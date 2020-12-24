@@ -456,7 +456,7 @@ module.exports = merge(webpackConfig, {
 To enable CSS support in your application, add following packages:
 
 ```bash
-yarn add css-loader style-loader mini-css-extract-plugin css-minimizer-webpack-plugin
+yarn add css-loader style-loader mini-css-extract-plugin css-minimizer-webpack-plugin postcss
 ```
 
 Optionally, add the `CSS` extension to webpack config for easy resolution.
@@ -479,7 +479,7 @@ then add the relevant pre-processors:
 #### Postcss
 
 ```bash
-yarn add postcss postcss-loader
+yarn add postcss-loader
 ```
 
 Optionally add these two plugins if they are required in your `postcss.config.js`:
