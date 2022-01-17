@@ -10,9 +10,9 @@ Gem::Specification.new do |s|
   s.homepage = "https://github.com/shakacode/webpackr"
   s.license  = "MIT"
 
+  npm_version = Webpacker::VERSION.gsub('.rc', '-rc')
   s.metadata = {
-    "source_code_uri" => "https://github.com/shakacode/webpackr/tree/v#{Webpacker::VERSION}",
-    "changelog_uri"   => "https://github.com/shakacode/webpackr/blob/v#{Webpacker::VERSION}/CHANGELOG.md"
+    "source_code_uri" => "https://github.com/shakacode/webpackr/tree/v#{npm_version}",
   }
 
   s.required_ruby_version = ">= 2.7.0"
