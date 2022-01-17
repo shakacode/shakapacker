@@ -2,10 +2,10 @@ $:.push File.expand_path("../lib", __FILE__)
 require "webpacker/version"
 
 Gem::Specification.new do |s|
-  s.name     = "webpacker"
+  s.name     = "webpackr"
   s.version  = Webpacker::VERSION
-  s.authors  = [ "David Heinemeier Hansson", "Gaurav Tiwari" ]
-  s.email    = [ "david@basecamp.com", "gaurav@gauravtiwari.co.uk" ]
+  s.authors  = [ "David Heinemeier Hansson", "Gaurav Tiwari", "Justin Gordon" ]
+  s.email    = [ "david@basecamp.com", "gaurav@gauravtiwari.co.uk", "justin@shakacode.com" ]
   s.summary  = "Use webpack to manage app-like JavaScript modules in Rails"
   s.homepage = "https://github.com/rails/webpacker"
   s.license  = "MIT"

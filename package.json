@@ -1,6 +1,6 @@
 {
-  "name": "@rails/webpacker",
-  "version": "6.0.0-rc.6",
+  "name": "@shakacode/webpackr",
+  "version": "6.0.0-rc.7",
   "description": "Use webpack to manage app-like JavaScript modules in Rails",
   "main": "package/index.js",
   "files": [
@@ -59,10 +59,10 @@
     "type": "git",
     "url": "git+https://github.com/rails/webpacker.git"
   },
-  "author": "David Heinemeier Hansson <david@basecamp.com>",
+  "author": "David Heinemeier Hansson <david@basecamp.com>, Justin Gordon <justin@shakacode.com>",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/rails/webpacker/issues"
+    "url": "https://github.com/shakacode/webpackr/issues"
   },
-  "homepage": "https://github.com/rails/webpacker"
+  "homepage": "https://github.com/shakacode/webpackr"
 }
