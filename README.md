@@ -1,11 +1,13 @@
-# Webpacker
+# Webpackr
 
-[![Ruby specs](https://github.com/rails/webpacker/workflows/Ruby%20specs/badge.svg)](https://github.com/rails/webpacker/actions)
-[![Jest specs](https://github.com/rails/webpacker/workflows/Jest%20specs/badge.svg)](https://github.com/rails/webpacker/actions)
-[![Rubocop](https://github.com/rails/webpacker/workflows/Rubocop/badge.svg)](https://github.com/rails/webpacker/actions)
-[![JS lint](https://github.com/rails/webpacker/workflows/JS%20lint/badge.svg)](https://github.com/rails/webpacker/actions)
+This is a fork of shakacode/webpackr.
 
-[![node.js](https://img.shields.io/badge/node-%3E%3D%2012.0.0-brightgreen.svg)](https://www.npmjs.com/package/@rails/webpacker)
+[![Ruby specs](https://github.com/shakacode/webpackr/workflows/Ruby%20specs/badge.svg)](https://github.com/shakacode/webpackr/actions)
+[![Jest specs](https://github.com/shakacode/webpackr/workflows/Jest%20specs/badge.svg)](https://github.com/shakacode/webpackr/actions)
+[![Rubocop](https://github.com/shakacode/webpackr/workflows/Rubocop/badge.svg)](https://github.com/shakacode/webpackr/actions)
+[![JS lint](https://github.com/shakacode/webpackr/workflows/JS%20lint/badge.svg)](https://github.com/shakacode/webpackr/actions)
+
+[![node.js](https://img.shields.io/badge/node-%3E%3D%2012.0.0-brightgreen.svg)](https://www.npmjs.com/package/@shakacode/webpackr)
 [![Gem](https://img.shields.io/gem/v/webpacker.svg)](https://rubygems.org/gems/webpacker)
 
 Webpacker makes it easy to use the JavaScript pre-processor and bundler
@@ -17,7 +19,11 @@ leaving Webpack responsible solely for app-like JavaScript, or it can be used ex
 
 Visit [Shipping Webpacker v6 – Status](https://discuss.rubyonrails.org/t/shipping-webpacker-v6-status/79683) for the latest news on a v6 release.
 
-Pleaes see the [new rails/webpacker discussion forum](https://discuss.rubyonrails.org/c/webpacker/10) to discuss debugging and troubleshooting tips. Please open issues for bugs and feature requests.
+Discussion forums to discuss debugging and troubleshooting tips. Please open issues for bugs and feature requests:
+1. [rails/webpacker discussion forum](https://discuss.rubyonrails.org/c/webpacker/10)
+2. [Discussions tab](https://github.com/shakacode/webpackr/discussions)
+
+---
 
 <!-- START doctoc generated TOC please keep comment here to allow auto update -->
 <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
@@ -106,8 +112,8 @@ Update your `Gemfile`:
 gem 'webpacker', '~> 6.0'
 
 # OR if you prefer to use master
-gem 'webpacker', git: 'https://github.com/rails/webpacker.git'
-yarn add https://github.com/rails/webpacker.git
+gem 'webpacker', git: 'https://github.com/shakacode/webpackr.git'
+yarn add https://github.com/shakacode/webpackr.git
 ```
 
 Then running the following to install Webpacker:
@@ -131,7 +137,7 @@ yarn add @babel/core @babel/plugin-transform-runtime @babel/preset-env @babel/ru
   webpack webpack-assets-manifest webpack-cli webpack-merge webpack-sources webpack-dev-server
 ```
 
-Previously, these "webpack" and "babel" packages were direct dependencies for `@rails/webpacker`. By
+Previously, these "webpack" and "babel" packages were direct dependencies for `@shakacode/webpackr`. By
 making these peer dependencies, you have control over the versions used in your webpack and babel configs.
 
 ## Usage
@@ -306,7 +312,7 @@ Then `require` this file in your `config/webpack/webpack.config.js`:
 
 ```js
 // config/webpack/webpack.config.js
-const { webpackConfig, merge } = require('@rails/webpacker')
+const { webpackConfig, merge } = require('@shakacode/webpackr')
 const customConfig = require('./custom')
 
 module.exports = merge(webpackConfig, customConfig)
@@ -316,7 +322,7 @@ If you need access to configs within Webpacker's configuration, you can import t
 
 ```js
 // config/webpack/webpack.config.js
-const { webpackConfig } = require('@rails/webpacker')
+const { webpackConfig } = require('@shakacode/webpackr')
 
 console.log(webpackConfig.output_path)
 console.log(webpackConfig.source_path)
@@ -332,7 +338,7 @@ By default, you will find the Webpacker preset in your `package.json`.
 ```json
 "babel": {
   "presets": [
-    "./node_modules/@rails/webpacker/package/babel/preset.js"
+    "./node_modules/@shakacode/webpackr/package/babel/preset.js"
   ]
 },
 ```
@@ -415,7 +421,7 @@ Then modify the webpack config to use it as a plugin:
 
 ```js
 // config/webpack/webpack.config.js
-const { webpackConfig, merge } = require("@rails/webpacker");
+const { webpackConfig, merge } = require("@shakacode/webpackr");
 const ForkTSCheckerWebpackPlugin = require("fork-ts-checker-webpack-plugin");
 
 module.exports = merge(webpackConfig, {
@@ -435,7 +441,7 @@ Optionally, add the `CSS` extension to webpack config for easy resolution.
 
 ```js
 // config/webpack/webpack.config.js
-const { webpackConfig, merge } = require('@rails/webpacker')
+const { webpackConfig, merge } = require('@shakacode/webpackr')
 const customConfig = {
   resolve: {
     extensions: ['.css']
@@ -508,7 +514,7 @@ module.exports = {
 
 ```js
 // config/webpack/webpack.config.js
-const { webpackConfig, merge } = require('@rails/webpacker')
+const { webpackConfig, merge } = require('@shakacode/webpackr')
 const vueConfig = require('./rules/vue')
 
 module.exports = merge(vueConfig, webpackConfig)
@@ -573,15 +579,15 @@ bundle update webpacker
 rails webpacker:install
 
 # yarn 1 instructions
-yarn upgrade @rails/webpacker --latest
+yarn upgrade @shakacode/webpackr --latest
 yarn upgrade webpack-dev-server --latest
 
 # yarn 2 instructions
-yarn up @rails/webpacker@latest
+yarn up @shakacode/webpackr@latest
 yarn up webpack-dev-server@latest
 
 # Or to install the latest release (including pre-releases)
-yarn add @rails/webpacker@next
+yarn add @shakacode/webpackr@next
 ```
 
 Also, consult the [CHANGELOG](./CHANGELOG.md) for additional upgrade links.
@@ -650,7 +656,7 @@ See the doc page for [Troubleshooting](./docs/troubleshooting.md).
 
 ## Contributing
 
-[![Code Helpers](https://www.codetriage.com/rails/webpacker/badges/users.svg)](https://www.codetriage.com/rails/webpacker)
+[![Code Helpers](https://www.codetriage.com/shakacode/webpackr/badges/users.svg)](https://www.codetriage.com/shakacode/webpackr)
 
 We encourage you to contribute to Webpacker! See [CONTRIBUTING](CONTRIBUTING.md) for guidelines about how to proceed.
 

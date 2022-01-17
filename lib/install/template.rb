@@ -66,11 +66,11 @@ results = []
 
 Dir.chdir(Rails.root) do
   if Webpacker::VERSION.match?(/^[0-9]+\.[0-9]+\.[0-9]+$/)
-    say "Installing @rails/webpacker@#{Webpacker::VERSION}"
-    results << run("yarn add @rails/webpacker@#{Webpacker::VERSION}")
+    say "Installing @shakacode/webpackr@#{Webpacker::VERSION}"
+    results << run("yarn add @shakacode/webpackr@#{Webpacker::VERSION}")
   else
-    say "Installing @rails/webpacker@next"
-    results << run("yarn add @rails/webpacker@next")
+    say "Installing @shakacode/webpackr@next"
+    results << run("yarn add @shakacode/webpackr@next")
   end
 
   package_json = File.read("#{__dir__}/../../package.json")
@@ -80,7 +80,7 @@ Dir.chdir(Rails.root) do
     result << "#{package}@#{major_version}"
   end.join(" ")
 
-  say "Adding @rails/webpacker peerDependencies"
+  say "Adding @shakacode/webpackr peerDependencies"
   results << run("yarn add #{peers_to_add}")
 
   say "Installing webpack-dev-server for live reloading as a development dependency"

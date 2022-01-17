@@ -60,7 +60,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/rails/webpacker.git"
+    "url": "git+https://github.com/shakacode/webpackr.git"
   },
   "author": "David Heinemeier Hansson <david@basecamp.com>, Justin Gordon <justin@shakacode.com>",
   "license": "MIT",

@@ -7,12 +7,12 @@ Gem::Specification.new do |s|
   s.authors  = [ "David Heinemeier Hansson", "Gaurav Tiwari", "Justin Gordon" ]
   s.email    = [ "david@basecamp.com", "gaurav@gauravtiwari.co.uk", "justin@shakacode.com" ]
   s.summary  = "Use webpack to manage app-like JavaScript modules in Rails"
-  s.homepage = "https://github.com/rails/webpacker"
+  s.homepage = "https://github.com/shakacode/webpackr"
   s.license  = "MIT"
 
   s.metadata = {
-    "source_code_uri" => "https://github.com/rails/webpacker/tree/v#{Webpacker::VERSION}",
-    "changelog_uri"   => "https://github.com/rails/webpacker/blob/v#{Webpacker::VERSION}/CHANGELOG.md"
+    "source_code_uri" => "https://github.com/shakacode/webpackr/tree/v#{Webpacker::VERSION}",
+    "changelog_uri"   => "https://github.com/shakacode/webpackr/blob/v#{Webpacker::VERSION}/CHANGELOG.md"
   }
 
   s.required_ruby_version = ">= 2.7.0"
