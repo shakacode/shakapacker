@@ -1,5 +1,10 @@
 # Webpackr
 
+_Warning, the final name of this fork and evolution of rails/webpacker is still pending waiting on community feedback._ 
+
+Please email suggestions to justin@shakacode.com or [comment in this issue](https://github.com/shakacode/webpackr/issues/9).
+
+
 This is a fork of [rails/webpacker](https://github.com/rails/webpacker). For pre v6, see [rails/webpacker 5-x-stable](https://github.com/rails/webpacker/tree/5-x-stable).
 
 [![Ruby specs](https://github.com/shakacode/webpackr/workflows/Ruby%20specs/badge.svg)](https://github.com/shakacode/webpackr/actions)
