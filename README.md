@@ -1,6 +1,6 @@
 # Webpackr
 
-This is a fork of shakacode/webpackr.
+This is a fork of [rails/webpacker](https://github.com/rails/webpacker). For pre v6, see [rails/webpacker 5-x-stable](https://github.com/rails/webpacker/tree/5-x-stable).
 
 [![Ruby specs](https://github.com/shakacode/webpackr/workflows/Ruby%20specs/badge.svg)](https://github.com/shakacode/webpackr/actions)
 [![Jest specs](https://github.com/shakacode/webpackr/workflows/Jest%20specs/badge.svg)](https://github.com/shakacode/webpackr/actions)
@@ -8,14 +8,13 @@ This is a fork of shakacode/webpackr.
 [![JS lint](https://github.com/shakacode/webpackr/workflows/JS%20lint/badge.svg)](https://github.com/shakacode/webpackr/actions)
 
 [![node.js](https://img.shields.io/badge/node-%3E%3D%2012.0.0-brightgreen.svg)](https://www.npmjs.com/package/@shakacode/webpackr)
-[![Gem](https://img.shields.io/gem/v/webpacker.svg)](https://rubygems.org/gems/webpacker)
+[![Gem](https://img.shields.io/gem/v/webpackr.svg)](https://rubygems.org/gems/webpackr)
 
 Webpacker makes it easy to use the JavaScript pre-processor and bundler
 [Webpack v5](https://webpack.js.org/)
 to manage application-like JavaScript in Rails. It can coexist with the asset pipeline,
 leaving Webpack responsible solely for app-like JavaScript, or it can be used exclusively, making it also responsible for images, fonts, and CSS.
 
-**NOTE:** The master branch now hosts the code for v6.x.x. Please refer to [5-x-stable](https://github.com/rails/webpacker/tree/5-x-stable) branch for 5.x documentation.
 
 Visit [Shipping Webpacker v6 – Status](https://discuss.rubyonrails.org/t/shipping-webpacker-v6-status/79683) for the latest news on a v6 release.
 
