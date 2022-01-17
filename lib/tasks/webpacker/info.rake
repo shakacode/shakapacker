@@ -11,7 +11,7 @@ namespace :webpacker do
       $stdout.puts "Yarn: #{`yarn --version`}"
 
       $stdout.puts "\n"
-      $stdout.puts "@rails/webpacker: \n#{`npm list @rails/webpacker version`}"
+      $stdout.puts "@shakacode/webpackr: \n#{`npm list @shakacode/webpackr version`}"
 
       $stdout.puts "Is bin/webpacker present?: #{File.exist? 'bin/webpacker'}"
       $stdout.puts "Is bin/webpacker-dev-server present?: #{File.exist? 'bin/webpacker-dev-server'}"

@@ -1,7 +1,7 @@
 {
   "private": true,
   "dependencies": {
-    "@rails/webpacker": "file:../../../../"
+    "@shakacode/webpackr": "file:../../../../"
   },
   "license": "MIT"
 }
