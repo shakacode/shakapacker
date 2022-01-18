@@ -1,7 +1,8 @@
 # Shakapacker
 
+_Actively maintained fork of [rails/webpacker](https://github.com/rails/webpacker). For pre v6, see [rails/webpacker 5-x-stable](https://github.com/rails/webpacker/tree/5-x-stable). Be sure to see the [CHANGELOG](./CHANGELOG.md)._
 
-This is a fork of [rails/webpacker](https://github.com/rails/webpacker). For pre v6, see [rails/webpacker 5-x-stable](https://github.com/rails/webpacker/tree/5-x-stable).
+Note, internal naming will continue to use `webpacker` where possible.
 
 [![Ruby specs](https://github.com/shakacode/shakapacker/workflows/Ruby%20specs/badge.svg)](https://github.com/shakacode/shakapacker/actions)
 [![Jest specs](https://github.com/shakacode/shakapacker/workflows/Jest%20specs/badge.svg)](https://github.com/shakacode/shakapacker/actions)
@@ -16,6 +17,7 @@ Webpacker makes it easy to use the JavaScript pre-processor and bundler
 to manage application-like JavaScript in Rails. It can coexist with the asset pipeline,
 leaving Webpack responsible solely for app-like JavaScript, or it can be used exclusively, making it also responsible for images, fonts, and CSS.
 
+See a comparison of [webpacker with jsbundling-rails](https://github.com/rails/jsbundling-rails/blob/main/docs/comparison_with_webpacker.md).
 
 Visit [Shipping Webpacker v6 – Status](https://discuss.rubyonrails.org/t/shipping-webpacker-v6-status/79683) for the latest news on a v6 release.
 
