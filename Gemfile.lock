@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    webpacker (6.0.0.rc.6)
+    shakapacker (6.0.0.rc.6)
       activesupport (>= 5.2)
       rack-proxy (>= 0.6.1)
       railties (>= 5.2)
@@ -177,7 +177,7 @@ DEPENDENCIES
   rubocop
   rubocop-performance
   semantic_range
-  webpacker!
+  shakapacker!
 
 BUNDLED WITH
-   2.2.30
+   2.2.32

@@ -10,7 +10,7 @@ Gem::Specification.new do |s|
   s.homepage = "https://github.com/shakacode/shakapacker"
   s.license  = "MIT"
 
-  npm_version = Webpacker::VERSION.gsub('.rc', '-rc')
+  npm_version = Webpacker::VERSION.gsub(".rc", "-rc")
   s.metadata = {
     "source_code_uri" => "https://github.com/shakacode/shakapacker/tree/v#{npm_version}",
   }
