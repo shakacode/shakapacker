@@ -49,5 +49,5 @@ Please see [UPGRADE GUIDE](./docs/v6_upgrade.md) for more information.
 
 
 [Unreleased]: https://github.com/shakacode/shakapacker/compare/6.0.0-rc.11...master
-[6.0.0.rc.12]: https://github.com/shakacode/shakapacker/compare/aba79635e6ff6562ec04d3c446d57ef19a5fef7d...6.0.0-rc.12
+[6.0.0.rc.12]: https://github.com/shakacode/shakapacker/compare/aba79635e6ff6562ec04d3c446d57ef19a5fef7d...v6.0.0-rc.12
 [6.0.0.rc.6]: https://github.com/rails/webpacker/compare/v5.4.3...aba79635e6ff6562ec04d3c446d57ef19a5fef7d
