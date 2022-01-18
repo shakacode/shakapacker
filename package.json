@@ -1,6 +1,6 @@
 {
-  "name": "@shakacode/webpackr",
-  "version": "6.0.0-rc.10",
+  "name": "@shakacode/shakapacker",
+  "version": "6.0.0-rc.6",
   "description": "Use webpack to manage app-like JavaScript modules in Rails",
   "main": "package/index.js",
   "files": [
@@ -60,12 +60,12 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/shakacode/webpackr.git"
+    "url": "git+https://github.com/shakacode/shakapacker.git"
   },
   "author": "David Heinemeier Hansson <david@basecamp.com>, Justin Gordon <justin@shakacode.com>",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/shakacode/webpackr/issues"
+    "url": "https://github.com/shakacode/shakapacker/issues"
   },
-  "homepage": "https://github.com/shakacode/webpackr"
+  "homepage": "https://github.com/shakacode/shakapacker"
 }

@@ -6,7 +6,7 @@
   "version": "0.1.0",
   "babel": {
     "presets": [
-      "./node_modules/@shakacode/webpackr/package/babel/preset.js"
+      "./node_modules/@shakacode/shakapacker/package/babel/preset.js"
     ]
   },
   "browserslist": [
