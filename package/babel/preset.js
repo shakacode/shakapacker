@@ -1,4 +1,4 @@
-const { moduleExists } = require('@shakacode/webpackr')
+const { moduleExists } = require('@shakacode/shakapacker')
 
 module.exports = function config(api) {
   const validEnv = ['development', 'test', 'production']
