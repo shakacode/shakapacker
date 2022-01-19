@@ -13,7 +13,7 @@ Let's call the shakacode/shakapacker directory `WEBPACKER_DIR` which has shakaco
 ### Setup with Yalc
 Use [`yalc`](https://github.com/wclr/yalc) unless you like yak shaving weird errors.
 1. In `WEBPACKER_DIR`, run `yalc publish`
-2. In `TEST_APP_DIR`, run `yalc link @shakacode/shakapacker`
+2. In `TEST_APP_DIR`, run `yalc link shakapacker`
 
 ## Update the Package Code
 1. Make some JS change in WEBPACKER_DIR

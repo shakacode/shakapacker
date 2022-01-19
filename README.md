@@ -1,15 +1,16 @@
 # Shakapacker
 
-_Actively maintained fork of [rails/webpacker](https://github.com/rails/webpacker). For pre v6, see [rails/webpacker 5-x-stable](https://github.com/rails/webpacker/tree/5-x-stable). Be sure to see the [CHANGELOG](./CHANGELOG.md)._
+_Official, actively maintained fork of [rails/webpacker](https://github.com/rails/webpacker). For pre v6, see [rails/webpacker 5-x-stable](https://github.com/rails/webpacker/tree/5-x-stable). Be sure to see the [CHANGELOG](./CHANGELOG.md)._
 
-Note, internal naming will continue to use `webpacker` where possible.
+* Note, internal naming will continue to use `webpacker` where possible.
+* See [V6 Upgrade](./docs/v6_upgrade.md) for upgrading from v5 or prior v6 releases.
 
 [![Ruby specs](https://github.com/shakacode/shakapacker/workflows/Ruby%20specs/badge.svg)](https://github.com/shakacode/shakapacker/actions)
 [![Jest specs](https://github.com/shakacode/shakapacker/workflows/Jest%20specs/badge.svg)](https://github.com/shakacode/shakapacker/actions)
 [![Rubocop](https://github.com/shakacode/shakapacker/workflows/Rubocop/badge.svg)](https://github.com/shakacode/shakapacker/actions)
 [![JS lint](https://github.com/shakacode/shakapacker/workflows/JS%20lint/badge.svg)](https://github.com/shakacode/shakapacker/actions)
 
-[![node.js](https://img.shields.io/badge/node-%3E%3D%2012.0.0-brightgreen.svg)](https://www.npmjs.com/package/@shakacode/shakapacker)
+[![node.js](https://img.shields.io/badge/node-%3E%3D%2012.0.0-brightgreen.svg)](https://www.npmjs.com/package/shakapacker)
 [![Gem](https://img.shields.io/gem/v/shakapacker.svg)](https://rubygems.org/gems/shakapacker)
 
 Webpacker makes it easy to use the JavaScript pre-processor and bundler
@@ -18,8 +19,6 @@ to manage application-like JavaScript in Rails. It can coexist with the asset pi
 leaving Webpack responsible solely for app-like JavaScript, or it can be used exclusively, making it also responsible for images, fonts, and CSS.
 
 See a comparison of [webpacker with jsbundling-rails](https://github.com/rails/jsbundling-rails/blob/main/docs/comparison_with_webpacker.md).
-
-Visit [Shipping Webpacker v6 – Status](https://discuss.rubyonrails.org/t/shipping-webpacker-v6-status/79683) for the latest news on a v6 release.
 
 Discussion forums to discuss debugging and troubleshooting tips. Please open issues for bugs and feature requests:
 1. [rails/webpacker discussion forum](https://discuss.rubyonrails.org/c/webpacker/10)
@@ -111,10 +110,10 @@ Update your `Gemfile`:
 
 ```ruby
 # Gemfile
-gem 'webpacker', '~> 6.0'
+gem 'shakapacker', '~> 6.0'
 
 # OR if you prefer to use master
-gem 'webpacker', git: 'https://github.com/shakacode/shakapacker.git'
+gem 'shakapacker', git: 'https://github.com/shakacode/shakapacker.git'
 yarn add https://github.com/shakacode/shakapacker.git
 ```
 
@@ -139,7 +138,7 @@ yarn add @babel/core @babel/plugin-transform-runtime @babel/preset-env @babel/ru
   webpack webpack-assets-manifest webpack-cli webpack-merge webpack-sources webpack-dev-server
 ```
 
-Previously, these "webpack" and "babel" packages were direct dependencies for `@shakacode/shakapacker`. By
+Previously, these "webpack" and "babel" packages were direct dependencies for `webpacker`. By
 making these peer dependencies, you have control over the versions used in your webpack and babel configs.
 
 ## Usage
@@ -314,7 +313,7 @@ Then `require` this file in your `config/webpack/webpack.config.js`:
 
 ```js
 // config/webpack/webpack.config.js
-const { webpackConfig, merge } = require('@shakacode/shakapacker')
+const { webpackConfig, merge } = require('shakapacker')
 const customConfig = require('./custom')
 
 module.exports = merge(webpackConfig, customConfig)
@@ -324,7 +323,7 @@ If you need access to configs within Webpacker's configuration, you can import t
 
 ```js
 // config/webpack/webpack.config.js
-const { webpackConfig } = require('@shakacode/shakapacker')
+const { webpackConfig } = require('shakapacker')
 
 console.log(webpackConfig.output_path)
 console.log(webpackConfig.source_path)
@@ -340,7 +339,7 @@ By default, you will find the Webpacker preset in your `package.json`.
 ```json
 "babel": {
   "presets": [
-    "./node_modules/@shakacode/shakapacker/package/babel/preset.js"
+    "./node_modules/shakapacker/package/babel/preset.js"
   ]
 },
 ```
@@ -423,7 +422,7 @@ Then modify the webpack config to use it as a plugin:
 
 ```js
 // config/webpack/webpack.config.js
-const { webpackConfig, merge } = require("@shakacode/shakapacker");
+const { webpackConfig, merge } = require("shakapacker");
 const ForkTSCheckerWebpackPlugin = require("fork-ts-checker-webpack-plugin");
 
 module.exports = merge(webpackConfig, {
@@ -443,7 +442,7 @@ Optionally, add the `CSS` extension to webpack config for easy resolution.
 
 ```js
 // config/webpack/webpack.config.js
-const { webpackConfig, merge } = require('@shakacode/shakapacker')
+const { webpackConfig, merge } = require('shakapacker')
 const customConfig = {
   resolve: {
     extensions: ['.css']
@@ -516,7 +515,7 @@ module.exports = {
 
 ```js
 // config/webpack/webpack.config.js
-const { webpackConfig, merge } = require('@shakacode/shakapacker')
+const { webpackConfig, merge } = require('shakapacker')
 const vueConfig = require('./rules/vue')
 
 module.exports = merge(vueConfig, webpackConfig)
@@ -581,15 +580,15 @@ bundle update webpacker
 rails webpacker:install
 
 # yarn 1 instructions
-yarn upgrade @shakacode/shakapacker --latest
+yarn upgrade shakapacker --latest
 yarn upgrade webpack-dev-server --latest
 
 # yarn 2 instructions
-yarn up @shakacode/shakapacker@latest
+yarn up shakapacker@latest
 yarn up webpack-dev-server@latest
 
 # Or to install the latest release (including pre-releases)
-yarn add @shakacode/shakapacker@next
+yarn add shakapacker@next
 ```
 
 Also, consult the [CHANGELOG](./CHANGELOG.md) for additional upgrade links.
