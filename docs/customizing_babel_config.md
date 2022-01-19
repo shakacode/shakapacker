@@ -1,13 +1,13 @@
 # Customizing Babel Config
 
 ## Default Configuration
-The default configuration of babel is done by using `package.json` to use the file within the `@shakacode/shakapacker` package.
+The default configuration of babel is done by using `package.json` to use the file within the `shakapacker` package.
 
 ```json
 {
   "babel": {
     "presets": [
-      "./node_modules/@shakacode/shakapacker/package/babel/preset.js"
+      "./node_modules/shakapacker/package/babel/preset.js"
     ]
   }
 }
@@ -27,7 +27,7 @@ yarn add --dev @pmmmwh/react-refresh-webpack-plugin react-refresh
 ```js
 // babel.config.js
 module.exports = function (api) {
-  const defaultConfigFunc = require('@shakacode/shakapacker/package/babel/preset.js')
+  const defaultConfigFunc = require('shakapacker/package/babel/preset.js')
   const resultConfig = defaultConfigFunc(api)
   const isProductionEnv = api.env('production')
 

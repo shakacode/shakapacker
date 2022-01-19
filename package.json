@@ -1,5 +1,5 @@
 {
-  "name": "@shakacode/shakapacker",
+  "name": "shakapacker",
   "version": "6.0.0-rc.12",
   "description": "Use webpack to manage app-like JavaScript modules in Rails",
   "main": "package/index.js",

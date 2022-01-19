@@ -10,6 +10,14 @@ Webpacker used to configure Webpack indirectly, which lead to a [complicated sec
 
 This means you have to configure integration with frameworks yourself, but webpack-merge helps with this. See this example for [Vue](https://github.com/shakacode/shakapacker#other-frameworks) and scroll to the bottom for [more examples](#examples-of-v5-to-v6).
 
+## webpacker v6.0.0.rc.6 to shakapacker
+See example migration, [PR 27](https://github.com/shakacode/react_on_rails_tutorial_with_ssr_and_hmr_fast_refresh/pull/27).
+          
+### Update
+1. Peer dependencies. Run `yarn add @babel/core @babel/plugin-transform-runtime @babel/preset-env @babel/runtime babel-loader compression-webpack-plugin pnp-webpack-plugin terser-webpack-plugin webpack webpack-assets-manifest webpack-cli webpack-merge webpack-sources webpack-dev-server`
+2. Update your webpack config for a single config file, `config/webpack/webpack.config.js`. 
+3. Update `babel.config.js` if you need JSX support. 
+
 ## How to upgrade to Webpacker v6 from v5
 1. Ensure you have a clean working git branch. You will be overwriting all your files and reverting the changes that you don't want.
 
@@ -33,13 +41,13 @@ This means you have to configure integration with frameworks yourself, but webpa
 
 1. Upgrade the Webpacker Ruby gem and the NPM package
 
-   Note: [Check the releases page to verify the latest version](https://github.com/rails/webpacker/releases), and make sure to install identical version numbers of webpacker gem and `@shakacode/shakapacker` npm package. (Gems use a period and packages use a dot between the main version number and the beta version.)
+   Note: [Check the releases page to verify the latest version](https://github.com/rails/webpacker/releases), and make sure to install identical version numbers of webpacker gem and `shakapacker` npm package. (Gems use a period and packages use a dot between the main version number and the beta version.)
 
    Example going to a specific version:
 
    ```ruby
    # Gemfile
-   gem 'shakapacker', '6.0.0.rc.7', require: 'webpacker'
+   gem 'shakapacker', '6.0.0.rc.13', require: 'webpacker'
    ```
 
    ```bash
@@ -47,7 +55,7 @@ This means you have to configure integration with frameworks yourself, but webpa
    ```
 
    ```bash
-   yarn add @shakacode/shakapacker@6.0.0-rc.7 --exact
+   yarn add shakapacker@6.0.0-rc.7 --exact
    ```
 
   ```bash
@@ -64,7 +72,7 @@ This means you have to configure integration with frameworks yourself, but webpa
 1. There is now a single default configuration file of `config/webpack/webpack.config.js`. Previously, the config file was set
   to `config/webpack/#{NODE_ENV}.js`. In the `config/webpack/` directory, you can either refactor your code in `test.js`, `development.js`, and `production.js` to a single file, `webpack.config.js` or you can replace the contents of `config/webpack/config.webpack.js` to conditionally load the old file based on the NODE_ENV with this snippet:
    ```js
-   const { env, webpackConfig } = require('@shakacode/shakapacker')
+   const { env, webpackConfig } = require('shakapacker')
    const { existsSync } = require('fs')
    const { resolve } = require('path')
 
@@ -109,7 +117,7 @@ This means you have to configure integration with frameworks yourself, but webpa
 1. Import `environment` changed to `webpackConfig`. For example, the new code looks like:
    ```js
    // config/webpack/webpack.config.js
-   const { webpackConfig, merge } = require('@shakacode/shakapacker')
+   const { webpackConfig, merge } = require('shakapacker')
    const customConfig = require('./custom')
 
    module.exports = merge(webpackConfig, customConfig)
