@@ -39,7 +39,7 @@ This means you have to configure integration with frameworks yourself, but webpa
 
    ```ruby
    # Gemfile
-   gem 'webpacker', '6.0.0.rc.7'
+   gem 'shakapacker', '6.0.0.rc.7'
    ```
 
    ```bash
