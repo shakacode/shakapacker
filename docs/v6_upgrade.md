@@ -41,13 +41,13 @@ See example migration, [PR 27](https://github.com/shakacode/react_on_rails_tutor
 
 1. Upgrade the Webpacker Ruby gem and the NPM package
 
-   Note: [Check the releases page to verify the latest version](https://github.com/rails/webpacker/releases), and make sure to install identical version numbers of webpacker gem and `shakapacker` npm package. (Gems use a period and packages use a dot between the main version number and the beta version.)
+   Note: [Check the gem page to verify the latest version](https://rubygems.org/gems/shakapacker), and make sure to install identical version numbers of `shakapacker` gem and package. (Gems use a period and packages use a dot between the main version number and the beta version.)
 
    Example going to a specific version:
 
    ```ruby
    # Gemfile
-   gem 'shakapacker', '6.0.0.rc.13', require: 'webpacker'
+   gem 'shakapacker', '6.0.0.rc.13'
    ```
 
    ```bash
@@ -55,7 +55,7 @@ See example migration, [PR 27](https://github.com/shakacode/react_on_rails_tutor
    ```
 
    ```bash
-   yarn add shakapacker@6.0.0-rc.7 --exact
+   yarn add shakapacker@6.0.0-rc.13 --exact
    ```
 
   ```bash

@@ -3,7 +3,9 @@
 _Official, actively maintained fork of [rails/webpacker](https://github.com/rails/webpacker). For pre v6, see [rails/webpacker 5-x-stable](https://github.com/rails/webpacker/tree/5-x-stable). Be sure to see the [CHANGELOG](./CHANGELOG.md)._
 
 * Note, internal naming will continue to use `webpacker` where possible.
-* See [V6 Upgrade](./docs/v6_upgrade.md) for upgrading from v5 or prior v6 releases.
+* See [V6 Upgrade](./docs/v6_upgrade.md) for upgrading from v5 or prior v6 releases. See this [PR from v6.0.0.rc.6 to shakapacker](https://github.com/shakacode/react_on_rails_tutorial_with_ssr_and_hmr_fast_refresh/pull/27).
+* [Slack discussion channel](https://reactrails.slack.com/join/shared_invite/enQtNjY3NTczMjczNzYxLTlmYjdiZmY3MTVlMzU2YWE0OWM0MzNiZDI0MzdkZGFiZTFkYTFkOGVjODBmOWEyYWQ3MzA2NGE1YWJjNmVlMGE).
+
 
 [![Ruby specs](https://github.com/shakacode/shakapacker/workflows/Ruby%20specs/badge.svg)](https://github.com/shakacode/shakapacker/actions)
 [![Jest specs](https://github.com/shakacode/shakapacker/workflows/Jest%20specs/badge.svg)](https://github.com/shakacode/shakapacker/actions)
