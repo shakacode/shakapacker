@@ -136,7 +136,7 @@ Note, in v6, most JS packages are peer dependencies. Thus, the installer will ad
 
 ```bash
 yarn add @babel/core @babel/plugin-transform-runtime @babel/preset-env @babel/runtime babel-loader \
-  compression-webpack-plugin pnp-webpack-plugin terser-webpack-plugin \
+  compression-webpack-plugin terser-webpack-plugin \
   webpack webpack-assets-manifest webpack-cli webpack-merge webpack-sources webpack-dev-server
 ```
 

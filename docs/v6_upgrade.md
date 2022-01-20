@@ -14,7 +14,7 @@ This means you have to configure integration with frameworks yourself, but webpa
 See example migration, [PR 27](https://github.com/shakacode/react_on_rails_tutorial_with_ssr_and_hmr_fast_refresh/pull/27).
           
 ### Update
-1. Peer dependencies. Run `yarn add @babel/core @babel/plugin-transform-runtime @babel/preset-env @babel/runtime babel-loader compression-webpack-plugin pnp-webpack-plugin terser-webpack-plugin webpack webpack-assets-manifest webpack-cli webpack-merge webpack-sources webpack-dev-server`
+1. Peer dependencies. Run `yarn add @babel/core @babel/plugin-transform-runtime @babel/preset-env @babel/runtime babel-loader compression-webpack-plugin terser-webpack-plugin webpack webpack-assets-manifest webpack-cli webpack-merge webpack-sources webpack-dev-server`
 2. Update your webpack config for a single config file, `config/webpack/webpack.config.js`. 
 3. Update `babel.config.js` if you need JSX support. 
 
@@ -66,7 +66,7 @@ See example migration, [PR 27](https://github.com/shakacode/react_on_rails_tutor
 
   Note, the webpacker:install will install the peer dependencies:
   ```bash
-  yarn add @babel/core @babel/plugin-transform-runtime @babel/preset-env @babel/runtime babel-loader compression-webpack-plugin pnp-webpack-plugin terser-webpack-plugin webpack webpack-assets-manifest webpack-cli webpack-merge webpack-sources webpack-dev-server
+  yarn add @babel/core @babel/plugin-transform-runtime @babel/preset-env @babel/runtime babel-loader compression-webpack-plugin terser-webpack-plugin webpack webpack-assets-manifest webpack-cli webpack-merge webpack-sources webpack-dev-server
   ```
 
 1. There is now a single default configuration file of `config/webpack/webpack.config.js`. Previously, the config file was set
