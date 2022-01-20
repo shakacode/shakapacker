@@ -139,7 +139,8 @@ class HelperTest < ActionView::TestCase
     end
 
     assert_equal \
-      "To prevent duplicated chunks on the page, you should call javascript_pack_tag only once on the page.",
+      "To prevent duplicated chunks on the page, you should call javascript_pack_tag only once on the page. " +
+        "Please refer to https://github.com/shakacode/shakapacker/blob/master/README.md#usage for the usage guide",
       error.message
   end
 
@@ -178,7 +179,8 @@ class HelperTest < ActionView::TestCase
     end
 
     assert_equal \
-      "To prevent duplicated chunks on the page, you should call stylesheet_pack_tag only once on the page.",
+      "To prevent duplicated chunks on the page, you should call stylesheet_pack_tag only once on the page. " +
+        "Please refer to https://github.com/shakacode/shakapacker/blob/master/README.md#usage for the usage guide",
       error.message
   end
 end

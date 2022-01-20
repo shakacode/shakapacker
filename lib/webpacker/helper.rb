@@ -96,7 +96,11 @@ module Webpacker::Helper
   #   <%= javascript_pack_tag 'calendar' %>
   #   <%= javascript_pack_tag 'map' %>
   def javascript_pack_tag(*names, defer: true, **options)
-    raise "To prevent duplicated chunks on the page, you should call javascript_pack_tag only once on the page." if @javascript_pack_tag_loaded
+    if @javascript_pack_tag_loaded
+      raise "To prevent duplicated chunks on the page, you should call javascript_pack_tag only once on the page. " \
+      "Please refer to https://github.com/shakacode/shakapacker/blob/master/README.md#usage for the usage guide"
+    end
+
     @javascript_pack_tag_loaded = true
 
     javascript_include_tag(*sources_from_manifest_entrypoints(names, type: :javascript), **options.tap { |o| o[:defer] = defer })
@@ -144,8 +148,13 @@ module Webpacker::Helper
   #   <%= stylesheet_pack_tag 'calendar' %>
   #   <%= stylesheet_pack_tag 'map' %>
   def stylesheet_pack_tag(*names, **options)
-    raise "To prevent duplicated chunks on the page, you should call stylesheet_pack_tag only once on the page." if @stylesheet_pack_tag_loaded
+    if @stylesheet_pack_tag_loaded
+      raise "To prevent duplicated chunks on the page, you should call stylesheet_pack_tag only once on the page. " \
+      "Please refer to https://github.com/shakacode/shakapacker/blob/master/README.md#usage for the usage guide"
+    end
+
     @stylesheet_pack_tag_loaded = true
+
     return "" if Webpacker.inlining_css?
 
     stylesheet_link_tag(*sources_from_manifest_entrypoints(names, type: :stylesheet), **options)
