@@ -1,5 +1,5 @@
-For versions prior to v6, see the [5.x stable branch of rails/webpacker](https://github.com/rails/webpacker/tree/5-x-stable).
-
+* For versions prior to v6, see the [5.x stable branch of rails/webpacker](https://github.com/rails/webpacker/tree/5-x-stable). 
+* Please see [UPGRADE GUIDE](./docs/v6_upgrade.md).
 
 ## Versions
 ### [Unreleased]
@@ -7,7 +7,7 @@ Changes since last non-beta release.
 
 *Please add entries here for your pull requests that are not yet released.*
 
-## [6.0.0.rc.12]
+## [6.0.0.rc.13 changes from rc.6]
 
 ### Merged from rails/webpacker
 
@@ -20,11 +20,9 @@ Changes since last non-beta release.
   to `config/webpack/#{NODE_ENV}.js`.
 - Changed all package.json dependencies to peerDependencies, so upgrading requires adding the dependencies, per the [UPGRADE GUIDE](./docs/v6_upgrade.md).
 
-## [6.0.0.rc.6] - Forked January 16, 2022
+## [6.0.0.rc.6 changes from v5] - Forked January 16, 2022
 
-Latest is rc.9.
 
-Please see [UPGRADE GUIDE](./docs/v6_upgrade.md) for more information.
 - `node_modules` will no longer be babel transfomed compiled by default. This primarily fixes [rails issue #35501](https://github.com/rails/rails/issues/35501) as well as [numerous other webpacker issues](https://github.com/rails/webpacker/issues/2131#issuecomment-581618497). The disabled loader can still be required explicitly via:
 
   ```js
@@ -48,6 +46,6 @@ Please see [UPGRADE GUIDE](./docs/v6_upgrade.md) for more information.
 - CSS extraction enabled by default, except when devServer is configured and running
 
 
-[Unreleased]: https://github.com/shakacode/shakapacker/compare/6.0.0-rc.11...master
-[6.0.0.rc.12]: https://github.com/shakacode/shakapacker/compare/aba79635e6ff6562ec04d3c446d57ef19a5fef7d...v6.0.0-rc.12
-[6.0.0.rc.6]: https://github.com/rails/webpacker/compare/v5.4.3...aba79635e6ff6562ec04d3c446d57ef19a5fef7d
+[Unreleased]: https://github.com/shakacode/shakapacker/compare/6.0.0-rc.13...master
+[6.0.0.rc.13 changes from rc.6]: https://github.com/shakacode/shakapacker/compare/aba79635e6ff6562ec04d3c446d57ef19a5fef7d...v6.0.0-rc.13
+[6.0.0.rc.6 changes from v5]: https://github.com/rails/webpacker/compare/v5.4.3...aba79635e6ff6562ec04d3c446d57ef19a5fef7d
