@@ -38,6 +38,7 @@ Discussion forums to discuss debugging and troubleshooting tips. Please open iss
   - [Rails v6](#rails-v6)
   - [Rails v7](#rails-v7)
   - [Manual Installation Steps](#manual-installation-steps)
+  - [Note for Sprockets usage](#note-for-sprockets-usage)
 - [Usage](#usage)
       - [Defer for `javascript_pack_tag`](#defer-for-javascript_pack_tag)
     - [Server-Side Rendering (SSR)](#server-side-rendering-ssr)
@@ -142,6 +143,15 @@ yarn add @babel/core @babel/plugin-transform-runtime @babel/preset-env @babel/ru
 
 Previously, these "webpack" and "babel" packages were direct dependencies for `webpacker`. By
 making these peer dependencies, you have control over the versions used in your webpack and babel configs.
+
+### Note for Sprockets usage
+
+If you are still using Sprockets for some of your assets, you might want to include files from `node_modules` directory in your asset pipeline. This is useful, for example, if you want to reference a stylesheet from a node package in your `.scss` stylesheet.
+
+In order to enable this, make sure you add `node_modules` to the asset load path by adding the following in an initializer (for example `config/initializers/assets.rb`)
+```ruby
+Rails.application.config.assets.paths << Rails.root.join('node_modules')
+```
 
 ## Usage
 
