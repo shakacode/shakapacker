@@ -97,14 +97,22 @@ Discussion forums to discuss debugging and troubleshooting tips. Please open iss
 ## Installation
 
 ### Rails v6
-With Rails v6, webpacker is installed by default:
+With Rails v6, [rails/webpacker v5](https://github.com/rails/webpacker/tree/5-x-stable) is installed by default:
 ```bash
 rails new myapp
 ```
 
+If you wish to migrate to Shakapacker, please follow the [V6 Upgrade](./docs/v6_upgrade.md) instructions.
+
+Alternatively, you can skip the default webpacker installation and then follow the [Manual Installation Steps](#manual-installation-steps) below.
+
+```bash
+rails new myapp --skip-javascript
+```
+
 ### Rails v7
 
-With Rails v7, skip JavaScript for a new app and follow below Manual Installation Steps to manually add the `webpacker` gem to your Gemfile. 
+With Rails v7, skip JavaScript for a new app and follow below Manual Installation Steps to manually add the `shakapacker` gem to your Gemfile. 
 ```bash
 rails new myapp --skip-javascript
 ```
@@ -587,7 +595,7 @@ You can run following commands to upgrade Webpacker to the latest stable version
 
 ```bash
 # check your Gemfile for version restrictions
-bundle update webpacker
+bundle update shakapacker
 
 # overwrite your changes to the default install files and revert any unwanted changes from the install
 rails webpacker:install
