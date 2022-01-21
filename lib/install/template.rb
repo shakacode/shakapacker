@@ -45,15 +45,6 @@ if (setup_path = Rails.root.join("bin/setup")).exist?
 RUBY
 end
 
-if (asset_config_path = Rails.root.join("config/initializers/assets.rb")).exist?
-  say "Add node_modules to the asset load path"
-  append_to_file asset_config_path, <<-RUBY
-
-# Add node_modules folder to the asset load path.
-Rails.application.config.assets.paths << Rails.root.join("node_modules")
-RUBY
-end
-
 if (csp_config_path = Rails.root.join("config/initializers/content_security_policy.rb")).exist?
   say "Make note of webpack-dev-server exemption needed to csp"
   insert_into_file csp_config_path, <<-RUBY, after: %(# Rails.application.config.content_security_policy do |policy|)
