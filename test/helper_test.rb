@@ -12,6 +12,9 @@ class HelperTest < ActionView::TestCase
         "https://example.com"
       end
     end.new
+
+    @javascript_pack_tag_loaded = nil
+    @stylesheet_pack_tag_loaded = nil
   end
 
   def test_asset_pack_path
@@ -129,6 +132,18 @@ class HelperTest < ActionView::TestCase
       javascript_pack_tag(:application)
   end
 
+  def test_javascript_pack_tag_multiple_invocations
+    error = assert_raises do
+      javascript_pack_tag(:application)
+      javascript_pack_tag(:bootstrap)
+    end
+
+    assert_equal \
+      "To prevent duplicated chunks on the page, you should call javascript_pack_tag only once on the page. " +
+        "Please refer to https://github.com/shakacode/shakapacker/blob/master/README.md#usage for the usage guide",
+      error.message
+  end
+
   def application_stylesheet_chunks
     %w[/packs/1-c20632e7baf2c81200d3.chunk.css /packs/application-k344a6d59eef8632c9d1.chunk.css]
   end
@@ -155,5 +170,17 @@ class HelperTest < ActionView::TestCase
     assert_equal \
       (application_stylesheet_chunks).map { |chunk| stylesheet_link_tag(chunk, media: "all") }.join("\n"),
       stylesheet_pack_tag("application", media: "all")
+  end
+
+  def test_stylesheet_pack_tag_multiple_invocations
+    error = assert_raises do
+      stylesheet_pack_tag(:application)
+      stylesheet_pack_tag(:hello_stimulus)
+    end
+
+    assert_equal \
+      "To prevent duplicated chunks on the page, you should call stylesheet_pack_tag only once on the page. " +
+        "Please refer to https://github.com/shakacode/shakapacker/blob/master/README.md#usage for the usage guide",
+      error.message
   end
 end
