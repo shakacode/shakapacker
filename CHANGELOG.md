@@ -52,6 +52,7 @@ Changes since last non-beta release.
 - CSS extraction enabled by default, except when devServer is configured and running
 
 
-[Unreleased]: https://github.com/shakacode/shakapacker/compare/6.0.0-rc.13...master
+[Unreleased]: https://github.com/shakacode/shakapacker/compare/6.0.0-rc.14...master
+[v6.0.0.rc.14]: https://github.com/shakacode/shakapacker/compare/v6.0.0-rc.13...v6.0.0-rc.14
 [v6.0.0.rc.13 changes from v6.0.0.rc.6]: https://github.com/shakacode/shakapacker/compare/aba79635e6ff6562ec04d3c446d57ef19a5fef7d...v6.0.0-rc.13
 [v6.0.0.rc.6 changes from v5.4]: https://github.com/rails/webpacker/compare/v5.4.3...aba79635e6ff6562ec04d3c446d57ef19a5fef7d

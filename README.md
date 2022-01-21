@@ -61,6 +61,7 @@ Discussion forums to discuss debugging and troubleshooting tips. Please open iss
 - [Paths](#paths)
   - [Additional paths](#additional-paths)
 - [Deployment](#deployment)
+- [Example Apps](#example-apps)
 - [Troubleshooting](#troubleshooting)
 - [Contributing](#contributing)
 - [License](#license)
@@ -661,6 +662,9 @@ When compiling assets for production on a remote server, such as a continuous in
 
 If you are using a CDN setup, webpacker will use the configured [asset host](https://guides.rubyonrails.org/configuring.html#rails-general-configuration) value to prefix URLs for images or font icons which are included inside JS code or CSS. It is possible to override this value during asset compilation by setting the `WEBPACKER_ASSET_HOST` environment variable.
 
+## Example Apps
+* [React on Rails Tutorial With SSR, HMR fast refresh, and TypeScript](https://github.com/shakacode/react_on_rails_tutorial_with_ssr_and_hmr_fast_refresh)
+
 
 ## Troubleshooting
 
@@ -669,10 +673,7 @@ See the doc page for [Troubleshooting](./docs/troubleshooting.md).
 
 ## Contributing
 
-[![Code Helpers](https://www.codetriage.com/shakacode/shakapacker/badges/users.svg)](https://www.codetriage.com/shakacode/shakapacker)
-
 We encourage you to contribute to Webpacker! See [CONTRIBUTING](CONTRIBUTING.md) for guidelines about how to proceed.
-
 
 ## License
 
