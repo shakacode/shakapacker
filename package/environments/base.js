@@ -3,7 +3,6 @@
 
 const { basename, dirname, join, relative, resolve } = require('path')
 const extname = require('path-complete-extname')
-const PnpWebpackPlugin = require('pnp-webpack-plugin')
 const { sync: globSync } = require('glob')
 const WebpackAssetsManifest = require('webpack-assets-manifest')
 const webpack = require('webpack')
@@ -92,15 +91,13 @@ module.exports = {
   entry: getEntryObject(),
   resolve: {
     extensions: ['.js', '.jsx', '.mjs', '.ts', '.tsx', '.coffee'],
-    modules: getModulePaths(),
-    plugins: [PnpWebpackPlugin]
+    modules: getModulePaths()
   },
 
   plugins: getPlugins(),
 
   resolveLoader: {
-    modules: ['node_modules'],
-    plugins: [PnpWebpackPlugin.moduleLoader(module)]
+    modules: ['node_modules']
   },
 
   optimization: {
