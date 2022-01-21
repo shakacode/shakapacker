@@ -6,6 +6,12 @@
 Changes since last non-beta release.
 
 *Please add entries here for your pull requests that are not yet released.*
+## [v6.0.0.rc.14] - January 20, 2022
+
+### Improved
+- Raise on multiple invocations of javascript_pack_tag and stylesheet_pack_tag helpers. [PR 19](https://github.com/shakacode/shakapacker/pull/19) by [tomdracz](https://github.com/tomdracz].
+- Remove automatic addition of node_modules into rails asset load path. [PR 20](https://github.com/shakacode/shakapacker/pull/20) by [tomdracz](https://github.com/tomdracz].
+- Remove pnp-webpack-plugin. [PR 21](https://github.com/shakacode/shakapacker/pull/21) by [tomdracz](https://github.com/tomdracz].
 
 ## [v6.0.0.rc.13 changes from v6.0.0.rc.6]
 
