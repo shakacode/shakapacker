@@ -15,8 +15,9 @@ See example migration, [PR 27](https://github.com/shakacode/react_on_rails_tutor
           
 ### Update
 1. Peer dependencies. Run `yarn add @babel/core @babel/plugin-transform-runtime @babel/preset-env @babel/runtime babel-loader compression-webpack-plugin terser-webpack-plugin webpack webpack-assets-manifest webpack-cli webpack-merge webpack-sources webpack-dev-server`
-2. Update your webpack config for a single config file, `config/webpack/webpack.config.js`. 
-3. Update `babel.config.js` if you need JSX support. 
+1. Update any scripts that called `bin/webpack` or `bin/webpack-dev-server` to `bin/webpacker` or `bin/webpacker-dev-server`
+1. Update your webpack config for a single config file, `config/webpack/webpack.config.js`. 
+1. Update `babel.config.js` if you need JSX support. 
 
 ## How to upgrade to Webpacker v6 from v5
 1. Ensure you have a clean working git branch. You will be overwriting all your files and reverting the changes that you don't want.
