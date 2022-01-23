@@ -41,8 +41,8 @@ Discussion forums to discuss debugging and troubleshooting tips. Please open iss
   - [Note for Sprockets usage](#note-for-sprockets-usage)
 - [Usage](#usage)
   - [View Helpers](#view-helpers)
-      - [Defer for `javascript_pack_tag`](#defer-for-javascript_pack_tag)
-    - [Server-Side Rendering (SSR)](#server-side-rendering-ssr)
+  - [Defer for `javascript_pack_tag`](#defer-for-javascript_pack_tag)
+  - [Server-Side Rendering (SSR)](#server-side-rendering-ssr)
   - [Development](#development)
   - [Webpack Configuration](#webpack-configuration)
   - [Babel configuration](#babel-configuration)
@@ -77,24 +77,22 @@ Discussion forums to discuss debugging and troubleshooting tips. Please open iss
 - Yarn
 
 ## Features
-- No requirement, just convenient, to use the webpack configuration part. The only requirement is that your webpack configuration create a manifest.
-- HMR with the webpack-dev-server
+- Rails view helpers that fully support webpack output
+- Convenient but not required webpack configuration. The only requirement is that your webpack configuration create a manifest.
+- HMR with the webpack-dev-server, such as for hot-reloading for React!
+- Automatic code splitting using multiple entry points to optimize JavaScript downloads
 - [Webpack v5](https://webpack.js.org/)
 - ES6 with [babel](https://babeljs.io/)
-- Automatic code splitting using multiple entry points
 - Asset compression, source-maps, and minification
 - CDN support
-- Rails view helpers that fully support webpack output
 - Extensible and configurable. For example, all major dependencies are specified as peers, so you can upgrade easily.
 
 ### Optional support
-
-  _requires extra packages to be installed_
-
-  - Stylesheets - Sass, Less, Stylus and Css, PostCSS
-  - CoffeeScript
-  - TypeScript
-  - React
+ _Requires extra packages to be installed._
+ - React
+ - TypeScript
+ - Stylesheets - Sass, Less, Stylus and Css, PostCSS
+ - CoffeeScript
 
 ## Installation
 
