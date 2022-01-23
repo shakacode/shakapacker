@@ -247,10 +247,10 @@ If you want to use images in your stylesheets:
   background-image: url('../images/logo.svg')
 }
 ```
-##### Defer for `javascript_pack_tag`
+### Defer for `javascript_pack_tag`
 Note, the default of "defer" for the `javascript_pack_tag`. You can override that to `false`. If you expose jquery globally with `expose-loader,` by using `import $ from "expose-loader?exposes=$,jQuery!jquery"` in your `app/packs/entrypoints/application.js`, pass the option `defer: false` to your `javascript_pack_tag`.
 
-#### Server-Side Rendering (SSR)
+### Server-Side Rendering (SSR)
 
 Note, if you are using server-side rendering of JavaScript with dynamic code-splitting, as is often done with extensions to Webpacker, like [React on Rails](https://github.com/shakacode/react_on_rails), your JavaScript should create the link prefetch HTML tags that you will use, so you won't need to use to `asset_pack_path` in those circumstances.
 
