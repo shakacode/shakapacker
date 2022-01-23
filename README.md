@@ -6,7 +6,6 @@ _Official, actively maintained fork of [rails/webpacker](https://github.com/rail
 * See [V6 Upgrade](./docs/v6_upgrade.md) for upgrading from v5 or prior v6 releases. See this [PR from v6.0.0.rc.6 to shakapacker](https://github.com/shakacode/react_on_rails_tutorial_with_ssr_and_hmr_fast_refresh/pull/27).
 * [Slack discussion channel](https://reactrails.slack.com/join/shared_invite/enQtNjY3NTczMjczNzYxLTlmYjdiZmY3MTVlMzU2YWE0OWM0MzNiZDI0MzdkZGFiZTFkYTFkOGVjODBmOWEyYWQ3MzA2NGE1YWJjNmVlMGE).
 
-
 [![Ruby specs](https://github.com/shakacode/shakapacker/workflows/Ruby%20specs/badge.svg)](https://github.com/shakacode/shakapacker/actions)
 [![Jest specs](https://github.com/shakacode/shakapacker/workflows/Jest%20specs/badge.svg)](https://github.com/shakacode/shakapacker/actions)
 [![Rubocop](https://github.com/shakacode/shakapacker/workflows/Rubocop/badge.svg)](https://github.com/shakacode/shakapacker/actions)
@@ -76,14 +75,15 @@ Discussion forums to discuss debugging and troubleshooting tips. Please open iss
 - Yarn
 
 ## Features
-
+- No requirement, just convenient, to use the webpack configuration part. The only requirement is that your webpack configuration create a manifest.
+- HMR with the webpack-dev-server
 - [Webpack v5](https://webpack.js.org/)
 - ES6 with [babel](https://babeljs.io/)
 - Automatic code splitting using multiple entry points
 - Asset compression, source-maps, and minification
 - CDN support
-- Rails view helpers
-- Extensible and configurable
+- Rails view helpers that fully support webpack output
+- Extensible and configurable. For example, all major dependencies are specified as peers, so you can upgrade easily.
 
 ### Optional support
 
@@ -201,7 +201,7 @@ The result looks like this:
 <script src="/packs/map-16838bab065ae1e314.js" data-turbolinks-track="reload" defer></script>
 ```
 
-**Important:** Pass all your pack names as multiple arguments, not multiple calls, when using `javascript_pack_tag` and the **`stylesheet_pack_tag`. Otherwise, you will get duplicated chunks on the page. Be especially careful if you might be calling these view helpers from your view, partials, and the layout for a page. You will need some logic to ensure you call the helpers only once with multiple arguments.
+**Important:** Pass all your pack names as multiple arguments, not multiple calls, when using `javascript_pack_tag` and the `stylesheet_pack_tag`. Otherwise, you will get duplicated chunks on the page. Be especially careful if you might be calling these view helpers from your view, partials, and the layout for a page. You will need some logic to ensure you call the helpers only once with multiple arguments.
 
 ```erb
 <%# DO %>
