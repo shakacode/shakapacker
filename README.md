@@ -13,6 +13,7 @@ _Official, actively maintained fork of [rails/webpacker](https://github.com/rail
 
 [![node.js](https://img.shields.io/badge/node-%3E%3D%2012.0.0-brightgreen.svg)](https://www.npmjs.com/package/shakapacker)
 [![Gem](https://img.shields.io/gem/v/shakapacker.svg)](https://rubygems.org/gems/shakapacker)
+[![npm version](https://badge.fury.io/js/shakapacker.svg)](https://badge.fury.io/js/shakapacker)
 
 Webpacker makes it easy to use the JavaScript pre-processor and bundler
 [Webpack v5](https://webpack.js.org/)
@@ -39,8 +40,8 @@ Discussion forums to discuss debugging and troubleshooting tips. Please open iss
   - [Manual Installation Steps](#manual-installation-steps)
   - [Note for Sprockets usage](#note-for-sprockets-usage)
 - [Usage](#usage)
-      - [Defer for `javascript_pack_tag`](#defer-for-javascript_pack_tag)
-    - [Server-Side Rendering (SSR)](#server-side-rendering-ssr)
+  - [Defer for `javascript_pack_tag`](#defer-for-javascript_pack_tag)
+  - [Server-Side Rendering (SSR)](#server-side-rendering-ssr)
   - [Development](#development)
   - [Webpack Configuration](#webpack-configuration)
   - [Babel configuration](#babel-configuration)
@@ -163,6 +164,8 @@ Rails.application.config.assets.paths << Rails.root.join('node_modules')
 ```
 
 ## Usage
+
+### View Helpers
 
 Once installed, you can start writing modern ES6-flavored JavaScript apps right away:
 
@@ -542,7 +545,6 @@ const vueConfig = require('./rules/vue')
 module.exports = merge(vueConfig, webpackConfig)
 ```
 
-
 ### Custom Rails environments
 
 Out of the box Webpacker ships with - development, test and production environments in `config/webpacker.yml` however, in most production apps extra environments are needed as part of deployment workflow. Webpacker supports this out of the box from version 3.4.0+ onwards.
@@ -614,7 +616,7 @@ yarn add shakapacker@next
 
 Also, consult the [CHANGELOG](./CHANGELOG.md) for additional upgrade links.
 
-## Paths
+### Paths
 
 By default, Webpacker ships with simple conventions for where the JavaScript app files and compiled webpack bundles will go in your Rails app. All these options are configurable from `config/webpacker.yml` file.
 
