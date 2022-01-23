@@ -6,7 +6,9 @@ const rules = {
   file: require('./file'),
   css: require('./css'),
   sass: require('./sass'),
-  babel: require('./babel'),
+  // TODO: Makes this switchable
+  // babel: require('./babel'),
+  swc: require('./swc'),
   erb: require('./erb'),
   coffee: require('./coffee'),
   less: require('./less'),
@@ -15,4 +17,4 @@ const rules = {
 
 module.exports = Object.keys(rules)
   .filter((key) => !!rules[key])
-  .map((key) => rules[key])
+  .flatMap((key) => rules[key])
