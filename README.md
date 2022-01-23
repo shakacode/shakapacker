@@ -112,7 +112,7 @@ rails new myapp --skip-javascript
 
 ### Rails v7
 
-With Rails v7, skip JavaScript for a new app and follow below Manual Installation Steps to manually add the `shakapacker` gem to your Gemfile. 
+With Rails v7, skip JavaScript for a new app and follow below Manual Installation Steps to manually add the `shakapacker` gem to your Gemfile.
 ```bash
 rails new myapp --skip-javascript
 ```
@@ -307,7 +307,7 @@ end
 
 ### Webpack Configuration
 
-Webpacker gives you a default configuration file for your test, development, and production environments in `config/webpack/*.js`. 
+Webpacker gives you a default configuration file for your test, development, and production environments in `config/webpack/*.js`.
 
 By default, you don't need to make any changes to `config/webpack/webpack.config.js` files since it's all standard production-ready configuration. However, if you do need to customize or add a new loader, this is where you would go.
 
