@@ -13,6 +13,7 @@ _Official, actively maintained fork of [rails/webpacker](https://github.com/rail
 
 [![node.js](https://img.shields.io/badge/node-%3E%3D%2012.0.0-brightgreen.svg)](https://www.npmjs.com/package/shakapacker)
 [![Gem](https://img.shields.io/gem/v/shakapacker.svg)](https://rubygems.org/gems/shakapacker)
+[![npm version](https://badge.fury.io/js/shakapacker.svg)](https://badge.fury.io/js/shakapacker)
 
 Webpacker makes it easy to use the JavaScript pre-processor and bundler
 [Webpack v5](https://webpack.js.org/)
@@ -39,8 +40,9 @@ Discussion forums to discuss debugging and troubleshooting tips. Please open iss
   - [Manual Installation Steps](#manual-installation-steps)
   - [Note for Sprockets usage](#note-for-sprockets-usage)
 - [Usage](#usage)
-      - [Defer for `javascript_pack_tag`](#defer-for-javascript_pack_tag)
-    - [Server-Side Rendering (SSR)](#server-side-rendering-ssr)
+  - [View Helpers](#view-helpers)
+  - [Defer for `javascript_pack_tag`](#defer-for-javascript_pack_tag)
+  - [Server-Side Rendering (SSR)](#server-side-rendering-ssr)
   - [Development](#development)
   - [Webpack Configuration](#webpack-configuration)
   - [Babel configuration](#babel-configuration)
@@ -57,7 +59,7 @@ Discussion forums to discuss debugging and troubleshooting tips. Please open iss
     - [Other frameworks](#other-frameworks)
   - [Custom Rails environments](#custom-rails-environments)
   - [Upgrading](#upgrading)
-- [Paths](#paths)
+  - [Paths](#paths)
   - [Additional paths](#additional-paths)
 - [Deployment](#deployment)
 - [Example Apps](#example-apps)
@@ -75,24 +77,22 @@ Discussion forums to discuss debugging and troubleshooting tips. Please open iss
 - Yarn
 
 ## Features
-- No requirement, just convenient, to use the webpack configuration part. The only requirement is that your webpack configuration create a manifest.
-- HMR with the webpack-dev-server
+- Rails view helpers that fully support webpack output
+- Convenient but not required webpack configuration. The only requirement is that your webpack configuration create a manifest.
+- HMR with the webpack-dev-server, such as for hot-reloading for React!
+- Automatic code splitting using multiple entry points to optimize JavaScript downloads
 - [Webpack v5](https://webpack.js.org/)
 - ES6 with [babel](https://babeljs.io/)
-- Automatic code splitting using multiple entry points
 - Asset compression, source-maps, and minification
 - CDN support
-- Rails view helpers that fully support webpack output
 - Extensible and configurable. For example, all major dependencies are specified as peers, so you can upgrade easily.
 
 ### Optional support
-
-  _requires extra packages to be installed_
-
-  - Stylesheets - Sass, Less, Stylus and Css, PostCSS
-  - CoffeeScript
-  - TypeScript
-  - React
+ _Requires extra packages to be installed._
+ - React
+ - TypeScript
+ - Stylesheets - Sass, Less, Stylus and Css, PostCSS
+ - CoffeeScript
 
 ## Installation
 
@@ -163,6 +163,8 @@ Rails.application.config.assets.paths << Rails.root.join('node_modules')
 ```
 
 ## Usage
+
+### View Helpers
 
 Once installed, you can start writing modern ES6-flavored JavaScript apps right away:
 
@@ -243,10 +245,10 @@ If you want to use images in your stylesheets:
   background-image: url('../images/logo.svg')
 }
 ```
-##### Defer for `javascript_pack_tag`
+### Defer for `javascript_pack_tag`
 Note, the default of "defer" for the `javascript_pack_tag`. You can override that to `false`. If you expose jquery globally with `expose-loader,` by using `import $ from "expose-loader?exposes=$,jQuery!jquery"` in your `app/packs/entrypoints/application.js`, pass the option `defer: false` to your `javascript_pack_tag`.
 
-#### Server-Side Rendering (SSR)
+### Server-Side Rendering (SSR)
 
 Note, if you are using server-side rendering of JavaScript with dynamic code-splitting, as is often done with extensions to Webpacker, like [React on Rails](https://github.com/shakacode/react_on_rails), your JavaScript should create the link prefetch HTML tags that you will use, so you won't need to use to `asset_pack_path` in those circumstances.
 
@@ -542,7 +544,6 @@ const vueConfig = require('./rules/vue')
 module.exports = merge(vueConfig, webpackConfig)
 ```
 
-
 ### Custom Rails environments
 
 Out of the box Webpacker ships with - development, test and production environments in `config/webpacker.yml` however, in most production apps extra environments are needed as part of deployment workflow. Webpacker supports this out of the box from version 3.4.0+ onwards.
@@ -614,7 +615,7 @@ yarn add shakapacker@next
 
 Also, consult the [CHANGELOG](./CHANGELOG.md) for additional upgrade links.
 
-## Paths
+### Paths
 
 By default, Webpacker ships with simple conventions for where the JavaScript app files and compiled webpack bundles will go in your Rails app. All these options are configurable from `config/webpacker.yml` file.
 
