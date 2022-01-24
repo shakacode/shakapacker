@@ -36,7 +36,13 @@ module.exports = loaderMatches(webpackLoader, 'swc', () => [
               }
             }
           },
-          sourceMaps: true
+          sourceMaps: true,
+          env: {
+            coreJs: '3.8',
+            loose: true,
+            exclude: ['transform-typeof-symbol'],
+            mode: 'entry'
+          }
         }
       }
     ]
@@ -67,7 +73,13 @@ module.exports = loaderMatches(webpackLoader, 'swc', () => [
               }
             }
           },
-          sourceMaps: true
+          sourceMaps: true,
+          env: {
+            coreJs: '3.8',
+            loose: true,
+            exclude: ['transform-typeof-symbol'],
+            mode: 'entry'
+          }
         }
       }
     ]
