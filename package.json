@@ -18,7 +18,6 @@
     "@babel/runtime": "^7.15.4",
     "babel-loader": "^8.2.2",
     "compression-webpack-plugin": "^9.0.0",
-    "pnp-webpack-plugin": "^1.7.0",
     "terser-webpack-plugin": "^5.2.4",
     "webpack": "^5.53.0",
     "webpack-assets-manifest": "^5.0.6",
