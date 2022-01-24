@@ -27,13 +27,21 @@ const resolvedPath = (packageName) => {
   }
 }
 
-const moduleExists = (packageName) => (!!resolvedPath(packageName))
+const moduleExists = (packageName) => !!resolvedPath(packageName)
 
 const canProcess = (rule, fn) => {
   const modulePath = resolvedPath(rule)
 
   if (modulePath) {
     return fn(modulePath)
+  }
+
+  return null
+}
+
+const loaderMatches = (configLoader, loaderToCheck, fn) => {
+  if (configLoader === loaderToCheck) {
+    return fn()
   }
 
   return null
@@ -47,5 +55,6 @@ module.exports = {
   ensureTrailingSlash,
   canProcess,
   moduleExists,
-  resetEnv
+  resetEnv,
+  loaderMatches
 }

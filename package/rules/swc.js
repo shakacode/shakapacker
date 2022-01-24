@@ -1,13 +1,15 @@
 const { resolve } = require('path')
 const { realpathSync } = require('fs')
+const { loaderMatches } = require('../utils/helpers')
 
 const {
   source_path: sourcePath,
-  additional_paths: additionalPaths
+  additional_paths: additionalPaths,
+  webpack_loader: webpackLoader
 } = require('../config')
 const { isProduction } = require('../env')
 
-module.exports = [
+module.exports = loaderMatches(webpackLoader, 'swc', () => [
   {
     test: /\.(js|jsx|mjs|coffee)?(\.erb)?$/,
     include: [sourcePath, ...additionalPaths].map((p) => {
@@ -70,4 +72,4 @@ module.exports = [
       }
     ]
   }
-]
+])

@@ -6,8 +6,7 @@ const rules = {
   file: require('./file'),
   css: require('./css'),
   sass: require('./sass'),
-  // TODO: Makes this switchable
-  // babel: require('./babel'),
+  babel: require('./babel'),
   swc: require('./swc'),
   erb: require('./erb'),
   coffee: require('./coffee'),

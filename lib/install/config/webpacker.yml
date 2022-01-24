@@ -15,6 +15,9 @@ default: &default
   # Reload manifest.json on all requests so we reload latest compiled packs
   cache_manifest: false
 
+  # Select loader to use, available options are 'babel' (default) or 'swc'
+  webpack_loader: 'babel'
+
 development:
   <<: *default
   compile: true
