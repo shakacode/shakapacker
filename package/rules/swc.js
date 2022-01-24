@@ -7,7 +7,7 @@ const {
   additional_paths: additionalPaths,
   webpack_loader: webpackLoader
 } = require('../config')
-const { isProduction } = require('../env')
+const { isDevelopment } = require('../env')
 
 module.exports = loaderMatches(webpackLoader, 'swc', () => [
   {
@@ -28,10 +28,12 @@ module.exports = loaderMatches(webpackLoader, 'swc', () => [
             parser: {
               syntax: 'ecmascript',
               jsx: true,
+              dynamicImport: true,
               transform: {
                 react: {
                   runtime: 'automatic',
-                  refresh: true
+                  development: isDevelopment,
+                  refresh: isDevelopment
                 }
               }
             }
@@ -65,10 +67,12 @@ module.exports = loaderMatches(webpackLoader, 'swc', () => [
             parser: {
               syntax: 'typescript',
               tsx: true,
+              dynamicImport: true,
               transform: {
                 react: {
                   runtime: 'automatic',
-                  refresh: true
+                  development: isDevelopment,
+                  refresh: isDevelopment
                 }
               }
             }
