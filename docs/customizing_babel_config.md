@@ -39,14 +39,14 @@ module.exports = function (api) {
           development: isDevelopmentEnv || isTestEnv,
           useBuiltIns: true
         } 
-      ],
+      ]
+    ].filter(Boolean),
+    plugins: [
       isProductionEnv && ['babel-plugin-transform-react-remove-prop-types', 
         { 
           removeImport: true 
         }
-      ]
-    ].filter(Boolean),
-    plugins: [
+      ],
       process.env.WEBPACK_SERVE && 'react-refresh/babel'
     ].filter(Boolean),
   }
