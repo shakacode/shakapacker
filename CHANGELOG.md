@@ -6,14 +6,17 @@
 Changes since last non-beta release.
 
 *Please add entries here for your pull requests that are not yet released.*
-## [v6.0.0.rc.14] - January 20, 2022
+## [v6.0.1] - January 24, 2022
+### Improved
+- PR #21 removed pnp-webpack-plugin as a dev dependency but did not remove it from the peer dependency list. [PR 30](https://github.com/shakacode/shakapacker/pull/19) by [t27duck](https://github.com/t27duck].
+
+## [v6.0.0 changes from v6.0.0.rc.6] - January 22, 2022
 
 ### Improved
 - Raise on multiple invocations of javascript_pack_tag and stylesheet_pack_tag helpers. [PR 19](https://github.com/shakacode/shakapacker/pull/19) by [tomdracz](https://github.com/tomdracz].
 - Remove automatic addition of node_modules into rails asset load path. [PR 20](https://github.com/shakacode/shakapacker/pull/20) by [tomdracz](https://github.com/tomdracz].
 - Remove pnp-webpack-plugin. [PR 21](https://github.com/shakacode/shakapacker/pull/21) by [tomdracz](https://github.com/tomdracz].
 
-## [v6.0.0.rc.13 changes from v6.0.0.rc.6]
 
 ### Merged from rails/webpacker
 
@@ -52,7 +55,7 @@ Changes since last non-beta release.
 - CSS extraction enabled by default, except when devServer is configured and running
 
 
-[Unreleased]: https://github.com/shakacode/shakapacker/compare/6.0.0-rc.14...master
-[v6.0.0.rc.14]: https://github.com/shakacode/shakapacker/compare/v6.0.0-rc.13...v6.0.0-rc.14
-[v6.0.0.rc.13 changes from v6.0.0.rc.6]: https://github.com/shakacode/shakapacker/compare/aba79635e6ff6562ec04d3c446d57ef19a5fef7d...v6.0.0-rc.13
+[Unreleased]: https://github.com/shakacode/shakapacker/compare/6.0.1...master
+[v6.0.1]: https://github.com/shakacode/shakapacker/compare/v6.0.0...v6.0.1
+[v6.0.0 changes from v6.0.0.rc.6]: https://github.com/shakacode/shakapacker/compare/aba79635e6ff6562ec04d3c446d57ef19a5fef7d...v6.0.0
 [v6.0.0.rc.6 changes from v5.4]: https://github.com/rails/webpacker/compare/v5.4.3...aba79635e6ff6562ec04d3c446d57ef19a5fef7d

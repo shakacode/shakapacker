@@ -1,10 +1,7 @@
 # Shakapacker
 
-_Official, actively maintained fork of [rails/webpacker](https://github.com/rails/webpacker). For pre v6, see [rails/webpacker 5-x-stable](https://github.com/rails/webpacker/tree/5-x-stable). Be sure to see the [CHANGELOG](./CHANGELOG.md)._
-
-* Note, internal naming will continue to use `webpacker` where possible.
-* See [V6 Upgrade](./docs/v6_upgrade.md) for upgrading from v5 or prior v6 releases. See this [PR from v6.0.0.rc.6 to shakapacker](https://github.com/shakacode/react_on_rails_tutorial_with_ssr_and_hmr_fast_refresh/pull/27).
-* [Slack discussion channel](https://reactrails.slack.com/join/shared_invite/enQtNjY3NTczMjczNzYxLTlmYjdiZmY3MTVlMzU2YWE0OWM0MzNiZDI0MzdkZGFiZTFkYTFkOGVjODBmOWEyYWQ3MzA2NGE1YWJjNmVlMGE).
+_Official, actively maintained fork of [rails/webpacker](https://github.com/rails/webpacker). Internal naming for `shakapacker` will continue to use `webpacker` where possible. Notably, the NPM package name is `shakapacker`._
+* See [V6 Upgrade](./docs/v6_upgrade.md) for upgrading from v5 or prior v6 releases. 
 
 [![Ruby specs](https://github.com/shakacode/shakapacker/workflows/Ruby%20specs/badge.svg)](https://github.com/shakacode/shakapacker/actions)
 [![Jest specs](https://github.com/shakacode/shakapacker/workflows/Jest%20specs/badge.svg)](https://github.com/shakacode/shakapacker/actions)
@@ -96,37 +93,21 @@ Discussion forums to discuss debugging and troubleshooting tips. Please open iss
 
 ## Installation
 
-### Rails v6
-With Rails v6, [rails/webpacker v5](https://github.com/rails/webpacker/tree/5-x-stable) is installed by default:
-```bash
-rails new myapp
-```
 
-If you wish to migrate to Shakapacker, please follow the [V6 Upgrade](./docs/v6_upgrade.md) instructions.
+### Rails v6+
 
-Alternatively, you can skip the default webpacker installation and then follow the [Manual Installation Steps](#manual-installation-steps) below.
-
+With Rails v6+, skip JavaScript for a new app and follow below Manual Installation Steps to manually add the `shakapacker` gem to your Gemfile.
 ```bash
 rails new myapp --skip-javascript
 ```
 
-### Rails v7
+_Note, Rails 6 installs the older v5 version of webpacker unless you specify `--skip-javascript`._
 
-With Rails v7, skip JavaScript for a new app and follow below Manual Installation Steps to manually add the `shakapacker` gem to your Gemfile.
-```bash
-rails new myapp --skip-javascript
-```
-
-### Manual Installation Steps
 Update your `Gemfile`:
 
 ```ruby
 # Gemfile
 gem 'shakapacker', '~> 6.0'
-
-# OR if you prefer to use master
-gem 'shakapacker', git: 'https://github.com/shakacode/shakapacker.git'
-yarn add https://github.com/shakacode/shakapacker.git
 ```
 
 Then running the following to install Webpacker:
@@ -309,11 +290,33 @@ end
 
 ### Webpack Configuration
 
-Webpacker gives you a default configuration file for your test, development, and production environments in `config/webpack/*.js`.
+First, you don't _need_ to use Shakapacker's webpack configuration. However, the `shakapacker` NPM package provides convenient access to configuration code that reads the `config/webpacker.yml` file which the view helpers also use. If you have your own customized webpack configuration, at the mininmum, you must ensure:
 
-By default, you don't need to make any changes to `config/webpack/webpack.config.js` files since it's all standard production-ready configuration. However, if you do need to customize or add a new loader, this is where you would go.
+1. Your output files go the right directory
+2. You provide a manifest, via package [`webpack-assets-manifest`](https://github.com/webdeveric/webpack-assets-manifest) that maps output names (your 'packs') to the fingerprinted versions, including bundle-splitting dependencies. That's the main secret sauce of webpacker!
 
-Here is how you can modify webpack configuration:
+The most practical webpack configuration is to take the default from Shakapacker and then use [webpack-merge](https://github.com/survivejs/webpack-merge) to merge your customizations with the default. For example, suppose you want to add some `resolve.extensions`:
+
+```js
+// use the new NPM package name, `shakapacker`.
+// merge is webpack-merge from https://github.com/survivejs/webpack-merge
+const { webpackConfig: baseWebpackConfig, merge } = require('shakapacker')
+
+const options = {
+  resolve: {
+      extensions: ['.css', '.ts', '.tsx']
+  }
+}
+
+// Copy the object using merge b/c the baseClientWebpackConfig is a mutable global
+// If you want to use this object for client and server rendering configurations,
+// havaing a new object is essential.
+module.exports = merge({}, baseWebpackConfig, options)
+```
+
+This example is based on [an example project](https://github.com/shakacode/react_on_rails_tutorial_with_ssr_and_hmr_fast_refresh/blob/master/config/webpack/webpack.config.js)
+
+Webpacker gives you a default configuration file `config/webpack/webpack.config.js`, which, by default, you don't need to make any changes to `config/webpack/webpack.config.js` since it's a standard production-ready configuration. However, you will probably want to customize or add a new loader by modifying the webpack configuration, as shown above.
 
 You might add separate files to keep your code more organized.
 
@@ -336,6 +339,7 @@ Then `require` this file in your `config/webpack/webpack.config.js`:
 
 ```js
 // config/webpack/webpack.config.js
+// use the new NPM package name, `shakapacker`.
 const { webpackConfig, merge } = require('shakapacker')
 const customConfig = require('./custom')
 
@@ -357,7 +361,7 @@ console.log(JSON.stringify(webpackConfig, undefined, 2))
 
 ### Babel configuration
 
-By default, you will find the Webpacker preset in your `package.json`.
+By default, you will find the Webpacker preset in your `package.json`. Note, you need to use the new NPM package name, `shakapacker`.
 
 ```json
 "babel": {
@@ -679,10 +683,9 @@ If you are using a CDN setup, webpacker will use the configured [asset host](htt
 
 See the doc page for [Troubleshooting](./docs/troubleshooting.md).
 
-
 ## Contributing
 
-We encourage you to contribute to Webpacker! See [CONTRIBUTING](CONTRIBUTING.md) for guidelines about how to proceed.
+We encourage you to contribute to Shakapacker/Webpacker! See [CONTRIBUTING](CONTRIBUTING.md) for guidelines about how to proceed. We have a [Slack discussion channel](https://reactrails.slack.com/join/shared_invite/enQtNjY3NTczMjczNzYxLTlmYjdiZmY3MTVlMzU2YWE0OWM0MzNiZDI0MzdkZGFiZTFkYTFkOGVjODBmOWEyYWQ3MzA2NGE1YWJjNmVlMGE).
 
 ## License
 
