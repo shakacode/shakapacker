@@ -28,13 +28,13 @@ module.exports = loaderMatches(webpackLoader, 'swc', () => [
             parser: {
               syntax: 'ecmascript',
               jsx: true,
-              dynamicImport: true,
-              transform: {
-                react: {
-                  runtime: 'automatic',
-                  development: isDevelopment,
-                  refresh: isDevelopment
-                }
+              dynamicImport: true
+            },
+            transform: {
+              react: {
+                runtime: 'automatic',
+                development: isDevelopment,
+                refresh: isDevelopment
               }
             }
           },
@@ -67,13 +67,13 @@ module.exports = loaderMatches(webpackLoader, 'swc', () => [
             parser: {
               syntax: 'typescript',
               tsx: true,
-              dynamicImport: true,
-              transform: {
-                react: {
-                  runtime: 'automatic',
-                  development: isDevelopment,
-                  refresh: isDevelopment
-                }
+              dynamicImport: true
+            },
+            transform: {
+              react: {
+                runtime: 'automatic',
+                development: isDevelopment,
+                refresh: isDevelopment
               }
             }
           },
