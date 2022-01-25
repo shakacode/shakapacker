@@ -7,7 +7,7 @@ const {
   additional_paths: additionalPaths,
   webpack_loader: webpackLoader
 } = require('../config')
-const { isDevelopment } = require('../env')
+const { isDevelopment, runningWebpackDevServer } = require('../env')
 
 module.exports = loaderMatches(webpackLoader, 'swc', () => [
   {
@@ -34,7 +34,7 @@ module.exports = loaderMatches(webpackLoader, 'swc', () => [
               react: {
                 runtime: 'automatic',
                 development: isDevelopment,
-                refresh: isDevelopment
+                refresh: runningWebpackDevServer && isDevelopment
               }
             }
           },
@@ -73,7 +73,7 @@ module.exports = loaderMatches(webpackLoader, 'swc', () => [
               react: {
                 runtime: 'automatic',
                 development: isDevelopment,
-                refresh: isDevelopment
+                refresh: runningWebpackDevServer && isDevelopment
               }
             }
           },
