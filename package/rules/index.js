@@ -16,4 +16,4 @@ const rules = {
 
 module.exports = Object.keys(rules)
   .filter((key) => !!rules[key])
-  .flatMap((key) => rules[key])
+  .map((key) => rules[key])
