@@ -40,11 +40,19 @@ const canProcess = (rule, fn) => {
 }
 
 const loaderMatches = (configLoader, loaderToCheck, fn) => {
-  if (configLoader === loaderToCheck) {
-    return fn()
+  if (configLoader !== loaderToCheck) {
+    return null
   }
 
-  return null
+  const loaderName = `${configLoader}-loader`
+
+  if (!moduleExists(loaderName)) {
+    throw new Error(
+      `Your webpacker config specified using ${configLoader}, but ${loaderName} package is not installed. Please install ${loaderName} first.`
+    )
+  }
+
+  return fn()
 }
 
 module.exports = {

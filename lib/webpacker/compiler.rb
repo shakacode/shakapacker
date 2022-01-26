@@ -57,8 +57,8 @@ class Webpacker::Compiler
           Webpacker::Compiler - Slow setup for development
 
           Prepare JS assets with either:
-          1. Running `bin/webpack-dev-server`
-          2. Set `compile` to false in webpacker.yml and run `bin/webpack -w`
+          1. Running `bin/webpacker-dev-server`
+          2. Set `compile` to false in webpacker.yml and run `bin/webpacker -w`
         MSG
       end
 

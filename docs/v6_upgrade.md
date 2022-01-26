@@ -11,7 +11,7 @@ Webpacker used to configure Webpack indirectly, which lead to a [complicated sec
 This means you have to configure integration with frameworks yourself, but webpack-merge helps with this. See this example for [Vue](https://github.com/shakacode/shakapacker#other-frameworks) and scroll to the bottom for [more examples](#examples-of-v5-to-v6).
 
 ## webpacker v6.0.0.rc.6 to shakapacker
-See example migration, [PR 27](https://github.com/shakacode/react_on_rails_tutorial_with_ssr_and_hmr_fast_refresh/pull/27).
+See an example migration here: [PR 27](https://github.com/shakacode/react_on_rails_tutorial_with_ssr_and_hmr_fast_refresh/pull/27).
           
 ### Update
 1. Peer dependencies. Run `yarn add @babel/core @babel/plugin-transform-runtime @babel/preset-env @babel/runtime babel-loader compression-webpack-plugin terser-webpack-plugin webpack webpack-assets-manifest webpack-cli webpack-merge webpack-sources webpack-dev-server`
