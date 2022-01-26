@@ -46,13 +46,16 @@ default: &default
 ## Usage
 
 ### React
+
 React is supported out of the box, provided you use `.jsx` or `.tsx` file extension. Shakapacker config will correctly recognise those and tell SWC to parse the JSX syntax correctly
 
 Fast refresh is supported out of the box, provided you use it in development (`NODE_ENV=development`) and `env.WEBPACK_SERVE` is true (running `webpack-dev-server`)
 
 ### Typescript
+
 Typescript is supported out of the box. Some features like decorators however might not be currently enabled
 
 ## Known limitations
+
 - `browserslist` config at the moment is not being picked up automatically. [Related SWC issue](https://github.com/swc-project/swc/issues/3365)
 - Using `.swcrc` config file is currently not supported. You might face some issues when `.swcrc` config is diverging from the SWC options we're passing in the Webpack rule
