@@ -49,11 +49,61 @@ default: &default
 
 React is supported out of the box, provided you use `.jsx` or `.tsx` file extension. Shakapacker config will correctly recognise those and tell SWC to parse the JSX syntax correctly
 
-Fast refresh is supported out of the box, provided you use it in development (`NODE_ENV=development`) and `env.WEBPACK_SERVE` is true (running `webpack-dev-server`)
-
 ### Typescript
 
 Typescript is supported out of the box. Some features like decorators however might not be currently enabled
+
+## Customising loader options
+
+You can see the default loader options at [swc/index.js](../package/swc/index.js)
+
+If you wish to customise the loader defaults further, for example if you want to enable support for decorators or React fast refresh, you need to create a `swc.config.js` file in your app config folder.
+
+This file should have a single default export which is an object with an `options` key. Your customisations will be merged with default loader options. You can use this to override or add additional configurations.
+
+Inside the `options` key, you can use any options available to SWC compiler. For the options reference, please refer to [official SWC docs](https://swc.rs/docs/configuration/compilation)
+
+See some examples below of potential `config/swc.config.js`
+
+### Example: Enabling top level await and decorators
+
+
+```js
+const customConfig = {
+  options: {
+    jsc: {
+      parser: {
+        topLevelAwait: true,
+        decorators: true
+      }
+    }
+  }
+}
+
+module.exports = customConfig
+```
+
+### Example: Enabling React Fast Refresh
+
+
+```js
+const { env } = require('shakapacker')
+
+const customConfig = {
+  options: {
+    jsc: {
+      transform: {
+        react: {
+          refresh: env.isDevelopment && env.runningWebpackDevServer
+        }
+      }
+    }
+  }
+}
+
+module.exports = customConfig
+```
+
 
 ## Known limitations
 
