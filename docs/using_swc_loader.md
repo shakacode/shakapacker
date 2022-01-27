@@ -104,8 +104,23 @@ const customConfig = {
 module.exports = customConfig
 ```
 
+### Example: Adding browserslist config
+
+```js
+
+const customConfig = {
+  options: {
+    env: {
+      targets: '> 0.25%, not dead'
+    }
+  }
+}
+
+module.exports = customConfig
+```
+
 
 ## Known limitations
 
-- `browserslist` config at the moment is not being picked up automatically. [Related SWC issue](https://github.com/swc-project/swc/issues/3365)
+- `browserslist` config at the moment is not being picked up automatically. [Related SWC issue](https://github.com/swc-project/swc/issues/3365). You can add your browserlist config through customising loader options as outlined above.
 - Using `.swcrc` config file is currently not supported. You might face some issues when `.swcrc` config is diverging from the SWC options we're passing in the Webpack rule
