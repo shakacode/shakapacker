@@ -374,9 +374,9 @@ Optionally, you can change your Babel configuration by removing these lines in y
 
 ### SWC configuration
 
-You can try out experimental integration with SWC loader. You can read more at [SWC usage docs](./docs/using_swc_loader.md)
+You can try out experimental integration with the SWC loader. You can read more at [SWC usage docs](./docs/using_swc_loader.md).
 
-Please note that if you want opt-in to use SWC, you can skip [React](#react) integration instructions as it is supported out of the box
+Please note that if you want opt-in to use SWC, you can skip [React](#react) integration instructions as it is supported out of the box.
 
 ### Integrations
 
