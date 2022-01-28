@@ -27,7 +27,7 @@ const resolvedPath = (packageName) => {
   }
 }
 
-const moduleExists = (packageName) => (!!resolvedPath(packageName))
+const moduleExists = (packageName) => !!resolvedPath(packageName)
 
 const canProcess = (rule, fn) => {
   const modulePath = resolvedPath(rule)
@@ -39,6 +39,22 @@ const canProcess = (rule, fn) => {
   return null
 }
 
+const loaderMatches = (configLoader, loaderToCheck, fn) => {
+  if (configLoader !== loaderToCheck) {
+    return null
+  }
+
+  const loaderName = `${configLoader}-loader`
+
+  if (!moduleExists(loaderName)) {
+    throw new Error(
+      `Your webpacker config specified using ${configLoader}, but ${loaderName} package is not installed. Please install ${loaderName} first.`
+    )
+  }
+
+  return fn()
+}
+
 module.exports = {
   chdirTestApp,
   chdirCwd,
@@ -47,5 +63,6 @@ module.exports = {
   ensureTrailingSlash,
   canProcess,
   moduleExists,
-  resetEnv
+  resetEnv,
+  loaderMatches
 }

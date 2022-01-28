@@ -41,6 +41,7 @@ Discussion forums to discuss debugging and troubleshooting tips. Please open iss
   - [Development](#development)
   - [Webpack Configuration](#webpack-configuration)
   - [Babel configuration](#babel-configuration)
+  - [SWC configuration](#swc-configuration)
   - [Integrations](#integrations)
     - [React](#react)
     - [Typescript](#typescript)
@@ -370,6 +371,12 @@ By default, you will find the Webpacker preset in your `package.json`. Note, you
 ```
 
 Optionally, you can change your Babel configuration by removing these lines in your `package.json` and add [a Babel configuration file](https://babeljs.io/docs/en/config-files) in your project. For an example customization based on the original, see [Customizing Babel Config](./docs/customizing_babel_config.md).
+
+### SWC configuration
+
+You can try out experimental integration with the SWC loader. You can read more at [SWC usage docs](./docs/using_swc_loader.md).
+
+Please note that if you want opt-in to use SWC, you can skip [React](#react) integration instructions as it is supported out of the box.
 
 ### Integrations
 

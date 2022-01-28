@@ -5,6 +5,7 @@ default: &default
   source_entry_path: entrypoints
   public_output_path: packs
   cache_path: tmp/webpacker
+  webpack_loader: babel
 
   # Additional paths webpack should look up modules
   # ['app/assets', 'engine/foo/app/assets']

@@ -7,6 +7,7 @@ const rules = {
   css: require('./css'),
   sass: require('./sass'),
   babel: require('./babel'),
+  swc: require('./swc'),
   erb: require('./erb'),
   coffee: require('./coffee'),
   less: require('./less'),
