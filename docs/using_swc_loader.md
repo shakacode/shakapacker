@@ -108,6 +108,8 @@ module.exports = customConfig
 
 ### Example: Enabling React Fast Refresh
 
+:warning: Remember that you still need to add [@pmmmwh/react-refresh-webpack-plugin](https://github.com/pmmmwh/react-refresh-webpack-plugin) to your webpack config. The setting below just replaces equivalent `react-refresh/babel` Babel plugin.
+
 
 ```js
 const { env } = require('shakapacker')
