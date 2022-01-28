@@ -4,7 +4,6 @@
 const { resolve } = require('path')
 const { existsSync } = require('fs')
 const { merge } = require('webpack-merge')
-const { isDevelopment } = require('../env')
 
 const isJsxFile = (filename) => !!filename.match(/\.(jsx|tsx)?(\.erb)?$/)
 
@@ -31,12 +30,6 @@ const getSwcLoaderConfig = (filenameToProcess) => {
             : 'ecmascript',
           [isTypescriptFile(filenameToProcess) ? 'tsx' : 'jsx']:
             isJsxFile(filenameToProcess)
-        },
-        transform: {
-          react: {
-            runtime: 'automatic',
-            development: isDevelopment
-          }
         }
       },
       sourceMaps: true,
