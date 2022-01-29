@@ -23,7 +23,7 @@ yarn add -D @swc/core swc-loader
 2. Add or change `webpacker_loader` value in your default `webpacker.yml` config to `swc`
 The default configuration of babel is done by using `package.json` to use the file within the `shakapacker` package.
 
-```json
+```yml
 default: &default
   source_path: app/javascript
   source_entry_path: /
