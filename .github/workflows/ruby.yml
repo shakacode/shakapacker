@@ -23,6 +23,9 @@ jobs:
           - ruby: 2.6
             os: ubuntu-latest
             gemfile: gemfiles/Gemfile-rails-edge
+          - ruby: 3.0
+            os: ubuntu-latest
+            gemfile: gemfiles/Gemfile-rails.5.2.x
 
     env:
       BUNDLE_GEMFILE: ${{ matrix.gemfile }}
