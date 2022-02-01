@@ -1,6 +1,8 @@
 # Using SWC Loader
 
-:warning: This feature is currently experimental. If you face any issues, please report at https://github.com/shakacode/shakapacker/issues.
+:warning: This feature is currently experimental. The configuration and API are subject to change during the beta release cycle.
+
+If you face any issues, please report at https://github.com/shakacode/shakapacker/issues.
 
 ## About SWC
 

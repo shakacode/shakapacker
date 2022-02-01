@@ -2,10 +2,14 @@
 * Please see [UPGRADE GUIDE](./docs/v6_upgrade.md).
 
 ## Versions
-### [Unreleased]
+## [Unreleased]
 Changes since last non-beta release.
 
 *Please add entries here for your pull requests that are not yet released.*
+
+### Added
+- Experimental support for SWC loader. [PR 29](https://github.com/shakacode/shakapacker/pull/29) by [tomdracz](https://github.com/tomdracz).
+
 ## [v6.0.2] - January 25, 2022
 ### Improved
 - Fix incorrect command name in warning. [PR 33](https://github.com/shakacode/shakapacker/pull/33) by [tricknotes](https://github.com/tricknotes).
@@ -59,7 +63,7 @@ Changes since last non-beta release.
 - CSS extraction enabled by default, except when devServer is configured and running
 
 
-[Unreleased]: https://github.com/shakacode/shakapacker/compare/6.0.2...master
+[Unreleased]: https://github.com/shakacode/shakapacker/compare/v6.0.2...master
 [v6.0.2]: https://github.com/shakacode/shakapacker/compare/v6.0.1...v6.0.2
 [v6.0.1]: https://github.com/shakacode/shakapacker/compare/v6.0.0...v6.0.1
 [v6.0.0 changes from v6.0.0.rc.6]: https://github.com/shakacode/shakapacker/compare/aba79635e6ff6562ec04d3c446d57ef19a5fef7d...v6.0.0
