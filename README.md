@@ -67,7 +67,7 @@ Discussion forums to discuss debugging and troubleshooting tips. Please open iss
 
 ## Prerequisites
 
-- Ruby 2.7+
+- Ruby 2.6+
 - Rails 5.2+
 - Node.js 12.13.0+ || 14+
 - Yarn
