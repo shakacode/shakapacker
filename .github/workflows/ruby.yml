@@ -15,24 +15,14 @@ jobs:
           - gemfiles/Gemfile-rails.6.0.x
           - gemfiles/Gemfile-rails.6.1.x
           - gemfiles/Gemfile-rails.7.0.x
-        include:
+          - gemfiles/Gemfile-rails-edge
+        exclude:
           - ruby: 2.6
             os: ubuntu-latest
-            gemfile: gemfiles/Gemfile-rails.5.2.x
+            gemfile: gemfiles/Gemfile-rails.7.0.x
           - ruby: 2.6
-            os: ubuntu-latest
-            gemfile: gemfiles/Gemfile-rails.6.0.x
-          - ruby: 2.6
-            os: ubuntu-latest
-            gemfile: gemfiles/Gemfile-rails.6.1.x
-          - ruby: 2.7
             os: ubuntu-latest
             gemfile: gemfiles/Gemfile-rails-edge
-            experimental: true
-          - ruby: 3.0
-            os: ubuntu-latest
-            gemfile: gemfiles/Gemfile-rails-edge
-            experimental: true
 
     env:
       BUNDLE_GEMFILE: ${{ matrix.gemfile }}
