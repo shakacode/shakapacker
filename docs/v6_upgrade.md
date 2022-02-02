@@ -1,25 +1,45 @@
-# Upgrading from Webpacker 5 to 6
+# Upgrading from Webpacker v5 to Shakapacker v6
 
-There are several substantial changes in Webpacker 6 that you need to manually account for when coming from Webpacker 5. This guide will help you through it.
+There are several substantial changes in Shakapacker v6 that you need to manually account for when coming from Webpacker 5. This guide will help you through it.
 
-## Webpacker has become a slimmer wrapper around Webpack
+## Webpacker/Shakapacker has become a slimmer wrapper around Webpack
 
 By default, Webpacker 6 is focused on compiling and bundling JavaScript. This pairs with the existing asset pipeline in Rails that's setup to transpile CSS and static images using [Sprockets](https://github.com/rails/sprockets). For most developers, that's the recommended combination. But if you'd like to use Webpacker for CSS and static assets as well, please see [integrations](https://github.com/shakacode/shakapacker#integrations) for more information.
 
-Webpacker used to configure Webpack indirectly, which lead to a [complicated secondary configuration process](https://github.com/rails/webpacker/blob/5-x-stable/docs/webpack.md). This was done in order to provide default configurations for the most popular frameworks, but ended up creating more complexity than it cured. So now Webpacker delegates all configuration directly to Webpack's default configuration setup.
+Webpacker used to configure Webpack indirectly, which lead to a [complicated secondary configuration process](https://github.com/rails/webpacker/blob/5-x-stable/docs/webpack.md). This was done in order to provide default configurations for the most popular frameworks, but ended up creating more complexity than it cured. So now Webpacker delegates all configuration directly to Webpack's default configuration setup. Additionally, all major dependencies, like `webpack` and `babel` are now **peer** dependencies, so you are free to upgrade those.
 
-This means you have to configure integration with frameworks yourself, but webpack-merge helps with this. See this example for [Vue](https://github.com/shakacode/shakapacker#other-frameworks) and scroll to the bottom for [more examples](#examples-of-v5-to-v6).
+While you have to configure integration with frameworks yourself, [`webpack-merge`](https://github.com/survivejs/webpack-merge) helps with this. See this example for [Vue](https://github.com/shakacode/shakapacker#other-frameworks) and scroll to the bottom for [more examples](#examples-of-v5-to-v6).
 
-## webpacker v6.0.0.rc.6 to shakapacker
+## webpacker v6.0.0.rc.6 to shakapacker v6.0.0 
 See an example migration here: [PR 27](https://github.com/shakacode/react_on_rails_tutorial_with_ssr_and_hmr_fast_refresh/pull/27).
           
-### Update
-1. Peer dependencies. Run `yarn add @babel/core @babel/plugin-transform-runtime @babel/preset-env @babel/runtime babel-loader compression-webpack-plugin terser-webpack-plugin webpack webpack-assets-manifest webpack-cli webpack-merge webpack-sources webpack-dev-server`
-1. Update any scripts that called `bin/webpack` or `bin/webpack-dev-server` to `bin/webpacker` or `bin/webpacker-dev-server`
-1. Update your webpack config for a single config file, `config/webpack/webpack.config.js`. 
-1. Update `babel.config.js` if you need JSX support. 
+### Update Steps to v6.0.0 from v6.0.0.rc.6
+_If you're on webpacker v5, follow below steps to get to v6.0.0.rc.6 first._
 
-## How to upgrade to Webpacker v6 from v5
+1. Change the gem name from `webpacker` to `shakapacker` and the NPM package from `@rails/webpacker` to `shakapacker`.
+1. Install the peer dependencies. Run `yarn add @babel/core @babel/plugin-transform-runtime @babel/preset-env @babel/runtime babel-loader compression-webpack-plugin terser-webpack-plugin webpack webpack-assets-manifest webpack-cli webpack-merge webpack-sources webpack-dev-server`
+1. Update any scripts that called `bin/webpack` or `bin/webpack-dev-server` to `bin/webpacker` or `bin/webpacker-dev-server`
+1. Update your webpack config for a single config file, `config/webpack/webpack.config.js`. If you want to use the prior style of having a separate file for each NODE_ENV, you can use this shim for `config/webpack/webpack.config.js`:
+   ```js
+   const { env, webpackConfig } = require('shakapacker')
+   const { existsSync } = require('fs')
+   const { resolve } = require('path')
+
+   const envSpecificConfig = () => {
+     const path = resolve(__dirname, `${env.nodeEnv}.js`)
+     if (existsSync(path)) {
+       console.log(`Loading ENV specific webpack configuration file ${path}`)
+       return require(path)
+     } else {
+       return webpackConfig
+     }
+   }
+  
+   module.exports = envSpecificConfig()
+   ```
+1. Update `babel.config.js` if you need JSX support. See [Customizing Babel Config](./customizing_babel_config.md)
+
+## How to upgrade to Webpacker v6.0.0.rc.6 from v5
 1. Ensure you have a clean working git branch. You will be overwriting all your files and reverting the changes that you don't want.
 
 1. Consider changing from the v5 default for `source_entry_path` in `webpacker.yml`.
@@ -159,7 +179,7 @@ See an example migration here: [PR 27](https://github.com/shakacode/react_on_rai
 
 1. Update any scripts that called `/bin/webpack` or `bin/webpack-dev-server` to `/bin/webpacker` or `bin/webpacker-dev-server`
 
-1. Try your app!
+1. Now, follow the steps above to get to shakapacker v6 from webpacker v6.0.0.rc.6[
 
 ## Examples of v5 to v6
 
