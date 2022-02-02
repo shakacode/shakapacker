@@ -1,6 +1,8 @@
 # Shakapacker
 
-_Official, actively maintained fork of [rails/webpacker](https://github.com/rails/webpacker). Internal naming for `shakapacker` will continue to use `webpacker` where possible. Notably, the NPM package name is `shakapacker`._
+_Official, actively maintained successor to [rails/webpacker](https://github.com/rails/webpacker). Internal naming for `shakapacker` will continue to use `webpacker` where possible for v6. ShakaCode stands behind long-term maintainence and development of this project for the Rails community._
+
+
 * See [V6 Upgrade](./docs/v6_upgrade.md) for upgrading from v5 or prior v6 releases. 
 
 [![Ruby specs](https://github.com/shakacode/shakapacker/workflows/Ruby%20specs/badge.svg)](https://github.com/shakacode/shakapacker/actions)
@@ -12,10 +14,11 @@ _Official, actively maintained fork of [rails/webpacker](https://github.com/rail
 [![Gem](https://img.shields.io/gem/v/shakapacker.svg)](https://rubygems.org/gems/shakapacker)
 [![npm version](https://badge.fury.io/js/shakapacker.svg)](https://badge.fury.io/js/shakapacker)
 
-Webpacker makes it easy to use the JavaScript pre-processor and bundler
-[Webpack v5](https://webpack.js.org/)
+Webpacker makes it easy to use the JavaScript pre-processor and bundler [Webpack v5+](https://webpack.js.org/)
 to manage application-like JavaScript in Rails. It can coexist with the asset pipeline,
 leaving Webpack responsible solely for app-like JavaScript, or it can be used exclusively, making it also responsible for images, fonts, and CSS.
+
+Check out 6.1.0.beta.0 for [SWC](https://swc.rs/) support! It's way faster than babel.
 
 See a comparison of [webpacker with jsbundling-rails](https://github.com/rails/jsbundling-rails/blob/main/docs/comparison_with_webpacker.md).
 
