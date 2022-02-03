@@ -37,6 +37,7 @@ Discussion forums to discuss debugging and troubleshooting tips. Please open iss
 - [Installation](#installation)
   - [Rails v6+](#rails-v6)
   - [Note for Sprockets usage](#note-for-sprockets-usage)
+  - [Note for Yarn v2 usage](#note-for-yarn-v2-usage)
 - [Usage](#usage)
   - [View Helpers](#view-helpers)
   - [Defer for `javascript_pack_tag`](#defer-for-javascript_pack_tag)
@@ -144,6 +145,12 @@ In order to enable this, make sure you add `node_modules` to the asset load path
 ```ruby
 Rails.application.config.assets.paths << Rails.root.join('node_modules')
 ```
+
+### Note for Yarn v2 usage
+
+If you are using Yarn v2 (berry), please note that PnP modules are not supported.
+
+In order to use Shakapacker with Yarn v2, make sure you set `nodeLinker: node-modules` in your `.yarnrc.yml` file as per the [Yarn docs](https://yarnpkg.com/getting-started/migration#step-by-step) to opt out of Plug'n'Play behaviour.
 
 ## Usage
 
