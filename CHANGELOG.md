@@ -10,6 +10,9 @@ Changes since last non-beta release.
 ### Added
 - Experimental support for SWC loader. [PR 29](https://github.com/shakacode/shakapacker/pull/29) by [tomdracz](https://github.com/tomdracz).
 
+### Fixed
+- Static asset subdirectories are retained after compilation, matching Webpacker v5 behaviour. [PR 47](https://github.com/shakacode/shakapacker/pull/47) by [tomdracz](https://github.com/tomdracz).
+
 ## [v6.0.2] - January 25, 2022
 ### Improved
 - Fix incorrect command name in warning. [PR 33](https://github.com/shakacode/shakapacker/pull/33) by [tricknotes](https://github.com/tricknotes).
