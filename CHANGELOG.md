@@ -1,5 +1,5 @@
 * For versions prior to v6, see the [5.x stable branch of rails/webpacker](https://github.com/rails/webpacker/tree/5-x-stable).
-* Please see [UPGRADE GUIDE](./docs/v6_upgrade.md).
+* Please see [v6 Upgrade Guide](./docs/v6_upgrade.md) to go from version prior to v6.
 
 ## Versions
 ## [Unreleased]
@@ -7,11 +7,12 @@ Changes since last non-beta release.
 
 *Please add entries here for your pull requests that are not yet released.*
 
+## [v6.1.0] - February 4, 2020
 ### Added
-- Experimental support for SWC loader. [PR 29](https://github.com/shakacode/shakapacker/pull/29) by [tomdracz](https://github.com/tomdracz).
+- Support for SWC loader. [PR 29](https://github.com/shakacode/shakapacker/pull/29) by [tomdracz](https://github.com/tomdracz).
 
 ### Fixed
-- Static asset subdirectories are retained after compilation, matching Webpacker v5 behaviour. [PR 47](https://github.com/shakacode/shakapacker/pull/47) by [tomdracz](https://github.com/tomdracz).
+- Static asset subdirectories are retained after compilation, matching Webpacker v5 behaviour. [PR 47](https://github.com/shakacode/shakapacker/pull/47) by [tomdracz](https://github.com/tomdracz). Fixes issues [rails/webpacker#2956](https://github.com/rails/webpacker/issues/2956) which broke in [rails/webpacker#2802](https://github.com/rails/webpacker/pull/2802).
 
 ## [v6.0.2] - January 25, 2022
 ### Improved
@@ -65,8 +66,11 @@ Changes since last non-beta release.
 - Splitchunks enabled by default
 - CSS extraction enabled by default, except when devServer is configured and running
 
+## v5.4.3 and prior changes from rails/webpacker
+See [CHANGELOG.md in rails/webpacker (up to v5.4.3)](https://github.com/rails/webpacker/blob/master/CHANGELOG.md) 
 
-[Unreleased]: https://github.com/shakacode/shakapacker/compare/v6.0.2...master
+[Unreleased]: https://github.com/shakacode/shakapacker/compare/v6.1.0...master
+[v6.1.0]: https://github.com/shakacode/shakapacker/compare/v6.0.2...v6.1.0
 [v6.0.2]: https://github.com/shakacode/shakapacker/compare/v6.0.1...v6.0.2
 [v6.0.1]: https://github.com/shakacode/shakapacker/compare/v6.0.0...v6.0.1
 [v6.0.0 changes from v6.0.0.rc.6]: https://github.com/shakacode/shakapacker/compare/aba79635e6ff6562ec04d3c446d57ef19a5fef7d...v6.0.0
