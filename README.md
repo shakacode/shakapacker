@@ -46,6 +46,7 @@ Discussion forums to discuss debugging and troubleshooting tips. Please open iss
   - [Webpack Configuration](#webpack-configuration)
   - [Babel configuration](#babel-configuration)
   - [SWC configuration](#swc-configuration)
+  - [esbuild loader configuration](#esbuild-loader-configuration)
   - [Integrations](#integrations)
     - [React](#react)
     - [Typescript](#typescript)
@@ -387,6 +388,12 @@ Optionally, you can change your Babel configuration by removing these lines in y
 You can try out experimental integration with the SWC loader. You can read more at [SWC usage docs](./docs/using_swc_loader.md).
 
 Please note that if you want opt-in to use SWC, you can skip [React](#react) integration instructions as it is supported out of the box.
+
+### esbuild loader configuration
+
+You can try out experimental integration with the esbuild-loader. You can read more at [esbuild-loader usage docs](./docs/using_esbuild_loader.md).
+
+Please note that if you want opt-in to use esbuild-loader, you can skip [React](#react) integration instructions as it is supported out of the box.
 
 ### Integrations
 
