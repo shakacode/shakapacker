@@ -106,11 +106,10 @@ rails new myapp --skip-javascript
 
 _Note, Rails 6 installs the older v5 version of webpacker unless you specify `--skip-javascript`._
 
-Update your `Gemfile`:
+Add `shakapacker` gem to your `Gemfile`:
 
-```ruby
-# Gemfile
-gem 'shakapacker', '~> 6.0'
+```bash
+bundle add shakapacker --strict
 ```
 
 Then running the following to install Webpacker:
