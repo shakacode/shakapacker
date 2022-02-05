@@ -2,10 +2,17 @@ require "rails/railtie"
 
 require "webpacker/helper"
 require "webpacker/dev_server_proxy"
+require "webpacker/version_checker"
 
 class Webpacker::Engine < ::Rails::Engine
   # Allows Webpacker config values to be set via Rails env config files
   config.webpacker = ActiveSupport::OrderedOptions.new
+
+  initializer "webpacker.version_checker" do
+    if File.exist?(Webpacker::VersionChecker::NodePackageVersion.package_json_path)
+      Webpacker::VersionChecker.build.raise_if_gem_and_node_package_versions_differ
+    end
+  end
 
   initializer "webpacker.proxy" do |app|
     if (Webpacker.config.dev_server.present? rescue nil)
