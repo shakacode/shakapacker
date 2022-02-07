@@ -16,11 +16,8 @@ module Webpacker
     end
 
     def raise_if_gem_and_node_package_versions_differ
-      # Skip check if package is listed from relative path, git repo or github URL
+      # Skip check if package is not in package.json or listed from relative path, git repo or github URL
       return if node_package_version.skip_processing?
-
-      # If no package found, assume user doesn't use it
-      return unless node_package_version.package_specified?
 
       node_major_minor_patch = node_package_version.major_minor_patch
       gem_major_minor_patch = gem_major_minor_patch_version
@@ -86,16 +83,12 @@ module Webpacker
           parsed_package_contents.dig("dependencies", "shakapacker").to_s
         end
 
-        def package_specified?
-          raw.present?
-        end
-
         def semver_wildcard?
           raw.match(/[~^]/).present?
         end
 
         def skip_processing?
-          relative_path? || git_url? || github_url?
+          !package_specified? || relative_path? || git_url? || github_url?
         end
 
         def major_minor_patch
@@ -110,6 +103,10 @@ module Webpacker
         end
 
         private
+
+          def package_specified?
+            raw.present?
+          end
 
           def relative_path?
             raw.match(%r{(\.\.|\Afile:///)}).present?

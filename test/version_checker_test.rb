@@ -4,12 +4,11 @@ require "webpacker/version"
 class NodePackageVersionDouble
   attr_reader :raw, :major_minor_patch
 
-  def initialize(raw: nil, major_minor_patch: nil, semver_wildcard: false, skip_processing: false, package_specified: true)
+  def initialize(raw: nil, major_minor_patch: nil, semver_wildcard: false, skip_processing: false)
     @raw = raw
     @major_minor_patch = major_minor_patch
     @semver_wildcard = semver_wildcard
     @skip_processing = skip_processing
-    @package_specified = package_specified
   end
 
   def semver_wildcard?
@@ -18,10 +17,6 @@ class NodePackageVersionDouble
 
   def skip_processing?
     @skip_processing
-  end
-
-  def package_specified?
-    @package_specified
   end
 end
 
@@ -98,7 +93,7 @@ class VersionCheckerTest < Minitest::Test
   end
 
   def test_no_raise_on_no_package
-    node_package_version = NodePackageVersionDouble.new(raw: nil, package_specified: false)
+    node_package_version = NodePackageVersionDouble.new(raw: nil, skip_processing: true)
 
     assert_silent do
       check_version(node_package_version, "6.0.0")
@@ -115,4 +110,136 @@ class VersionCheckerTest < Minitest::Test
 end
 
 class NodePackageVersionTest < Minitest::Test
+  def node_package_version(fixture_version: "normal")
+    file_path = File.expand_path("fixtures/#{fixture_version}_package.json", __dir__)
+    Webpacker::VersionChecker::NodePackageVersion.new(file_path)
+  end
+
+  def test_normal_package_raw
+    assert_equal "6.0.0", node_package_version.raw
+  end
+
+  def test_normal_package_major_minor_patch
+    assert_equal ["6", "0", "0"], node_package_version.major_minor_patch
+  end
+
+  def test_normal_package_skip_processing
+    assert_equal false, node_package_version.skip_processing?
+  end
+
+  def test_normal_package_semver_wildcard
+    assert_equal false, node_package_version.semver_wildcard?
+  end
+
+  def test_beta_package_raw
+    assert_equal "6.0.0-beta.1", node_package_version(fixture_version: "beta").raw
+  end
+
+  def test_beta_package_major_minor_patch
+    assert_equal ["6", "0", "0"], node_package_version(fixture_version: "beta").major_minor_patch
+  end
+
+  def test_beta_package_skip_processing
+    assert_equal false, node_package_version(fixture_version: "beta").skip_processing?
+  end
+
+  def test_beta_package_semver_wildcard
+    assert_equal false, node_package_version(fixture_version: "beta").semver_wildcard?
+  end
+
+  def test_semver_caret_package_raw
+    assert_equal "^6.0.0", node_package_version(fixture_version: "semver_caret").raw
+  end
+
+  def test_semver_caret_package_major_minor_patch
+    assert_equal ["6", "0", "0"], node_package_version(fixture_version: "semver_caret").major_minor_patch
+  end
+
+  def test_semver_caret_package_skip_processing
+    assert_equal false, node_package_version(fixture_version: "semver_caret").skip_processing?
+  end
+
+  def test_semver_caret_package_semver_wildcard
+    assert_equal true, node_package_version(fixture_version: "semver_caret").semver_wildcard?
+  end
+
+  def test_semver_tilde_package_raw
+    assert_equal "~6.0.0", node_package_version(fixture_version: "semver_tilde").raw
+  end
+
+  def test_semver_tilde_package_major_minor_patch
+    assert_equal ["6", "0", "0"], node_package_version(fixture_version: "semver_tilde").major_minor_patch
+  end
+
+  def test_semver_tilde_package_skip_processing
+    assert_equal false, node_package_version(fixture_version: "semver_tilde").skip_processing?
+  end
+
+  def test_semver_tilde_package_semver_wildcard
+    assert_equal true, node_package_version(fixture_version: "semver_tilde").semver_wildcard?
+  end
+
+  def test_relative_path_package_raw
+    assert_equal "../shakapacker", node_package_version(fixture_version: "relative_path").raw
+  end
+
+  def test_relative_path_package_major_minor_patch
+    assert_nil node_package_version(fixture_version: "relative_path").major_minor_patch
+  end
+
+  def test_relative_path_package_skip_processing
+    assert_equal true, node_package_version(fixture_version: "relative_path").skip_processing?
+  end
+
+  def test_relative_path_package_semver_wildcard
+    assert_equal false, node_package_version(fixture_version: "relative_path").semver_wildcard?
+  end
+
+  def test_git_url_package_raw
+    assert_equal "git://github.com/shakapacker/shakapacker.git", node_package_version(fixture_version: "git_url").raw
+  end
+
+  def test_git_url_package_major_minor_patch
+    assert_nil node_package_version(fixture_version: "git_url").major_minor_patch
+  end
+
+  def test_git_url_package_skip_processing
+    assert_equal true, node_package_version(fixture_version: "git_url").skip_processing?
+  end
+
+  def test_git_url_package_semver_wildcard
+    assert_equal false, node_package_version(fixture_version: "git_url").semver_wildcard?
+  end
+
+  def test_github_url_package_raw
+    assert_equal "shakapacker/shakapacker#feature/branch", node_package_version(fixture_version: "github_url").raw
+  end
+
+  def test_github_url_package_major_minor_patch
+    assert_nil node_package_version(fixture_version: "github_url").major_minor_patch
+  end
+
+  def test_github_url_package_skip_processing
+    assert_equal true, node_package_version(fixture_version: "github_url").skip_processing?
+  end
+
+  def test_github_url_package_semver_wildcard
+    assert_equal false, node_package_version(fixture_version: "github_url").semver_wildcard?
+  end
+
+  def test_without_package_raw
+    assert_equal "", node_package_version(fixture_version: "without").raw
+  end
+
+  def test_without_package_major_minor_patch
+    assert_nil node_package_version(fixture_version: "without").major_minor_patch
+  end
+
+  def test_without_package_skip_processing
+    assert_equal true, node_package_version(fixture_version: "without").skip_processing?
+  end
+
+  def test_without_package_semver_wildcard
+    assert_equal false, node_package_version(fixture_version: "without").semver_wildcard?
+  end
 end
