@@ -7,7 +7,7 @@ assignees: ''
 
 ---
 
-A bug is a crash or incorrect behavior. If you have a debugging or troubleshooting question, please open a discussion on the [Rails forum, category webpacker](https://discuss.rubyonrails.org/c/webpacker/10)
+A bug is a crash or incorrect behavior. If you have a debugging or troubleshooting question, please open a discussion on [Discussions Tab](https://github.com/shakacode/shakapacker/discussions).
 
 Ruby version:
 Rails version:
