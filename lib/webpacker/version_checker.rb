@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+require "webpacker/version"
 
 module Webpacker
   class VersionChecker
@@ -82,7 +83,7 @@ module Webpacker
 
         def raw
           parsed_package_contents = JSON.parse(package_json_contents)
-          package_info = parsed_package_contents.dig("dependencies", "shakapacker").to_s
+          parsed_package_contents.dig("dependencies", "shakapacker").to_s
         end
 
         def package_specified?
