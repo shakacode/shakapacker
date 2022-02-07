@@ -24,7 +24,7 @@ To use esbuild as your transpiler today. You need to do two things:
 1. Make sure you've installed `esbuild` and `esbuild-loader` packages.
 
 ```
-yarn add -D esbuild esbuild-loader
+yarn add esbuild esbuild-loader
 ```
 
 2. Add or change `webpacker_loader` value in your default `webpacker.yml` config to `esbuild`
