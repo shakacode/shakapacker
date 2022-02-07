@@ -7,6 +7,8 @@ Changes since last non-beta release.
 
 *Please add entries here for your pull requests that are not yet released.*
 
+## [v6.1.1] - February 6, 2022
+
 ### Added
 - Support for esbuild-loader. [PR 53](https://github.com/shakacode/shakapacker/pull/53) by [tomdracz](https://github.com/tomdracz).
 
@@ -72,7 +74,8 @@ Changes since last non-beta release.
 ## v5.4.3 and prior changes from rails/webpacker
 See [CHANGELOG.md in rails/webpacker (up to v5.4.3)](https://github.com/rails/webpacker/blob/master/CHANGELOG.md) 
 
-[Unreleased]: https://github.com/shakacode/shakapacker/compare/v6.1.0...master
+[Unreleased]: https://github.com/shakacode/shakapacker/compare/v6.1.1...master
+[v6.1.1]: https://github.com/shakacode/shakapacker/compare/v6.1.1...v6.1.1
 [v6.1.0]: https://github.com/shakacode/shakapacker/compare/v6.0.2...v6.1.0
 [v6.0.2]: https://github.com/shakacode/shakapacker/compare/v6.0.1...v6.0.2
 [v6.0.1]: https://github.com/shakacode/shakapacker/compare/v6.0.0...v6.0.1
