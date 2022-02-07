@@ -2,7 +2,6 @@
 
 _Official, actively maintained successor to [rails/webpacker](https://github.com/rails/webpacker). Internal naming for `shakapacker` will continue to use `webpacker` where possible for v6. ShakaCode stands behind long-term maintainence and development of this project for the Rails community._
 
-
 * See [V6 Upgrade](./docs/v6_upgrade.md) for upgrading from v5 or prior v6 releases. 
 
 [![Ruby specs](https://github.com/shakacode/shakapacker/workflows/Ruby%20specs/badge.svg)](https://github.com/shakacode/shakapacker/actions)
@@ -18,13 +17,13 @@ Webpacker makes it easy to use the JavaScript pre-processor and bundler [Webpack
 to manage application-like JavaScript in Rails. It can coexist with the asset pipeline,
 leaving Webpack responsible solely for app-like JavaScript, or it can be used exclusively, making it also responsible for images, fonts, and CSS.
 
-Check out 6.1.0.beta.0 for [SWC](https://swc.rs/) support! It's way faster than babel.
+Check out 6.1.1 for [SWC](https://swc.rs/) and [esbuild-loader](https://github.com/privatenumber/esbuild-loader) support! They are faster than Babel!
 
 See a comparison of [webpacker with jsbundling-rails](https://github.com/rails/jsbundling-rails/blob/main/docs/comparison_with_webpacker.md).
 
-Discussion forums to discuss debugging and troubleshooting tips. Please open issues for bugs and feature requests:
-1. [rails/webpacker discussion forum](https://discuss.rubyonrails.org/c/webpacker/10)
-2. [Discussions tab](https://github.com/shakacode/shakapacker/discussions)
+Discussion forum and Slack to discuss debugging and troubleshooting tips. Please open issues for bugs and feature requests:
+1. [Discussions tab](https://github.com/shakacode/shakapacker/discussions)
+2. [Slack discussion channel](https://reactrails.slack.com/join/shared_invite/enQtNjY3NTczMjczNzYxLTlmYjdiZmY3MTVlMzU2YWE0OWM0MzNiZDI0MzdkZGFiZTFkYTFkOGVjODBmOWEyYWQ3MzA2NGE1YWJjNmVlMGE)
 
 ---
 
@@ -78,12 +77,12 @@ Discussion forums to discuss debugging and troubleshooting tips. Please open iss
 - Yarn
 
 ## Features
-- Rails view helpers that fully support webpack output
+- Rails view helpers that fully support Webpack output, including HMR and code splitting.
 - Convenient but not required webpack configuration. The only requirement is that your webpack configuration create a manifest.
 - HMR with the webpack-dev-server, such as for hot-reloading for React!
 - Automatic code splitting using multiple entry points to optimize JavaScript downloads
-- [Webpack v5](https://webpack.js.org/)
-- ES6 with [babel](https://babeljs.io/)
+- [Webpack v5+](https://webpack.js.org/)
+- ES6 with [babel](https://babeljs.io/), [SWC](https://swc.rs/), or [Esbuild](https://github.com/privatenumber/esbuild-loader)
 - Asset compression, source-maps, and minification
 - CDN support
 - Extensible and configurable. For example, all major dependencies are specified as peers, so you can upgrade easily.
