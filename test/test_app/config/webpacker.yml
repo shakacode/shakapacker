@@ -36,6 +36,7 @@ default: &default
 development:
   <<: *default
   compile: true
+  ensure_consistent_versioning: true
 
   # Reference: https://webpack.js.org/configuration/dev-server/
   dev_server:
