@@ -19,7 +19,7 @@ In order to use SWC as your compiler today. You need to do two things:
 1. Make sure you've installed `@swc/core` and `swc-loader` packages.
 
 ```
-yarn add -D @swc/core swc-loader
+yarn add @swc/core swc-loader
 ```
 
 2. Add or change `webpacker_loader` value in your default `webpacker.yml` config to `swc`
