@@ -21,11 +21,37 @@ class NodePackageVersionDouble
 end
 
 class VersionCheckerTest < Minitest::Test
-  def check_version(node_package_version, stub_gem_version = Webpacker::VERSION)
+  def check_version(node_package_version, stub_gem_version = Webpacker::VERSION, stub_config = true)
     version_checker = Webpacker::VersionChecker.new(node_package_version)
     version_checker.stub :gem_version, stub_gem_version do
-      version_checker.raise_if_gem_and_node_package_versions_differ
+      Webpacker.config.stub :ensure_consistent_versioning?, stub_config do
+        version_checker.raise_if_gem_and_node_package_versions_differ
+      end
     end
+  end
+
+  def test_message_printed_if_consistency_check_disabled_and_mismatch
+    node_package_version = NodePackageVersionDouble.new(raw: "6.1.0", major_minor_patch: ["6", "1", "0"])
+
+    out, err = capture_io do
+      check_version(node_package_version, "6.0.0", false)
+    end
+
+    assert_match \
+      "Webpacker::VersionChecker - Version mismatch detected",
+      err
+  end
+
+  def test_message_printed_if_consistency_check_disabled_and_semver
+    node_package_version = NodePackageVersionDouble.new(raw: "^6.1.0", major_minor_patch: ["6", "1", "0"], semver_wildcard: true)
+
+    out, err = capture_io do
+      check_version(node_package_version, "6.1.0", false)
+    end
+
+    assert_match \
+      "Webpacker::VersionChecker - Semver wildcard detected",
+      err
   end
 
   def test_raise_on_different_major_version

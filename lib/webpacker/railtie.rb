@@ -9,7 +9,7 @@ class Webpacker::Engine < ::Rails::Engine
   config.webpacker = ActiveSupport::OrderedOptions.new
 
   initializer "webpacker.version_checker" do
-    if File.exist?(Webpacker::VersionChecker::NodePackageVersion.package_json_path) && Webpacker.config.ensure_consistent_versioning?
+    if File.exist?(Webpacker::VersionChecker::NodePackageVersion.package_json_path)
       Webpacker::VersionChecker.build.raise_if_gem_and_node_package_versions_differ
     end
   end

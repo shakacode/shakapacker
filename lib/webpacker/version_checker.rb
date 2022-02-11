@@ -25,9 +25,33 @@ module Webpacker
                        node_major_minor_patch[1] == gem_major_minor_patch[1] &&
                        node_major_minor_patch[2] == gem_major_minor_patch[2]
 
+      uses_wildcard = node_package_version.semver_wildcard?
+
+      if !Webpacker.config.ensure_consistent_versioning? && (uses_wildcard || !versions_match)
+        check_failed = if uses_wildcard
+          "Semver wildcard detected"
+        else
+          "Version mismatch detected"
+        end
+
+        warn <<-MSG.strip_heredoc
+          Webpacker::VersionChecker - #{check_failed}
+
+          You are currently not checking for consistent versions of shakapacker gem and npm package. A version mismatch or usage of semantic versioning wildcard (~ or ^) has been detected.
+
+          Version mismatch can lead to incorrect behavior and bugs. You should ensure that both the gem and npm package dependencies are locked to the same version.
+
+          You can enable the version check by setting `ensure_consistent_versioning: true` in your `webpacker.yml` file.
+
+          Checking for gem and npm package versions mismatch or wildcard will be enabled by default in the next major version of shakapacker.
+        MSG
+
+        return
+      end
+
       raise_differing_versions_warning unless versions_match
 
-      raise_node_semver_version_warning if node_package_version.semver_wildcard?
+      raise_node_semver_version_warning if uses_wildcard
     end
 
     private
