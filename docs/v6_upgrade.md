@@ -166,7 +166,7 @@ _If you're on webpacker v5, follow below steps to get to v6.0.0.rc.6 first._
       }
     }
     ```
-1. In `webpacker.yml`, check if you had `watched_paths`. That is not `additional_paths`.
+1. In `webpacker.yml`, check if you had `watched_paths`. That is now `additional_paths`.
 
 1. Some dependencies were removed in [PR 3056](https://github.com/rails/webpacker/pull/3056). If you see the error: `Error: Cannot find module 'babel-plugin-macros'`, or similar, then you need to `yarn add <dependency>` where <dependency> might include: `babel-plugin-macros`, `case-sensitive-paths-webpack-plugin`, `core-js`, `regenerator-runtime`. Or you might want to remove your dependency on those.
 
