@@ -22,7 +22,7 @@ In order to use SWC as your compiler today. You need to do two things:
 yarn add @swc/core swc-loader
 ```
 
-2. Add or change `webpacker_loader` value in your default `webpacker.yml` config to `swc`
+2. Add or change `webpack_loader` value in your default `webpacker.yml` config to `swc`
 The default configuration of babel is done by using `package.json` to use the file within the `shakapacker` package.
 
 ```yml
