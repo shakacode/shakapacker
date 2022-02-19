@@ -1,0 +1,10 @@
+# TODO add more examples
+# - React
+# - TypeScript
+# - Stylesheets - Sass, Less, Stylus and Css, PostCSS
+# - CoffeeScript
+# - SWC
+example_type_data:
+  -
+    name: basic
+    generator_options: ""

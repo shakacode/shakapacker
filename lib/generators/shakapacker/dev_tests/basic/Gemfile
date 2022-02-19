@@ -1,0 +1,3 @@
+gem "mini_racer", platforms: :ruby
+gem "rspec-rails", group: :test
+gem "chromedriver-helper", group: :test

@@ -11,3 +11,4 @@ yarn-error.log*
 /log
 gemfiles/*.lock
 .DS_Store
+.ruby-version
