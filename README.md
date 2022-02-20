@@ -209,7 +209,7 @@ The result looks like this:
 
 If you want to link a static asset for `<img />` tag, you can use the `asset_pack_path` helper:
 ```erb
-<img src="<%= asset_pack_path 'images/logo.svg' %>" />
+<img src="<%= asset_pack_path 'static/logo.svg' %>" />
 ```
 
 Or use the dedicated helper:
