@@ -1,3 +1,4 @@
+require_relative 'task_helpers'
 require_relative File.join("..", "lib", "shakapacker", "utils", "version_syntax_converter")
 require_relative File.join("..", "lib", "shakapacker", "utils", "misc")
 
@@ -25,11 +26,12 @@ Note, accept defaults for npmjs options. Script will pause to get 2FA tokens.
 
 Example: `rake release[2.1.0,false]`")
 task :create_release, %i[gem_version dry_run] do |_t, args|
+  include Shakapacker::TaskHelpers
   # Check if there are uncommited changes
-  Shakapacker::Utils::Misc.uncommitted_changes?(RaisingMessageHandler.new)
+  uncommitted_changes?(RaisingMessageHandler.new)
   args_hash = args.to_hash
 
-  is_dry_run = Shakapacker::Utils::Misc.object_to_boolean(args_hash[:dry_run])
+  is_dry_run = object_to_boolean(args_hash[:dry_run])
 
   gem_version = args_hash.fetch(:gem_version, "")
 
@@ -42,8 +44,8 @@ task :create_release, %i[gem_version dry_run] do |_t, args|
   end
 
   # See https://github.com/svenfuchs/gem-release
-  Shakapacker::Utils::Misc.sh_in_dir(gem_root, "git pull --rebase")
-  Shakapacker::Utils::Misc.sh_in_dir(gem_root, "gem bump --no-commit #{gem_version.strip.empty? ? '' : %(--version #{gem_version})}")
+  sh_in_dir(gem_root, "git pull --rebase")
+  sh_in_dir(gem_root, "gem bump --no-commit #{gem_version.strip.empty? ? '' : %(--version #{gem_version})}")
 
   # Will bump the yarn version, commit, tag the commit, push to repo, and release on yarn
   release_it_command = +"release-it"
@@ -53,12 +55,12 @@ task :create_release, %i[gem_version dry_run] do |_t, args|
   puts "ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ"
   puts "Use the OTP for NPM!"
   puts "ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ"
-  Shakapacker::Utils::Misc.sh_in_dir(gem_root, release_it_command)
+  sh_in_dir(gem_root, release_it_command)
 
   # Release the new gem version
   puts "ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ"
   puts "Use the OTP for RubyGems!"
   puts "ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ"
 
-  Shakapacker::Utils::Misc.sh_in_dir(gem_root, "gem release") unless is_dry_run
+  sh_in_dir(gem_root, "gem release") unless is_dry_run
 end
