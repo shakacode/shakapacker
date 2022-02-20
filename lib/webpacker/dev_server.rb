@@ -55,6 +55,15 @@ class Webpacker::DevServer
     fetch(:hmr)
   end
 
+  def inline_css?
+    case fetch(:inline_css)
+    when false, "false"
+      false
+    else
+      true
+    end
+  end
+
   def env_prefix
     config.dev_server.fetch(:env_prefix, DEFAULT_ENV_PREFIX)
   end
