@@ -368,6 +368,13 @@ console.log(webpackConfig.source_path)
 console.log(JSON.stringify(webpackConfig, undefined, 2))
 ```
 
+You may want to modify rules in the default configuration. For instance, if you are using a custom svg loader, you may want to remove `.svg` from the default file loader rules. You can search and filter the default rules like so:
+
+```js
+const svgRule = config.module.rules.find(rule => rule.test.test('.svg'));
+svgRule.test = svgRule.test.filter(t => !t.test('.svg'))
+```
+
 ### Babel configuration
 
 By default, you will find the Webpacker preset in your `package.json`. Note, you need to use the new NPM package name, `shakapacker`.
