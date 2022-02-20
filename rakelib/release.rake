@@ -1,6 +1,5 @@
 require_relative 'task_helpers'
-require_relative File.join("..", "lib", "shakapacker", "utils", "version_syntax_converter")
-require_relative File.join("..", "lib", "shakapacker", "utils", "misc")
+require_relative 'version_syntax_converter'
 
 class RaisingMessageHandler
   def add_error(error)
@@ -27,6 +26,8 @@ Note, accept defaults for npmjs options. Script will pause to get 2FA tokens.
 Example: `rake release[2.1.0,false]`")
 task :create_release, %i[gem_version dry_run] do |_t, args|
   include Shakapacker::TaskHelpers
+  include Shakapacker::VersionSyntaxConverter
+
   # Check if there are uncommited changes
   uncommitted_changes?(RaisingMessageHandler.new)
   args_hash = args.to_hash
@@ -37,11 +38,7 @@ task :create_release, %i[gem_version dry_run] do |_t, args|
 
   gem_root = File.expand_path("..", __dir__)
 
-  npm_version = if gem_version.strip.empty?
-    ""
-                else
-                  Shakapacker::Utils::VersionSyntaxConverter.new.rubygem_to_npm(gem_version)
-  end
+  npm_version = gem_version.strip.empty? ? "" : rubygem_to_npm(gem_version)
 
   # See https://github.com/svenfuchs/gem-release
   sh_in_dir(gem_root, "git pull --rebase")
