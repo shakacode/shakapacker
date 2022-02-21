@@ -58,10 +58,10 @@ results = []
 Dir.chdir(Rails.root) do
   if Webpacker::VERSION.match?(/^[0-9]+\.[0-9]+\.[0-9]+$/)
     say "Installing shakapacker@#{Webpacker::VERSION}"
-    results << run("yarn add shakapacker@#{Webpacker::VERSION}")
+    results << run("yarn add shakapacker@#{Webpacker::VERSION} --exact")
   else
     say "Installing shakapacker@next"
-    results << run("yarn add shakapacker@next")
+    results << run("yarn add shakapacker@next --exact")
   end
 
   package_json = File.read("#{__dir__}/../../package.json")

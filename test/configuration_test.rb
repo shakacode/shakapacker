@@ -75,4 +75,16 @@ class ConfigurationTest < Webpacker::Test
       assert Webpacker.config.compile?
     end
   end
+
+  def test_ensure_consistent_versioning?
+    refute @config.ensure_consistent_versioning?
+
+    with_rails_env("development") do
+      assert Webpacker.config.ensure_consistent_versioning?
+    end
+
+    with_rails_env("test") do
+      refute Webpacker.config.ensure_consistent_versioning?
+    end
+  end
 end

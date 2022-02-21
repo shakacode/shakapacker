@@ -23,6 +23,10 @@ class Webpacker::Configuration
     fetch(:compile)
   end
 
+  def ensure_consistent_versioning?
+    fetch(:ensure_consistent_versioning)
+  end
+
   def source_path
     root_path.join(fetch(:source_path))
   end
