@@ -91,26 +91,6 @@ _If you're on webpacker v5, follow below steps to get to v6.0.0.rc.6 first._
    yarn add @babel/core @babel/plugin-transform-runtime @babel/preset-env @babel/runtime babel-loader compression-webpack-plugin terser-webpack-plugin webpack webpack-assets-manifest webpack-cli webpack-merge webpack-sources webpack-dev-server
    ```
 
-1. There is now a single default configuration file of `config/webpack/webpack.config.js`. Previously, the config file was set
-  to `config/webpack/#{NODE_ENV}.js`. In the `config/webpack/` directory, you can either refactor your code in `test.js`, `development.js`, and `production.js` to a single file, `webpack.config.js` or you can replace the contents of `config/webpack/config.webpack.js` to conditionally load the old file based on the NODE_ENV with this snippet:
-   ```js
-   const { env, webpackConfig } = require('shakapacker')
-   const { existsSync } = require('fs')
-   const { resolve } = require('path')
-
-   const envSpecificConfig = () => {
-     const path = resolve(__dirname, `${env.nodeEnv}.js`)
-     if (existsSync(path)) {
-       console.log(`Loading ENV specific webpack configuration file ${path}`)
-       return require(path)
-     } else {
-       return webpackConfig
-     }
-   }
-
-   module.exports = envSpecificConfig()
-   ```
-
 1. Review the new default's changes to `webpacker.yml`. Consider each suggested change carefully, especially the change to have your `source_entry_path` be at the top level of your `source_path`.
    The v5 default used `packs` for `source_entry_path`:
    ```yml
@@ -136,22 +116,36 @@ _If you're on webpacker v5, follow below steps to get to v6.0.0.rc.6 first._
 
 1. If you are using any integrations like `css`, `postcss`, `React` or `TypeScript`. Please see https://github.com/shakacode/shakapacker#integrations section on how they work in v6.
 
-1. Import `environment` changed to `webpackConfig`. For example, the new code looks like:
+1. `config/webpack/environment.js` was changed to `config/webpack/base.js` and exports a native webpack config so no need to call `toWebpackConfig`.
+   Use `merge` to make changes:
+   
    ```js
-   // config/webpack/webpack.config.js
-   const { webpackConfig, merge } = require('shakapacker')
-   const customConfig = require('./custom')
-
-   module.exports = merge(webpackConfig, customConfig)
+   // config/webpack/base.js
+   const { webpackConfig, merge } = require('@rails/webpacker');
+   const customConfig = {
+     module: {
+       rules: [
+         {
+           test: require.resolve('jquery'),
+           loader: 'expose-loader',
+           options: {
+             exposes: ['$', 'jQuery']
+           }
+         }
+       ]
+     }
+   };
+   
+   module.exports = merge(webpackConfig, customConfig);
    ```
-
+ 
 1. Copy over custom browserlist config from `.browserslistrc` if it exists into the `"browserslist"` key in `package.json` and remove `.browserslistrc`.
 
 1. Remove `babel.config.js` if you never changed it. Configure your `package.json` to use the default:
    ```json
    "babel": {
      "presets": [
-       "./node_modules/shakapacker/package/babel/preset.js"
+       "./node_modules/@rails/webpacker/package/babel/preset.js"
      ]
    }
    ```
@@ -172,15 +166,13 @@ _If you're on webpacker v5, follow below steps to get to v6.0.0.rc.6 first._
 
 1. Review the new default's changes to `webpacker.yml` and `config/webpack`. Consider each suggested change carefully, especially the change to have your `source_entry_path` be at the top level of your `source_path`.
 
-1. Make sure that you can run `bin/webpacker` without errors.
+1. Make sure that you can run `bin/webpack` without errors.
 
 1. Try running `RAILS_ENV=production bin/rails assets:precompile`. If all goes well, don't forget to clean the generated assets with `bin/rails assets:clobber`.
 
 1. Run `yarn add webpack-dev-server` if those are not already in your dev dependencies. Make sure you're using v4+.
 
-1. Update any scripts that called `/bin/webpack` or `bin/webpack-dev-server` to `/bin/webpacker` or `bin/webpacker-dev-server`
-
-1. In `bin/webpacker` and `bin/webpacker-dev-server`, The default NODE_ENV, if not set, will be the RAILS_ENV. Previously, NODE_ENV would default to development if not set. Thus, the old bin stubs would use the webpack config corresponding to `config/webpack/development.js`. After the change, if `RAILS_ENV` is `test`, then `NODE_ENV` is `test`. The final 6.0 release changes to using a single `webpack.config.js`.
+1. In `bin/webpack` and `bin/webpack-dev-server`, The default NODE_ENV, if not set, will be the RAILS_ENV. Previously, NODE_ENV would default to development if not set. Thus, the old bin stubs would use the webpack config corresponding to `config/webpack/development.js`. After the change, if `RAILS_ENV` is `test`, then `NODE_ENV` is `test`. The final 6.0 release changes to using a single `webpack.config.js`.
 
 1. Now, follow the steps above to get to shakapacker v6 from webpacker v6.0.0.rc.6
 
