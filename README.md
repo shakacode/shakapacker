@@ -2,7 +2,7 @@
 
 _Official, actively maintained successor to [rails/webpacker](https://github.com/rails/webpacker). Internal naming for `shakapacker` will continue to use `webpacker` where possible for v6. ShakaCode stands behind long-term maintainence and development of this project for the Rails community._
 
-* See [V6 Upgrade](./docs/v6_upgrade.md) for upgrading from v5 or prior v6 releases. 
+* See [V6 Upgrade](./docs/v6_upgrade.md) for upgrading from v5 or prior v6 releases.
 
 [![Ruby specs](https://github.com/shakacode/shakapacker/workflows/Ruby%20specs/badge.svg)](https://github.com/shakacode/shakapacker/actions)
 [![Jest specs](https://github.com/shakacode/shakapacker/workflows/Jest%20specs/badge.svg)](https://github.com/shakacode/shakapacker/actions)
@@ -670,7 +670,9 @@ development:
     port: 3035
 ```
 
-If you have `hmr` turned to true, then the `stylesheet_pack_tag` generates no output, as you will want to configure your styles to be inlined in your JavaScript for hot reloading. During production and testing, the `stylesheet_pack_tag` will create the appropriate HTML tags.
+If you have `hmr` turned to true and `inline_css` is not false, then the `stylesheet_pack_tag` generates no output, as you will want to configure your styles to be inlined in your JavaScript for hot reloading. During production and testing, the `stylesheet_pack_tag` will create the appropriate HTML tags.
+
+If you want to have HMR and separate link tags, set `hmr: true` and `inline_css: false`. This will cause styles to be extracted and reloaded with the `mini-css-extract-plugin` loader. Note that in this scenario, you do not need to include style-loader in your project dependencies.
 
 ### Additional paths
 

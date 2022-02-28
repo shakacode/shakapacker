@@ -36,6 +36,6 @@ class Webpacker::Instance
   end
 
   def inlining_css?
-    dev_server.hmr? && dev_server.running?
+    dev_server.inline_css? && dev_server.hmr? && dev_server.running?
   end
 end
