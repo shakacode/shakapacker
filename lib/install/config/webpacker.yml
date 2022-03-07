@@ -32,8 +32,13 @@ development:
     port: 3035
     # Hot Module Replacement updates modules while the application is running without a full reload
     hmr: false
-    # If HMR is on, CSS will by inlined by delivering it as part of the script payload via script-loader.
-    # If you want to instead deliver CSS as <link> tags via mini-extract-css-plugin, set inline_css to false.
+    # If HMR is on, CSS will by inlined by delivering it as part of the script payload via style-loader. Be sure
+    # that you add style-loader to your project dependencies.
+    #
+    # If you want to instead deliver CSS via <link> with the mini-extract-css-plugin, set inline_css to false.
+    # In that case, style-loader is not needed as a dependency.
+    #
+    # mini-extract-css-plugin is a required dependency in both cases.
     inline_css: true
     # Defaults to the inverse of hmr. Uncomment to manually set this.
     # live_reload: true

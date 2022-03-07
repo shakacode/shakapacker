@@ -5,7 +5,15 @@ You have two options for serving CSS in development:
 1. You can opt to serve CSS via style-loader (as was traditionally done in a Webpack setup), where CSS is written by Javascript served by Webpacker into a `<style>` tag, or
 2. You can opt to serve CSS as a full CSS file via mini-css-extract-plugin, which uses a standard `<link>` tag to load a fully separate CSS file.
 
-Both options support HMR. The default is style-loader. If you want to use mini-css-extract-plugin in development, set `inline_css: false` in your webpacker.yml.
+Both options support HMR. The default is style-loader. If you want to use mini-css-extract-plugin in development, set `inline_css: false` in the development dev_server section of your webpacker.yml:
+
+```yml
+development:
+  <<: *default
+  dev_server:
+    hmr: true
+    inline_css: false # Use mini-css-extract-plugin for CSS delivery
+```
 
 ## Why would I pick style-loader?
 
@@ -13,7 +21,7 @@ style-loader is how you are probably are used to serving CSS in development with
 
 ### benefits
 
-* No FOUC on HMR refreshes
+* No [Flash Of Unstyled Content (FOUC)](https://en.wikipedia.org/wiki/Flash_of_unstyled_content) on HMR refreshes
 * Smaller/faster incremental updates.
 
 ### drawbacks
