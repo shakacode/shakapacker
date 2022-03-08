@@ -206,6 +206,8 @@ The result looks like this:
 <%= stylesheet_pack_tag 'map' %>
 ```
 
+If you need to setup the pack name args in partials, [see this discussion](https://github.com/shakacode/shakapacker/issues/39).
+
 If you want to link a static asset for `<img />` tag, you can use the `asset_pack_path` helper:
 ```erb
 <img src="<%= asset_pack_path 'static/logo.svg' %>" />
