@@ -29,4 +29,10 @@ const getPublicPath = () => {
 config.publicPath = getPublicPath()
 config.publicPathWithoutCDN = `/${config.public_output_path}/`
 
+if (config.manifest_path) {
+  config.manifestPath = resolve(config.manifest_path)
+} else {
+  config.manifestPath = resolve(config.outputPath, 'manifest.json')
+}
+
 module.exports = config

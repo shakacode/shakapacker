@@ -8,6 +8,9 @@ default: &default
   cache_path: tmp/webpacker
   webpack_compile_output: true
 
+  # Location for manifest.json, defaults to {public_output_path}/manifest.json if unset
+  # manifest_path: public/packs/manifest.json
+
   # Additional paths webpack should look up modules
   # ['app/assets', 'engine/foo/app/assets']
   additional_paths: []

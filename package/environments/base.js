@@ -54,7 +54,7 @@ const getPlugins = () => {
     new WebpackAssetsManifest({
       entrypoints: true,
       writeToDisk: true,
-      output: 'manifest.json',
+      output: config.manifestPath,
       entrypointsUseAssets: true,
       publicPath: true
     })
