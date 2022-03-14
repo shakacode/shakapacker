@@ -30,12 +30,12 @@ const getSwcLoaderConfig = (filenameToProcess) => {
             : 'ecmascript',
           [isTypescriptFile(filenameToProcess) ? 'tsx' : 'jsx']:
             isJsxFile(filenameToProcess)
-        }
+        },
+        loose: true
       },
       sourceMaps: true,
       env: {
-        coreJs: '3.8',
-        loose: true,
+        coreJs: 3,
         exclude: ['transform-typeof-symbol'],
         mode: 'entry'
       }
