@@ -206,6 +206,13 @@ The result looks like this:
 <%= stylesheet_pack_tag 'map' %>
 ```
 
+However, you may use multiple calls to stylesheet_pack_tag if, say, you require multiple <style> tags for different output media:
+
+``` erb
+<%= stylesheet_pack_tag 'application', media: 'screen' %>
+<%= stylesheet_pack_tag 'print', media: 'print' %>
+```
+
 If you need to setup the pack name args in partials, [see this discussion](https://github.com/shakacode/shakapacker/issues/39).
 
 If you want to link a static asset for `<img />` tag, you can use the `asset_pack_path` helper:
