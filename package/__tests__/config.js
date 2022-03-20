@@ -1,6 +1,7 @@
 /* global test expect, describe */
 
 const { chdirCwd, chdirTestApp, resetEnv } = require('../utils/helpers')
+const { resolve } = require('path')
 
 chdirTestApp()
 
@@ -30,5 +31,15 @@ describe('Config', () => {
       'some.config.js',
       'app/elm'
     ])
+  })
+
+  test('should default manifestPath to the public dir', () => {
+    expect(config.manifestPath).toEqual(resolve('public/packs/manifest.json'))
+  })
+
+  test('should allow overriding manifestPath', () => {
+    process.env.WEBPACKER_CONFIG = 'config/webpacker_manifest_path.yml'
+    const config = require('../config')
+    expect(config.manifestPath).toEqual(resolve('app/packs/manifest.json'))
   })
 })

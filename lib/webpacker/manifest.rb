@@ -80,8 +80,8 @@ class Webpacker::Manifest
     end
 
     def load
-      if config.public_manifest_path.exist?
-        JSON.parse config.public_manifest_path.read
+      if config.manifest_path.exist?
+        JSON.parse config.manifest_path.read
       else
         {}
       end
@@ -104,7 +104,7 @@ class Webpacker::Manifest
 
     def missing_file_from_manifest_error(bundle_name)
       <<-MSG
-Webpacker can't find #{bundle_name} in #{config.public_manifest_path}. Possible causes:
+Webpacker can't find #{bundle_name} in #{config.manifest_path}. Possible causes:
 1. You forgot to install node packages (try `yarn install`) or are running an incompatible version of Node
 2. Your app has code with a non-standard extension (like a `.jsx` file) but the extension is not in the `extensions` config in `config/webpacker.yml`
 3. You have set compile: false (see `config/webpacker.yml`) for this environment

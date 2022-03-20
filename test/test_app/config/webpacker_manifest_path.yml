@@ -1,4 +1,4 @@
-# Note: You must restart bin/webpacker-dev-server for changes to take effect
+# Note: You must restart bin/webpack-dev-server for changes to take effect
 
 default: &default
   source_path: app/packs
@@ -7,10 +7,9 @@ default: &default
   public_output_path: packs
   cache_path: tmp/webpacker
   webpack_compile_output: false
-  webpack_loader: babel
 
   # Location for manifest.json, defaults to {public_output_path}/manifest.json if unset
-  # manifest_path: public/packs/manifest.json
+  manifest_path: app/packs/manifest.json
 
   # Additional paths webpack should look up modules
   # ['app/assets', 'engine/foo/app/assets']
@@ -39,7 +38,6 @@ default: &default
 development:
   <<: *default
   compile: true
-  ensure_consistent_versioning: true
 
   # Reference: https://webpack.js.org/configuration/dev-server/
   dev_server:
