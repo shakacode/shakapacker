@@ -30,9 +30,9 @@ _If you're on webpacker v5, follow below steps to get to v6.0.0.rc.6 first._
      if (existsSync(path)) {
        console.log(`Loading ENV specific webpack configuration file ${path}`)
        return require(path)
-     } else {
-       console.log(`WARNING: Using default webpack configuration. Did not find a Env specific file at path ${path}`)
-       return webpackConfig
+     } else {                       
+       // Probably an error if the file for the NODE_ENV does not exist
+       throw new Error(`Got Error with NODE_ENV = ${env.nodeEnv}`);
      }
    }
 
