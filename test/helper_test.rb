@@ -14,7 +14,6 @@ class HelperTest < ActionView::TestCase
     end.new
 
     @javascript_pack_tag_loaded = nil
-    @stylesheet_pack_tag_loaded = nil
   end
 
   def test_asset_pack_path
@@ -149,19 +148,19 @@ class HelperTest < ActionView::TestCase
   end
 
   def hello_stimulus_stylesheet_chunks
-    %w[/packs/hello_stimulus-k344a6d59eef8632c9d1.chunk.css]
+    %w[/packs/1-c20632e7baf2c81200d3.chunk.css /packs/hello_stimulus-k344a6d59eef8632c9d1.chunk.css]
   end
 
   def test_stylesheet_pack_tag
     assert_equal \
-      (application_stylesheet_chunks + hello_stimulus_stylesheet_chunks)
+      (application_stylesheet_chunks + hello_stimulus_stylesheet_chunks).uniq
         .map { |chunk| stylesheet_link_tag(chunk) }.join("\n"),
       stylesheet_pack_tag("application", "hello_stimulus")
   end
 
   def test_stylesheet_pack_tag_symbol
     assert_equal \
-      (application_stylesheet_chunks + hello_stimulus_stylesheet_chunks)
+      (application_stylesheet_chunks + hello_stimulus_stylesheet_chunks).uniq
         .map { |chunk| stylesheet_link_tag(chunk) }.join("\n"),
       stylesheet_pack_tag(:application, :hello_stimulus)
   end
@@ -172,15 +171,16 @@ class HelperTest < ActionView::TestCase
       stylesheet_pack_tag("application", media: "all")
   end
 
-  def test_stylesheet_pack_tag_multiple_invocations
-    error = assert_raises do
-      stylesheet_pack_tag(:application)
-      stylesheet_pack_tag(:hello_stimulus)
-    end
+  def test_stylesheet_pack_tag_multiple_invocations_are_allowed
+    app_style = stylesheet_pack_tag(:application)
+    stimulus_style = stylesheet_pack_tag(:hello_stimulus)
 
     assert_equal \
-      "To prevent duplicated chunks on the page, you should call stylesheet_pack_tag only once on the page. " +
-        "Please refer to https://github.com/shakacode/shakapacker/blob/master/README.md#usage for the usage guide",
-      error.message
+      application_stylesheet_chunks.map { |chunk| stylesheet_link_tag(chunk) }.join("\n"),
+      app_style
+
+    assert_equal \
+      hello_stimulus_stylesheet_chunks.map { |chunk| stylesheet_link_tag(chunk) }.join("\n"),
+      stimulus_style
   end
 end
