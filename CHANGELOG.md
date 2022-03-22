@@ -7,13 +7,18 @@ Changes since last non-beta release.
 
 *Please add entries here for your pull requests that are not yet released.*
 
+## [v6.2.0] - March 22, 2022
+
 ### Added
-- Rewrite webpack module rules as regular expressions. Allows for easy iteration during config customization. [PR 60](https://github.com/shakacode/shakapacker/pull/60) by [blnoonan](https://github.com/blnoonan)
+- Make manifest_path configurable, to keep manifest.json private if desired. [PR 78](https://github.com/shakacode/shakapacker/pull/78) by [jdelStrother](https://github.com/jdelStrother).
+- Rewrite webpack module rules as regular expressions. Allows for easy iteration during config customization. [PR 60](https://github.com/shakacode/shakapacker/pull/60) by [blnoonan](https://github.com/blnoonan).
 - Initialization check to ensure shakapacker gem and NPM package version are consistent. Opt-in behaviour enabled by setting `ensure_consistent_versioning` configuration variable. [PR 51](https://github.com/shakacode/shakapacker/pull/51) by [tomdracz](https://github.com/tomdracz).
-- Add `dev_server.inline_css: bool` config option to allow for opting out of style-loader and into mini-extract-css-plugin for CSS HMR in development. [PR 69](https://github.com/shakacode/shakapacker/pull/69) by [cheald](https://github.com/cheald)
-- Increase default connect timeout for dev server connections, establishing connections more reliably for busy machines. [PR 74](https://github.com/shakacode/shakapacker/pull/74) by [stevecrozz](https://github.com/stevecrozz)
-- Make manifest_path configurable, to keep manifest.json private if desired. [PR 78](https://github.com/shakacode/shakapacker/pull/78) by [jdelStrother](https://github.com/jdelStrother)
-- Allow multiple invocations of stylesheet_pack_tag (eg for a regular stylesheet & a print stylesheet). [PR 82](https://github.com/shakacode/shakapacker/pull/82) by [jdelStrother](https://github.com/jdelStrother)
+- Add `dev_server.inline_css: bool` config option to allow for opting out of style-loader and into mini-extract-css-plugin for CSS HMR in development. [PR 69](https://github.com/shakacode/shakapacker/pull/69) by [cheald](https://github.com/cheald).
+
+### Improved
+- Increase default connect timeout for dev server connections, establishing connections more reliably for busy machines. [PR 74](https://github.com/shakacode/shakapacker/pull/74) by [stevecrozz](https://github.com/stevecrozz).
+- Allow multiple invocations of stylesheet_pack_tag (eg for a regular stylesheet & a print stylesheet). [PR 82](https://github.com/shakacode/shakapacker/pull/82) by [jdelStrother](https://github.com/jdelStrother).
+- Tweak swc config for parity with Babel. [PR 79](https://github.com/shakacode/shakapacker/pull/79) by [dleavitt](https://github.com/dleavitt).
 
 ## [v6.1.1] - February 6, 2022
 
@@ -82,7 +87,8 @@ Changes since last non-beta release.
 ## v5.4.3 and prior changes from rails/webpacker
 See [CHANGELOG.md in rails/webpacker (up to v5.4.3)](https://github.com/rails/webpacker/blob/master/CHANGELOG.md) 
 
-[Unreleased]: https://github.com/shakacode/shakapacker/compare/v6.1.1...master
+[Unreleased]: https://github.com/shakacode/shakapacker/compare/v6.2.0...master
+[v6.2.0]: https://github.com/shakacode/shakapacker/compare/v6.1.1...v6.2.0
 [v6.1.1]: https://github.com/shakacode/shakapacker/compare/v6.1.0...v6.1.1
 [v6.1.0]: https://github.com/shakacode/shakapacker/compare/v6.0.2...v6.1.0
 [v6.0.2]: https://github.com/shakacode/shakapacker/compare/v6.0.1...v6.0.2
