@@ -106,12 +106,13 @@ class HelperTest < ActionView::TestCase
       javascript_pack_tag("application", "bootstrap")
   end
 
-  def test_javascript_pack_with_no_defer_tag
-    assert_equal \
-      %(<script src="/packs/vendors~application~bootstrap-c20632e7baf2c81200d3.chunk.js"></script>\n) +
+  SCRIPTS_APPLICATION_BOOTSTRAP = %(<script src="/packs/vendors~application~bootstrap-c20632e7baf2c81200d3.chunk.js"></script>\n) +
         %(<script src="/packs/vendors~application-e55f2aae30c07fb6d82a.chunk.js"></script>\n) +
         %(<script src="/packs/application-k344a6d59eef8632c9d1.js"></script>\n) +
-        %(<script src="/packs/bootstrap-300631c4f0e0f9c865bc.js"></script>),
+        %(<script src="/packs/bootstrap-300631c4f0e0f9c865bc.js"></script>)
+
+  def test_javascript_pack_with_no_defer_tag
+    assert_equal SCRIPTS_APPLICATION_BOOTSTRAP,
       javascript_pack_tag("application", "bootstrap", defer: false)
   end
 
@@ -132,15 +133,10 @@ class HelperTest < ActionView::TestCase
   end
 
   def test_javascript_pack_tag_multiple_invocations
-    error = assert_raises do
-      javascript_pack_tag(:application)
-      javascript_pack_tag(:bootstrap)
-    end
+    r = javascript_pack_tag(:application, defer: false)
+    r += "\n".html_safe + javascript_pack_tag(:bootstrap, defer: false)
 
-    assert_equal \
-      "To prevent duplicated chunks on the page, you should call javascript_pack_tag only once on the page. " +
-        "Please refer to https://github.com/shakacode/shakapacker/blob/master/README.md#usage for the usage guide",
-      error.message
+    assert_equal SCRIPTS_APPLICATION_BOOTSTRAP, r
   end
 
   def application_stylesheet_chunks

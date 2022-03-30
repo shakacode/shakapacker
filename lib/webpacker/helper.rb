@@ -101,16 +101,18 @@ module Webpacker::Helper
       @emitted = {}
     end
     includetags = "".html_safe
+    newline = "".html_safe
     sources = sources_from_manifest_entrypoints(names, type: :javascript)
     sources.each do |source|
-      if @emitted.keys.include?(source) && @emitted[source][:defer] != defer
+      if @emitted.key?(source) && @emitted[source][:defer] != defer
         raise "Chunk #{source} already emitted with defer value "\
           "#{@emitted[source][:defer]}. Trying to emit with different "\
           "defer value is not allowed."
-      elsif !@emitted.keys.include?(source)
-        includetags += javascript_include_tag(source, options)
+      elsif !@emitted.key?(source)
+        includetags += newline + javascript_include_tag(source, options)
       end
-      @emitted[source] = {defer: defer}
+      @emitted[source] = { defer: defer }
+      newline = "\n".html_safe
     end
     return includetags
   end
