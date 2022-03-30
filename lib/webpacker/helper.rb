@@ -96,14 +96,23 @@ module Webpacker::Helper
   #   <%= javascript_pack_tag 'calendar' %>
   #   <%= javascript_pack_tag 'map' %>
   def javascript_pack_tag(*names, defer: true, **options)
-    if @javascript_pack_tag_loaded
-      raise "To prevent duplicated chunks on the page, you should call javascript_pack_tag only once on the page. " \
-      "Please refer to https://github.com/shakacode/shakapacker/blob/master/README.md#usage for the usage guide"
+    options[:defer] = defer
+    if !defined?(@emitted)
+      @emitted = {}
     end
-
-    @javascript_pack_tag_loaded = true
-
-    javascript_include_tag(*sources_from_manifest_entrypoints(names, type: :javascript), **options.tap { |o| o[:defer] = defer })
+    includetags = "".html_safe
+    sources = sources_from_manifest_entrypoints(names, type: :javascript)
+    sources.each do |source|
+      if @emitted.keys.include?(source) && @emitted[source][:defer] != defer
+        raise "Chunk #{source} already emitted with defer value "\
+          "#{@emitted[source][:defer]}. Trying to emit with different "\
+          "defer value is not allowed."
+      elsif !@emitted.keys.include?(source)
+        includetags += javascript_include_tag(source, options)
+      end
+      @emitted[source] = {defer: defer}
+    end
+    return includetags
   end
 
   # Creates a link tag, for preloading, that references a given Webpacker asset.
