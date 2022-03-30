@@ -288,7 +288,7 @@ You can use environment variables as options supported by [webpack-dev-server](h
 WEBPACKER_DEV_SERVER_PORT=4305 WEBPACKER_DEV_SERVER_HOST=example.com WEBPACKER_DEV_SERVER_INLINE=true WEBPACKER_DEV_SERVER_HOT=false ./bin/webpacker-dev-server
 ```
 
-By default, the webpack dev server listens on `localhost:3035` in development for security purposes. However, if you want your app to be available on port 4035 over local LAN IP or a VM instance like vagrant, you can set the `host` when running `./bin/webpacker-dev-server` binstub:
+By default, the webpack dev server listens on `localhost:3035` in development for security purposes. However, if you want your app to be available on port 4035 over local LAN IP or a VM instance like vagrant, you can set the `port` and `host` when running `./bin/webpacker-dev-server` binstub:
 
 ```bash
 WEBPACKER_DEV_SERVER_PORT=4305 WEBPACKER_DEV_SERVER_HOST=0.0.0.0 ./bin/webpacker-dev-server
