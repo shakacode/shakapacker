@@ -87,34 +87,58 @@ module Webpacker::Helper
   #   <script src="/packs/map~runtime-16838bab065ae1e314.chunk.js" data-turbolinks-track="reload" defer="true"></script>
   #   <script src="/packs/map-16838bab065ae1e314.chunk.js" data-turbolinks-track="reload" defer="true"></script>
   #
-  # DO:
-  #
-  #   <%= javascript_pack_tag 'calendar', 'map' %>
-  #
-  # DON'T:
-  #
-  #   <%= javascript_pack_tag 'calendar' %>
-  #   <%= javascript_pack_tag 'map' %>
+  # There should be at least one javascript_pack_tag in the main template
+  # ActionView will call first partial templates and after the main one
+  # We don't emit chunks in partials, just in the main template
+  # In partial we just queue what has to be emitted in the main
+ 
   def javascript_pack_tag(*names, defer: true, **options)
+
     options[:defer] = defer
     if !defined?(@emitted)
       @emitted = {}
     end
-    includetags = "".html_safe
-    newline = "".html_safe
-    sources = sources_from_manifest_entrypoints(names, type: :javascript)
-    sources.each do |source|
-      if @emitted.key?(source) && @emitted[source][:defer] != defer
-        raise "Chunk #{source} already emitted with defer value "\
-          "#{@emitted[source][:defer]}. Trying to emit with different "\
-          "defer value is not allowed."
-      elsif !@emitted.key?(source)
-        includetags += newline + javascript_include_tag(source, options)
-      end
-      @emitted[source] = { defer: defer }
-      newline = "\n".html_safe
+    if !defined?(@queue)
+      @queue = []
     end
-    return includetags
+
+    @includetags = "".html_safe
+    @newline = "".html_safe
+
+    def emit_without_repetition(source, defer, options)
+        if @emitted.key?(source) && @emitted[source][:defer] != defer
+          raise "Chunk #{source} already emitted with defer value "\
+            "#{@emitted[source][:defer]}. Trying to emit with different "\
+            "defer value is a conflict."
+        elsif !@emitted.key?(source)
+          @includetags += @newline + javascript_include_tag(source, options)
+          @newline = "\n".html_safe
+          @emitted[source] = { defer: defer }
+        end
+    end
+
+    # Determine if we are in a partial template or in the main one
+    partial = caller.filter{|c| c.include?('partial_renderer')}.count > 0
+
+
+    #puts names, partial;
+    #debugger
+    sources = sources_from_manifest_entrypoints(names, type: :javascript)
+
+    if partial
+      sources.each do |source|
+        @queue |= [source]
+      end
+    else # main template (layout?)
+      sources.each do |source|
+        emit_without_repetition(source, defer, options)
+      end
+      @queue.each do |source|
+        emit_without_repetition(source, defer, options)
+      end
+    end 
+
+    return @includetags
   end
 
   # Creates a link tag, for preloading, that references a given Webpacker asset.
