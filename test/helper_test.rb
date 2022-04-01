@@ -115,6 +115,16 @@ class HelperTest < ActionView::TestCase
       javascript_pack_tag("application", "bootstrap", defer: false)
   end
 
+  def test_javascript_pack_with_append
+    append_javascript_pack_tag("bootstrap", defer: false)
+    assert_equal \
+      %(<script src="/packs/vendors~application~bootstrap-c20632e7baf2c81200d3.chunk.js" defer="defer"></script>\n) +
+        %(<script src="/packs/vendors~application-e55f2aae30c07fb6d82a.chunk.js" defer="defer"></script>\n) +
+        %(<script src="/packs/application-k344a6d59eef8632c9d1.js" defer="defer"></script>\n) +
+        %(<script src="/packs/bootstrap-300631c4f0e0f9c865bc.js"></script>),
+      javascript_pack_tag("application")
+  end
+
   def test_javascript_pack_tag_splat
     assert_equal \
       %(<script src="/packs/vendors~application~bootstrap-c20632e7baf2c81200d3.chunk.js" defer="defer"></script>\n) +
