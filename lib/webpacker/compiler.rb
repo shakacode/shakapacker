@@ -109,7 +109,7 @@ class Webpacker::Compiler
 
     def default_watched_paths
       [
-        *config.additional_paths,
+        *config.additional_paths.map { |path| "#{path}/**/*" },
         "#{config.source_path}/**/*",
         "yarn.lock", "package.json",
         "config/webpack/**/*"
