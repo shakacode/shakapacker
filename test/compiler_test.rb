@@ -1,18 +1,18 @@
 require "test_helper"
 
 class CompilerTest < Minitest::Test
-  def remove_compilation_digest_path
-    Webpacker.compiler.send(:compilation_digest_path).tap do |path|
+  def remove_compilation_timestamp_path
+    Webpacker.compiler.send(:compilation_timestamp_path).tap do |path|
       path.delete if path.exist?
     end
   end
 
   def setup
-    remove_compilation_digest_path
+    remove_compilation_timestamp_path
   end
 
   def teardown
-    remove_compilation_digest_path
+    remove_compilation_timestamp_path
   end
 
   def test_custom_environment_variables
@@ -52,8 +52,8 @@ class CompilerTest < Minitest::Test
     end
   end
 
-  def test_compilation_digest_path
-    assert_equal Webpacker.compiler.send(:compilation_digest_path).basename.to_s, "last-compilation-digest-#{Webpacker.env}"
+  def test_compilation_timestamp_path
+    assert_equal Webpacker.compiler.send(:compilation_timestamp_path).basename.to_s, "last-compilation-timestamp-#{Webpacker.env}"
   end
 
   def test_external_env_variables
