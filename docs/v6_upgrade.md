@@ -2,6 +2,8 @@
 
 There are several substantial changes in Shakapacker v6 that you need to manually account for when coming from Webpacker 5. This guide will help you through it.
 
+[ShakaCode](https://www.shakacode.com) offers suppport for upgrading from webpacker or using Shakapacker. If interested, contact [justin@shakacode.com](mailto:justin@shakacode.com).
+
 ## Webpacker/Shakapacker has become a slimmer wrapper around Webpack
 
 By default, Webpacker 6 is focused on compiling and bundling JavaScript. This pairs with the existing asset pipeline in Rails that's setup to transpile CSS and static images using [Sprockets](https://github.com/rails/sprockets). For most developers, that's the recommended combination. But if you'd like to use Webpacker for CSS and static assets as well, please see [integrations](https://github.com/shakacode/shakapacker#integrations) for more information.
