@@ -17,13 +17,15 @@ Webpacker makes it easy to use the JavaScript pre-processor and bundler [Webpack
 to manage application-like JavaScript in Rails. It can coexist with the asset pipeline,
 leaving Webpack responsible solely for app-like JavaScript, or it can be used exclusively, making it also responsible for images, fonts, and CSS.
 
-Check out 6.1.1 for [SWC](https://swc.rs/) and [esbuild-loader](https://github.com/privatenumber/esbuild-loader) support! They are faster than Babel!
+Check out 6.1.1+ for [SWC](https://swc.rs/) and [esbuild-loader](https://github.com/privatenumber/esbuild-loader) support! They are faster than Babel!
 
 See a comparison of [webpacker with jsbundling-rails](https://github.com/rails/jsbundling-rails/blob/main/docs/comparison_with_webpacker.md).
 
 Discussion forum and Slack to discuss debugging and troubleshooting tips. Please open issues for bugs and feature requests:
 1. [Discussions tab](https://github.com/shakacode/shakapacker/discussions)
 2. [Slack discussion channel](https://reactrails.slack.com/join/shared_invite/enQtNjY3NTczMjczNzYxLTlmYjdiZmY3MTVlMzU2YWE0OWM0MzNiZDI0MzdkZGFiZTFkYTFkOGVjODBmOWEyYWQ3MzA2NGE1YWJjNmVlMGE)
+
+[ShakaCode](https://www.shakacode.com) offers suppport for upgrading from webpacker or using Shakapacker. If interested, contact [justin@shakacode.com](mailto:justin@shakacode.com). ShakaCode is [hiring passionate engineers](https://jobs.lever.co/shakacode/3bdbfdb3-4495-4611-a279-01dddb351abe) that love open source.
 
 ---
 
