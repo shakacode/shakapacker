@@ -93,7 +93,7 @@ you don't need to do anything extra for Webpacker, it just works.
 
 ### Assets compiling on every deployment even if JavaScript and CSS files are not changed
 
-Make sure you have `public/packs` and `node_modules` in `:linked_dirs`
+Make sure you have your public outputh path (default `public/packs`), the webpacker cache path (default `tmp/webpacker`) and `node_modules` in `:linked_dirs`
 
 ```ruby
 append :linked_dirs, "log", "tmp/pids", "tmp/cache", "tmp/sockets", "tmp/webpacker", "public/packs", ".bundle", "node_modules"
