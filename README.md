@@ -24,6 +24,7 @@ See a comparison of [webpacker with jsbundling-rails](https://github.com/rails/j
 Discussion forum and Slack to discuss debugging and troubleshooting tips. Please open issues for bugs and feature requests:
 1. [Discussions tab](https://github.com/shakacode/shakapacker/discussions)
 2. [Slack discussion channel](https://reactrails.slack.com/join/shared_invite/enQtNjY3NTczMjczNzYxLTlmYjdiZmY3MTVlMzU2YWE0OWM0MzNiZDI0MzdkZGFiZTFkYTFkOGVjODBmOWEyYWQ3MzA2NGE1YWJjNmVlMGE)
+3. [Tweets with tag `#shakapacker`](https://twitter.com/hashtag/shakapacker?src=hashtag_click)
 
 [ShakaCode](https://www.shakacode.com) offers suppport for upgrading from webpacker or using Shakapacker. If interested, contact [justin@shakacode.com](mailto:justin@shakacode.com). ShakaCode is [hiring passionate engineers](https://jobs.lever.co/shakacode/3bdbfdb3-4495-4611-a279-01dddb351abe) that love open source.
 
