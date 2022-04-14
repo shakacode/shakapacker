@@ -16,7 +16,6 @@ class Webpacker::Commands
   #   age=600.
   #
   def clean(count = 2, age = 3600)
-    return unless config.webpacker_precompile?
     if config.public_output_path.exist? && config.manifest_path.exist?
       packs
         .map do |paths|
@@ -41,18 +40,20 @@ class Webpacker::Commands
   end
 
   def clobber
-    return unless config.webpacker_precompile?
     config.public_output_path.rmtree if config.public_output_path.exist?
     config.cache_path.rmtree if config.cache_path.exist?
   end
 
   def bootstrap
-    return unless config.webpacker_precompile?
     manifest.refresh
   end
 
+  def gatekeeper(command_string)
+    return undefined unless config.webpacker_precompile?
+    Webpacker.send(*command_string.split)
+  end
+
   def compile
-    return unless config.webpacker_precompile?
     compiler.compile.tap do |success|
       manifest.refresh if success
     end

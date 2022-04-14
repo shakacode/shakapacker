@@ -14,7 +14,7 @@ namespace :webpacker do
   task compile: ["webpacker:verify_install", :environment] do
     Webpacker.with_node_env(ENV.fetch("NODE_ENV", "production")) do
       Webpacker.ensure_log_goes_to_stdout do
-        if Webpacker.compile
+        if Webpacker.gatekeeper('compile')
           # Successful compilation!
         else
           # Failed compilation
