@@ -100,5 +100,17 @@ class ConfigurationTest < Webpacker::Test
     with_rails_env("test") do
       refute Webpacker.config.ensure_consistent_versioning?
     end
+
+    def test_webpacker_precompile
+      assert @config.webpacker_precompile
+
+      ENV["WEBPACKER_PRECOMPILE"] = "false"
+
+      refute Webpacker.config.webpacker_precompile?
+
+      ENV["WEBPACKER_PRECOMPILE"] = "yes"
+
+      assert Webpacker.config.webpacker_precompile?
+    end
   end
 end
