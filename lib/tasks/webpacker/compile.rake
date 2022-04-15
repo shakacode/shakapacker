@@ -34,7 +34,7 @@ namespace :webpacker do
 end
 
 # Compile packs after we've compiled all other assets during precompilation
-skip_webpacker_precompile = %w(no false n f).include?(ENV["WEBPACKER_PRECOMPILE"]) || Webpacker.config.dont_enhance_asset_precompile
+skip_webpacker_precompile = %w(no false n f).include?(ENV["WEBPACKER_PRECOMPILE"]) || Webpacker.config.dont_enhance_asset_precompile?
 
 unless skip_webpacker_precompile
   if Rake::Task.task_defined?("assets:precompile")

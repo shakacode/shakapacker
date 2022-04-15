@@ -8,7 +8,7 @@ namespace :webpacker do
   end
 end
 
-skip_webpacker_clobber = %w(no false n f).include?(ENV["WEBPACKER_PRECOMPILE"]) || Webpacker.config.dont_enhance_asset_precompile
+skip_webpacker_clobber = %w(no false n f).include?(ENV["WEBPACKER_PRECOMPILE"]) || Webpacker.config.dont_enhance_asset_precompile?
 
 unless skip_webpacker_clobber
   # Run clobber if the assets:clobber is run
