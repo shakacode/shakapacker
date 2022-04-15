@@ -33,10 +33,7 @@ namespace :webpacker do
   end
 end
 
-# Compile packs after we've compiled all other assets during precompilation
-skip_webpacker_precompile = Webpacker.config.skip_webpacker_precompile?
-
-unless skip_webpacker_precompile
+if Webpacker.config.webpacker_precompile?
   if Rake::Task.task_defined?("assets:precompile")
     enhance_assets_precompile
   else
