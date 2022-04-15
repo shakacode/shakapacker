@@ -27,6 +27,10 @@ class Webpacker::Configuration
     fetch(:ensure_consistent_versioning)
   end
 
+  def dont_enhance_asset_precompile?
+    fetch(:dont_enhance_asset_precompile)
+  end
+
   def source_path
     root_path.join(fetch(:source_path))
   end

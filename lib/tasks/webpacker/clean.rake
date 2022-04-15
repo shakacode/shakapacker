@@ -11,7 +11,7 @@ namespace :webpacker do
   end
 end
 
-skip_webpacker_clean = %w(no false n f).include?(ENV["WEBPACKER_PRECOMPILE"])
+skip_webpacker_clean = %w(no false n f).include?(ENV["WEBPACKER_PRECOMPILE"]) || Webpacker.config.dont_enhance_asset_precompile
 
 unless skip_webpacker_clean
   # Run clean if the assets:clean is run
