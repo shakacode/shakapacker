@@ -19,25 +19,19 @@ class Webpacker::Compiler
 
   def compile
     if stale?
-      run_webpack.tap do |success|
-        # We used to only record the timestamp on success
-        # However, the output file is still written on error, meaning that the timestamp should still be updated.
-        # If it's not, you can end up in a situation where a recompile doesn't take place when it should.
-        # See https://github.com/rails/webpacker/issues/2113
-        record_latest_modified_timestamp
-      end
+      run_webpack
     else
       logger.debug "Everything's up-to-date. Nothing to do"
       true
     end
   end
 
-  # Returns true if all the compiled packs are up to date with the underlying asset files.
+  # Returns true if manifest file mtime is newer than the timestamp of the last modified watched file
   def fresh?
-    last_compilation_timestamp&.== latest_modified_timestamp
+    manifest_mtime > latest_modified_timestamp
   end
 
-  # Returns true if the compiled packs are out of date with the underlying asset files.
+  # Returns true if manifest file mtime is older than the timestamp of the last modified watched file
   def stale?
     !fresh?
   end
@@ -45,9 +39,8 @@ class Webpacker::Compiler
   private
     attr_reader :webpacker
 
-    def last_compilation_timestamp
-      compilation_timestamp_path.read if compilation_timestamp_path.exist? && config.manifest_path.exist?
-    rescue Errno::ENOENT, Errno::ENOTDIR
+    def manifest_mtime
+      config.manifest_path.exist? ? File.mtime(config.manifest_path).to_i : 0
     end
 
     def latest_modified_timestamp
@@ -66,14 +59,8 @@ class Webpacker::Compiler
       expanded_paths = [*default_watched_paths, *watched_paths].map do |path|
         root_path.join(path)
       end
-      files = Dir[*expanded_paths].reject { |f| File.directory?(f) }
-      latest_modified = files.max_by { |f| File.mtime(f) }
-      File.mtime(latest_modified).to_i.to_s
-    end
-
-    def record_latest_modified_timestamp
-      config.cache_path.mkpath
-      compilation_timestamp_path.write(latest_modified_timestamp)
+      latest_modified = Dir[*expanded_paths].max_by { |f| File.mtime(f) }
+      File.mtime(latest_modified).to_i
     end
 
     def optionalRubyRunner
@@ -108,15 +95,11 @@ class Webpacker::Compiler
 
     def default_watched_paths
       [
-        *config.additional_paths.map { |path| "#{path}/**/*" },
-        "#{config.source_path}/**/*",
+        *config.additional_paths.map { |path| "#{path}{,/**/*}" },
+        "#{config.source_path}{,/**/*}",
         "yarn.lock", "package.json",
-        "config/webpack/**/*"
+        "config/webpack{,/**/*}"
       ].freeze
-    end
-
-    def compilation_timestamp_path
-      config.cache_path.join("last-compilation-timestamp-#{webpacker.env}")
     end
 
     def webpack_env
