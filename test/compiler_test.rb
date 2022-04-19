@@ -1,20 +1,6 @@
 require "test_helper"
 
 class CompilerTest < Minitest::Test
-  def remove_compilation_timestamp_path
-    Webpacker.compiler.send(:compilation_timestamp_path).tap do |path|
-      path.delete if path.exist?
-    end
-  end
-
-  def setup
-    remove_compilation_timestamp_path
-  end
-
-  def teardown
-    remove_compilation_timestamp_path
-  end
-
   def test_custom_environment_variables
     assert_nil Webpacker.compiler.send(:webpack_env)["FOO"]
     Webpacker.compiler.env["FOO"] = "BAR"
@@ -50,10 +36,6 @@ class CompilerTest < Minitest::Test
       Webpacker.compiler.compile
       assert Webpacker.compiler.fresh?
     end
-  end
-
-  def test_compilation_timestamp_path
-    assert_equal Webpacker.compiler.send(:compilation_timestamp_path).basename.to_s, "last-compilation-timestamp-#{Webpacker.env}"
   end
 
   def test_external_env_variables
