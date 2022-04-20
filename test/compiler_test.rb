@@ -14,9 +14,7 @@ class CompilerTest < Minitest::Test
   end
 
   def with_stubs(latest_timestamp:, manifest_exists: true, &proc)
-    @latest_timestamp = latest_timestamp
-
-    Webpacker.compiler.stub :latest_modified_timestamp, @latest_timestamp do
+    Webpacker.compiler.stub :latest_modified_timestamp, latest_timestamp do
       FileTest.stub :exist?, manifest_exists do
         File.stub :mtime, @manifest_timestamp do
           yield proc
