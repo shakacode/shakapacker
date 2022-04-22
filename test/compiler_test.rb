@@ -13,11 +13,11 @@ class CompilerTest < Minitest::Test
     @manifest_timestamp = Time.parse("2021-01-01 12:34:56 UTC")
   end
 
-  def with_stubs(latest_timestamp:, manifest_exists: true, &proc)
+  def with_stubs(latest_timestamp:, manifest_exists: true)
     Webpacker.compiler.stub :latest_modified_timestamp, latest_timestamp do
       FileTest.stub :exist?, manifest_exists do
         File.stub :mtime, @manifest_timestamp do
-          yield proc
+          yield
         end
       end
     end
