@@ -7,6 +7,10 @@ Changes since last non-beta release.
 
 *Please add entries here for your pull requests that are not yet released.*
 
+## [v6.2.1] - April 15, 2022
+### Fixed
+- Put back config.public_manifest_path, removed in 6.2.0 in PR 78. [PR 104](https://github.com/shakacode/shakapacker/pull/104) by [justin808](https://github.com/justin808).
+
 ## [v6.2.0] - March 22, 2022
 
 ### Added

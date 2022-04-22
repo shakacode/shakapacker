@@ -2,6 +2,8 @@
 
 There are several substantial changes in Shakapacker v6 that you need to manually account for when coming from Webpacker 5. This guide will help you through it.
 
+[ShakaCode](https://www.shakacode.com) offers suppport for upgrading from webpacker or using Shakapacker. If interested, contact [justin@shakacode.com](mailto:justin@shakacode.com).
+
 ## Webpacker/Shakapacker has become a slimmer wrapper around Webpack
 
 By default, Webpacker 6 is focused on compiling and bundling JavaScript. This pairs with the existing asset pipeline in Rails that's setup to transpile CSS and static images using [Sprockets](https://github.com/rails/sprockets). For most developers, that's the recommended combination. But if you'd like to use Webpacker for CSS and static assets as well, please see [integrations](https://github.com/shakacode/shakapacker#integrations) for more information.
@@ -17,7 +19,7 @@ See an example migration here: [PR 27](https://github.com/shakacode/react_on_rai
 _If you're on webpacker v5, follow below steps to get to v6.0.0.rc.6 first._
 
 1. Change the gem name from `webpacker` to `shakapacker` and the NPM package from `@rails/webpacker` to `shakapacker`.
-1. Install the peer dependencies. Run `yarn add @babel/core @babel/plugin-transform-runtime @babel/preset-env @babel/runtime babel-loader compression-webpack-plugin terser-webpack-plugin webpack webpack-assets-manifest webpack-cli webpack-merge webpack-sources webpack-dev-server`
+1. Install the peer dependencies. Run `yarn add @babel/core @babel/plugin-transform-runtime @babel/preset-env @babel/runtime babel-loader compression-webpack-plugin terser-webpack-plugin webpack webpack-assets-manifest webpack-cli webpack-merge webpack-sources webpack-dev-server`. You may have old versions of libraries. Run `yarn install` and check for warnings like `warning " > shakapacker@6.1.1" has incorrect peer dependency "compression-webpack-plugin@^9.0.0"` and `file-loader@1.1.11" has incorrect peer dependency "webpack@^2.0.0 || ^3.0.0 || ^4.0.0"`. In other words, warnings like these are **serious** and will cause considerable confusion if not respected.
 1. Update any scripts that called `bin/webpack` or `bin/webpack-dev-server` to `bin/webpacker` or `bin/webpacker-dev-server`
 1. Update your webpack config for a single config file, `config/webpack/webpack.config.js`. If you want to use the prior style of having a separate file for each NODE_ENV, you can use this shim for `config/webpack/webpack.config.js`. WARNING, previously, if you did not set `NODE_ENV`, `NODE_ENV` defaulted to `development`. Thus, you might expect `config/webpack/development.js` to run, but you'll instead be using the `config/webpack/RAILS_ENV.js`
    ```js

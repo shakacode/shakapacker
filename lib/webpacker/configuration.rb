@@ -47,6 +47,10 @@ class Webpacker::Configuration
     end
   end
 
+  def public_manifest_path
+    manifest_path
+  end
+
   def public_path
     root_path.join(fetch(:public_root_path))
   end

@@ -8,7 +8,7 @@ class ManifestTest < Minitest::Test
       Webpacker.manifest.lookup!(asset_file)
     end
 
-    assert_match "Webpacker can't find #{asset_file} in #{manifest_path}", error.message
+    assert_match "Shakapacker can't find #{asset_file} in #{manifest_path}", error.message
   end
 
   def test_lookup_with_type_exception!
@@ -18,7 +18,7 @@ class ManifestTest < Minitest::Test
       Webpacker.manifest.lookup!(asset_file, type: :javascript)
     end
 
-    assert_match "Webpacker can't find #{asset_file}.js in #{manifest_path}", error.message
+    assert_match "Shakapacker can't find #{asset_file}.js in #{manifest_path}", error.message
   end
 
   def test_lookup_success!
@@ -60,7 +60,7 @@ class ManifestTest < Minitest::Test
       Webpacker.manifest.lookup_pack_with_chunks!(asset_file, type: :javascript)
     end
 
-    assert_match "Webpacker can't find #{asset_file}.js in #{manifest_path}", error.message
+    assert_match "Shakapacker can't find #{asset_file}.js in #{manifest_path}", error.message
   end
 
   def test_lookup_entrypoint

@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    shakapacker (6.2.0)
+    shakapacker (6.2.1)
       activesupport (>= 5.2)
       rack-proxy (>= 0.6.1)
       railties (>= 5.2)
