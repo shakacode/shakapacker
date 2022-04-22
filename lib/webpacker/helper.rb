@@ -101,11 +101,11 @@ module Webpacker::Helper
       "Please refer to https://github.com/shakacode/shakapacker/blob/master/README.md#usage for the usage guide"
     end
 
-    @javascript_pack_tag_loaded = true
-
     append_javascript_pack_tag(*names, defer: defer)
     non_deferred = sources_from_manifest_entrypoints(javascript_pack_tag_queue[:non_deferred], type: :javascript)
     deferred = sources_from_manifest_entrypoints(javascript_pack_tag_queue[:deferred], type: :javascript) - non_deferred
+
+    @javascript_pack_tag_loaded = true
 
     capture do
       concat javascript_include_tag(*deferred, **options.tap { |o| o[:defer] = true })
@@ -162,6 +162,11 @@ module Webpacker::Helper
   end
 
   def append_javascript_pack_tag(*names, defer: true)
+    if @javascript_pack_tag_loaded
+      raise "You can only call append_javascript_pack_tag before javascript_pack_tag helper. " \
+      "Please refer to https://github.com/shakacode/shakapacker/blob/master/README.md#usage for the usage guide"
+    end
+
     hash_key = defer ? :deferred : :non_deferred
     javascript_pack_tag_queue[hash_key] |= names
   end
