@@ -216,7 +216,18 @@ However, you may use multiple calls to stylesheet_pack_tag if, say, you require 
 <%= stylesheet_pack_tag 'print', media: 'print' %>
 ```
 
-If you need to setup the pack name args in partials, [see this discussion](https://github.com/shakacode/shakapacker/issues/39).
+You can also use `append_javascript_pack_tag` helper to bundle additional tags together when calling `javascript_pack_tag`:
+
+```erb
+<% append_javascript_pack_tag 'calendar', 'map' %>
+<%= javascript_pack_tag 'application' %>
+```
+
+In the example above, `calendar` and `map` tags will be bundled together with `application` and deduplicated once `javascript_pack_tag` is used.
+
+**Important:** `append_javascript_pack_tag` can be used anywhere in your application as long as it is executed BEFORE the `javascript_pack_tag`. If you attempt to call `append_javascript_pack_tag` helper after `javascript_pack_tag`, an error will be raised. You should aim to have only single `javascript_pack_tag` invocation in your page load.
+
+For alternative options of setting the additional packs, [see this discussion](https://github.com/shakacode/shakapacker/issues/39).
 
 If you want to link a static asset for `<img />` tag, you can use the `asset_pack_path` helper:
 ```erb
