@@ -101,9 +101,17 @@ module Webpacker::Helper
       "Please refer to https://github.com/shakacode/shakapacker/blob/master/README.md#usage for the usage guide"
     end
 
+    append_javascript_pack_tag(*names, defer: defer)
+    non_deferred = sources_from_manifest_entrypoints(javascript_pack_tag_queue[:non_deferred], type: :javascript)
+    deferred = sources_from_manifest_entrypoints(javascript_pack_tag_queue[:deferred], type: :javascript) - non_deferred
+
     @javascript_pack_tag_loaded = true
 
-    javascript_include_tag(*sources_from_manifest_entrypoints(names, type: :javascript), **options.tap { |o| o[:defer] = defer })
+    capture do
+      concat javascript_include_tag(*deferred, **options.tap { |o| o[:defer] = true })
+      concat "\n" if non_deferred.any? && deferred.any?
+      concat javascript_include_tag(*non_deferred, **options.tap { |o| o[:defer] = false })
+    end
   end
 
   # Creates a link tag, for preloading, that references a given Webpacker asset.
@@ -153,7 +161,24 @@ module Webpacker::Helper
     stylesheet_link_tag(*sources_from_manifest_entrypoints(names, type: :stylesheet), **options)
   end
 
+  def append_javascript_pack_tag(*names, defer: true)
+    if @javascript_pack_tag_loaded
+      raise "You can only call append_javascript_pack_tag before javascript_pack_tag helper. " \
+      "Please refer to https://github.com/shakacode/shakapacker/blob/master/README.md#usage for the usage guide"
+    end
+
+    hash_key = defer ? :deferred : :non_deferred
+    javascript_pack_tag_queue[hash_key] |= names
+  end
+
   private
+
+    def javascript_pack_tag_queue
+      @javascript_pack_tag_queue ||= {
+        deferred: [],
+        non_deferred: []
+      }
+    end
 
     def sources_from_manifest_entrypoints(names, type:)
       names.map { |name| current_webpacker_instance.manifest.lookup_pack_with_chunks!(name.to_s, type: type) }.flatten.uniq
