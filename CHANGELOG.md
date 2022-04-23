@@ -14,6 +14,16 @@ Changes since last non-beta release.
 
   This change may increase the file size of your bundles, and may change some behavior in your app if your code touches upon one of the edge cases where Loose mode differs from native JavaScript. There are notes in the linked PR about how to turn Loose mode back on if you need to, but consider migrating to Compiler Assumptions when you can. If you have already customized your babel config, this change probably won't affect you.
 
+- Use last modified timestamps rather than file digest to determine compiler freshness. [PR 97](https://github.com/shakacode/shakapacker/pull/94) by [tomdracz](https://github.com/tomdracz).
+
+  Rather than calculating SHA digest of all the files in the paths watched by the compiler, we are now comparing the modified time of the `manifest.json` file versues the latest modified timestamp of files and directories in watched paths. Unlike calculating digest, which only looked at the files, the new calculation also considers directory timestamps, including the parent ones (i.e. `config.source_path` folder timestamp will be checked together will timestamps of all files and directories inside of it).
+
+  This change should result in improved compiler checks performance but might be breaking for certain setups and edge cases. If you encounter any issues, please report them at https://github.com/shakacode/shakapacker/issues.
+
+### Added
+- Adds `webpacker_precompile` setting to `webpacker.yml` to allow controlling precompile behaviour, similar to existing `ENV["WEBPACKER_PRECOMPILE"]` variable. [PR 102](https://github.com/shakacode/shakapacker/pull/102) by [Judahmeek](https://github.com/Judahmeek).
+- Adds `append_javascript_pack_tag` helper. Allows for easier usage and coordination of multiple javascript packs. [PR 94](https://github.com/shakacode/shakapacker/pull/94) by [tomdracz](https://github.com/tomdracz).
+
 ## [v6.2.1] - April 15, 2022
 ### Fixed
 - Put back config.public_manifest_path, removed in 6.2.0 in PR 78. [PR 104](https://github.com/shakacode/shakapacker/pull/104) by [justin808](https://github.com/justin808).
@@ -98,7 +108,8 @@ Changes since last non-beta release.
 ## v5.4.3 and prior changes from rails/webpacker
 See [CHANGELOG.md in rails/webpacker (up to v5.4.3)](https://github.com/rails/webpacker/blob/master/CHANGELOG.md) 
 
-[Unreleased]: https://github.com/shakacode/shakapacker/compare/v6.2.0...master
+[Unreleased]: https://github.com/shakacode/shakapacker/compare/v6.2.1...master
+[v6.2.1]: https://github.com/shakacode/shakapacker/compare/v6.2.0...v6.2.1
 [v6.2.0]: https://github.com/shakacode/shakapacker/compare/v6.1.1...v6.2.0
 [v6.1.1]: https://github.com/shakacode/shakapacker/compare/v6.1.0...v6.1.1
 [v6.1.0]: https://github.com/shakacode/shakapacker/compare/v6.0.2...v6.1.0
