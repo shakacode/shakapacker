@@ -261,6 +261,8 @@ Webpacker ships with two binstubs: `./bin/webpacker` and `./bin/webpacker-dev-se
 
 In development, Webpacker compiles on demand rather than upfront by default. This happens when you refer to any of the pack assets using the Webpacker helper methods. This means that you don't have to run any separate processes. Compilation errors are logged to the standard Rails log. However, this auto-compilation happens when a web request is made that requires an updated webpack build, not when files change. Thus, that can be painfully slow for front-end development in this default way. Instead, you should either run the `bin/webpacker --watch` or run `./bin/webpacker-dev-server`
 
+**Note:** If you are not using webpack dev server, your packs will be served by Rails public file server. If you've enabled caching (Rails application `config.action_controller.perform_caching` setting), your changes will likely not be picked up due to `Cache-Control` header being set and assets being cached in browser memory. For more details see the [issue #88](https://github.com/shakacode/shakapacker/issues/88).
+
 If you want to use live code reloading, or you have enough JavaScript that on-demand compilation is too slow, you'll need to run `./bin/webpacker-dev-server` or `ruby ./bin/webpacker-dev-server`. Windows users will need to run these commands in a terminal separate from `bundle exec rails s`. This process will watch for changes in the relevant files, defined by `webpacker.yml` configuration settings for `source_path`, `source_entry_path`, and `additional_paths`, and it will then automatically reload the browser to match. This feature is also known as [Hot Module Replacement](https://webpack.js.org/concepts/hot-module-replacement/).
 
 ```bash
