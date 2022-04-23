@@ -258,7 +258,7 @@ If you want to use images in your stylesheets:
 }
 ```
 ### Defer for `javascript_pack_tag`
-Note, the default of "defer" for the `javascript_pack_tag`. You can override that to `false`. If you expose jquery globally with `expose-loader,` by using `import $ from "expose-loader?exposes=$,jQuery!jquery"` in your `app/packs/entrypoints/application.js`, pass the option `defer: false` to your `javascript_pack_tag`.
+Note, the default of "defer" for the `javascript_pack_tag`. You can override that to `false`. If you expose jquery globally with `expose-loader,` by using `import $ from "expose-loader?exposes=$,jQuery!jquery"` in your `app/javascript/application.js`, pass the option `defer: false` to your `javascript_pack_tag`.
 
 ### Server-Side Rendering (SSR)
 
@@ -301,13 +301,13 @@ Once you start this webpack development server, Webpacker will automatically sta
 You can use environment variables as options supported by [webpack-dev-server](https://webpack.js.org/configuration/dev-server/) in the form `WEBPACKER_DEV_SERVER_<OPTION>`. Please note that these environmental variables will always take precedence over the ones already set in the configuration file, and that the _same_ environmental variables must be available to the `rails server` process.
 
 ```bash
-WEBPACKER_DEV_SERVER_HOST=example.com WEBPACKER_DEV_SERVER_INLINE=true WEBPACKER_DEV_SERVER_HOT=false ./bin/webpacker-dev-server
+WEBPACKER_DEV_SERVER_PORT=4305 WEBPACKER_DEV_SERVER_HOST=example.com WEBPACKER_DEV_SERVER_INLINE=true WEBPACKER_DEV_SERVER_HOT=false ./bin/webpacker-dev-server
 ```
 
-By default, the webpack dev server listens on `localhost` in development for security purposes. However, if you want your app to be available over local LAN IP or a VM instance like vagrant, you can set the `host` when running `./bin/webpacker-dev-server` binstub:
+By default, the webpack dev server listens on `localhost:3035` in development for security purposes. However, if you want your app to be available on port 4035 over local LAN IP or a VM instance like vagrant, you can set the `port` and `host` when running `./bin/webpacker-dev-server` binstub:
 
 ```bash
-WEBPACKER_DEV_SERVER_HOST=0.0.0.0 ./bin/webpacker-dev-server
+WEBPACKER_DEV_SERVER_PORT=4305 WEBPACKER_DEV_SERVER_HOST=0.0.0.0 ./bin/webpacker-dev-server
 ```
 
 **Note:** You need to allow webpack-dev-server host as an allowed origin for `connect-src` if you are running your application in a restrict CSP environment (like Rails 5.2+). This can be done in Rails 5.2+ in the CSP initializer `config/initializers/content_security_policy.rb` with a snippet like this:
@@ -486,7 +486,7 @@ Add tsconfig.json
     "moduleResolution": "node",
     "baseUrl": ".",
     "paths": {
-      "*": ["node_modules/*", "app/packs/*"]
+      "*": ["node_modules/*", "app/javascript/*"]
     },
     "sourceMap": true,
     "target": "es5",
@@ -675,13 +675,13 @@ Also, consult the [CHANGELOG](./CHANGELOG.md) for additional upgrade links.
 
 By default, Webpacker ships with simple conventions for where the JavaScript app files and compiled webpack bundles will go in your Rails app. All these options are configurable from `config/webpacker.yml` file.
 
-The configuration for what webpack is supposed to compile by default rests on the convention that every file in `app/packs/entrypoints/*`**(default)** or whatever path you set for `source_entry_path` in the `webpacker.yml` configuration is turned into their own output files (or entry points, as webpack calls it). Therefore you don't want to put anything inside `packs` directory that you do not want to be an entry file. As a rule of thumb, put all files you want to link in your views inside "packs" directory and keep everything else under `app/packs`.
+The configuration for what webpack is supposed to compile by default rests on the convention that every file in `app/javascript/`**(default)** or whatever path you set for `source_entry_path` in the `webpacker.yml` configuration is turned into their own output files (or entry points, as webpack calls it). Therefore you don't want to put any file inside `app/javascript` directory that you do not want to be an entry file. As a rule of thumb, put all files you want to link in your views inside "app/javascript/" directory and keep everything else under subdirectories like `app/javascript/controllers`.
 
-Suppose you want to change the source directory from `app/packs` to `frontend` and output to `assets/packs`. This is how you would do it:
+Suppose you want to change the source directory from `app/javascript` to `frontend` and output to `assets/packs`. This is how you would do it:
 
 ```yml
 # config/webpacker.yml
-source_path: frontend # packs are in frontend/packs
+source_path: frontend # packs are the files in frontend/
 public_output_path: assets/packs # outputs to => public/assets/packs
 ```
 
