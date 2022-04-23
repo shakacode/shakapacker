@@ -1,5 +1,4 @@
 require "open3"
-require "digest/sha1"
 
 class Webpacker::Compiler
   # Additional paths that test compiler needs to watch
@@ -20,25 +19,19 @@ class Webpacker::Compiler
 
   def compile
     if stale?
-      run_webpack.tap do |success|
-        # We used to only record the digest on success
-        # However, the output file is still written on error, meaning that the digest should still be updated.
-        # If it's not, you can end up in a situation where a recompile doesn't take place when it should.
-        # See https://github.com/rails/webpacker/issues/2113
-        record_compilation_digest
-      end
+      run_webpack
     else
       logger.debug "Everything's up-to-date. Nothing to do"
       true
     end
   end
 
-  # Returns true if all the compiled packs are up to date with the underlying asset files.
+  # Returns true if manifest file mtime is newer than the timestamp of the last modified watched file
   def fresh?
-    last_compilation_digest&.== watched_files_digest
+    manifest_mtime > latest_modified_timestamp
   end
 
-  # Returns true if the compiled packs are out of date with the underlying asset files.
+  # Returns true if manifest file mtime is older than the timestamp of the last modified watched file
   def stale?
     !fresh?
   end
@@ -46,12 +39,11 @@ class Webpacker::Compiler
   private
     attr_reader :webpacker
 
-    def last_compilation_digest
-      compilation_digest_path.read if compilation_digest_path.exist? && config.manifest_path.exist?
-    rescue Errno::ENOENT, Errno::ENOTDIR
+    def manifest_mtime
+      config.manifest_path.exist? ? File.mtime(config.manifest_path).to_i : 0
     end
 
-    def watched_files_digest
+    def latest_modified_timestamp
       if Rails.env.development?
         warn <<~MSG.strip
           Webpacker::Compiler - Slow setup for development
@@ -67,14 +59,8 @@ class Webpacker::Compiler
       expanded_paths = [*default_watched_paths, *watched_paths].map do |path|
         root_path.join(path)
       end
-      files = Dir[*expanded_paths].reject { |f| File.directory?(f) }
-      file_ids = files.sort.map { |f| "#{File.basename(f)}/#{Digest::SHA1.file(f).hexdigest}" }
-      Digest::SHA1.hexdigest(file_ids.join("/"))
-    end
-
-    def record_compilation_digest
-      config.cache_path.mkpath
-      compilation_digest_path.write(watched_files_digest)
+      latest_modified = Dir[*expanded_paths].max_by { |f| File.mtime(f) }
+      File.mtime(latest_modified).to_i
     end
 
     def optionalRubyRunner
@@ -109,15 +95,11 @@ class Webpacker::Compiler
 
     def default_watched_paths
       [
-        *config.additional_paths.map { |path| "#{path}/**/*" },
-        "#{config.source_path}/**/*",
+        *config.additional_paths.map { |path| "#{path}{,/**/*}" },
+        "#{config.source_path}{,/**/*}",
         "yarn.lock", "package.json",
-        "config/webpack/**/*"
+        "config/webpack{,/**/*}"
       ].freeze
-    end
-
-    def compilation_digest_path
-      config.cache_path.join("last-compilation-digest-#{webpacker.env}")
     end
 
     def webpack_env

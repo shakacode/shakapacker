@@ -1,20 +1,6 @@
 require "test_helper"
 
 class CompilerTest < Minitest::Test
-  def remove_compilation_digest_path
-    Webpacker.compiler.send(:compilation_digest_path).tap do |path|
-      path.delete if path.exist?
-    end
-  end
-
-  def setup
-    remove_compilation_digest_path
-  end
-
-  def teardown
-    remove_compilation_digest_path
-  end
-
   def test_custom_environment_variables
     assert_nil Webpacker.compiler.send(:webpack_env)["FOO"]
     Webpacker.compiler.env["FOO"] = "BAR"
@@ -23,37 +9,46 @@ class CompilerTest < Minitest::Test
     Webpacker.compiler.env = {}
   end
 
-  def test_freshness
-    assert Webpacker.compiler.stale?
-    assert !Webpacker.compiler.fresh?
+  def setup
+    @manifest_timestamp = Time.parse("2021-01-01 12:34:56 UTC")
+  end
+
+  def with_stubs(latest_timestamp:, manifest_exists: true)
+    Webpacker.compiler.stub :latest_modified_timestamp, latest_timestamp do
+      FileTest.stub :exist?, manifest_exists do
+        File.stub :mtime, @manifest_timestamp do
+          yield
+        end
+      end
+    end
+  end
+
+  def test_freshness_when_manifest_missing
+    latest_timestamp = @manifest_timestamp + 3600
+
+    with_stubs(latest_timestamp: latest_timestamp.to_i, manifest_exists: false) do
+      assert Webpacker.compiler.stale?
+    end
+  end
+
+  def test_freshness_when_manifest_older
+    latest_timestamp = @manifest_timestamp + 3600
+
+    with_stubs(latest_timestamp: latest_timestamp.to_i) do
+      assert Webpacker.compiler.stale?
+    end
+  end
+
+  def test_freshness_when_manifest_newer
+    latest_timestamp = @manifest_timestamp - 3600
+
+    with_stubs(latest_timestamp: latest_timestamp.to_i) do
+      assert Webpacker.compiler.fresh?
+    end
   end
 
   def test_compile
     assert !Webpacker.compiler.compile
-  end
-
-  def test_freshness_on_compile_success
-    status = OpenStruct.new(success?: true)
-
-    assert Webpacker.compiler.stale?
-    Open3.stub :capture3, [:sterr, :stdout, status] do
-      Webpacker.compiler.compile
-      assert Webpacker.compiler.fresh?
-    end
-  end
-
-  def test_freshness_on_compile_fail
-    status = OpenStruct.new(success?: false)
-
-    assert Webpacker.compiler.stale?
-    Open3.stub :capture3, [:sterr, :stdout, status] do
-      Webpacker.compiler.compile
-      assert Webpacker.compiler.fresh?
-    end
-  end
-
-  def test_compilation_digest_path
-    assert_equal Webpacker.compiler.send(:compilation_digest_path).basename.to_s, "last-compilation-digest-#{Webpacker.env}"
   end
 
   def test_external_env_variables
