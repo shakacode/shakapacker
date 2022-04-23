@@ -12,16 +12,17 @@
     "yarn": ">=1 <4"
   },
   "peerDependencies": {
-    "@babel/core": "^7.15.5",
-    "@babel/plugin-transform-runtime": "^7.15.0",
-    "@babel/preset-env": "^7.15.6",
-    "@babel/runtime": "^7.15.4",
-    "babel-loader": "^8.2.2",
+    "@babel/core": "^7.17.9",
+    "@babel/plugin-transform-runtime": "^7.17.9",
+    "@babel/preset-env": "^7.16.11",
+    "@babel/runtime": "^7.17.9",
+    "babel-loader": "^8.2.4",
     "compression-webpack-plugin": "^9.0.0",
-    "terser-webpack-plugin": "^5.2.4",
-    "webpack": "^5.53.0",
+    "terser-webpack-plugin": "^5.3.1",
+    "webpack": "^5.72.0",
     "webpack-assets-manifest": "^5.0.6",
-    "webpack-cli": "^4.8.0",
+    "webpack-cli": "^4.9.2",
+    "webpack-dev-server": "^4.8.1",
     "webpack-merge": "^5.8.0"
   },
   "dependencies": {
@@ -30,7 +31,7 @@
     "path-complete-extname": "^1.0.0"
   },
   "devDependencies": {
-    "babel-loader": "^8.2.2",
+    "babel-loader": "^8.2.4",
     "compression-webpack-plugin": "^9.0.0",
     "esbuild-loader": "^2.18.0",
     "eslint": "^7.32.0",
@@ -41,7 +42,7 @@
     "eslint-plugin-react": "^7.26.0",
     "jest": "^27.2.1",
     "swc-loader": "^0.1.15",
-    "webpack": "^5.53.0",
+    "webpack": "^5.72.0",
     "webpack-assets-manifest": "^5.0.6",
     "webpack-merge": "^5.8.0"
   },
