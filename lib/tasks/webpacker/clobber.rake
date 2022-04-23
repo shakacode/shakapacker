@@ -8,9 +8,7 @@ namespace :webpacker do
   end
 end
 
-skip_webpacker_clobber = %w(no false n f).include?(ENV["WEBPACKER_PRECOMPILE"])
-
-unless skip_webpacker_clobber
+if Webpacker.config.webpacker_precompile?
   # Run clobber if the assets:clobber is run
   if Rake::Task.task_defined?("assets:clobber")
     Rake::Task["assets:clobber"].enhance do

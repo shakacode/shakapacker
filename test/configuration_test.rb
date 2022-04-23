@@ -28,14 +28,14 @@ class ConfigurationTest < Webpacker::Test
     public_output_path = File.expand_path File.join(File.dirname(__FILE__), "test_app/public/packs").to_s
     assert_equal @config.public_output_path.to_s, public_output_path
 
-    @config = Webpacker::Configuration.new(
+    @public_root_config = Webpacker::Configuration.new(
       root_path: @config.root_path,
       config_path: Pathname.new(File.expand_path("./test_app/config/webpacker_public_root.yml", __dir__)),
       env: "production"
     )
 
     public_output_path = File.expand_path File.join(File.dirname(__FILE__), "public/packs").to_s
-    assert_equal @config.public_output_path.to_s, public_output_path
+    assert_equal @public_root_config.public_output_path.to_s, public_output_path
   end
 
   def test_public_manifest_path
@@ -47,14 +47,14 @@ class ConfigurationTest < Webpacker::Test
     manifest_path = File.expand_path File.join(File.dirname(__FILE__), "test_app/public/packs", "manifest.json").to_s
     assert_equal @config.manifest_path.to_s, manifest_path
 
-    @config = Webpacker::Configuration.new(
+    @manifest_config = Webpacker::Configuration.new(
       root_path: @config.root_path,
       config_path: Pathname.new(File.expand_path("./test_app/config/webpacker_manifest_path.yml", __dir__)),
       env: "production"
     )
 
     manifest_path = File.expand_path File.join(File.dirname(__FILE__), "test_app/app/packs", "manifest.json").to_s
-    assert_equal @config.manifest_path.to_s, manifest_path
+    assert_equal @manifest_config.manifest_path.to_s, manifest_path
   end
 
   def test_cache_path
@@ -99,6 +99,26 @@ class ConfigurationTest < Webpacker::Test
 
     with_rails_env("test") do
       refute Webpacker.config.ensure_consistent_versioning?
+    end
+
+    def test_webpacker_precompile
+      assert @config.webpacker_precompile
+
+      ENV["WEBPACKER_PRECOMPILE"] = "false"
+
+      refute Webpacker.config.webpacker_precompile?
+
+      ENV["WEBPACKER_PRECOMPILE"] = "yes"
+
+      assert Webpacker.config.webpacker_precompile?
+
+      @no_precompile_config = Webpacker::Configuration.new(
+        root_path: @config.root_path,
+        config_path: Pathname.new(File.expand_path("./test_app/config/webpacker_no_precompile.yml", __dir__)),
+        env: "production"
+      )
+
+      refute @no_precompile_config.webpacker_precompile
     end
   end
 end

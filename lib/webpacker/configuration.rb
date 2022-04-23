@@ -27,6 +27,12 @@ class Webpacker::Configuration
     fetch(:ensure_consistent_versioning)
   end
 
+  def webpacker_precompile?
+    # ENV of false takes precedence
+    return false if %w(no false n f).include?(ENV["WEBPACKER_PRECOMPILE"])
+    return %w(yes true t).include?(ENV["WEBPACKER_PRECOMPILE"]) || fetch(:webpacker_precompile)
+  end
+
   def source_path
     root_path.join(fetch(:source_path))
   end

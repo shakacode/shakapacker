@@ -11,9 +11,7 @@ namespace :webpacker do
   end
 end
 
-skip_webpacker_clean = %w(no false n f).include?(ENV["WEBPACKER_PRECOMPILE"])
-
-unless skip_webpacker_clean
+if Webpacker.config.webpacker_precompile?
   # Run clean if the assets:clean is run
   if Rake::Task.task_defined?("assets:clean")
     Rake::Task["assets:clean"].enhance do
