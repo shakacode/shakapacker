@@ -10,6 +10,8 @@ Changes since last non-beta release.
 
 ## [v6.3.0-rc.1] - April 24, 2024
 
+Note: [Rubygem is 6.3.0.pre.rc.1](https://rubygems.org/gems/shakapacker/versions/6.3.0.pre.rc.1) and [NPM is 6.3.0-rc.1](https://www.npmjs.com/package/shakapacker/v/6.3.0-rc.1).
+
 ### Changed
 - Remove Loose mode from the default @babel-preset/env configuration. [PR 107](https://github.com/shakacode/shakapacker/pull/107) by [Jeremy Liberman](https://github.com/MrLeebo).
 
@@ -116,7 +118,7 @@ Changes since last non-beta release.
 See [CHANGELOG.md in rails/webpacker (up to v5.4.3)](https://github.com/rails/webpacker/blob/master/CHANGELOG.md) 
 
 [Unreleased]: https://github.com/shakacode/shakapacker/compare/v6.3.0-rc.1...master
-[v6.3.0-rc.0]: https://github.com/shakacode/shakapacker/compare/v6.2.1...v6.3.0-rc.1
+[v6.3.0-rc.1]: https://github.com/shakacode/shakapacker/compare/v6.2.1...v6.3.0-rc.1
 [v6.2.1]: https://github.com/shakacode/shakapacker/compare/v6.2.0...v6.2.1
 [v6.2.0]: https://github.com/shakacode/shakapacker/compare/v6.1.1...v6.2.0
 [v6.1.1]: https://github.com/shakacode/shakapacker/compare/v6.1.0...v6.1.1
