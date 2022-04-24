@@ -2,7 +2,7 @@
 
 There are several substantial changes in Shakapacker v6 that you need to manually account for when coming from Webpacker 5. This guide will help you through it.
 
-[ShakaCode](https://www.shakacode.com) offers suppport for upgrading from webpacker or using Shakapacker. If interested, contact [justin@shakacode.com](mailto:justin@shakacode.com).
+[ShakaCode](https://www.shakacode.com) offers support for upgrading from webpacker or using Shakapacker. If interested, contact [justin@shakacode.com](mailto:justin@shakacode.com).
 
 ## Webpacker/Shakapacker has become a slimmer wrapper around Webpack
 

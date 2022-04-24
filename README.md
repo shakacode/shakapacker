@@ -1,6 +1,6 @@
 # Shakapacker
 
-_Official, actively maintained successor to [rails/webpacker](https://github.com/rails/webpacker). Internal naming for `shakapacker` will continue to use `webpacker` where possible for v6. ShakaCode stands behind long-term maintainence and development of this project for the Rails community._
+_Official, actively maintained successor to [rails/webpacker](https://github.com/rails/webpacker). Internal naming for `shakapacker` will continue to use `webpacker` where possible for v6. ShakaCode stands behind the long-term maintainence and development of this project for the Rails community._
 
 * See [V6 Upgrade](./docs/v6_upgrade.md) for upgrading from v5 or prior v6 releases.
 
@@ -26,7 +26,7 @@ Discussion forum and Slack to discuss debugging and troubleshooting tips. Please
 2. [Slack discussion channel](https://reactrails.slack.com/join/shared_invite/enQtNjY3NTczMjczNzYxLTlmYjdiZmY3MTVlMzU2YWE0OWM0MzNiZDI0MzdkZGFiZTFkYTFkOGVjODBmOWEyYWQ3MzA2NGE1YWJjNmVlMGE)
 3. [Tweets with tag `#shakapacker`](https://twitter.com/hashtag/shakapacker?src=hashtag_click)
 
-[ShakaCode](https://www.shakacode.com) offers suppport for upgrading from webpacker or using Shakapacker. If interested, contact [justin@shakacode.com](mailto:justin@shakacode.com). ShakaCode is [hiring passionate engineers](https://jobs.lever.co/shakacode/3bdbfdb3-4495-4611-a279-01dddb351abe) that love open source.
+[ShakaCode](https://www.shakacode.com) offers support for upgrading from webpacker or using Shakapacker. If interested, contact [justin@shakacode.com](mailto:justin@shakacode.com). ShakaCode is [hiring passionate engineers](https://jobs.lever.co/shakacode/3bdbfdb3-4495-4611-a279-01dddb351abe) that love open source.
 
 ---
 
