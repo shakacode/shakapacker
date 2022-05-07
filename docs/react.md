@@ -2,7 +2,7 @@
 
 These steps describe how to create a Rails/React app, using Shakapacker as the bundler.
 
-Before starting, ensure that you have Yarn installed:
+Before starting, ensure that you have Yarn installed, for example:
 
 ```shell
 npm i -g yarn
