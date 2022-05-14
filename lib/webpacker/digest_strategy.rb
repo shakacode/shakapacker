@@ -23,37 +23,37 @@ module Webpacker
 
     private
 
-    def last_compilation_digest
-      compilation_digest_path.read if compilation_digest_path.exist? && config.manifest_path.exist?
-    rescue Errno::ENOENT, Errno::ENOTDIR
-    end
+      def last_compilation_digest
+        compilation_digest_path.read if compilation_digest_path.exist? && config.manifest_path.exist?
+      rescue Errno::ENOENT, Errno::ENOTDIR
+      end
 
-    def watched_files_digest
-      if Rails.env.development?
-        warn <<~MSG.strip
+      def watched_files_digest
+        if Rails.env.development?
+          warn <<~MSG.strip
           Webpacker::Compiler - Slow setup for development
           Prepare JS assets with either:
           1. Running `bin/webpacker-dev-server`
           2. Set `compile` to false in webpacker.yml and run `bin/webpacker -w`
         MSG
+        end
+
+        root_path = Pathname.new(File.expand_path(config.root_path))
+        expanded_paths = [*default_watched_paths].map do |path|
+          root_path.join(path)
+        end
+        files = Dir[*expanded_paths].reject { |f| File.directory?(f) }
+        file_ids = files.sort.map { |f| "#{File.basename(f)}/#{Digest::SHA1.file(f).hexdigest}" }
+        Digest::SHA1.hexdigest(file_ids.join("/"))
       end
 
-      root_path = Pathname.new(File.expand_path(config.root_path))
-      expanded_paths = [*default_watched_paths].map do |path|
-        root_path.join(path)
+      def record_compilation_digest
+        config.cache_path.mkpath
+        compilation_digest_path.write(watched_files_digest)
       end
-      files = Dir[*expanded_paths].reject { |f| File.directory?(f) }
-      file_ids = files.sort.map { |f| "#{File.basename(f)}/#{Digest::SHA1.file(f).hexdigest}" }
-      Digest::SHA1.hexdigest(file_ids.join("/"))
-    end
 
-    def record_compilation_digest
-      config.cache_path.mkpath
-      compilation_digest_path.write(watched_files_digest)
-    end
-
-    def compilation_digest_path
-      config.cache_path.join("last-compilation-digest-#{Webpacker.env}")
-    end
+      def compilation_digest_path
+        config.cache_path.join("last-compilation-digest-#{Webpacker.env}")
+      end
   end
 end

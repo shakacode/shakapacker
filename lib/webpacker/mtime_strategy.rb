@@ -14,27 +14,27 @@ module Webpacker
 
     private
 
-    def manifest_mtime
-      config.manifest_path.exist? ? File.mtime(config.manifest_path).to_i : 0
-    end
+      def manifest_mtime
+        config.manifest_path.exist? ? File.mtime(config.manifest_path).to_i : 0
+      end
 
-    def latest_modified_timestamp
-      if Rails.env.development?
-        warn <<~MSG.strip
+      def latest_modified_timestamp
+        if Rails.env.development?
+          warn <<~MSG.strip
           Webpacker::Compiler - Slow setup for development
 
           Prepare JS assets with either:
           1. Running `bin/webpacker-dev-server`
           2. Set `compile` to false in webpacker.yml and run `bin/webpacker -w`
         MSG
-      end
+        end
 
-      root_path = Pathname.new(File.expand_path(config.root_path))
-      expanded_paths = [*default_watched_paths].map do |path|
-        root_path.join(path)
+        root_path = Pathname.new(File.expand_path(config.root_path))
+        expanded_paths = [*default_watched_paths].map do |path|
+          root_path.join(path)
+        end
+        latest_modified = Dir[*expanded_paths].max_by { |f| File.mtime(f) }
+        File.mtime(latest_modified).to_i
       end
-      latest_modified = Dir[*expanded_paths].max_by { |f| File.mtime(f) }
-      File.mtime(latest_modified).to_i
-    end
   end
 end

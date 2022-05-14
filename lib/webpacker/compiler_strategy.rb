@@ -5,11 +5,11 @@ module Webpacker
   class CompilerStrategy
     def self.from_config
       strategy_from_config = Webpacker.config.compiler_strategy
-      
+
       case strategy_from_config
-      when 'mtime'
+      when "mtime"
         Webpacker::MtimeStrategy.new
-      when 'digest'
+      when "digest"
         Webpacker::DigestStrategy.new
       else
         raise "Unknown strategy '#{strategy_from_config}'. " \

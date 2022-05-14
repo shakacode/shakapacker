@@ -9,16 +9,16 @@ module Webpacker
     end
 
     private
-  
-    attr_reader :config
 
-    def default_watched_paths
-      [
-        *config.additional_paths.map { |path| "#{path}{,/**/*}" },
-        "#{config.source_path}{,/**/*}",
-        "yarn.lock", "package.json",
-        "config/webpack{,/**/*}"
-      ].freeze
-    end
+      attr_reader :config
+
+      def default_watched_paths
+        [
+          *config.additional_paths.map { |path| "#{path}{,/**/*}" },
+          "#{config.source_path}{,/**/*}",
+          "yarn.lock", "package.json",
+          "config/webpack{,/**/*}"
+        ].freeze
+      end
   end
 end
