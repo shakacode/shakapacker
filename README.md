@@ -62,6 +62,7 @@ Discussion forum and Slack to discuss debugging and troubleshooting tips. Please
     - [Other frameworks](#other-frameworks)
   - [Custom Rails environments](#custom-rails-environments)
   - [Upgrading](#upgrading)
+  - [Compiler strategies](#compiler-strategies)
   - [Paths](#paths)
   - [Additional paths](#additional-paths)
 - [Deployment](#deployment)
@@ -671,6 +672,17 @@ yarn add shakapacker@next
 
 Also, consult the [CHANGELOG](./CHANGELOG.md) for additional upgrade links.
 
+### Compiler strategies
+
+Shakapacker ships with two different strategies that are used to determine whether assets need recompilation.
+
+- `digest` - This strategy calculates SHA1 digest of files in your watched paths (see below). The calculated digest is then stored in a temp file. To check whether the assets need to be recompiled, Shakapacker calculates the SHA1 of the watched files and compares it with the one stored. If the digests are equal, no recompilation occurs. If the digests are different or the temp file is missing, files are recompiled.
+- `mtime` - This strategy looks at last modified at timestamps of both files AND directories in your watched paths. The timestamp of the most recent file or directory is then compared with the timestamp of `manifest.json` file generated. If the manifest file timestamp is newer than one of the most recently modified file or directory in the watched paths, no recompilation occurs. If the manifest file is order, files are recompiled.
+
+`mtime` strategy is generally faster than the `digest` one, but it requires stable timestamps, this makes it perfect for development environment. In production or CI environments, the `digest` strategy is more suitable, unless you are using incremental builds or caching and can guarantee that the timestamps will not change after e.g. cache restore.
+
+You can control what strategy is used by `compiler_strategy` option in `webpacker.yml` config file. By default `mtime` strategy is used in development environment, `digest` is used elsewhere.
+
 ### Paths
 
 By default, Webpacker ships with simple conventions for where the JavaScript app files and compiled webpack bundles will go in your Rails app. All these options are configurable from `config/webpacker.yml` file.
@@ -718,7 +730,7 @@ import 'images/rails.png'
 
 **Note:** Please be careful when adding paths here otherwise it will make the compilation slow, consider adding specific paths instead of whole parent directory if you just need to reference one or two modules
 
-**Also note:** While importing assets living outside your `source_path` defined in webpacker.yml (like, for instance, assets under `app/assets`) from within your packs using _relative_ paths like `import '../../assets/javascripts/file.js'` will work in development, Webpacker won't recompile the bundle in production unless a file that lives in one of it's watched paths has changed (check out `Webpacker::Compiler#latest_modified_timestamp`). That's why you'd need to add `app/assets` to the additional_paths as stated above and use `import 'javascripts/file.js'` instead.
+**Also note:** While importing assets living outside your `source_path` defined in webpacker.yml (like, for instance, assets under `app/assets`) from within your packs using _relative_ paths like `import '../../assets/javascripts/file.js'` will work in development, Webpacker won't recompile the bundle in production unless a file that lives in one of it's watched paths has changed (check out `Webpacker::MtimeStrategy#latest_modified_timestamp` or `Webpacker::DigestStrategy#watched_files_digest` depending on strategy configured by `compiler_strategy` option in `webpacker.yml`). That's why you'd need to add `app/assets` to the additional_paths as stated above and use `import 'javascripts/file.js'` instead.
 
 
 ## Deployment
