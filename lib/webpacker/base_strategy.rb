@@ -4,7 +4,7 @@ module Webpacker
       @config = Webpacker.config
     end
 
-    def compile_success_hook
+    def after_compile_hook
       nil
     end
 

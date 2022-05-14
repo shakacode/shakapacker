@@ -6,18 +6,17 @@ class Webpacker::Compiler
   # Webpacker::Compiler.env['FRONTEND_API_KEY'] = 'your_secret_key'
   cattr_accessor(:env) { {} }
 
-  delegate :config, :logger, to: :webpacker
-  delegate :fresh?, :stale?, :compile_success_hook, to: :strategy
+  delegate :config, :logger, :strategy, to: :webpacker
+  delegate :fresh?, :stale?, :after_compile_hook, to: :strategy
 
   def initialize(webpacker)
     @webpacker = webpacker
-    @strategy = Webpacker::CompilerStrategy.from_config
   end
 
   def compile
     if stale?
       run_webpack.tap do |success|
-        compile_success_hook
+        after_compile_hook
       end
     else
       logger.debug "Everything's up-to-date. Nothing to do"
@@ -26,7 +25,7 @@ class Webpacker::Compiler
   end
 
   private
-    attr_reader :webpacker, :strategy
+    attr_reader :webpacker
 
     def optionalRubyRunner
       bin_webpack_path = config.root_path.join("bin/webpacker")

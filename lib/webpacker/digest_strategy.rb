@@ -13,7 +13,7 @@ module Webpacker
       !fresh?
     end
 
-    def compile_success_hook
+    def after_compile_hook
       # We used to only record the digest on success
       # However, the output file is still written on error, meaning that the digest should still be updated.
       # If it's not, you can end up in a situation where a recompile doesn't take place when it should.

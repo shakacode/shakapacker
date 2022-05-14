@@ -9,8 +9,43 @@ class CompilerTest < Minitest::Test
     Webpacker.compiler.env = {}
   end
 
-  def test_compile
-    assert !Webpacker.compiler.compile
+  def test_compile_true_when_fresh
+    mock = Minitest::Mock.new
+    mock.expect(:stale?, false)
+    Webpacker.compiler.stub(:strategy, mock) do
+      assert Webpacker.compiler.compile
+    end
+    assert_mock mock
+  end
+
+  def test_after_compile_hook_called_on_success
+    mock = Minitest::Mock.new
+    mock.expect(:stale?, true)
+    mock.expect(:after_compile_hook, nil)
+
+    status = OpenStruct.new(success?: true)
+
+    Webpacker.compiler.stub(:strategy, mock) do
+      Open3.stub :capture3, [:sterr, :stdout, status] do
+        Webpacker.compiler.compile
+      end
+    end
+    assert_mock mock
+  end
+
+  def test_no_after_compile_hook_called_on_failure
+    mock = Minitest::Mock.new
+    mock.expect(:stale?, true)
+    mock.expect(:after_compile_hook, nil)
+
+    status = OpenStruct.new(success?: false)
+
+    Webpacker.compiler.stub(:strategy, mock) do
+      Open3.stub :capture3, [:sterr, :stdout, status] do
+        Webpacker.compiler.compile
+      end
+    end
+    assert_mock mock
   end
 
   def test_external_env_variables
