@@ -33,7 +33,7 @@ class CompilerTest < Minitest::Test
     assert_mock mock
   end
 
-  def test_no_after_compile_hook_called_on_failure
+  def test_after_compile_hook_called_on_failure
     mock = Minitest::Mock.new
     mock.expect(:stale?, true)
     mock.expect(:after_compile_hook, nil)
