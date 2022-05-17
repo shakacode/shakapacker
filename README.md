@@ -431,7 +431,9 @@ Webpacker out of the box supports JS and static assets (fonts, images etc.) comp
 
 #### React
 
-See customization example the [Customizing Babel Config](./docs/customizing_babel_config.md) for React configuration.
+See here for detailed instructions on how to [configure Shakapacker to bundle a React app](./docs/react.md) (with optional HMR).
+
+See also [Customizing Babel Config](./docs/customizing_babel_config.md) for an example React configuration.
 
 #### Typescript
 ...if you are using typescript, update your `tsconfig.json`
