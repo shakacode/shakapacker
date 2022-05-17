@@ -4,6 +4,8 @@ default: &default
   source_path: app/javascript
   source_entry_path: /
   public_root_path: public
+  components_path: bundles
+  ror_components_directory: ror_components
   public_output_path: packs
   cache_path: tmp/webpacker
   webpack_compile_output: true

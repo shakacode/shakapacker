@@ -65,6 +65,14 @@ class Webpacker::Configuration
     public_path.join(fetch(:public_output_path))
   end
 
+  def components_path
+    source_path.join(fetch(:components_path))
+  end
+
+  def components_directory_name
+    fetch(:ror_components_directory) || "ror_components"
+  end
+
   def cache_manifest?
     fetch(:cache_manifest)
   end
