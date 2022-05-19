@@ -1,4 +1,4 @@
-const { dirname, join } = require('path')
+const { dirname } = require('path')
 const { source_path: sourcePath } = require('../config')
 
 module.exports = {
@@ -12,7 +12,7 @@ module.exports = {
         .split('/')
         .slice(1)
 
-      const foldersWithStatic = join('static', ...folders)
+      const foldersWithStatic = ['static', ...folders].join('/')
       return `${foldersWithStatic}/[name]-[hash][ext][query]`
     }
   }
