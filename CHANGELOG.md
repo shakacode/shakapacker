@@ -8,13 +8,15 @@ Changes since last non-beta release.
 
 *Please add entries here for your pull requests that are not yet released.*
 
+## [v6.3.0] - May 19, 2022
+
 ### Improved
 - Add ability to configure usage of either last modified timestamp and digest strategies when checking asset freshness. [PR 112](https://github.com/shakacode/shakapacker/pull/112) by [tomdracz](https://github.com/tomdracz). 
 
 ### Fixed
 - On Windows CSS urls no longer contain backslashes resulting in 404 errors. [PR 115](https://github.com/shakacode/shakapacker/pull/115) by [daniel-rikowski](https://github.com/daniel-rikowski).
 
-## [v6.3.0-rc.1] - April 24, 2024
+## [v6.3.0-rc.1] - April 24, 2022
 
 Note: [Rubygem is 6.3.0.pre.rc.1](https://rubygems.org/gems/shakapacker/versions/6.3.0.pre.rc.1) and [NPM is 6.3.0-rc.1](https://www.npmjs.com/package/shakapacker/v/6.3.0-rc.1).
 
@@ -123,7 +125,8 @@ Note: [Rubygem is 6.3.0.pre.rc.1](https://rubygems.org/gems/shakapacker/versions
 ## v5.4.3 and prior changes from rails/webpacker
 See [CHANGELOG.md in rails/webpacker (up to v5.4.3)](https://github.com/rails/webpacker/blob/master/CHANGELOG.md) 
 
-[Unreleased]: https://github.com/shakacode/shakapacker/compare/v6.3.0-rc.1...master
+[Unreleased]: https://github.com/shakacode/shakapacker/compare/v6.3.0...master
+[v6.3.0]: https://github.com/shakacode/shakapacker/compare/v6.3.0-rc.1...v6.3.0
 [v6.3.0-rc.1]: https://github.com/shakacode/shakapacker/compare/v6.2.1...v6.3.0-rc.1
 [v6.2.1]: https://github.com/shakacode/shakapacker/compare/v6.2.0...v6.2.1
 [v6.2.0]: https://github.com/shakacode/shakapacker/compare/v6.1.1...v6.2.0
