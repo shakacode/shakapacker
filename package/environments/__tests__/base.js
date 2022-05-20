@@ -28,6 +28,20 @@ describe('Base config', () => {
       ])
     })
 
+    test('should return only 2 entry points with config.nested_entries == false', () => {
+      expect(baseConfig.entry.multi_entry.sort()).toEqual([
+        resolve('app', 'packs', 'entrypoints', 'multi_entry.css'),
+        resolve('app', 'packs', 'entrypoints', 'multi_entry.js')
+      ])
+      expect(baseConfig.entry['generated/something']).toEqual(
+        resolve('app', 'packs', 'entrypoints', 'generated', 'something.js')
+      )
+    })
+
+    test('should return 3 entry points with config.nested_entries == true', () => {
+      expect(baseConfig.entry.multi_entry.length).toEqual(2)
+    })
+
     test('should return output', () => {
       expect(baseConfig.output.filename).toEqual('js/[name].js')
       expect(baseConfig.output.chunkFilename).toEqual(

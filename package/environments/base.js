@@ -14,8 +14,15 @@ const { moduleExists } = require('../utils/helpers')
 const getEntryObject = () => {
   const entries = {}
   const rootPath = join(config.source_path, config.source_entry_path)
+  if (config.source_entry_path === '/' && config.nested_entries) {
+    throw new Error(
+      "Your webpacker config specified using a source_entry_path of '/' with 'nested_entries' == " +
+      "'true'. Doing this would result in packs for every one of your source files"
+    )
+  }
+  const nesting = config.nested_entries ? '**/' : ''
 
-  globSync(`${rootPath}/*.*`).forEach((path) => {
+  globSync(`${rootPath}/${nesting}*.*`).forEach((path) => {
     const namespace = relative(join(rootPath), dirname(path))
     const name = join(namespace, basename(path, extname(path)))
     let assetPaths = resolve(path)

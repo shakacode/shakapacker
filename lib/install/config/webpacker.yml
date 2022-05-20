@@ -2,7 +2,15 @@
 
 default: &default
   source_path: app/javascript
+
+  # You can have a subdirectory of the source_path, like 'packs' (recommended).
+  # Alternatively, you can use '/' to use the whole source_path directory.
   source_entry_path: /
+
+  # If nested_entries is true, then we'll pick up subdirectories within the source_entry_path.
+  # You cannot set this option to true if you set source_entry_path to '/'
+  nested_entries: false
+
   public_root_path: public
   public_output_path: packs
   cache_path: tmp/webpacker

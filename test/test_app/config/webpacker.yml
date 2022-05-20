@@ -3,6 +3,7 @@
 default: &default
   source_path: app/packs
   source_entry_path: entrypoints
+  nested_entries: true
   public_root_path: public
   public_output_path: packs
   cache_path: tmp/webpacker
