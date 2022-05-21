@@ -150,7 +150,7 @@ In order to use Shakapacker with Yarn v2, make sure you set `nodeLinker: node-mo
 At it's core, Shakapacker's essential functionality is to:
 
 1. Provide configuration by a single file used by both Rails view helpers and JavaScript webpack compilation code.
-2. Provide Rails view helpers, utilizing this configuratio file, so that a webpage can load JavaScript, CSS, and other static assets compiled by webpack, supporting bundle splitting, fingerprinting, and HMR.
+2. Provide Rails view helpers, utilizing this configuration file, so that a webpage can load JavaScript, CSS, and other static assets compiled by webpack, supporting bundle splitting, fingerprinting, and HMR.
 3. Provide a community supported, default webpack compilation that generates the necessary bundles and manifest, using the same configuration file. This compilation can be extended for any needs.
 
 ## Usage
