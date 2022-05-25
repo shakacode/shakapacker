@@ -85,6 +85,10 @@ class Webpacker::Configuration
     fetch(:webpack_compile_output)
   end
 
+  def compiler_strategy
+    fetch(:compiler_strategy)
+  end
+
   def fetch(key)
     data.fetch(key, defaults[key])
   end

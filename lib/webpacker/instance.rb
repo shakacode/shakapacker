@@ -19,6 +19,10 @@ class Webpacker::Instance
     )
   end
 
+  def strategy
+    @strategy ||= Webpacker::CompilerStrategy.from_config
+  end
+
   def compiler
     @compiler ||= Webpacker::Compiler.new self
   end

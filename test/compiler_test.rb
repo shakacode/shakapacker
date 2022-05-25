@@ -9,46 +9,43 @@ class CompilerTest < Minitest::Test
     Webpacker.compiler.env = {}
   end
 
-  def setup
-    @manifest_timestamp = Time.parse("2021-01-01 12:34:56 UTC")
+  def test_compile_true_when_fresh
+    mock = Minitest::Mock.new
+    mock.expect(:stale?, false)
+    Webpacker.compiler.stub(:strategy, mock) do
+      assert Webpacker.compiler.compile
+    end
+    assert_mock mock
   end
 
-  def with_stubs(latest_timestamp:, manifest_exists: true)
-    Webpacker.compiler.stub :latest_modified_timestamp, latest_timestamp do
-      FileTest.stub :exist?, manifest_exists do
-        File.stub :mtime, @manifest_timestamp do
-          yield
-        end
+  def test_after_compile_hook_called_on_success
+    mock = Minitest::Mock.new
+    mock.expect(:stale?, true)
+    mock.expect(:after_compile_hook, nil)
+
+    status = OpenStruct.new(success?: true)
+
+    Webpacker.compiler.stub(:strategy, mock) do
+      Open3.stub :capture3, [:sterr, :stdout, status] do
+        Webpacker.compiler.compile
       end
     end
+    assert_mock mock
   end
 
-  def test_freshness_when_manifest_missing
-    latest_timestamp = @manifest_timestamp + 3600
+  def test_after_compile_hook_called_on_failure
+    mock = Minitest::Mock.new
+    mock.expect(:stale?, true)
+    mock.expect(:after_compile_hook, nil)
 
-    with_stubs(latest_timestamp: latest_timestamp.to_i, manifest_exists: false) do
-      assert Webpacker.compiler.stale?
+    status = OpenStruct.new(success?: false)
+
+    Webpacker.compiler.stub(:strategy, mock) do
+      Open3.stub :capture3, [:sterr, :stdout, status] do
+        Webpacker.compiler.compile
+      end
     end
-  end
-
-  def test_freshness_when_manifest_older
-    latest_timestamp = @manifest_timestamp + 3600
-
-    with_stubs(latest_timestamp: latest_timestamp.to_i) do
-      assert Webpacker.compiler.stale?
-    end
-  end
-
-  def test_freshness_when_manifest_newer
-    latest_timestamp = @manifest_timestamp - 3600
-
-    with_stubs(latest_timestamp: latest_timestamp.to_i) do
-      assert Webpacker.compiler.fresh?
-    end
-  end
-
-  def test_compile
-    assert !Webpacker.compiler.compile
+    assert_mock mock
   end
 
   def test_external_env_variables
