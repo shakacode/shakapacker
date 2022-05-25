@@ -169,7 +169,7 @@ DEPENDENCIES
   bundler (>= 1.3.0)
   byebug
   minitest (~> 5.0)
-  nokogiri (>= 1.13.6)
+  nokogiri (~> 1.13, >= 1.13.6)
   rack-proxy
   rails
   rake (>= 11.1)
