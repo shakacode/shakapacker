@@ -7,6 +7,8 @@
 Changes since last non-beta release.
 
 *Please add entries here for your pull requests that are not yet released.*
+### Improved
+- Allow v10 of `compression-webpack-plugin` as a peer dependency. [PR 117](https://github.com/shakacode/shakapacker/pull/117) by [aried3r](https://github.com/aried3r).
 
 ## [v6.3.0] - May 19, 2022
 
