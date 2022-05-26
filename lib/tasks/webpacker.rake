@@ -9,7 +9,6 @@ tasks = {
   "webpacker:check_binstubs"          => "Verifies that bin/webpacker is present",
   "webpacker:binstubs"                => "Installs Webpacker binstubs in this application",
   "webpacker:verify_install"          => "Verifies if Webpacker is installed",
-  "webpacker:yarn_install"            => "Support for older Rails versions. Install all JavaScript dependencies as specified via Yarn"
 }.freeze
 
 desc "Lists all available tasks in Webpacker"
