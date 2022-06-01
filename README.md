@@ -83,8 +83,8 @@ Discussion forum and Slack to discuss debugging and troubleshooting tips. Please
 ## Features
 - Rails view helpers that fully support Webpack output, including HMR and code splitting.
 - Convenient but not required webpack configuration. The only requirement is that your webpack configuration create a manifest.
-- HMR with the webpack-dev-server, such as for hot-reloading for React!
-- Automatic code splitting using multiple entry points to optimize JavaScript downloads
+- HMR with the webpack-dev-server, such as for hot-reloading React!
+- Automatic code splitting using multiple entry points to optimize JavaScript downloads.
 - [Webpack v5+](https://webpack.js.org/)
 - ES6 with [babel](https://babeljs.io/), [SWC](https://swc.rs/), or [Esbuild](https://github.com/privatenumber/esbuild-loader)
 - Asset compression, source-maps, and minification
@@ -99,7 +99,6 @@ Discussion forum and Slack to discuss debugging and troubleshooting tips. Please
  - CoffeeScript
 
 ## Installation
-
 
 ### Rails v6+
 
@@ -129,7 +128,7 @@ When `package.json` and/or `yarn.lock` changes, such as when pulling down change
 yarn
 ```
 
-Note, in v6, most JS packages are peer dependencies. Thus, the installer will add the packages:
+Note, in v6+, most JS packages are peer dependencies. Thus, the installer will add the packages:
 
 ```bash
 yarn add @babel/core @babel/plugin-transform-runtime @babel/preset-env @babel/runtime babel-loader \
@@ -140,39 +139,66 @@ yarn add @babel/core @babel/plugin-transform-runtime @babel/preset-env @babel/ru
 Previously, these "webpack" and "babel" packages were direct dependencies for `webpacker`. By
 making these peer dependencies, you have control over the versions used in your webpack and babel configs.
 
-### Note for Sprockets usage
-
-If you are still using Sprockets for some of your assets, you might want to include files from `node_modules` directory in your asset pipeline. This is useful, for example, if you want to reference a stylesheet from a node package in your `.scss` stylesheet.
-
-In order to enable this, make sure you add `node_modules` to the asset load path by adding the following in an initializer (for example `config/initializers/assets.rb`)
-```ruby
-Rails.application.config.assets.paths << Rails.root.join('node_modules')
-```
-
 ### Note for Yarn v2 usage
 
 If you are using Yarn v2 (berry), please note that PnP modules are not supported.
 
 In order to use Shakapacker with Yarn v2, make sure you set `nodeLinker: node-modules` in your `.yarnrc.yml` file as per the [Yarn docs](https://yarnpkg.com/getting-started/migration#step-by-step) to opt out of Plug'n'Play behaviour.
 
+## Concepts
+
+At it's core, Shakapacker's essential functionality is to:
+
+1. Provide configuration by a single file used by both Rails view helpers and JavaScript webpack compilation code.
+2. Provide Rails view helpers, utilizing this configuration file, so that a webpage can load JavaScript, CSS, and other static assets compiled by webpack, supporting bundle splitting, fingerprinting, and HMR.
+3. Provide a community supported, default webpack compilation that generates the necessary bundles and manifest, using the same configuration file. This compilation can be extended for any needs.
+
 ## Usage
 
-### View Helpers
+### Configuration and Code
 
-Once installed, you can start writing modern ES6-flavored JavaScript apps right away:
+You will need your file system to correspond to the setup of your `webpacker.yml` file.
 
+Suppose you have the following files:
+
+`webacker.yml`
 ```yml
+default: &default
+  source_path: app/javascript
+  source_entry_path: packs 
+  public_root_path: public
+  public_output_path: packs
+# And more
+```
+
+And that maps to a directory structure like this:
+
+```
 app/javascript:
-  # Only Webpack entry files here
-  └── application.js
-  └── application.css
-  └── src:
+  └── packs:               # sets up webpack entries
+  │   └── application.js   # references ../src/my_component.js
+  │   └── application.css
+  └── src:                 # any directory name is fine. Referenced files need to be under source_path
   │   └── my_component.js
   └── stylesheets:
   │   └── my_styles.css
   └── images:
       └── logo.svg
+public/packs                # webpack output
 ```
+
+Webpack intelligently includes only necessary files. In this example, the file `packs/application.js` would reference `../src/my_component.js`
+
+### View Helpers
+The Shakapacker view helpers generate the script and link tags to get the webpack output onto your views.
+
+Be sure to consult the API documentation in the source code of [helper.rb](./lib/webpacker/helper.rb).
+
+**Note:** In order for your styles or static assets files to be available in your view, you would need to link them in your "pack" or entry file. Otherwise, Webpack won't know to package up those files.
+
+#### View Helpers `javascript_pack_tag` and `stylesheet_pack_tag`
+
+These view helpers take your `webpacker.yml` configuration file, along with the resulting webpack compilation `manifest.json` and generates the HTML to load the assets.
 
 You can then link the JavaScript pack in Rails views using the `javascript_pack_tag` helper. If you have styles imported in your pack file, you can link them by using `stylesheet_pack_tag`:
 
@@ -184,11 +210,14 @@ You can then link the JavaScript pack in Rails views using the `javascript_pack_
 The `javascript_pack_tag` and `stylesheet_pack_tag` helpers will include all the transpiled
 packs with the chunks in your view, which creates html tags for all the chunks.
 
-The result looks like this:
+You can provide multiple packs and other attributes. Note, `defer` defaults to showing.
 
 ```erb
 <%= javascript_pack_tag 'calendar', 'map', 'data-turbolinks-track': 'reload' %>
+```
 
+The resulting HTML would look like:
+```
 <script src="/packs/vendor-16838bab065ae1e314.js" data-turbolinks-track="reload" defer></script>
 <script src="/packs/calendar~runtime-16838bab065ae1e314.js" data-turbolinks-track="reload" defer></script>
 <script src="/packs/calendar-1016838bab065ae1e314.js" data-turbolinks-track="reload" defer"></script>
@@ -196,44 +225,79 @@ The result looks like this:
 <script src="/packs/map-16838bab065ae1e314.js" data-turbolinks-track="reload" defer></script>
 ```
 
-**Important:** Pass all your pack names as multiple arguments, not multiple calls, when using `javascript_pack_tag` and the `stylesheet_pack_tag`. Otherwise, you will get duplicated chunks on the page. Be especially careful if you might be calling these view helpers from your view, partials, and the layout for a page. You will need some logic to ensure you call the helpers only once with multiple arguments.
+In this output, both the calendar and map codes might refer to other common libraries. Those get placed something like the vendor bundle. The view helper removes any duplication.
+
+Note, the default of "defer" for the `javascript_pack_tag`. You can override that to `false`. If you expose jquery globally with `expose-loader,` by using `import $ from "expose-loader?exposes=$,jQuery!jquery"` in your `app/javascript/application.js`, pass the option `defer: false` to your `javascript_pack_tag`.
+
+**Important:** Pass all your pack names as multiple arguments, not multiple calls, when using `javascript_pack_tag` and the `stylesheet_pack_tag`. Otherwise, you will get duplicated chunks on the page. 
 
 ```erb
 <%# DO %>
 <%= javascript_pack_tag 'calendar', 'map' %>
-<%= stylesheet_pack_tag 'calendar', 'map' %>
 
 <%# DON'T %>
 <%= javascript_pack_tag 'calendar' %>
 <%= javascript_pack_tag 'map' %>
-<%= stylesheet_pack_tag 'calendar' %>
-<%= stylesheet_pack_tag 'map' %>
 ```
-
-However, you may use multiple calls to stylesheet_pack_tag if, say, you require multiple <style> tags for different output media:
+While this also generally applies to `stylesheet_pack_tag`, you may use multiple calls to stylesheet_pack_tag if, say, you require multiple <style> tags for different output media:
 
 ``` erb
 <%= stylesheet_pack_tag 'application', media: 'screen' %>
 <%= stylesheet_pack_tag 'print', media: 'print' %>
 ```
 
-You can also use `append_javascript_pack_tag` helper to bundle additional tags together when calling `javascript_pack_tag`:
+#### View Helper `append_javascript_pack_tag`
 
+If you need configure your pack names from the view for a route or partials, then you will need some logic to ensure you call the helpers only once with multiple arguments. The new view helper `append_javascript_pack_tag` can solve this problem. This helper will queue up packs when the `javascript_pack_tag` is finally used.
+
+Main view:
 ```erb
-<% append_javascript_pack_tag 'calendar', 'map' %>
+<% append_javascript_pack_tag 'calendar' %>
+```
+
+Some partial:
+```erb
+<% append_javascript_pack_tag 'map' %>
+```
+
+And the main layout has:
+```erb
 <%= javascript_pack_tag 'application' %>
 ```
 
-In the example above, `calendar` and `map` tags will be bundled together with `application` and deduplicated once `javascript_pack_tag` is used.
+is the same as using this in the main layout:
 
-**Important:** `append_javascript_pack_tag` can be used anywhere in your application as long as it is executed BEFORE the `javascript_pack_tag`. If you attempt to call `append_javascript_pack_tag` helper after `javascript_pack_tag`, an error will be raised. You should aim to have only single `javascript_pack_tag` invocation in your page load.
+```erb
+<%= javascript_pack_tag 'calendar', 'map', application' %>
+```
+
+However, you typically can't do that in the main layout, as the view and partial codes will depend on the route.
+
+Thus, you can distribute the logic of what packs are needed for any route. All the magic of splitting up the code was automatic!
+
+**Important:** `append_javascript_pack_tag` can be used anywhere in your application as long as it is executed BEFORE the `javascript_pack_tag`. If you attempt to call `append_javascript_pack_tag` helper after `javascript_pack_tag`, an error will be raised. You should have only a single `javascript_pack_tag` invocation in your page load.
+                                                                                                    
+The typical issue is that your layout might reference some partials that need to configure packs. A good way to solve this problem is to use `content_for` to ensure that the code to render your partial comes before the call to `javascript_pack_tag`.
+
+```erb
+<% content_for :footer do 
+   render 'shared/footer' %>
+   
+<%= javascript_pack_tag %>
+
+<%= content_for :footer %>
+```
 
 For alternative options of setting the additional packs, [see this discussion](https://github.com/shakacode/shakapacker/issues/39).
+
+#### View Helper: `asset_pack_path`
 
 If you want to link a static asset for `<img />` tag, you can use the `asset_pack_path` helper:
 ```erb
 <img src="<%= asset_pack_path 'static/logo.svg' %>" />
 ```
+
+#### View Helper: `image_pack_tag`
 
 Or use the dedicated helper:
 ```erb
@@ -241,16 +305,20 @@ Or use the dedicated helper:
 <%= image_pack_tag 'picture.png', srcset: { 'picture-2x.png' => '2x' } %>
 ```
 
+#### View Helper: `favicon_pack_tag`
 If you want to create a favicon:
 ```erb
 <%= favicon_pack_tag 'mb-icon.png', rel: 'apple-touch-icon', type: 'image/png' %>
 ```
 
+#### View Helper: `preload_pack_asset`
 If you want to preload a static asset in your `<head>`, you can use the `preload_pack_asset` helper:
 ```erb
 <%= preload_pack_asset 'fonts/fa-regular-400.woff2' %>
 ```
 
+
+### Images in Stylesheets
 If you want to use images in your stylesheets:
 
 ```css
@@ -258,24 +326,39 @@ If you want to use images in your stylesheets:
   background-image: url('../images/logo.svg')
 }
 ```
-### Defer for `javascript_pack_tag`
-Note, the default of "defer" for the `javascript_pack_tag`. You can override that to `false`. If you expose jquery globally with `expose-loader,` by using `import $ from "expose-loader?exposes=$,jQuery!jquery"` in your `app/javascript/application.js`, pass the option `defer: false` to your `javascript_pack_tag`.
 
 ### Server-Side Rendering (SSR)
 
 Note, if you are using server-side rendering of JavaScript with dynamic code-splitting, as is often done with extensions to Webpacker, like [React on Rails](https://github.com/shakacode/react_on_rails), your JavaScript should create the link prefetch HTML tags that you will use, so you won't need to use to `asset_pack_path` in those circumstances.
 
-**Note:** In order for your styles or static assets files to be available in your view, you would need to link them in your "pack" or entry file. Otherwise, Webpack won't know to package up those files.
-
 ### Development
 
 Webpacker ships with two binstubs: `./bin/webpacker` and `./bin/webpacker-dev-server`. Both are thin wrappers around the standard `webpack.js` and `webpack-dev-server.js` executables to ensure that the right configuration files and environmental variables are loaded based on your environment.
 
-In development, Webpacker compiles on demand rather than upfront by default. This happens when you refer to any of the pack assets using the Webpacker helper methods. This means that you don't have to run any separate processes. Compilation errors are logged to the standard Rails log. However, this auto-compilation happens when a web request is made that requires an updated webpack build, not when files change. Thus, that can be painfully slow for front-end development in this default way. Instead, you should either run the `bin/webpacker --watch` or run `./bin/webpacker-dev-server`
+#### Automatic Webpack Code Building
 
-**Note:** If you are not using webpack dev server, your packs will be served by Rails public file server. If you've enabled caching (Rails application `config.action_controller.perform_caching` setting), your changes will likely not be picked up due to `Cache-Control` header being set and assets being cached in browser memory. For more details see the [issue #88](https://github.com/shakacode/shakapacker/issues/88).
+Shakapacker can be configured to automatically compile on demand when needed using the `webpacker.yml` `compile` option. This happens when you refer to any of the pack assets using the Shakapacker helper methods. This means that you don't have to run any separate processes. Compilation errors are logged to the standard Rails log. However, this auto-compilation happens when a web request is made that requires an updated webpack build, not when files change. Thus, that can be **painfully slow** for front-end development in this default way. Instead, you should either run the `bin/webpacker --watch` or run `./bin/webpacker-dev-server` during development.
 
-If you want to use live code reloading, or you have enough JavaScript that on-demand compilation is too slow, you'll need to run `./bin/webpacker-dev-server` or `ruby ./bin/webpacker-dev-server`. Windows users will need to run these commands in a terminal separate from `bundle exec rails s`. This process will watch for changes in the relevant files, defined by `webpacker.yml` configuration settings for `source_path`, `source_entry_path`, and `additional_paths`, and it will then automatically reload the browser to match. This feature is also known as [Hot Module Replacement](https://webpack.js.org/concepts/hot-module-replacement/).
+The `compile: true` option can be more useful for test and production builds.
+
+#### Compiler strategies
+
+Shakapacker ships with two different strategies that are used to determine whether assets need recompilation per the `compile: true` option:
+
+- `digest` - This strategy calculates SHA1 digest of files in your watched paths (see below). The calculated digest is then stored in a temp file. To check whether the assets need to be recompiled, Shakapacker calculates the SHA1 of the watched files and compares it with the one stored. If the digests are equal, no recompilation occurs. If the digests are different or the temp file is missing, files are recompiled.
+- `mtime` - This strategy looks at last modified at timestamps of both files AND directories in your watched paths. The timestamp of the most recent file or directory is then compared with the timestamp of `manifest.json` file generated. If the manifest file timestamp is newer than one of the most recently modified file or directory in the watched paths, no recompilation occurs. If the manifest file is order, files are recompiled.
+
+The `mtime` strategy is generally faster than the `digest` one, but it requires stable timestamps, this makes it perfect for a development environment, such as needing to rebuild bundles for tests, or if you're not changing frontend assets much.
+
+In production or CI environments, the `digest` strategy is more suitable, unless you are using incremental builds or caching and can guarantee that the timestamps will not change after e.g. cache restore. However, many production or CI environments will explicitly compile assets, so `compile: false` is more appropriate. Otherwise, you'll waste time either checking file timestamps or computing digests.
+
+You can control what strategy is used by `compiler_strategy` option in `webpacker.yml` config file. By default `mtime` strategy is used in development environment, `digest` is used elsewhere.
+
+**Note:** If you are not using the webpack-dev-server, your packs will be served by Rails public file server. If you've enabled caching (Rails application `config.action_controller.perform_caching` setting), your changes will likely not be picked up due to `Cache-Control` header being set and assets being cached in browser memory. For more details see the [issue #88](https://github.com/shakacode/shakapacker/issues/88).
+
+If you want to use live code reloading, or you have enough JavaScript that on-demand compilation is too slow, you'll need to run `./bin/webpacker-dev-server`. This process will watch for changes in the relevant files, defined by `webpacker.yml` configuration settings for `source_path`, `source_entry_path`, and `additional_paths`, and it will then automatically reload the browser to match. This feature is also known as [Hot Module Replacement](https://webpack.js.org/concepts/hot-module-replacement/).
+
+#### Common Development Commands
 
 ```bash
 # webpack dev server
@@ -286,15 +369,6 @@ If you want to use live code reloading, or you have enough JavaScript that on-de
 
 # standalone build
 ./bin/webpacker --progress
-
-# Help
-./bin/webpacker help
-
-# Version
-./bin/webpacker version
-
-# Info
-./bin/webpacker info
 ```
 
 Once you start this webpack development server, Webpacker will automatically start proxying all webpack asset requests to this server. When you stop this server, Rails will detect that it's not running and Rails will revert back to on-demand compilation _if_ you have the `compile` option set to true in your `config/webpacker.yml`
@@ -327,7 +401,7 @@ end
 First, you don't _need_ to use Shakapacker's webpack configuration. However, the `shakapacker` NPM package provides convenient access to configuration code that reads the `config/webpacker.yml` file which the view helpers also use. If you have your own customized webpack configuration, at the minimum, you must ensure:
 
 1. Your output files go the right directory
-2. You provide a manifest, via package [`webpack-assets-manifest`](https://github.com/webdeveric/webpack-assets-manifest) that maps output names (your 'packs') to the fingerprinted versions, including bundle-splitting dependencies. That's the main secret sauce of webpacker!
+2. Your output includes a manifest, via package [`webpack-assets-manifest`](https://github.com/webdeveric/webpack-assets-manifest) that maps output names (your 'packs') to the fingerprinted versions, including bundle-splitting dependencies. That's the main secret sauce of webpacker!
 
 The most practical webpack configuration is to take the default from Shakapacker and then use [webpack-merge](https://github.com/survivejs/webpack-merge) to merge your customizations with the default. For example, suppose you want to add some `resolve.extensions`:
 
@@ -350,7 +424,7 @@ module.exports = merge({}, baseWebpackConfig, options)
 
 This example is based on [an example project](https://github.com/shakacode/react_on_rails_tutorial_with_ssr_and_hmr_fast_refresh/blob/master/config/webpack/webpack.config.js)
 
-Webpacker gives you a default configuration file `config/webpack/webpack.config.js`, which, by default, you don't need to make any changes to `config/webpack/webpack.config.js` since it's a standard production-ready configuration. However, you will probably want to customize or add a new loader by modifying the webpack configuration, as shown above.
+Shakapacker gives you a default configuration file `config/webpack/webpack.config.js`, which, by default, you don't need to make any changes to `config/webpack/webpack.config.js` since it's a standard production-ready configuration. However, you will probably want to customize or add a new loader by modifying the webpack configuration, as shown above.
 
 You might add separate files to keep your code more organized.
 
@@ -380,7 +454,7 @@ const customConfig = require('./custom')
 module.exports = merge(webpackConfig, customConfig)
 ```
 
-If you need access to configs within Webpacker's configuration, you can import them like so:
+If you need access to configs within Shakapacker's configuration, you can import them like so:
 
 ```js
 // config/webpack/webpack.config.js
@@ -402,7 +476,7 @@ svgRule.test = svgRule.test.filter(t => !t.test('.svg'))
 
 ### Babel configuration
 
-By default, you will find the Webpacker preset in your `package.json`. Note, you need to use the new NPM package name, `shakapacker`.
+By default, you will find the Shakapacker preset in your `package.json`. Note, you need to use the new NPM package name, `shakapacker`.
 
 ```json
 "babel": {
@@ -411,8 +485,8 @@ By default, you will find the Webpacker preset in your `package.json`. Note, you
   ]
 },
 ```
-
 Optionally, you can change your Babel configuration by removing these lines in your `package.json` and add [a Babel configuration file](https://babeljs.io/docs/en/config-files) in your project. For an example customization based on the original, see [Customizing Babel Config](./docs/customizing_babel_config.md).
+
 
 ### SWC configuration
 
@@ -428,7 +502,7 @@ Please note that if you want opt-in to use esbuild-loader, you can skip [React](
 
 ### Integrations
 
-Webpacker out of the box supports JS and static assets (fonts, images etc.) compilation. To enable support for CoffeeScript or TypeScript install relevant packages:
+Shakapacker out of the box supports JS and static assets (fonts, images etc.) compilation. To enable support for CoffeeScript or TypeScript install relevant packages:
 
 #### React
 
@@ -605,7 +679,7 @@ module.exports = merge(vueConfig, webpackConfig)
 
 ### Custom Rails environments
 
-Out of the box Webpacker ships with - development, test and production environments in `config/webpacker.yml` however, in most production apps extra environments are needed as part of deployment workflow. Webpacker supports this out of the box from version 3.4.0+ onwards.
+Out of the box Shakapacker ships with - development, test and production environments in `config/webpacker.yml` however, in most production apps extra environments are needed as part of deployment workflow. Shakapacker supports this out of the box from version 3.4.0+ onwards.
 
 You can choose to define additional environment configurations in webpacker.yml,
 
@@ -623,7 +697,7 @@ staging:
   public_output_path: packs-staging
 ```
 
-Otherwise Webpacker will use production environment as a fallback environment for loading configurations. Please note, `NODE_ENV` can either be set to `production`, `development` or `test`. This means you don't need to create additional environment files inside `config/webpacker/*` and instead use webpacker.yml to load different configurations using `RAILS_ENV`.
+Otherwise Shakapacker will use production environment as a fallback environment for loading configurations. Please note, `NODE_ENV` can either be set to `production`, `development` or `test`. This means you don't need to create additional environment files inside `config/webpacker/*` and instead use webpacker.yml to load different configurations using `RAILS_ENV`.
 
 For example, the below command will compile assets in production mode but will use staging configurations from `config/webpacker.yml` if available or use fallback production environment configuration:
 
@@ -651,7 +725,7 @@ bundle exec rails webpacker:compile
 
 ### Upgrading
 
-You can run following commands to upgrade Webpacker to the latest stable version. This process involves upgrading the gem and related JavaScript packages:
+You can run following commands to upgrade Shakapacker to the latest stable version. This process involves upgrading the gem and related JavaScript packages:
 
 ```bash
 # check your Gemfile for version restrictions
@@ -674,20 +748,9 @@ yarn add shakapacker@next
 
 Also, consult the [CHANGELOG](./CHANGELOG.md) for additional upgrade links.
 
-### Compiler strategies
-
-Shakapacker ships with two different strategies that are used to determine whether assets need recompilation.
-
-- `digest` - This strategy calculates SHA1 digest of files in your watched paths (see below). The calculated digest is then stored in a temp file. To check whether the assets need to be recompiled, Shakapacker calculates the SHA1 of the watched files and compares it with the one stored. If the digests are equal, no recompilation occurs. If the digests are different or the temp file is missing, files are recompiled.
-- `mtime` - This strategy looks at last modified at timestamps of both files AND directories in your watched paths. The timestamp of the most recent file or directory is then compared with the timestamp of `manifest.json` file generated. If the manifest file timestamp is newer than one of the most recently modified file or directory in the watched paths, no recompilation occurs. If the manifest file is order, files are recompiled.
-
-`mtime` strategy is generally faster than the `digest` one, but it requires stable timestamps, this makes it perfect for development environment. In production or CI environments, the `digest` strategy is more suitable, unless you are using incremental builds or caching and can guarantee that the timestamps will not change after e.g. cache restore.
-
-You can control what strategy is used by `compiler_strategy` option in `webpacker.yml` config file. By default `mtime` strategy is used in development environment, `digest` is used elsewhere.
-
 ### Paths
 
-By default, Webpacker ships with simple conventions for where the JavaScript app files and compiled webpack bundles will go in your Rails app. All these options are configurable from `config/webpacker.yml` file.
+By default, Shakapacker ships with simple conventions for where the JavaScript app files and compiled webpack bundles will go in your Rails app. All these options are configurable from `config/webpacker.yml` file.
 
 The configuration for what webpack is supposed to compile by default rests on the convention that every file in `app/javascript/`**(default)** or whatever path you set for `source_entry_path` in the `webpacker.yml` configuration is turned into their own output files (or entry points, as webpack calls it). Therefore you don't want to put any file inside `app/javascript` directory that you do not want to be an entry file. As a rule of thumb, put all files you want to link in your views inside "app/javascript/" directory and keep everything else under subdirectories like `app/javascript/controllers`.
 
@@ -715,7 +778,7 @@ If you want to have HMR and separate link tags, set `hmr: true` and `inline_css:
 
 ### Additional paths
 
-If you are adding Webpacker to an existing app that has most of the assets inside `app/assets` or inside an engine, and you want to share that with webpack modules, you can use the `additional_paths` option available in `config/webpacker.yml`. This lets you
+If you are adding Shakapacker to an existing app that has most of the assets inside `app/assets` or inside an engine, and you want to share that with webpack modules, you can use the `additional_paths` option available in `config/webpacker.yml`. This lets you
 add additional paths that webpack should look up when resolving modules:
 
 ```yml
@@ -732,12 +795,12 @@ import 'images/rails.png'
 
 **Note:** Please be careful when adding paths here otherwise it will make the compilation slow, consider adding specific paths instead of whole parent directory if you just need to reference one or two modules
 
-**Also note:** While importing assets living outside your `source_path` defined in webpacker.yml (like, for instance, assets under `app/assets`) from within your packs using _relative_ paths like `import '../../assets/javascripts/file.js'` will work in development, Webpacker won't recompile the bundle in production unless a file that lives in one of it's watched paths has changed (check out `Webpacker::MtimeStrategy#latest_modified_timestamp` or `Webpacker::DigestStrategy#watched_files_digest` depending on strategy configured by `compiler_strategy` option in `webpacker.yml`). That's why you'd need to add `app/assets` to the additional_paths as stated above and use `import 'javascripts/file.js'` instead.
+**Also note:** While importing assets living outside your `source_path` defined in webpacker.yml (like, for instance, assets under `app/assets`) from within your packs using _relative_ paths like `import '../../assets/javascripts/file.js'` will work in development, Shakapacker won't recompile the bundle in production unless a file that lives in one of it's watched paths has changed (check out `Webpacker::MtimeStrategy#latest_modified_timestamp` or `Webpacker::DigestStrategy#watched_files_digest` depending on strategy configured by `compiler_strategy` option in `webpacker.yml`). That's why you'd need to add `app/assets` to the additional_paths as stated above and use `import 'javascripts/file.js'` instead.
 
 
 ## Deployment
 
-Webpacker hooks up a new `webpacker:compile` task to `assets:precompile`, which gets run whenever you run `assets:precompile`. If you are not using Sprockets, `webpacker:compile` is automatically aliased to `assets:precompile`. Similar to sprockets both rake tasks will compile packs in production mode but will use `RAILS_ENV` to load configuration from `config/webpacker.yml` (if available).
+Shakapacker hooks up a new `webpacker:compile` task to `assets:precompile`, which gets run whenever you run `assets:precompile`. If you are not using Sprockets, `webpacker:compile` is automatically aliased to `assets:precompile`. Similar to sprockets both rake tasks will compile packs in production mode but will use `RAILS_ENV` to load configuration from `config/webpacker.yml` (if available).
 
 This behavior is optional & can be disabled by either setting an `WEBPACKER_PRECOMPILE` environment variable to `false`, `no`, `n`, or `f`, or by setting a `webpacker_precompile` key in your `webpacker.yml` to `false`. ([source code](./lib/webpacker/configuration.rb#L30))
 
@@ -760,3 +823,15 @@ We encourage you to contribute to Shakapacker/Webpacker! See [CONTRIBUTING](CONT
 ## License
 
 Webpacker is released under the [MIT License](https://opensource.org/licenses/MIT).
+  
+# Supporters
+
+The following companies support this open source project, and ShakaCode uses their products! Justin writes React on Rails on [RubyMine](https://www.jetbrains.com/ruby/). We use [Scout](https://scoutapp.com/) to monitor the live performance of [HiChee.com](https://HiChee.com), [Rails AutoScale](https://railsautoscale.com) to scale the dynos of HiChee, and [HoneyBadger](https://www.honeybadger.io/) to monitor application errors. We love [BrowserStack](https://www.browserstack.com) to solve problems with oddball browsers.
+
+[![RubyMine](https://user-images.githubusercontent.com/1118459/114100597-3b0e3000-9860-11eb-9b12-73beb1a184b2.png)](https://www.jetbrains.com/ruby/)
+[![Scout](https://user-images.githubusercontent.com/1118459/171088197-81555b69-9ed0-4235-9acf-fcb37ecfb949.png)](https://scoutapp.com/)
+[![Rails AutoScale](https://user-images.githubusercontent.com/1118459/103197530-48dc0e80-488a-11eb-8b1b-a16664b30274.png)](https://railsautoscale.com/)
+[![BrowserStack](https://cloud.githubusercontent.com/assets/1118459/23203304/1261e468-f886-11e6-819e-93b1a3f17da4.png)](https://www.browserstack.com)
+[![HoneyBadger](https://user-images.githubusercontent.com/1118459/114100696-63962a00-9860-11eb-8ac1-75ca02856d8e.png)](https://www.honeybadger.io/)
+
+ShakaCode's favorite project tracking tool is [Shortcut](https://shortcut.com/). If you want to **try Shortcut and get 2 months free beyond the 14-day trial period**, click [here to use ShakaCode's referral code](http://r.clbh.se/mvfoNeH). We're participating in their awesome triple-sided referral program, which you can read about [here](https://shortcut.com/referral/). By using our [referral code](http://r.clbh.se/mvfoNeH) you'll be supporting ShakaCode and, thus, React on Rails!

@@ -7,6 +7,13 @@
 Changes since last non-beta release.
 
 *Please add entries here for your pull requests that are not yet released.*
+### Improved
+- Allow v10 of `compression-webpack-plugin` as a peer dependency. [PR 117](https://github.com/shakacode/shakapacker/pull/117) by [aried3r](https://github.com/aried3r).
+_Please add entries here for your pull requests that are not yet released._
+
+### Changed
+
+- Removed the `yarn:install` Rake task, and no longer enhance `assets:precompile` with said task. These tasks were used to ensure required NPM packages were installed before asset precompilation. Going forward you will need to ensure these packages are already installed yourself. Should you wish to restore this behaviour you'll need to [reimplement the task](https://github.com/shakacode/shakapacker/blob/bee661422f2c902aa8ac9cf8fa1f7ccb8142c914/lib/tasks/yarn.rake) in your own application.
 
 ## [v6.3.0] - May 19, 2022
 
