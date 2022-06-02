@@ -25,10 +25,8 @@ namespace :webpacker do
   end
 end
 
-if Webpacker.config.webpacker_precompile?
-  if Rake::Task.task_defined?("assets:precompile")
-    enhance_assets_precompile
-  else
-    Rake::Task.define_task("assets:precompile" => ["webpacker:compile"])
-  end
+if Rake::Task.task_defined?("assets:precompile")
+  enhance_assets_precompile
+else
+  Rake::Task.define_task("assets:precompile" => ["webpacker:compile"])
 end
