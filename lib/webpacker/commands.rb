@@ -51,7 +51,9 @@ class Webpacker::Commands
   # Returns truthy string explaining precompile enhancement is disabled
   # Or returns result of block passed
   def run_if_webpacker_precompile
-    return "precompile enhancement is disabled because webpacker_precompile is false" unless config.webpacker_precompile?
+    config_path_exists = File.exist?(Webpacker.config_path)
+    return "precompile enhancement is disabled because configuration file #{Webpacker.config_path} does not exist" unless config_path_exists
+    return 'precompile enhancement is disabled because webpacker_precompile is false' unless config.webpacker_precompile?
     yield
   end
 
