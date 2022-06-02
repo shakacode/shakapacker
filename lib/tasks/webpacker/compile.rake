@@ -14,8 +14,13 @@ namespace :webpacker do
   task compile: ["webpacker:verify_install", :environment] do
     Webpacker.with_node_env(ENV.fetch("NODE_ENV", "production")) do
       Webpacker.ensure_log_goes_to_stdout do
-        if Webpacker.gatekeeper('compile')
-          # Successful compilation!
+
+        compiled_ok_or_precompile_enhancement_disabled = Webpacker.run_if_webpacker_precompile do
+          Webpacker.compile
+        end
+
+        if compiled_ok_or_precompile_enhancement_disabled
+          # Successful compilation or skipped!
         else
           # Failed compilation
           exit!

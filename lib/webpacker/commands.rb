@@ -48,9 +48,11 @@ class Webpacker::Commands
     manifest.refresh
   end
 
-  def gatekeeper(command_string)
-    return undefined unless config.webpacker_precompile?
-    Webpacker.send(*command_string.split)
+  # Returns truthy string explaining precompile enhancement is disabled
+  # Or returns result of block passed
+  def run_if_webpacker_precompile
+    return "precompile enhancement is disabled because webpacker_precompile is false" unless config.webpacker_precompile?
+    yield
   end
 
   def compile
