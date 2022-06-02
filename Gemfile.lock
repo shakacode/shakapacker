@@ -182,7 +182,7 @@ DEPENDENCIES
   minitest (~> 5.0)
   nokogiri (~> 1.13, >= 1.13.6)
   rack-proxy
-  rails (~> 6.1, >= 6.1.6)
+  rails (>= 6.1.6)
   rake (>= 11.1)
   rubocop
   rubocop-performance
