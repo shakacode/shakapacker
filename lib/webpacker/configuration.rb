@@ -30,7 +30,10 @@ class Webpacker::Configuration
   def webpacker_precompile?
     # ENV of false takes precedence
     return false if %w(no false n f).include?(ENV["WEBPACKER_PRECOMPILE"])
-    return %w(yes true t).include?(ENV["WEBPACKER_PRECOMPILE"]) || fetch(:webpacker_precompile)
+    return true if %w(yes true t).include?(ENV["WEBPACKER_PRECOMPILE"])
+
+    return false unless config_path.exist?
+    fetch(:webpacker_precompile)
   end
 
   def source_path
