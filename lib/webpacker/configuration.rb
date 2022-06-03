@@ -32,7 +32,7 @@ class Webpacker::Configuration
     return false if %w(no false n f).include?(ENV["WEBPACKER_PRECOMPILE"])
     return true if %w(yes true t).include?(ENV["WEBPACKER_PRECOMPILE"])
 
-    return false unless File.exist?(@config_path)
+    return false unless config_path.exist?
     fetch(:webpacker_precompile)
   end
 
