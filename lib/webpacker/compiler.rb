@@ -14,6 +14,11 @@ class Webpacker::Compiler
   end
 
   def compile
+    if compiling?
+      sleep 0.5
+      return compile
+    end
+
     if stale?
       run_webpack.tap do |success|
         after_compile_hook
@@ -26,6 +31,15 @@ class Webpacker::Compiler
 
   private
     attr_reader :webpacker
+
+    def compiling?
+      # Parallel testing workers assume that the compilation is performed by the 0th worker
+      stale? && current_process_is_parallel_worker?
+    end
+
+    def current_process_is_parallel_worker?
+      `ps -f -p #{Process.pid}`.chomp.match?(/Rails test worker [1-9]\d*/)
+    end
 
     def optionalRubyRunner
       bin_webpack_path = config.root_path.join("bin/webpacker")
