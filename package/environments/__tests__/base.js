@@ -8,9 +8,11 @@ const { chdirTestApp, chdirCwd, resetEnv } = require('../../utils/helpers')
 chdirTestApp()
 
 const { resolve } = require('path')
-const baseConfig = require('../base')
 
 describe('Base config', () => {
+  const baseConfig = require('../base')
+  const config = require("../../config");
+
   beforeEach(() => jest.resetModules() && resetEnv())
 
   afterAll(chdirCwd)
@@ -23,6 +25,8 @@ describe('Base config', () => {
     })
 
     test('should return only 2 entry points with config.nested_entries == false', () => {
+      expect(config.nested_entries).toEqual(false)
+
       expect(baseConfig.entry.multi_entry.sort()).toEqual([
         resolve('app', 'packs', 'entrypoints', 'multi_entry.css'),
         resolve('app', 'packs', 'entrypoints', 'multi_entry.js')
