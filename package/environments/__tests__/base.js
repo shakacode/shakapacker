@@ -30,11 +30,16 @@ describe('Base config', () => {
       expect(baseConfig.entry['generated/something']).toEqual(undefined)
     })
 
-    test('should return only 3 entry points with config.nested_entries == true', () => {
+    test('should returns top level and nested entry points with config.nested_entries == true', () => {
       process.env.WEBPACKER_CONFIG = 'config/webpacker_nested_entries.yml'
-      require('../../config.js')
+      const config = require('../../config.js')
       const baseConfig = require('../base')
 
+      expect(config.nested_entries).toEqual(true)
+
+      expect(baseConfig.entry.application).toEqual(
+        resolve('app', 'packs', 'entrypoints', 'application.js')
+      )
       expect(baseConfig.entry.multi_entry.sort()).toEqual([
         resolve('app', 'packs', 'entrypoints', 'multi_entry.css'),
         resolve('app', 'packs', 'entrypoints', 'multi_entry.js')
