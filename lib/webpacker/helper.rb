@@ -158,7 +158,26 @@ module Webpacker::Helper
   def stylesheet_pack_tag(*names, **options)
     return "" if Webpacker.inlining_css?
 
+    if @stylesheet_pack_tag_loaded
+      raise "To prevent duplicated stylesheet on the page, you should call stylesheet_pack_tag only once on the page. " \
+      "Please refer to https://github.com/shakacode/shakapacker/blob/master/README.md#usage for the usage guide"
+    end
+
     stylesheet_link_tag(*sources_from_manifest_entrypoints(names, type: :stylesheet), **options)
+    appended_stylesheets = sources_from_manifest_entrypoints(@stylesheet_pack_tag_queue || [], type: :stylesheet)
+
+    @stylesheet_pack_tag_loaded = true
+
+    stylesheet_link_tag(*appended_stylesheets, **options)
+  end
+
+  def append_stylesheet_pack_tag(*names)
+    if @stylesheet_pack_tag_loaded
+      raise "You can only call append_stylesheet_pack_tag before stylesheet_pack_tag helper. " \
+      "Please refer to https://github.com/shakacode/shakapacker/blob/master/README.md#usage for the usage guide"
+    end
+
+    @stylesheet_pack_tag_queue = names
   end
 
   def append_javascript_pack_tag(*names, defer: true)
