@@ -9,10 +9,10 @@ chdirTestApp()
 
 const { resolve } = require('path')
 
-describe('Base config', () => {
-  const baseConfig = require('../base')
-  const config = require("../../config");
+const baseConfig = require('../base')
+const config = require("../../config");
 
+describe('Base config', () => {
   beforeEach(() => jest.resetModules() && resetEnv())
 
   afterAll(chdirCwd)
@@ -36,7 +36,7 @@ describe('Base config', () => {
 
     test('should returns top level and nested entry points with config.nested_entries == true', () => {
       process.env.WEBPACKER_CONFIG = 'config/webpacker_nested_entries.yml'
-      const config = require('../../config.js')
+      const config = require("../../config");
       const baseConfig = require('../base')
 
       expect(config.nested_entries).toEqual(true)
