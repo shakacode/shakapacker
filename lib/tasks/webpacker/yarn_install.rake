@@ -6,7 +6,7 @@ namespace :webpacker do
       Automatic installation of yarn packages when assets are precompiled is deprecated and will be removed in Shakapacker v7.
       Please ensure you are installing yarn packages explicitly before the asset compilation.
     MSG
-    
+
     valid_node_envs = %w[test development production]
     node_env = ENV.fetch("NODE_ENV") do
       valid_node_envs.include?(Rails.env) ? Rails.env : "production"
