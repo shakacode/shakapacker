@@ -8,6 +8,7 @@ Changes since last non-beta release.
 
 _Please add entries here for your pull requests that are not yet released._
 
+## [v6.4.1] - June 5, 2022
 ### Fixed
 - Restores automatic installation of yarn packages removed in [#131](https://github.com/shakacode/shakapacker/pull/131), with added deprecation notice. [PR 140](https://github.com/shakacode/shakapacker/pull/140) by [tomdracz](https://github.com/tomdracz).
 
@@ -144,7 +145,8 @@ Note: [Rubygem is 6.3.0.pre.rc.1](https://rubygems.org/gems/shakapacker/versions
 ## v5.4.3 and prior changes from rails/webpacker
 See [CHANGELOG.md in rails/webpacker (up to v5.4.3)](https://github.com/rails/webpacker/blob/master/CHANGELOG.md) 
 
-[Unreleased]: https://github.com/shakacode/shakapacker/compare/v6.4.0...master
+[Unreleased]: https://github.com/shakacode/shakapacker/compare/v6.4.1...master
+[v6.4.1]: https://github.com/shakacode/shakapacker/compare/v6.4.0...v6.4.1
 [v6.4.0]: https://github.com/shakacode/shakapacker/compare/v6.3.0...v6.4.0
 [v6.3.0]: https://github.com/shakacode/shakapacker/compare/v6.2.1...v6.3.0
 [v6.2.1]: https://github.com/shakacode/shakapacker/compare/v6.2.0...v6.2.1
