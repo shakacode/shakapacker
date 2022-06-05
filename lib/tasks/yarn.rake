@@ -5,6 +5,12 @@
 namespace :yarn do
   desc "Install all JavaScript dependencies as specified via Yarn"
   task :install do
+    warn <<~MSG.strip
+      Shakapacker - Automatic installation of yarn packages is deprecated
+      Automatic installation of yarn packages when assets are precompiled is deprecated and will be removed in Shakapacker v7.
+      Please ensure you are installing yarn packages explicitly before the asset compilation.
+    MSG
+
     begin
       # Install only production deps when for not usual envs.
       valid_node_envs = %w[test development production]
@@ -34,11 +40,5 @@ end
 
 # Run Yarn prior to Sprockets assets precompilation, so dependencies are available for use.
 if Rake::Task.task_defined?("assets:precompile") && File.exist?(Rails.root.join("bin", "yarn"))
-  warn <<~MSG.strip
-    Shakapacker - Automatic installation of yarn packages is deprecated
-    Automatic installation of yarn packages when assets are precompiled is deprecated and will be removed in Shakapacker v7.
-    Please ensure you are installing yarn packages explicitly before the asset compilation.
-  MSG
-
   Rake::Task["assets:precompile"].enhance [ "yarn:install" ]
 end
