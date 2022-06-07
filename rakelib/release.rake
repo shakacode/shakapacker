@@ -44,6 +44,7 @@ task :create_release, %i[gem_version dry_run] do |_t, args|
   # See https://github.com/svenfuchs/gem-release
   Shakapacker::Utils::Misc.sh_in_dir(gem_root, "git pull --rebase")
   Shakapacker::Utils::Misc.sh_in_dir(gem_root, "gem bump --no-commit #{gem_version.strip.empty? ? '' : %(--version #{gem_version})}")
+  Shakapacker::Utils::Misc.sh_in_dir(gem_root, "bundle install")
 
   # Will bump the yarn version, commit, tag the commit, push to repo, and release on yarn
   release_it_command = +"release-it"
