@@ -251,7 +251,7 @@ While this also generally applies to `stylesheet_pack_tag`, you may use multiple
 
 #### View Helper `append_javascript_pack_tag`
 
-If you need configure your pack names from the view for a route or partials, then you will need some logic to ensure you call the helpers only once with multiple arguments. The new view helper `append_javascript_pack_tag` can solve this problem. This helper will queue up packs when the `javascript_pack_tag` is finally used.
+If you need configure your script pack names from the view for a route or partials, then you will need some logic to ensure you call the helpers only once with multiple arguments. The new view helper `append_javascript_pack_tag` can solve this problem. This helper will queue up script packs when the `javascript_pack_tag` is finally used.
 
 Main view:
 ```erb
@@ -292,6 +292,34 @@ The typical issue is that your layout might reference some partials that need to
 ```
 
 For alternative options of setting the additional packs, [see this discussion](https://github.com/shakacode/shakapacker/issues/39).
+
+#### View Helper append_stylesheet_pack_tag
+If you need configure your stylesheet pack names from the view for a route or partials, then you will need some logic to ensure you call the helpers only once with multiple arguments. The new view helper append_stylesheet_pack_tag can solve this problem. This helper will queue up packs when the stylesheet_pack_tag is finally used.
+
+Main view:
+```erb
+<% append_stylesheet_pack_tag 'calendar' %>
+```
+
+Some partial:
+```erb
+<% append_stylesheet_pack_tag 'map' %>
+```
+
+And the main layout has:
+```erb
+<%= stylesheet_pack_tag 'application' %>
+```
+
+is the same as using this in the main layout:
+
+```erb
+<%= stylesheet_pack_tag 'calendar', 'map', application' %>
+```
+
+However, you typically can't do that in the main layout, as the view and partial codes will depend on the route.
+
+Thus, you can distribute the logic of what packs are needed for any route. All the magic of splitting up the code was automatic!
 
 #### View Helper: `asset_pack_path`
 
