@@ -205,4 +205,21 @@ class HelperTest < ActionView::TestCase
       hello_stimulus_stylesheet_chunks.map { |chunk| stylesheet_link_tag(chunk) }.join("\n"),
       stimulus_style
   end
+
+  def test_stylesheet_pack_with_append
+    append_stylesheet_pack_tag(:hello_stimulus)
+
+    assert_equal \
+      (application_stylesheet_chunks + hello_stimulus_stylesheet_chunks).uniq.map { |chunk| stylesheet_link_tag(chunk) }.join("\n"),
+      stylesheet_pack_tag(:application)
+  end
+
+  def test_stylesheet_pack_with_duplicate_append
+    append_stylesheet_pack_tag(:hello_stimulus)
+    append_stylesheet_pack_tag(:application)
+
+    assert_equal \
+      (application_stylesheet_chunks + hello_stimulus_stylesheet_chunks).uniq.map { |chunk| stylesheet_link_tag(chunk) }.join("\n"),
+      stylesheet_pack_tag(:application)
+  end
 end
