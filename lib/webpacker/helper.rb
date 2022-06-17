@@ -168,10 +168,7 @@ module Webpacker::Helper
 
     @stylesheet_pack_tag_loaded = true
 
-    capture do
-      concat stylesheet_link_tag(*requested_packs, **options)
-      concat stylesheet_link_tag(*appended_packs, **options)
-    end
+    stylesheet_link_tag(*(requested_packs | appended_packs), **options)
   end
 
   def append_stylesheet_pack_tag(*names)
