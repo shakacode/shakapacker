@@ -8,7 +8,12 @@ Before starting, ensure that you have Yarn installed, for example:
 npm i -g yarn
 ```
 
-## Basic Setup
+## Easy Setup
+If you'd like easy integration of React with Ruby on Rails, see [React on Rails](https://github.com/shakacode/react_on_rails).
+
+The below information applies to a React on Rails app, except 
+
+## Basic Manual Setup
 
 Create a new Rails app as per the [installation instructions in the README](https://github.com/shakacode/shakapacker#installation).
 
