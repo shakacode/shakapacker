@@ -35,6 +35,12 @@ Update the Babel configuration in the `package.json` file:
 },
 ```
 
+Create `.env` file on the root directory if you don't have one already and add the following:
+
+```
+EXECJS_RUNTIME=Node
+```
+
 And that's it. You can now create a React app using `app/javascript/application.js` as your entry point.
 
 ## Enabling Hot Module Replacement (HMR)
@@ -138,6 +144,12 @@ bundle add shakapacker --strict
 ./bin/rails webpacker:install
 yarn add react react-dom @babel/preset-react
 yarn add css-loader style-loader mini-css-extract-plugin css-minimizer-webpack-plugin
+```
+
+- Setup ENV variables
+```
+touch .env
+echo "EXECJS_RUNTIME=Node" >> .env
 ```
 
 2. Generate a controller
