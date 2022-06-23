@@ -11,7 +11,11 @@ npm i -g yarn
 ## Easy Setup
 If you'd like easy integration of React with Ruby on Rails, see [React on Rails](https://github.com/shakacode/react_on_rails).
 
-The below information applies to a React on Rails app, except 
+The below information applies to a React on Rails app, except that you need to setup some environment variables as follows:
+
+```
+EXECJS_RUNTIME=Node
+```
 
 ## Basic Manual Setup
 
@@ -33,12 +37,6 @@ Update the Babel configuration in the `package.json` file:
 +   "@babel/preset-react"
   ]
 },
-```
-
-Create `.env` file on the root directory if you don't have one already and add the following:
-
-```
-EXECJS_RUNTIME=Node
 ```
 
 And that's it. You can now create a React app using `app/javascript/application.js` as your entry point.
@@ -144,12 +142,6 @@ bundle add shakapacker --strict
 ./bin/rails webpacker:install
 yarn add react react-dom @babel/preset-react
 yarn add css-loader style-loader mini-css-extract-plugin css-minimizer-webpack-plugin
-```
-
-- Setup ENV variables
-```
-touch .env
-echo "EXECJS_RUNTIME=Node" >> .env
 ```
 
 2. Generate a controller
