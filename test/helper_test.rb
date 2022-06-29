@@ -222,4 +222,11 @@ class HelperTest < ActionView::TestCase
       (application_stylesheet_chunks + hello_stimulus_stylesheet_chunks).uniq.map { |chunk| stylesheet_link_tag(chunk) }.join("\n"),
       stylesheet_pack_tag(:application)
   end
+
+  def test_multiple_stylesheet_pack_with_different_media_attr
+    assert_nothing_raised do
+      stylesheet_pack_tag(:application)
+      stylesheet_pack_tag(:application, media: "print")
+    end
+  end
 end
