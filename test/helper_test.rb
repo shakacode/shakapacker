@@ -244,10 +244,5 @@ class HelperTest < ActionView::TestCase
     assert_equal \
       hello_stimulus_stylesheet_chunks.map { |chunk| stylesheet_link_tag(chunk, media: "all") }.join("\n"),
       hello_stimulus_style_with_media
-
-    assert_nothing_raised do
-      stylesheet_pack_tag(:application)
-      stylesheet_pack_tag(:application, media: "print")
-    end
   end
 end
