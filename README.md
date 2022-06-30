@@ -284,8 +284,7 @@ Thus, you can distribute the logic of what packs are needed for any route. All t
 
 **Important:** `append_javascript_pack_tag` can be used anywhere in your application as long as it is executed BEFORE the `javascript_pack_tag`. If you attempt to call `append_javascript_pack_tag` helper after `javascript_pack_tag`, an error will be raised. You should have only a single `javascript_pack_tag` invocation in your page load.
 
-**Important** Similar to `append_javascript_pack_tag`, the `append_stylesheet_pack_tag` should be used anywhere in your application as long as it is executed BEFORE the `stylesheet_pack_tag`. However, if you attempt to call `append_stylesheet_pack_tag` helper after `stylesheet_pack_tag`, an error will be **NOT** be raised.
-                                                                                                    
+**Important** Similar to `append_javascript_pack_tag`, the `append_stylesheet_pack_tag` should be used anywhere in your application as long as it is executed BEFORE the `stylesheet_pack_tag`. If you attempt to call `append_stylesheet_pack_tag` helper after `stylesheet_pack_tag`, an error will be raised. However, you may have multiple invocation of `stylesheet_pack_tag`                                                                                  
 The typical issue is that your layout might reference some partials that need to configure packs. A good way to solve this problem is to use `content_for` to ensure that the code to render your partial comes before the call to `javascript_pack_tag`.
 
 ```erb
