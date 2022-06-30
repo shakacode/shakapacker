@@ -249,36 +249,42 @@ While this also generally applies to `stylesheet_pack_tag`, you may use multiple
 <%= stylesheet_pack_tag 'print', media: 'print' %>
 ```
 
-#### View Helper `append_javascript_pack_tag`
+#### View Helper `append_javascript_pack_tag` and `append_stylesheet_pack_tag`
 
-If you need configure your pack names from the view for a route or partials, then you will need some logic to ensure you call the helpers only once with multiple arguments. The new view helper `append_javascript_pack_tag` can solve this problem. This helper will queue up packs when the `javascript_pack_tag` is finally used.
+If you need configure your script pack names or stylesheet pack names from the view for a route or partials, then you will need some logic to ensure you call the helpers only once with multiple arguments. The new view helpers, `append_javascript_pack_tag` and `append_stylesheet_pack_tag` can solve this problem. The helper `append_javascript_pack_tag` will queue up script packs when the `javascript_pack_tag` is finally used. Similarly,`append_stylesheet_pack_tag` will queue up style packs when the `stylesheet_pack_tag` is finally used.
 
 Main view:
 ```erb
 <% append_javascript_pack_tag 'calendar' %>
+<% append_stylesheet_pack_tag 'calendar' %>
 ```
 
 Some partial:
 ```erb
 <% append_javascript_pack_tag 'map' %>
+<% append_stylesheet_pack_tag 'map' %>
 ```
 
 And the main layout has:
 ```erb
 <%= javascript_pack_tag 'application' %>
+<%= stylesheet_pack_tag 'application' %>
 ```
 
 is the same as using this in the main layout:
 
 ```erb
 <%= javascript_pack_tag 'calendar', 'map', application' %>
+<%= stylesheet_pack_tag 'calendar', 'map', application' %>
 ```
 
 However, you typically can't do that in the main layout, as the view and partial codes will depend on the route.
 
-Thus, you can distribute the logic of what packs are needed for any route. All the magic of splitting up the code was automatic!
+Thus, you can distribute the logic of what packs are needed for any route. All the magic of splitting up the code and CSS was automatic!
 
 **Important:** `append_javascript_pack_tag` can be used anywhere in your application as long as it is executed BEFORE the `javascript_pack_tag`. If you attempt to call `append_javascript_pack_tag` helper after `javascript_pack_tag`, an error will be raised. You should have only a single `javascript_pack_tag` invocation in your page load.
+
+**Important** Similar to `append_javascript_pack_tag`, the `append_stylesheet_pack_tag` should be used anywhere in your application as long as it is executed BEFORE the `stylesheet_pack_tag`. However, if you attempt to call `append_stylesheet_pack_tag` helper after `stylesheet_pack_tag`, an error will be **NOT** be raised.
                                                                                                     
 The typical issue is that your layout might reference some partials that need to configure packs. A good way to solve this problem is to use `content_for` to ensure that the code to render your partial comes before the call to `javascript_pack_tag`.
 

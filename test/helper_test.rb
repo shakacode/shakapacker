@@ -204,5 +204,45 @@ class HelperTest < ActionView::TestCase
     assert_equal \
       hello_stimulus_stylesheet_chunks.map { |chunk| stylesheet_link_tag(chunk) }.join("\n"),
       stimulus_style
+
+    assert_nothing_raised do
+      stylesheet_pack_tag(:application)
+      stylesheet_pack_tag(:hello_stimulus)
+    end
+  end
+
+  def test_stylesheet_pack_with_append
+    append_stylesheet_pack_tag(:hello_stimulus)
+
+    assert_equal \
+      (application_stylesheet_chunks + hello_stimulus_stylesheet_chunks).uniq.map { |chunk| stylesheet_link_tag(chunk) }.join("\n"),
+      stylesheet_pack_tag(:application)
+  end
+
+  def test_stylesheet_pack_with_duplicate_append
+    append_stylesheet_pack_tag(:hello_stimulus)
+    append_stylesheet_pack_tag(:application)
+
+    assert_equal \
+      (application_stylesheet_chunks + hello_stimulus_stylesheet_chunks).uniq.map { |chunk| stylesheet_link_tag(chunk) }.join("\n"),
+      stylesheet_pack_tag(:application)
+  end
+
+  def test_multiple_stylesheet_pack_with_different_media_attr
+    app_style = stylesheet_pack_tag(:application)
+    app_style_with_media = stylesheet_pack_tag(:application, media: "print")
+    hello_stimulus_style_with_media = stylesheet_pack_tag(:hello_stimulus, media: "all")
+
+    assert_equal \
+      application_stylesheet_chunks.map { |chunk| stylesheet_link_tag(chunk) }.join("\n"),
+      app_style
+
+    assert_equal \
+      application_stylesheet_chunks.map { |chunk| stylesheet_link_tag(chunk, media: "print") }.join("\n"),
+      app_style_with_media
+
+    assert_equal \
+      hello_stimulus_stylesheet_chunks.map { |chunk| stylesheet_link_tag(chunk, media: "all") }.join("\n"),
+      hello_stimulus_style_with_media
   end
 end
