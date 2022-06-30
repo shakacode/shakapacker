@@ -6,6 +6,8 @@
 ## [Unreleased]
 Changes since last non-beta release.
 
+- Added `append_stylesheet_pack_tag` helper, which is required for filesystem-based automated Component Registry API on React-on-Rails.
+
 _Please add entries here for your pull requests that are not yet released._
 
 ## [v6.4.1] - June 5, 2022
