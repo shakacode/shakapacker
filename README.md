@@ -278,10 +278,9 @@ is the same as using this in the main layout:
 <%= stylesheet_pack_tag 'calendar', 'map', application' %>
 ```
 
-
 However, you typically can't do that in the main layout, as the view and partial codes will depend on the route.
 
-Thus, you can distribute the logic of what packs are needed for any route. All the magic of splitting up the code was automatic!
+Thus, you can distribute the logic of what packs are needed for any route. All the magic of splitting up the code and CSS was automatic!
 
 **Important:** `append_javascript_pack_tag` can be used anywhere in your application as long as it is executed BEFORE the `javascript_pack_tag`. If you attempt to call `append_javascript_pack_tag` helper after `javascript_pack_tag`, an error will be raised. You should have only a single `javascript_pack_tag` invocation in your page load.
 
