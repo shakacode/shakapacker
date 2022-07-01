@@ -133,7 +133,7 @@ class HelperTest < ActionView::TestCase
 
     assert_equal \
       "You can only call append_javascript_pack_tag before javascript_pack_tag helper. " +
-        "Please refer to https://github.com/shakacode/shakapacker/blob/master/README.md#usage for the usage guide",
+        "Please refer to https://github.com/shakacode/shakapacker/blob/master/README.md#view-helper-append_javascript_pack_tag-and-append_stylesheet_pack_tag for the usage guide",
       error.message
   end
 
@@ -161,7 +161,7 @@ class HelperTest < ActionView::TestCase
 
     assert_equal \
       "To prevent duplicated chunks on the page, you should call javascript_pack_tag only once on the page. " +
-        "Please refer to https://github.com/shakacode/shakapacker/blob/master/README.md#usage for the usage guide",
+        "Please refer to https://github.com/shakacode/shakapacker/blob/master/README.md#view-helpers-javascript_pack_tag-and-stylesheet_pack_tag for the usage guide",
       error.message
   end
 

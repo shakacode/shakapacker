@@ -98,7 +98,7 @@ module Webpacker::Helper
   def javascript_pack_tag(*names, defer: true, **options)
     if @javascript_pack_tag_loaded
       raise "To prevent duplicated chunks on the page, you should call javascript_pack_tag only once on the page. " \
-      "Please refer to https://github.com/shakacode/shakapacker/blob/master/README.md#usage for the usage guide"
+      "Please refer to https://github.com/shakacode/shakapacker/blob/master/README.md#view-helpers-javascript_pack_tag-and-stylesheet_pack_tag for the usage guide"
     end
 
     append_javascript_pack_tag(*names, defer: defer)
@@ -169,7 +169,7 @@ module Webpacker::Helper
   def append_stylesheet_pack_tag(*names)
     if @stylesheet_pack_tag_loaded
       raise "You can only call append_stylesheet_pack_tag before stylesheet_pack_tag helper. " \
-      "Please refer to https://github.com/shakacode/shakapacker/blob/master/README.md#usage for the usage guide"
+      "Please refer to https://github.com/shakacode/shakapacker/blob/master/README.md#view-helper-append_javascript_pack_tag-and-append_stylesheet_pack_tag for the usage guide"
     end
 
     @stylesheet_pack_tag_queue ||= []
@@ -179,7 +179,7 @@ module Webpacker::Helper
   def append_javascript_pack_tag(*names, defer: true)
     if @javascript_pack_tag_loaded
       raise "You can only call append_javascript_pack_tag before javascript_pack_tag helper. " \
-      "Please refer to https://github.com/shakacode/shakapacker/blob/master/README.md#usage for the usage guide"
+      "Please refer to https://github.com/shakacode/shakapacker/blob/master/README.md#view-helper-append_javascript_pack_tag-and-append_stylesheet_pack_tag for the usage guide"
     end
 
     hash_key = defer ? :deferred : :non_deferred

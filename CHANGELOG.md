@@ -6,7 +6,8 @@
 ## [Unreleased]
 Changes since last non-beta release.
 
-- Added `append_stylesheet_pack_tag` helper, which is required for filesystem-based automated Component Registry API on React-on-Rails.
+### Added
+- `append_stylesheet_pack_tag` helper. It helps in configuring stylesheet pack names from the view for a route or partials. It is also required for filesystem-based automated Component Registry API on React on Rails gem. [PR 144](https://github.com/shakacode/shakapacker/pull/144) by [pulkitkkr](https://github.com/pulkitkkr).
 
 _Please add entries here for your pull requests that are not yet released._
 
