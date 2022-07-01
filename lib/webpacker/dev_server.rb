@@ -18,8 +18,6 @@ class Webpacker::DevServer
     else
       false
     end
-  rescue
-    false
   end
 
   def host
