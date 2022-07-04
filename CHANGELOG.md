@@ -1,18 +1,19 @@
 * For the changelog of versions prior to v6, see the [5.x stable branch of rails/webpacker](https://github.com/rails/webpacker/tree/5-x-stable).
 * Please see the [v6 Upgrade Guide](./docs/v6_upgrade.md) to go from versions prior to v6.
-* [ShakaCode](https://www.shakacode.com) offers support for upgrading from webpacker or using Shakapacker. If interested, contact [justin@shakacode.com](mailto:justin@shakacode.com).
+* [ShakaCode](https://www.shakacode.com) offers support for upgrading from webpacker or using Shakapacker. If interested, contact Justin Gordon, [justin@shakacode.com](mailto:justin@shakacode.com).
 
 ## Versions
 ## [Unreleased]
 Changes since last non-beta release.
 
+_Please add entries here for your pull requests that are not yet released._
+
+## [v6.5.0] - July 4, 2022
 ### Added
 - `append_stylesheet_pack_tag` helper. It helps in configuring stylesheet pack names from the view for a route or partials. It is also required for filesystem-based automated Component Registry API on React on Rails gem. [PR 144](https://github.com/shakacode/shakapacker/pull/144) by [pulkitkkr](https://github.com/pulkitkkr).
 
-### Fixed
-- Make sure at most one compilation runs at a time (#139).
-
-_Please add entries here for your pull requests that are not yet released._
+### Improved
+- Make sure at most one compilation runs at a time [PR 139](https://github.com/shakacode/shakapacker/pull/139) by [artemave](https://github.com/artemave)
 
 ## [v6.4.1] - June 5, 2022
 ### Fixed
@@ -151,7 +152,8 @@ Note: [Rubygem is 6.3.0.pre.rc.1](https://rubygems.org/gems/shakapacker/versions
 ## v5.4.3 and prior changes from rails/webpacker
 See [CHANGELOG.md in rails/webpacker (up to v5.4.3)](https://github.com/rails/webpacker/blob/master/CHANGELOG.md) 
 
-[Unreleased]: https://github.com/shakacode/shakapacker/compare/v6.4.1...master
+[Unreleased]: https://github.com/shakacode/shakapacker/compare/v6.5.0...master
+[v6.5.0]: https://github.com/shakacode/shakapacker/compare/v6.4.1...v6.5.0
 [v6.4.1]: https://github.com/shakacode/shakapacker/compare/v6.4.0...v6.4.1
 [v6.4.0]: https://github.com/shakacode/shakapacker/compare/v6.3.0...v6.4.0
 [v6.3.0]: https://github.com/shakacode/shakapacker/compare/v6.2.1...v6.3.0
