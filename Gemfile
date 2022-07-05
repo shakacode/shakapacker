@@ -7,6 +7,7 @@ gem "rake", ">= 11.1"
 gem "rack-proxy", require: false
 gem "semantic_range", require: false
 gem "nokogiri", "~> 1.13", ">= 1.13.6"
+gem "rails-html-sanitizer", ">= 1.4.3"
 
 group :test do
   gem "minitest", "~> 5.0"
