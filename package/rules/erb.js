@@ -9,7 +9,13 @@ module.exports = canProcess('rails-erb-loader', (resolvedPath) => ({
   use: [
     {
       loader: resolvedPath,
-      options: { runner: `${runner}bin/rails runner` }
+      options: {
+        runner: `${runner}bin/rails runner`,
+        env: {
+          ...process.env,
+          DISABLE_SPRING: 1
+        }
+      }
     }
   ]
 }))

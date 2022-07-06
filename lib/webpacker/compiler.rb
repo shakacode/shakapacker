@@ -14,18 +14,52 @@ class Webpacker::Compiler
   end
 
   def compile
-    if stale?
-      run_webpack.tap do |success|
-        after_compile_hook
-      end
-    else
+    unless stale?
       logger.debug "Everything's up-to-date. Nothing to do"
+      return true
+    end
+
+    if compiling?
+      wait_for_compilation_to_complete
       true
+    else
+      acquire_ipc_lock do
+        run_webpack.tap do |success|
+          after_compile_hook
+        end
+      end
     end
   end
 
   private
     attr_reader :webpacker
+
+    def acquire_ipc_lock
+      open_lock_file do |lf|
+        lf.flock(File::LOCK_EX)
+        yield if block_given?
+      end
+    end
+
+    def locked?
+      open_lock_file do |lf|
+        lf.flock(File::LOCK_EX | File::LOCK_NB) != 0
+      end
+    end
+
+    alias compiling? locked?
+
+    def wait_for_compilation_to_complete
+      logger.info "Waiting for the compilation to complete..."
+      acquire_ipc_lock
+    end
+
+    def open_lock_file
+      lock_file_name = File.join(Dir.tmpdir, "shakapacker.lock")
+      File.open(lock_file_name, File::CREAT) do |lf|
+        return yield lf
+      end
+    end
 
     def optionalRubyRunner
       bin_webpack_path = config.root_path.join("bin/webpacker")

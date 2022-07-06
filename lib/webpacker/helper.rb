@@ -98,7 +98,7 @@ module Webpacker::Helper
   def javascript_pack_tag(*names, defer: true, **options)
     if @javascript_pack_tag_loaded
       raise "To prevent duplicated chunks on the page, you should call javascript_pack_tag only once on the page. " \
-      "Please refer to https://github.com/shakacode/shakapacker/blob/master/README.md#usage for the usage guide"
+      "Please refer to https://github.com/shakacode/shakapacker/blob/master/README.md#view-helpers-javascript_pack_tag-and-stylesheet_pack_tag for the usage guide"
     end
 
     append_javascript_pack_tag(*names, defer: defer)
@@ -158,13 +158,28 @@ module Webpacker::Helper
   def stylesheet_pack_tag(*names, **options)
     return "" if Webpacker.inlining_css?
 
-    stylesheet_link_tag(*sources_from_manifest_entrypoints(names, type: :stylesheet), **options)
+    requested_packs = sources_from_manifest_entrypoints(names, type: :stylesheet)
+    appended_packs = available_sources_from_manifest_entrypoints(@stylesheet_pack_tag_queue || [], type: :stylesheet)
+
+    @stylesheet_pack_tag_loaded = true
+
+    stylesheet_link_tag(*(requested_packs | appended_packs), **options)
+  end
+
+  def append_stylesheet_pack_tag(*names)
+    if @stylesheet_pack_tag_loaded
+      raise "You can only call append_stylesheet_pack_tag before stylesheet_pack_tag helper. " \
+      "Please refer to https://github.com/shakacode/shakapacker/blob/master/README.md#view-helper-append_javascript_pack_tag-and-append_stylesheet_pack_tag for the usage guide"
+    end
+
+    @stylesheet_pack_tag_queue ||= []
+    @stylesheet_pack_tag_queue.concat names
   end
 
   def append_javascript_pack_tag(*names, defer: true)
     if @javascript_pack_tag_loaded
       raise "You can only call append_javascript_pack_tag before javascript_pack_tag helper. " \
-      "Please refer to https://github.com/shakacode/shakapacker/blob/master/README.md#usage for the usage guide"
+      "Please refer to https://github.com/shakacode/shakapacker/blob/master/README.md#view-helper-append_javascript_pack_tag-and-append_stylesheet_pack_tag for the usage guide"
     end
 
     hash_key = defer ? :deferred : :non_deferred
@@ -182,6 +197,10 @@ module Webpacker::Helper
 
     def sources_from_manifest_entrypoints(names, type:)
       names.map { |name| current_webpacker_instance.manifest.lookup_pack_with_chunks!(name.to_s, type: type) }.flatten.uniq
+    end
+
+    def available_sources_from_manifest_entrypoints(names, type:)
+      names.map { |name| current_webpacker_instance.manifest.lookup_pack_with_chunks(name.to_s, type: type) }.flatten.compact.uniq
     end
 
     def resolve_path_to_image(name, **options)

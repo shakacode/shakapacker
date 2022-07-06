@@ -1,19 +1,39 @@
 * For the changelog of versions prior to v6, see the [5.x stable branch of rails/webpacker](https://github.com/rails/webpacker/tree/5-x-stable).
 * Please see the [v6 Upgrade Guide](./docs/v6_upgrade.md) to go from versions prior to v6.
-* [ShakaCode](https://www.shakacode.com) offers support for upgrading from webpacker or using Shakapacker. If interested, contact [justin@shakacode.com](mailto:justin@shakacode.com).
+* [ShakaCode](https://www.shakacode.com) offers support for upgrading from webpacker or using Shakapacker. If interested, contact Justin Gordon, [justin@shakacode.com](mailto:justin@shakacode.com).
 
 ## Versions
 ## [Unreleased]
 Changes since last non-beta release.
 
-*Please add entries here for your pull requests that are not yet released.*
-### Improved
-- Allow v10 of `compression-webpack-plugin` as a peer dependency. [PR 117](https://github.com/shakacode/shakapacker/pull/117) by [aried3r](https://github.com/aried3r).
 _Please add entries here for your pull requests that are not yet released._
 
-### Changed
+## [v6.5.0] - July 4, 2022
+### Added
+- `append_stylesheet_pack_tag` helper. It helps in configuring stylesheet pack names from the view for a route or partials. It is also required for filesystem-based automated Component Registry API on React on Rails gem. [PR 144](https://github.com/shakacode/shakapacker/pull/144) by [pulkitkkr](https://github.com/pulkitkkr).
 
-- Removed the `yarn:install` Rake task, and no longer enhance `assets:precompile` with said task. These tasks were used to ensure required NPM packages were installed before asset precompilation. Going forward you will need to ensure these packages are already installed yourself. Should you wish to restore this behaviour you'll need to [reimplement the task](https://github.com/shakacode/shakapacker/blob/bee661422f2c902aa8ac9cf8fa1f7ccb8142c914/lib/tasks/yarn.rake) in your own application.
+### Improved
+- Make sure at most one compilation runs at a time [PR 139](https://github.com/shakacode/shakapacker/pull/139) by [artemave](https://github.com/artemave)
+
+## [v6.4.1] - June 5, 2022
+### Fixed
+- Restores automatic installation of yarn packages removed in [#131](https://github.com/shakacode/shakapacker/pull/131), with added deprecation notice. [PR 140](https://github.com/shakacode/shakapacker/pull/140) by [tomdracz](https://github.com/tomdracz).
+
+  This will be again removed in Shakapacker v7 so you need to ensure you are installing yarn packages explicitly before the asset compilation, rather than relying on this behaviour through `asset:precompile` task (e.g. Capistrano deployment).
+
+- Disable Spring being used by `rails-erb-loader`. [PR 141](https://github.com/shakacode/shakapacker/pull/141) by [tomdracz](https://github.com/tomdracz).
+
+## [v6.4.0] - June 2, 2022
+### Fixed
+- Fixed [Issue 123: Rails 7.0.3 - Webpacker configuration file not found when running rails webpacker:install (shakapacker v6.3)](https://github.com/shakacode/shakapacker/issues/123) in [PR 136: Don't enhance precompile if no config #136](https://github.com/shakacode/shakapacker/pull/136) by [justin808](https://github.com/justin808).
+
+### Added
+- Configuration boolean option `nested_entries` to use nested entries. This was the default prior to v6.0. Because entries maybe generated, it's useful to allow a `generated` subdirectory. [PR 121](https://github.com/shakacode/shakapacker/pull/121) by [justin808](https://github.com/justin808). 
+
+### Improved
+- Allow v10 of `compression-webpack-plugin` as a peer dependency. [PR 117](https://github.com/shakacode/shakapacker/pull/117) by [aried3r](https://github.com/aried3r).
+
+- [Remove assets:precompile task enhancement #131](https://github.com/shakacode/shakapacker/pull/131) by [James Herdman](https://github.com/jherdman): Removed the `yarn:install` Rake task, and no longer enhance `assets:precompile` with said task. These tasks were used to ensure required NPM packages were installed before asset precompilation. Going forward you will need to ensure these packages are already installed yourself. Should you wish to restore this behaviour you'll need to [reimplement the task](https://github.com/shakacode/shakapacker/blob/bee661422f2c902aa8ac9cf8fa1f7ccb8142c914/lib/tasks/yarn.rake) in your own application.
 
 ## [v6.3.0] - May 19, 2022
 
@@ -41,7 +61,7 @@ Note: [Rubygem is 6.3.0.pre.rc.1](https://rubygems.org/gems/shakapacker/versions
 ### Improved
 - Use last modified timestamps rather than file digest to determine compiler freshness. [PR 97](https://github.com/shakacode/shakapacker/pull/97) by [tomdracz](https://github.com/tomdracz).
 
-  Rather than calculating SHA digest of all the files in the paths watched by the compiler, we are now comparing the modified time of the `manifest.json` file versues the latest modified timestamp of files and directories in watched paths. Unlike calculating digest, which only looked at the files, the new calculation also considers directory timestamps, including the parent ones (i.e. `config.source_path` folder timestamp will be checked together will timestamps of all files and directories inside of it).
+  Rather than calculating SHA digest of all the files in the paths watched by the compiler, we are now comparing the modified time of the `manifest.json` file versus the latest modified timestamp of files and directories in watched paths. Unlike calculating digest, which only looked at the files, the new calculation also considers directory timestamps, including the parent ones (i.e. `config.source_path` folder timestamp will be checked together will timestamps of all files and directories inside of it).
 
   This change should result in improved compiler checks performance but might be breaking for certain setups and edge cases. If you encounter any issues, please report them at https://github.com/shakacode/shakapacker/issues.
 
@@ -132,9 +152,11 @@ Note: [Rubygem is 6.3.0.pre.rc.1](https://rubygems.org/gems/shakapacker/versions
 ## v5.4.3 and prior changes from rails/webpacker
 See [CHANGELOG.md in rails/webpacker (up to v5.4.3)](https://github.com/rails/webpacker/blob/master/CHANGELOG.md) 
 
-[Unreleased]: https://github.com/shakacode/shakapacker/compare/v6.3.0...master
-[v6.3.0]: https://github.com/shakacode/shakapacker/compare/v6.3.0-rc.1...v6.3.0
-[v6.3.0-rc.1]: https://github.com/shakacode/shakapacker/compare/v6.2.1...v6.3.0-rc.1
+[Unreleased]: https://github.com/shakacode/shakapacker/compare/v6.5.0...master
+[v6.5.0]: https://github.com/shakacode/shakapacker/compare/v6.4.1...v6.5.0
+[v6.4.1]: https://github.com/shakacode/shakapacker/compare/v6.4.0...v6.4.1
+[v6.4.0]: https://github.com/shakacode/shakapacker/compare/v6.3.0...v6.4.0
+[v6.3.0]: https://github.com/shakacode/shakapacker/compare/v6.2.1...v6.3.0
 [v6.2.1]: https://github.com/shakacode/shakapacker/compare/v6.2.0...v6.2.1
 [v6.2.0]: https://github.com/shakacode/shakapacker/compare/v6.1.1...v6.2.0
 [v6.1.1]: https://github.com/shakacode/shakapacker/compare/v6.1.0...v6.1.1

@@ -26,50 +26,60 @@ Discussion forum and Slack to discuss debugging and troubleshooting tips. Please
 2. [Slack discussion channel](https://reactrails.slack.com/join/shared_invite/enQtNjY3NTczMjczNzYxLTlmYjdiZmY3MTVlMzU2YWE0OWM0MzNiZDI0MzdkZGFiZTFkYTFkOGVjODBmOWEyYWQ3MzA2NGE1YWJjNmVlMGE)
 3. [Tweets with tag `#shakapacker`](https://twitter.com/hashtag/shakapacker?src=hashtag_click)
 
-[ShakaCode](https://www.shakacode.com) offers support for upgrading from webpacker or using Shakapacker. If interested, contact [justin@shakacode.com](mailto:justin@shakacode.com). ShakaCode is [hiring passionate engineers](https://jobs.lever.co/shakacode/3bdbfdb3-4495-4611-a279-01dddb351abe) that love open source.
+[ShakaCode](https://www.shakacode.com) offers support for upgrading from webpacker and using Shakapacker. If interested, contact Justin Gordon, [justin@shakacode.com](mailto:justin@shakacode.com). ShakaCode is [hiring passionate engineers](https://jobs.lever.co/shakacode/3bdbfdb3-4495-4611-a279-01dddb351abe) that love open source.
 
 ---
 
 <!-- START doctoc generated TOC please keep comment here to allow auto update -->
 <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
 
-- [Prerequisites](#prerequisites)
-- [Features](#features)
-  - [Optional support](#optional-support)
-- [Installation](#installation)
-  - [Rails v6+](#rails-v6)
-  - [Note for Sprockets usage](#note-for-sprockets-usage)
-  - [Note for Yarn v2 usage](#note-for-yarn-v2-usage)
-- [Usage](#usage)
-  - [View Helpers](#view-helpers)
-  - [Defer for `javascript_pack_tag`](#defer-for-javascript_pack_tag)
-  - [Server-Side Rendering (SSR)](#server-side-rendering-ssr)
-  - [Development](#development)
-  - [Webpack Configuration](#webpack-configuration)
-  - [Babel configuration](#babel-configuration)
-  - [SWC configuration](#swc-configuration)
-  - [esbuild loader configuration](#esbuild-loader-configuration)
-  - [Integrations](#integrations)
-    - [React](#react)
-    - [Typescript](#typescript)
-    - [CoffeeScript](#coffeescript)
-    - [TypeScript](#typescript)
-    - [CSS](#css)
-    - [Postcss](#postcss)
-    - [Sass](#sass)
-    - [Less](#less)
-    - [Stylus](#stylus)
-    - [Other frameworks](#other-frameworks)
-  - [Custom Rails environments](#custom-rails-environments)
-  - [Upgrading](#upgrading)
-  - [Compiler strategies](#compiler-strategies)
-  - [Paths](#paths)
-  - [Additional paths](#additional-paths)
-- [Deployment](#deployment)
-- [Example Apps](#example-apps)
-- [Troubleshooting](#troubleshooting)
-- [Contributing](#contributing)
-- [License](#license)
+  - [Prerequisites](#prerequisites)
+  - [Features](#features)
+    - [Optional support](#optional-support)
+  - [Installation](#installation)
+    - [Rails v6+](#rails-v6)
+    - [Note for Yarn v2 usage](#note-for-yarn-v2-usage)
+  - [Concepts](#concepts)
+  - [Usage](#usage)
+    - [Configuration and Code](#configuration-and-code)
+    - [View Helpers](#view-helpers)
+      - [View Helpers `javascript_pack_tag` and `stylesheet_pack_tag`](#view-helpers-javascript_pack_tag-and-stylesheet_pack_tag)
+      - [View Helper `append_javascript_pack_tag` and `append_stylesheet_pack_tag`](#view-helper-append_javascript_pack_tag-and-append_stylesheet_pack_tag)
+      - [View Helper: `asset_pack_path`](#view-helper-asset_pack_path)
+      - [View Helper: `image_pack_tag`](#view-helper-image_pack_tag)
+      - [View Helper: `favicon_pack_tag`](#view-helper-favicon_pack_tag)
+      - [View Helper: `preload_pack_asset`](#view-helper-preload_pack_asset)
+    - [Images in Stylesheets](#images-in-stylesheets)
+    - [Server-Side Rendering (SSR)](#server-side-rendering-ssr)
+    - [Development](#development)
+      - [Automatic Webpack Code Building](#automatic-webpack-code-building)
+      - [Compiler strategies](#compiler-strategies)
+      - [Common Development Commands](#common-development-commands)
+    - [Webpack Configuration](#webpack-configuration)
+    - [Babel configuration](#babel-configuration)
+    - [SWC configuration](#swc-configuration)
+    - [esbuild loader configuration](#esbuild-loader-configuration)
+    - [Integrations](#integrations)
+      - [React](#react)
+      - [Typescript](#typescript)
+      - [CoffeeScript](#coffeescript)
+      - [TypeScript](#typescript)
+      - [CSS](#css)
+      - [Postcss](#postcss)
+      - [Sass](#sass)
+      - [Less](#less)
+      - [Stylus](#stylus)
+      - [Other frameworks](#other-frameworks)
+    - [Custom Rails environments](#custom-rails-environments)
+    - [Upgrading](#upgrading)
+    - [Paths](#paths)
+    - [Additional paths](#additional-paths)
+  - [Deployment](#deployment)
+  - [Example Apps](#example-apps)
+  - [Troubleshooting](#troubleshooting)
+  - [Contributing](#contributing)
+  - [License](#license)
+- [Supporters](#supporters)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
@@ -159,7 +169,7 @@ At it's core, Shakapacker's essential functionality is to:
 
 You will need your file system to correspond to the setup of your `webpacker.yml` file.
 
-Suppose you have the following files:
+Suppose you have the following configuration:
 
 `webacker.yml`
 ```yml
@@ -168,6 +178,7 @@ default: &default
   source_entry_path: packs 
   public_root_path: public
   public_output_path: packs
+  nested_entries: false
 # And more
 ```
 
@@ -188,6 +199,8 @@ public/packs                # webpack output
 ```
 
 Webpack intelligently includes only necessary files. In this example, the file `packs/application.js` would reference `../src/my_component.js`
+
+`nested_entries` allows you to have webpack entry points nested in subdirectories. This defaults to false so you don't accidentally create entry points for an entire tree of files. In other words, with `nested_entries: false`, you can have your entire `source_path` used for your source (using the `source_entry_path: /`) and you place files at the top level that you want as entry points. `nested_entries: true` allows you to have entries that are in subdirectories. This is useful if you have entries that are generated, so you can have a `generated` subdirectory and easily separate generated files from the rest of your codebase.
 
 ### View Helpers
 The Shakapacker view helpers generate the script and link tags to get the webpack output onto your views.
@@ -246,37 +259,41 @@ While this also generally applies to `stylesheet_pack_tag`, you may use multiple
 <%= stylesheet_pack_tag 'print', media: 'print' %>
 ```
 
-#### View Helper `append_javascript_pack_tag`
+#### View Helper `append_javascript_pack_tag` and `append_stylesheet_pack_tag`
 
-If you need configure your pack names from the view for a route or partials, then you will need some logic to ensure you call the helpers only once with multiple arguments. The new view helper `append_javascript_pack_tag` can solve this problem. This helper will queue up packs when the `javascript_pack_tag` is finally used.
+If you need configure your script pack names or stylesheet pack names from the view for a route or partials, then you will need some logic to ensure you call the helpers only once with multiple arguments. The new view helpers, `append_javascript_pack_tag` and `append_stylesheet_pack_tag` can solve this problem. The helper `append_javascript_pack_tag` will queue up script packs when the `javascript_pack_tag` is finally used. Similarly,`append_stylesheet_pack_tag` will queue up style packs when the `stylesheet_pack_tag` is finally used.
 
 Main view:
 ```erb
 <% append_javascript_pack_tag 'calendar' %>
+<% append_stylesheet_pack_tag 'calendar' %>
 ```
 
 Some partial:
 ```erb
 <% append_javascript_pack_tag 'map' %>
+<% append_stylesheet_pack_tag 'map' %>
 ```
 
 And the main layout has:
 ```erb
 <%= javascript_pack_tag 'application' %>
+<%= stylesheet_pack_tag 'application' %>
 ```
 
 is the same as using this in the main layout:
 
 ```erb
 <%= javascript_pack_tag 'calendar', 'map', application' %>
+<%= stylesheet_pack_tag 'calendar', 'map', application' %>
 ```
 
 However, you typically can't do that in the main layout, as the view and partial codes will depend on the route.
 
-Thus, you can distribute the logic of what packs are needed for any route. All the magic of splitting up the code was automatic!
+Thus, you can distribute the logic of what packs are needed for any route. All the magic of splitting up the code and CSS was automatic!
 
-**Important:** `append_javascript_pack_tag` can be used anywhere in your application as long as it is executed BEFORE the `javascript_pack_tag`. If you attempt to call `append_javascript_pack_tag` helper after `javascript_pack_tag`, an error will be raised. You should have only a single `javascript_pack_tag` invocation in your page load.
-                                                                                                    
+**Important:** Both `append_(javascript/stylesheet)_pack_tag` helpers can be used anywhere in your application as long as they are executed BEFORE `(javascript/stylesheet)_pack_tag` respectively. If you attempt to call one of the `append_(javascript/stylesheet)_pack_tag` helpers after the respective `(javascript/stylesheet)_pack_tag`, an error will be raised.
+
 The typical issue is that your layout might reference some partials that need to configure packs. A good way to solve this problem is to use `content_for` to ensure that the code to render your partial comes before the call to `javascript_pack_tag`.
 
 ```erb

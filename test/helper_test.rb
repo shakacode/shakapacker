@@ -133,7 +133,7 @@ class HelperTest < ActionView::TestCase
 
     assert_equal \
       "You can only call append_javascript_pack_tag before javascript_pack_tag helper. " +
-        "Please refer to https://github.com/shakacode/shakapacker/blob/master/README.md#usage for the usage guide",
+        "Please refer to https://github.com/shakacode/shakapacker/blob/master/README.md#view-helper-append_javascript_pack_tag-and-append_stylesheet_pack_tag for the usage guide",
       error.message
   end
 
@@ -161,7 +161,7 @@ class HelperTest < ActionView::TestCase
 
     assert_equal \
       "To prevent duplicated chunks on the page, you should call javascript_pack_tag only once on the page. " +
-        "Please refer to https://github.com/shakacode/shakapacker/blob/master/README.md#usage for the usage guide",
+        "Please refer to https://github.com/shakacode/shakapacker/blob/master/README.md#view-helpers-javascript_pack_tag-and-stylesheet_pack_tag for the usage guide",
       error.message
   end
 
@@ -204,5 +204,45 @@ class HelperTest < ActionView::TestCase
     assert_equal \
       hello_stimulus_stylesheet_chunks.map { |chunk| stylesheet_link_tag(chunk) }.join("\n"),
       stimulus_style
+
+    assert_nothing_raised do
+      stylesheet_pack_tag(:application)
+      stylesheet_pack_tag(:hello_stimulus)
+    end
+  end
+
+  def test_stylesheet_pack_with_append
+    append_stylesheet_pack_tag(:hello_stimulus)
+
+    assert_equal \
+      (application_stylesheet_chunks + hello_stimulus_stylesheet_chunks).uniq.map { |chunk| stylesheet_link_tag(chunk) }.join("\n"),
+      stylesheet_pack_tag(:application)
+  end
+
+  def test_stylesheet_pack_with_duplicate_append
+    append_stylesheet_pack_tag(:hello_stimulus)
+    append_stylesheet_pack_tag(:application)
+
+    assert_equal \
+      (application_stylesheet_chunks + hello_stimulus_stylesheet_chunks).uniq.map { |chunk| stylesheet_link_tag(chunk) }.join("\n"),
+      stylesheet_pack_tag(:application)
+  end
+
+  def test_multiple_stylesheet_pack_with_different_media_attr
+    app_style = stylesheet_pack_tag(:application)
+    app_style_with_media = stylesheet_pack_tag(:application, media: "print")
+    hello_stimulus_style_with_media = stylesheet_pack_tag(:hello_stimulus, media: "all")
+
+    assert_equal \
+      application_stylesheet_chunks.map { |chunk| stylesheet_link_tag(chunk) }.join("\n"),
+      app_style
+
+    assert_equal \
+      application_stylesheet_chunks.map { |chunk| stylesheet_link_tag(chunk, media: "print") }.join("\n"),
+      app_style_with_media
+
+    assert_equal \
+      hello_stimulus_stylesheet_chunks.map { |chunk| stylesheet_link_tag(chunk, media: "all") }.join("\n"),
+      hello_stimulus_style_with_media
   end
 end

@@ -3,15 +3,18 @@
 // environment.js expects to find config/webpacker.yml and resolved modules from
 // the root of a Rails project
 
-const { chdirTestApp, chdirCwd } = require('../../utils/helpers')
+const { chdirTestApp, chdirCwd, resetEnv } = require('../../utils/helpers')
 
 chdirTestApp()
 
 const { resolve } = require('path')
-const rules = require('../../rules')
+
 const baseConfig = require('../base')
+const config = require("../../config");
 
 describe('Base config', () => {
+  beforeEach(() => jest.resetModules() && resetEnv())
+
   afterAll(chdirCwd)
 
   describe('config', () => {
@@ -21,11 +24,33 @@ describe('Base config', () => {
       )
     })
 
-    test('should return multi file entry points', () => {
+    test('should return only 2 entry points with config.nested_entries == false', () => {
+      expect(config.nested_entries).toEqual(false)
+
       expect(baseConfig.entry.multi_entry.sort()).toEqual([
         resolve('app', 'packs', 'entrypoints', 'multi_entry.css'),
         resolve('app', 'packs', 'entrypoints', 'multi_entry.js')
       ])
+      expect(baseConfig.entry['generated/something']).toEqual(undefined)
+    })
+
+    test('should returns top level and nested entry points with config.nested_entries == true', () => {
+      process.env.WEBPACKER_CONFIG = 'config/webpacker_nested_entries.yml'
+      const config = require("../../config");
+      const baseConfig = require('../base')
+
+      expect(config.nested_entries).toEqual(true)
+
+      expect(baseConfig.entry.application).toEqual(
+        resolve('app', 'packs', 'entrypoints', 'application.js')
+      )
+      expect(baseConfig.entry.multi_entry.sort()).toEqual([
+        resolve('app', 'packs', 'entrypoints', 'multi_entry.css'),
+        resolve('app', 'packs', 'entrypoints', 'multi_entry.js')
+      ])
+      expect(baseConfig.entry['generated/something']).toEqual(
+        resolve('app', 'packs', 'entrypoints', 'generated', 'something.js')
+      )
     })
 
     test('should return output', () => {
@@ -36,6 +61,8 @@ describe('Base config', () => {
     })
 
     test('should return default loader rules for each file in config/loaders', () => {
+      const rules = require('../../rules')
+
       const defaultRules = Object.keys(rules)
       const configRules = baseConfig.module.rules
 
