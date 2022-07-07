@@ -62,13 +62,12 @@ Discussion forum and Slack to discuss debugging and troubleshooting tips. Please
     - [Integrations](#integrations)
       - [React](#react)
       - [Typescript](#typescript)
-      - [CoffeeScript](#coffeescript)
-      - [TypeScript](#typescript)
       - [CSS](#css)
       - [Postcss](#postcss)
       - [Sass](#sass)
       - [Less](#less)
       - [Stylus](#stylus)
+      - [CoffeeScript](#coffeescript)
       - [Other frameworks](#other-frameworks)
     - [Custom Rails environments](#custom-rails-environments)
     - [Upgrading](#upgrading)
@@ -171,7 +170,7 @@ You will need your file system to correspond to the setup of your `webpacker.yml
 
 Suppose you have the following configuration:
 
-`webacker.yml`
+`webpacker.yml`
 ```yml
 default: &default
   source_path: app/javascript
@@ -527,34 +526,6 @@ See here for detailed instructions on how to [configure Shakapacker to bundle a 
 
 See also [Customizing Babel Config](./docs/customizing_babel_config.md) for an example React configuration.
 
-#### Typescript
-...if you are using typescript, update your `tsconfig.json`
-
-```json
-{
-  "compilerOptions": {
-    "declaration": false,
-    "emitDecoratorMetadata": true,
-    "experimentalDecorators": true,
-    "lib": ["es6", "dom"],
-    "module": "es6",
-    "moduleResolution": "node",
-    "sourceMap": true,
-    "target": "es5",
-    "jsx": "react",
-    "noEmit": true
-  },
-  "exclude": ["**/*.spec.ts", "node_modules", "vendor", "public"],
-  "compileOnSave": false
-}
-```
-
-#### CoffeeScript
-
-```bash
-yarn add coffeescript coffee-loader
-```
-
 #### TypeScript
 
 ```bash
@@ -578,12 +549,9 @@ Add tsconfig.json
     "lib": ["es6", "dom"],
     "module": "es6",
     "moduleResolution": "node",
-    "baseUrl": ".",
-    "paths": {
-      "*": ["node_modules/*", "app/javascript/*"]
-    },
     "sourceMap": true,
     "target": "es5",
+    "jsx": "react",
     "noEmit": true
   },
   "exclude": ["**/*.spec.ts", "node_modules", "vendor", "public"],
@@ -655,6 +623,12 @@ yarn add less less-loader
 
 ```bash
 yarn add stylus stylus-loader
+```
+
+#### CoffeeScript
+
+```bash
+yarn add coffeescript coffee-loader
 ```
 
 #### Other frameworks
