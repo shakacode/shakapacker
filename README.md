@@ -170,7 +170,7 @@ You will need your file system to correspond to the setup of your `webpacker.yml
 
 Suppose you have the following configuration:
 
-`webacker.yml`
+`webpacker.yml`
 ```yml
 default: &default
   source_path: app/javascript
