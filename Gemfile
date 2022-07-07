@@ -2,14 +2,4 @@ source "https://rubygems.org"
 
 gemspec
 
-gem "rails", ">= 6.1.6"
-gem "rake", ">= 11.1"
-gem "rack-proxy", require: false
-gem "semantic_range", require: false
-gem "nokogiri", "~> 1.13", ">= 1.13.6"
-gem "rails-html-sanitizer", ">= 1.4.3"
-
-group :test do
-  gem "minitest", "~> 5.0"
-  gem "byebug"
-end
+eval_gemfile File.expand_path("./Gemfile.development_dependencies", __dir__)
