@@ -1,4 +1,4 @@
- # frozen_string_literal: true
+# frozen_string_literal: true
 
 gem "rails", ">= 6.1.6"
 gem "rake", ">= 11.1"
