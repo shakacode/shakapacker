@@ -126,7 +126,7 @@ GEM
     rails-dom-testing (2.0.3)
       activesupport (>= 4.2.0)
       nokogiri (>= 1.6)
-    rails-html-sanitizer (1.4.2)
+    rails-html-sanitizer (1.4.3)
       loofah (~> 2.3)
     railties (6.1.6)
       actionpack (= 6.1.6)
@@ -183,6 +183,7 @@ DEPENDENCIES
   nokogiri (~> 1.13, >= 1.13.6)
   rack-proxy
   rails (>= 6.1.6)
+  rails-html-sanitizer (>= 1.4.3)
   rake (>= 11.1)
   rubocop
   rubocop-performance
