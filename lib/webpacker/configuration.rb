@@ -130,7 +130,7 @@ class Webpacker::Configuration
         rescue ArgumentError
           YAML.load_file(path)
         end
-        HashWithIndifferentAccess.new(config[env])
+        HashWithIndifferentAccess.new(config[env] || config[Webpacker::DEFAULT_ENV])
       end
     end
 end

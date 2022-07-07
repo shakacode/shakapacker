@@ -6,6 +6,8 @@ require "active_support/tagged_logging"
 module Webpacker
   extend self
 
+  DEFAULT_ENV = "production".freeze
+
   def instance=(instance)
     @instance = instance
   end

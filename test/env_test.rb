@@ -18,6 +18,6 @@ class EnvTest < Webpacker::Test
   end
 
   def test_default
-    assert_equal Webpacker::Env::DEFAULT, "production"
+    assert_equal Webpacker::DEFAULT_ENV, "production"
   end
 end

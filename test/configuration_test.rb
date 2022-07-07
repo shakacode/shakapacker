@@ -125,4 +125,26 @@ class ConfigurationTest < Webpacker::Test
 
     refute @no_precompile_config.webpacker_precompile?
   end
+
+  def test_fall_back_to_bundled_config_with_the_same_name_for_standard_environments
+    @no_default_config = Webpacker::Configuration.new(
+      root_path: @config.root_path,
+      config_path: Pathname.new(File.expand_path("./test_app/config/webpacker_defaults_fallback.yml", __dir__)),
+      env: "default"
+    )
+
+    refute @no_default_config.cache_manifest? # fall back to "default" config from bundled file
+    refute @no_default_config.webpacker_precompile? # use "default" config from custom file
+  end
+
+  def test_fall_back_to_bundled_production_config_for_custom_environments
+    @no_env_config = Webpacker::Configuration.new(
+      root_path: @config.root_path,
+      config_path: Pathname.new(File.expand_path("./test_app/config/webpacker_defaults_fallback.yml", __dir__)),
+      env: "staging"
+    )
+
+    assert @no_env_config.cache_manifest? # fall back to "production" config from bundled file
+    refute @no_env_config.webpacker_precompile? # use "staging" config from custom file
+  end
 end
