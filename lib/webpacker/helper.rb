@@ -174,6 +174,9 @@ module Webpacker::Helper
 
     @stylesheet_pack_tag_queue ||= []
     @stylesheet_pack_tag_queue.concat names
+
+    # prevent rendering Array#to_s representation when used with <%= … %> syntax
+    nil
   end
 
   def append_javascript_pack_tag(*names, defer: true)
@@ -184,6 +187,9 @@ module Webpacker::Helper
 
     hash_key = defer ? :deferred : :non_deferred
     javascript_pack_tag_queue[hash_key] |= names
+
+    # prevent rendering Array#to_s representation when used with <%= … %> syntax
+    nil
   end
 
   private
