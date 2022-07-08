@@ -29,7 +29,7 @@ module Webpacker
 
       if !Webpacker.config.ensure_consistent_versioning? && (uses_wildcard || !versions_match)
         check_failed = if uses_wildcard
-          "Semver wildcard detected"
+          "Semver wildcard without a lockfile detected"
         else
           "Version mismatch detected"
         end
@@ -37,7 +37,7 @@ module Webpacker
         warn <<-MSG.strip_heredoc
           Webpacker::VersionChecker - #{check_failed}
 
-          You are currently not checking for consistent versions of shakapacker gem and npm package. A version mismatch or usage of semantic versioning wildcard (~ or ^) has been detected.
+          You are currently not checking for consistent versions of shakapacker gem and npm package. A version mismatch or usage of semantic versioning wildcard (~ or ^) without a lockfile has been detected.
 
           Version mismatch can lead to incorrect behavior and bugs. You should ensure that both the gem and npm package dependencies are locked to the same version.
 
@@ -61,9 +61,9 @@ module Webpacker
          Detected: #{node_package_version.raw}
               gem: #{gem_version}
          Ensure the installed version of the gem is the same as the version of
-         your installed node package. Do not use >= or ~> in your Gemfile for shakapacker.
-         Do not use ^ or ~ in your package.json for shakapacker.
-         Run `yarn add shakapacker --exact` in the directory containing folder node_modules.
+         your installed node package.
+         Do not use >= or ~> in your Gemfile for shakapacker without a lockfile.
+         Do not use ^ or ~ in your package.json for shakapacker without a lockfile.
       MSG
       end
 

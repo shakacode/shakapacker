@@ -38,7 +38,7 @@ class VersionCheckerTest < Minitest::Test
     end
 
     assert_match \
-      "Webpacker::VersionChecker - Version mismatch detected",
+      "Webpacker::VersionChecker - Version mismatch",
       err
   end
 
@@ -50,7 +50,7 @@ class VersionCheckerTest < Minitest::Test
     end
 
     assert_match \
-      "Webpacker::VersionChecker - Semver wildcard detected",
+      "Webpacker::VersionChecker - Semver wildcard without a lockfile detected",
       err
   end
 
