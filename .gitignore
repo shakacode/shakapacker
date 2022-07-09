@@ -1,5 +1,5 @@
 /.bundle
-/Gemfile.lock
+Gemfile.lock
 /pkg
 /test/mounted_app/test/dummy/log
 /test/test_app/log
