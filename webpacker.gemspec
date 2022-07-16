@@ -16,19 +16,17 @@ Gem::Specification.new do |s|
   }
 
   s.required_ruby_version = ">= 2.6.0"
-  s.add_dependency("rack-proxy", ">= 0.7.2")
-  s.add_dependency("nokogiri", ">= 1.13.6")
-  s.add_dependency("rails-html-sanitizer", ">= 1.4.3")
-
+  s.add_dependency "rack-proxy", ">= 0.7.2"
+  s.add_dependency "nokogiri", ">= 1.13.6"
+  s.add_dependency "rails-html-sanitizer", ">= 1.4.3"
   s.add_dependency "activesupport", ">= 6.0.5.1"
   s.add_dependency "railties",      ">= 6.0.5.1"
   s.add_dependency "semantic_range", ">= 3.0.0"
-
   s.add_development_dependency "bundler", ">= 1.3.0"
   s.add_development_dependency "rubocop"
   s.add_development_dependency "rubocop-performance"
-  s.add_development_dependency("minitest")
-  s.add_development_dependency("byebug")
+  s.add_development_dependency "minitest"
+  s.add_development_dependency "byebug"
 
   s.files         = `git ls-files`.split("\n")
   s.test_files    = `git ls-files -- test/*`.split("\n")
