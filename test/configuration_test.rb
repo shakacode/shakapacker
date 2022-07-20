@@ -100,25 +100,29 @@ class ConfigurationTest < Webpacker::Test
     with_rails_env("test") do
       refute Webpacker.config.ensure_consistent_versioning?
     end
+  end
 
-    def test_webpacker_precompile
-      assert @config.webpacker_precompile
+  def test_webpacker_precompile
+    assert @config.webpacker_precompile?
 
-      ENV["WEBPACKER_PRECOMPILE"] = "false"
+    ENV["WEBPACKER_PRECOMPILE"] = "false"
 
-      refute Webpacker.config.webpacker_precompile?
+    refute Webpacker.config.webpacker_precompile?
 
-      ENV["WEBPACKER_PRECOMPILE"] = "yes"
+    ENV["WEBPACKER_PRECOMPILE"] = "yes"
 
-      assert Webpacker.config.webpacker_precompile?
+    assert Webpacker.config.webpacker_precompile?
 
-      @no_precompile_config = Webpacker::Configuration.new(
-        root_path: @config.root_path,
-        config_path: Pathname.new(File.expand_path("./test_app/config/webpacker_no_precompile.yml", __dir__)),
-        env: "production"
-      )
+    @no_precompile_config = Webpacker::Configuration.new(
+      root_path: @config.root_path,
+      config_path: Pathname.new(File.expand_path("./test_app/config/webpacker_no_precompile.yml", __dir__)),
+      env: "production"
+    )
 
-      refute @no_precompile_config.webpacker_precompile
-    end
+    assert @no_precompile_config.webpacker_precompile?
+
+    ENV["WEBPACKER_PRECOMPILE"] = nil
+
+    refute @no_precompile_config.webpacker_precompile?
   end
 end
