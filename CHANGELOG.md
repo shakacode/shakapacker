@@ -10,6 +10,7 @@ _Please add entries here for your pull requests that are not yet released._
 
 - `append_javascript_pack_tag` and `append_stylesheet_pack_tag` helpers return `nil` to prevent rendering the queue into view when using `<%= … %>` ERB syntax. [PR 167](https://github.com/shakacode/shakapacker/pull/167) by [ur5us](https://github.com/ur5us)
 - fix non-runnable test due to wrong code nesting [PR 173](https://github.com/shakacode/shakapacker/pull/173) by [ur5us](https://github.com/ur5us)
+- fix default configurations not working for custom Rails environments [PR 168](https://github.com/shakacode/shakapacker/pull/168) by [ur5us](https://github.com/ur5us)
 
 ## [v6.5.0] - July 4, 2022
 ### Added
