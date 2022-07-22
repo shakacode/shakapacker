@@ -105,12 +105,28 @@ class ConfigurationTest < Webpacker::Test
   def test_webpacker_precompile
     assert @config.webpacker_precompile?
 
-    ENV["WEBPACKER_PRECOMPILE"] = "false"
-
+    ENV["WEBPACKER_PRECOMPILE"] = "no"
     refute Webpacker.config.webpacker_precompile?
 
     ENV["WEBPACKER_PRECOMPILE"] = "yes"
+    assert Webpacker.config.webpacker_precompile?
 
+    ENV["WEBPACKER_PRECOMPILE"] = "false"
+    refute Webpacker.config.webpacker_precompile?
+
+    ENV["WEBPACKER_PRECOMPILE"] = "true"
+    assert Webpacker.config.webpacker_precompile?
+
+    ENV["WEBPACKER_PRECOMPILE"] = "n"
+    refute Webpacker.config.webpacker_precompile?
+
+    ENV["WEBPACKER_PRECOMPILE"] = "y"
+    assert Webpacker.config.webpacker_precompile?
+
+    ENV["WEBPACKER_PRECOMPILE"] = "f"
+    refute Webpacker.config.webpacker_precompile?
+
+    ENV["WEBPACKER_PRECOMPILE"] = "t"
     assert Webpacker.config.webpacker_precompile?
 
     @no_precompile_config = Webpacker::Configuration.new(
@@ -124,6 +140,14 @@ class ConfigurationTest < Webpacker::Test
     ENV["WEBPACKER_PRECOMPILE"] = nil
 
     refute @no_precompile_config.webpacker_precompile?
+
+    @invalid_path_config = Webpacker::Configuration.new(
+      root_path: @config.root_path,
+      config_path: Pathname.new(File.expand_path("./test_app/config/invalid_path.yml", __dir__)),
+      env: "default"
+    )
+
+    refute @invalid_path_config.webpacker_precompile?
   end
 
   def test_fall_back_to_bundled_config_with_the_same_name_for_standard_environments
