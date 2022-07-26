@@ -90,6 +90,18 @@ class ConfigurationTest < Webpacker::Test
     end
   end
 
+  def test_nested_entries?
+    refute @config.nested_entries?
+
+    with_rails_env("development") do
+      refute Webpacker.config.nested_entries?
+    end
+
+    with_rails_env("test") do
+      refute Webpacker.config.nested_entries?
+    end
+  end
+
   def test_ensure_consistent_versioning?
     refute @config.ensure_consistent_versioning?
 
