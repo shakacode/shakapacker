@@ -23,6 +23,10 @@ class Webpacker::Configuration
     fetch(:compile)
   end
 
+  def nested_entries?
+    fetch(:nested_entries)
+  end
+
   def ensure_consistent_versioning?
     fetch(:ensure_consistent_versioning)
   end
