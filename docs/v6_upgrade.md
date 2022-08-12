@@ -92,7 +92,7 @@ _If you're on webpacker v5, follow below steps to get to v6.0.0.rc.6 first._
    source_path: app/javascript
    source_entry_path: /
    ```
-   If you prefer this configuratiom, then you will move your `app/javascript/packs/*` (including `application.js`) to `app/javascript/` and update the configuration file.
+   If you prefer this configuration, then you will move your `app/javascript/packs/*` (including `application.js`) to `app/javascript/` and update the configuration file.
 
    Note, moving your files is optional, as you can stil keep your entries in a separate directory, called something like `packs`, or `entries`. This directory is defined with the `source_path`.
 
