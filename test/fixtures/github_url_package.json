@@ -5,7 +5,7 @@
   "license": "MIT",
   "private": true,
   "dependencies": {
-    "shakapacker": "shakapacker/shakapacker#feature\/branch"
+    "shakapacker": "shakacode/shakapacker#master"
   },
   "devDependencies": {
     "right-pad": "^1.0.1"

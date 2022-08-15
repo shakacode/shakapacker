@@ -1,0 +1,47 @@
+{
+  "name": "test_app",
+  "version": "1.0.0",
+  "lockfileVersion": 2,
+  "requires": true,
+  "packages": {
+    "": {
+      "name": "test_app",
+      "version": "1.0.0",
+      "license": "MIT",
+      "dependencies": {
+        "left-pad": "1.0.2"
+      },
+      "devDependencies": {
+        "right-pad": "^1.0.1"
+      }
+    },
+    "node_modules/left-pad": {
+      "version": "1.0.2",
+      "resolved": "https://registry.npmjs.org/left-pad/-/left-pad-1.0.2.tgz",
+      "integrity": "sha512-i+siCE/qH/g/aFBfv9alTWzGetfoI8pw4mT4L4DA1kcCZwxnLzCpW5W96BmcNZvSsEStD0mn3NInNjp+CXb1lw==",
+      "deprecated": "use String.prototype.padStart()"
+    },
+    "node_modules/right-pad": {
+      "version": "1.0.1",
+      "resolved": "https://registry.npmjs.org/right-pad/-/right-pad-1.0.1.tgz",
+      "integrity": "sha512-bYBjgxmkvTAfgIYy328fmkwhp39v8lwVgWhhrzxPV3yHtcSqyYKe9/XOhvW48UFjATg3VuJbpsp5822ACNvkmw==",
+      "dev": true,
+      "engines": {
+        "node": ">= 0.10"
+      }
+    }
+  },
+  "dependencies": {
+    "left-pad": {
+      "version": "1.0.2",
+      "resolved": "https://registry.npmjs.org/left-pad/-/left-pad-1.0.2.tgz",
+      "integrity": "sha512-i+siCE/qH/g/aFBfv9alTWzGetfoI8pw4mT4L4DA1kcCZwxnLzCpW5W96BmcNZvSsEStD0mn3NInNjp+CXb1lw=="
+    },
+    "right-pad": {
+      "version": "1.0.1",
+      "resolved": "https://registry.npmjs.org/right-pad/-/right-pad-1.0.1.tgz",
+      "integrity": "sha512-bYBjgxmkvTAfgIYy328fmkwhp39v8lwVgWhhrzxPV3yHtcSqyYKe9/XOhvW48UFjATg3VuJbpsp5822ACNvkmw==",
+      "dev": true
+    }
+  }
+}
