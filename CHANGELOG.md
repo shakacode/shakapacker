@@ -10,6 +10,9 @@ _Please add entries here for your pull requests that are not yet released._
 
 ## [v6.5.1] - August 12, 2022
 
+### Improved
+- Resolve exact npm package version from lockfiles for constraint checking. [PR 170](https://github.com/shakacode/shakapacker/pull/170) by [G-Rath](https://github.com/G-Rath).
+
 ### Fixed
 - `append_javascript_pack_tag` and `append_stylesheet_pack_tag` helpers return `nil` to prevent rendering the queue into view when using `<%= … %>` ERB syntax. [PR 167](https://github.com/shakacode/shakapacker/pull/167) by [ur5us](https://github.com/ur5us). While `<%=` should not be used, it's OK to return nil in case it's misused.
 - Fixed non-runnable test due to wrong code nesting. [PR 173](https://github.com/shakacode/shakapacker/pull/173) by [ur5us](https://github.com/ur5us).
