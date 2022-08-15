@@ -8,7 +8,7 @@ Changes since last non-beta release.
 
 _Please add entries here for your pull requests that are not yet released._
 
-## [v6.5.1] - August 12, 2022
+## [v6.5.1] - August 15, 2022
 
 ### Improved
 - Resolve exact npm package version from lockfiles for constraint checking. [PR 170](https://github.com/shakacode/shakapacker/pull/170) by [G-Rath](https://github.com/G-Rath).
