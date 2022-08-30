@@ -53,7 +53,7 @@ _If you're on webpacker v5, follow below steps to get to v6.0.0.rc.6 first._
 
 1. Upgrade the Webpacker Ruby gem and the NPM package
 
-   Note: [Check the gem page to verify the latest version](https://rubygems.org/gems/shakapacker), and make sure to install identical version numbers of `shakapacker` gem and package. (Gems use a hyphen and packages use a dot between the main version number and the beta version.)
+   Note: [Check the gem page to verify the latest version](https://rubygems.org/gems/shakapacker), and make sure to install identical version numbers of `shakapacker` gem and package, and remove the old `webpacker` gem from the Gemfile (Gems use a hyphen and packages use a dot between the main version number and the beta version.)
 
    Example going to a specific version:
 
