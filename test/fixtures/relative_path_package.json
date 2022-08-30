@@ -5,7 +5,7 @@
   "license": "MIT",
   "private": true,
   "dependencies": {
-    "shakapacker": "../shakapacker"
+    "shakapacker": "../.."
   },
   "devDependencies": {
     "right-pad": "^1.0.1"

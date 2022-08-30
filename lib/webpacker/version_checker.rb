@@ -29,7 +29,7 @@ module Webpacker
 
       if !Webpacker.config.ensure_consistent_versioning? && (uses_wildcard || !versions_match)
         check_failed = if uses_wildcard
-          "Semver wildcard detected"
+          "Semver wildcard without a lockfile detected"
         else
           "Version mismatch detected"
         end
@@ -37,7 +37,7 @@ module Webpacker
         warn <<-MSG.strip_heredoc
           Webpacker::VersionChecker - #{check_failed}
 
-          You are currently not checking for consistent versions of shakapacker gem and npm package. A version mismatch or usage of semantic versioning wildcard (~ or ^) has been detected.
+          You are currently not checking for consistent versions of shakapacker gem and npm package. A version mismatch or usage of semantic versioning wildcard (~ or ^) without a lockfile has been detected.
 
           Version mismatch can lead to incorrect behavior and bugs. You should ensure that both the gem and npm package dependencies are locked to the same version.
 
@@ -61,9 +61,9 @@ module Webpacker
          Detected: #{node_package_version.raw}
               gem: #{gem_version}
          Ensure the installed version of the gem is the same as the version of
-         your installed node package. Do not use >= or ~> in your Gemfile for shakapacker.
-         Do not use ^ or ~ in your package.json for shakapacker.
-         Run `yarn add shakapacker --exact` in the directory containing folder node_modules.
+         your installed node package.
+         Do not use >= or ~> in your Gemfile for shakapacker without a lockfile.
+         Do not use ^ or ~ in your package.json for shakapacker without a lockfile.
       MSG
       end
 
@@ -91,20 +91,29 @@ module Webpacker
         attr_reader :package_json
 
         def self.build
-          new(package_json_path)
+          new(package_json_path, yarn_lock_path, package_lock_path)
         end
 
         def self.package_json_path
           Rails.root.join("package.json")
         end
 
-        def initialize(package_json)
+        def self.yarn_lock_path
+          Rails.root.join("yarn.lock")
+        end
+
+        def self.package_lock_path
+          Rails.root.join("package-lock.json")
+        end
+
+        def initialize(package_json, yarn_lock, package_lock)
           @package_json = package_json
+          @yarn_lock = yarn_lock
+          @package_lock = package_lock
         end
 
         def raw
-          parsed_package_contents = JSON.parse(package_json_contents)
-          parsed_package_contents.dig("dependencies", "shakapacker").to_s
+          @raw ||= find_version
         end
 
         def semver_wildcard?
@@ -146,6 +155,60 @@ module Webpacker
 
           def package_json_contents
             @package_json_contents ||= File.read(package_json)
+          end
+
+          def find_version
+            if File.exist?(@yarn_lock)
+              version = from_yarn_lock
+
+              return version unless version.nil?
+            end
+
+            if File.exist?(@package_lock)
+              version = from_package_lock
+
+              return version unless version.nil?
+            end
+
+            parsed_package_contents = JSON.parse(package_json_contents)
+            parsed_package_contents.dig("dependencies", "shakapacker").to_s
+          end
+
+          def from_package_lock
+            package_lock_contents = File.read(@package_lock)
+            parsed_lock_contents = JSON.parse(package_lock_contents)
+
+            pkg = parsed_lock_contents.dig("packages", "node_modules/shakapacker")
+            pkg = parsed_lock_contents.dig("dependencies", "shakapacker") if pkg.nil?
+
+            pkg&.fetch("version", nil)
+          end
+
+          def from_yarn_lock
+            found_pkg = false
+            version = nil
+            matcher = /\A"?shakapacker@.+:/
+
+            File.foreach(@yarn_lock, chomp: true) do |line|
+              next if line.start_with?("#")
+
+              # if we've found the start of the packages details and then come across
+              # a line that is not indented we've hit the end of the package details
+              break if found_pkg && !line.start_with?("  ")
+
+              if found_pkg
+                m = line.match(/\A {2}version:? "?(?<package_version>[\w.-]+)"?\z/)
+
+                next unless m
+
+                version = m[:package_version]
+                break
+              end
+
+              found_pkg = true if matcher.match(line)
+            end
+
+            version
           end
       end
   end

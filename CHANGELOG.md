@@ -8,10 +8,16 @@ Changes since last non-beta release.
 
 _Please add entries here for your pull requests that are not yet released._
 
-- `append_javascript_pack_tag` and `append_stylesheet_pack_tag` helpers return `nil` to prevent rendering the queue into view when using `<%= … %>` ERB syntax. [PR 167](https://github.com/shakacode/shakapacker/pull/167) by [ur5us](https://github.com/ur5us)
-- fix non-runnable test due to wrong code nesting [PR 173](https://github.com/shakacode/shakapacker/pull/173) by [ur5us](https://github.com/ur5us)
-- fix default configurations not working for custom Rails environments [PR 168](https://github.com/shakacode/shakapacker/pull/168) by [ur5us](https://github.com/ur5us)
-- Add accessor method for `nested_entries` configuration. [PR 176](https://github.com/shakacode/shakapacker/pull/176) by [pulkitkkr](https://github.com/pulkitkkr)
+## [v6.5.1] - August 15, 2022
+
+### Improved
+- Resolve exact npm package version from lockfiles for constraint checking. [PR 170](https://github.com/shakacode/shakapacker/pull/170) by [G-Rath](https://github.com/G-Rath).
+
+### Fixed
+- `append_javascript_pack_tag` and `append_stylesheet_pack_tag` helpers return `nil` to prevent rendering the queue into view when using `<%= … %>` ERB syntax. [PR 167](https://github.com/shakacode/shakapacker/pull/167) by [ur5us](https://github.com/ur5us). While `<%=` should not be used, it's OK to return nil in case it's misused.
+- Fixed non-runnable test due to wrong code nesting. [PR 173](https://github.com/shakacode/shakapacker/pull/173) by [ur5us](https://github.com/ur5us).
+- Fixed default configurations not working for custom Rails environments [PR 168](https://github.com/shakacode/shakapacker/pull/168) by [ur5us](https://github.com/ur5us).
+- Added accessor method for `nested_entries` configuration. [PR 176](https://github.com/shakacode/shakapacker/pull/176) by [pulkitkkr](https://github.com/pulkitkkr).
 
 ## [v6.5.0] - July 4, 2022
 ### Added
@@ -157,7 +163,8 @@ Note: [Rubygem is 6.3.0.pre.rc.1](https://rubygems.org/gems/shakapacker/versions
 ## v5.4.3 and prior changes from rails/webpacker
 See [CHANGELOG.md in rails/webpacker (up to v5.4.3)](https://github.com/rails/webpacker/blob/master/CHANGELOG.md)
 
-[Unreleased]: https://github.com/shakacode/shakapacker/compare/v6.5.0...master
+[Unreleased]: https://github.com/shakacode/shakapacker/compare/v6.5.1...master
+[v6.5.1]: https://github.com/shakacode/shakapacker/compare/v6.5.0...v6.5.1
 [v6.5.0]: https://github.com/shakacode/shakapacker/compare/v6.4.1...v6.5.0
 [v6.4.1]: https://github.com/shakacode/shakapacker/compare/v6.4.0...v6.4.1
 [v6.4.0]: https://github.com/shakacode/shakapacker/compare/v6.3.0...v6.4.0
