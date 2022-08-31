@@ -434,7 +434,7 @@ const options = {
 
 // Copy the object using merge b/c the baseClientWebpackConfig is a mutable global
 // If you want to use this object for client and server rendering configurations,
-// havaing a new object is essential.
+// having a new object is essential.
 module.exports = merge({}, baseWebpackConfig, options)
 ```
 
