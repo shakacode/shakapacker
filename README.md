@@ -350,6 +350,7 @@ Note, if you are using server-side rendering of JavaScript with dynamic code-spl
 ### Development
 
 Webpacker ships with two binstubs: `./bin/webpacker` and `./bin/webpacker-dev-server`. Both are thin wrappers around the standard `webpack.js` and `webpack-dev-server.js` executables to ensure that the right configuration files and environmental variables are loaded based on your environment.
+The setting of the NODE_ENV should be removed from the binstubs.
 
 #### Automatic Webpack Code Building
 
