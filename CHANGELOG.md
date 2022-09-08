@@ -7,7 +7,18 @@
 Changes since last non-beta release.
 
 _Please add entries here for your pull requests that are not yet released._
-- Fixed NODE_ENV default and moved it from binstubs to the runner [PR 185](https://github.com/shakacode/shakapacker/pull/185) by [mage1711](https://github.com/mage1711).
+
+## [v6.5.2] - September 8, 2022
+
+### Upgrade
+Remove the setting of the NODE_ENV in your `bin/webpacker` and `bin/webpacker-dev-server` files per [PR 185](https://github.com/shakacode/shakapacker/pull/185).
+
+### Fixed
+- Changed NODE_ENV defaults to the following and moved from binstubs to the runner. [PR 185](https://github.com/shakacode/shakapacker/pull/185) by [mage1711](https://github.com/mage1711).
+
+```
+ENV["NODE_ENV"] ||= (ENV["RAILS_ENV"] == "production") ? "production" : "development"
+```
 
 ## [v6.5.1] - August 15, 2022
 
@@ -164,7 +175,8 @@ Note: [Rubygem is 6.3.0.pre.rc.1](https://rubygems.org/gems/shakapacker/versions
 ## v5.4.3 and prior changes from rails/webpacker
 See [CHANGELOG.md in rails/webpacker (up to v5.4.3)](https://github.com/rails/webpacker/blob/master/CHANGELOG.md)
 
-[Unreleased]: https://github.com/shakacode/shakapacker/compare/v6.5.1...master
+[Unreleased]: https://github.com/shakacode/shakapacker/compare/v6.5.2...master
+[v6.5.2]: https://github.com/shakacode/shakapacker/compare/v6.5.1...v6.5.2
 [v6.5.1]: https://github.com/shakacode/shakapacker/compare/v6.5.0...v6.5.1
 [v6.5.0]: https://github.com/shakacode/shakapacker/compare/v6.4.1...v6.5.0
 [v6.4.1]: https://github.com/shakacode/shakapacker/compare/v6.4.0...v6.4.1
