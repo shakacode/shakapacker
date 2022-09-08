@@ -351,6 +351,8 @@ Note, if you are using server-side rendering of JavaScript with dynamic code-spl
 
 Webpacker ships with two binstubs: `./bin/webpacker` and `./bin/webpacker-dev-server`. Both are thin wrappers around the standard `webpack.js` and `webpack-dev-server.js` executables to ensure that the right configuration files and environmental variables are loaded based on your environment.
 
+Older Shakapacker installations had the setting of a missing NODE_ENV in the binstubs as the default per RAILS_ENV, it is no longer set there.
+
 #### Automatic Webpack Code Building
 
 Shakapacker can be configured to automatically compile on demand when needed using the `webpacker.yml` `compile` option. This happens when you refer to any of the pack assets using the Shakapacker helper methods. This means that you don't have to run any separate processes. Compilation errors are logged to the standard Rails log. However, this auto-compilation happens when a web request is made that requires an updated webpack build, not when files change. Thus, that can be **painfully slow** for front-end development in this default way. Instead, you should either run the `bin/webpacker --watch` or run `./bin/webpacker-dev-server` during development.

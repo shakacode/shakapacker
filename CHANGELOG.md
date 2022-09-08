@@ -7,6 +7,7 @@
 Changes since last non-beta release.
 
 _Please add entries here for your pull requests that are not yet released._
+- Fixed NODE_ENV default and moved it from binstubs to the runner [PR 185](https://github.com/shakacode/shakapacker/pull/185) by [mage1711](https://github.com/mage1711).
 
 ## [v6.5.1] - August 15, 2022
 
