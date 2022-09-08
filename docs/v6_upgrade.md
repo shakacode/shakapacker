@@ -15,6 +15,9 @@ While you have to configure integration with frameworks yourself, [`webpack-merg
 ## webpacker v6.0.0.rc.6 to shakapacker v6.0.0
 See an example migration here: [PR 27](https://github.com/shakacode/react_on_rails_tutorial_with_ssr_and_hmr_fast_refresh/pull/27).
 
+### Update to v6.5.2
+1. Remove setting the NODE_ENV in your `bin/webpacker` and `bin/webpacker-dev-server` bin stubs as these are not set in the webpack runner file.
+
 ### Update Steps to v6.0.0 from v6.0.0.rc.6
 _If you're on webpacker v5, follow below steps to get to v6.0.0.rc.6 first._
 
