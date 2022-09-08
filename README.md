@@ -351,7 +351,7 @@ Note, if you are using server-side rendering of JavaScript with dynamic code-spl
 
 Webpacker ships with two binstubs: `./bin/webpacker` and `./bin/webpacker-dev-server`. Both are thin wrappers around the standard `webpack.js` and `webpack-dev-server.js` executables to ensure that the right configuration files and environmental variables are loaded based on your environment.
 
-Older Shakapacker installations had the setting of a missing NODE_ENV in the binstubs as the default per RAILS_ENV, it is no longer set there.
+_Note: older Shakapacker installations had set a missing NODE_ENV in the binstubs. Please remove this for versions 6.5.2 and newer._
 
 #### Automatic Webpack Code Building
 
