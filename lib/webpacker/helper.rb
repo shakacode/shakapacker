@@ -1,3 +1,6 @@
+require_relative "../rgl/adjacency"
+require_relative "../rgl/topsort"
+
 module Webpacker::Helper
   # Returns the current Webpacker instance.
   # Could be overridden to use multiple Webpacker
@@ -173,7 +176,7 @@ module Webpacker::Helper
     end
 
     @stylesheet_pack_tag_queue ||= []
-    @stylesheet_pack_tag_queue.concat names
+    @stylesheet_pack_tag_queue |= names
 
     # prevent rendering Array#to_s representation when used with <%= … %> syntax
     nil
@@ -202,11 +205,34 @@ module Webpacker::Helper
     end
 
     def sources_from_manifest_entrypoints(names, type:)
-      names.map { |name| current_webpacker_instance.manifest.lookup_pack_with_chunks!(name.to_s, type: type) }.flatten.uniq
+      graph = RGL::DirectedAdjacencyGraph.new
+
+      names.each { |name|
+        packs = current_webpacker_instance.manifest.lookup_pack_with_chunks!(name.to_s, type: type)
+        add_packs_to_directed_graph(packs, graph)
+      }
+
+      graph.topsort_iterator.to_a.compact
     end
 
     def available_sources_from_manifest_entrypoints(names, type:)
-      names.map { |name| current_webpacker_instance.manifest.lookup_pack_with_chunks(name.to_s, type: type) }.flatten.compact.uniq
+      graph = RGL::DirectedAdjacencyGraph.new
+
+      names.each { |name|
+       packs = current_webpacker_instance.manifest.lookup_pack_with_chunks(name.to_s, type: type)
+       add_packs_to_directed_graph(packs, graph)  if packs.present?
+     }
+
+      graph.topsort_iterator.to_a.compact
+    end
+
+    def add_packs_to_directed_graph(packs, graph)
+      packs.each_index { |index|
+        return unless index < packs.size
+        v1 = packs[index]
+        v2 = packs[index + 1]
+        graph.add_edge(v1, v2)
+      }
     end
 
     def resolve_path_to_image(name, **options)
