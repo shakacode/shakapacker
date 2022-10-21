@@ -99,19 +99,19 @@ class HelperTest < ActionView::TestCase
 
   def test_javascript_pack_tag
     assert_equal \
+      %(<script src="/packs/bootstrap-300631c4f0e0f9c865bc.js" defer="defer"></script>\n) +
       %(<script src="/packs/vendors~application~bootstrap-c20632e7baf2c81200d3.chunk.js" defer="defer"></script>\n) +
-        %(<script src="/packs/vendors~application-e55f2aae30c07fb6d82a.chunk.js" defer="defer"></script>\n) +
-        %(<script src="/packs/application-k344a6d59eef8632c9d1.js" defer="defer"></script>\n) +
-        %(<script src="/packs/bootstrap-300631c4f0e0f9c865bc.js" defer="defer"></script>),
-      javascript_pack_tag("application", "bootstrap")
+      %(<script src="/packs/vendors~application-e55f2aae30c07fb6d82a.chunk.js" defer="defer"></script>\n) +
+      %(<script src="/packs/application-k344a6d59eef8632c9d1.js" defer="defer"></script>),
+     javascript_pack_tag("application", "bootstrap")
   end
 
   def test_javascript_pack_with_no_defer_tag
     assert_equal \
-      %(<script src="/packs/vendors~application~bootstrap-c20632e7baf2c81200d3.chunk.js"></script>\n) +
+        %(<script src="/packs/bootstrap-300631c4f0e0f9c865bc.js"></script>\n) +
+        %(<script src="/packs/vendors~application~bootstrap-c20632e7baf2c81200d3.chunk.js"></script>\n) +
         %(<script src="/packs/vendors~application-e55f2aae30c07fb6d82a.chunk.js"></script>\n) +
-        %(<script src="/packs/application-k344a6d59eef8632c9d1.js"></script>\n) +
-        %(<script src="/packs/bootstrap-300631c4f0e0f9c865bc.js"></script>),
+        %(<script src="/packs/application-k344a6d59eef8632c9d1.js"></script>),
       javascript_pack_tag("application", "bootstrap", defer: false)
   end
 
@@ -175,14 +175,14 @@ class HelperTest < ActionView::TestCase
 
   def test_stylesheet_pack_tag
     assert_equal \
-      (application_stylesheet_chunks + hello_stimulus_stylesheet_chunks).uniq
+      (hello_stimulus_stylesheet_chunks + application_stylesheet_chunks).uniq
         .map { |chunk| stylesheet_link_tag(chunk) }.join("\n"),
       stylesheet_pack_tag("application", "hello_stimulus")
   end
 
   def test_stylesheet_pack_tag_symbol
     assert_equal \
-      (application_stylesheet_chunks + hello_stimulus_stylesheet_chunks).uniq
+      (hello_stimulus_stylesheet_chunks + application_stylesheet_chunks).uniq
         .map { |chunk| stylesheet_link_tag(chunk) }.join("\n"),
       stylesheet_pack_tag(:application, :hello_stimulus)
   end
