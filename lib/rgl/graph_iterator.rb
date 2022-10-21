@@ -1,6 +1,6 @@
 # Copied form https://github.com/monora/rgl/blob/master/lib/rgl/graph_iterator.rb at version 0.5.9
 
-require "stream"
+require "rgl/stream"
 
 require "rgl/graph_wrapper"
 
