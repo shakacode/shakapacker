@@ -7,6 +7,8 @@
 Changes since last non-beta release.
 
 _Please add entries here for your pull requests that are not yet released._
+### Fixed
+- Ignored CSS module order warnings from `mini-css-extract-plugin` using `ignoreOrder` flag by [pulkitkkr](https://github.com/shakacode/shakapacker/pull/185) in [PR 192](https://github.com/shakacode/shakapacker/pull/192).
 
 ## [v6.5.2] - September 8, 2022
 
