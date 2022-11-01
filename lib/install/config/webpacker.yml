@@ -11,6 +11,12 @@ default: &default
   # You cannot set this option to true if you set source_entry_path to '/'
   nested_entries: false
 
+  #  While using a File-System-based automated bundle generation feature, miscellaneous warnings suggesting css order
+  #  conflicts may arise due to the mini-css-extract-plugin. For projects where css ordering has been mitigated through
+  #  consistent use of scoping or naming conventions, the css order warnings can be disabled by setting
+  #  css_extract_ignore_order_warnings to true
+  css_extract_ignore_order_warnings: false
+
   public_root_path: public
   public_output_path: packs
   cache_path: tmp/webpacker

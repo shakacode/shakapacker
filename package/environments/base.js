@@ -77,7 +77,7 @@ const getPlugins = () => {
         // For projects where css ordering has been mitigated through consistent use of scoping or naming conventions,
         // the css order warnings can be disabled by setting the ignoreOrder flag.
         // Read: https://stackoverflow.com/questions/51971857/mini-css-extract-plugin-warning-in-chunk-chunkname-mini-css-extract-plugin-con
-        ignoreOrder: true
+        ignoreOrder: config.css_extract_ignore_order_warnings
       })
     )
   }

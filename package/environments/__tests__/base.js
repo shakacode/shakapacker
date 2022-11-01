@@ -24,6 +24,17 @@ describe('Base config', () => {
       )
     })
 
+    test('should return false for css_extract_ignore_order_warnings when using default config', () => {
+      expect(config.css_extract_ignore_order_warnings).toEqual(false)
+    })
+
+    test('should return true for css_extract_ignore_order_warnings when configured', () => {
+      process.env.WEBPACKER_CONFIG = 'config/webpacker_css_extract_ignore_order_warnings.yml'
+      const config = require("../../config");
+
+      expect(config.css_extract_ignore_order_warnings).toEqual(true)
+    })
+
     test('should return only 2 entry points with config.nested_entries == false', () => {
       expect(config.nested_entries).toEqual(false)
 
