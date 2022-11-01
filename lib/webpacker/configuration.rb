@@ -27,6 +27,10 @@ class Webpacker::Configuration
     fetch(:nested_entries)
   end
 
+  def use_topological_order?
+    fetch(:use_topological_order)
+  end
+
   def ensure_consistent_versioning?
     fetch(:ensure_consistent_versioning)
   end
