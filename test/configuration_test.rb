@@ -102,6 +102,18 @@ class ConfigurationTest < Webpacker::Test
     end
   end
 
+  def test_use_topological_order?
+    refute @config.use_topological_order?
+
+    with_rails_env("development") do
+      refute Webpacker.config.use_topological_order?
+    end
+
+    with_rails_env("test") do
+      refute Webpacker.config.use_topological_order?
+    end
+  end
+
   def test_ensure_consistent_versioning?
     refute @config.ensure_consistent_versioning?
 
