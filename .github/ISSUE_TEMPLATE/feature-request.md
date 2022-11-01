@@ -11,7 +11,7 @@ A feature request describes a suggested improvement. If you have a debugging or 
 
 Ruby version:
 Rails version:
-Webpacker version:
+Shakapacker version:
 
 Desired behavior:
 
