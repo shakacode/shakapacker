@@ -7,8 +7,9 @@
 Changes since last non-beta release.
 
 _Please add entries here for your pull requests that are not yet released._
-### Fixed
-- Ignored CSS module order warnings from `mini-css-extract-plugin` using `ignoreOrder` flag by [pulkitkkr](https://github.com/shakacode/shakapacker/pull/185) in [PR 192](https://github.com/shakacode/shakapacker/pull/192).
+### Improved
+- The `mini-css-extract-plugin` may cause various warnings indicating CSS order conflicts when using a [File-System-based automated bundle generation feature](https://www.shakacode.com/react-on-rails/docs/guides/file-system-based-automated-bundle-generation/).
+CSS order warnings can be disabled in projects where CSS ordering has been mitigated by consistent use of scoping or naming conventions. Added `css_extract_ignore_order_warnings` flag to webpacker configuration to disable the order warnings by [pulkitkkr](https://github.com/shakacode/shakapacker/pull/185) in [PR 192](https://github.com/shakacode/shakapacker/pull/192).
 
 ## [v6.5.2] - September 8, 2022
 
