@@ -205,6 +205,26 @@ module Webpacker::Helper
     end
 
     def sources_from_manifest_entrypoints(names, type:)
+      return sources_from_manifest_entrypoints_in_topological_order(names, type: type) if use_topological_order?
+
+      sources_from_manifest_entrypoints_in_non_topological_order(names, type: type)
+    end
+
+    def available_sources_from_manifest_entrypoints(names, type:)
+      return available_sources_from_manifest_entrypoints_in_topological_order(names, type: type) if use_topological_order?
+
+      available_sources_from_manifest_entrypoints_in_non_topological_order(names, type: type)
+    end
+
+    def sources_from_manifest_entrypoints_in_non_topological_order(names, type:)
+      names.map { |name| current_webpacker_instance.manifest.lookup_pack_with_chunks!(name.to_s, type: type) }.flatten.uniq
+    end
+
+    def available_sources_from_manifest_entrypoints_in_non_topological_order(names, type:)
+      names.map { |name| current_webpacker_instance.manifest.lookup_pack_with_chunks(name.to_s, type: type) }.flatten.compact.uniq
+    end
+
+    def sources_from_manifest_entrypoints_in_topological_order(names, type:)
       graph = RGL::DirectedAdjacencyGraph.new
 
       names.each { |name|
@@ -215,7 +235,7 @@ module Webpacker::Helper
       graph.topsort_iterator.to_a.compact
     end
 
-    def available_sources_from_manifest_entrypoints(names, type:)
+    def available_sources_from_manifest_entrypoints_in_topological_order(names, type:)
       graph = RGL::DirectedAdjacencyGraph.new
 
       names.each { |name|
@@ -241,4 +261,8 @@ module Webpacker::Helper
     rescue
       path_to_asset(current_webpacker_instance.manifest.lookup!(name), options)
     end
+
+  def use_topological_order?
+    current_webpacker_instance.config.use_topological_order?
+  end
 end

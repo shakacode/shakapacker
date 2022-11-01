@@ -11,6 +11,10 @@ default: &default
   # You cannot set this option to true if you set source_entry_path to '/'
   nested_entries: false
 
+  # Topological ordering of a directed graph is a linear ordering mechanism to preserve the order of vertices for all
+  # edges in graph. Set this option to true to use topological ordering for the packs.
+  use_topological_order: false
+
   #  While using a File-System-based automated bundle generation feature, miscellaneous warnings suggesting css order
   #  conflicts may arise due to the mini-css-extract-plugin. For projects where css ordering has been mitigated through
   #  consistent use of scoping or naming conventions, the css order warnings can be disabled by setting
