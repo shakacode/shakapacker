@@ -8,6 +8,9 @@ Changes since last non-beta release.
 
 _Please add entries here for your pull requests that are not yet released._
 
+### Improved
+- Describe keys for `dev_server` in generated `webpacker.yml`. [PR 201](https://github.com/shakacode/shakapacker/pull/201) by [alexeyr](https://github.com/alexeyr).
+
 ## [v6.5.4] - November 4, 2022
 ### Fixed
 - Fixed regression caused by 6.5.3. PR #192 introduce extra split() call. [PR 202](https://github.com/shakacode/shakapacker/pull/202) by [Eric-Guo](https://github.com/Eric-Guo).

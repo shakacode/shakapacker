@@ -49,37 +49,60 @@ development:
   compiler_strategy: mtime
 
   # Reference: https://webpack.js.org/configuration/dev-server/
+  # Keys not described there are documented inline and in https://github.com/shakacode/shakapacker/
+  # Keys not listed below are not supported.
   dev_server:
+    # Specify whether to serve over HTTPS. True uses a self-signed certificate, but you can also provide your own
+    # as an object. See https://webpack.js.org/configuration/dev-server/#devserverhttps
     https: false
+    # Specify a host to use. See https://webpack.js.org/configuration/dev-server/#devserverhost
     host: localhost
+    # Specify a port number to listen for requests on. Use 'auto' to automatically use a free port.
+    # See https://webpack.js.org/configuration/dev-server/#devserverport
     port: 3035
     # Hot Module Replacement updates modules while the application is running without a full reload
+    # Used instead of the `hot` key in https://webpack.js.org/configuration/dev-server/#devserverhot
     hmr: false
-    # If HMR is on, CSS will by inlined by delivering it as part of the script payload via style-loader. Be sure
-    # that you add style-loader to your project dependencies.
+    # If HMR is on, CSS will be inlined by delivering it as part of the script payload via style-loader.
+    # Make sure you have style-loader in your project dependencies.
     #
     # If you want to instead deliver CSS via <link> with the mini-css-extract-plugin, set inline_css to false.
     # In that case, style-loader is not needed as a dependency.
     #
     # mini-css-extract-plugin is a required dependency in both cases.
     inline_css: true
-    # Defaults to the inverse of hmr. Uncomment to manually set this.
+    # Specify whether to reload/refresh the page when file changes are detected. Defaults to the inverse of hmr.
+    # Uncomment to manually set this. This is only used if `hmr` is false or `watch_files` is set.
+    # See https://webpack.js.org/configuration/dev-server/#devserverlivereload
     # live_reload: true
+    # All keys from https://webpack.js.org/configuration/dev-server/#devserverclient can be specified
     client:
-      # Should we show a full-screen overlay in the browser when there are compiler errors or warnings?
+      # Should we show a full-screen overlay in the browser when there are compiler errors or warnings
+      # (can be limited to errors or warnings only)? https://webpack.js.org/configuration/dev-server/#overlay
       overlay: true
-      # May also be a string
+      # This option allows specifying URL to web socket server (useful when you're proxying dev server and client script
+      # does not always know where to connect to). May also be a string.
+      # To get protocol/hostname/port from browser use 'auto://0.0.0.0:0/ws'.
+      # https://webpack.js.org/configuration/dev-server/#websocketurl
       # webSocketURL:
-      #  hostname: "0.0.0.0"
-      #  pathname: "/ws"
+      #  hostname: '0.0.0.0'
+      #  pathname: '/ws'
       #  port: 8080
-    # Should we use gzip compression?
+    # Should we use gzip compression? See https://webpack.js.org/configuration/dev-server/#devservercompress
     compress: true
-    # Note that apps that do not check the host are vulnerable to DNS rebinding attacks
-    allowed_hosts: "all"
+    # This option allows you to list services that are allowed to access the dev server. Use `.example.com` to
+    # allow all subdomains of example.com (including itself). When set to 'all' this option bypasses host checking.
+    # THIS IS NOT RECOMMENDED as apps that do not check the host are vulnerable to DNS rebinding attacks.
+    # When set to 'auto' this allows localhost and the values of `host` and `client.webSocketURL.hostname` keys.
+    # See https://webpack.js.org/configuration/dev-server/#devserverallowedhosts
+    allowed_hosts: all
+    # Shows progress and colorizes output of bin/webpacker[-dev-server]
     pretty: true
+    # Adds headers to all responses. See https://webpack.js.org/configuration/dev-server/#devserverheaders
     headers:
       'Access-Control-Allow-Origin': '*'
+    # This option allows configuring options for serving static files from a directory.
+    # Can use all keys from https://webpack.js.org/configuration/dev-server/#devserverstatic
     static:
       watch:
         ignored: '**/node_modules/**'
