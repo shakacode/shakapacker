@@ -73,7 +73,7 @@ const getPlugins = () => {
     plugins.push(
       new MiniCssExtractPlugin({
         filename: `css/[name]${hash}.css`,
-        chunkFilename: `css/[id]${hash}.css`.split(),
+        chunkFilename: `css/[id]${hash}.css`,
         // For projects where css ordering has been mitigated through consistent use of scoping or naming conventions,
         // the css order warnings can be disabled by setting the ignoreOrder flag.
         // Read: https://stackoverflow.com/questions/51971857/mini-css-extract-plugin-warning-in-chunk-chunkname-mini-css-extract-plugin-con
