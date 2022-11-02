@@ -41,8 +41,14 @@ development:
     port: 3035
     public: localhost:3035
     hmr: false
-    # Inline should be set to true if using HMR
-    inline: true
+    # If HMR is on, CSS will by inlined by delivering it as part of the script payload via style-loader. Be sure
+    # that you add style-loader to your project dependencies.
+    #
+    # If you want to instead deliver CSS via <link> with the mini-extract-css-plugin, set inline_css to false.
+    # In that case, style-loader is not needed as a dependency.
+    #
+    # mini-extract-css-plugin is a required dependency in both cases.
+    inline_css: true
     overlay: true
     disable_host_check: true
     use_local_ip: false
