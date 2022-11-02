@@ -16,6 +16,12 @@ class HelperTest < ActionView::TestCase
     @javascript_pack_tag_loaded = nil
   end
 
+  def with_use_topological_order_true(&block)
+    stub(:use_topological_order?, true) do
+      yield
+    end
+  end
+
   def test_asset_pack_path
     assert_equal "/packs/bootstrap-300631c4f0e0f9c865bc.js", asset_pack_path("bootstrap.js")
     assert_equal "/packs/bootstrap-c38deda30895059837cf.css", asset_pack_path("bootstrap.css")
@@ -97,22 +103,44 @@ class HelperTest < ActionView::TestCase
     end
   end
 
-  def test_javascript_pack_tag
+  def test_javascript_pack_tag_without_topological_order
     assert_equal \
-      %(<script src="/packs/bootstrap-300631c4f0e0f9c865bc.js" defer="defer"></script>\n) +
       %(<script src="/packs/vendors~application~bootstrap-c20632e7baf2c81200d3.chunk.js" defer="defer"></script>\n) +
-      %(<script src="/packs/vendors~application-e55f2aae30c07fb6d82a.chunk.js" defer="defer"></script>\n) +
-      %(<script src="/packs/application-k344a6d59eef8632c9d1.js" defer="defer"></script>),
-     javascript_pack_tag("application", "bootstrap")
+       %(<script src="/packs/vendors~application-e55f2aae30c07fb6d82a.chunk.js" defer="defer"></script>\n) +
+       %(<script src="/packs/application-k344a6d59eef8632c9d1.js" defer="defer"></script>\n) +
+       %(<script src="/packs/bootstrap-300631c4f0e0f9c865bc.js" defer="defer"></script>),
+      javascript_pack_tag("application", "bootstrap")
   end
 
-  def test_javascript_pack_with_no_defer_tag
+  def test_javascript_pack_tag_with_topological_order
+    with_use_topological_order_true do
+      assert_equal \
+      %(<script src="/packs/bootstrap-300631c4f0e0f9c865bc.js" defer="defer"></script>\n) +
+       %(<script src="/packs/vendors~application~bootstrap-c20632e7baf2c81200d3.chunk.js" defer="defer"></script>\n) +
+       %(<script src="/packs/vendors~application-e55f2aae30c07fb6d82a.chunk.js" defer="defer"></script>\n) +
+       %(<script src="/packs/application-k344a6d59eef8632c9d1.js" defer="defer"></script>),
+      javascript_pack_tag("application", "bootstrap")
+    end
+  end
+
+  def test_javascript_pack_with_no_defer_tag_without_topological_order
     assert_equal \
-        %(<script src="/packs/bootstrap-300631c4f0e0f9c865bc.js"></script>\n) +
-        %(<script src="/packs/vendors~application~bootstrap-c20632e7baf2c81200d3.chunk.js"></script>\n) +
-        %(<script src="/packs/vendors~application-e55f2aae30c07fb6d82a.chunk.js"></script>\n) +
-        %(<script src="/packs/application-k344a6d59eef8632c9d1.js"></script>),
+      %(<script src="/packs/vendors~application~bootstrap-c20632e7baf2c81200d3.chunk.js"></script>\n) +
+       %(<script src="/packs/vendors~application-e55f2aae30c07fb6d82a.chunk.js"></script>\n) +
+       %(<script src="/packs/application-k344a6d59eef8632c9d1.js"></script>\n) +
+       %(<script src="/packs/bootstrap-300631c4f0e0f9c865bc.js"></script>),
       javascript_pack_tag("application", "bootstrap", defer: false)
+  end
+
+  def test_javascript_pack_with_no_defer_tag_and_topological_order
+    with_use_topological_order_true do
+      assert_equal \
+        %(<script src="/packs/bootstrap-300631c4f0e0f9c865bc.js"></script>\n) +
+         %(<script src="/packs/vendors~application~bootstrap-c20632e7baf2c81200d3.chunk.js"></script>\n) +
+         %(<script src="/packs/vendors~application-e55f2aae30c07fb6d82a.chunk.js"></script>\n) +
+         %(<script src="/packs/application-k344a6d59eef8632c9d1.js"></script>),
+        javascript_pack_tag("application", "bootstrap", defer: false)
+    end
   end
 
   def test_javascript_pack_with_append
@@ -173,16 +201,34 @@ class HelperTest < ActionView::TestCase
     %w[/packs/1-c20632e7baf2c81200d3.chunk.css /packs/hello_stimulus-k344a6d59eef8632c9d1.chunk.css]
   end
 
-  def test_stylesheet_pack_tag
-    assert_equal \
+  def test_stylesheet_pack_tag_with_topological_order
+    with_use_topological_order_true do
+      assert_equal \
       (hello_stimulus_stylesheet_chunks + application_stylesheet_chunks).uniq
+        .map { |chunk| stylesheet_link_tag(chunk) }.join("\n"),
+      stylesheet_pack_tag("application", "hello_stimulus")
+    end
+  end
+
+  def test_stylesheet_pack_tag_without_topological_order
+    assert_equal \
+      (application_stylesheet_chunks + hello_stimulus_stylesheet_chunks).uniq
         .map { |chunk| stylesheet_link_tag(chunk) }.join("\n"),
       stylesheet_pack_tag("application", "hello_stimulus")
   end
 
-  def test_stylesheet_pack_tag_symbol
-    assert_equal \
+  def test_stylesheet_pack_tag_symbol_with_topological_order
+    with_use_topological_order_true do
+      assert_equal \
       (hello_stimulus_stylesheet_chunks + application_stylesheet_chunks).uniq
+        .map { |chunk| stylesheet_link_tag(chunk) }.join("\n"),
+      stylesheet_pack_tag(:application, :hello_stimulus)
+    end
+  end
+
+  def test_stylesheet_pack_tag_symbol_without_topological_order
+    assert_equal \
+      (application_stylesheet_chunks + hello_stimulus_stylesheet_chunks).uniq
         .map { |chunk| stylesheet_link_tag(chunk) }.join("\n"),
       stylesheet_pack_tag(:application, :hello_stimulus)
   end

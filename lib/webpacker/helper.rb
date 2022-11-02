@@ -262,7 +262,7 @@ module Webpacker::Helper
       path_to_asset(current_webpacker_instance.manifest.lookup!(name), options)
     end
 
-  def use_topological_order?
-    current_webpacker_instance.config.use_topological_order?
-  end
+    def use_topological_order?
+      current_webpacker_instance.config.use_topological_order?
+    end
 end
