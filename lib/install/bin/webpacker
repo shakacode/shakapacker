@@ -1,12 +1,11 @@
 #!/usr/bin/env ruby
 
-require "pathname"
+ENV["RAILS_ENV"] ||= "development"
+ENV["BUNDLE_GEMFILE"] ||= File.expand_path("../../Gemfile", __FILE__)
+
 require "bundler/setup"
 require "webpacker"
 require "webpacker/webpack_runner"
-
-ENV["RAILS_ENV"] ||= "development"
-ENV["BUNDLE_GEMFILE"] ||= File.expand_path("../../Gemfile", Pathname.new(__FILE__).realpath)
 
 APP_ROOT = File.expand_path("..", __dir__)
 Dir.chdir(APP_ROOT) do
