@@ -1,13 +1,17 @@
 * For the changelog of versions prior to v6, see the [5.x stable branch of rails/webpacker](https://github.com/rails/webpacker/tree/5-x-stable).
 * Please see the [v6 Upgrade Guide](./docs/v6_upgrade.md) to go from versions prior to v6.
-* [ShakaCode](https://www.shakacode.com) offers support for upgrading from webpacker or using Shakapacker. If interested, contact Justin Gordon, [justin@shakacode.com](mailto:justin@shakacode.com).
+* [ShakaCode](https://www.shakacode.com) offers support for upgrading from Webpacker or using Shakapacker. If interested, contact Justin Gordon, [justin@shakacode.com](mailto:justin@shakacode.com).
 
 ## Versions
 ## [Unreleased]
 Changes since last non-beta release.
 
 _Please add entries here for your pull requests that are not yet released._
+
+## [v6.5.3] - November 1, 2022
+
 ### Improved
+- Set RAILS_ENV and BUNDLE_GEMFILE env values before requiring `bundler/setup`, `webpacker`, and `webpacker/webpack_runner`. [PR 190](https://github.com/shakacode/shakapacker/pull/190) by [betmenslido](https://github.com/betmenslido).
 - The `mini-css-extract-plugin` may cause various warnings indicating CSS order conflicts when using a [File-System-based automated bundle generation feature](https://www.shakacode.com/react-on-rails/docs/guides/file-system-based-automated-bundle-generation/).
 CSS order warnings can be disabled in projects where CSS ordering has been mitigated by consistent use of scoping or naming conventions. Added `css_extract_ignore_order_warnings` flag to webpacker configuration to disable the order warnings by [pulkitkkr](https://github.com/shakacode/shakapacker/pull/185) in [PR 192](https://github.com/shakacode/shakapacker/pull/192).
 
@@ -178,7 +182,8 @@ Note: [Rubygem is 6.3.0.pre.rc.1](https://rubygems.org/gems/shakapacker/versions
 ## v5.4.3 and prior changes from rails/webpacker
 See [CHANGELOG.md in rails/webpacker (up to v5.4.3)](https://github.com/rails/webpacker/blob/master/CHANGELOG.md)
 
-[Unreleased]: https://github.com/shakacode/shakapacker/compare/v6.5.2...master
+[Unreleased]: https://github.com/shakacode/shakapacker/compare/v6.5.3...master
+[v6.5.3]: https://github.com/shakacode/shakapacker/compare/v6.5.2...v6.5.3
 [v6.5.2]: https://github.com/shakacode/shakapacker/compare/v6.5.1...v6.5.2
 [v6.5.1]: https://github.com/shakacode/shakapacker/compare/v6.5.0...v6.5.1
 [v6.5.0]: https://github.com/shakacode/shakapacker/compare/v6.4.1...v6.5.0
