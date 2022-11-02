@@ -10,7 +10,29 @@ _Please add entries here for your pull requests that are not yet released._
 ### Improved
 - The `mini-css-extract-plugin` may cause various warnings indicating CSS order conflicts when using a [File-System-based automated bundle generation feature](https://www.shakacode.com/react-on-rails/docs/guides/file-system-based-automated-bundle-generation/).
 CSS order warnings can be disabled in projects where CSS ordering has been mitigated by consistent use of scoping or naming conventions. Added `css_extract_ignore_order_warnings` flag to webpacker configuration to disable the order warnings by [pulkitkkr](https://github.com/shakacode/shakapacker/pull/185) in [PR 192](https://github.com/shakacode/shakapacker/pull/192).
-- Update Stylesheet & Javascript Pack tag(s) to return packs in Topological Order by [pulkitkkr](https://github.com/shakacode/shakapacker/pull/185) in [PR 193](https://github.com/shakacode/shakapacker/pull/193).
+- Topological ordering of a directed graph is a linear ordering mechanism to preserve the order of vertices for all edges in graph. Added `use_topological_order` flag to configure Stylesheet & Javascript Pack tag(s) to return packs in Topological Order by [pulkitkkr](https://github.com/shakacode/shakapacker/pull/185) in [PR 193](https://github.com/shakacode/shakapacker/pull/193). <br/><br/> This change ensures script and JS tags order all dependencies based on the order of all included entry points from the manifest. The old algorithm added dependencies by appending from the list and unique. The new way uses topological order.
+
+####Old way
+
+```
+a = A B C
+d = D B C
+
+for a, d
+A B C D
+
+for d, a
+D B C A
+```
+
+#### New way
+```
+for a, d
+A D B C
+
+for d, a
+D A B C
+```
 
 ## [v6.5.2] - September 8, 2022
 
