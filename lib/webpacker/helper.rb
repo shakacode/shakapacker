@@ -1,5 +1,5 @@
-require_relative "../rgl/adjacency"
-require_relative "../rgl/topsort"
+require "rgl/adjacency"
+require "rgl/topsort"
 
 module Webpacker::Helper
   # Returns the current Webpacker instance.
