@@ -8,6 +8,10 @@ Changes since last non-beta release.
 
 _Please add entries here for your pull requests that are not yet released._
 
+## [v6.5.4] - November 4, 2022
+### Fixed
+- Fixed regression caused by 6.5.3. PR #192 introduce extra split() call. [PR 202](https://github.com/shakacode/shakapacker/pull/202) by [Eric-Guo](https://github.com/Eric-Guo).
+
 ## [v6.5.3] - November 1, 2022
 
 ### Improved
@@ -182,7 +186,8 @@ Note: [Rubygem is 6.3.0.pre.rc.1](https://rubygems.org/gems/shakapacker/versions
 ## v5.4.3 and prior changes from rails/webpacker
 See [CHANGELOG.md in rails/webpacker (up to v5.4.3)](https://github.com/rails/webpacker/blob/master/CHANGELOG.md)
 
-[Unreleased]: https://github.com/shakacode/shakapacker/compare/v6.5.3...master
+[Unreleased]: https://github.com/shakacode/shakapacker/compare/v6.5.4...master
+[v6.5.4]: https://github.com/shakacode/shakapacker/compare/v6.5.3...v6.5.4
 [v6.5.3]: https://github.com/shakacode/shakapacker/compare/v6.5.2...v6.5.3
 [v6.5.2]: https://github.com/shakacode/shakapacker/compare/v6.5.1...v6.5.2
 [v6.5.1]: https://github.com/shakacode/shakapacker/compare/v6.5.0...v6.5.1
