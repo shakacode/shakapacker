@@ -45,7 +45,7 @@ _If you're on webpacker v5, follow below steps to get to v6.0.0.rc.6 first._
 
    module.exports = envSpecificConfig()
    ```
-1. Update `babel.config.js` if you need JSX support. See [Customizing Babel Config](./customizing_babel_config.md)
+1. Update `babel.config.js` if you need JSX support. See [Customizing Babel Config](./docs/customizing_babel_config.md)
 
 ## How to upgrade to Webpacker v6.0.0.rc.6 from v5
 1. Ensure you have a clean working git branch. You will be overwriting all your files and reverting the changes that you don't want.
