@@ -33,7 +33,7 @@ class VersionCheckerTest < Minitest::Test
   def test_message_printed_if_consistency_check_disabled_and_mismatch
     node_package_version = NodePackageVersionDouble.new(raw: "6.1.0", major_minor_patch: ["6", "1", "0"])
 
-    out, err = capture_io do
+    _out, err = capture_io do
       check_version(node_package_version, "6.0.0", false)
     end
 
@@ -45,7 +45,7 @@ class VersionCheckerTest < Minitest::Test
   def test_message_printed_if_consistency_check_disabled_and_semver
     node_package_version = NodePackageVersionDouble.new(raw: "^6.1.0", major_minor_patch: ["6", "1", "0"], semver_wildcard: true)
 
-    out, err = capture_io do
+    _out, err = capture_io do
       check_version(node_package_version, "6.1.0", false)
     end
 
