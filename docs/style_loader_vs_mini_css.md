@@ -31,7 +31,7 @@ style-loader is how you are probably are used to serving CSS in development with
 * Adds an extra dependency
 * Divergence in delivery mechanism from production
 
-## Why would I pick mini-extract-css-plugin?
+## Why would I pick mini-css-extract-plugin?
 
 mini-css-extract-plugin's behavior is much more true to a production deployment's behavior, in that CSS is loaded via `link rel=stylsheet` tags, rather than injected by Javascript into `style` tags.
 

@@ -142,7 +142,7 @@ _If you're on webpacker v5, follow below steps to get to v6.0.0.rc.6 first._
      ]
    }
    ```
-   See customization example the [Customizing Babel Config](./docs/customizing_babel_config.md) for React configuration.
+   See customization example the [Customizing Babel Config](./customizing_babel_config.md) for React configuration.
 
 1. `extensions` was removed from the `webpacker.yml` file. Move custom extensions to your configuration by merging an object like this. For more details, see docs for [Webpack Configuration](https://github.com/shakacode/shakapacker/blob/master/README.md#webpack-configuration)
 
