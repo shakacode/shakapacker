@@ -70,7 +70,7 @@ _If you're on webpacker v5, follow below steps to get to v6.0.0.rc.6 first._
    ```
 
    ```bash
-   yarn add webpacker@6.0.0-rc.6 --exact
+   yarn add @rails/webpacker@6.0.0-rc.6 --exact
    ```
 
    ```bash
