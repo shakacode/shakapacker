@@ -8,6 +8,8 @@ Changes since last non-beta release.
 
 _Please add entries here for your pull requests that are not yet released._
 
+## [v6.5.5] - December 23, 2022
+
 ### Improved
 - Describe keys different from `webpack-dev-server` in generated `webpacker.yml`. [PR 194](https://github.com/shakacode/shakapacker/pull/194) by [alexeyr](https://github.com/alexeyr).
 - Allow webpack-cli v5 [PR 216](https://github.com/shakacode/shakapacker/pull/216) by [tagliala](https://github.com/tagliala).
@@ -191,7 +193,8 @@ Note: [Rubygem is 6.3.0.pre.rc.1](https://rubygems.org/gems/shakapacker/versions
 ## v5.4.3 and prior changes from rails/webpacker
 See [CHANGELOG.md in rails/webpacker (up to v5.4.3)](https://github.com/rails/webpacker/blob/master/CHANGELOG.md)
 
-[Unreleased]: https://github.com/shakacode/shakapacker/compare/v6.5.4...master
+[Unreleased]: https://github.com/shakacode/shakapacker/compare/v6.5.5...master
+[v6.5.5]: https://github.com/shakacode/shakapacker/compare/v6.5.4...v6.5.5
 [v6.5.4]: https://github.com/shakacode/shakapacker/compare/v6.5.3...v6.5.4
 [v6.5.3]: https://github.com/shakacode/shakapacker/compare/v6.5.2...v6.5.3
 [v6.5.2]: https://github.com/shakacode/shakapacker/compare/v6.5.1...v6.5.2
