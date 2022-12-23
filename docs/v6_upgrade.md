@@ -50,19 +50,19 @@ _If you're on webpacker v5, follow below steps to get to v6.0.0.rc.6 first._
 ## How to upgrade to Webpacker v6.0.0.rc.6 from v5
 1. Ensure you have a clean working git branch. You will be overwriting all your files and reverting the changes that you don't want.
 
-1. **Ensure no nested directories in your `source_entry_path`. or set option `nested_entries: true`** Check if you had any entry point files in child directories of your `source_entry_path`.
+1. **Ensure no nested directories in your `source_entry_path`.** Check if you had any entry point files in child directories of your `source_entry_path`. Files for entry points in child directories are not supported by shakacode/shakapacker v6. Move those files to the top level, adjusting any imports in those files.
 
-   The new v6 configuration **defaults** to not allow nesting, so as to allow placing the entry points at in the root directory of JavaScript. You can find this change [here](https://github.com/rails/webpacker/commit/5de0fbc1e16d3db0c93202fb39f5b4d80582c682#diff-7af8667a3e36201db57c02b68dd8651883d7bfc00dc9653661be11cd31feeccdL19).
+   The v6 configuration does not allow nesting, so as to allow placing the entry points at in the root directory of JavaScript. You can find this change [here](https://github.com/rails/webpacker/commit/5de0fbc1e16d3db0c93202fb39f5b4d80582c682#diff-7af8667a3e36201db57c02b68dd8651883d7bfc00dc9653661be11cd31feeccdL19).
 
 1. Upgrade the Webpacker Ruby gem and the NPM package
 
-   Note: [Check the gem page to verify the latest version](https://rubygems.org/gems/shakapacker), and make sure to install identical version numbers of `shakapacker` gem and package, and remove the old `webpacker` gem from the Gemfile (Gems use a hyphen and packages use a dot between the main version number and the beta version.)
+   Note: [Check the gem page to verify the latest version](https://rubygems.org/gems/webpacker), and make sure to install identical version numbers of `webpacker` gem and package.
 
    Example going to a specific version:
 
    ```ruby
    # Gemfile
-   gem 'shakapacker', '6.0.0.rc.13'
+   gem 'webpacker', '6.0.0.rc.6'
    ```
 
    ```bash
@@ -70,7 +70,7 @@ _If you're on webpacker v5, follow below steps to get to v6.0.0.rc.6 first._
    ```
 
    ```bash
-   yarn add shakapacker@6.0.0-rc.13 --exact
+   yarn add @rails/webpacker@6.0.0-rc.6 --exact
    ```
 
    ```bash
@@ -98,10 +98,6 @@ _If you're on webpacker v5, follow below steps to get to v6.0.0.rc.6 first._
    If you prefer this configuration, then you will move your `app/javascript/packs/*` (including `application.js`) to `app/javascript/` and update the configuration file.
 
    Note, moving your files is optional, as you can stil keep your entries in a separate directory, called something like `packs`, or `entries`. This directory is defined with the `source_path`.
-
-1. **Ensure no nested directories in your `source_entry_path`.** Check if you had any entry point files in child directories of your `source_entry_path`. Files for entry points in child directories are not supported by shakacode/shakapacker v6. Move those files to the top level, adjusting any imports in those files.
-
-   The v6 configuration does not allow nesting, so as to allow placing the entry points at in the root directory of JavaScript. You can find this change [here](https://github.com/rails/webpacker/commit/5de0fbc1e16d3db0c93202fb39f5b4d80582c682#diff-7af8667a3e36201db57c02b68dd8651883d7bfc00dc9653661be11cd31feeccdL19).
 
 1. Update `webpack-dev-server` to the current version, greater than 4.2, updating `package.json`.
 
