@@ -1,11 +1,11 @@
 /.bundle
 Gemfile.lock
 /pkg
-/test/mounted_app/test/dummy/log
-/test/test_app/log
+/spec/mounted_app/test/dummy/log
+/spec/test_app/log
 node_modules
 .byebug_history
-/test/test_app/tmp
+/spec/test_app/tmp
 yarn-debug.log*
 yarn-error.log*
 .yarn-integrity
