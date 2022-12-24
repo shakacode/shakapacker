@@ -1,33 +1,33 @@
-require "test_helper"
-
-class DigestStrategyTest < Minitest::Test
+describe "DigestStrategy" do
   def remove_compilation_digest_path
     @digest_strategy.send(:compilation_digest_path).tap do |path|
       path.delete if path.exist?
     end
   end
 
-  def setup
+  before :all do
     @digest_strategy = Webpacker::DigestStrategy.new
     remove_compilation_digest_path
   end
 
-  def teardown
+  after :all do
     remove_compilation_digest_path
   end
 
-  def test_freshness
-    assert @digest_strategy.stale?
-    assert !@digest_strategy.fresh?
+  it "is not fresh before compilation" do
+    expect(@digest_strategy.stale?).to be true
+    expect(@digest_strategy.fresh?).to be_falsy
   end
 
-  def test_freshness_after_compilation_hook
+  it "is fresh after compilation" do
     @digest_strategy.after_compile_hook
-    assert @digest_strategy.fresh?
-    assert !@digest_strategy.stale?
+    expect(@digest_strategy.stale?).to be false
+    expect(@digest_strategy.fresh?).to be true
   end
 
-  def test_compilation_digest_path
-    assert_equal @digest_strategy.send(:compilation_digest_path).basename.to_s, "last-compilation-digest-#{Webpacker.env}"
+  it "generates correct compilation_digest_path" do
+    actual_path = @digest_strategy.send(:compilation_digest_path).basename.to_s
+    expected_path = "last-compilation-digest-#{Webpacker.env}"
+    expect(actual_path).to eq expected_path
   end
 end
