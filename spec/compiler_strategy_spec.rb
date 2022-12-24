@@ -1,27 +1,18 @@
-require "test_helper"
-
-class CompilerStrategyTest < Minitest::Test
-  def test_mtime_strategy_returned
-    Webpacker.config.stub :compiler_strategy, "mtime" do
-      assert_instance_of Webpacker::MtimeStrategy, Webpacker::CompilerStrategy.from_config
-    end
+describe "CompilerStrategy" do
+  it "can instantiate MtimeStrategy based on the config file" do
+    allow(Webpacker.config).to receive(:compiler_strategy).and_return("mtime")
+    expect(Webpacker::CompilerStrategy.from_config).to be_an_instance_of(Webpacker::MtimeStrategy)
   end
 
-  def test_digest_strategy_returned
-    Webpacker.config.stub :compiler_strategy, "digest" do
-      assert_instance_of Webpacker::DigestStrategy, Webpacker::CompilerStrategy.from_config
-    end
+  it "can instantiate DigestStrategy based on the config file" do
+    allow(Webpacker.config).to receive(:compiler_strategy).and_return("digest")
+    expect(Webpacker::CompilerStrategy.from_config).to be_an_instance_of(Webpacker::DigestStrategy)
   end
 
-  def test_raise_on_unknown_strategy
-    Webpacker.config.stub :compiler_strategy, "other" do
-      error = assert_raises do
-        Webpacker::CompilerStrategy.from_config
-      end
+  it "raise exception for unknown compiler_strategy in the config file" do
+    expected_error_message = "Unknown strategy 'other'. Available options are 'mtime' and 'digest'."
+    allow(Webpacker.config).to receive(:compiler_strategy).and_return("other")
 
-      assert_equal \
-        "Unknown strategy 'other'. Available options are 'mtime' and 'digest'.",
-        error.message
-    end
+    expect { Webpacker::CompilerStrategy.from_config }.to raise_error(expected_error_message)
   end
 end
