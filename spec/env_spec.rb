@@ -1,23 +1,21 @@
-require "test_helper"
-
-class EnvTest < Webpacker::Test
-  def test_current
-    assert_equal Webpacker.env, Rails.env
+RSpec.describe "Env" do
+  it "uses the same env for Rails and Webpacker" do
+    expect(Webpacker.env).to eq Rails.env
   end
 
-  def test_custom_without_config
+  it "uses production env without config" do
     with_rails_env("foo") do
-      assert_equal Webpacker.env, "production"
+      expect(Webpacker.env).to eq "production"
     end
   end
 
-  def test_custom_with_config
+  it "uses the given env in custom config" do
     with_rails_env("staging") do
-      assert_equal Webpacker.env, "staging"
+      expect(Webpacker.env).to eq "staging"
     end
   end
 
-  def test_default
-    assert_equal Webpacker::DEFAULT_ENV, "production"
+  it "uses 'production' as default env" do
+    expect(Webpacker::DEFAULT_ENV).to eq "production"
   end
 end
