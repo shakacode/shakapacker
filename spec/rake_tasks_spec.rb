@@ -1,37 +1,32 @@
-require "test_helper"
+describe "RakeTasks" do
+  let(:test_app_path) { File.expand_path("test_app", __dir__) }
 
-class RakeTasksTest < Minitest::Test
-  def test_rake_tasks
+  it "`rake -T` lists webpacker tasks" do
     output = Dir.chdir(test_app_path) { `rake -T` }
-    assert_includes output, "webpacker"
-    assert_includes output, "webpacker:check_binstubs"
-    assert_includes output, "webpacker:check_node"
-    assert_includes output, "webpacker:check_yarn"
-    assert_includes output, "webpacker:clean"
-    assert_includes output, "webpacker:clobber"
-    assert_includes output, "webpacker:compile"
-    assert_includes output, "webpacker:install"
-    assert_includes output, "webpacker:verify_install"
+    expect(output).to include "webpacker"
+    expect(output).to include "webpacker:check_binstubs"
+    expect(output).to include "webpacker:check_node"
+    expect(output).to include "webpacker:check_yarn"
+    expect(output).to include "webpacker:clean"
+    expect(output).to include "webpacker:clobber"
+    expect(output).to include "webpacker:compile"
+    expect(output).to include "webpacker:install"
+    expect(output).to include "webpacker:verify_install"
   end
 
-  def test_rake_task_webpacker_check_binstubs
+  it "`webpacker:check_binstubs` doesn't get 'webpack binstub not found' error" do
     output = Dir.chdir(test_app_path) { `rake webpacker:check_binstubs 2>&1` }
-    refute_includes output, "webpack binstub not found."
+    expect(output).to_not include "webpack binstub not found."
   end
 
-  def test_check_node_version
+  it "`webpacker:check_node` doesn't get 'Webpacker requires Node.js' error" do
     output = Dir.chdir(test_app_path) { `rake webpacker:check_node 2>&1` }
-    refute_includes output, "Webpacker requires Node.js"
+    expect(output).to_not include "Webpacker requires Node.js"
   end
 
-  def test_check_yarn_version
+  it "`webpacker:check_yarn` doesn't get error related to yarn" do
     output = Dir.chdir(test_app_path) { `rake webpacker:check_yarn 2>&1` }
-    refute_includes output, "Yarn not installed"
-    refute_includes output, "Webpacker requires Yarn"
+    expect(output).to_not include "Yarn not installed"
+    expect(output).to_not include "Webpacker requires Yarn"
   end
-
-  private
-    def test_app_path
-      File.expand_path("test_app", __dir__)
-    end
 end
