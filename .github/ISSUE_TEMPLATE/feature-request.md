@@ -7,12 +7,15 @@ assignees: ''
 
 ---
 
-A feature request describes a suggested improvement. If you have a debugging or troubleshooting question, please open a discussion on the [Discussions tab](https://github.com/shakacode/shakapacker/discussions).
+_Notice: A feature request describes a suggested improvement. If you have a debugging or troubleshooting question, please open a discussion on the [Discussions Tab](https://github.com/shakacode/shakapacker/discussions). Otherwise, remove this line and fill out the following sections._
 
-Ruby version:
-Rails version:
-Shakapacker version:
+## Desired behavior:
 
-Desired behavior:
 
-Actual behavior:
+## Actual behavior:
+
+
+## Setup environment:
+- Ruby version: 
+- Rails version: 
+- Shakapacker version: 
