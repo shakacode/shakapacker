@@ -1,89 +1,98 @@
-require "test_helper"
+describe "Webpacker::Manifest" do
+  let(:manifest_path) { File.expand_path File.join(File.dirname(__FILE__), "test_app/public/packs", "manifest.json").to_s }
 
-class ManifestTest < Minitest::Test
-  def test_lookup_exception!
+  it "#lookup! throws exception for a non-existing asset file" do
     asset_file = "calendar.js"
+    expected_error_message = "Shakapacker can't find #{asset_file} in #{manifest_path}"
 
-    error = assert_raises_manifest_missing_entry_error do
+    allow(Webpacker.config).to receive(:compile?).and_return(false)
+
+    expect {
       Webpacker.manifest.lookup!(asset_file)
-    end
-
-    assert_match "Shakapacker can't find #{asset_file} in #{manifest_path}", error.message
+    }.to raise_error(Webpacker::Manifest::MissingEntryError, /#{expected_error_message}/)
   end
 
-  def test_lookup_with_type_exception!
+  it "#lookup! throws exception for a non-existing asset file with type and without extension" do
     asset_file = "calendar"
+    expected_error_message = "Shakapacker can't find #{asset_file}.js in #{manifest_path}"
 
-    error = assert_raises_manifest_missing_entry_error do
+    allow(Webpacker.config).to receive(:compile?).and_return(false)
+
+    expect {
       Webpacker.manifest.lookup!(asset_file, type: :javascript)
-    end
-
-    assert_match "Shakapacker can't find #{asset_file}.js in #{manifest_path}", error.message
+    }.to raise_error(Webpacker::Manifest::MissingEntryError, /#{expected_error_message}/)
   end
 
-  def test_lookup_success!
-    assert_equal Webpacker.manifest.lookup!("bootstrap.js"), "/packs/bootstrap-300631c4f0e0f9c865bc.js"
+  it "#lookup! returns path to bundled bootstrap.js" do
+    actual = Webpacker.manifest.lookup!("bootstrap.js")
+    expected = "/packs/bootstrap-300631c4f0e0f9c865bc.js"
+
+    expect(actual).to eq expected
   end
 
-  def test_lookup_with_chunks_without_extension_success!
-    assert_equal ["/packs/bootstrap-300631c4f0e0f9c865bc.js"], Webpacker.manifest.lookup_pack_with_chunks!("bootstrap", type: :javascript)
+  it "#lookup_pack_with_chunks! returns array of path to bundled bootstrap with type of javascript" do
+    actual = Webpacker.manifest.lookup_pack_with_chunks!("bootstrap", type: :javascript)
+    expected = ["/packs/bootstrap-300631c4f0e0f9c865bc.js"]
+
+    expect(actual).to eq expected
   end
 
-  def test_lookup_with_chunks_with_extension_success!
-    assert_equal ["/packs/bootstrap-300631c4f0e0f9c865bc.js"], Webpacker.manifest.lookup_pack_with_chunks!("bootstrap.js", type: :javascript)
+  it "#lookup_with_chunks! returns array of path to bundled bootstrap.js with type of javascript" do
+    actual = Webpacker.manifest.lookup_pack_with_chunks!("bootstrap.js", type: :javascript)
+    expected = ["/packs/bootstrap-300631c4f0e0f9c865bc.js"]
+
+    expect(actual).to eq expected
   end
 
-  def test_lookup_with_chunks_without_extension_subdir_success!
-    assert_equal ["/packs/print/application-983b6c164a47f7ed49cd.css"], Webpacker.manifest.lookup_pack_with_chunks!("print/application", type: :css)
+  it "#lookup_with_chunks! returns array of path to bundled 'print/application' without extension and in a sub-directory" do
+    actual = Webpacker.manifest.lookup_pack_with_chunks!("print/application", type: :css)
+    expected = ["/packs/print/application-983b6c164a47f7ed49cd.css"]
+
+    expect(actual).to eq expected
   end
 
-  def test_lookup_with_chunks_with_extension_subdir_success!
-    assert_equal ["/packs/print/application-983b6c164a47f7ed49cd.css"], Webpacker.manifest.lookup_pack_with_chunks!("print/application.css", type: :css)
+  it "#lookup_with_chunks! returns array of path to bundled 'print/application.css' in a sub-directory" do
+    actual = Webpacker.manifest.lookup_pack_with_chunks!("print/application.css", type: :css)
+    expected = ["/packs/print/application-983b6c164a47f7ed49cd.css"]
+
+    expect(actual).to eq expected
   end
 
-  def test_lookup_nil
-    assert_nil Webpacker.manifest.lookup("foo.js")
+  it "#lookup returns nil for non-existing asset file" do
+    expect(Webpacker.manifest.lookup("foo.js")).to be nil
   end
 
-  def test_lookup_chunks_nil
-    assert_nil Webpacker.manifest.lookup_pack_with_chunks("foo.js")
+  it "#lookup_pack_with_chunks returns nil for non-existing asset file" do
+    expect(Webpacker.manifest.lookup_pack_with_chunks("foo.js")).to be nil
   end
 
-  def test_lookup_success
-    assert_equal Webpacker.manifest.lookup("bootstrap.js"), "/packs/bootstrap-300631c4f0e0f9c865bc.js"
+  it "#lookup returns path for bootstrap.js" do
+    actual = Webpacker.manifest.lookup("bootstrap.js")
+    expected = "/packs/bootstrap-300631c4f0e0f9c865bc.js"
+
+    expect(actual).to eq expected
   end
 
-  def test_lookup_entrypoint_exception!
+  it "#lookup_pack_with_chunks! throws exception for a non-existing asset file" do
     asset_file = "calendar"
 
-    error = assert_raises_manifest_missing_entry_error do
-      Webpacker.manifest.lookup_pack_with_chunks!(asset_file, type: :javascript)
-    end
+    expected_error_message = "Shakapacker can't find #{asset_file}.js in #{manifest_path}"
 
-    assert_match "Shakapacker can't find #{asset_file}.js in #{manifest_path}", error.message
+    allow(Webpacker.config).to receive(:compile?).and_return(false)
+
+    expect {
+      Webpacker.manifest.lookup_pack_with_chunks!(asset_file, type: :javascript)
+    }.to raise_error(Webpacker::Manifest::MissingEntryError, /#{expected_error_message}/)
   end
 
-  def test_lookup_entrypoint
-    application_entrypoints = [
+  it "#lookup_pack_with_chunks! returns array of paths to bundled js files with 'application' in their name" do
+    actual_application_entrypoints = Webpacker.manifest.lookup_pack_with_chunks!("application", type: :javascript)
+    expected_application_entrypoints = [
       "/packs/vendors~application~bootstrap-c20632e7baf2c81200d3.chunk.js",
       "/packs/vendors~application-e55f2aae30c07fb6d82a.chunk.js",
       "/packs/application-k344a6d59eef8632c9d1.js"
     ]
 
-    assert_equal Webpacker.manifest.lookup_pack_with_chunks!("application", type: :javascript), application_entrypoints
+    expect(actual_application_entrypoints).to eq expected_application_entrypoints
   end
-
-  private
-
-    def assert_raises_manifest_missing_entry_error(&block)
-      error = nil
-      Webpacker.config.stub :compile?, false do
-        error = assert_raises Webpacker::Manifest::MissingEntryError, &block
-      end
-      error
-    end
-
-    def manifest_path
-      File.expand_path File.join(File.dirname(__FILE__), "test_app/public/packs", "manifest.json").to_s
-    end
 end
