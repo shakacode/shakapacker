@@ -1,47 +1,45 @@
-require "test_helper"
-
-class DevServerTest < Webpacker::Test
-  def test_running?
-    refute Webpacker.dev_server.running?
+describe "DevServer" do
+  it "doesn't run by default" do
+    expect(Webpacker.dev_server.running?).to be_falsy
   end
 
-  def test_host
+  it "uses localhost as host in development environment" do
     with_rails_env("development") do
-      assert_equal Webpacker.dev_server.host, "localhost"
+      expect(Webpacker.dev_server.host).to eq "localhost"
     end
   end
 
-  def test_port
+  it "uses port 3035 in development environment" do
     with_rails_env("development") do
-      assert_equal Webpacker.dev_server.port, 3035
+      expect(Webpacker.dev_server.port).to eq 3035
     end
   end
 
-  def test_https?
+  it "doesn't use https in development environment" do
     with_rails_env("development") do
-      assert_equal Webpacker.dev_server.https?, false
+      expect(Webpacker.dev_server.https?).to be false
     end
   end
 
-  def test_protocol
+  it "uses http protocol in development environment" do
     with_rails_env("development") do
-      assert_equal Webpacker.dev_server.protocol, "http"
+      expect(Webpacker.dev_server.protocol).to eq "http"
     end
   end
 
-  def test_host_with_port
+  it "sets host_with_port to localhost:3035 in development environment" do
     with_rails_env("development") do
-      assert_equal Webpacker.dev_server.host_with_port, "localhost:3035"
+      expect(Webpacker.dev_server.host_with_port).to eq "localhost:3035"
     end
   end
 
-  def test_pretty?
+  it "doesn't use pretty in development environment" do
     with_rails_env("development") do
-      refute Webpacker.dev_server.pretty?
+      expect(Webpacker.dev_server.pretty?).to be false
     end
   end
 
-  def test_default_env_prefix
-    assert_equal Webpacker::DevServer::DEFAULT_ENV_PREFIX, "WEBPACKER_DEV_SERVER"
+  it "users WEBPACKER_DEV_SERVER for DEFAULT_ENV_PREFIX" do
+    expect(Webpacker::DevServer::DEFAULT_ENV_PREFIX).to eq "WEBPACKER_DEV_SERVER"
   end
 end
