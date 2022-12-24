@@ -1,49 +1,47 @@
-require "test_helper"
-
-class WebpackerTest < Webpacker::Test
-  def test_config_params
-    assert_equal Rails.env, Webpacker.config.env
-    assert_equal Webpacker.instance.root_path, Webpacker.config.root_path
-    assert_equal Webpacker.instance.config_path, Webpacker.config.config_path
+describe "Webpacker" do
+  it "accepts env as config params" do
+    expect(Webpacker.config.env).to eq Rails.env
+    expect(Webpacker.config.root_path).to eq Webpacker.instance.root_path
+    expect(Webpacker.config.config_path).to eq Webpacker.instance.config_path
 
     with_rails_env("test") do
-      assert_equal "test", Webpacker.config.env
+      expect(Webpacker.config.env).to eq "test"
     end
   end
 
-  def test_inline_css_no_dev_server
-    assert !Webpacker.inlining_css?
+  it "#inline_css? returns false with disabled dev_server" do
+    expect(Webpacker.inlining_css?).to be_falsy
   end
 
-  def test_inline_css_with_hmr
-    dev_server = Webpacker::DevServer.new({})
-    def dev_server.host; "localhost"; end
-    def dev_server.port; "3035"; end
-    def dev_server.pretty?; false; end
-    def dev_server.https?; true; end
-    def dev_server.hmr?; true; end
-    def dev_server.running?; true; end
-    def dev_server.inline_css?; true; end
-    Webpacker.instance.stub(:dev_server, dev_server) do
-      assert Webpacker.inlining_css?
-    end
+  it "#inline_css? returns true with enabled hmr" do
+    dev_server = double("dev_server")
+    allow(dev_server).to receive(:host).and_return("localhost")
+    allow(dev_server).to receive(:port).and_return("3035")
+    allow(dev_server).to receive(:pretty?).and_return(false)
+    allow(dev_server).to receive(:https?).and_return(true)
+    allow(dev_server).to receive(:hmr?).and_return(true)
+    allow(dev_server).to receive(:running?).and_return(true)
+    allow(dev_server).to receive(:inline_css?).and_return(true)
+    allow(Webpacker.instance).to receive(:dev_server).and_return(dev_server)
+
+    expect(Webpacker.inlining_css?).to be true
   end
 
-  def test_explicit_no_inline_css_with_hmr
-    dev_server = Webpacker::DevServer.new({})
-    def dev_server.host; "localhost"; end
-    def dev_server.port; "3035"; end
-    def dev_server.pretty?; false; end
-    def dev_server.https?; true; end
-    def dev_server.hmr?; true; end
-    def dev_server.running?; true; end
-    def dev_server.inline_css?; false; end
-    Webpacker.instance.stub(:dev_server, dev_server) do
-      assert !Webpacker.inlining_css?
-    end
+  it "#inline_css? returns false with enabled hmr and explicitly setting inline_css to false" do
+    dev_server = double("dev_server")
+    allow(dev_server).to receive(:host).and_return("localhost")
+    allow(dev_server).to receive(:port).and_return("3035")
+    allow(dev_server).to receive(:pretty?).and_return(false)
+    allow(dev_server).to receive(:https?).and_return(true)
+    allow(dev_server).to receive(:hmr?).and_return(true)
+    allow(dev_server).to receive(:running?).and_return(true)
+    allow(dev_server).to receive(:inline_css?).and_return(false)
+    allow(Webpacker.instance).to receive(:dev_server).and_return(dev_server)
+
+    expect(Webpacker.inlining_css?).to be_falsy
   end
 
-  def test_app_autoload_paths_cleanup
-    assert_empty $test_app_autoload_paths_in_initializer
+  it "has app_autoload_paths cleanup" do
+    expect($test_app_autoload_paths_in_initializer).to eq []
   end
 end
