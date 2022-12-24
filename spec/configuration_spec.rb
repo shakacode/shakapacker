@@ -1,7 +1,5 @@
-require "test_helper"
-
-class ConfigurationTest < Webpacker::Test
-  def setup
+describe "Configuration" do
+  before :context do
     @config = Webpacker::Configuration.new(
       root_path: Pathname.new(File.expand_path("test_app", __dir__)),
       config_path: Pathname.new(File.expand_path("./test_app/config/webpacker.yml", __dir__)),
@@ -9,43 +7,43 @@ class ConfigurationTest < Webpacker::Test
     )
   end
 
-  def test_source_path
+  it "returns correct source_path" do
     source_path = File.expand_path File.join(File.dirname(__FILE__), "test_app/app/packs").to_s
-    assert_equal source_path, @config.source_path.to_s
+    expect(@config.source_path.to_s).to eq source_path
   end
 
-  def test_source_entry_path
+  it "returns correct source_entry_path" do
     source_entry_path = File.expand_path File.join(File.dirname(__FILE__), "test_app/app/packs", "entrypoints").to_s
-    assert_equal @config.source_entry_path.to_s, source_entry_path
+    expect(@config.source_entry_path.to_s).to eq source_entry_path
   end
 
-  def test_public_root_path
+  it "returns correct public_root_path" do
     public_root_path = File.expand_path File.join(File.dirname(__FILE__), "test_app/public").to_s
-    assert_equal @config.public_path.to_s, public_root_path
+    expect(@config.public_path.to_s).to eq public_root_path
   end
 
-  def test_public_output_path
+  it "returns correct public_output_path" do
     public_output_path = File.expand_path File.join(File.dirname(__FILE__), "test_app/public/packs").to_s
-    assert_equal @config.public_output_path.to_s, public_output_path
+    expect(@config.public_output_path.to_s).to eq public_output_path
 
-    @public_root_config = Webpacker::Configuration.new(
+    public_root_config = Webpacker::Configuration.new(
       root_path: @config.root_path,
       config_path: Pathname.new(File.expand_path("./test_app/config/webpacker_public_root.yml", __dir__)),
       env: "production"
     )
 
     public_output_path = File.expand_path File.join(File.dirname(__FILE__), "public/packs").to_s
-    assert_equal @public_root_config.public_output_path.to_s, public_output_path
+    expect(public_root_config.public_output_path.to_s).to eq public_output_path
   end
 
-  def test_public_manifest_path
+  it "returns correct public_manifest_path" do
     public_manifest_path = File.expand_path File.join(File.dirname(__FILE__), "test_app/public/packs", "manifest.json").to_s
-    assert_equal @config.public_manifest_path.to_s, public_manifest_path
+    expect(@config.public_manifest_path.to_s).to eq public_manifest_path
   end
 
-  def test_manifest_path
+  it "returns correct manifest_path" do
     manifest_path = File.expand_path File.join(File.dirname(__FILE__), "test_app/public/packs", "manifest.json").to_s
-    assert_equal @config.manifest_path.to_s, manifest_path
+    expect(@config.manifest_path.to_s).to eq manifest_path
 
     @manifest_config = Webpacker::Configuration.new(
       root_path: @config.root_path,
@@ -54,92 +52,92 @@ class ConfigurationTest < Webpacker::Test
     )
 
     manifest_path = File.expand_path File.join(File.dirname(__FILE__), "test_app/app/packs", "manifest.json").to_s
-    assert_equal @manifest_config.manifest_path.to_s, manifest_path
+    expect(@manifest_config.manifest_path.to_s).to eq manifest_path
   end
 
-  def test_cache_path
+  it "returns correct cache_path" do
     cache_path = File.expand_path File.join(File.dirname(__FILE__), "test_app/tmp/webpacker").to_s
-    assert_equal @config.cache_path.to_s, cache_path
+    expect(@config.cache_path.to_s).to eq cache_path
   end
 
-  def test_additional_paths
-    assert_equal @config.additional_paths, ["app/assets", "/etc/yarn", "some.config.js", "app/elm"]
+  it "returns correct additional_paths" do
+    expect(@config.additional_paths).to eq ["app/assets", "/etc/yarn", "some.config.js", "app/elm"]
   end
 
-  def test_cache_manifest?
-    assert @config.cache_manifest?
+  it "returns correct cache_manifest?" do
+    expect(@config.cache_manifest?).to be true
 
     with_rails_env("development") do
-      refute Webpacker.config.cache_manifest?
+      expect(Webpacker.config.cache_manifest?).to be false
     end
 
     with_rails_env("test") do
-      refute Webpacker.config.cache_manifest?
+      expect(Webpacker.config.cache_manifest?).to be false
     end
   end
 
-  def test_compile?
-    refute @config.compile?
+  it "returns correct compile?" do
+    expect(@config.compile?).to be false
 
     with_rails_env("development") do
-      assert Webpacker.config.compile?
+      expect(Webpacker.config.compile?).to be true
     end
 
     with_rails_env("test") do
-      assert Webpacker.config.compile?
+      expect(Webpacker.config.compile?).to be true
     end
   end
 
-  def test_nested_entries?
-    refute @config.nested_entries?
+  it "returns correct nested_entries?" do
+    expect(@config.nested_entries?).to be false
 
     with_rails_env("development") do
-      refute Webpacker.config.nested_entries?
+      expect(Webpacker.config.nested_entries?).to be false
     end
 
     with_rails_env("test") do
-      refute Webpacker.config.nested_entries?
+      expect(Webpacker.config.nested_entries?).to be false
     end
   end
 
-  def test_ensure_consistent_versioning?
-    refute @config.ensure_consistent_versioning?
+  it "returns correct ensure_consistent_versioning?" do
+    expect(@config.ensure_consistent_versioning?).to be false
 
     with_rails_env("development") do
-      assert Webpacker.config.ensure_consistent_versioning?
+      expect(Webpacker.config.ensure_consistent_versioning?).to be true
     end
 
     with_rails_env("test") do
-      refute Webpacker.config.ensure_consistent_versioning?
+      expect(Webpacker.config.ensure_consistent_versioning?).to be false
     end
   end
 
-  def test_webpacker_precompile
-    assert @config.webpacker_precompile?
+  it "returns correct webpacker_precompile" do
+    expect(@config.webpacker_precompile?).to be true
 
     ENV["WEBPACKER_PRECOMPILE"] = "no"
-    refute Webpacker.config.webpacker_precompile?
+    expect(Webpacker.config.webpacker_precompile?).to be false
 
     ENV["WEBPACKER_PRECOMPILE"] = "yes"
-    assert Webpacker.config.webpacker_precompile?
+    expect(Webpacker.config.webpacker_precompile?).to be true
 
     ENV["WEBPACKER_PRECOMPILE"] = "false"
-    refute Webpacker.config.webpacker_precompile?
+    expect(Webpacker.config.webpacker_precompile?).to be false
 
     ENV["WEBPACKER_PRECOMPILE"] = "true"
-    assert Webpacker.config.webpacker_precompile?
+    expect(Webpacker.config.webpacker_precompile?).to be true
 
     ENV["WEBPACKER_PRECOMPILE"] = "n"
-    refute Webpacker.config.webpacker_precompile?
+    expect(Webpacker.config.webpacker_precompile?).to be false
 
     ENV["WEBPACKER_PRECOMPILE"] = "y"
-    assert Webpacker.config.webpacker_precompile?
+    expect(Webpacker.config.webpacker_precompile?).to be true
 
     ENV["WEBPACKER_PRECOMPILE"] = "f"
-    refute Webpacker.config.webpacker_precompile?
+    expect(Webpacker.config.webpacker_precompile?).to be false
 
     ENV["WEBPACKER_PRECOMPILE"] = "t"
-    assert Webpacker.config.webpacker_precompile?
+    expect(Webpacker.config.webpacker_precompile?).to be true
 
     @no_precompile_config = Webpacker::Configuration.new(
       root_path: @config.root_path,
@@ -147,11 +145,11 @@ class ConfigurationTest < Webpacker::Test
       env: "production"
     )
 
-    assert @no_precompile_config.webpacker_precompile?
+    expect(@no_precompile_config.webpacker_precompile?).to be true
 
     ENV["WEBPACKER_PRECOMPILE"] = nil
 
-    refute @no_precompile_config.webpacker_precompile?
+    expect(@no_precompile_config.webpacker_precompile?).to be false
 
     @invalid_path_config = Webpacker::Configuration.new(
       root_path: @config.root_path,
@@ -159,28 +157,28 @@ class ConfigurationTest < Webpacker::Test
       env: "default"
     )
 
-    refute @invalid_path_config.webpacker_precompile?
+    expect(@invalid_path_config.webpacker_precompile?).to be false
   end
 
-  def test_fall_back_to_bundled_config_with_the_same_name_for_standard_environments
-    @no_default_config = Webpacker::Configuration.new(
+  it "falls back to bundled config with the same name for standard environments" do
+    no_default_config = Webpacker::Configuration.new(
       root_path: @config.root_path,
       config_path: Pathname.new(File.expand_path("./test_app/config/webpacker_defaults_fallback.yml", __dir__)),
       env: "default"
     )
 
-    refute @no_default_config.cache_manifest? # fall back to "default" config from bundled file
-    refute @no_default_config.webpacker_precompile? # use "default" config from custom file
+    expect(no_default_config.cache_manifest?).to be false # fall back to "default" config from bundled file
+    expect(no_default_config.webpacker_precompile?).to be false # use "default" config from custom file
   end
 
-  def test_fall_back_to_bundled_production_config_for_custom_environments
-    @no_env_config = Webpacker::Configuration.new(
+  it "falls back to bundled production config for custom environments" do
+    no_env_config = Webpacker::Configuration.new(
       root_path: @config.root_path,
       config_path: Pathname.new(File.expand_path("./test_app/config/webpacker_defaults_fallback.yml", __dir__)),
       env: "staging"
     )
 
-    assert @no_env_config.cache_manifest? # fall back to "production" config from bundled file
-    refute @no_env_config.webpacker_precompile? # use "staging" config from custom file
+    expect(no_env_config.cache_manifest?).to be true # fall back to "production" config from bundled file
+    expect(no_env_config.webpacker_precompile?).to be false # use "staging" config from custom file
   end
 end
