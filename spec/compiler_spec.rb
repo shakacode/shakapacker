@@ -1,60 +1,58 @@
-require "test_helper"
+describe "Compiler" do
+  it "accepts custom environment variables" do
+    expect(Webpacker.compiler.send(:webpack_env)["FOO"]).to be nil
 
-class CompilerTest < Minitest::Test
-  def test_custom_environment_variables
-    assert_nil Webpacker.compiler.send(:webpack_env)["FOO"]
     Webpacker.compiler.env["FOO"] = "BAR"
-    assert Webpacker.compiler.send(:webpack_env)["FOO"] == "BAR"
+    expect(Webpacker.compiler.send(:webpack_env)["FOO"]).to eq "BAR"
   ensure
     Webpacker.compiler.env = {}
   end
 
-  def test_compile_true_when_fresh
-    mock = Minitest::Mock.new
-    mock.expect(:stale?, false)
-    Webpacker.compiler.stub(:strategy, mock) do
-      assert Webpacker.compiler.compile
-    end
-    assert_mock mock
+  it "compiles when fresh" do
+    mock = double("mock")
+    allow(mock).to receive(:stale?).and_return(false)
+    allow(Webpacker.compiler).to receive(:strategy).and_return(mock)
+
+    expect(Webpacker.compiler.compile).to be_truthy
+    expect(mock).to have_received(:stale?)
   end
 
-  def test_after_compile_hook_called_on_success
-    mock = Minitest::Mock.new
-    mock.expect(:stale?, true)
-    mock.expect(:after_compile_hook, nil)
+  it "calls after_compile_hook on successful compile" do
+    mock = double("mock")
+    allow(mock).to receive(:stale?).and_return(true)
+    allow(mock).to receive(:after_compile_hook).and_return(nil)
 
     status = OpenStruct.new(success?: true)
 
-    Webpacker.compiler.stub(:strategy, mock) do
-      Open3.stub :capture3, [:sterr, :stdout, status] do
-        Webpacker.compiler.compile
-      end
-    end
-    assert_mock mock
+    allow(Webpacker.compiler).to receive(:strategy).and_return(mock)
+    allow(Open3).to receive(:capture3).and_return([:sterr, :stdout, status])
+
+    Webpacker.compiler.compile
+    expect(mock).to have_received(:after_compile_hook)
   end
 
-  def test_after_compile_hook_called_on_failure
-    mock = Minitest::Mock.new
-    mock.expect(:stale?, true)
-    mock.expect(:after_compile_hook, nil)
+  it "calls after_compile_hook on failed compile" do
+    mock = double("mock")
+    allow(mock).to receive(:stale?).and_return(true)
+    allow(mock).to receive(:after_compile_hook).and_return(nil)
 
     status = OpenStruct.new(success?: false)
 
-    Webpacker.compiler.stub(:strategy, mock) do
-      Open3.stub :capture3, [:sterr, :stdout, status] do
-        Webpacker.compiler.compile
-      end
-    end
-    assert_mock mock
+    allow(Webpacker.compiler).to receive(:strategy).and_return(mock)
+    allow(Open3).to receive(:capture3).and_return([:sterr, :stdout, status])
+
+    Webpacker.compiler.compile
+    expect(mock).to have_received(:after_compile_hook)
   end
 
-  def test_external_env_variables
-    assert_nil Webpacker.compiler.send(:webpack_env)["WEBPACKER_ASSET_HOST"]
-    assert_nil Webpacker.compiler.send(:webpack_env)["WEBPACKER_RELATIVE_URL_ROOT"]
+  it "accepts external env variables" do
+    expect(Webpacker.compiler.send(:webpack_env)["WEBPACKER_ASSET_HOST"]).to be nil
+    expect(Webpacker.compiler.send(:webpack_env)["WEBPACKER_RELATIVE_URL_ROOT"]).to be nil
 
     ENV["WEBPACKER_ASSET_HOST"] = "foo.bar"
     ENV["WEBPACKER_RELATIVE_URL_ROOT"] = "/baz"
-    assert_equal Webpacker.compiler.send(:webpack_env)["WEBPACKER_ASSET_HOST"], "foo.bar"
-    assert_equal Webpacker.compiler.send(:webpack_env)["WEBPACKER_RELATIVE_URL_ROOT"], "/baz"
+
+    expect(Webpacker.compiler.send(:webpack_env)["WEBPACKER_ASSET_HOST"]).to eq "foo.bar"
+    expect(Webpacker.compiler.send(:webpack_env)["WEBPACKER_RELATIVE_URL_ROOT"]).to eq "/baz"
   end
 end
