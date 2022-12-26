@@ -45,14 +45,6 @@ if (setup_path = Rails.root.join("bin/setup")).exist?
 RUBY
 end
 
-if Rails::VERSION::MAJOR < 7 && (csp_config_path = Rails.root.join("config/initializers/content_security_policy.rb")).exist?
-  say "Make note of webpack-dev-server exemption needed to csp"
-  insert_into_file csp_config_path, <<-RUBY, after: %(# Rails.application.config.content_security_policy do |policy|)
-  #   # If you are using webpack-dev-server then specify webpack-dev-server host
-  #   policy.connect_src :self, :https, "http://localhost:3035", "ws://localhost:3035" if Rails.env.development?
-RUBY
-end
-
 results = []
 
 Dir.chdir(Rails.root) do
@@ -76,13 +68,6 @@ Dir.chdir(Rails.root) do
 
   say "Installing webpack-dev-server for live reloading as a development dependency"
   results << run("yarn add --dev webpack-dev-server")
-end
-
-if Rails::VERSION::MAJOR == 5 && Rails::VERSION::MINOR > 1
-  say "You need to allow webpack-dev-server host as allowed origin for connect-src.", :yellow
-  say "This can be done in Rails 5.2+ for development environment in the CSP initializer", :yellow
-  say "config/initializers/content_security_policy.rb with a snippet like this:", :yellow
-  say "policy.connect_src :self, :https, \"http://localhost:3035\", \"ws://localhost:3035\" if Rails.env.development?", :yellow
 end
 
 unless results.all?
