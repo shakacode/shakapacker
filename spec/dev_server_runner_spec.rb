@@ -29,22 +29,14 @@ describe "DevServerRunner" do
   end
   it "run cmd argv with https" do
     cmd = ["#{test_app_path}/node_modules/.bin/webpack", "serve", "--config", "#{test_app_path}/config/webpack/webpack.config.js", "--https"]
-    dev_server = Webpacker::DevServer.new({})
-    def dev_server.host
-      "localhost"
-    end
-    def dev_server.port
-      "3035"
-    end
-    def dev_server.pretty?
-      false
-    end
-    def dev_server.https?
-      true
-    end
-    def dev_server.hmr?
-      false
-    end
+
+    dev_server = double()
+    allow(dev_server).to receive(:host).and_return("localhost")
+    allow(dev_server).to receive(:port).and_return("3035")
+    allow(dev_server).to receive(:pretty?).and_return(false)
+    allow(dev_server).to receive(:https?).and_return(true)
+    allow(dev_server).to receive(:hmr?).and_return(false)
+
     allow(Webpacker::DevServer).to receive(:new) do
       verify_command(cmd, argv: (["--https"]))
     end.and_return(dev_server)
