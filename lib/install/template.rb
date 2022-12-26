@@ -38,11 +38,27 @@ end
 
 if (setup_path = Rails.root.join("bin/setup")).exist?
   say "Run bin/yarn during bin/setup"
-  insert_into_file setup_path.to_s, <<-RUBY, after: %(  system("bundle check") || system!("bundle install")\n)
+
+  if File.read(setup_path).match? Regexp.escape("  # system('bin/yarn')\n")
+    gsub_file setup_path, "# system('bin/yarn')", 'system! "bin/yarn"'
+  else
+    # Due to the inconsistency of quotation usage in Rails 7 compared to
+    # earlier versions, we check both single and double quotations here.
+    pattern = /system\(['"]bundle check['"]\) \|\| system!\(['"]bundle install['"]\)\n/
+
+    if File.read(setup_path).match? pattern
+      insert_into_file setup_path.to_s, <<-RUBY, after: pattern
 
   # Install JavaScript dependencies
   system! "bin/yarn"
 RUBY
+    else
+      say <<~MSG, :red
+        It seems your `bin/setup` file doesn't have the expected content.
+        Please review the file and manually add `system! "bin/yarn"`.
+      MSG
+    end
+  end
 end
 
 results = []
