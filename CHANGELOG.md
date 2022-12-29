@@ -8,7 +8,7 @@ Changes since last non-beta release.
 
 _Please add entries here for your pull requests that are not yet released._
 
-## [v6.5.5] - December 23, 2022
+## [v6.5.5] - December 28, 2022
 
 ### Improved
 - Describe keys different from `webpack-dev-server` in generated `webpacker.yml`. [PR 194](https://github.com/shakacode/shakapacker/pull/194) by [alexeyr](https://github.com/alexeyr).
