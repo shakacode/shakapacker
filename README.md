@@ -21,12 +21,21 @@ Check out 6.1.1+ for [SWC](https://swc.rs/) and [esbuild-loader](https://github.
 
 See a comparison of [Shakapacker with jsbundling-rails](https://github.com/rails/jsbundling-rails/blob/main/docs/comparison_with_webpacker.md).
 
-Discussion forum and Slack to discuss debugging and troubleshooting tips. Please open issues for bugs and feature requests:
-1. [Discussions tab](https://github.com/shakacode/shakapacker/discussions)
-2. [Slack discussion channel](https://reactrails.slack.com/join/shared_invite/enQtNjY3NTczMjczNzYxLTlmYjdiZmY3MTVlMzU2YWE0OWM0MzNiZDI0MzdkZGFiZTFkYTFkOGVjODBmOWEyYWQ3MzA2NGE1YWJjNmVlMGE)
-3. [Tweets with tag `#shakapacker`](https://twitter.com/hashtag/shakapacker?src=hashtag_click)
+For discussions, see our [Slack Channel](https://reactrails.slack.com/join/shared_invite/enQtNjY3NTczMjczNzYxLTlmYjdiZmY3MTVlMzU2YWE0OWM0MzNiZDI0MzdkZGFiZTFkYTFkOGVjODBmOWEyYWQ3MzA2NGE1YWJjNmVlMGE).
 
-[ShakaCode](https://www.shakacode.com) offers support for upgrading from webpacker and using Shakapacker. If interested, contact Justin Gordon, [justin@shakacode.com](mailto:justin@shakacode.com). ShakaCode is [hiring passionate engineers](https://jobs.lever.co/shakacode/3bdbfdb3-4495-4611-a279-01dddb351abe) that love open source.
+---
+### ShakaCode Support
+
+[ShakaCode](https://www.shakacode.com) offers support for upgrading from webpacker and using Shakapacker. If interested, contact Justin Gordon, [justin@shakacode.com](mailto:justin@shakacode.com). We're also [hiring](https://jobs.lever.co/shakacode/3bdbfdb3-4495-4611-a279-01dddb351abe)!
+
+Here's a testimonial of how ShakaCode can help, from [Florian Gößler](https://github.com/FGoessler) of [Blinkist](https://www.blinkist.com/), January 2, 2023:
+> Hey Justin 👋
+>
+> I just wanted to let you know that we today shipped the webpacker to shakapacker upgrades and it all seems to be running smoothly! Thanks again for all your support and your teams work! 😍
+>
+> On top of your work, it was now also very easy for me to upgrade Tailwind and include our external node_module based web component library which we were using for our other (more modern) apps already. That work is going to be shipped later this week though as we are polishing the last bits of it. 😉
+>
+> Have a great 2023 and maybe we get to work together again later in the year! 🙌
 
 ---
 
