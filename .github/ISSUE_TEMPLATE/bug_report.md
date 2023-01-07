@@ -7,14 +7,18 @@ assignees: ''
 
 ---
 
-A bug is a crash or incorrect behavior. If you have a debugging or troubleshooting question, please open a discussion on [Discussions Tab](https://github.com/shakacode/shakapacker/discussions).
+_Notice: A bug is a crash or incorrect behavior. If you have a debugging or troubleshooting question, please open a discussion on the [Discussions Tab](https://github.com/shakacode/shakapacker/discussions). Otherwise, remove this line and fill out the following sections._
 
-Ruby version:
-Rails version:
-Shakapacker version:
+## Expected behavior:
 
-Expected behavior:
 
-Actual behavior:
+## Actual behavior:
 
-Small, reproducible repo:
+
+## Small, reproducible repo:
+
+
+## Setup environment:
+- Ruby version: 
+- Rails version: 
+- Shakapacker version: 
