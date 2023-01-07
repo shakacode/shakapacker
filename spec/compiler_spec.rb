@@ -1,4 +1,4 @@
-describe "Compiler" do
+describe "Webpacker::Compiler" do
   it "accepts custom environment variables" do
     expect(Webpacker.compiler.send(:webpack_env)["FOO"]).to be nil
 
@@ -8,41 +8,40 @@ describe "Compiler" do
     Webpacker.compiler.env = {}
   end
 
-  it "compiles when fresh" do
-    mock = double("mock")
-    allow(mock).to receive(:stale?).and_return(false)
-    allow(Webpacker.compiler).to receive(:strategy).and_return(mock)
+  it "returns true when fresh" do
+    mocked_strategy = double("Strategy")
+    expect(mocked_strategy).to receive(:stale?).and_return(false)
 
-    expect(Webpacker.compiler.compile).to be_truthy
-    expect(mock).to have_received(:stale?)
+    expect(Webpacker.compiler).to receive(:strategy).and_return(mocked_strategy)
+
+    expect(Webpacker.compiler.compile).to be true
   end
 
-  it "calls after_compile_hook on successful compile" do
-    mock = double("mock")
-    allow(mock).to receive(:stale?).and_return(true)
-    allow(mock).to receive(:after_compile_hook).and_return(nil)
+  it "returns true and calls after_compile_hook on successful compile" do
+    mocked_strategy = spy("Strategy")
+    expect(mocked_strategy).to receive(:stale?).and_return(true)
+
+    allow(Webpacker.compiler).to receive(:strategy).and_return(mocked_strategy)
 
     status = OpenStruct.new(success?: true)
-
-    allow(Webpacker.compiler).to receive(:strategy).and_return(mock)
     allow(Open3).to receive(:capture3).and_return([:sterr, :stdout, status])
 
-    Webpacker.compiler.compile
-    expect(mock).to have_received(:after_compile_hook)
+    expect(Webpacker.compiler.compile).to be true
+    expect(mocked_strategy).to have_received(:after_compile_hook)
   end
 
-  it "calls after_compile_hook on failed compile" do
-    mock = double("mock")
-    allow(mock).to receive(:stale?).and_return(true)
-    allow(mock).to receive(:after_compile_hook).and_return(nil)
+  it "returns false and calls after_compile_hook on failed compile" do
+    mocked_strategy = spy("Strategy")
+    allow(mocked_strategy).to receive(:stale?).and_return(true)
+    allow(mocked_strategy).to receive(:after_compile_hook)
+
+    allow(Webpacker.compiler).to receive(:strategy).and_return(mocked_strategy)
 
     status = OpenStruct.new(success?: false)
-
-    allow(Webpacker.compiler).to receive(:strategy).and_return(mock)
     allow(Open3).to receive(:capture3).and_return([:sterr, :stdout, status])
 
-    Webpacker.compiler.compile
-    expect(mock).to have_received(:after_compile_hook)
+    expect(Webpacker.compiler.compile).to be false
+    expect(mocked_strategy).to have_received(:after_compile_hook)
   end
 
   it "accepts external env variables" do
