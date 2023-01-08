@@ -55,6 +55,10 @@ const getModulePaths = () => {
   return result
 }
 
+console.log("ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ");
+console.log("config.useContentHash: " + config.useContentHash);
+console.log("ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ");
+
 const getPlugins = () => {
   const plugins = [
     new webpack.EnvironmentPlugin(process.env),
@@ -68,7 +72,7 @@ const getPlugins = () => {
   ]
 
   if (moduleExists('css-loader') && moduleExists('mini-css-extract-plugin')) {
-    const hash = isProduction ? '-[contenthash:8]' : ''
+    const hash = config.useContentHash ? '-[contenthash:8]' : ''
     const MiniCssExtractPlugin = require('mini-css-extract-plugin')
     plugins.push(
       new MiniCssExtractPlugin({
@@ -87,7 +91,7 @@ const getPlugins = () => {
 
 // Don't use contentHash except for production for performance
 // https://webpack.js.org/guides/build-performance/#avoid-production-specific-tooling
-const hash = isProduction ? '-[contenthash]' : ''
+const hash = config.useContentHash ? '-[contenthash]' : ''
 module.exports = {
   mode: 'production',
   output: {
