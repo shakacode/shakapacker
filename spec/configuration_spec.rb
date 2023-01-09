@@ -202,7 +202,7 @@ describe "Webpacker::Configuration" do
 
   context "with webpacker_precompile entry set to false" do
     describe "#webpacker_precompile?" do
-      before :example do
+      before :each do
         ENV["WEBPACKER_PRECOMPILE"] = nil
       end
 
