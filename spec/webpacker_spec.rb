@@ -9,12 +9,12 @@ describe "Webpacker" do
     end
   end
 
-  it "#inline_css? returns false with disabled dev_server" do
-    expect(Webpacker.inlining_css?).to be_falsy
+  it "#inline_css? returns nil with disabled dev_server" do
+    expect(Webpacker.inlining_css?).to be nil
   end
 
   it "#inline_css? returns true with enabled hmr" do
-    dev_server = double("dev_server")
+    dev_server = instance_double("Webpacker::DevServer")
     allow(dev_server).to receive(:host).and_return("localhost")
     allow(dev_server).to receive(:port).and_return("3035")
     allow(dev_server).to receive(:pretty?).and_return(false)
@@ -22,13 +22,14 @@ describe "Webpacker" do
     allow(dev_server).to receive(:hmr?).and_return(true)
     allow(dev_server).to receive(:running?).and_return(true)
     allow(dev_server).to receive(:inline_css?).and_return(true)
+
     allow(Webpacker.instance).to receive(:dev_server).and_return(dev_server)
 
     expect(Webpacker.inlining_css?).to be true
   end
 
   it "#inline_css? returns false with enabled hmr and explicitly setting inline_css to false" do
-    dev_server = double("dev_server")
+    dev_server = instance_double("Webpacker::DevServer")
     allow(dev_server).to receive(:host).and_return("localhost")
     allow(dev_server).to receive(:port).and_return("3035")
     allow(dev_server).to receive(:pretty?).and_return(false)
@@ -36,6 +37,7 @@ describe "Webpacker" do
     allow(dev_server).to receive(:hmr?).and_return(true)
     allow(dev_server).to receive(:running?).and_return(true)
     allow(dev_server).to receive(:inline_css?).and_return(false)
+
     allow(Webpacker.instance).to receive(:dev_server).and_return(dev_server)
 
     expect(Webpacker.inlining_css?).to be_falsy
