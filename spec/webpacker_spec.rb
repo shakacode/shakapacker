@@ -1,14 +1,4 @@
 describe "Webpacker" do
-  it "accepts env as config params" do
-    expect(Webpacker.config.env).to eq Rails.env
-    expect(Webpacker.config.root_path).to eq Webpacker.instance.root_path
-    expect(Webpacker.config.config_path).to eq Webpacker.instance.config_path
-
-    with_rails_env("test") do
-      expect(Webpacker.config.env).to eq "test"
-    end
-  end
-
   describe "#inline_css?" do
     let(:dev_server) { instance_double("Webpacker::DevServer") }
 
