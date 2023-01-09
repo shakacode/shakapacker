@@ -9,38 +9,38 @@ describe "Webpacker" do
     end
   end
 
-  it "#inline_css? returns nil with disabled dev_server" do
-    expect(Webpacker.inlining_css?).to be nil
-  end
+  describe "#inline_css?" do
+    let(:dev_server) { instance_double("Webpacker::DevServer") }
 
-  it "#inline_css? returns true with enabled hmr" do
-    dev_server = instance_double("Webpacker::DevServer")
-    allow(dev_server).to receive(:host).and_return("localhost")
-    allow(dev_server).to receive(:port).and_return("3035")
-    allow(dev_server).to receive(:pretty?).and_return(false)
-    allow(dev_server).to receive(:https?).and_return(true)
-    allow(dev_server).to receive(:hmr?).and_return(true)
-    allow(dev_server).to receive(:running?).and_return(true)
-    allow(dev_server).to receive(:inline_css?).and_return(true)
+    before :each do
+      allow(dev_server).to receive(:host).and_return("localhost")
+      allow(dev_server).to receive(:port).and_return("3035")
+      allow(dev_server).to receive(:pretty?).and_return(false)
+      allow(dev_server).to receive(:https?).and_return(true)
+      allow(dev_server).to receive(:running?).and_return(true)
+    end
 
-    allow(Webpacker.instance).to receive(:dev_server).and_return(dev_server)
+    it "returns nil with disabled dev_server" do
+      expect(Webpacker.inlining_css?).to be nil
+    end
 
-    expect(Webpacker.inlining_css?).to be true
-  end
+    it "returns true with enabled hmr" do
+      allow(dev_server).to receive(:hmr?).and_return(true)
+      allow(dev_server).to receive(:inline_css?).and_return(true)
 
-  it "#inline_css? returns false with enabled hmr and explicitly setting inline_css to false" do
-    dev_server = instance_double("Webpacker::DevServer")
-    allow(dev_server).to receive(:host).and_return("localhost")
-    allow(dev_server).to receive(:port).and_return("3035")
-    allow(dev_server).to receive(:pretty?).and_return(false)
-    allow(dev_server).to receive(:https?).and_return(true)
-    allow(dev_server).to receive(:hmr?).and_return(true)
-    allow(dev_server).to receive(:running?).and_return(true)
-    allow(dev_server).to receive(:inline_css?).and_return(false)
+      allow(Webpacker.instance).to receive(:dev_server).and_return(dev_server)
 
-    allow(Webpacker.instance).to receive(:dev_server).and_return(dev_server)
+      expect(Webpacker.inlining_css?).to be true
+    end
 
-    expect(Webpacker.inlining_css?).to be_falsy
+    it "returns false with enabled hmr and explicitly setting inline_css to false" do
+      allow(dev_server).to receive(:hmr?).and_return(true)
+      allow(dev_server).to receive(:inline_css?).and_return(false)
+
+      allow(Webpacker.instance).to receive(:dev_server).and_return(dev_server)
+
+      expect(Webpacker.inlining_css?).to be false
+    end
   end
 
   it "has app_autoload_paths cleanup" do
