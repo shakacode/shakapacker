@@ -1,22 +1,25 @@
-require "test_helper"
-
-class EngineRakeTasksTest < Minitest::Test
-  def setup
+describe "EngineRakeTasks" do
+  before :context do
     remove_webpack_binstubs
   end
 
-  def teardown
+  after :context do
     remove_webpack_binstubs
   end
 
-  def test_task_mounted
+  it "mounts app:webpacker task successfully" do
     output = Dir.chdir(mounted_app_path) { `rake -T` }
-    assert_includes output, "app:webpacker"
+    expect(output).to include "app:webpacker"
   end
 
-  def test_binstubs
+  it "binstubs adds only expected files to bin directory" do
+    original_files_in_bin = current_files_in_bin
+
     Dir.chdir(mounted_app_path) { `bundle exec rake app:webpacker:binstubs` }
-    webpack_binstub_paths.each { |path| assert File.exist?(path) }
+    webpack_binstub_paths.each { |path| expect(File.exist?(path)).to be true }
+
+    # and no other files are added
+    expect(current_files_in_bin - webpack_binstub_paths).to match_array original_files_in_bin
   end
 
   private
@@ -24,8 +27,13 @@ class EngineRakeTasksTest < Minitest::Test
       File.expand_path("mounted_app", __dir__)
     end
 
+    def current_files_in_bin
+      Dir.glob("#{mounted_app_path}/test/dummy/bin/*")
+    end
+
     def webpack_binstub_paths
       [
+        "#{mounted_app_path}/test/dummy/bin/yarn",
         "#{mounted_app_path}/test/dummy/bin/webpacker",
         "#{mounted_app_path}/test/dummy/bin/webpacker-dev-server",
       ]

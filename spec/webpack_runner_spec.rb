@@ -1,30 +1,29 @@
-require "test_helper"
 require "webpacker/webpack_runner"
 
-class WebpackRunnerTest < Webpacker::Test
-  def setup
+describe "WebpackRunner" do
+  before :all do
     @original_node_env, ENV["NODE_ENV"] = ENV["NODE_ENV"], "development"
     @original_rails_env, ENV["RAILS_ENV"] = ENV["RAILS_ENV"], "development"
   end
 
-  def teardown
+  after :all do
     ENV["NODE_ENV"] = @original_node_env
     ENV["RAILS_ENV"] = @original_rails_env
   end
 
-  def test_run_cmd_via_node_modules
+  it "runs cmd via node_modules" do
     cmd = ["#{test_app_path}/node_modules/.bin/webpack", "--config", "#{test_app_path}/config/webpack/webpack.config.js"]
 
     verify_command(cmd, use_node_modules: true)
   end
 
-  def test_run_cmd_via_yarn
+  it "runs cmd via yarn" do
     cmd = ["yarn", "webpack", "--config", "#{test_app_path}/config/webpack/webpack.config.js"]
 
     verify_command(cmd, use_node_modules: false)
   end
 
-  def test_run_cmd_argv
+  it "runs cmd argv" do
     cmd = ["#{test_app_path}/node_modules/.bin/webpack", "--config", "#{test_app_path}/config/webpack/webpack.config.js", "--watch"]
 
     verify_command(cmd, argv: ["--watch"])
@@ -41,16 +40,14 @@ class WebpackRunnerTest < Webpacker::Test
 
       klass = Webpacker::WebpackRunner
       instance = klass.new(argv)
-      mock = Minitest::Mock.new
-      mock.expect(:call, nil, [Webpacker::Compiler.env, *cmd])
 
-      klass.stub(:new, instance) do
-        instance.stub(:node_modules_bin_exist?, use_node_modules) do
-          Kernel.stub(:exec, mock) { klass.run(argv) }
-        end
-      end
+      allow(klass).to receive(:new).and_return(instance)
+      allow(instance).to receive(:node_modules_bin_exist?).and_return(use_node_modules)
+      allow(Kernel).to receive(:exec)
 
-      mock.verify
+      klass.run(argv)
+
+      expect(Kernel).to have_received(:exec).with(Webpacker::Compiler.env, *cmd)
     ensure
       Dir.chdir(cwd)
     end

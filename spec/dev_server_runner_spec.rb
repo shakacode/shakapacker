@@ -1,52 +1,47 @@
-require "test_helper"
 require "webpacker/dev_server_runner"
 
-class DevServerRunnerTest < Webpacker::Test
-  def setup
+describe "DevServerRunner" do
+  before do
     @original_node_env, ENV["NODE_ENV"] = ENV["NODE_ENV"], "development"
     @original_rails_env, ENV["RAILS_ENV"] = ENV["RAILS_ENV"], "development"
     @original_webpacker_config = ENV["WEBPACKER_CONFIG"]
   end
 
-  def teardown
+  after do
     ENV["NODE_ENV"] = @original_node_env
     ENV["RAILS_ENV"] = @original_rails_env
     ENV["WEBPACKER_CONFIG"] = @original_webpacker_config
   end
 
-  def test_run_cmd_via_node_modules
-    cmd = ["#{test_app_path}/node_modules/.bin/webpack", "serve", "--config", "#{test_app_path}/config/webpack/webpack.config.js"]
+  let(:test_app_path) { File.expand_path("test_app", __dir__) }
 
+  it "run cmd via node modules" do
+    cmd = ["#{test_app_path}/node_modules/.bin/webpack", "serve", "--config", "#{test_app_path}/config/webpack/webpack.config.js"]
     verify_command(cmd, use_node_modules: true)
   end
-
-  def test_run_cmd_via_yarn
+  it "run cmd via yarn" do
     cmd = ["yarn", "webpack", "serve", "--config", "#{test_app_path}/config/webpack/webpack.config.js"]
-
     verify_command(cmd, use_node_modules: false)
   end
-
-  def test_run_cmd_argv
+  it "run cmd argv" do
     cmd = ["#{test_app_path}/node_modules/.bin/webpack", "serve", "--config", "#{test_app_path}/config/webpack/webpack.config.js", "--quiet"]
-
-    verify_command(cmd, argv: ["--quiet"])
+    verify_command(cmd, argv: (["--quiet"]))
   end
-
-  def test_run_cmd_argv_with_https
+  it "run cmd argv with https" do
     cmd = ["#{test_app_path}/node_modules/.bin/webpack", "serve", "--config", "#{test_app_path}/config/webpack/webpack.config.js", "--https"]
 
-    dev_server = Webpacker::DevServer.new({})
-    def dev_server.host; "localhost"; end
-    def dev_server.port; "3035"; end
-    def dev_server.pretty?; false; end
-    def dev_server.https?; true; end
-    def dev_server.hmr?; false; end
-    Webpacker::DevServer.stub(:new, dev_server) do
-      verify_command(cmd, argv: ["--https"])
-    end
-  end
+    dev_server = double()
+    allow(dev_server).to receive(:host).and_return("localhost")
+    allow(dev_server).to receive(:port).and_return("3035")
+    allow(dev_server).to receive(:pretty?).and_return(false)
+    allow(dev_server).to receive(:https?).and_return(true)
+    allow(dev_server).to receive(:hmr?).and_return(false)
 
-  def test_environment_variables
+    allow(Webpacker::DevServer).to receive(:new) do
+      verify_command(cmd, argv: (["--https"]))
+    end.and_return(dev_server)
+  end
+  it "accepts environment variables" do
     cmd = ["#{test_app_path}/node_modules/.bin/webpack", "serve", "--config", "#{test_app_path}/config/webpack/webpack.config.js"]
     env = Webpacker::Compiler.env.dup
     ENV["WEBPACKER_CONFIG"] = env["WEBPACKER_CONFIG"] = "#{test_app_path}/config/webpacker_other_location.yml"
@@ -55,27 +50,22 @@ class DevServerRunnerTest < Webpacker::Test
   end
 
   private
-    def test_app_path
-      File.expand_path("test_app", __dir__)
-    end
 
     def verify_command(cmd, use_node_modules: true, argv: [], env: Webpacker::Compiler.env)
       cwd = Dir.pwd
       Dir.chdir(test_app_path)
-
       klass = Webpacker::DevServerRunner
       instance = klass.new(argv)
-      mock = Minitest::Mock.new
-      mock.expect(:call, nil, [env, *cmd])
 
-      klass.stub(:new, instance) do
-        instance.stub(:node_modules_bin_exist?, use_node_modules) do
-          Kernel.stub(:exec, mock) { klass.run(argv) }
-        end
-      end
+      allow(klass).to receive(:new).and_return(instance)
+      allow(instance).to receive(:node_modules_bin_exist?).and_return(use_node_modules)
+      allow(Kernel).to receive(:exec).with(env, *cmd)
 
-      mock.verify
-    ensure
-      Dir.chdir(cwd)
+      klass.run(argv)
+
+      expect(Kernel).to have_received(:exec).with(env, *cmd)
+
+      ensure
+        Dir.chdir(cwd)
     end
 end
