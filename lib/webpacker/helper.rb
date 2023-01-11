@@ -180,19 +180,30 @@ module Webpacker::Helper
   end
 
   def append_javascript_pack_tag(*names, defer: true)
-    if @javascript_pack_tag_loaded
-      raise "You can only call append_javascript_pack_tag before javascript_pack_tag helper. " \
-      "Please refer to https://github.com/shakacode/shakapacker/blob/master/README.md#view-helper-append_javascript_pack_tag-and-append_stylesheet_pack_tag for the usage guide"
+    update_javascript_pack_tag_queue(defer: defer) do
+      javascript_pack_tag_queue[hash_key] |= names
     end
+  end
 
-    hash_key = defer ? :deferred : :non_deferred
-    javascript_pack_tag_queue[hash_key] |= names
-
-    # prevent rendering Array#to_s representation when used with <%= … %> syntax
-    nil
+  def prepend_javascript_pack_tag(*names, defer: true)
+    update_javascript_pack_tag_queue(defer: defer) do
+      javascript_pack_tag_queue[hash_key].unshift(names)
+    end
   end
 
   private
+
+    def update_javascript_pack_tag_queue(defer:)
+      if @javascript_pack_tag_loaded
+        raise "You can only call #{__method__} before javascript_pack_tag helper. " \
+        "Please refer to https://github.com/shakacode/shakapacker/blob/master/README.md#view-helper-append_javascript_pack_tag-and-append_stylesheet_pack_tag for the usage guide"
+      end
+
+      yield defer ? :deferred : :non_deferred
+
+      # prevent rendering Array#to_s representation when used with <%= … %> syntax
+      nil
+    end
 
     def javascript_pack_tag_queue
       @javascript_pack_tag_queue ||= {
