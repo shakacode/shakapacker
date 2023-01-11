@@ -8,6 +8,8 @@ Changes since last non-beta release.
 
 _Please add entries here for your pull requests that are not yet released._
 
+- Added `prepend_javascript_pack_tag` to helpers. Allows to move an entry to the top of queue. Handy when calling from the layout to make sure an entry goes before the view and partial `append_javascript_pack_tag` entries. [PR 235](https://github.com/shakacode/shakapacker/pull/235) by [paypro-leon](https://github.com/paypro-leon).
+
 ## [v6.5.5] - December 28, 2022
 
 ### Improved
