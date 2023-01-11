@@ -187,7 +187,7 @@ module Webpacker::Helper
 
   def prepend_javascript_pack_tag(*names, defer: true)
     update_javascript_pack_tag_queue(defer: defer) do |hash_key|
-      javascript_pack_tag_queue[hash_key].unshift(names)
+      javascript_pack_tag_queue[hash_key].unshift *names
     end
   end
 
@@ -195,7 +195,7 @@ module Webpacker::Helper
 
     def update_javascript_pack_tag_queue(defer:)
       if @javascript_pack_tag_loaded
-        raise "You can only call #{__method__} before javascript_pack_tag helper. " \
+        raise "You can only call #{caller_locations(1..1).first.label} before javascript_pack_tag helper. " \
         "Please refer to https://github.com/shakacode/shakapacker/blob/master/README.md#view-helper-append_javascript_pack_tag-and-append_stylesheet_pack_tag for the usage guide"
       end
 

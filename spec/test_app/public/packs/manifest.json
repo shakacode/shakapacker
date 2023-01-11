@@ -2,6 +2,7 @@
   "bootstrap.css": "/packs/bootstrap-c38deda30895059837cf.css",
   "application.css": "/packs/application-dd6b1cd38bfa093df600.css",
   "bootstrap.js": "/packs/bootstrap-300631c4f0e0f9c865bc.js",
+  "main.js": "/packs/main-e323a53c7f30f5d53cbb.js",
   "application.js": "/packs/application-k344a6d59eef8632c9d1.js",
   "application.png": "/packs/application-k344a6d59eef8632c9d1.png",
   "fonts/fa-regular-400.woff2": "/packs/fonts/fa-regular-400-944fb546bd7018b07190a32244f67dc9.woff2",
@@ -28,6 +29,13 @@
       "assets": {
         "js": [
           "/packs/bootstrap-300631c4f0e0f9c865bc.js"
+        ]
+      }
+    },
+    "main": {
+      "assets": {
+        "js": [
+          "/packs/main-e323a53c7f30f5d53cbb.js"
         ]
       }
     },
