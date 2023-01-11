@@ -180,13 +180,13 @@ module Webpacker::Helper
   end
 
   def append_javascript_pack_tag(*names, defer: true)
-    update_javascript_pack_tag_queue(defer: defer) do
+    update_javascript_pack_tag_queue(defer: defer) do |hash_key|
       javascript_pack_tag_queue[hash_key] |= names
     end
   end
 
   def prepend_javascript_pack_tag(*names, defer: true)
-    update_javascript_pack_tag_queue(defer: defer) do
+    update_javascript_pack_tag_queue(defer: defer) do |hash_key|
       javascript_pack_tag_queue[hash_key].unshift(names)
     end
   end
