@@ -9,7 +9,8 @@ end
 
 def enhance_assets_precompile
   # yarn:install was added in Rails 5.1
-  deps = yarn_install_available? ? [] : ["webpacker:yarn_install"]
+  # keep this in until v7, then remove the yarn install
+  deps = yarn_install_available? && ENV["SHAKAPACKER_YARN_INSTALL"] != "false" ? [] : ["webpacker:yarn_install"]
   Rake::Task["assets:precompile"].enhance(deps) do |task|
     prefix = task.name.split(/#|assets:precompile/).first
 
