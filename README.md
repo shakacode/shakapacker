@@ -53,7 +53,7 @@ Here's a testimonial of how ShakaCode can help, from [Florian Gößler](https://
     - [Configuration and Code](#configuration-and-code)
     - [View Helpers](#view-helpers)
       - [View Helpers `javascript_pack_tag` and `stylesheet_pack_tag`](#view-helpers-javascript_pack_tag-and-stylesheet_pack_tag)
-      - [View Helper `append_javascript_pack_tag` and `append_stylesheet_pack_tag`](#view-helper-append_javascript_pack_tag-and-append_stylesheet_pack_tag)
+      - [View Helper `append_javascript_pack_tag`, `prepend_javascript_pack_tag` and `append_stylesheet_pack_tag`](#view-helper-append_javascript_pack_tag-prepend_javascript_pack_tag-and-append_stylesheet_pack_tag)
       - [View Helper: `asset_pack_path`](#view-helper-asset_pack_path)
       - [View Helper: `image_pack_tag`](#view-helper-image_pack_tag)
       - [View Helper: `favicon_pack_tag`](#view-helper-favicon_pack_tag)
@@ -267,7 +267,7 @@ While this also generally applies to `stylesheet_pack_tag`, you may use multiple
 <%= stylesheet_pack_tag 'print', media: 'print' %>
 ```
 
-#### View Helper `append_javascript_pack_tag` and `append_stylesheet_pack_tag`
+#### View Helper `append_javascript_pack_tag`, `prepend_javascript_pack_tag` and `append_stylesheet_pack_tag`
 
 If you need configure your script pack names or stylesheet pack names from the view for a route or partials, then you will need some logic to ensure you call the helpers only once with multiple arguments. The new view helpers, `append_javascript_pack_tag` and `append_stylesheet_pack_tag` can solve this problem. The helper `append_javascript_pack_tag` will queue up script packs when the `javascript_pack_tag` is finally used. Similarly,`append_stylesheet_pack_tag` will queue up style packs when the `stylesheet_pack_tag` is finally used.
 
@@ -311,6 +311,30 @@ The typical issue is that your layout might reference some partials that need to
 <%= javascript_pack_tag %>
 
 <%= content_for :footer %>
+```
+
+There is also `prepend_javascript_pack_tag` that will put the entry at the front of the queue. This is handy when you want an entry in the main layout to go before the partial and main layout `append_javascript_pack_tag` entries.
+
+Main view:
+```erb
+<% append_javascript_pack_tag 'map' %>
+```
+
+Some partial:
+```erb
+<% append_javascript_pack_tag 'map' %>
+```
+
+And the main layout has:
+```erb
+<%= prepend_javascript_pack_tag 'main' %>
+<%= javascript_pack_tag 'application' %>
+```
+
+is the same as using this in the main layout:
+
+```erb
+<%= javascript_pack_tag 'main', 'calendar', 'map', application' %>
 ```
 
 For alternative options of setting the additional packs, [see this discussion](https://github.com/shakacode/shakapacker/issues/39).

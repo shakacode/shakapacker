@@ -132,7 +132,7 @@ module ActionView::TestCase::Behavior
       }.to raise_error(expected_error_message)
     end
 
-    it "#preppend_javascript_pack_tag raises error if called after calling #javascript_pack_tag" do
+    it "#prepend_javascript_pack_tag raises error if called after calling #javascript_pack_tag" do
       expected_error_message = \
         "You can only call prepend_javascript_pack_tag before javascript_pack_tag helper. " +
         "Please refer to https://github.com/shakacode/shakapacker/blob/master/README.md#view-helper-append_javascript_pack_tag-and-append_stylesheet_pack_tag for the usage guide"
