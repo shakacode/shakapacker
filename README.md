@@ -327,7 +327,7 @@ Some partial:
 
 And the main layout has:
 ```erb
-<%= prepend_javascript_pack_tag 'main' %>
+<% prepend_javascript_pack_tag 'main' %>
 <%= javascript_pack_tag 'application' %>
 ```
 
