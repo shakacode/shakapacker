@@ -53,7 +53,7 @@ Here's a testimonial of how ShakaCode can help, from [Florian Gößler](https://
     - [Configuration and Code](#configuration-and-code)
     - [View Helpers](#view-helpers)
       - [View Helpers `javascript_pack_tag` and `stylesheet_pack_tag`](#view-helpers-javascript_pack_tag-and-stylesheet_pack_tag)
-      - [View Helper `append_javascript_pack_tag`, `prepend_javascript_pack_tag` and `append_stylesheet_pack_tag`](#view-helper-append_javascript_pack_tag-prepend_javascript_pack_tag-and-append_stylesheet_pack_tag)
+      - [View Helpers `append_javascript_pack_tag`, `prepend_javascript_pack_tag` and `append_stylesheet_pack_tag`](#view-helper-append_javascript_pack_tag-prepend_javascript_pack_tag-and-append_stylesheet_pack_tag)
       - [View Helper: `asset_pack_path`](#view-helper-asset_pack_path)
       - [View Helper: `image_pack_tag`](#view-helper-image_pack_tag)
       - [View Helper: `favicon_pack_tag`](#view-helper-favicon_pack_tag)
@@ -300,7 +300,7 @@ However, you typically can't do that in the main layout, as the view and partial
 
 Thus, you can distribute the logic of what packs are needed for any route. All the magic of splitting up the code and CSS was automatic!
 
-**Important:** Both `append_(javascript/stylesheet)_pack_tag` helpers can be used anywhere in your application as long as they are executed BEFORE `(javascript/stylesheet)_pack_tag` respectively. If you attempt to call one of the `append_(javascript/stylesheet)_pack_tag` helpers after the respective `(javascript/stylesheet)_pack_tag`, an error will be raised.
+**Important:** These helpers can be used anywhere in your application as long as they are executed BEFORE `(javascript/stylesheet)_pack_tag` respectively. If you attempt to call one of these helpers after the respective `(javascript/stylesheet)_pack_tag`, an error will be raised.
 
 The typical issue is that your layout might reference some partials that need to configure packs. A good way to solve this problem is to use `content_for` to ensure that the code to render your partial comes before the call to `javascript_pack_tag`.
 

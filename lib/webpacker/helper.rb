@@ -169,7 +169,7 @@ module Webpacker::Helper
   def append_stylesheet_pack_tag(*names)
     if @stylesheet_pack_tag_loaded
       raise "You can only call append_stylesheet_pack_tag before stylesheet_pack_tag helper. " \
-      "Please refer to https://github.com/shakacode/shakapacker/blob/master/README.md#view-helper-append_javascript_pack_tag-and-append_stylesheet_pack_tag for the usage guide"
+      "Please refer to https://github.com/shakacode/shakapacker/blob/master/README.md#view-helper-append_javascript_pack_tag-prepend_javascript_pack_tag-and-append_stylesheet_pack_tag for the usage guide"
     end
 
     @stylesheet_pack_tag_queue ||= []
@@ -196,7 +196,7 @@ module Webpacker::Helper
     def update_javascript_pack_tag_queue(defer:)
       if @javascript_pack_tag_loaded
         raise "You can only call #{caller_locations(1..1).first.label} before javascript_pack_tag helper. " \
-        "Please refer to https://github.com/shakacode/shakapacker/blob/master/README.md#view-helper-append_javascript_pack_tag-and-append_stylesheet_pack_tag for the usage guide"
+        "Please refer to https://github.com/shakacode/shakapacker/blob/master/README.md#view-helper-append_javascript_pack_tag-prepend_javascript_pack_tag-and-append_stylesheet_pack_tag for the usage guide"
       end
 
       yield(defer ? :deferred : :non_deferred)
