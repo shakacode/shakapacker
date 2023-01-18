@@ -1,3 +1,10 @@
+## Contents
+- [Setting Up a Development Environment](#setting-up-a-development-environment)
+- [Making sure your changes pass all tests](#making-sure-your-changes-pass-all-tests)
+- [Testing the generator](#testing-the-generator)
+- [Find existing issues](#find-existing-issues)
+
+---
 ## Setting Up a Development Environment
 
 1. Install [Yarn](https://yarnpkg.com/)
@@ -51,7 +58,7 @@ bundle exec rake test TEST=test/rake_tasks_test.rb
 bundle exec ruby -I test test/rake_tasks_test.rb -n test_rake_webpacker_install
 ```
 
-# Testing the generator
+## Testing the generator
 If you change the generator, check that install instructions work.
 
 1. Update the gemfile so that gem "webpacker" has a line like this, pointing to your install of webpacker
@@ -60,3 +67,6 @@ If you change the generator, check that install instructions work.
    ```
 2. `bundle`
 3. Run the generator confirm that you got the right changes. 
+
+## Find existing issues
+You may look at the issues list to find existing known issues to be addressed. In this, we recommend to look at closed issues, particularly with "[help wanted](https://github.com/shakacode/shakapacker/issues?q=is%3Aissue+label%3A%22help+wanted%22+is%3Aclosed+)" label.

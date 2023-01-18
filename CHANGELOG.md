@@ -8,7 +8,14 @@ Changes since last non-beta release.
 
 _Please add entries here for your pull requests that are not yet released._
 
+<<<<<<< HEAD
 - Added `prepend_javascript_pack_tag` to helpers. Allows to move an entry to the top of queue. Handy when calling from the layout to make sure an entry goes before the view and partial `append_javascript_pack_tag` entries. [PR 235](https://github.com/shakacode/shakapacker/pull/235) by [paypro-leon](https://github.com/paypro-leon).
+=======
+## [6.5.6] - January 15, 2023
+### Fixed
+- Remove duplicate yarn installs. [PR 238](https://github.com/shakacode/shakapacker/pull/238) by [justin808](https://github/justin808).
+- Remove unneeded code related to CSP config for generator. [PR 223](https://github.com/shakacode/shakapacker/pull/223) by [ahangarha](https://github/ahangarha). 
+>>>>>>> 3cd3b55848f3f1f622fdb09de3eaf6a794931410
 
 ## [v6.5.5] - December 28, 2022
 
@@ -195,7 +202,8 @@ Note: [Rubygem is 6.3.0.pre.rc.1](https://rubygems.org/gems/shakapacker/versions
 ## v5.4.3 and prior changes from rails/webpacker
 See [CHANGELOG.md in rails/webpacker (up to v5.4.3)](https://github.com/rails/webpacker/blob/master/CHANGELOG.md)
 
-[Unreleased]: https://github.com/shakacode/shakapacker/compare/v6.5.5...master
+[Unreleased]: https://github.com/shakacode/shakapacker/compare/v6.5.6...master
+[v6.5.6]: https://github.com/shakacode/shakapacker/compare/v6.5.5...v6.5.6
 [v6.5.5]: https://github.com/shakacode/shakapacker/compare/v6.5.4...v6.5.5
 [v6.5.4]: https://github.com/shakacode/shakapacker/compare/v6.5.3...v6.5.4
 [v6.5.3]: https://github.com/shakacode/shakapacker/compare/v6.5.2...v6.5.3
