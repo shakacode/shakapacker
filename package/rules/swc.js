@@ -1,23 +1,12 @@
-const { resolve } = require('path')
-const { realpathSync } = require('fs')
 const { loaderMatches } = require('../utils/helpers')
 const { getSwcLoaderConfig } = require('../swc')
-
 const {
-  source_path: sourcePath,
-  additional_paths: additionalPaths,
   webpack_loader: webpackLoader
 } = require('../config')
+const jscommon = require('./jscommon')
 
 module.exports = loaderMatches(webpackLoader, 'swc', () => ({
   test: /\.(ts|tsx|js|jsx|mjs|coffee)?(\.erb)?$/,
-  include: [sourcePath, ...additionalPaths].map((p) => {
-    try {
-      return realpathSync(p)
-    } catch (e) {
-      return resolve(p)
-    }
-  }),
-  exclude: /node_modules/,
+  ...jscommon,
   use: ({ resource }) => getSwcLoaderConfig(resource)
 }))
