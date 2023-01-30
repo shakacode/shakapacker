@@ -36,26 +36,30 @@ else
   say %(        Add <%= javascript_pack_tag "application" %> within the <head> tag in your custom layout.)
 end
 
+# Ensure there is `system!("bin/yarn")` command in `./bin/setup` file
 if (setup_path = Rails.root.join("bin/setup")).exist?
   say "Run bin/yarn during bin/setup"
 
   if File.read(setup_path).match? Regexp.escape("  # system('bin/yarn')\n")
-    gsub_file(setup_path, "# system('bin/yarn')", 'system!("bin/yarn")')
+    gsub_file(setup_path, "# system('bin/yarn')", "system!('bin/yarn')")
   else
     # Due to the inconsistency of quotation usage in Rails 7 compared to
     # earlier versions, we check both single and double quotations here.
     pattern = /system\(['"]bundle check['"]\) \|\| system!\(['"]bundle install['"]\)\n/
 
-    if File.read(setup_path).match? pattern
-      insert_into_file(setup_path.to_s, <<-RUBY, after: pattern)
+    string_to_add = <<-RUBY
 
   # Install JavaScript dependencies
   system!("bin/yarn")
 RUBY
+
+    if File.read(setup_path).match? pattern
+      insert_into_file(setup_path, string_to_add, after: pattern)
     else
       say <<~MSG, :red
         It seems your `bin/setup` file doesn't have the expected content.
-        Please review the file and manually add `system!("bin/yarn")`.
+        Please review the file and manually add `system!("bin/yarn")` before any
+        other command that requires JavaScript dependencies being already installed.
       MSG
     end
   end
