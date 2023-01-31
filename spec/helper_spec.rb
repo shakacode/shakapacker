@@ -106,14 +106,40 @@ module ActionView::TestCase::Behavior
       expect(javascript_pack_tag("application")).to eq expected
     end
 
+    it "#javascript_pack_tag generates correct prepended tag" do
+      append_javascript_pack_tag("bootstrap")
+      prepend_javascript_pack_tag("main")
+
+      expected = <<~HTML.chomp
+        <script src="/packs/main-e323a53c7f30f5d53cbb.js" defer="defer"></script>
+        <script src="/packs/bootstrap-300631c4f0e0f9c865bc.js" defer="defer"></script>
+        <script src="/packs/vendors~application~bootstrap-c20632e7baf2c81200d3.chunk.js" defer="defer"></script>
+        <script src="/packs/vendors~application-e55f2aae30c07fb6d82a.chunk.js" defer="defer"></script>
+        <script src="/packs/application-k344a6d59eef8632c9d1.js" defer="defer"></script>
+      HTML
+
+      expect(javascript_pack_tag("application")).to eq expected
+    end
+
     it "#append_javascript_pack_tag raises error if called after calling #javascript_pack_tag" do
       expected_error_message = \
         "You can only call append_javascript_pack_tag before javascript_pack_tag helper. " +
-        "Please refer to https://github.com/shakacode/shakapacker/blob/master/README.md#view-helper-append_javascript_pack_tag-and-append_stylesheet_pack_tag for the usage guide"
+        "Please refer to https://github.com/shakacode/shakapacker/blob/master/README.md#view-helper-append_javascript_pack_tag-prepend_javascript_pack_tag-and-append_stylesheet_pack_tag for the usage guide"
 
       expect {
         javascript_pack_tag("application")
         append_javascript_pack_tag("bootstrap", defer: false)
+      }.to raise_error(expected_error_message)
+    end
+
+    it "#prepend_javascript_pack_tag raises error if called after calling #javascript_pack_tag" do
+      expected_error_message = \
+        "You can only call prepend_javascript_pack_tag before javascript_pack_tag helper. " +
+        "Please refer to https://github.com/shakacode/shakapacker/blob/master/README.md#view-helper-append_javascript_pack_tag-prepend_javascript_pack_tag-and-append_stylesheet_pack_tag for the usage guide"
+
+      expect {
+        javascript_pack_tag("application")
+        prepend_javascript_pack_tag("bootstrap", defer: false)
       }.to raise_error(expected_error_message)
     end
 
