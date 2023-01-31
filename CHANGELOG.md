@@ -7,6 +7,8 @@
 Changes since last non-beta release.
 
 _Please add entries here for your pull requests that are not yet released._
+### Fixed
+- Fixed failing to update `bin/setup` file due to different formats of the file in different versions of Rails. [PR229](https://github.com/shakacode/shakapacker/pull/229) by [ahangarha](https://github.com/ahangarha)
 
 ### Fixed
 - Upgrade several JS dependencies to fix security issues. [PR 243](https://github.com/shakacode/shakapacker/pull/243) by [ahangarha](https://github.com/ahangarha).
