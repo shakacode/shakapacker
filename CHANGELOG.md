@@ -8,6 +8,9 @@ Changes since last non-beta release.
 
 _Please add entries here for your pull requests that are not yet released._
 
+### Fixed
+- Upgrade several JS dependencies to fix security issues. [PR 243](https://github.com/shakacode/shakapacker/pull/243) by [ahangarha](https://github.com/ahangarha).
+
 ## [6.5.6] - January 15, 2023
 ### Fixed
 - Remove duplicate yarn installs. [PR 238](https://github.com/shakacode/shakapacker/pull/238) by [justin808](https://github/justin808).
