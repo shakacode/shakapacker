@@ -8,7 +8,7 @@ Changes since last non-beta release.
 
 _Please add entries here for your pull requests that are not yet released._
 
-## [6.5.6] - February 11, 2023
+## [v6.5.6] - February 11, 2023
 ### Fixed
 - Fixed failing to update `bin/setup` file due to different formats of the file in different versions of Rails. [PR229](https://github.com/shakacode/shakapacker/pull/229) by [ahangarha](https://github.com/ahangarha)
 
@@ -18,7 +18,7 @@ _Please add entries here for your pull requests that are not yet released._
 
 - Fixed [issue](https://github.com/shakacode/shakapacker/issues/208) to support directories under `node_modules/*` in the `additional_paths` property of `webpacker.yml` [PR 238](https://github.com/shakacode/shakapacker/pull/238) by [vaukalak](https://github.com/vaukalak).
 
-## [6.5.6] - January 15, 2023
+## [v6.5.6] - January 15, 2023
 ### Fixed
 - Remove duplicate yarn installs. [PR 238](https://github.com/shakacode/shakapacker/pull/238) by [justin808](https://github/justin808).
 - Remove unneeded code related to CSP config for generator. [PR 223](https://github.com/shakacode/shakapacker/pull/223) by [ahangarha](https://github/ahangarha). 
