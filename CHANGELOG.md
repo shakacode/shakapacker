@@ -7,16 +7,15 @@
 Changes since last non-beta release.
 
 _Please add entries here for your pull requests that are not yet released._
+
+## [6.5.6] - February 11, 2023
 ### Fixed
 - Fixed failing to update `bin/setup` file due to different formats of the file in different versions of Rails. [PR229](https://github.com/shakacode/shakapacker/pull/229) by [ahangarha](https://github.com/ahangarha)
 
-### Fixed
 - Upgrade several JS dependencies to fix security issues. [PR 243](https://github.com/shakacode/shakapacker/pull/243) by [ahangarha](https://github.com/ahangarha).
 
 - Added `prepend_javascript_pack_tag` to helpers. Allows to move an entry to the top of queue. Handy when calling from the layout to make sure an entry goes before the view and partial `append_javascript_pack_tag` entries. [PR 235](https://github.com/shakacode/shakapacker/pull/235) by [paypro-leon](https://github.com/paypro-leon).
 
-## [6.5.6] - January 30, 2023
-### Fixed
 - Fixed [issue](https://github.com/shakacode/shakapacker/issues/208) to support directories under `node_modules/*` in the `additional_paths` property of `webpacker.yml` [PR 238](https://github.com/shakacode/shakapacker/pull/238) by [vaukalak](https://github.com/vaukalak).
 
 ## [6.5.6] - January 15, 2023
