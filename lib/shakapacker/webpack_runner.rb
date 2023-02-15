@@ -18,7 +18,7 @@ module Shakapacker
 
     def run
       env = Shakapacker::Compiler.env
-      env["SHAKAPACKER_CONFIG"] = @webpacker_config
+      env["SHAKAPACKER_CONFIG"] = @shakapacker_config
 
       cmd = if node_modules_bin_exist?
         ["#{@node_modules_bin_path}/webpack"]
@@ -26,7 +26,7 @@ module Shakapacker
         ["yarn", "webpack"]
       end
 
-      if @argv.delete "--debug-webpacker"
+      if @argv.delete "--debug-shakapacker"
         cmd = ["node", "--inspect-brk"] + cmd
       end
 

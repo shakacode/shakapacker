@@ -48,28 +48,28 @@ describe "VersionChecker" do
     node_package_version = NodePackageVersionDouble.new(raw: "6.1.0", major_minor_patch: ["6", "1", "0"])
 
     expect { check_version(node_package_version, "7.0.0") }
-      .to raise_error(/\*\*ERROR\*\* Webpacker: Webpacker gem and node package versions do not match/)
+      .to raise_error(/\*\*ERROR\*\* Shakapacker: Shakapacker gem and node package versions do not match/)
   end
 
   it "raises exception on different minor version" do
     node_package_version = NodePackageVersionDouble.new(raw: "6.1.0", major_minor_patch: ["6", "1", "0"])
 
     expect { check_version(node_package_version, "6.2.0") }
-      .to raise_error(/\*\*ERROR\*\* Webpacker: Webpacker gem and node package versions do not match/)
+      .to raise_error(/\*\*ERROR\*\* Shakapacker: Shakapacker gem and node package versions do not match/)
   end
 
   it "raises exception on different patch version" do
     node_package_version = NodePackageVersionDouble.new(raw: "6.1.1", major_minor_patch: ["6", "1", "1"])
 
     expect { check_version(node_package_version, "6.1.2") }
-      .to raise_error(/\*\*ERROR\*\* Webpacker: Webpacker gem and node package versions do not match/)
+      .to raise_error(/\*\*ERROR\*\* Shakapacker: Shakapacker gem and node package versions do not match/)
   end
 
   it "raises exception on semver wildcard" do
     node_package_version = NodePackageVersionDouble.new(raw: "^6.0.0", major_minor_patch: ["6", "0", "0"], semver_wildcard: true)
 
     expect { check_version(node_package_version, "6.0.0") }
-      .to raise_error(/\*\*ERROR\*\* Webpacker: Your node package version for shakapacker contains a \^ or ~/)
+      .to raise_error(/\*\*ERROR\*\* Shakapacker: Your node package version for shakapacker contains a \^ or ~/)
   end
 
   it "doesn't raise exception on matching versions" do

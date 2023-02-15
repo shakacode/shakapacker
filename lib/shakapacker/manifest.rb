@@ -8,10 +8,10 @@
 class Shakapacker::Manifest
   class MissingEntryError < StandardError; end
 
-  delegate :config, :compiler, :dev_server, to: :@webpacker
+  delegate :config, :compiler, :dev_server, to: :@instance
 
-  def initialize(webpacker)
-    @webpacker = webpacker
+  def initialize(instance)
+    @instance = instance
   end
 
   def refresh
@@ -32,7 +32,7 @@ class Shakapacker::Manifest
     lookup_pack_with_chunks(name, pack_type) || handle_missing_entry(name, pack_type)
   end
 
-  # Computes the relative path for a given Webpacker asset using manifest.json.
+  # Computes the relative path for a given Shakapacker asset using manifest.json.
   # If no asset is found, returns nil.
   #
   # Example:
@@ -55,7 +55,7 @@ class Shakapacker::Manifest
     end
 
     def compile
-      Shakapacker.logger.tagged("Webpacker") { compiler.compile }
+      Shakapacker.logger.tagged("Shakapacker") { compiler.compile }
     end
 
     def data
@@ -110,7 +110,7 @@ Shakapacker can't find #{bundle_name} in #{config.manifest_path}. Possible cause
 3. You have set compile: false (see `config/shakapacker.yml`) for this environment
    (unless you are using the `bin/shakapacker -w` or the `bin/shakapacker-dev-server`, in which case maybe you aren't running the dev server in the background?)
 4. webpack has not yet FINISHED running to reflect updates.
-5. You have misconfigured Webpacker's `config/shakapacker.yml` file.
+5. You have misconfigured Shakapacker's `config/shakapacker.yml` file.
 6. Your webpack configuration is not creating a manifest.
 
 Your manifest contains:

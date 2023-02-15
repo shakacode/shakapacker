@@ -1,8 +1,8 @@
 class Shakapacker::Commands
-  delegate :config, :compiler, :manifest, :logger, to: :@webpacker
+  delegate :config, :compiler, :manifest, :logger, to: :@instance
 
-  def initialize(webpacker)
-    @webpacker = webpacker
+  def initialize(instance)
+    @instance = instance
   end
 
   # Cleanup old assets in the compile directory. By default it will

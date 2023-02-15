@@ -1,4 +1,4 @@
-describe "Webpacker" do
+describe "shakapacker" do
   describe "#inline_css?" do
     let(:dev_server) { instance_double("Shakapacker::DevServer") }
 

@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require_relative "../../webpacker/version"
+require_relative "../../shakapacker/version"
 
 module Shakapacker
   module Utils

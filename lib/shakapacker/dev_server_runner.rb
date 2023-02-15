@@ -20,7 +20,7 @@ module Shakapacker
 
         @config = Configuration.new(
           root_path: app_root,
-          config_path: Pathname.new(@webpacker_config),
+          config_path: Pathname.new(@shakapacker_config),
           env: ENV["RAILS_ENV"]
         )
 
@@ -34,7 +34,7 @@ module Shakapacker
 
       rescue Errno::ENOENT, NoMethodError
         $stdout.puts "webpack dev_server configuration not found in #{@config.config_path}[#{ENV["RAILS_ENV"]}]."
-        $stdout.puts "Please run bundle exec rails webpacker:install to install Webpacker"
+        $stdout.puts "Please run bundle exec rails shakapacker:install to install Shakapacker"
         exit!
       end
 
@@ -43,7 +43,7 @@ module Shakapacker
       def detect_unsupported_switches!
         unsupported_switches = UNSUPPORTED_SWITCHES & @argv
         if unsupported_switches.any?
-          $stdout.puts "The following CLI switches are not supported by Webpacker: #{unsupported_switches.join(' ')}. Please edit your command and try again."
+          $stdout.puts "The following CLI switches are not supported by Shakapacker: #{unsupported_switches.join(' ')}. Please edit your command and try again."
           exit!
         end
 
@@ -64,7 +64,7 @@ module Shakapacker
 
       def execute_cmd
         env = Shakapacker::Compiler.env
-        env["SHAKAPACKER_CONFIG"] = @webpacker_config
+        env["SHAKAPACKER_CONFIG"] = @shakapacker_config
         env["WEBPACK_SERVE"] = "true"
 
         cmd = if node_modules_bin_exist?
@@ -73,9 +73,9 @@ module Shakapacker
           ["yarn", "webpack", "serve"]
         end
 
-        if @argv.include?("--debug-webpacker")
+        if @argv.include?("--debug-shakapacker")
           cmd = [ "node", "--inspect-brk", "--trace-warnings" ] + cmd
-          @argv.delete "--debug-webpacker"
+          @argv.delete "--debug-shakapacker"
         end
 
         cmd += ["--config", @webpack_config]

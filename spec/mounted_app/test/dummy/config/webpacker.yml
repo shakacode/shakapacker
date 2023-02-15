@@ -4,7 +4,7 @@ default: &default
   source_path: app/packs
   source_entry_path: entrypoints
   public_output_path: packs
-  cache_path: tmp/webpacker
+  cache_path: tmp/shakapacker
   webpack_loader: babel
 
   # Additional paths webpack should look up modules

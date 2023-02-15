@@ -1,10 +1,10 @@
 require "rack/proxy"
 
 class Shakapacker::DevServerProxy < Rack::Proxy
-  delegate :config, :dev_server, to: :@webpacker
+  delegate :config, :dev_server, to: :@instance
 
   def initialize(app = nil, opts = {})
-    @webpacker = opts.delete(:webpacker) || Shakapacker.instance
+    @instance = opts.delete(:shakapacker) || Shakapacker.instance
     opts[:streaming] = false if Rails.env.test? && !opts.key?(:streaming)
     super
   end

@@ -1,12 +1,12 @@
 module Shakapacker::Helper
-  # Returns the current Webpacker instance.
-  # Could be overridden to use multiple Webpacker
+  # Returns the current Shakapacker instance.
+  # Could be overridden to use multiple Shakapacker
   # configurations within the same app (e.g. with engines).
-  def current_webpacker_instance
+  def current_shakapacker_instance
     Shakapacker.instance
   end
 
-  # Computes the relative path for a given Webpacker asset.
+  # Computes the relative path for a given Shakapacker asset.
   # Returns the relative path using manifest.json and passes it to path_to_asset helper.
   # This will use path_to_asset internally, so most of their behaviors will be the same.
   #
@@ -14,10 +14,10 @@ module Shakapacker::Helper
   #
   #   <%= asset_pack_path 'calendar.css' %> # => "/packs/calendar-1016838bab065ae1e122.css"
   def asset_pack_path(name, **options)
-    path_to_asset(current_webpacker_instance.manifest.lookup!(name), options)
+    path_to_asset(current_shakapacker_instance.manifest.lookup!(name), options)
   end
 
-  # Computes the absolute path for a given Webpacker asset.
+  # Computes the absolute path for a given Shakapacker asset.
   # Returns the absolute path using manifest.json and passes it to url_to_asset helper.
   # This will use url_to_asset internally, so most of their behaviors will be the same.
   #
@@ -25,17 +25,17 @@ module Shakapacker::Helper
   #
   #   <%= asset_pack_url 'calendar.css' %> # => "http://example.com/packs/calendar-1016838bab065ae1e122.css"
   def asset_pack_url(name, **options)
-    url_to_asset(current_webpacker_instance.manifest.lookup!(name), options)
+    url_to_asset(current_shakapacker_instance.manifest.lookup!(name), options)
   end
 
-  # Computes the relative path for a given Webpacker image with the same automated processing as image_pack_tag.
+  # Computes the relative path for a given Shakapacker image with the same automated processing as image_pack_tag.
   # Returns the relative path using manifest.json and passes it to path_to_asset helper.
   # This will use path_to_asset internally, so most of their behaviors will be the same.
   def image_pack_path(name, **options)
     resolve_path_to_image(name, **options)
   end
 
-  # Computes the absolute path for a given Webpacker image with the same automated
+  # Computes the absolute path for a given Shakapacker image with the same automated
   # processing as image_pack_tag. Returns the relative path using manifest.json
   # and passes it to path_to_asset helper. This will use path_to_asset internally,
   # so most of their behaviors will be the same.
@@ -114,7 +114,7 @@ module Shakapacker::Helper
     end
   end
 
-  # Creates a link tag, for preloading, that references a given Webpacker asset.
+  # Creates a link tag, for preloading, that references a given Shakapacker asset.
   # In production mode, the digested reference is automatically looked up.
   # See: https://developer.mozilla.org/en-US/docs/Web/HTML/Preloading_content
   #
@@ -124,7 +124,7 @@ module Shakapacker::Helper
   #   <link rel="preload" href="/packs/fonts/fa-regular-400-944fb546bd7018b07190a32244f67dc9.woff2" as="font" type="font/woff2" crossorigin="anonymous">
   def preload_pack_asset(name, **options)
     if self.class.method_defined?(:preload_link_tag)
-      preload_link_tag(current_webpacker_instance.manifest.lookup!(name), options)
+      preload_link_tag(current_shakapacker_instance.manifest.lookup!(name), options)
     else
       raise "You need Rails >= 5.2 to use this tag."
     end
@@ -213,17 +213,17 @@ module Shakapacker::Helper
     end
 
     def sources_from_manifest_entrypoints(names, type:)
-      names.map { |name| current_webpacker_instance.manifest.lookup_pack_with_chunks!(name.to_s, type: type) }.flatten.uniq
+      names.map { |name| current_shakapacker_instance.manifest.lookup_pack_with_chunks!(name.to_s, type: type) }.flatten.uniq
     end
 
     def available_sources_from_manifest_entrypoints(names, type:)
-      names.map { |name| current_webpacker_instance.manifest.lookup_pack_with_chunks(name.to_s, type: type) }.flatten.compact.uniq
+      names.map { |name| current_shakapacker_instance.manifest.lookup_pack_with_chunks(name.to_s, type: type) }.flatten.compact.uniq
     end
 
     def resolve_path_to_image(name, **options)
       path = name.starts_with?("static/") ? name : "static/#{name}"
-      path_to_asset(current_webpacker_instance.manifest.lookup!(path), options)
+      path_to_asset(current_shakapacker_instance.manifest.lookup!(path), options)
     rescue
-      path_to_asset(current_webpacker_instance.manifest.lookup!(name), options)
+      path_to_asset(current_shakapacker_instance.manifest.lookup!(name), options)
     end
 end

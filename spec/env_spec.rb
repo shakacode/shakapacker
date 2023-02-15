@@ -1,5 +1,5 @@
 RSpec.describe "Env" do
-  it "uses the same env for Rails and Webpacker" do
+  it "uses the same env for Rails and Shakapacker" do
     expect(Shakapacker.env).to eq Rails.env
   end
 

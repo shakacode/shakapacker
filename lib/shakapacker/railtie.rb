@@ -5,8 +5,8 @@ require "shakapacker/dev_server_proxy"
 require "shakapacker/version_checker"
 
 class Shakapacker::Engine < ::Rails::Engine
-  # Allows Webpacker config values to be set via Rails env config files
-  config.webpacker = ActiveSupport::OrderedOptions.new
+  # Allows Shakapacker config values to be set via Rails env config files
+  config.shakapacker = ActiveSupport::OrderedOptions.new
 
   initializer "shakapacker.version_checker" do
     if File.exist?(Shakapacker::VersionChecker::NodePackageVersion.package_json_path)

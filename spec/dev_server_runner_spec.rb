@@ -4,13 +4,13 @@ describe "DevServerRunner" do
   before do
     @original_node_env, ENV["NODE_ENV"] = ENV["NODE_ENV"], "development"
     @original_rails_env, ENV["RAILS_ENV"] = ENV["RAILS_ENV"], "development"
-    @original_webpacker_config = ENV["SHAKAPACKER_CONFIG"]
+    @original_shakapacker_config = ENV["SHAKAPACKER_CONFIG"]
   end
 
   after do
     ENV["NODE_ENV"] = @original_node_env
     ENV["RAILS_ENV"] = @original_rails_env
-    ENV["SHAKAPACKER_CONFIG"] = @original_webpacker_config
+    ENV["SHAKAPACKER_CONFIG"] = @original_shakapacker_config
   end
 
   let(:test_app_path) { File.expand_path("test_app", __dir__) }

@@ -68,12 +68,12 @@ module Shakapacker
       end
 
       def raise_differing_versions_warning
-        msg = "**ERROR** Webpacker: Webpacker gem and node package versions do not match\n#{common_error_msg}"
+        msg = "**ERROR** Shakapacker: Shakapacker gem and node package versions do not match\n#{common_error_msg}"
         raise msg
       end
 
       def raise_node_semver_version_warning
-        msg = "**ERROR** Webpacker: Your node package version for shakapacker contains a "\
+        msg = "**ERROR** Shakapacker: Your node package version for shakapacker contains a "\
               "^ or ~\n#{common_error_msg}"
         raise msg
       end

@@ -1,12 +1,12 @@
 class Shakapacker::Env
-  delegate :config_path, :logger, to: :@webpacker
+  delegate :config_path, :logger, to: :@instance
 
-  def self.inquire(webpacker)
-    new(webpacker).inquire
+  def self.inquire(instance)
+    new(instance).inquire
   end
 
-  def initialize(webpacker)
-    @webpacker = webpacker
+  def initialize(instance)
+    @instance = instance
   end
 
   def inquire

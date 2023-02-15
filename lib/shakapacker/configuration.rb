@@ -116,8 +116,8 @@ class Shakapacker::Configuration
       if self.class.installing
         {}
       else
-        raise "Webpacker configuration file not found #{config_path}. " \
-              "Please run rails webpacker:install " \
+        raise "Shakapacker configuration file not found #{config_path}. " \
+              "Please run rails shakapacker:install " \
               "Error: #{e.message}"
       end
     rescue Psych::SyntaxError => e
