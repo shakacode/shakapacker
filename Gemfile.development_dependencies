@@ -11,5 +11,10 @@ group :test, :development do
 end
 
 group :test do
+<<<<<<< Updated upstream
+=======
+  gem "generator_spec"
+  gem "minitest", "~> 5.0"
+>>>>>>> Stashed changes
   gem "byebug"
 end
