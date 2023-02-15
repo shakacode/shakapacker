@@ -9,5 +9,5 @@ require "shakapacker/webpack_runner"
 
 APP_ROOT = File.expand_path("..", __dir__)
 Dir.chdir(APP_ROOT) do
-  Webpacker::WebpackRunner.run(ARGV)
+  Shakapacker::WebpackRunner.run(ARGV)
 end

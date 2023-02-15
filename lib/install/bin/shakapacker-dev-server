@@ -9,5 +9,5 @@ require "shakapacker/dev_server_runner"
 
 APP_ROOT = File.expand_path("..", __dir__)
 Dir.chdir(APP_ROOT) do
-  Webpacker::DevServerRunner.run(ARGV)
+  Shakapacker::DevServerRunner.run(ARGV)
 end
