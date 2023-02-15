@@ -1,6 +1,6 @@
 require "action_controller/railtie"
 require "action_view/railtie"
-require "webpacker"
+require "shakapacker"
 
 module TestDummyApp
   class Application < Rails::Application

@@ -101,15 +101,15 @@ require_relative "test_app/config/environment"
 
 Rails.env = "production"
 
-Webpacker.instance = ::Webpacker::Instance.new
+Shakapacker.instance = ::Shakapacker::Instance.new
 
 def reloaded_config
-  Webpacker.instance.instance_variable_set(:@env, nil)
-  Webpacker.instance.instance_variable_set(:@config, nil)
-  Webpacker.instance.instance_variable_set(:@dev_server, nil)
-  Webpacker.env
-  Webpacker.config
-  Webpacker.dev_server
+  Shakapacker.instance.instance_variable_set(:@env, nil)
+  Shakapacker.instance.instance_variable_set(:@config, nil)
+  Shakapacker.instance.instance_variable_set(:@dev_server, nil)
+  Shakapacker.env
+  Shakapacker.config
+  Shakapacker.dev_server
 end
 
 def with_rails_env(env)

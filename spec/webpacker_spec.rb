@@ -1,6 +1,6 @@
 describe "Webpacker" do
   describe "#inline_css?" do
-    let(:dev_server) { instance_double("Webpacker::DevServer") }
+    let(:dev_server) { instance_double("Shakapacker::DevServer") }
 
     before :each do
       allow(dev_server).to receive(:host).and_return("localhost")
@@ -11,25 +11,25 @@ describe "Webpacker" do
     end
 
     it "returns nil with disabled dev_server" do
-      expect(Webpacker.inlining_css?).to be nil
+      expect(Shakapacker.inlining_css?).to be nil
     end
 
     it "returns true with enabled hmr" do
       allow(dev_server).to receive(:hmr?).and_return(true)
       allow(dev_server).to receive(:inline_css?).and_return(true)
 
-      allow(Webpacker.instance).to receive(:dev_server).and_return(dev_server)
+      allow(Shakapacker.instance).to receive(:dev_server).and_return(dev_server)
 
-      expect(Webpacker.inlining_css?).to be true
+      expect(Shakapacker.inlining_css?).to be true
     end
 
     it "returns false with enabled hmr and explicitly setting inline_css to false" do
       allow(dev_server).to receive(:hmr?).and_return(true)
       allow(dev_server).to receive(:inline_css?).and_return(false)
 
-      allow(Webpacker.instance).to receive(:dev_server).and_return(dev_server)
+      allow(Shakapacker.instance).to receive(:dev_server).and_return(dev_server)
 
-      expect(Webpacker.inlining_css?).to be false
+      expect(Shakapacker.inlining_css?).to be false
     end
   end
 

@@ -1,27 +1,27 @@
 describe "Command" do
   before do
-    allow(Webpacker.logger).to receive(:info)
+    allow(Shakapacker.logger).to receive(:info)
   end
 
   describe "#compile" do
     it "returns success status when stale" do
-      expect(Webpacker.compiler).to receive(:stale?).and_return(true)
-      expect(Webpacker.compiler).to receive(:run_webpack).and_return(true)
+      expect(Shakapacker.compiler).to receive(:stale?).and_return(true)
+      expect(Shakapacker.compiler).to receive(:run_webpack).and_return(true)
 
-      expect(Webpacker.commands.compile).to be true
+      expect(Shakapacker.commands.compile).to be true
     end
 
     it "returns success status when fresh" do
-      expect(Webpacker.compiler).to receive(:stale?).and_return(false)
+      expect(Shakapacker.compiler).to receive(:stale?).and_return(false)
 
-      expect(Webpacker.commands.compile).to be true
+      expect(Shakapacker.commands.compile).to be true
     end
 
     it "returns failure status when stale" do
-      expect(Webpacker.compiler).to receive(:stale?).and_return(true)
-      expect(Webpacker.compiler).to receive(:run_webpack).and_return(false)
+      expect(Shakapacker.compiler).to receive(:stale?).and_return(true)
+      expect(Shakapacker.compiler).to receive(:run_webpack).and_return(false)
 
-      expect(Webpacker.commands.compile).to be false
+      expect(Shakapacker.commands.compile).to be false
     end
   end
 
@@ -30,7 +30,7 @@ describe "Command" do
     let(:prev_files) do
       # Test assets to be kept and deleted, path and mtime
       {
-        # recent versions to be kept with Webpacker.commands.clean(count = 2)
+        # recent versions to be kept with Shakapacker.commands.clean(count = 2)
         "js/application-deadbeef.js" => now - 4000,
         "js/common-deadbeee.js" => now - 4002,
         "css/common-deadbeed.css" => now - 4004,
@@ -39,12 +39,12 @@ describe "Command" do
         "js/common-1eadbeee.js" => now - 8002,
         "css/common-1eadbeed.css" => now - 8004,
         "media/images/logo-1eadbeeb.css" => now - 8006,
-        # new files to be kept with Webpacker.commands.clean(age = 3600)
+        # new files to be kept with Shakapacker.commands.clean(age = 3600)
         "js/brandnew-0001.js" => now,
         "js/brandnew-0002.js" => now - 10,
         "js/brandnew-0003.js" => now - 20,
         "js/brandnew-0004.js" => now - 40,
-      }.transform_keys { |path| "#{Webpacker.config.public_output_path}/#{path}" }
+      }.transform_keys { |path| "#{Shakapacker.config.public_output_path}/#{path}" }
     end
 
     let(:expired_files) do
@@ -54,7 +54,7 @@ describe "Command" do
         "js/common-0eadbeee.js" => now - 9002,
         "css/common-0eadbeed.css" => now - 9004,
         "js/brandnew-0005.js" => now - 3640,
-      }.transform_keys { |path| "#{Webpacker.config.public_output_path}/#{path}" }
+      }.transform_keys { |path| "#{Shakapacker.config.public_output_path}/#{path}" }
     end
 
     let(:all_files) { prev_files.merge(expired_files) }
@@ -66,7 +66,7 @@ describe "Command" do
     before :context do
       @dir_glob_stub = Proc.new { |arg|
         case arg
-        when "#{Webpacker.config.public_output_path}/**/*"
+        when "#{Shakapacker.config.public_output_path}/**/*"
           all_files.keys
         else
           []
@@ -76,7 +76,7 @@ describe "Command" do
 
     it "works with nested hashes and without any compiled files" do
       allow(File).to receive(:delete).and_return(true)
-      expect(Webpacker.commands.clean).to be true
+      expect(Shakapacker.commands.clean).to be true
     end
 
     it "deletes only and only expired versioned files if no parameter passed" do
@@ -85,7 +85,7 @@ describe "Command" do
       end
 
       with_time_dir_and_files_stub do
-        expect(Webpacker.commands.clean).to be true
+        expect(Shakapacker.commands.clean).to be true
 
         # Verify that only and only expired files are deleted
         all_files.keys.each do |longpath|

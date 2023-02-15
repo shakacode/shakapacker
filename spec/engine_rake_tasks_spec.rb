@@ -34,8 +34,8 @@ describe "EngineRakeTasks" do
     def webpack_binstub_paths
       [
         "#{mounted_app_path}/test/dummy/bin/yarn",
-        "#{mounted_app_path}/test/dummy/bin/webpacker",
-        "#{mounted_app_path}/test/dummy/bin/webpacker-dev-server",
+        "#{mounted_app_path}/test/dummy/bin/shakapacker",
+        "#{mounted_app_path}/test/dummy/bin/shakapacker-dev-server",
       ]
     end
 
