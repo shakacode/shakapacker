@@ -6,7 +6,7 @@ default: &default
   nested_entries: true
   public_root_path: public
   public_output_path: packs
-  cache_path: tmp/webpacker
+  cache_path: tmp/shakapacker
   webpack_compile_output: false
   webpack_loader: babel
 

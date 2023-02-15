@@ -1,7 +1,7 @@
 # Note: You must restart bin/shakapacker-dev-server for changes to take effect
 
 default: &default
-  webpacker_precompile: false
+  shakapacker_precompile: false
 
 production:
   <<: *default

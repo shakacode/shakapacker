@@ -41,7 +41,7 @@ describe "Shakapacker::Configuration" do
     end
 
     it "#cache_path returns correct path" do
-      cache_path = File.expand_path File.join(File.dirname(__FILE__), "test_app/tmp/webpacker").to_s
+      cache_path = File.expand_path File.join(File.dirname(__FILE__), "test_app/tmp/shakapacker").to_s
       expect(config.cache_path.to_s).to eq cache_path
     end
 

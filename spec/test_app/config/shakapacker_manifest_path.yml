@@ -5,7 +5,7 @@ default: &default
   source_entry_path: entrypoints
   public_root_path: public
   public_output_path: packs
-  cache_path: tmp/webpacker
+  cache_path: tmp/shakapacker
   webpack_compile_output: false
 
   # Location for manifest.json, defaults to {public_output_path}/manifest.json if unset

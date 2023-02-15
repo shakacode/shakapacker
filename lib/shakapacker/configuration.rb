@@ -37,7 +37,7 @@ class Shakapacker::Configuration
     return true if %w(yes true y t).include?(ENV["SHAKAPACKER_PRECOMPILE"])
 
     return false unless config_path.exist?
-    fetch(:webpacker_precompile)
+    fetch(:shakapacker_precompile)
   end
 
   def source_path
