@@ -1,6 +1,6 @@
 /* global test expect, describe, afterAll, beforeEach */
 
-// environment.js expects to find config/webpacker.yml and resolved modules from
+// environment.js expects to find config/shakapacker.yml and resolved modules from
 // the root of a Rails project
 
 const { chdirTestApp, chdirCwd, resetEnv } = require('../../utils/helpers')
@@ -29,7 +29,7 @@ describe('Base config', () => {
     })
 
     test('should return true for css_extract_ignore_order_warnings when configured', () => {
-      process.env.WEBPACKER_CONFIG = 'config/webpacker_css_extract_ignore_order_warnings.yml'
+      process.env.SHAKAPACKER_CONFIG = 'config/shakapacker_css_extract_ignore_order_warnings.yml'
       const config = require("../../config");
 
       expect(config.css_extract_ignore_order_warnings).toEqual(true)
@@ -46,7 +46,7 @@ describe('Base config', () => {
     })
 
     test('should returns top level and nested entry points with config.nested_entries == true', () => {
-      process.env.WEBPACKER_CONFIG = 'config/webpacker_nested_entries.yml'
+      process.env.SHAKAPACKER_CONFIG = 'config/shakapacker_nested_entries.yml'
       const config = require("../../config");
       const baseConfig = require('../base')
 

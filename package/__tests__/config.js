@@ -19,7 +19,7 @@ describe('Config', () => {
 
   test('public path with asset host', () => {
     process.env.RAILS_ENV = 'development'
-    process.env.WEBPACKER_ASSET_HOST = 'http://foo.com/'
+    process.env.SHAKAPACKER_ASSET_HOST = 'http://foo.com/'
     const config = require('../config')
     expect(config.publicPath).toEqual('http://foo.com/packs/')
   })
@@ -38,7 +38,7 @@ describe('Config', () => {
   })
 
   test('should allow overriding manifestPath', () => {
-    process.env.WEBPACKER_CONFIG = 'config/webpacker_manifest_path.yml'
+    process.env.SHAKAPACKER_CONFIG = 'config/shakapacker_manifest_path.yml'
     const config = require('../config')
     expect(config.manifestPath).toEqual(resolve('app/packs/manifest.json'))
   })

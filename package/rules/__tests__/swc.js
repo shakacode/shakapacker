@@ -38,6 +38,11 @@ const createWebpackConfig = (file, use) => {
 describe("swc", () => {
   test("process source path", async () => {
     const normalPath = `${app_javascript}/a.js`;
+    
+    console.log('ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ')
+    console.log(`normalPath: ${normalPath}`)
+    console.log('ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ')
+    
     const [tracked, loader] = createTrackLoader();
     const compiler = createTestCompiler(
       createWebpackConfig(normalPath, loader)
