@@ -126,7 +126,7 @@ describe "Shakapacker::Configuration" do
         ENV["SHAKAPACKER_PRECOMPILE"] = nil
       end
 
-      subject { config.webpacker_precompile? }
+      subject { config.shakapacker_precompile? }
 
       it "returns true when SHAKAPACKER_PRECOMPILE is unset" do
         is_expected.to be true
@@ -214,7 +214,7 @@ describe "Shakapacker::Configuration" do
         )
       }
 
-      subject { config.webpacker_precompile? }
+      subject { config.shakapacker_precompile? }
 
       it "returns false with unset SHAKAPACKER_PRECOMPILE" do
         expect(subject).to be false
@@ -240,7 +240,7 @@ describe "Shakapacker::Configuration" do
     )
 
     it "#shakapacker_precompile? returns false" do
-      expect(config.webpacker_precompile?).to be false
+      expect(config.shakapacker_precompile?).to be false
     end
   end
 
@@ -258,7 +258,7 @@ describe "Shakapacker::Configuration" do
     end
 
     it "#shakapacker_precompile? uses 'default' config from custom file" do
-      expect(config.webpacker_precompile?).to be false
+      expect(config.shakapacker_precompile?).to be false
     end
   end
 
@@ -275,7 +275,7 @@ describe "Shakapacker::Configuration" do
       expect(config.cache_manifest?).to be true
     end
     it "#shakapacker_precompile? use 'staging' config from custom file" do
-      expect(config.webpacker_precompile?).to be false
+      expect(config.shakapacker_precompile?).to be false
     end
   end
 end

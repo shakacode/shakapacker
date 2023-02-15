@@ -1,5 +1,5 @@
 require "semantic_range"
-namespace :webpacker do
+namespace :shakapacker do
   desc "Verifies if Node.js is installed"
   task :check_node do
     begin
@@ -17,7 +17,7 @@ namespace :webpacker do
       end
 
       unless is_valid
-        $stderr.puts "Webpacker requires Node.js \"#{node_range}\" and you are using #{node_version}"
+        $stderr.puts "Shakapacker requires Node.js \"#{node_range}\" and you are using #{node_version}"
         $stderr.puts "Please upgrade Node.js https://nodejs.org/en/download/"
         $stderr.puts "Exiting!"
         exit!

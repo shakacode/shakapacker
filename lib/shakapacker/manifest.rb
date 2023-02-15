@@ -108,7 +108,7 @@ Shakapacker can't find #{bundle_name} in #{config.manifest_path}. Possible cause
 1. You forgot to install node packages (try `yarn install`) or are running an incompatible version of Node
 2. Your app has code with a non-standard extension (like a `.jsx` file) but the extension is not in the `extensions` config in `config/shakapacker.yml`
 3. You have set compile: false (see `config/shakapacker.yml`) for this environment
-   (unless you are using the `bin/webpacker -w` or the `bin/webpacker-dev-server`, in which case maybe you aren't running the dev server in the background?)
+   (unless you are using the `bin/shakapacker -w` or the `bin/shakapacker-dev-server`, in which case maybe you aren't running the dev server in the background?)
 4. webpack has not yet FINISHED running to reflect updates.
 5. You have misconfigured Webpacker's `config/shakapacker.yml` file.
 6. Your webpack configuration is not creating a manifest.

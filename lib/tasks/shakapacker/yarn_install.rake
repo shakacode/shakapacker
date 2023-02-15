@@ -1,4 +1,4 @@
-namespace :webpacker do
+namespace :shakapacker do
   desc "Support for older Rails versions. Install all JavaScript dependencies as specified via Yarn"
   task :yarn_install do
     warn <<~MSG.strip

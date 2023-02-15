@@ -1,10 +1,10 @@
-namespace :webpacker do
-  desc "Verifies that bin/webpacker is present"
+namespace :shakapacker do
+  desc "Verifies that bin/shakapacker is present"
   task :check_binstubs do
-    unless File.exist?(Rails.root.join("bin/webpacker"))
-      $stderr.puts "webpacker binstub not found.\n"\
-           "Have you run rails webpacker:install ?\n"\
-           "Make sure the bin directory and bin/webpacker are not included in .gitignore\n"\
+    unless File.exist?(Rails.root.join("bin/shakapacker"))
+      $stderr.puts "shakapacker binstub not found.\n"\
+           "Have you run rails shakapacker:install ?\n"\
+           "Make sure the bin directory and bin/shakapacker are not included in .gitignore\n"\
            "Exiting!"
       exit!
     end

@@ -1,5 +1,5 @@
 require "semantic_range"
-namespace :webpacker do
+namespace :shakapacker do
   desc "Verifies if Yarn is installed"
   task :check_yarn do
     begin
@@ -15,9 +15,9 @@ namespace :webpacker do
       is_unsupported = SemanticRange.satisfies?(yarn_version, ">=4.0.0") rescue false
 
       unless is_valid
-        $stderr.puts "Webpacker requires Yarn \"#{yarn_range}\" and you are using #{yarn_version}"
+        $stderr.puts "Shakapacker requires Yarn \"#{yarn_range}\" and you are using #{yarn_version}"
         if is_unsupported
-          $stderr.puts "This version of Webpacker does not support Yarn #{yarn_version}. Please downgrade to a supported version of Yarn https://yarnpkg.com/lang/en/docs/install/"
+          $stderr.puts "This version of Shakapacker does not support Yarn #{yarn_version}. Please downgrade to a supported version of Yarn https://yarnpkg.com/lang/en/docs/install/"
         else
           $stderr.puts "Please upgrade Yarn https://yarnpkg.com/lang/en/docs/install/"
         end

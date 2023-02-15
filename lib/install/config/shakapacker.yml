@@ -1,4 +1,4 @@
-# Note: You must restart bin/webpacker-dev-server for changes to take effect
+# Note: You must restart bin/shakapacker-dev-server for changes to take effect
 
 default: &default
   source_path: app/javascript
@@ -79,7 +79,7 @@ development:
     compress: true
     # Note that apps that do not check the host are vulnerable to DNS rebinding attacks
     allowed_hosts: 'all'
-    # Shows progress and colorizes output of bin/webpacker[-dev-server]
+    # Shows progress and colorizes output of bin/shakapacker[-dev-server]
     pretty: true
     headers:
       'Access-Control-Allow-Origin': '*'

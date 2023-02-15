@@ -24,8 +24,8 @@ module Shakapacker
           Shakapacker::Compiler - Slow setup for development
 
           Prepare JS assets with either:
-          1. Running `bin/webpacker-dev-server`
-          2. Set `compile` to false in shakapacker.yml and run `bin/webpacker -w`
+          1. Running `bin/shakapacker-dev-server`
+          2. Set `compile` to false in shakapacker.yml and run `bin/shakapacker -w`
         MSG
         end
 

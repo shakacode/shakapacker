@@ -31,7 +31,7 @@ class Shakapacker::Configuration
     fetch(:ensure_consistent_versioning)
   end
 
-  def webpacker_precompile?
+  def shakapacker_precompile?
     # ENV of false takes precedence
     return false if %w(no false n f).include?(ENV["SHAKAPACKER_PRECOMPILE"])
     return true if %w(yes true y t).include?(ENV["SHAKAPACKER_PRECOMPILE"])

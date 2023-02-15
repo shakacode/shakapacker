@@ -1,18 +1,18 @@
 require "shakapacker/configuration"
 
-namespace :webpacker do
+namespace :shakapacker do
   desc "Remove the webpack compiled output directory"
-  task clobber: ["webpacker:verify_config", :environment] do
-    Webpacker.clobber
-    $stdout.puts "Removed webpack output path directory #{Webpacker.config.public_output_path}"
+  task clobber: ["shakapacker:verify_config", :environment] do
+    Shakapacker.clobber
+    $stdout.puts "Removed webpack output path directory #{Shakapacker.config.public_output_path}"
   end
 end
 
-if Webpacker.config.webpacker_precompile?
+if Shakapacker.config.shakapacker_precompile?
   # Run clobber if the assets:clobber is run
   if Rake::Task.task_defined?("assets:clobber")
     Rake::Task["assets:clobber"].enhance do
-      Rake::Task["webpacker:clobber"].invoke
+      Rake::Task["shakapacker:clobber"].invoke
     end
   end
 end

@@ -1,18 +1,18 @@
 tasks = {
-  "webpacker:info"                    => "Provides information on Webpacker's environment",
-  "webpacker:install"                 => "Installs and setup webpack with Yarn",
-  "webpacker:compile"                 => "Compiles webpack bundles based on environment",
-  "webpacker:clean"                   => "Remove old compiled webpacks",
-  "webpacker:clobber"                 => "Removes the webpack compiled output directory",
-  "webpacker:check_node"              => "Verifies if Node.js is installed",
-  "webpacker:check_yarn"              => "Verifies if Yarn is installed",
-  "webpacker:check_binstubs"          => "Verifies that bin/webpacker is present",
-  "webpacker:binstubs"                => "Installs Webpacker binstubs in this application",
-  "webpacker:verify_install"          => "Verifies if Webpacker is installed",
+  "shakapacker:info"                    => "Provides information on Shakapacker's environment",
+  "shakapacker:install"                 => "Installs and setup webpack with Yarn",
+  "shakapacker:compile"                 => "Compiles webpack bundles based on environment",
+  "shakapacker:clean"                   => "Remove old compiled webpacks",
+  "shakapacker:clobber"                 => "Removes the webpack compiled output directory",
+  "shakapacker:check_node"              => "Verifies if Node.js is installed",
+  "shakapacker:check_yarn"              => "Verifies if Yarn is installed",
+  "shakapacker:check_binstubs"          => "Verifies that bin/shakapacker is present",
+  "shakapacker:binstubs"                => "Installs Shakapacker binstubs in this application",
+  "shakapacker:verify_install"          => "Verifies if Shakapacker is installed",
 }.freeze
 
-desc "Lists all available tasks in Webpacker"
-task :webpacker do
-  puts "Available Webpacker tasks are:"
+desc "Lists all available tasks in Shakapacker"
+task :shakapacker do
+  puts "Available Shakapacker tasks are:"
   tasks.each { |task, message| puts task.ljust(30) + message }
 end

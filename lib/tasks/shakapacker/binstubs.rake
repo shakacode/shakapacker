@@ -1,10 +1,10 @@
 binstubs_template_path = File.expand_path("../../install/binstubs.rb", __dir__).freeze
 bin_path = ENV["BUNDLE_BIN"] || Rails.root.join("bin")
 
-namespace :webpacker do
-  desc "Installs Webpacker binstubs in this application"
+namespace :shakapacker do
+  desc "Installs Shakapacker binstubs in this application"
   task binstubs: [:check_node, :check_yarn] do |task|
-    prefix = task.name.split(/#|webpacker:binstubs/).first
+    prefix = task.name.split(/#|shakapacker:binstubs/).first
 
     if Rails::VERSION::MAJOR >= 5
       exec "#{RbConfig.ruby} #{bin_path}/rails #{prefix}app:template LOCATION='#{binstubs_template_path}'"
