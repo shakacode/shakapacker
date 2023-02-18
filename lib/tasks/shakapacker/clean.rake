@@ -3,7 +3,7 @@ $stdout.sync = true
 require "shakapacker/configuration"
 
 namespace :shakapacker do
-  desc "Remove old compiled webpacks"
+  desc "Remove old compiled bundles"
   task :clean, [:keep, :age] => ["shakapacker:verify_install", :environment] do |_, args|
     Shakapacker.ensure_log_goes_to_stdout do
       Shakapacker.clean(Integer(args.keep || 2), Integer(args.age || 3600))
