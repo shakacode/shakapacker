@@ -40,6 +40,10 @@ class Shakapacker::Configuration
     fetch(:shakapacker_precompile)
   end
 
+  def webapacker_precompile?
+    shakapacker_precompile?
+  end
+
   def source_path
     root_path.join(fetch(:source_path))
   end

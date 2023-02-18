@@ -4,9 +4,13 @@ class Shakapacker::Instance
   cattr_accessor(:logger) { ActiveSupport::TaggedLogging.new(ActiveSupport::Logger.new(STDOUT)) }
 
   attr_reader :root_path, :config_path
+
   def initialize(root_path: Rails.root, config_path: Rails.root.join("config/shakapacker.yml"))
     @root_path = root_path
     @config_path = Pathname.new(ENV["SHAKAPACKER_CONFIG"] || config_path)
+
+    # For backward compatibility
+    @config_path = Shakapacker::get_config_file_path_with_backward_compatibility(@config_path)
   end
 
   def env
