@@ -176,7 +176,11 @@ At its core, Shakapacker's essential function is to:
 
 ### Configuration and Code
 
+<<<<<<< HEAD
 You will need your file system to correspond to the setup of your `config/shakapacker.yml` file.
+=======
+You will need your file system to correspond to the setup of your `shakapacker.yml` file.
+>>>>>>> e326690 (Update Readme and contribution guide for shakapacker)
 
 Suppose you have the following configuration:
 
@@ -224,7 +228,11 @@ Be sure to consult the API documentation in the source code of [helper.rb](./lib
 
 #### View Helpers `javascript_pack_tag` and `stylesheet_pack_tag`
 
+<<<<<<< HEAD
 These view helpers take your `shakapacker.yml` configuration file and the resulting webpack compilation `manifest.json` and generate the HTML to load the assets.
+=======
+These view helpers take your `shakapacker.yml` configuration file, along with the resulting webpack compilation `manifest.json` and generate the HTML to load the assets.
+>>>>>>> e326690 (Update Readme and contribution guide for shakapacker)
 
 You can then link the JavaScript pack in Rails views using the `javascript_pack_tag` helper. If you have styles imported in your pack file, you can link them by using `stylesheet_pack_tag`:
 
