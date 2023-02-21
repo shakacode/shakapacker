@@ -40,7 +40,7 @@ class Shakapacker::Configuration
     fetch(:shakapacker_precompile)
   end
 
-  def webapacker_precompile?
+  def webpacker_precompile?
     shakapacker_precompile?
   end
 
