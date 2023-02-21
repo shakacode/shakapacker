@@ -19,7 +19,7 @@ See an example migration here: [PR 27](https://github.com/shakacode/react_on_rai
 1. Remove setting the NODE_ENV in your `bin/webpacker` and `bin/webpacker-dev-server` bin stubs as these are not set in the webpack runner file.
 
 ### Update Steps to v6.0.0 from v6.0.0.rc.6
-_If you're on webpacker v5, follow below steps to get to v6.0.0.rc.6 first._
+_If you're on webpacker v5, follow [how to upgrade to webpacker v6.0.0.rc.6 from v5](#how-to-upgrade-to-webpacker-v600rc6-from-v5) to get to v6.0.0.rc.6 first._
 
 1. Change the gem name from `webpacker` to `shakapacker` and the NPM package from `@rails/webpacker` to `shakapacker`.
 1. Install the peer dependencies. Run `yarn add @babel/core @babel/plugin-transform-runtime @babel/preset-env @babel/runtime babel-loader compression-webpack-plugin terser-webpack-plugin webpack webpack-assets-manifest webpack-cli webpack-merge webpack-sources webpack-dev-server`. You may have old versions of libraries. Run `yarn install` and check for warnings like `warning " > shakapacker@6.1.1" has incorrect peer dependency "compression-webpack-plugin@^9.0.0"` and `file-loader@1.1.11" has incorrect peer dependency "webpack@^2.0.0 || ^3.0.0 || ^4.0.0"`. In other words, warnings like these are **serious** and will cause considerable confusion if not respected.
