@@ -1,5 +1,3 @@
-require "shakapacker/configuration"
-
 namespace :shakapacker do
   desc "Verifies if the Shakapacker config is present"
   task :verify_config do
