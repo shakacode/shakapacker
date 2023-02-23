@@ -1,10 +1,12 @@
+require "pathname"
 class Webpacker::Instance
   cattr_accessor(:logger) { ActiveSupport::TaggedLogging.new(ActiveSupport::Logger.new(STDOUT)) }
 
   attr_reader :root_path, :config_path
 
   def initialize(root_path: Rails.root, config_path: Rails.root.join("config/webpacker.yml"))
-    @root_path, @config_path = root_path, config_path
+    @root_path = root_path
+    @config_path = Pathname.new(ENV["WEBPACKER_CONFIG"] || config_path)
   end
 
   def env
