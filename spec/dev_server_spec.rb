@@ -1,3 +1,5 @@
+require_relative "spec_helper_initializer"
+
 describe "DevServer" do
   it "doesn't run by default" do
     expect(Shakapacker.dev_server.running?).to be_falsy

@@ -1,3 +1,5 @@
+require_relative "spec_helper_initializer"
+
 describe "shakapacker" do
   describe "#inline_css?" do
     let(:dev_server) { instance_double("Shakapacker::DevServer") }

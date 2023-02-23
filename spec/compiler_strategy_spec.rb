@@ -1,3 +1,5 @@
+require_relative "spec_helper_initializer"
+
 describe "Shakapacker::CompilerStrategy" do
   describe "#from_config" do
     it "returns and instance of MtimeStrategy when compiler_strategy is set to mtime" do

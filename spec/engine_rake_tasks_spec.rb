@@ -1,3 +1,5 @@
+require_relative "spec_helper_initializer"
+
 describe "EngineRakeTasks" do
   before :context do
     remove_webpack_binstubs

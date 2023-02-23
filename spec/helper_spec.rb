@@ -1,3 +1,5 @@
+require_relative "spec_helper_initializer"
+
 module ActionView::TestCase::Behavior
   attr_accessor :request
 

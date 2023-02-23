@@ -13,6 +13,8 @@ class Shakapacker::Configuration
     @root_path = root_path
     @config_path = config_path
     @env = env
+
+    Shakapacker.set_shakapacker_env_variables_for_backward_compatibility
   end
 
   def dev_server
@@ -101,7 +103,13 @@ class Shakapacker::Configuration
   end
 
   def fetch(key)
-    data.fetch(key, defaults[key])
+    # for backward compatibility
+    return data.fetch(key, defaults[key]) unless key == :shakapacker_precompile
+
+    return data.fetch(:shakapacker_precompile) if data.key?(:shakapacker_precompile)
+
+    webpacker_key = key.to_s.gsub("shakapacker", "webpacker").to_sym
+    data.fetch(webpacker_key, defaults[key])
   end
 
   private
