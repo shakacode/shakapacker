@@ -73,9 +73,8 @@ module Shakapacker
           ["yarn", "webpack", "serve"]
         end
 
-        if @argv.include?("--debug-shakapacker")
+        if @argv.delete("--debug-shakapacker") || @argv.delete("--debug-webpacker")
           cmd = [ "node", "--inspect-brk", "--trace-warnings" ] + cmd
-          @argv.delete "--debug-shakapacker"
         end
 
         cmd += ["--config", @webpack_config]
