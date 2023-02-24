@@ -1,12 +1,12 @@
 /* test expect, describe, afterAll, beforeEach */
 
 const { resolve } = require('path')
-const { chdirTestApp, chdirCwd } = require('../utils/helpers')
+const { chdirWebpackerTestApp } = require('../utils/helpers')
 
 const rootPath = process.cwd()
-chdirTestApp()
+chdirWebpackerTestApp()
 
-describe('Production environment', () => {
+describe('Backward Compatibility - Production environment', () => {
   afterAll(() => process.chdir(rootPath))
 
   describe('webpackConfig', () => {

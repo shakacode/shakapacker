@@ -1,12 +1,12 @@
 /* global test expect, describe */
 
-const { chdirTestApp } = require('../utils/helpers')
+const { chdirWebpackerTestApp, resetEnv } = require('../utils/helpers')
 
 const rootPath = process.cwd()
-chdirTestApp()
+chdirWebpackerTestApp()
 
-describe('Env', () => {
-  beforeEach(() => jest.resetModules())
+describe('Backward Compatibility - Env', () => {
+  beforeEach(() => jest.resetModules() && resetEnv())
   afterAll(() => process.chdir(rootPath))
 
   test('with NODE_ENV and RAILS_ENV set to development', () => {

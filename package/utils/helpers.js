@@ -1,8 +1,19 @@
+const { accessSync, constants } = require('fs')
+
 const isArray = (value) => Array.isArray(value)
 const isBoolean = (str) => /^true/.test(str) || /^false/.test(str)
 const chdirTestApp = () => {
   try {
     return process.chdir('spec/test_app')
+  } catch (e) {
+    return null
+  }
+}
+
+// For backward compatibility
+const chdirWebpackerTestApp = () => {
+  try {
+    return process.chdir('spec/backward_compatibility_specs/webpacker_test_app')
   } catch (e) {
     return null
   }
@@ -55,8 +66,32 @@ const loaderMatches = (configLoader, loaderToCheck, fn) => {
   return fn()
 }
 
+// For backward compatibility
+// Set SHAKAPACKER_XYZ only if SHAKAPACKER_XYZ is not defined but WEBPACKER_XYZ is.
+const setShakapackerEnvVariablesForBackwardCompatibility = () => {
+  const webpackerEnvVariables = Object.entries(process.env).filter((key) => /^WEBPACKER_/.test(key))
+  webpackerEnvVariables.forEach(([webpackerEnvKey, webpackerEnvvalue]) => {
+    const shakapackerKey = webpackerEnvKey.replace(/^WEBPACKER/, 'SHAKAPACKER')
+    if (!process.env[shakapackerKey]) {
+      process.env[shakapackerKey] = webpackerEnvvalue
+    }
+  })
+}
+
+const fileExists = (path) => {
+  try {
+    accessSync(path, constants.R_OK)
+    return true
+  } catch (_) {
+    return false
+  }
+}
+
 module.exports = {
   chdirTestApp,
+  chdirWebpackerTestApp,
+  setShakapackerEnvVariablesForBackwardCompatibility,
+  fileExists,
   chdirCwd,
   isArray,
   isBoolean,

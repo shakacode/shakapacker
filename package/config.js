@@ -2,7 +2,10 @@ const { resolve } = require('path')
 const { load } = require('js-yaml')
 const { readFileSync } = require('fs')
 const { merge } = require('webpack-merge')
-const { ensureTrailingSlash } = require('./utils/helpers')
+const {
+  ensureTrailingSlash,
+  setShakapackerEnvVariablesForBackwardCompatibility
+} = require('./utils/helpers')
 const { railsEnv } = require('./env')
 const configPath = require('./configPath')
 
@@ -22,6 +25,7 @@ config.outputPath = resolve(config.public_root_path, config.public_output_path)
 // Ensure that the publicPath includes our asset host so dynamic imports
 // (code-splitting chunks and static assets) load from the CDN instead of a relative path.
 const getPublicPath = () => {
+  setShakapackerEnvVariablesForBackwardCompatibility()
   const rootUrl = ensureTrailingSlash(process.env.SHAKAPACKER_ASSET_HOST || '/')
   return `${rootUrl}${config.public_output_path}/`
 }
