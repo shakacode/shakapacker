@@ -115,12 +115,14 @@ class Shakapacker::Configuration
 
     return data.fetch(:shakapacker_precompile) if data.key?(:shakapacker_precompile)
 
-    Shakapacker.puts_deprecation_message(
-      Shakapacker.short_deprecation_message(
-        "webpacker_precompile",
-        "shakapacker_precompile"
+    if data.key?(:shakapacker_precompile)
+      Shakapacker.puts_deprecation_message(
+        Shakapacker.short_deprecation_message(
+          "webpacker_precompile",
+          "shakapacker_precompile"
+        )
       )
-    )
+    end
 
     data.fetch(:webpacker_precompile, defaults[key])
   end

@@ -35,18 +35,29 @@ module Shakapacker
 
   def set_shakapacker_env_variables_for_backward_compatibility
     webpacker_env_variables = ENV.select { |key| key.start_with?("WEBPACKER_") }
+
+    deprecation_message_body = ""
+
     webpacker_env_variables.each do |webpacker_key, _|
       shakapacker_key = webpacker_key.gsub("WEBPACKER_", "SHAKAPACKER_")
       next if ENV.key?(shakapacker_key)
 
-      puts <<~MSG
-        \e[33m
-        DEPRECATION NOTICE:
-        Use `#{shakapacker_key}` instead of deprecated `#{webpacker_key}`.
-        Read more: #{Shakapacker::DEPRECATION_GUIDE_URL}
-        \e[0m
+      deprecation_message_body += <<~MSG
+        Use `#{shakapacker_key}` instead of the deprecated `#{webpacker_key}`.
       MSG
+
       ENV[shakapacker_key] = ENV[webpacker_key]
+    end
+
+    if deprecation_message_body.present?
+      Shakapacker.puts_deprecation_message(
+        <<~MSG
+          DEPRECATION NOTICE:
+
+          #{deprecation_message_body}
+          Read more: #{Shakapacker::DEPRECATION_GUIDE_URL}
+        MSG
+      )
     end
   end
 
