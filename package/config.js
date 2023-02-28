@@ -9,7 +9,7 @@ const {
 const { railsEnv } = require('./env')
 const configPath = require('./configPath')
 
-const defaultConfigPath = require.resolve('../lib/install/config/shakapacker.yml')
+const defaultConfigPath = require.resolve('../config/shakapacker.yml')
 
 const getDefaultConfig = () => {
   const defaultConfig = load(readFileSync(defaultConfigPath), 'utf8')
