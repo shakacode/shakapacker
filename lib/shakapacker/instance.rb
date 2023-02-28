@@ -10,7 +10,7 @@ class Shakapacker::Instance
     @config_path = Pathname.new(ENV["SHAKAPACKER_CONFIG"] || config_path)
 
     # For backward compatibility
-    @config_path = Shakapacker::get_config_file_path_with_backward_compatibility(@config_path)
+    @config_path = Shakapacker.get_config_file_path_with_backward_compatibility(config_path)
   end
 
   def env
