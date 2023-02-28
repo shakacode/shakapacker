@@ -1,5 +1,6 @@
+const fs = require('fs')
 const { resolve } = require('path')
-const { setShakapackerEnvVariablesForBackwardCompatibility, fileExists } = require('./utils/helpers')
+const { setShakapackerEnvVariablesForBackwardCompatibility } = require('./utils/helpers')
 
 setShakapackerEnvVariablesForBackwardCompatibility()
 
@@ -8,8 +9,8 @@ const resolveToPhysicalFilePath = () => {
   const shakapackerConfigPath = resolve('config', 'shakapacker.yml')
   const webpackerConfigPath = resolve('config', 'webpacker.yml')
 
-  if (fileExists(shakapackerConfigPath)) return shakapackerConfigPath
-  if (fileExists(webpackerConfigPath)) return webpackerConfigPath
+  if (fs.existsSync(shakapackerConfigPath)) return shakapackerConfigPath
+  if (fs.existsSync(webpackerConfigPath)) return webpackerConfigPath
 
   // If neither of files exist, try to resolve to shakapacker.yml to get more relevant error
   return shakapackerConfigPath
