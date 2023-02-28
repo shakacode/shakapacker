@@ -12,8 +12,9 @@ tasks = {
 }.freeze
 
 desc "DEPRECATED - Lists all available tasks in Webpacker"
-task :webpacker do
+task :webpacker do |task|
   puts "DEPRECATED - Available Webpacker tasks are:"
   tasks.each { |task, message| puts task.ljust(30) + message }
-  puts "These tasks are deprecated. Consider using shakapacker tasks!"
+
+  Shakapacker.puts_rake_deprecation_message(task.name)
 end

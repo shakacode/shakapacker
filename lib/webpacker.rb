@@ -1,4 +1,4 @@
 # This file exists for backward compatibility
 require "shakapacker"
 
-puts Shakapacker::DEPRECATION_MESSAGE
+Shakapacker.puts_deprecation_message(Shakapacker::DEPRECATION_MESSAGE)

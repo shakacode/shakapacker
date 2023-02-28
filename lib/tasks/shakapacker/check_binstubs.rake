@@ -4,11 +4,12 @@ namespace :shakapacker do
     if File.exist?(Rails.root.join("bin/shakapacker"))
       exit
     elsif File.exist?(Rails.root.join("bin/webpacker"))
-      puts <<~MSG
-        DEPRECATION NOTICE:
-        `bin/webpacker` found but it is deprecated.
-        More info: #{Webpacker::DEPRECATION_GUIDE_URL}
-      MSG
+      Shakapacker.puts_deprecation_message(
+        Shakapacker.short_deprecation_message(
+          "bin/webpacker",
+          "bin/shakapacker"
+        )
+      )
       exit
     else
       puts <<~MSG

@@ -104,13 +104,12 @@ class Shakapacker::Compiler
       if File.exist?(config.root_path.join("bin/shakapacker"))
         config.root_path.join("bin/shakapacker")
       elsif File.exist?(config.root_path.join("bin/webpacker"))
-        puts <<~MSG
-
-          DEPRECATION NOTICE:
-          Use `bin/shakapacker` instead of deprecated `bin/webpacker`
-          Read more: #{Shakapacker::DEPRECATION_GUIDE_URL}
-
-        MSG
+        Shakapacker.puts_deprecation_message(
+          Shakapacker.short_deprecation_message(
+            "bin/webpacker",
+            "bin/shakapacker"
+          )
+        )
         config.root_path.join("bin/webpacker")
       else
         config.root_path.join("bin/shakapacker")
