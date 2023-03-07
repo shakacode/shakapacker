@@ -33,6 +33,28 @@ describe "Webpacker" do
     end
   end
 
+  describe "configurable config" do
+    before do
+      @original_webpacker_config = ENV["WEBPACKER_CONFIG"]
+    end
+
+    after do
+      ENV["WEBPACKER_CONFIG"] = @original_webpacker_config
+    end
+
+    it "allows config file to be changed based on ENV variable" do
+      ENV.delete("WEBPACKER_CONFIG")
+      Webpacker.instance = nil
+      expect(Webpacker.config.config_path.to_s).to eq(Rails.root.join("config/webpacker.yml").to_s)
+    end
+
+    it "allows config file to be changed based on ENV variable" do
+      ENV["WEBPACKER_CONFIG"] = "/some/random/path.yml"
+      Webpacker.instance = nil
+      expect(Webpacker.config.config_path.to_s).to eq("/some/random/path.yml")
+    end
+  end
+
   it "has app_autoload_paths cleanup" do
     expect($test_app_autoload_paths_in_initializer).to eq []
   end
