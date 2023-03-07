@@ -35,23 +35,23 @@ describe "shakapacker" do
 
   describe "configurable config" do
     before do
-      @original_webpacker_config = ENV["WEBPACKER_CONFIG"]
+      @original_shakapacker_config = ENV["SHAKAPACKER_CONFIG"]
     end
 
     after do
-      ENV["WEBPACKER_CONFIG"] = @original_webpacker_config
+      ENV["SHAKAPACKER_CONFIG"] = @original_shakapacker_config
     end
 
     it "allows config file to be changed based on ENV variable" do
-      ENV.delete("WEBPACKER_CONFIG")
-      Webpacker.instance = nil
-      expect(Webpacker.config.config_path.to_s).to eq(Rails.root.join("config/webpacker.yml").to_s)
+      ENV.delete("SHAKAPACKER_CONFIG")
+      Shakapacker.instance = nil
+      expect(Shakapacker.config.config_path.to_s).to eq(Rails.root.join("config/shakapacker.yml").to_s)
     end
 
     it "allows config file to be changed based on ENV variable" do
-      ENV["WEBPACKER_CONFIG"] = "/some/random/path.yml"
-      Webpacker.instance = nil
-      expect(Webpacker.config.config_path.to_s).to eq("/some/random/path.yml")
+      ENV["SHAKAPACKER_CONFIG"] = "/some/random/path.yml"
+      Shakapacker.instance = nil
+      expect(Shakapacker.config.config_path.to_s).to eq("/some/random/path.yml")
     end
   end
 
