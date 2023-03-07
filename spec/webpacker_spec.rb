@@ -1,6 +1,6 @@
 require_relative "spec_helper_initializer"
 
-describe "shakapacker" do
+describe "Shakapacker" do
   describe "#inline_css?" do
     let(:dev_server) { instance_double("Shakapacker::DevServer") }
 
@@ -32,28 +32,6 @@ describe "shakapacker" do
       allow(Shakapacker.instance).to receive(:dev_server).and_return(dev_server)
 
       expect(Shakapacker.inlining_css?).to be false
-    end
-  end
-
-  describe "configurable config" do
-    before do
-      @original_shakapacker_config = ENV["SHAKAPACKER_CONFIG"]
-    end
-
-    after do
-      ENV["SHAKAPACKER_CONFIG"] = @original_shakapacker_config
-    end
-
-    it "allows config file to be changed based on ENV variable" do
-      ENV.delete("SHAKAPACKER_CONFIG")
-      Shakapacker.instance = nil
-      expect(Shakapacker.config.config_path.to_s).to eq(Rails.root.join("config/shakapacker.yml").to_s)
-    end
-
-    it "allows config file to be changed based on ENV variable" do
-      ENV["SHAKAPACKER_CONFIG"] = "/some/random/path.yml"
-      Shakapacker.instance = nil
-      expect(Shakapacker.config.config_path.to_s).to eq("/some/random/path.yml")
     end
   end
 

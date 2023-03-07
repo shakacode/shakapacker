@@ -11,10 +11,11 @@ class Shakapacker::Configuration
 
   def initialize(root_path:, config_path:, env:)
     @root_path = root_path
-    @config_path = config_path
     @env = env
 
+    # For backward compatibility
     Shakapacker.set_shakapacker_env_variables_for_backward_compatibility
+    @config_path = Pathname.new(ENV["SHAKAPACKER_CONFIG"] || config_path)
   end
 
   def dev_server
