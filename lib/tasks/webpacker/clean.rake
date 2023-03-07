@@ -1,6 +1,6 @@
 $stdout.sync = true
 
-require "webpacker/configuration"
+require "shakapacker/configuration"
 
 namespace :webpacker do
   desc "Remove old compiled webpacks"

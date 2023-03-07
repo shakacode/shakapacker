@@ -1,7 +1,7 @@
-module Webpacker
+module Shakapacker
   class BaseStrategy
     def initialize
-      @config = Webpacker.config
+      @config = Shakapacker.config
     end
 
     def after_compile_hook

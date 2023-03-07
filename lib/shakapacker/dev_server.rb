@@ -1,8 +1,8 @@
-class Webpacker::DevServer
-  DEFAULT_ENV_PREFIX = "WEBPACKER_DEV_SERVER".freeze
+class Shakapacker::DevServer
+  DEFAULT_ENV_PREFIX = "SHAKAPACKER_DEV_SERVER".freeze
 
   # Configure dev server connection timeout (in seconds), default: 0.1
-  # Webpacker.dev_server.connect_timeout = 1
+  # Shakapacker.dev_server.connect_timeout = 1
   cattr_accessor(:connect_timeout) { 0.1 }
 
   attr_reader :config

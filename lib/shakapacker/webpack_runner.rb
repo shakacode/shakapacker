@@ -1,8 +1,8 @@
 require "shellwords"
-require "webpacker/runner"
+require "shakapacker/runner"
 
-module Webpacker
-  class WebpackRunner < Webpacker::Runner
+module Shakapacker
+  class WebpackRunner < Shakapacker::Runner
     WEBPACK_COMMANDS = [
       "help",
       "h",
@@ -17,8 +17,8 @@ module Webpacker
     ].freeze
 
     def run
-      env = Webpacker::Compiler.env
-      env["WEBPACKER_CONFIG"] = @webpacker_config
+      env = Shakapacker::Compiler.env
+      env["SHAKAPACKER_CONFIG"] = @webpacker_config
 
       cmd = if node_modules_bin_exist?
         ["#{@node_modules_bin_path}/webpack"]

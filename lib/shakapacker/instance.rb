@@ -1,20 +1,21 @@
 require "pathname"
-class Webpacker::Instance
+
+class Shakapacker::Instance
   cattr_accessor(:logger) { ActiveSupport::TaggedLogging.new(ActiveSupport::Logger.new(STDOUT)) }
 
   attr_reader :root_path, :config_path
-
-  def initialize(root_path: Rails.root, config_path: Rails.root.join("config/webpacker.yml"))
+  
+  def initialize(root_path: Rails.root, config_path: Rails.root.join("config/shakapacker.yml"))
     @root_path = root_path
-    @config_path = Pathname.new(ENV["WEBPACKER_CONFIG"] || config_path)
+    @config_path = Pathname.new(ENV["SHAKAPACKER_CONFIG"] || config_path)
   end
 
   def env
-    @env ||= Webpacker::Env.inquire self
+    @env ||= Shakapacker::Env.inquire self
   end
 
   def config
-    @config ||= Webpacker::Configuration.new(
+    @config ||= Shakapacker::Configuration.new(
       root_path: root_path,
       config_path: config_path,
       env: env
@@ -22,23 +23,23 @@ class Webpacker::Instance
   end
 
   def strategy
-    @strategy ||= Webpacker::CompilerStrategy.from_config
+    @strategy ||= Shakapacker::CompilerStrategy.from_config
   end
 
   def compiler
-    @compiler ||= Webpacker::Compiler.new self
+    @compiler ||= Shakapacker::Compiler.new self
   end
 
   def dev_server
-    @dev_server ||= Webpacker::DevServer.new config
+    @dev_server ||= Shakapacker::DevServer.new config
   end
 
   def manifest
-    @manifest ||= Webpacker::Manifest.new self
+    @manifest ||= Shakapacker::Manifest.new self
   end
 
   def commands
-    @commands ||= Webpacker::Commands.new self
+    @commands ||= Shakapacker::Commands.new self
   end
 
   def inlining_css?

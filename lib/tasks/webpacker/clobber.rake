@@ -1,4 +1,4 @@
-require "webpacker/configuration"
+require "shakapacker/configuration"
 
 namespace :webpacker do
   desc "Remove the webpack compiled output directory"

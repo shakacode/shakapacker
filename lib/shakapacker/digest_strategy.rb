@@ -1,7 +1,7 @@
 require "digest/sha1"
-require "webpacker/base_strategy"
+require "shakapacker/base_strategy"
 
-module Webpacker
+module Shakapacker
   class DigestStrategy < BaseStrategy
     # Returns true if all the compiled packs are up to date with the underlying asset files.
     def fresh?
@@ -31,10 +31,10 @@ module Webpacker
       def watched_files_digest
         if Rails.env.development?
           warn <<~MSG.strip
-          Webpacker::Compiler - Slow setup for development
+          Shakapacker::Compiler - Slow setup for development
           Prepare JS assets with either:
           1. Running `bin/webpacker-dev-server`
-          2. Set `compile` to false in webpacker.yml and run `bin/webpacker -w`
+          2. Set `compile` to false in shakapacker.yml and run `bin/webpacker -w`
         MSG
         end
 
@@ -53,7 +53,7 @@ module Webpacker
       end
 
       def compilation_digest_path
-        config.cache_path.join("last-compilation-digest-#{Webpacker.env}")
+        config.cache_path.join("last-compilation-digest-#{Shakapacker.env}")
       end
   end
 end

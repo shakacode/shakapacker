@@ -2,7 +2,7 @@ require "yaml"
 require "active_support/core_ext/hash/keys"
 require "active_support/core_ext/hash/indifferent_access"
 
-class Webpacker::Configuration
+class Shakapacker::Configuration
   class << self
     attr_accessor :installing
   end
@@ -33,8 +33,8 @@ class Webpacker::Configuration
 
   def webpacker_precompile?
     # ENV of false takes precedence
-    return false if %w(no false n f).include?(ENV["WEBPACKER_PRECOMPILE"])
-    return true if %w(yes true y t).include?(ENV["WEBPACKER_PRECOMPILE"])
+    return false if %w(no false n f).include?(ENV["SHAKAPACKER_PRECOMPILE"])
+    return true if %w(yes true y t).include?(ENV["SHAKAPACKER_PRECOMPILE"])
 
     return false unless config_path.exist?
     fetch(:webpacker_precompile)
@@ -82,7 +82,7 @@ class Webpacker::Configuration
 
   def check_yarn_integrity=(value)
     warn <<~EOS
-      Webpacker::Configuration#check_yarn_integrity=(value) is obsolete. The integrity
+      Shakapacker::Configuration#check_yarn_integrity=(value) is obsolete. The integrity
       check has been removed from Webpacker (https://github.com/rails/webpacker/pull/2518)
       so changing this setting will have no effect.
     EOS
@@ -128,13 +128,13 @@ class Webpacker::Configuration
 
     def defaults
       @defaults ||= begin
-        path = File.expand_path("../../install/config/webpacker.yml", __FILE__)
+        path = File.expand_path("../../install/config/shakapacker.yml", __FILE__)
         config = begin
           YAML.load_file(path, aliases: true)
         rescue ArgumentError
           YAML.load_file(path)
         end
-        HashWithIndifferentAccess.new(config[env] || config[Webpacker::DEFAULT_ENV])
+        HashWithIndifferentAccess.new(config[env] || config[Shakapacker::DEFAULT_ENV])
       end
     end
 end

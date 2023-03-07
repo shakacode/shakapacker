@@ -5,7 +5,7 @@ require_relative "../../webpacker/version"
 module Shakapacker
   module Utils
     class VersionSyntaxConverter
-      def rubygem_to_npm(rubygem_version = Webpacker::VERSION)
+      def rubygem_to_npm(rubygem_version = Shakapacker::VERSION)
         regex_match = rubygem_version.match(/(\d+\.\d+\.\d+)[.\-]?(.+)?/)
         return "#{regex_match[1]}-#{regex_match[2]}" if regex_match[2]
 

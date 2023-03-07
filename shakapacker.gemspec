@@ -1,16 +1,16 @@
 $:.push File.expand_path("../lib", __FILE__)
-require "webpacker/version"
+require "shakapacker/version"
 
 Gem::Specification.new do |s|
   s.name     = "shakapacker"
-  s.version  = Webpacker::VERSION
+  s.version  = Shakapacker::VERSION
   s.authors  = [ "David Heinemeier Hansson", "Gaurav Tiwari", "Justin Gordon" ]
   s.email    = [ "david@basecamp.com", "gaurav@gauravtiwari.co.uk", "justin@shakacode.com" ]
   s.summary  = "Use webpack to manage app-like JavaScript modules in Rails"
   s.homepage = "https://github.com/shakacode/shakapacker"
   s.license  = "MIT"
 
-  npm_version = Webpacker::VERSION.gsub(".rc", "-rc")
+  npm_version = Shakapacker::VERSION.gsub(".rc", "-rc")
   s.metadata = {
     "source_code_uri" => "https://github.com/shakacode/shakapacker/tree/v#{npm_version}",
   }

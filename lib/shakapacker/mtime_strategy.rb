@@ -1,6 +1,6 @@
-require "webpacker/base_strategy"
+require "shakapacker/base_strategy"
 
-module Webpacker
+module Shakapacker
   class MtimeStrategy < BaseStrategy
     # Returns true if manifest file mtime is newer than the timestamp of the last modified watched file
     def fresh?
@@ -21,11 +21,11 @@ module Webpacker
       def latest_modified_timestamp
         if Rails.env.development?
           warn <<~MSG.strip
-          Webpacker::Compiler - Slow setup for development
+          Shakapacker::Compiler - Slow setup for development
 
           Prepare JS assets with either:
           1. Running `bin/webpacker-dev-server`
-          2. Set `compile` to false in webpacker.yml and run `bin/webpacker -w`
+          2. Set `compile` to false in shakapacker.yml and run `bin/webpacker -w`
         MSG
         end
 

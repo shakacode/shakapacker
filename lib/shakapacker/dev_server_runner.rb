@@ -1,11 +1,11 @@
 require "shellwords"
 require "socket"
-require "webpacker/configuration"
-require "webpacker/dev_server"
-require "webpacker/runner"
+require "shakapacker/configuration"
+require "shakapacker/dev_server"
+require "shakapacker/runner"
 
-module Webpacker
-  class DevServerRunner < Webpacker::Runner
+module Shakapacker
+  class DevServerRunner < Shakapacker::Runner
     def run
       load_config
       detect_unsupported_switches!
@@ -48,7 +48,7 @@ module Webpacker
         end
 
         if @argv.include?("--https") && !@https
-          $stdout.puts "Please set https: true in webpacker.yml to use the --https command line flag."
+          $stdout.puts "Please set https: true in shakapacker.yml to use the --https command line flag."
           exit!
         end
       end
@@ -63,8 +63,8 @@ module Webpacker
       end
 
       def execute_cmd
-        env = Webpacker::Compiler.env
-        env["WEBPACKER_CONFIG"] = @webpacker_config
+        env = Shakapacker::Compiler.env
+        env["SHAKAPACKER_CONFIG"] = @webpacker_config
         env["WEBPACK_SERVE"] = "true"
 
         cmd = if node_modules_bin_exist?

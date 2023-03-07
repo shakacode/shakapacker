@@ -1,4 +1,4 @@
-class Webpacker::Commands
+class Shakapacker::Commands
   delegate :config, :compiler, :manifest, :logger, to: :@webpacker
 
   def initialize(webpacker)

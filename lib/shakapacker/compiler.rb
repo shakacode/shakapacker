@@ -1,16 +1,16 @@
 require "open3"
-require "webpacker/compiler_strategy"
+require "shakapacker/compiler_strategy"
 
-class Webpacker::Compiler
+class Shakapacker::Compiler
   # Additional environment variables that the compiler is being run with
-  # Webpacker::Compiler.env['FRONTEND_API_KEY'] = 'your_secret_key'
+  # Shakapacker::Compiler.env['FRONTEND_API_KEY'] = 'your_secret_key'
   cattr_accessor(:env) { {} }
 
-  delegate :config, :logger, :strategy, to: :webpacker
+  delegate :config, :logger, :strategy, to: :instance
   delegate :fresh?, :stale?, :after_compile_hook, to: :strategy
 
-  def initialize(webpacker)
-    @webpacker = webpacker
+  def initialize(instance)
+    @instance = instance
   end
 
   def compile
@@ -32,7 +32,7 @@ class Webpacker::Compiler
   end
 
   private
-    attr_reader :webpacker
+    attr_reader :instance
 
     def acquire_ipc_lock
       open_lock_file do |lf|
@@ -94,8 +94,8 @@ class Webpacker::Compiler
     def webpack_env
       return env unless defined?(ActionController::Base)
 
-      env.merge("WEBPACKER_ASSET_HOST"        => ENV.fetch("WEBPACKER_ASSET_HOST", ActionController::Base.helpers.compute_asset_host),
-                "WEBPACKER_RELATIVE_URL_ROOT" => ENV.fetch("WEBPACKER_RELATIVE_URL_ROOT", ActionController::Base.relative_url_root),
-                "WEBPACKER_CONFIG" => webpacker.config_path.to_s)
+      env.merge("SHAKAPACKER_ASSET_HOST"        => ENV.fetch("SHAKAPACKER_ASSET_HOST", ActionController::Base.helpers.compute_asset_host),
+                "SHAKAPACKER_RELATIVE_URL_ROOT" => ENV.fetch("SHAKAPACKER_RELATIVE_URL_ROOT", ActionController::Base.relative_url_root),
+                "SHAKAPACKER_CONFIG" => instance.config_path.to_s)
     end
 end

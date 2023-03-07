@@ -1,68 +1,68 @@
 require "rails/railtie"
 
-require "webpacker/helper"
-require "webpacker/dev_server_proxy"
-require "webpacker/version_checker"
+require "shakapacker/helper"
+require "shakapacker/dev_server_proxy"
+require "shakapacker/version_checker"
 
-class Webpacker::Engine < ::Rails::Engine
+class Shakapacker::Engine < ::Rails::Engine
   # Allows Webpacker config values to be set via Rails env config files
   config.webpacker = ActiveSupport::OrderedOptions.new
 
-  initializer "webpacker.version_checker" do
-    if File.exist?(Webpacker::VersionChecker::NodePackageVersion.package_json_path)
-      Webpacker::VersionChecker.build.raise_if_gem_and_node_package_versions_differ
+  initializer "shakapacker.version_checker" do
+    if File.exist?(Shakapacker::VersionChecker::NodePackageVersion.package_json_path)
+      Shakapacker::VersionChecker.build.raise_if_gem_and_node_package_versions_differ
     end
   end
 
-  initializer "webpacker.proxy" do |app|
-    if (Webpacker.config.dev_server.present? rescue nil)
+  initializer "shakapacker.proxy" do |app|
+    if (Shakapacker.config.dev_server.present? rescue nil)
       app.middleware.insert_before 0,
         Rails::VERSION::MAJOR >= 5 ?
-          Webpacker::DevServerProxy : "Webpacker::DevServerProxy", ssl_verify_none: true
+          Shakapacker::DevServerProxy : "Shakapacker::DevServerProxy", ssl_verify_none: true
     end
   end
 
-  initializer "webpacker.helper" do
+  initializer "shakapacker.helper" do
     ActiveSupport.on_load :action_controller do
-      ActionController::Base.helper Webpacker::Helper
+      ActionController::Base.helper Shakapacker::Helper
     end
 
     ActiveSupport.on_load :action_view do
-      include Webpacker::Helper
+      include Shakapacker::Helper
     end
   end
 
-  initializer "webpacker.logger" do
+  initializer "shakapacker.logger" do
     config.after_initialize do
       if ::Rails.logger.respond_to?(:tagged)
-        Webpacker.logger = ::Rails.logger
+        Shakapacker.logger = ::Rails.logger
       else
-        Webpacker.logger = ActiveSupport::TaggedLogging.new(::Rails.logger)
+        Shakapacker.logger = ActiveSupport::TaggedLogging.new(::Rails.logger)
       end
     end
   end
 
-  initializer "webpacker.bootstrap" do
+  initializer "shakapacker.bootstrap" do
     if defined?(Rails::Server) || defined?(Rails::Console)
-      Webpacker.bootstrap
+      Shakapacker.bootstrap
       if defined?(Spring)
         require "spring/watcher"
-        Spring.after_fork { Webpacker.bootstrap }
-        Spring.watch(Webpacker.config.config_path)
+        Spring.after_fork { Shakapacker.bootstrap }
+        Spring.watch(Shakapacker.config.config_path)
       end
     end
   end
 
-  initializer "webpacker.set_source" do |app|
-    if Webpacker.config.config_path.exist?
-      app.config.javascript_path = Webpacker.config.source_path.relative_path_from(Rails.root.join("app")).to_s
+  initializer "shakapacker.set_source" do |app|
+    if Shakapacker.config.config_path.exist?
+      app.config.javascript_path = Shakapacker.config.source_path.relative_path_from(Rails.root.join("app")).to_s
     end
   end
 
-  initializer "webpacker.remove_app_packs_from_the_autoload_paths" do
+  initializer "shakapacker.remove_app_packs_from_the_autoload_paths" do
     Rails.application.config.before_initialize do
-      if Webpacker.config.config_path.exist?
-        source_path = Webpacker.config.source_path.to_s
+      if Shakapacker.config.config_path.exist?
+        source_path = Shakapacker.config.source_path.to_s
         ActiveSupport::Dependencies.autoload_paths.delete(source_path)
       end
     end

@@ -1,4 +1,4 @@
-require "webpacker/version"
+require "shakapacker/version"
 
 namespace :webpacker do
   desc "Provide information on Webpacker's environment"

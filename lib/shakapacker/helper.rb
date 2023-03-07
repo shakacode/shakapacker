@@ -1,9 +1,9 @@
-module Webpacker::Helper
+module Shakapacker::Helper
   # Returns the current Webpacker instance.
   # Could be overridden to use multiple Webpacker
   # configurations within the same app (e.g. with engines).
   def current_webpacker_instance
-    Webpacker.instance
+    Shakapacker.instance
   end
 
   # Computes the relative path for a given Webpacker asset.
@@ -156,7 +156,7 @@ module Webpacker::Helper
   #   <%= stylesheet_pack_tag 'calendar' %>
   #   <%= stylesheet_pack_tag 'map' %>
   def stylesheet_pack_tag(*names, **options)
-    return "" if Webpacker.inlining_css?
+    return "" if Shakapacker.inlining_css?
 
     requested_packs = sources_from_manifest_entrypoints(names, type: :stylesheet)
     appended_packs = available_sources_from_manifest_entrypoints(@stylesheet_pack_tag_queue || [], type: :stylesheet)

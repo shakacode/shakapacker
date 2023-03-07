@@ -1,4 +1,4 @@
-require "webpacker/configuration"
+require "shakapacker/configuration"
 
 namespace :webpacker do
   desc "Verifies if the Webpacker config is present"
