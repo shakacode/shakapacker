@@ -5,6 +5,7 @@ module.exports = {
     'import/no-unresolved': 'off',
     'import/no-extraneous-dependencies': 'off',
     'import/extensions': 'off',
+    "indent": ["error", 2],
     semi: ['error', 'never']
   },
   env: {
