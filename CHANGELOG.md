@@ -10,11 +10,11 @@ _Please add entries here for your pull requests that are not yet released._
 
 ## [v6.6.0] - March 7, 2023
 ### Improved
-- Allow configuration of webpacker.yml through env variable. [PR 254](https://github.com/shakacode/shakapacker/pull/254) by [alecslupu](https://github.com/alecslupu)
+- Allow configuration of webpacker.yml through env variable. [PR 254](https://github.com/shakacode/shakapacker/pull/254) by [alecslupu](https://github.com/alecslupu).
 
 ## [v6.5.6] - February 11, 2023
 ### Fixed
-- Fixed failing to update `bin/setup` file due to different formats of the file in different versions of Rails. [PR 229](https://github.com/shakacode/shakapacker/pull/229) by [ahangarha](https://github.com/ahangarha)
+- Fixed failing to update `bin/setup` file due to different formats of the file in different versions of Rails. [PR 229](https://github.com/shakacode/shakapacker/pull/229) by [ahangarha](https://github.com/ahangarha).
 
 - Upgrade several JS dependencies to fix security issues. [PR 243](https://github.com/shakacode/shakapacker/pull/243) by [ahangarha](https://github.com/ahangarha).
 
