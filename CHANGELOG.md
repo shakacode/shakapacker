@@ -7,6 +7,8 @@
 Changes since last non-beta release.
 
 _Please add entries here for your pull requests that are not yet released._
+### Improved
+- Set CSS modules mode depending on file type. [PR 261](https://github.com/shakacode/shakapacker/pull/261) by [talyuk](https://github.com/talyuk).
 
 ## [v6.6.0] - March 7, 2023
 ### Improved
@@ -22,7 +24,7 @@ _Please add entries here for your pull requests that are not yet released._
 
 - Fixed [issue](https://github.com/shakacode/shakapacker/issues/208) to support directories under `node_modules/*` in the `additional_paths` property of `webpacker.yml` [PR 240](https://github.com/shakacode/shakapacker/pull/240) by [vaukalak](https://github.com/vaukalak).
 - Remove duplicate yarn installs. [PR 238](https://github.com/shakacode/shakapacker/pull/238) by [justin808](https://github/justin808).
-- Remove unneeded code related to CSP config for generator. [PR 223](https://github.com/shakacode/shakapacker/pull/223) by [ahangarha](https://github/ahangarha). 
+- Remove unneeded code related to CSP config for generator. [PR 223](https://github.com/shakacode/shakapacker/pull/223) by [ahangarha](https://github/ahangarha).
 
 ## [v6.5.5] - December 28, 2022
 
