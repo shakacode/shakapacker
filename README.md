@@ -176,7 +176,7 @@ At its core, Shakapacker's essential function is to:
 
 ### Configuration and Code
 
-You will need your file system to correspond to the setup of your `shakapacker.yml` file.
+You will need your file system to correspond to the setup of your `config/shakapacker.yml` file.
 
 Suppose you have the following configuration:
 
@@ -224,7 +224,7 @@ Be sure to consult the API documentation in the source code of [helper.rb](./lib
 
 #### View Helpers `javascript_pack_tag` and `stylesheet_pack_tag`
 
-These view helpers take your `shakapacker.yml` configuration file, along with the resulting webpack compilation `manifest.json` and generate the HTML to load the assets.
+These view helpers take your `shakapacker.yml` configuration file and the resulting webpack compilation `manifest.json` and generate the HTML to load the assets.
 
 You can then link the JavaScript pack in Rails views using the `javascript_pack_tag` helper. If you have styles imported in your pack file, you can link them by using `stylesheet_pack_tag`:
 
@@ -849,7 +849,7 @@ See the doc page for [Troubleshooting](./docs/troubleshooting.md).
 
 ## Contributing
 
-We encourage you to contribute to Shakapacker/Shakapacker! See [CONTRIBUTING](CONTRIBUTING.md) for guidelines about how to proceed. We have a [Slack discussion channel](https://reactrails.slack.com/join/shared_invite/enQtNjY3NTczMjczNzYxLTlmYjdiZmY3MTVlMzU2YWE0OWM0MzNiZDI0MzdkZGFiZTFkYTFkOGVjODBmOWEyYWQ3MzA2NGE1YWJjNmVlMGE).
+We encourage you to contribute to Shakapacker! See [CONTRIBUTING](CONTRIBUTING.md) for guidelines about how to proceed. We have a [Slack discussion channel](https://reactrails.slack.com/join/shared_invite/enQtNjY3NTczMjczNzYxLTlmYjdiZmY3MTVlMzU2YWE0OWM0MzNiZDI0MzdkZGFiZTFkYTFkOGVjODBmOWEyYWQ3MzA2NGE1YWJjNmVlMGE).
 
 ## License
 
