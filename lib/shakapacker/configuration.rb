@@ -111,12 +111,25 @@ class Shakapacker::Configuration
   end
 
   def fetch(key)
-    # for backward compatibility
-    return data.fetch(key, defaults[key]) unless key == :shakapacker_precompile
+    return data.fetch(key, defaults[key]) unless [:shakapacker_precompile, :webpacker_precompile].include?(key)
 
+    # for backward compatibility
+    if key == :webpacker_precompile
+      Shakapacker.puts_deprecation_message(
+        Shakapacker.short_deprecation_message(
+          "webpacker_precompile",
+          "shakapacker_precompile"
+        )
+      )
+
+      return data.fetch(:webpacker_precompile, defaults[key])
+    end
+
+    # Fetching shakapacker_precompile while having such entry in config file
     return data.fetch(:shakapacker_precompile) if data.key?(:shakapacker_precompile)
 
-    if data.key?(:shakapacker_precompile)
+    # Fetching shakapacker_precompile while having webpacker_precompile entry in config file
+    if data.key?(:webpacker_precompile)
       Shakapacker.puts_deprecation_message(
         Shakapacker.short_deprecation_message(
           "webpacker_precompile",
@@ -125,6 +138,7 @@ class Shakapacker::Configuration
       )
     end
 
+    # Fetch either webpacker_precompile in config file or shakapacker_precompile in gem config file
     data.fetch(:webpacker_precompile, defaults[key])
   end
 
