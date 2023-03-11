@@ -3,9 +3,8 @@ module Shakapacker
   DEPRECATION_MESSAGE = <<~MSG
     DEPRECATION NOTICE:
 
-    Using Webpacker module is deprecated in Shakapacker. Though this version
-    offers backward compatibility, updating your project to comply with the
-    new interfaces is strongly recommended.
+    Using webpacker spelling is deprecated in Shakapacker.
+    Update your project with the new spelling.
 
     For more information about this process, check:
     #{DEPRECATION_GUIDE_URL}
