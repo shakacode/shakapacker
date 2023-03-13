@@ -1,5 +1,5 @@
-describe "Webpacker::MtimeStrategy" do
-  let(:mtime_strategy) { Webpacker::MtimeStrategy.new }
+describe "Shakapacker::MtimeStrategy" do
+  let(:mtime_strategy) { Shakapacker::MtimeStrategy.new }
   let(:manifest_timestamp) { Time.parse("2021-01-01 12:34:56 UTC") }
 
   describe "#fresh?" do

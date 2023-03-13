@@ -22,7 +22,7 @@ In order to use SWC as your compiler today. You need to do two things:
 yarn add @swc/core swc-loader
 ```
 
-2. Add or change `webpack_loader` value in your default `webpacker.yml` config to `swc`
+2. Add or change `webpack_loader` value in your default `shakapacker.yml` config to `swc`
 The default configuration of babel is done by using `package.json` to use the file within the `shakapacker` package.
 
 ```yml
@@ -31,7 +31,7 @@ default: &default
   source_entry_path: /
   public_root_path: public
   public_output_path: packs
-  cache_path: tmp/webpacker
+  cache_path: tmp/shakapacker
   webpack_compile_output: true
 
   # Additional paths webpack should look up modules
