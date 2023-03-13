@@ -1,16 +1,16 @@
 # Deployment
 
-Webpacker hooks up a new `webpacker:compile` task to `assets:precompile`, which gets run whenever you run `assets:precompile`.
-If you are not using Sprockets `webpacker:compile` is automatically aliased to `assets:precompile`.
+Shakapacker hooks up a new `shakapacker:compile` task to `assets:precompile`, which gets run whenever you run `assets:precompile`.
+If you are not using Sprockets `shakapacker:compile` is automatically aliased to `assets:precompile`.
 
 ```
 
 ## Heroku
 
-In order for your Webpacker app to run on Heroku, you'll need to do a bit of configuration before hand.
+In order for your Shakapacker app to run on Heroku, you'll need to do a bit of configuration before hand.
 
 ```bash
-heroku create my-webpacker-heroku-app
+heroku create my-shakapacker-heroku-app
 heroku addons:create heroku-postgresql:hobby-dev
 heroku buildpacks:add heroku/nodejs
 heroku buildpacks:add heroku/ruby
@@ -26,11 +26,11 @@ We're essentially doing the following here:
 
 ## Nginx
 
-Webpacker doesn't serve anything in production. You’re expected to configure your web server to serve files in public/ directly.
+Shakapacker doesn't serve anything in production. You’re expected to configure your web server to serve files in public/ directly.
 
 Some servers support sending precompressed versions of files when they're available. For example, nginx offers a `gzip_static` directive that serves files with the `.gz` extension to supported clients. With an optional module, nginx can also serve Brotli compressed files with the `.br` extension (see below for installation and configuration instructions).
 
-Here's a sample nginx site config for a Rails app using Webpacker:
+Here's a sample nginx site config for a Rails app using Shakapacker:
 
 ```nginx
 upstream app {
@@ -86,17 +86,17 @@ Now, you can set `brotli_static on;` in your nginx site config, as per the confi
 
 ## CDN
 
-Webpacker out-of-the-box provides CDN support using your Rails app `config.action_controller.asset_host` setting. If you already have [CDN](http://guides.rubyonrails.org/asset_pipeline.html#cdns) added in your Rails app
-you don't need to do anything extra for Webpacker, it just works.
+Shakapacker out-of-the-box provides CDN support using your Rails app `config.action_controller.asset_host` setting. If you already have [CDN](http://guides.rubyonrails.org/asset_pipeline.html#cdns) added in your Rails app
+you don't need to do anything extra for Shakapacker, it just works.
 
 ## Capistrano
 
 ### Assets compiling on every deployment even if JavaScript and CSS files are not changed
 
-Make sure you have your public outputh path (default `public/packs`), the webpacker cache path (default `tmp/webpacker`) and `node_modules` in `:linked_dirs`
+Make sure you have your public outputh path (default `public/packs`), the shakapacker cache path (default `tmp/shakapacker`) and `node_modules` in `:linked_dirs`
 
 ```ruby
-append :linked_dirs, "log", "tmp/pids", "tmp/cache", "tmp/sockets", "tmp/webpacker", "public/packs", ".bundle", "node_modules"
+append :linked_dirs, "log", "tmp/pids", "tmp/cache", "tmp/sockets", "tmp/shakapacker", "public/packs", ".bundle", "node_modules"
 ```
 
 If you have `node_modules` added to `:linked_dirs` you'll need to run yarn install before `deploy:assets:precompile`, so you can add this code snippet at the bottom deploy.rb

@@ -5,7 +5,7 @@
   "main": "package/index.js",
   "files": [
     "package",
-    "lib/install/config/webpacker.yml"
+    "lib/install/config/shakapacker.yml"
   ],
   "engines": {
     "node": "^12.13.0 || ^14 || >=16",

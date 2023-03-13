@@ -47,7 +47,7 @@ With HMR enabled, Shakapacker will automatically update only that part of the pa
 
 To enable HMR in a React app, proceed as follows:.
 
-In `config/webpacker.yml` set `hmr` is set to `true`.
+In `config/shakapacker.yml` set `hmr` is set to `true`.
 
 Install the [react-refresh](https://www.npmjs.com/package/react-refresh) package, as well as [@pmmmwh/react-refresh-webpack-plugin](https://www.npmjs.com/package/@pmmmwh/react-refresh-webpack-plugin):
 
@@ -139,7 +139,7 @@ rails new myapp --skip-javascript
 cd myapp
 bundle add shakapacker --strict
 ./bin/bundle install
-./bin/rails webpacker:install
+./bin/rails shakapacker:install
 yarn add react react-dom @babel/preset-react
 yarn add css-loader style-loader mini-css-extract-plugin css-minimizer-webpack-plugin
 ```
@@ -182,7 +182,7 @@ export default HelloMessage;
 h1 { color: blue; }
 ```
 
-7. Enable HMR in config/webpacker.yml:
+7. Enable HMR in config/shakapacker.yml:
 ```shell
 hmr: true
 ```
@@ -261,7 +261,7 @@ module.exports = function (api) {
 9. Start the Rails server and the webpack-dev-server in separate console windows:
 ```shell
 rails s
-./bin/webpacker-dev-server
+./bin/shakapacker-dev-server
 ```
 
 10. Hit: <http://localhost:3000/site/index>

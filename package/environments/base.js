@@ -16,7 +16,7 @@ const getEntryObject = () => {
   const rootPath = join(config.source_path, config.source_entry_path)
   if (config.source_entry_path === '/' && config.nested_entries) {
     throw new Error(
-      "Your webpacker config specified using a source_entry_path of '/' with 'nested_entries' == " +
+      "Your shakapacker config specified using a source_entry_path of '/' with 'nested_entries' == " +
       "'true'. Doing this would result in packs for every one of your source files"
     )
   }

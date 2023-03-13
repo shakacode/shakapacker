@@ -1,0 +1,18 @@
+# Note: You must restart bin/shakapacker-dev-server for changes to take effect
+
+default: &default
+  public_root_path: ../public
+
+development:
+  <<: *default
+  compile: true
+
+test:
+  <<: *default
+  compile: true
+  public_output_path: packs-test
+
+production:
+  <<: *default
+  compile: false
+  cache_manifest: true

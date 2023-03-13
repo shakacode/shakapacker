@@ -49,21 +49,21 @@ bundle exec rake test
 #### 4.1 Run a single ruby test file
 
 ```
-bundle exec rake test TEST=test/rake_tasks_test.rb
+bundle exec rspec spec/configuration_spec.rb
 ```
 
 #### 4.2 Run a single ruby test
 
 ```
-bundle exec ruby -I test test/rake_tasks_test.rb -n test_rake_webpacker_install
+bundle exec rspec -e "#source_entry_path returns correct path"
 ```
 
 ## Testing the generator
 If you change the generator, check that install instructions work.
 
-1. Update the gemfile so that gem "webpacker" has a line like this, pointing to your install of webpacker
+1. Update the gemfile so that gem "shakapacker" has a line like this, pointing to your install of shakapacker
    ```ruby
-   gem 'webpacker', path: "~/shakacode/forks/shakapacker"
+   gem 'shakapacker', path: "~/shakacode/forks/shakapacker"
    ```
 2. `bundle`
 3. Run the generator confirm that you got the right changes. 

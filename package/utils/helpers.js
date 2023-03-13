@@ -48,7 +48,7 @@ const loaderMatches = (configLoader, loaderToCheck, fn) => {
 
   if (!moduleExists(loaderName)) {
     throw new Error(
-      `Your webpacker config specified using ${configLoader}, but ${loaderName} package is not installed. Please install ${loaderName} first.`
+      `Your Shakapacker config specified using ${configLoader}, but ${loaderName} package is not installed. Please install ${loaderName} first.`
     )
   }
 

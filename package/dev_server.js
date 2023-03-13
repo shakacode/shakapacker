@@ -9,7 +9,7 @@ const fetch = (key) => {
 const devServerConfig = config.dev_server
 
 if (devServerConfig) {
-  const envPrefix = config.dev_server.env_prefix || 'WEBPACKER_DEV_SERVER'
+  const envPrefix = config.dev_server.env_prefix || 'SHAKAPACKER_DEV_SERVER'
 
   Object.keys(devServerConfig).forEach((key) => {
     const envValue = fetch(`${envPrefix}_${key.toUpperCase()}`)

@@ -1,4 +1,4 @@
-require "webpacker/webpack_runner"
+require "shakapacker/webpack_runner"
 
 describe "WebpackRunner" do
   before :all do
@@ -38,7 +38,7 @@ describe "WebpackRunner" do
       cwd = Dir.pwd
       Dir.chdir(test_app_path)
 
-      klass = Webpacker::WebpackRunner
+      klass = Shakapacker::WebpackRunner
       instance = klass.new(argv)
 
       allow(klass).to receive(:new).and_return(instance)
@@ -47,7 +47,7 @@ describe "WebpackRunner" do
 
       klass.run(argv)
 
-      expect(Kernel).to have_received(:exec).with(Webpacker::Compiler.env, *cmd)
+      expect(Kernel).to have_received(:exec).with(Shakapacker::Compiler.env, *cmd)
     ensure
       Dir.chdir(cwd)
     end

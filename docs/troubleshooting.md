@@ -5,7 +5,7 @@
 1. Read the error message carefully. The error message will tell you the precise key value
    that is not matching what Webpack expects.
 
-2. Put a `debugger` statement in your Webpack configuration and run `bin/webpacker --debug-webpacker`.
+2. Put a `debugger` statement in your Webpack configuration and run `bin/shakapacker --debug-shakapacker`.
    If you have a node debugger installed, you'll see the Chrome debugger for your webpack
    config. For example, install the Chrome extension
    [NiM](https://chrome.google.com/webstore/detail/nodejs-v8-inspector-manag/gnhhdgbaldcilmgcpfddgdbkhjohddkj) and
@@ -13,9 +13,9 @@
    For more details on debugging, see the official
    [Webpack docs on debugging](https://webpack.js.org/contribute/debugging/#devtools)
 
-3. Any arguments that you add to bin/webpacker get sent to webpack. For example, you can pass `--debug` to switch loaders to debug mode. See [webpack CLI debug options](https://webpack.js.org/api/cli/#debug-options) for more information on the available options.
+3. Any arguments that you add to bin/shakapacker get sent to webpack. For example, you can pass `--debug` to switch loaders to debug mode. See [webpack CLI debug options](https://webpack.js.org/api/cli/#debug-options) for more information on the available options.
 
-4. You can also pass additional options to the command to run the webpack-dev-server and start the webpack-dev-server with the option `--debug-webpacker`
+4. You can also pass additional options to the command to run the webpack-dev-server and start the webpack-dev-server with the option `--debug-shakapacker`
 
 ## Incorrect peer dependencies
 The latest version of Shakapacker uses peer dependencies to make upgrading easier. However, there's a catch.
@@ -38,12 +38,12 @@ So, be sure to investigate warnings from `yarn install`!
 ## ENOENT: no such file or directory - node-sass
 
 If you get the error `ENOENT: no such file or directory - node-sass` on deploy with
-`assets:precompile` or `bundle exec rails webpacker:compile` you may need to
+`assets:precompile` or `bundle exec rails shakapacker:compile` you may need to
 move Sass to production `dependencies`.
 
 Move any packages that related to Sass (e.g. `node-sass` or `sass-loader`) from
 `devDependencies` to `dependencies` in `package.json`. This is because
-webpacker is running on a production system with the Rails workflow to build
+shakapacker is running on a production system with the Rails workflow to build
 the assets. Particularly on hosting providers that try to detect and do the right
 thing, like Heroku.
 
@@ -64,11 +64,11 @@ In `package.json`:
 
 * If you get this error `Can't find hello_react.js in manifest.json`
 when loading a view in the browser it's because webpack is still compiling packs.
-Webpacker uses a `manifest.json` file to keep track of packs in all environments,
+Shakapacker uses a `manifest.json` file to keep track of packs in all environments,
 however since this file is generated after packs are compiled by webpack. So,
 if you load a view in browser whilst webpack is compiling you will get this error.
 Therefore, make sure webpack
-(i.e `./bin/webpacker-dev-server`) is running and has
+(i.e `./bin/shakapacker-dev-server`) is running and has
 completed the compilation successfully before loading a view.
 
 
@@ -85,7 +85,7 @@ completed the compilation successfully before loading a view.
 
 ## webpack or webpack-dev-server not found
 
-* This could happen if `webpacker:install` step is skipped. Please run `bundle exec rails webpacker:install` to fix the issue.
+* This could happen if `shakapacker:install` step is skipped. Please run `bundle exec rails shakapacker:install` to fix the issue.
 
 * If you encounter the above error on heroku after upgrading from Rails 4.x to 5.1.x, then the problem might be related to missing `yarn` binstub. Please run following commands to update/add binstubs:
 
@@ -97,7 +97,7 @@ bundle config --delete bin
 ## Running webpack on Windows
 
 If you are running webpack on Windows, your command shell may not be able to interpret the preferred interpreter
-for the scripts generated in `bin/webpacker` and `bin/webpacker-dev-server`. Instead you'll want to run the scripts
+for the scripts generated in `bin/shakapacker` and `bin/shakapacker-dev-server`. Instead you'll want to run the scripts
 manually with Ruby:
 
 ```
@@ -107,7 +107,7 @@ C:\path>ruby bin\webpack-dev-server
 
 ## Invalid configuration object. webpack has been initialised using a configuration object that does not match the API schema.
 
-If you receive this error when running `$ ./bin/webpacker-dev-server` ensure your configuration is correct; most likely the path to your "packs" folder is incorrect if you modified from the original "source_path" defined in `config/webpacker.yml`.
+If you receive this error when running `$ ./bin/shakapacker-dev-server` ensure your configuration is correct; most likely the path to your "packs" folder is incorrect if you modified from the original "source_path" defined in `config/shakapacker.yml`.
 
 ## Running Elm on Continuous Integration (CI) services such as CircleCI, CodeShip, Travis CI
 
@@ -132,7 +132,7 @@ chmod +x $HOME/your_rails_app/node_modules/.bin/elm-make
 ```
 
 ## Rake assets:precompile fails. ExecJS::RuntimeError
-This error occurs because you are trying to minify by `terser` a pack that's already been minified by Webpacker. To avoid this conflict and prevent appearing of `ExecJS::RuntimeError` error, you will need to disable uglifier from Rails config:
+This error occurs because you are trying to minify by `terser` a pack that's already been minified by Shakapacker. To avoid this conflict and prevent appearing of `ExecJS::RuntimeError` error, you will need to disable uglifier from Rails config:
 
 ```ruby
 # In production.rb
@@ -164,10 +164,10 @@ module.exports = merge(webpackConfig, {
 
 ### Compilation Fails Silently
 
-If compiling is not producing output files and there are no error messages to help troubleshoot. Setting the `webpack_compile_output` configuration variable to `true` in webpacker.yml may add some helpful error information to your log file (Rails `log/development.log` or `log/production.log`)
+If compiling is not producing output files and there are no error messages to help troubleshoot. Setting the `webpack_compile_output` configuration variable to `true` in shakapacker.yml may add some helpful error information to your log file (Rails `log/development.log` or `log/production.log`)
 
 ```yml
-# webpacker.yml
+# shakapacker.yml
 default: &default
   source_path: app/javascript
   source_entry_path: packs
@@ -218,11 +218,11 @@ using Heroku's Pipeline promote feature). You might find that your production
 application is using your staging `config.asset_host` host when using
 `javascript_pack_tag`.
 
-This can be fixed by setting the environment variable `WEBPACKER_ASSET_HOST` to
+This can be fixed by setting the environment variable `SHAKAPACKER_ASSET_HOST` to
 an empty string where your assets are compiled. On Heroku this is done under
 *Settings* -> *Config Vars*.
 
-This way webpacker won't hard-code the CDN host into the manifest file used by
+This way shakapacker won't hard-code the CDN host into the manifest file used by
 `javascript_pack_tag`, but instead fetch the CDN host at runtime, resolving the
 issue.
 

@@ -1,12 +1,12 @@
 module ActionView::TestCase::Behavior
   attr_accessor :request
 
-  describe "Webpacker::Helper" do
+  describe "Shakapacker::Helper" do
     let(:application_stylesheet_chunks) { %w[/packs/1-c20632e7baf2c81200d3.chunk.css /packs/application-k344a6d59eef8632c9d1.chunk.css] }
     let(:hello_stimulus_stylesheet_chunks) { %w[/packs/1-c20632e7baf2c81200d3.chunk.css /packs/hello_stimulus-k344a6d59eef8632c9d1.chunk.css] }
 
     before :each do
-      extend Webpacker::Helper
+      extend Shakapacker::Helper
       extend ActionView::Helpers
       extend ActionView::Helpers::AssetTagHelper
       extend ActionView::TestCase::Behavior
