@@ -111,18 +111,17 @@ class Shakapacker::Configuration
   end
 
   def fetch(key)
-    # for backward compatibility
-    if key == :webpacker_precompile
-      Shakapacker.puts_deprecation_message(
-        Shakapacker.short_deprecation_message(
-          "webpacker_precompile",
-          "shakapacker_precompile"
-        )
-      )
-      return data.fetch(key, defaults[:shakapacker_precompile])
-    end
+    return data.fetch(key, defaults[key]) unless key == :webpacker_precompile
 
-    return data.fetch(key, defaults[key])
+    # for backward compatibility
+    Shakapacker.puts_deprecation_message(
+      Shakapacker.short_deprecation_message(
+        "webpacker_precompile",
+        "shakapacker_precompile"
+      )
+    )
+
+    data.fetch(key, defaults[:shakapacker_precompile])
   end
 
   private
