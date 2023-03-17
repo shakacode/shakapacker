@@ -10,7 +10,9 @@ Changes since last non-beta release.
 _Please add entries here for your pull requests that are not yet released._
 
 ### Changed
-- Rename Webpacker to Shakapacker in entire project including config files, binstubs, environment variables,... with backward compatibility. More information: [v7 Upgrade Guide](./docs/v7_upgrade.md) [PR157](https://github.com/shakacode/shakapacker/pull/157) by [ahangarha](https://github.com/ahangarha)
+- Rename Webpacker to Shakapacker in the entire project including config files, binstubs, environment variables, etc. with a high degree of backward compatibility.
+
+  This change might be breaking for certain setups and edge cases. More information: [v7 Upgrade Guide](./docs/v7_upgrade.md) [PR157](https://github.com/shakacode/shakapacker/pull/157) by [ahangarha](https://github.com/ahangarha)
 
 ## [v6.6.0] - March 7, 2023
 ### Improved
