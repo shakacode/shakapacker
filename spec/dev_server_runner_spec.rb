@@ -1,3 +1,4 @@
+require_relative "spec_helper_initializer"
 require "shakapacker/dev_server_runner"
 
 describe "DevServerRunner" do

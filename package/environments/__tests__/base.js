@@ -5,6 +5,7 @@
 
 const { chdirTestApp, chdirCwd, resetEnv } = require('../../utils/helpers')
 
+const rootPath = process.cwd()
 chdirTestApp()
 
 const { resolve } = require('path')
@@ -14,8 +15,7 @@ const config = require("../../config");
 
 describe('Base config', () => {
   beforeEach(() => jest.resetModules() && resetEnv())
-
-  afterAll(chdirCwd)
+  afterAll(() => process.chdir(rootPath))
 
   describe('config', () => {
     test('should return entry', () => {

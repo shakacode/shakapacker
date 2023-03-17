@@ -16,7 +16,7 @@ const createTrackLoader = () => {
 
 const node_modules = path.resolve("node_modules");
 const node_modules_included = path.resolve("node_modules/included");
-const app_javascript = path.resolve("app/packs");
+const app_javascript = path.resolve("app/javascript");
 
 const createInMemoryFs = () => {
   const fs = new MemoryFS();

@@ -1,3 +1,4 @@
+require_relative "spec_helper_initializer"
 require "shakapacker/version"
 
 class NodePackageVersionDouble

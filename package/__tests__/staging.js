@@ -1,12 +1,13 @@
 /* test expect, describe, afterAll, beforeEach */
 
 const { resolve } = require('path')
-const { chdirTestApp, chdirCwd } = require('../utils/helpers')
+const { chdirTestApp } = require('../utils/helpers')
 
+const rootPath = process.cwd()
 chdirTestApp()
 
 describe('Custom environment', () => {
-  afterAll(chdirCwd)
+  afterAll(() => process.chdir(rootPath))
 
   describe('webpackConfig', () => {
     beforeEach(() => jest.resetModules())
