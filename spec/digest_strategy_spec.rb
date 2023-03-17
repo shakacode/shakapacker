@@ -1,3 +1,5 @@
+require_relative "spec_helper_initializer"
+
 describe "DigestStrategy" do
   def remove_compilation_digest_path
     @digest_strategy.send(:compilation_digest_path).tap do |path|

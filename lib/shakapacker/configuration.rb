@@ -11,8 +11,11 @@ class Shakapacker::Configuration
 
   def initialize(root_path:, config_path:, env:)
     @root_path = root_path
-    @config_path = config_path
     @env = env
+
+    # For backward compatibility
+    Shakapacker.set_shakapacker_env_variables_for_backward_compatibility
+    @config_path = Pathname.new(ENV["SHAKAPACKER_CONFIG"] || config_path)
   end
 
   def dev_server
@@ -38,6 +41,17 @@ class Shakapacker::Configuration
 
     return false unless config_path.exist?
     fetch(:shakapacker_precompile)
+  end
+
+  def webpacker_precompile?
+    Shakapacker.puts_deprecation_message(
+      Shakapacker.short_deprecation_message(
+        "webpacker_precompile?",
+        "shakapacker_precompile?"
+      )
+    )
+
+    shakapacker_precompile?
   end
 
   def source_path
@@ -97,7 +111,17 @@ class Shakapacker::Configuration
   end
 
   def fetch(key)
-    data.fetch(key, defaults[key])
+    return data.fetch(key, defaults[key]) unless key == :webpacker_precompile
+
+    # for backward compatibility
+    Shakapacker.puts_deprecation_message(
+      Shakapacker.short_deprecation_message(
+        "webpacker_precompile",
+        "shakapacker_precompile"
+      )
+    )
+
+    data.fetch(key, defaults[:shakapacker_precompile])
   end
 
   private
@@ -111,7 +135,16 @@ class Shakapacker::Configuration
       rescue ArgumentError
         YAML.load_file(config_path.to_s)
       end
-      config[env].deep_symbolize_keys
+      symbolized_config = config[env].deep_symbolize_keys
+
+      # For backward compatibility
+      if symbolized_config.key?(:shakapacker_precompile) && !symbolized_config.key?(:webpacker_precompile)
+        symbolized_config[:webpacker_precompile] = symbolized_config[:shakapacker_precompile]
+      elsif !symbolized_config.key?(:shakapacker_precompile) && symbolized_config.key?(:webpacker_precompile)
+        symbolized_config[:shakapacker_precompile] = symbolized_config[:webpacker_precompile]
+      end
+
+      return symbolized_config
     rescue Errno::ENOENT => e
       if self.class.installing
         {}

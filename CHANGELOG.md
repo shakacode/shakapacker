@@ -1,4 +1,5 @@
 * For the changelog of versions prior to v6, see the [5.x stable branch of rails/webpacker](https://github.com/rails/webpacker/tree/5-x-stable).
+* Please see the [v7 Upgrade Guide](./docs/v7_upgrade.md) for upgrading to new spelling in version 7.
 * Please see the [v6 Upgrade Guide](./docs/v6_upgrade.md) to go from versions prior to v6.
 * [ShakaCode](https://www.shakacode.com) offers support for upgrading from Webpacker or using Shakapacker. If interested, contact Justin Gordon, [justin@shakacode.com](mailto:justin@shakacode.com).
 
@@ -18,8 +19,8 @@ _Please add entries here for your pull requests that are not yet released._
 ### Improved
 - Move compilation lock file into the working directory. [PR 272](https://github.com/shakacode/shakapacker/pull/272) by [tomdracz](https://github.com/tomdracz).
 
-### Breaking changes
-- Rename Webpacker to Shakapacker in entire project including config files, binstubs, environment variables,... [PR157](https://github.com/shakacode/shakapacker/pull/157) by [ahangarha](https://github.com/ahangarha)
+### Changed
+- Rename Webpacker to Shakapacker in entire project including config files, binstubs, environment variables,... with backward compatibility. More information: [v7 Upgrade Guide](./docs/v7_upgrade.md) [PR157](https://github.com/shakacode/shakapacker/pull/157) by [ahangarha](https://github.com/ahangarha)
 
 ## [v6.6.0] - March 7, 2023
 ### Improved

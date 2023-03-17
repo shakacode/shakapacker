@@ -26,7 +26,16 @@ module Shakapacker
         ["yarn", "webpack"]
       end
 
-      if @argv.delete "--debug-shakapacker"
+      if @argv.include?("--debug-webpacker")
+        Shakapacker.puts_deprecation_message(
+          Shakapacker.short_deprecation_message(
+            "--debug-webpacker",
+            "--debug-shakapacker"
+          )
+        )
+      end
+
+      if @argv.delete("--debug-shakapacker") || @argv.delete("--debug-webpacker")
         cmd = ["node", "--inspect-brk"] + cmd
       end
 

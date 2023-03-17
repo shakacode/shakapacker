@@ -1,3 +1,5 @@
+require_relative "spec_helper_initializer"
+
 describe "Shakapacker::Configuration" do
   ROOT_PATH = Pathname.new(File.expand_path("test_app", __dir__))
 

@@ -1,12 +1,13 @@
 /* global test expect, describe */
 
-const { chdirTestApp, chdirCwd } = require('../utils/helpers')
+const { chdirTestApp } = require('../utils/helpers')
 
+const rootPath = process.cwd()
 chdirTestApp()
 
 describe('Env', () => {
   beforeEach(() => jest.resetModules())
-  afterAll(chdirCwd)
+  afterAll(() => process.chdir(rootPath))
 
   test('with NODE_ENV and RAILS_ENV set to development', () => {
     process.env.RAILS_ENV = 'development'

@@ -1,3 +1,5 @@
+require_relative "spec_helper_initializer"
+
 describe "Shakapacker::Compiler" do
   it "accepts custom environment variables" do
     expect(Shakapacker.compiler.send(:webpack_env)["FOO"]).to be nil

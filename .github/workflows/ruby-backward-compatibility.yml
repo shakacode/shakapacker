@@ -1,0 +1,43 @@
+name: Ruby specs - Backward compatibility
+
+on: [push, pull_request]
+
+jobs:
+  test:
+    name: Ruby specs - Backward compatibility
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest]
+        ruby: ['2.6', '2.7', '3.0']
+        gemfile:
+          - gemfiles/Gemfile-rails.5.2.x
+          - gemfiles/Gemfile-rails.6.0.x
+          - gemfiles/Gemfile-rails.6.1.x
+          - gemfiles/Gemfile-rails.7.0.x
+          # Uncomment the following line only to ensure compatibility with the
+          # upcomming Rails versions, maybe before a release.
+          #- gemfiles/Gemfile-rails-edge
+        exclude:
+          - ruby: 2.6
+            os: ubuntu-latest
+            gemfile: gemfiles/Gemfile-rails.7.0.x
+          - ruby: 2.6
+            os: ubuntu-latest
+            gemfile: gemfiles/Gemfile-rails-edge
+          - ruby: 3.0
+            os: ubuntu-latest
+            gemfile: gemfiles/Gemfile-rails.5.2.x
+
+    env:
+      BUNDLE_GEMFILE: ${{ matrix.gemfile }}
+
+    steps:
+      - uses: actions/checkout@v2
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: ${{ matrix.ruby }}
+          bundler-cache: true
+
+      - name: Ruby specs - Backward compatibility
+        run: bundle exec rake test_bc

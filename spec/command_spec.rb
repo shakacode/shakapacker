@@ -1,3 +1,5 @@
+require_relative "spec_helper_initializer"
+
 describe "Command" do
   before do
     allow(Shakapacker.logger).to receive(:info)

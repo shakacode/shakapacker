@@ -8,3 +8,8 @@ rescue LoadError
 end
 
 task default: :test
+
+desc "Run backward compatibility specs"
+task :test_bc do
+  system("bundle exec rspec spec/backward_compatibility_specs/*_spec_bc.rb")
+end
