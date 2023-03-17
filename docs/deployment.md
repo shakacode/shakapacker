@@ -24,6 +24,8 @@ We're essentially doing the following here:
 * Adding the Heroku NodeJS and Ruby buildpacks for your app. This allows the `npm` or `yarn` executables to properly function when compiling your app - as well as Ruby.
 * Pushing your code to Heroku and kicking off the deployment
 
+Your production build process is responsible for running `yarn install` before `rake assets:precompile`. For example, if you are on Heroku, the `heroku/nodejs` buildpack must run **prior** to the `heroku/ruby` buildpack for precompilation to run successfully.
+
 ## Nginx
 
 Webpacker doesn't serve anything in production. You’re expected to configure your web server to serve files in public/ directly.
