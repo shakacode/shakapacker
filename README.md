@@ -239,16 +239,16 @@ packs with the chunks in your view, which creates HTML tags for all the chunks.
 You can provide multiple packs and other attributes. Note, `defer` defaults to showing.
 
 ```erb
-<%= javascript_pack_tag 'calendar', 'map', 'data-turbolinks-track': 'reload' %>
+<%= javascript_pack_tag 'calendar', 'map', 'data-turbo-track': 'reload' %>
 ```
 
 The resulting HTML would look like this:
 ```
-<script src="/packs/vendor-16838bab065ae1e314.js" data-turbolinks-track="reload" defer></script>
-<script src="/packs/calendar~runtime-16838bab065ae1e314.js" data-turbolinks-track="reload" defer></script>
-<script src="/packs/calendar-1016838bab065ae1e314.js" data-turbolinks-track="reload" defer"></script>
-<script src="/packs/map~runtime-16838bab065ae1e314.js" data-turbolinks-track="reload" defer></script>
-<script src="/packs/map-16838bab065ae1e314.js" data-turbolinks-track="reload" defer></script>
+<script src="/packs/vendor-16838bab065ae1e314.js" data-turbo-track="reload" defer></script>
+<script src="/packs/calendar~runtime-16838bab065ae1e314.js" data-turbo-track="reload" defer></script>
+<script src="/packs/calendar-1016838bab065ae1e314.js" data-turbo-track="reload" defer"></script>
+<script src="/packs/map~runtime-16838bab065ae1e314.js" data-turbo-track="reload" defer></script>
+<script src="/packs/map-16838bab065ae1e314.js" data-turbo-track="reload" defer></script>
 ```
 
 In this output, both the calendar and map codes might refer to other common libraries. Those get placed in something like the vendor bundle. The view helper removes any duplication.
