@@ -9,11 +9,12 @@ module Shakapacker
     def initialize(argv)
       @argv = argv
 
+      @app_path              = File.expand_path(".", Dir.pwd)
+      @webpack_config        = File.join(@app_path, "config/webpack/webpack.config.js")
+
       Shakapacker.set_shakapacker_env_variables_for_backward_compatibility
 
-      @app_path              = File.expand_path(".", Dir.pwd)
       @node_modules_bin_path = ENV["SHAKAPACKER_NODE_MODULES_BIN_PATH"] || `yarn bin`.chomp
-      @webpack_config        = File.join(@app_path, "config/webpack/webpack.config.js")
       @shakapacker_config    = ENV["SHAKAPACKER_CONFIG"] || File.join(@app_path, "config/shakapacker.yml")
 
       @shakapacker_config = Shakapacker.get_config_file_path_with_backward_compatibility(@shakapacker_config)
