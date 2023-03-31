@@ -28,10 +28,7 @@ module.exports = function config(api) {
           exclude: ['transform-typeof-symbol']
         }
       ],
-      moduleExists('@babel/preset-typescript') && [
-        '@babel/preset-typescript',
-        { allExtensions: true, isTSX: true }
-      ]
+      moduleExists('@babel/preset-typescript') && '@babel/preset-typescript'
     ].filter(Boolean),
     plugins: [
       ['@babel/plugin-transform-runtime', { helpers: false }]
