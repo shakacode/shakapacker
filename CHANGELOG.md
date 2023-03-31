@@ -22,7 +22,7 @@ _Please add entries here for your pull requests that are not yet released._
 
   `@babel/preset-typescript` has been initialised in default configuration with `{ allExtensions: true, isTSX: true }` - meaning every file in the codebase was treated as TSX leading to potential issues. This has been removed and returns to sensible default of the preset which is to figure out the file type from the extensions. This change might affect generated output however so it is marked as breaking.
 
-- Remove the arbitrary stripping of the top-level directory when generating static file paths [PR XX](https://github.com/shakacode/shakapacker/pull/XX) by [tomdracz](https://github.com/tomdracz).
+- Remove the arbitrary stripping of the top-level directory when generating static file paths. [PR 271](https://github.com/shakacode/shakapacker/pull/271) by [tomdracz](https://github.com/tomdracz).
 
   Prior to this change, top level directory of static assets like images and fonts was stripped. This meant that file in `app/javascript/images/image.png` would be output to `static/image.png` directory and could be referenced through helpers as `image_pack_tag("image.jpg")` or `image_pack_tag("static/image.jpg")`.
 
