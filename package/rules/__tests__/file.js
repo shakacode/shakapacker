@@ -34,6 +34,15 @@ describe('file', () => {
     types.forEach(type => expect(file.exclude.test(type)).toBe(true))
   })
 
+  test('correct generated output path is returned for top level files', () => {
+    const pathData = {
+      filename: `${sourcePath}/image.svg`,
+    };
+    expect(file.generator.filename(pathData)).toEqual(
+      'static/[name]-[hash][ext][query]'
+    );
+  });
+
   test('correct generated output path is returned for nested files', () => {
     const pathData = {
       filename: `${sourcePath}/images/image.svg`,
