@@ -10,7 +10,6 @@ module.exports = {
       const folders = dirname(pathData.filename)
         .replace(`${sourcePath}/`, '')
         .split('/')
-        .slice(1)
 
       const foldersWithStatic = ['static', ...folders].join('/')
       return `${foldersWithStatic}/[name]-[hash][ext][query]`
