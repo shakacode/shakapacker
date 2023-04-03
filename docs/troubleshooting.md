@@ -188,7 +188,7 @@ Thus ProvidePlugin manages build-time dependencies to global symbols whereas the
 
 For instance, with [jQuery](https://jquery.com/):
 ```diff
-// app/packs/entrypoints/application.js
+// app/javascript/entrypoints/application.js
 
 - import jQuery from 'jquery'
 - window.jQuery = jQuery

@@ -40,6 +40,6 @@ describe('Config', () => {
   test('should allow overriding manifestPath', () => {
     process.env.WEBPACKER_CONFIG = 'config/webpacker_manifest_path.yml'
     const config = require('../config')
-    expect(config.manifestPath).toEqual(resolve('app/packs/manifest.json'))
+    expect(config.manifestPath).toEqual(resolve('app/javascript/manifest.json'))
   })
 })
