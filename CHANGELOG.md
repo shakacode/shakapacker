@@ -14,6 +14,9 @@ _Please add entries here for your pull requests that are not yet released._
 
   This change might be breaking for certain setups and edge cases. More information: [v7 Upgrade Guide](./docs/v7_upgrade.md) [PR157](https://github.com/shakacode/shakapacker/pull/157) by [ahangarha](https://github.com/ahangarha)
 
+### Removed
+- Remove redundant enhancement for precompile task to run `yarn install` [PR 270](https://github.com/shakacode/shakapacker/pull/270) by [ahangarha](https://github.com/ahangarha).
+
 ## [v6.6.0] - March 7, 2023
 ### Improved
 - Allow configuration of webpacker.yml through env variable. [PR 254](https://github.com/shakacode/shakapacker/pull/254) by [alecslupu](https://github.com/alecslupu).
