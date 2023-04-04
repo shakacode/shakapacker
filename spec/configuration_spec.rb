@@ -11,12 +11,12 @@ describe "Webpacker::Configuration" do
     end
 
     it "#source_path returns correct path" do
-      source_path = File.expand_path File.join(File.dirname(__FILE__), "test_app/app/packs").to_s
+      source_path = File.expand_path File.join(File.dirname(__FILE__), "test_app/app/javascript").to_s
       expect(config.source_path.to_s).to eq source_path
     end
 
     it "#source_entry_path returns correct path" do
-      source_entry_path = File.expand_path File.join(File.dirname(__FILE__), "test_app/app/packs", "entrypoints").to_s
+      source_entry_path = File.expand_path File.join(File.dirname(__FILE__), "test_app/app/javascript", "entrypoints").to_s
       expect(config.source_entry_path.to_s).to eq source_entry_path
     end
 
@@ -195,7 +195,7 @@ describe "Webpacker::Configuration" do
     )
 
     it "#manifest_path returns correct expected value" do
-      expected_manifest_path = File.expand_path File.join(File.dirname(__FILE__), "test_app/app/packs", "manifest.json").to_s
+      expected_manifest_path = File.expand_path File.join(File.dirname(__FILE__), "test_app/app/javascript", "manifest.json").to_s
       expect(config.manifest_path.to_s).to eq expected_manifest_path
     end
   end
