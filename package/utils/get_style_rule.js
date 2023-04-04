@@ -20,7 +20,7 @@ const getStyleRule = (test, preprocessors = []) => {
           sourceMap: true,
           importLoaders: 2,
           modules: {
-            mode: 'auto'
+            auto: true
           }
         }
       },
