@@ -20,7 +20,7 @@ describe('Base config', () => {
   describe('config', () => {
     test('should return entry', () => {
       expect(baseConfig.entry.application).toEqual(
-        resolve('app', 'packs', 'entrypoints', 'application.js')
+        resolve('app', 'javascript', 'entrypoints', 'application.js')
       )
     })
 
@@ -39,8 +39,8 @@ describe('Base config', () => {
       expect(config.nested_entries).toEqual(false)
 
       expect(baseConfig.entry.multi_entry.sort()).toEqual([
-        resolve('app', 'packs', 'entrypoints', 'multi_entry.css'),
-        resolve('app', 'packs', 'entrypoints', 'multi_entry.js')
+        resolve('app', 'javascript', 'entrypoints', 'multi_entry.css'),
+        resolve('app', 'javascript', 'entrypoints', 'multi_entry.js')
       ])
       expect(baseConfig.entry['generated/something']).toEqual(undefined)
     })
@@ -53,14 +53,14 @@ describe('Base config', () => {
       expect(config.nested_entries).toEqual(true)
 
       expect(baseConfig.entry.application).toEqual(
-        resolve('app', 'packs', 'entrypoints', 'application.js')
+        resolve('app', 'javascript', 'entrypoints', 'application.js')
       )
       expect(baseConfig.entry.multi_entry.sort()).toEqual([
-        resolve('app', 'packs', 'entrypoints', 'multi_entry.css'),
-        resolve('app', 'packs', 'entrypoints', 'multi_entry.js')
+        resolve('app', 'javascript', 'entrypoints', 'multi_entry.css'),
+        resolve('app', 'javascript', 'entrypoints', 'multi_entry.js')
       ])
       expect(baseConfig.entry['generated/something']).toEqual(
-        resolve('app', 'packs', 'entrypoints', 'generated', 'something.js')
+        resolve('app', 'javascript', 'entrypoints', 'generated', 'something.js')
       )
     })
 
@@ -91,7 +91,7 @@ describe('Base config', () => {
 
     test('should return default resolve.modules with additions', () => {
       expect(baseConfig.resolve.modules).toEqual([
-        resolve('app', 'packs'),
+        resolve('app', 'javascript'),
         resolve('app/assets'),
         resolve('/etc/yarn'),
         resolve('some.config.js'),

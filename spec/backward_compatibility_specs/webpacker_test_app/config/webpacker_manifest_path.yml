@@ -1,7 +1,7 @@
 # Note: You must restart bin/webpack-dev-server for changes to take effect
 
 default: &default
-  source_path: app/packs
+  source_path: app/javascript
   source_entry_path: entrypoints
   public_root_path: public
   public_output_path: packs
@@ -9,7 +9,7 @@ default: &default
   webpack_compile_output: false
 
   # Location for manifest.json, defaults to {public_output_path}/manifest.json if unset
-  manifest_path: app/packs/manifest.json
+  manifest_path: app/javascript/manifest.json
 
   # Additional paths webpack should look up modules
   # ['app/assets', 'engine/foo/app/assets']

@@ -75,7 +75,7 @@ module Shakapacker::Helper
   # Creates script tags that reference the js chunks from entrypoints when using split chunks API,
   # as compiled by webpack per the entries list in package/environments/base.js.
   # By default, this list is auto-generated to match everything in
-  # app/packs/entrypoints/*.js and all the dependent chunks. In production mode, the digested reference is automatically looked up.
+  # app/javascript/entrypoints/*.js and all the dependent chunks. In production mode, the digested reference is automatically looked up.
   # See: https://webpack.js.org/plugins/split-chunks-plugin/
   #
   # Example:
@@ -133,7 +133,7 @@ module Shakapacker::Helper
   # Creates link tags that reference the css chunks from entrypoints when using split chunks API,
   # as compiled by webpack per the entries list in package/environments/base.js.
   # By default, this list is auto-generated to match everything in
-  # app/packs/entrypoints/*.js and all the dependent chunks. In production mode, the digested reference is automatically looked up.
+  # app/javascript/entrypoints/*.js and all the dependent chunks. In production mode, the digested reference is automatically looked up.
   # See: https://webpack.js.org/plugins/split-chunks-plugin/
   #
   # Examples:
