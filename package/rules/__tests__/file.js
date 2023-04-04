@@ -1,5 +1,4 @@
 const file = require('../file')
-const { source_path: sourcePath } = require('../../config');
 
 describe('file', () => {
   test('test expected file types', () => {
@@ -36,7 +35,7 @@ describe('file', () => {
 
   test('correct generated output path is returned for top level files', () => {
     const pathData = {
-      filename: `${sourcePath}/image.svg`,
+      filename: 'app/javascript/image.svg',
     };
     expect(file.generator.filename(pathData)).toEqual(
       'static/[name]-[hash][ext][query]'
@@ -45,7 +44,7 @@ describe('file', () => {
 
   test('correct generated output path is returned for nested files', () => {
     const pathData = {
-      filename: `${sourcePath}/images/image.svg`,
+      filename: 'app/javascript/images/image.svg',
     };
     expect(file.generator.filename(pathData)).toEqual(
       'static/images/[name]-[hash][ext][query]'
@@ -54,7 +53,7 @@ describe('file', () => {
 
   test('correct generated output path is returned for deeply nested files', () => {
     const pathData = {
-      filename: `${sourcePath}/images/nested/deeply/image.svg`,
+      filename: 'app/javascript/images/nested/deeply/image.svg',
     };
     expect(file.generator.filename(pathData)).toEqual(
       'static/images/nested/deeply/[name]-[hash][ext][query]'
