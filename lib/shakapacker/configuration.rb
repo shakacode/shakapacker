@@ -63,7 +63,7 @@ class Shakapacker::Configuration
   end
 
   def source_entry_path
-    source_path.join(fetch(:source_entry_path))
+    source_path.join(relative_path(fetch(:source_entry_path)))
   end
 
   def manifest_path
@@ -169,5 +169,11 @@ class Shakapacker::Configuration
         end
         HashWithIndifferentAccess.new(config[env] || config[Shakapacker::DEFAULT_ENV])
       end
+    end
+
+    def relative_path(path)
+      return ".#{path}" if path.start_with?("/")
+
+      path
     end
 end
