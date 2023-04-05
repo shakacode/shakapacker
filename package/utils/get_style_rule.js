@@ -18,7 +18,10 @@ const getStyleRule = (test, preprocessors = []) => {
         loader: require.resolve('css-loader'),
         options: {
           sourceMap: true,
-          importLoaders: 2
+          importLoaders: 2,
+          modules: {
+            auto: true
+          }
         }
       },
       tryPostcss(),
