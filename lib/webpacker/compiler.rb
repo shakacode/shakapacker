@@ -1,5 +1,6 @@
 require "open3"
 require "webpacker/compiler_strategy"
+require "fileutils"
 
 class Webpacker::Compiler
   # Additional environment variables that the compiler is being run with
@@ -55,10 +56,20 @@ class Webpacker::Compiler
     end
 
     def open_lock_file
-      lock_file_name = File.join(Dir.tmpdir, "shakapacker.lock")
-      File.open(lock_file_name, File::CREAT) do |lf|
+      create_lock_file_dir unless File.exist?(lock_file_path)
+
+      File.open(lock_file_path, File::CREAT) do |lf|
         return yield lf
       end
+    end
+
+    def create_lock_file_dir
+      dirname = File.dirname(lock_file_path)
+      FileUtils.mkdir_p(dirname)
+    end
+
+    def lock_file_path
+      config.root_path.join("tmp/shakapacker.lock")
     end
 
     def optionalRubyRunner
