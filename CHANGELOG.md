@@ -13,7 +13,10 @@ _Please add entries here for your pull requests that are not yet released._
 - Rename Webpacker to Shakapacker in the entire project including config files, binstubs, environment variables, etc. with a high degree of backward compatibility.
 
   This change might be breaking for certain setups and edge cases. More information: [v7 Upgrade Guide](./docs/v7_upgrade.md) [PR157](https://github.com/shakacode/shakapacker/pull/157) by [ahangarha](https://github.com/ahangarha)
-- Set `source_entry_path` to relative `packs` rather absolute `/` in `webpacker.yml` [PR 205](https://github.com/shakacode/shakapacker/pull/205) by [ahangarha](https://github.com/ahangarha)
+- Set `source_entry_path` to `packs` in`shakapacker.yml` [PR 205](https://github.com/shakacode/shakapacker/pull/205) by [ahangarha](https://github.com/ahangarha).
+
+### Fixed
+- Process `source_entry_path` with values starting with `/` as a relative path to `source_path` [PR 205](https://github.com/shakacode/shakapacker/pull/205) by [ahangarha](https://github.com/ahangarha).
 
 ## [v6.6.0] - March 7, 2023
 ### Improved
