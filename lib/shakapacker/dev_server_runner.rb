@@ -29,7 +29,7 @@ module Shakapacker
         @hostname          = dev_server.host
         @port              = dev_server.port
         @pretty            = dev_server.pretty?
-        @https             = dev_server.https?
+        @https             = dev_server.protocol == "https"
         @hot               = dev_server.hmr?
 
       rescue Errno::ENOENT, NoMethodError

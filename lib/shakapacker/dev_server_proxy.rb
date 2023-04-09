@@ -15,7 +15,7 @@ class Shakapacker::DevServerProxy < Rack::Proxy
       env["HTTP_X_FORWARDED_SERVER"] = dev_server.host_with_port
       env["HTTP_PORT"] = env["HTTP_X_FORWARDED_PORT"] = dev_server.port.to_s
       env["HTTP_X_FORWARDED_PROTO"] = env["HTTP_X_FORWARDED_SCHEME"] = dev_server.protocol
-      unless dev_server.https?
+      unless dev_server.protocol == "https"
         env["HTTPS"] = env["HTTP_X_FORWARDED_SSL"] = "off"
       end
       env["SCRIPT_NAME"] = ""
