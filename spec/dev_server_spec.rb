@@ -91,8 +91,30 @@ describe "DevServer" do
       end
     end
 
+    it "returns `http` when set to a hash with `type: http`" do
+      expect(dev_server).to receive(:fetch).with(:server).and_return({
+        type: "http",
+        options: {}
+      })
+
+      with_rails_env("development") do
+        expect(dev_server.server).to eq "http"
+      end
+    end
+
     it "returns `https` when set to `https`" do
       expect(dev_server).to receive(:fetch).with(:server).and_return("https")
+
+      with_rails_env("development") do
+        expect(dev_server.server).to eq "https"
+      end
+    end
+
+    it "returns `https` when set to a hash with `type: https`" do
+      expect(dev_server).to receive(:fetch).with(:server).and_return({
+        type: "https",
+        options: {}
+      })
 
       with_rails_env("development") do
         expect(dev_server.server).to eq "https"

@@ -40,7 +40,8 @@ class Shakapacker::DevServer
   end
 
   def server
-    server_type = fetch(:server)
+    server_value = fetch(:server)
+    server_type = server_value.is_a?(Hash) ? server_value[:type] : server_value
 
     return server_type if ["http", "https"].include?(server_type)
 
