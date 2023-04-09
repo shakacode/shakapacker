@@ -40,6 +40,13 @@ if (runningWebpackDevServer) {
     devServerConfig.client = devServer.client
   }
 
+  // If we have `server` entry, we ignore possible `https` one.
+  if (devServer.server) {
+    devServerConfig.server = devServer.server
+  } else if (devServer.https) {
+    devServerConfig.https = devServer.https
+  }
+
   devConfig = merge(devConfig, {
     stats: {
       colors: true,
