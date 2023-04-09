@@ -47,6 +47,21 @@ if (runningWebpackDevServer) {
     devServerConfig.https = devServer.https
   }
 
+  const jsToRbKeyPairs = [
+    ['magicHtml', 'magic_html'],
+    ['onAfterSetupMiddleware', 'on_after_setup_middleware'],
+    ['onBeforeSetupMiddleware', 'on_before_setup_middleware'],
+    ['onListening', 'on_listening'],
+    ['setupExitSignals', 'setup_exit_signals'],
+    ['setupMiddlewares', 'setup_middlewares'],
+    ['watchFiles', 'watch_files'],
+    ['webSocketServer', 'web_socket_server']
+  ]
+
+  jsToRbKeyPairs.forEach(([jsKey, rbKey]) => {
+    if (devServer[rbKey]) devServerConfig[jsKey] = devServer[rbKey]
+  })
+
   devConfig = merge(devConfig, {
     stats: {
       colors: true,
