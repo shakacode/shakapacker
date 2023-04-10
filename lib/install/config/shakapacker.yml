@@ -5,6 +5,7 @@ default: &default
 
   # You can have a subdirectory of the source_path, like 'packs' (recommended).
   # Alternatively, you can use '/' to use the whole source_path directory.
+  # Notice that this is a relative path to source_path
   source_entry_path: packs
 
   # If nested_entries is true, then we'll pick up subdirectories within the source_entry_path.
