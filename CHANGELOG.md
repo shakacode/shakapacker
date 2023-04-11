@@ -22,7 +22,7 @@ _Please add entries here for your pull requests that are not yet released._
 - Remove redundant enhancement for precompile task to run `yarn install` [PR 270](https://github.com/shakacode/shakapacker/pull/270) by [ahangarha](https://github.com/ahangarha).
 
 ### Added
-- All standard Webpack entries with the camle-case format are now supported in `shakapacker.yml` in snake-case format. [PR276](https://github.com/shakacode/shakapacker/pull/276) by [ahangarha](https://github.com/ahangarha).    
+- All standard Webpack entries with the camelCase format are now supported in `shakapacker.yml` in snake_case format. [PR276](https://github.com/shakacode/shakapacker/pull/276) by [ahangarha](https://github.com/ahangarha).    
 
 ## [v6.6.0] - March 7, 2023
 ### Improved
