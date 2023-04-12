@@ -54,7 +54,7 @@ class Shakapacker::DevServer
     MSG
 
     "http"
-  rescue
+  rescue KeyError
     "http"
   end
 
