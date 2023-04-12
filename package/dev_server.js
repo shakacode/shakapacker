@@ -3,7 +3,7 @@ const config = require('./config')
 const { outputPath: contentBase, publicPath } = require('./config')
 const { isDevelopment } = require('./env')
 
-const fetch = (key) => {
+const fetchFromEnv = (key) => {
   const value = process.env[key]
   return isBoolean(value) ? JSON.parse(value) : value
 }
@@ -17,7 +17,7 @@ if (isDevelopment) {
     const envPrefix = devServerFromConfigFile.env_prefix || 'SHAKAPACKER_DEV_SERVER'
 
     Object.keys(devServerFromConfigFile).forEach((key) => {
-      const envValue = fetch(`${envPrefix}_${key.toUpperCase()}`)
+      const envValue = fetchFromEnv(`${envPrefix}_${key.toUpperCase()}`)
       if (envValue !== undefined) devServerFromConfigFile[key] = envValue
     })
   }
