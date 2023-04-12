@@ -8,20 +8,20 @@ const fetch = (key) => {
   return isBoolean(value) ? JSON.parse(value) : value
 }
 
-const devServerFromConfigFile = config.dev_server
-
-if (devServerFromConfigFile) {
-  const envPrefix = config.dev_server.env_prefix || 'SHAKAPACKER_DEV_SERVER'
-
-  Object.keys(devServerFromConfigFile).forEach((key) => {
-    const envValue = fetch(`${envPrefix}_${key.toUpperCase()}`)
-    if (envValue !== undefined) devServerFromConfigFile[key] = envValue
-  })
-}
-
 let devServer = {}
 
 if (isDevelopment) {
+  const devServerFromConfigFile = config.dev_server
+
+  if (devServerFromConfigFile) {
+    const envPrefix = devServerFromConfigFile.env_prefix || 'SHAKAPACKER_DEV_SERVER'
+
+    Object.keys(devServerFromConfigFile).forEach((key) => {
+      const envValue = fetch(`${envPrefix}_${key.toUpperCase()}`)
+      if (envValue !== undefined) devServerFromConfigFile[key] = envValue
+    })
+  }
+
   const liveReload = devServerFromConfigFile.live_reload !== undefined ? devServerFromConfigFile.live_reload : !devServerFromConfigFile.hmr
 
   devServer = {
@@ -63,4 +63,4 @@ if (isDevelopment) {
   })
 }
 
-module.exports = devServer || {}
+module.exports = devServer
