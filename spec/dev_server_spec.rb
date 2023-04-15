@@ -44,4 +44,90 @@ describe "DevServer" do
   it "users SHAKAPACKER_DEV_SERVER for DEFAULT_ENV_PREFIX" do
     expect(Shakapacker::DevServer::DEFAULT_ENV_PREFIX).to eq "SHAKAPACKER_DEV_SERVER"
   end
+
+  context "#protocol in development environment" do
+    let(:dev_server) { Shakapacker.dev_server }
+
+    it "returns `http` by default (with unset `server` and `https`)" do
+      with_rails_env("development") do
+        expect(dev_server.protocol).to eq "http"
+      end
+    end
+
+    it "returns `https` when `server` is set to `https`" do
+      expect(dev_server).to receive(:server).and_return("https")
+
+      with_rails_env("development") do
+        expect(dev_server.protocol).to eq "https"
+      end
+    end
+
+    it "returns `https` with unset `server` and `https` set to `true`" do
+      expect(dev_server).to receive(:server).and_return("http")
+      expect(dev_server).to receive(:https?).and_return(true)
+
+      with_rails_env("development") do
+        expect(dev_server.protocol).to eq "https"
+      end
+    end
+  end
+
+  context "#server in development environment" do
+    let(:dev_server) { Shakapacker.dev_server }
+
+    it "returns `http` when unset" do
+      expect(dev_server).to receive(:fetch).with(:server).and_return(nil)
+
+      with_rails_env("development") do
+        expect(dev_server.server).to eq "http"
+      end
+    end
+
+    it "returns `http` when set to `https`" do
+      expect(dev_server).to receive(:fetch).with(:server).and_return("http")
+
+      with_rails_env("development") do
+        expect(dev_server.server).to eq "http"
+      end
+    end
+
+    it "returns `http` when set to a hash with `type: http`" do
+      expect(dev_server).to receive(:fetch).with(:server).and_return({
+        type: "http",
+        options: {}
+      })
+
+      with_rails_env("development") do
+        expect(dev_server.server).to eq "http"
+      end
+    end
+
+    it "returns `https` when set to `https`" do
+      expect(dev_server).to receive(:fetch).with(:server).and_return("https")
+
+      with_rails_env("development") do
+        expect(dev_server.server).to eq "https"
+      end
+    end
+
+    it "returns `https` when set to a hash with `type: https`" do
+      expect(dev_server).to receive(:fetch).with(:server).and_return({
+        type: "https",
+        options: {}
+      })
+
+      with_rails_env("development") do
+        expect(dev_server.server).to eq "https"
+      end
+    end
+
+    it "returns `http` when set to any value except `http` and `https`" do
+      expect(dev_server).to receive(:fetch).twice.with(:server).and_return("other-than-https")
+
+      with_rails_env("development") do
+        expect(dev_server.server).to eq "http"
+        expect { dev_server.server }.to output(/WARNING/).to_stdout
+      end
+    end
+  end
 end

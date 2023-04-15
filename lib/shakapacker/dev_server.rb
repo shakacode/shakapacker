@@ -39,8 +39,29 @@ class Shakapacker::DevServer
     end
   end
 
+  def server
+    server_value = fetch(:server)
+    server_type = server_value.is_a?(Hash) ? server_value[:type] : server_value
+
+    return server_type if ["http", "https"].include?(server_type)
+
+    return "http" if server_type.nil?
+
+    puts <<~MSG
+    WARNING:
+    `server: #{server_type}` is not a valid configuration in Shakapacker.
+    Falling back to default `server: http`.
+    MSG
+
+    "http"
+  rescue KeyError
+    "http"
+  end
+
   def protocol
-    https? ? "https" : "http"
+    return "https" if server == "https" || https? == true
+
+    "http"
   end
 
   def host_with_port
@@ -73,6 +94,8 @@ class Shakapacker::DevServer
       return nil unless config.dev_server.present?
 
       ENV["#{env_prefix}_#{key.upcase}"] || config.dev_server.fetch(key, defaults[key])
+    rescue
+      nil
     end
 
     def defaults
