@@ -54,17 +54,13 @@ class Shakapacker::Engine < ::Rails::Engine
   end
 
   initializer "shakapacker.set_source" do |app|
-    if Shakapacker.config.config_path.exist?
-      app.config.javascript_path = Shakapacker.config.source_path.relative_path_from(Rails.root.join("app")).to_s
-    end
+    app.config.javascript_path = Shakapacker.config.source_path.relative_path_from(Rails.root.join("app")).to_s
   end
 
   initializer "shakapacker.remove_app_packs_from_the_autoload_paths" do
     Rails.application.config.before_initialize do
-      if Shakapacker.config.config_path.exist?
-        source_path = Shakapacker.config.source_path.to_s
-        ActiveSupport::Dependencies.autoload_paths.delete(source_path)
-      end
+      source_path = Shakapacker.config.source_path.to_s
+      ActiveSupport::Dependencies.autoload_paths.delete(source_path)
     end
   end
 end

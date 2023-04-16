@@ -20,7 +20,8 @@ module Shakapacker
 
         @config = Configuration.new(
           root_path: app_root,
-          config_path: Pathname.new(@shakapacker_config),
+          # config_path: Pathname.new(@shakapacker_config),
+          config_hash: @full_config,
           env: ENV["RAILS_ENV"]
         )
 

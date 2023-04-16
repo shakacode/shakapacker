@@ -108,7 +108,12 @@ class Shakapacker::Compiler
 
       env.merge("SHAKAPACKER_ASSET_HOST"        => ENV.fetch("SHAKAPACKER_ASSET_HOST", ActionController::Base.helpers.compute_asset_host),
                 "SHAKAPACKER_RELATIVE_URL_ROOT" => ENV.fetch("SHAKAPACKER_RELATIVE_URL_ROOT", ActionController::Base.relative_url_root),
-                "SHAKAPACKER_CONFIG" => instance.config_path.to_s)
+                # TODO: Do we need to set this? I don't think we need to know
+                # config file path anymore since we only need it when we are
+                # parsing the config file. No other entity in Shakapacker
+                # Should care about this location.
+                # "SHAKAPACKER_CONFIG" => instance.config_path.to_s
+              )
     end
 
     def bin_shakapacker_path

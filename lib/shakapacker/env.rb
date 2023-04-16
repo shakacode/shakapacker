@@ -1,5 +1,5 @@
 class Shakapacker::Env
-  delegate :config_path, :logger, to: :@instance
+  delegate :full_config, :logger, to: :@instance
 
   def self.inquire(instance)
     new(instance).inquire
@@ -10,7 +10,7 @@ class Shakapacker::Env
   end
 
   def inquire
-    fallback_env_warning if config_path.exist? && !current
+    fallback_env_warning if !current
     current || Shakapacker::DEFAULT_ENV.inquiry
   end
 
@@ -24,18 +24,6 @@ class Shakapacker::Env
     end
 
     def available_environments
-      if config_path.exist?
-        begin
-          YAML.load_file(config_path.to_s, aliases: true)
-        rescue ArgumentError
-          YAML.load_file(config_path.to_s)
-        end
-      else
-        [].freeze
-      end
-    rescue Psych::SyntaxError => e
-      raise "YAML syntax error occurred while parsing #{config_path}. " \
-            "Please note that YAML must be consistently indented using spaces. Tabs are not allowed. " \
-            "Error: #{e.message}"
+      full_config.keys.map(&:to_s)
     end
 end
