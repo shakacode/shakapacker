@@ -1,9 +1,59 @@
+require "yaml"
+require "active_support/core_ext/hash/keys"
+require "active_support/core_ext/hash/indifferent_access"
 module Shakapacker::Helper
   # Returns the current Shakapacker instance.
   # Could be overridden to use multiple Shakapacker
   # configurations within the same app (e.g. with engines).
   def current_shakapacker_instance
     Shakapacker.instance
+  end
+
+  class << self
+    def parse_config_file_to_hash(config_path: Rails.root.join("config/shakapacker.yml"))
+      default_config = begin
+        default_config = File.expand_path("../../install/config/shakapacker.yml", __FILE__)
+        config = begin
+          YAML.load_file(default_config, aliases: true)
+        rescue ArgumentError
+          YAML.load_file(default_config)
+        end
+      end.deep_symbolize_keys
+
+      user_config = begin
+        YAML.load_file(config_path.to_s, aliases: true)
+      rescue ArgumentError
+        # TODO: This error handling needs to be revised. This is added to make progress for now.
+        begin
+          YAML.load_file(config_path.to_s)
+        rescue Errno::ENOENT
+          {}
+        end
+      end.deep_symbolize_keys
+
+      # For backward compatibility
+      if user_config.key?(:shakapacker_precompile) && !user_config.key?(:webpacker_precompile)
+        user_config[:webpacker_precompile] = user_config[:shakapacker_precompile]
+      elsif !user_config.key?(:shakapacker_precompile) && user_config.key?(:webpacker_precompile)
+        user_config[:shakapacker_precompile] = user_config[:webpacker_precompile]
+      end
+
+      return default_config.deep_merge(user_config)
+    rescue Errno::ENOENT => e
+      # TODO: This doesn't work here. Think about if it is needed at all
+      # since we have changed the way we load configuration
+      if self.class.installing
+        {}
+      else
+        raise "Shakapacker configuration file not found #{config_path}. " \
+              "Please run rails shakapacker:install " \
+              "Error: #{e.message}"
+      end
+    rescue Psych::SyntaxError => e
+      raise "YAML syntax error occurred while parsing #{config_path}. " \
+            "Please note that YAML must be consistently indented using spaces. Tabs are not allowed. " \
+            "Error: #{e.message}"
+    end
   end
 
   # Computes the relative path for a given Shakapacker asset.

@@ -1,21 +1,23 @@
 require "yaml"
 require "active_support/core_ext/hash/keys"
 require "active_support/core_ext/hash/indifferent_access"
+require "active_support/core_ext/hash/deep_merge"
 
 class Shakapacker::Configuration
   class << self
     attr_accessor :installing
   end
 
-  attr_reader :root_path, :config_path, :env
+  attr_reader :root_path, :env
 
-  def initialize(root_path:, config_path:, env:)
+  def initialize(root_path:, config_hash: {}, env:)
     @root_path = root_path
     @env = env
 
     # For backward compatibility
     Shakapacker.set_shakapacker_env_variables_for_backward_compatibility
-    @config_path = Pathname.new(ENV["SHAKAPACKER_CONFIG"] || config_path)
+    # @config_path = Pathname.new(ENV["SHAKAPACKER_CONFIG"] || config_path)
+    @config_hash = config_hash
   end
 
   def dev_server
@@ -39,7 +41,11 @@ class Shakapacker::Configuration
     return false if %w(no false n f).include?(ENV["SHAKAPACKER_PRECOMPILE"])
     return true if %w(yes true y t).include?(ENV["SHAKAPACKER_PRECOMPILE"])
 
-    return false unless config_path.exist?
+    # TODO: Following commented line doesn't make sense! If we don't set
+    # shakapacker_precompile in the user config file, we should fallback to
+    # default config. So this is not enough to just check the value in the
+    # user config.
+    # return false unless config_path.exist?
     fetch(:shakapacker_precompile)
   end
 
@@ -111,7 +117,7 @@ class Shakapacker::Configuration
   end
 
   def fetch(key)
-    return data.fetch(key, defaults[key]) unless key == :webpacker_precompile
+    return data.fetch(key, nil) unless key == :webpacker_precompile
 
     # for backward compatibility
     Shakapacker.puts_deprecation_message(
@@ -121,54 +127,20 @@ class Shakapacker::Configuration
       )
     )
 
-    data.fetch(key, defaults[:shakapacker_precompile])
+    # TODO: Check for backward compatibility
+    # See how we can get the right value for backward compatibility
+    # data.fetch(key, defaults[:shakapacker_precompile])
+    data.fetch(key)
   end
 
   private
     def data
-      @data ||= load
+      @data ||= config_for_env(@config_hash, env)
     end
 
-    def load
-      config = begin
-        YAML.load_file(config_path.to_s, aliases: true)
-      rescue ArgumentError
-        YAML.load_file(config_path.to_s)
-      end
-      symbolized_config = config[env].deep_symbolize_keys
-
-      # For backward compatibility
-      if symbolized_config.key?(:shakapacker_precompile) && !symbolized_config.key?(:webpacker_precompile)
-        symbolized_config[:webpacker_precompile] = symbolized_config[:shakapacker_precompile]
-      elsif !symbolized_config.key?(:shakapacker_precompile) && symbolized_config.key?(:webpacker_precompile)
-        symbolized_config[:shakapacker_precompile] = symbolized_config[:webpacker_precompile]
-      end
-
-      return symbolized_config
-    rescue Errno::ENOENT => e
-      if self.class.installing
-        {}
-      else
-        raise "Shakapacker configuration file not found #{config_path}. " \
-              "Please run rails shakapacker:install " \
-              "Error: #{e.message}"
-      end
-    rescue Psych::SyntaxError => e
-      raise "YAML syntax error occurred while parsing #{config_path}. " \
-            "Please note that YAML must be consistently indented using spaces. Tabs are not allowed. " \
-            "Error: #{e.message}"
-    end
-
-    def defaults
-      @defaults ||= begin
-        path = File.expand_path("../../install/config/shakapacker.yml", __FILE__)
-        config = begin
-          YAML.load_file(path, aliases: true)
-        rescue ArgumentError
-          YAML.load_file(path)
-        end
-        HashWithIndifferentAccess.new(config[env] || config[Shakapacker::DEFAULT_ENV])
-      end
+    def config_for_env(config, env)
+      indifferent_config_hash = HashWithIndifferentAccess.new(config)
+      indifferent_config_hash[env] || indifferent_config_hash[Shakapacker::DEFAULT_ENV]
     end
 
     def relative_path(path)
