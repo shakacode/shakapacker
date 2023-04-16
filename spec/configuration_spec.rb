@@ -1,13 +1,16 @@
 require_relative "spec_helper_initializer"
+require "shakapacker/helper"
 
 describe "Shakapacker::Configuration" do
   ROOT_PATH = Pathname.new(File.expand_path("test_app", __dir__))
 
   context "with standard shakapacker.yml" do
     let(:config) do
+      config_path = Pathname.new(File.expand_path("./test_app/config/shakapacker.yml", __dir__))
+      config_hash = Shakapacker::Helper.parse_config_file_to_hash(config_path: config_path)
       Shakapacker::Configuration.new(
         root_path: ROOT_PATH,
-        config_path: Pathname.new(File.expand_path("./test_app/config/shakapacker.yml", __dir__)),
+        config_hash: config_hash,
         env: "production"
       )
     end
@@ -177,9 +180,11 @@ describe "Shakapacker::Configuration" do
   end
 
   context "with shakapacker config file containing public_output_path entry" do
+    config_path = Pathname.new(File.expand_path("./test_app/config/shakapacker_public_root.yml", __dir__))
+    config_hash = Shakapacker::Helper.parse_config_file_to_hash(config_path: config_path)
     config = Shakapacker::Configuration.new(
       root_path: ROOT_PATH,
-      config_path: Pathname.new(File.expand_path("./test_app/config/shakapacker_public_root.yml", __dir__)),
+      config_hash: config_hash,
       env: "production"
     )
 
@@ -190,9 +195,11 @@ describe "Shakapacker::Configuration" do
   end
 
   context "with shakapacker config file containing manifext_path entry" do
+    config_path = Pathname.new(File.expand_path("./test_app/config/shakapacker_manifest_path.yml", __dir__))
+    config_hash = Shakapacker::Helper.parse_config_file_to_hash(config_path: config_path)
     config = Shakapacker::Configuration.new(
       root_path: ROOT_PATH,
-      config_path: Pathname.new(File.expand_path("./test_app/config/shakapacker_manifest_path.yml", __dir__)),
+      config_hash: config_hash,
       env: "production"
     )
 
@@ -209,9 +216,11 @@ describe "Shakapacker::Configuration" do
       end
 
       let(:config) {
-        Shakapacker::Configuration.new(
+        config_path = Pathname.new(File.expand_path("./test_app/config/shakapacker_no_precompile.yml", __dir__))
+        config_hash = Shakapacker::Helper.parse_config_file_to_hash(config_path: config_path)
+        config = Shakapacker::Configuration.new(
           root_path: ROOT_PATH,
-          config_path: Pathname.new(File.expand_path("./test_app/config/shakapacker_no_precompile.yml", __dir__)),
+          config_hash: config_hash,
           env: "production"
         )
       }
@@ -235,22 +244,30 @@ describe "Shakapacker::Configuration" do
   end
 
   context "with shakapacker config file containing invalid path" do
+    config_path = Pathname.new(File.expand_path("./test_app/config/invalid_path.yml", __dir__))
+    config_hash = Shakapacker::Helper.parse_config_file_to_hash(config_path: config_path)
     config = Shakapacker::Configuration.new(
       root_path: ROOT_PATH,
-      config_path: Pathname.new(File.expand_path("./test_app/config/invalid_path.yml", __dir__)),
+      config_hash: config_hash,
       env: "default"
     )
 
     it "#shakapacker_precompile? returns false" do
+      # TODO: This should be true
+      # Though we try to read invalid config file, we still have default
+      # config file which has entry for shakapacker_precompile: true
+      # Why should it return fals?
       expect(config.shakapacker_precompile?).to be false
     end
   end
 
   context "with shakapacker config file with defaults fallback" do
     let(:config) do
-      Shakapacker::Configuration.new(
+      config_path = Pathname.new(File.expand_path("./test_app/config/shakapacker_defaults_fallback.yml", __dir__))
+      config_hash = Shakapacker::Helper.parse_config_file_to_hash(config_path: config_path)
+      config = Shakapacker::Configuration.new(
         root_path: ROOT_PATH,
-        config_path: Pathname.new(File.expand_path("./test_app/config/shakapacker_defaults_fallback.yml", __dir__)),
+        config_hash: config_hash,
         env: "default"
       )
     end
@@ -266,9 +283,11 @@ describe "Shakapacker::Configuration" do
 
   context "falls back to bundled production config for custom environments" do
     let(:config) do
+      config_path = Pathname.new(File.expand_path("./test_app/config/shakapacker_defaults_fallback.yml", __dir__))
+      config_hash = Shakapacker::Helper.parse_config_file_to_hash(config_path: config_path)
       Shakapacker::Configuration.new(
         root_path: ROOT_PATH,
-        config_path: Pathname.new(File.expand_path("./test_app/config/shakapacker_defaults_fallback.yml", __dir__)),
+        config_hash: config_hash,
         env: "staging"
       )
     end

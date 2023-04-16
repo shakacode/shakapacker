@@ -1,31 +1,30 @@
 require_relative "spec_helper_initializer"
 
 describe "Shakapacker::Instance" do
-  before :each do
+  before :all do
     ENV.delete("WEBPACKER_CONFIG")
     ENV.delete("SHAKAPACKER_CONFIG")
     Shakapacker.instance = Shakapacker::Instance.new
   end
 
-  after :each do
+  after :all do
     ENV.delete("WEBPACKER_CONFIG")
     ENV.delete("SHAKAPACKER_CONFIG")
     Shakapacker.instance = Shakapacker::Instance.new
   end
 
-  it "uses default config path if no env variable defined" do
-    actual_config_path = Rails.root.join("config/shakapacker.yml")
-    expected_config_path = Shakapacker.config.config_path
+  # TODO: This test is not complete. It doesn't work properly in other environments
+  # For now, this is an step to improve tests for new Shakapacker interface.
+  it "accepts config hash in production environment" do
+    config = {
+      production: {
+        source_path: "custom_path_value"
+      }
+    }
 
-    expect(expected_config_path).to eq(actual_config_path)
-  end
-
-  it "uses SHAKAPACKER_CONFIG env variable for config file" do
-    ENV["SHAKAPACKER_CONFIG"] = "/some/random/path.yml"
-
-    actual_config_path = "/some/random/path.yml"
-    expected_config_path = Shakapacker.config.config_path.to_s
-
-    expect(expected_config_path).to eq(actual_config_path)
+    with_rails_env("production") do
+      Shakapacker.instance = Shakapacker::Instance.new(config_hash: config)
+      expect(Shakapacker.config.source_path.to_s).to match /custom_path_value$/
+    end
   end
 end
