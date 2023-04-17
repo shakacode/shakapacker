@@ -13,8 +13,14 @@ describe "Shakapacker::Instance" do
     Shakapacker.instance = Shakapacker::Instance.new
   end
 
-  # TODO: This test is not complete. It doesn't work properly in other environments
-  # For now, this is an step to improve tests for new Shakapacker interface.
+  it "uses default config file if no configuration passed" do
+    with_rails_env("development") do
+      Shakapacker.instance = Shakapacker::Instance.new
+      expect(Shakapacker.config.source_path.to_s).to match /app\/packs$/
+      expect(Shakapacker.config.source_entry_path.to_s).to match /entrypoints$/
+    end
+  end
+
   it "accepts config hash in production environment" do
     config = {
       production: {
@@ -23,6 +29,19 @@ describe "Shakapacker::Instance" do
     }
 
     with_rails_env("production") do
+      Shakapacker.instance = Shakapacker::Instance.new(config_hash: config)
+      expect(Shakapacker.config.source_path.to_s).to match /custom_path_value$/
+    end
+  end
+
+  it "accepts config hash in development environment" do
+    config = {
+      development: {
+        source_path: "custom_path_value"
+      }
+    }
+
+    with_rails_env("development") do
       Shakapacker.instance = Shakapacker::Instance.new(config_hash: config)
       expect(Shakapacker.config.source_path.to_s).to match /custom_path_value$/
     end
