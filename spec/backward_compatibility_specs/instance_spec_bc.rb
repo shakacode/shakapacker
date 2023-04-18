@@ -13,19 +13,37 @@ describe "Webpacker::Instance" do
     Webpacker.instance = Webpacker::Instance.new
   end
 
-  it "uses default config path if no env variable defined" do
-    actual_config_path = Rails.root.join("config/webpacker.yml")
-    expected_config_path = Webpacker.config.config_path
-
-    expect(expected_config_path).to eq(actual_config_path)
+  it "uses default config file if no configuration passed" do
+    with_rails_env("development") do
+      Webpacker.instance = Webpacker::Instance.new
+      expect(Webpacker.config.source_path.to_s).to match /app\/packs$/
+      expect(Webpacker.config.source_entry_path.to_s).to match /entrypoints$/
+    end
   end
 
-  it "uses WEBPACKER_CONFIG env variable for config file" do
-    ENV["WEBPACKER_CONFIG"] = "/some/random/path.yml"
+  it "accepts config hash in production environment" do
+    config = {
+      production: {
+        source_path: "custom_path_value"
+      }
+    }
 
-    actual_config_path = "/some/random/path.yml"
-    expected_config_path = Webpacker.config.config_path.to_s
+    with_rails_env("production") do
+      Webpacker.instance = Webpacker::Instance.new(custom_config: config)
+      expect(Webpacker.config.source_path.to_s).to match /custom_path_value$/
+    end
+  end
 
-    expect(Webpacker.config.config_path.to_s).to eq("/some/random/path.yml")
+  it "accepts config hash in development environment" do
+    config = {
+      development: {
+        source_path: "custom_path_value"
+      }
+    }
+
+    with_rails_env("development") do
+      Webpacker.instance = Webpacker::Instance.new(custom_config: config)
+      expect(Webpacker.config.source_path.to_s).to match /custom_path_value$/
+    end
   end
 end

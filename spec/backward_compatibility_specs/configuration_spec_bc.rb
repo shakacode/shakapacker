@@ -5,9 +5,11 @@ describe "Webpacker::Configuration" do
 
   context "with standard webpacker.yml" do
     let(:config) do
+      config_path = Pathname.new(File.expand_path("./webpacker_test_app/config/webpacker.yml", __dir__))
+      config_hash = Webpacker::Helper.parse_config_file_to_hash(config_path)
       Webpacker::Configuration.new(
         root_path: ROOT_PATH,
-        config_path: Pathname.new(File.expand_path("./webpacker_test_app/config/webpacker.yml", __dir__)),
+        custom_config: config_hash,
         env: "production"
       )
     end
@@ -178,9 +180,11 @@ describe "Webpacker::Configuration" do
   end
 
   context "with webpacker config file containing public_output_path entry" do
+    config_path = Pathname.new(File.expand_path("./webpacker_test_app/config/webpacker_public_root.yml", __dir__))
+    config_hash = Webpacker::Helper.parse_config_file_to_hash(config_path)
     config = Webpacker::Configuration.new(
       root_path: ROOT_PATH,
-      config_path: Pathname.new(File.expand_path("./webpacker_test_app/config/webpacker_public_root.yml", __dir__)),
+      custom_config: config_hash,
       env: "production"
     )
 
@@ -191,9 +195,11 @@ describe "Webpacker::Configuration" do
   end
 
   context "with webpacker config file containing manifext_path entry" do
+    config_path = Pathname.new(File.expand_path("./webpacker_test_app/config/webpacker_manifest_path.yml", __dir__))
+    config_hash = Webpacker::Helper.parse_config_file_to_hash(config_path)
     config = Webpacker::Configuration.new(
       root_path: ROOT_PATH,
-      config_path: Pathname.new(File.expand_path("./webpacker_test_app/config/webpacker_manifest_path.yml", __dir__)),
+      custom_config: config_hash,
       env: "production"
     )
 
@@ -211,9 +217,11 @@ describe "Webpacker::Configuration" do
       end
 
       let(:config) {
+        config_path = Pathname.new(File.expand_path("./webpacker_test_app/config/webpacker_no_precompile.yml", __dir__))
+        config_hash = Webpacker::Helper.parse_config_file_to_hash(config_path)
         Webpacker::Configuration.new(
           root_path: ROOT_PATH,
-          config_path: Pathname.new(File.expand_path("./webpacker_test_app/config/webpacker_no_precompile.yml", __dir__)),
+          custom_config: config_hash,
           env: "production"
         )
       }
@@ -238,9 +246,11 @@ describe "Webpacker::Configuration" do
   end
 
   context "with webpacker config file containing invalid path" do
+    config_path = Pathname.new(File.expand_path("./webpacker_test_app/config/invalid_path.yml", __dir__))
+    config_hash = Webpacker::Helper.parse_config_file_to_hash(config_path)
     config = Webpacker::Configuration.new(
       root_path: ROOT_PATH,
-      config_path: Pathname.new(File.expand_path("./webpacker_test_app/config/invalid_path.yml", __dir__)),
+      custom_config: config_hash,
       env: "default"
     )
 
@@ -251,9 +261,11 @@ describe "Webpacker::Configuration" do
 
   context "with webpacker config file with defaults fallback" do
     let(:config) do
+      config_path = Pathname.new(File.expand_path("./webpacker_test_app/config/webpacker_defaults_fallback.yml", __dir__))
+      config_hash = Webpacker::Helper.parse_config_file_to_hash(config_path)
       Webpacker::Configuration.new(
         root_path: ROOT_PATH,
-        config_path: Pathname.new(File.expand_path("./webpacker_test_app/config/webpacker_defaults_fallback.yml", __dir__)),
+        custom_config: config_hash,
         env: "default"
       )
     end
@@ -269,9 +281,11 @@ describe "Webpacker::Configuration" do
 
   context "falls back to bundled production config for custom environments" do
     let(:config) do
+      config_path = Pathname.new(File.expand_path("./webpacker_test_app/config/webpacker_defaults_fallback.yml", __dir__))
+      config_hash = Webpacker::Helper.parse_config_file_to_hash(config_path)
       Webpacker::Configuration.new(
         root_path: ROOT_PATH,
-        config_path: Pathname.new(File.expand_path("./webpacker_test_app/config/webpacker_defaults_fallback.yml", __dir__)),
+        custom_config: config_hash,
         env: "staging"
       )
     end

@@ -18,17 +18,17 @@ describe "DevServerRunner" do
   let(:test_app_path) { File.expand_path("webpacker_test_app", __dir__) }
 
   it "run cmd via node modules" do
-    cmd = ["#{test_app_path}/node_modules/.bin/webpack", "serve", "--config", "#{test_app_path}/config/webpack/webpack.config.js"]
+    cmd = ["#{test_app_path}/node_modules/.bin/webpack", "serve", "--config", "#{test_app_path}/config/webpack/webpack.config.js", "--progress", "--color"]
     verify_command(cmd, use_node_modules: true)
   end
 
   it "run cmd via yarn" do
-    cmd = ["yarn", "webpack", "serve", "--config", "#{test_app_path}/config/webpack/webpack.config.js"]
+    cmd = ["yarn", "webpack", "serve", "--config", "#{test_app_path}/config/webpack/webpack.config.js", "--progress", "--color"]
     verify_command(cmd, use_node_modules: false)
   end
 
   it "run cmd argv" do
-    cmd = ["#{test_app_path}/node_modules/.bin/webpack", "serve", "--config", "#{test_app_path}/config/webpack/webpack.config.js", "--quiet"]
+    cmd = ["#{test_app_path}/node_modules/.bin/webpack", "serve", "--config", "#{test_app_path}/config/webpack/webpack.config.js", "--progress", "--color", "--quiet"]
     verify_command(cmd, argv: (["--quiet"]))
   end
 
@@ -48,7 +48,7 @@ describe "DevServerRunner" do
   end
 
   it "accepts environment variables" do
-    cmd = ["#{test_app_path}/node_modules/.bin/webpack", "serve", "--config", "#{test_app_path}/config/webpack/webpack.config.js"]
+    cmd = ["#{test_app_path}/node_modules/.bin/webpack", "serve", "--config", "#{test_app_path}/config/webpack/webpack.config.js", "--progress", "--color"]
     env = Webpacker::Compiler.env.dup
 
     # ENV["WEBPACKER_CONFIG"] is the interface and env["SHAKAPACKER_CONFIG"] is internal
