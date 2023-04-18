@@ -1,6 +1,7 @@
 require "yaml"
 require "active_support/core_ext/hash/keys"
 require "active_support/core_ext/hash/indifferent_access"
+require_relative "deprecation_helper"
 
 module Shakapacker::Helper
   # Returns the current Shakapacker instance.
@@ -12,6 +13,9 @@ module Shakapacker::Helper
 
   class << self
     def parse_config_file_to_hash(config_path = Rails.root.join("config/shakapacker.yml"))
+      # For backward compatibility
+      config_path = Shakapacker.get_config_file_path_with_backward_compatibility(config_path)
+
       config = begin
         YAML.load_file(config_path.to_s, aliases: true)
       rescue ArgumentError

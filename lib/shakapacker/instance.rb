@@ -8,9 +8,6 @@ class Shakapacker::Instance
 
   def initialize(root_path: Rails.root, custom_config: Shakapacker::Helper.parse_config_file_to_hash)
     @root_path = root_path
-
-    # For backward compatibility
-    # @config_path = Shakapacker.get_config_file_path_with_backward_compatibility(config_path)
     @custom_config = custom_config
   end
 

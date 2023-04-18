@@ -16,8 +16,6 @@ class Shakapacker::Configuration
 
     # For backward compatibility
     Shakapacker.set_shakapacker_env_variables_for_backward_compatibility
-    # @config_path = Pathname.new(ENV["SHAKAPACKER_CONFIG"] || config_path)
-    # @config_hash = config_hash
 
     @custom_config = if custom_config
       custom_config
