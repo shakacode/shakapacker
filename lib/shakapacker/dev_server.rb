@@ -99,8 +99,4 @@ class Shakapacker::DevServer
     rescue
       nil
     end
-
-    def defaults
-      config.send(:defaults)[:dev_server] || {}
-    end
 end
