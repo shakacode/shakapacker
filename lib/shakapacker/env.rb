@@ -1,5 +1,5 @@
 class Shakapacker::Env
-  delegate :full_config, :logger, to: :@instance
+  delegate :custom_config, :logger, to: :@instance
 
   def self.inquire(instance)
     new(instance).inquire
@@ -24,6 +24,6 @@ class Shakapacker::Env
     end
 
     def available_environments
-      full_config.keys.map(&:to_s)
+      custom_config.keys.map(&:to_s)
     end
 end

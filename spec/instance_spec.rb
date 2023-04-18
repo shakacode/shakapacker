@@ -29,7 +29,7 @@ describe "Shakapacker::Instance" do
     }
 
     with_rails_env("production") do
-      Shakapacker.instance = Shakapacker::Instance.new(config_hash: config)
+      Shakapacker.instance = Shakapacker::Instance.new(custom_config: config)
       expect(Shakapacker.config.source_path.to_s).to match /custom_path_value$/
     end
   end
@@ -42,7 +42,7 @@ describe "Shakapacker::Instance" do
     }
 
     with_rails_env("development") do
-      Shakapacker.instance = Shakapacker::Instance.new(config_hash: config)
+      Shakapacker.instance = Shakapacker::Instance.new(custom_config: config)
       expect(Shakapacker.config.source_path.to_s).to match /custom_path_value$/
     end
   end

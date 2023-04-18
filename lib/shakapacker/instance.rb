@@ -4,14 +4,14 @@ require "shakapacker/helper"
 class Shakapacker::Instance
   cattr_accessor(:logger) { ActiveSupport::TaggedLogging.new(ActiveSupport::Logger.new(STDOUT)) }
 
-  attr_reader :root_path, :full_config
+  attr_reader :root_path, :custom_config
 
-  def initialize(root_path: Rails.root, config_hash: Shakapacker::Helper.parse_config_file_to_hash)
+  def initialize(root_path: Rails.root, custom_config: Shakapacker::Helper.parse_config_file_to_hash)
     @root_path = root_path
 
     # For backward compatibility
     # @config_path = Shakapacker.get_config_file_path_with_backward_compatibility(config_path)
-    @full_config = config_hash
+    @custom_config = custom_config
   end
 
   def env
@@ -21,7 +21,7 @@ class Shakapacker::Instance
   def config
     @config ||= Shakapacker::Configuration.new(
       root_path: @root_path,
-      config_hash: @full_config,
+      custom_config: @custom_config,
       env: env
     )
   end

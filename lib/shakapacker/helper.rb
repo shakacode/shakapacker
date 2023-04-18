@@ -1,6 +1,7 @@
 require "yaml"
 require "active_support/core_ext/hash/keys"
 require "active_support/core_ext/hash/indifferent_access"
+
 module Shakapacker::Helper
   # Returns the current Shakapacker instance.
   # Could be overridden to use multiple Shakapacker
@@ -10,17 +11,8 @@ module Shakapacker::Helper
   end
 
   class << self
-    def parse_config_file_to_hash(config_path: Rails.root.join("config/shakapacker.yml"))
-      default_config = begin
-        default_config = File.expand_path("../../install/config/shakapacker.yml", __FILE__)
-        config = begin
-          YAML.load_file(default_config, aliases: true)
-        rescue ArgumentError
-          YAML.load_file(default_config)
-        end
-      end.deep_symbolize_keys
-
-      user_config = begin
+    def parse_config_file_to_hash(config_path = Rails.root.join("config/shakapacker.yml"))
+      config = begin
         YAML.load_file(config_path.to_s, aliases: true)
       rescue ArgumentError
         # TODO: This error handling needs to be revised. This is added to make progress for now.
@@ -32,17 +24,17 @@ module Shakapacker::Helper
       end.deep_symbolize_keys
 
       # For backward compatibility
-      if user_config.key?(:shakapacker_precompile) && !user_config.key?(:webpacker_precompile)
-        user_config[:webpacker_precompile] = user_config[:shakapacker_precompile]
-      elsif !user_config.key?(:shakapacker_precompile) && user_config.key?(:webpacker_precompile)
-        user_config[:shakapacker_precompile] = user_config[:webpacker_precompile]
+      if config.key?(:shakapacker_precompile) && !config.key?(:webpacker_precompile)
+        config[:webpacker_precompile] = config[:shakapacker_precompile]
+      elsif !config.key?(:shakapacker_precompile) && config.key?(:webpacker_precompile)
+        config[:shakapacker_precompile] = config[:webpacker_precompile]
       end
 
-      return default_config.deep_merge(user_config)
+      # return default_config.deep_merge(user_config)
+      return config
     rescue Errno::ENOENT => e
-      # TODO: This doesn't work here. Think about if it is needed at all
-      # since we have changed the way we load configuration
-      if self.class.installing
+      # TODO: Can we check installing status in a better way?
+      if Shakapacker::Configuration.installing
         {}
       else
         raise "Shakapacker configuration file not found #{config_path}. " \

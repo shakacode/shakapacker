@@ -2,6 +2,7 @@ require "yaml"
 require "active_support/core_ext/hash/keys"
 require "active_support/core_ext/hash/indifferent_access"
 require "active_support/core_ext/hash/deep_merge"
+require "shakapacker/helper"
 
 class Shakapacker::Configuration
   class << self
@@ -10,14 +11,23 @@ class Shakapacker::Configuration
 
   attr_reader :root_path, :env
 
-  def initialize(root_path:, config_hash: {}, env:)
+  def initialize(root_path:, custom_config: nil, default_config: nil, env:)
     @root_path = root_path
-    @env = env
 
     # For backward compatibility
     Shakapacker.set_shakapacker_env_variables_for_backward_compatibility
     # @config_path = Pathname.new(ENV["SHAKAPACKER_CONFIG"] || config_path)
-    @config_hash = config_hash
+    # @config_hash = config_hash
+
+    @custom_config = if custom_config
+      custom_config
+    else
+      config_path = ENV["SHAKAPACKER_CONFIG"] ? Pathname.new(ENV["SHAKAPACKER_CONFIG"]) : Rails.root.join("config/shakapacker.yml")
+      Shakapacker::Helper.parse_config_file_to_hash(config_path)
+    end
+
+    @default_config = default_config || Shakapacker::Helper.parse_config_file_to_hash(File.expand_path("../../install/config/shakapacker.yml", __FILE__))
+    @env = env
   end
 
   def dev_server
@@ -135,12 +145,13 @@ class Shakapacker::Configuration
 
   private
     def data
-      @data ||= config_for_env(@config_hash, env)
+      @data ||= config_for_env(env)
     end
 
-    def config_for_env(config, env)
-      indifferent_config_hash = HashWithIndifferentAccess.new(config)
-      indifferent_config_hash[env] || indifferent_config_hash[Shakapacker::DEFAULT_ENV]
+    def config_for_env(env)
+      full_config = HashWithIndifferentAccess.new(@default_config.deep_merge(@custom_config))
+
+      full_config[env] || full_config[Shakapacker::DEFAULT_ENV]
     end
 
     def relative_path(path)
