@@ -280,4 +280,44 @@ describe "Shakapacker::Configuration" do
       expect(config.shakapacker_precompile?).to be false
     end
   end
+
+  context "#source_entry_path" do
+    let(:config) do
+      Shakapacker::Configuration.new(
+        root_path: ROOT_PATH,
+        config_path: Pathname.new(File.expand_path("./test_app/config/shakapacker.yml", __dir__)),
+        env: "production"
+      )
+    end
+
+    it "returns correct path with source_entry_path starting with 'extra_path'" do
+      allow(config).to receive(:fetch).with(:source_path).and_return("the_source_path")
+      allow(config).to receive(:fetch).with(:source_entry_path).and_return("extra_path")
+
+      actual = config.source_entry_path.to_s
+      expected = "#{config.source_path.to_s}/extra_path"
+
+      expect(actual).to eq(expected)
+    end
+
+    it "returns correct path with source_entry_path starting with /" do
+      allow(config).to receive(:fetch).with(:source_path).and_return("the_source_path")
+      allow(config).to receive(:fetch).with(:source_entry_path).and_return("/")
+
+      actual = config.source_entry_path.to_s
+      expected = config.source_path.to_s
+
+      expect(actual).to eq(expected)
+    end
+
+    it "returns correct path with source_entry_path starting with /extra_path" do
+      allow(config).to receive(:fetch).with(:source_path).and_return("the_source_path")
+      allow(config).to receive(:fetch).with(:source_entry_path).and_return("/extra_path")
+
+      actual = config.source_entry_path.to_s
+      expected = "#{config.source_path.to_s}/extra_path"
+
+      expect(actual).to eq(expected)
+    end
+  end
 end
