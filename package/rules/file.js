@@ -8,9 +8,9 @@ module.exports = {
   generator: {
     filename: (pathData) => {
       const folders = dirname(pathData.filename)
-        .replace(`${sourcePath}/`, '')
+        .replace(`${sourcePath}`, '')
         .split('/')
-        .slice(1)
+        .filter(Boolean)
 
       const foldersWithStatic = ['static', ...folders].join('/')
       return `${foldersWithStatic}/[name]-[hash][ext][query]`
