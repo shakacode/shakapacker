@@ -49,11 +49,6 @@ class Shakapacker::Configuration
     return false if %w(no false n f).include?(ENV["SHAKAPACKER_PRECOMPILE"])
     return true if %w(yes true y t).include?(ENV["SHAKAPACKER_PRECOMPILE"])
 
-    # TODO: Following commented line doesn't make sense! If we don't set
-    # shakapacker_precompile in the user config file, we should fallback to
-    # default config. So this is not enough to just check the value in the
-    # user config.
-    # return false unless config_path.exist?
     fetch(:shakapacker_precompile)
   end
 
