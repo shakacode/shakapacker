@@ -28,10 +28,12 @@ module Shakapacker::Helper
       end.deep_symbolize_keys
 
       # For backward compatibility
-      if config.key?(:shakapacker_precompile) && !config.key?(:webpacker_precompile)
-        config[:webpacker_precompile] = config[:shakapacker_precompile]
-      elsif !config.key?(:shakapacker_precompile) && config.key?(:webpacker_precompile)
-        config[:shakapacker_precompile] = config[:webpacker_precompile]
+      config.each do |env, config_for_env|
+        if config_for_env.key?(:shakapacker_precompile) && !config_for_env.key?(:webpacker_precompile)
+          config[env][:webpacker_precompile] = config[env][:shakapacker_precompile]
+        elsif !config_for_env.key?(:shakapacker_precompile) && config_for_env.key?(:webpacker_precompile)
+          config[env][:shakapacker_precompile] = config[env][:webpacker_precompile]
+        end
       end
 
       # return default_config.deep_merge(user_config)

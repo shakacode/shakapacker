@@ -24,7 +24,10 @@ class Shakapacker::Configuration
       Shakapacker::Helper.parse_config_file_to_hash(config_path)
     end
 
+    @custom_config = HashWithIndifferentAccess.new(@custom_config)
+
     @default_config = default_config || Shakapacker::Helper.parse_config_file_to_hash(File.expand_path("../../install/config/shakapacker.yml", __FILE__))
+    @default_config = HashWithIndifferentAccess.new(@default_config)
     @env = env
   end
 
@@ -138,13 +141,14 @@ class Shakapacker::Configuration
 
   private
     def data
-      @data ||= config_for_env(env)
+      @data ||= config_for_env
     end
 
-    def config_for_env(env)
-      full_config = HashWithIndifferentAccess.new(@default_config.deep_merge(@custom_config))
+    def config_for_env
+      custom_config_for_env = @custom_config[env] || {}
+      default_config_for_env = @default_config[env] || @default_config[Shakapacker::DEFAULT_ENV] || {}
 
-      full_config[env] || full_config[Shakapacker::DEFAULT_ENV]
+      default_config_for_env.deep_merge(custom_config_for_env)
     end
 
     def relative_path(path)
