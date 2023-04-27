@@ -280,7 +280,7 @@ describe "Shakapacker::Configuration" do
       expect(config.cache_manifest?).to be false
     end
 
-    it "#shakapacker_precompile? uses 'default' config from custom file" do
+    it "#shakapacker_precompile? uses 'default' config from custom config" do
       expect(config.shakapacker_precompile?).to be false
     end
   end
@@ -299,7 +299,7 @@ describe "Shakapacker::Configuration" do
     it "#cache_manifest? fall back to 'production' config from bundled file" do
       expect(config.cache_manifest?).to be true
     end
-    it "#shakapacker_precompile? use 'staging' config from custom file" do
+    it "#shakapacker_precompile? use 'staging' config from custom config" do
       expect(config.shakapacker_precompile?).to be false
     end
   end
