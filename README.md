@@ -37,6 +37,8 @@ Here's a testimonial of how ShakaCode can help, from [Florian Gößler](https://
 >
 > Have a great 2023 and maybe we get to work together again later in the year! 🙌
 
+Read the [full review here](https://clutch.co/profile/shakacode#reviews?sort_by=date_DESC#review-2118154). Here's [another review of a Shakapacker migration that led to more work](https://clutch.co/profile/shakacode#reviews?sort_by=date_DESC#review-2096078).
+
 ---
 
 <!-- START doctoc generated TOC please keep comment here to allow auto update -->
