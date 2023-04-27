@@ -94,8 +94,6 @@ class Shakapacker::DevServer
       return nil unless config.dev_server.present?
 
       ENV["#{env_prefix}_#{key.upcase}"] || config.dev_server.fetch(key)
-
-      ENV["#{env_prefix}_#{key.upcase}"] || config.dev_server.fetch(key)
     rescue
       nil
     end
