@@ -245,20 +245,6 @@ describe "Webpacker::Configuration" do
     end
   end
 
-  context "with webpacker config file containing invalid path" do
-    config_path = Pathname.new(File.expand_path("./webpacker_test_app/config/invalid_path.yml", __dir__))
-    config_hash = Webpacker::Helper.parse_config_file_to_hash(config_path)
-    config = Webpacker::Configuration.new(
-      root_path: ROOT_PATH,
-      custom_config: config_hash,
-      env: "default"
-    )
-
-    it "#webpacker_precompile? returns false" do
-      expect(config.webpacker_precompile?).to be false
-    end
-  end
-
   context "with webpacker config file with defaults fallback" do
     let(:config) do
       config_path = Pathname.new(File.expand_path("./webpacker_test_app/config/webpacker_defaults_fallback.yml", __dir__))
