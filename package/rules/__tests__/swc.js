@@ -1,4 +1,3 @@
-const path = require("path");
 const {
   app_javascript,
   node_modules,
@@ -36,7 +35,7 @@ const createWebpackConfig = (file, use) => {
 };
 
 describe("swc", () => {
-  test("process source path", async () => {
+  test("process files in source_path", async () => {
     const normalPath = `${app_javascript}/a.js`;
     const [tracked, loader] = createTrackLoader();
     const compiler = createTestCompiler(

@@ -8,6 +8,15 @@ const chdirTestApp = () => {
   }
 }
 
+// For backward compatibility
+const chdirWebpackerTestApp = () => {
+  try {
+    return process.chdir('spec/backward_compatibility_specs/webpacker_test_app')
+  } catch (e) {
+    return null
+  }
+}
+
 const chdirCwd = () => process.chdir(process.cwd())
 
 const resetEnv = () => {
@@ -48,15 +57,29 @@ const loaderMatches = (configLoader, loaderToCheck, fn) => {
 
   if (!moduleExists(loaderName)) {
     throw new Error(
-      `Your webpacker config specified using ${configLoader}, but ${loaderName} package is not installed. Please install ${loaderName} first.`
+      `Your Shakapacker config specified using ${configLoader}, but ${loaderName} package is not installed. Please install ${loaderName} first.`
     )
   }
 
   return fn()
 }
 
+// For backward compatibility
+// Set SHAKAPACKER_XYZ only if SHAKAPACKER_XYZ is not defined but WEBPACKER_XYZ is.
+const setShakapackerEnvVariablesForBackwardCompatibility = () => {
+  const webpackerEnvVariables = Object.entries(process.env).filter((key) => /^WEBPACKER_/.test(key))
+  webpackerEnvVariables.forEach(([webpackerEnvKey, webpackerEnvValue]) => {
+    const shakapackerKey = webpackerEnvKey.replace(/^WEBPACKER/, 'SHAKAPACKER')
+    if (!process.env[shakapackerKey]) {
+      process.env[shakapackerKey] = webpackerEnvValue
+    }
+  })
+}
+
 module.exports = {
   chdirTestApp,
+  chdirWebpackerTestApp,
+  setShakapackerEnvVariablesForBackwardCompatibility,
   chdirCwd,
   isArray,
   isBoolean,

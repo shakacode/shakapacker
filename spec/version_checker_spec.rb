@@ -1,4 +1,5 @@
-require "webpacker/version"
+require_relative "spec_helper_initializer"
+require "shakapacker/version"
 
 class NodePackageVersionDouble
   attr_reader :raw, :major_minor_patch
@@ -20,10 +21,10 @@ class NodePackageVersionDouble
 end
 
 describe "VersionChecker" do
-  def check_version(node_package_version, stub_gem_version = Webpacker::VERSION, stub_config = true)
-    version_checker = Webpacker::VersionChecker.new(node_package_version)
+  def check_version(node_package_version, stub_gem_version = Shakapacker::VERSION, stub_config = true)
+    version_checker = Shakapacker::VersionChecker.new(node_package_version)
     allow(version_checker).to receive(:gem_version).and_return(stub_gem_version)
-    allow(Webpacker.config).to receive(:ensure_consistent_versioning?).and_return(stub_config)
+    allow(Shakapacker.config).to receive(:ensure_consistent_versioning?).and_return(stub_config)
 
     version_checker.raise_if_gem_and_node_package_versions_differ
   end
@@ -32,7 +33,7 @@ describe "VersionChecker" do
     node_package_version = NodePackageVersionDouble.new(raw: "6.1.0", major_minor_patch: ["6", "1", "0"])
 
     expect { check_version(node_package_version, "6.0.0", false) }
-      .to output(/Webpacker::VersionChecker - Version mismatch/)
+      .to output(/Shakapacker::VersionChecker - Version mismatch/)
       .to_stderr
   end
 
@@ -40,7 +41,7 @@ describe "VersionChecker" do
     node_package_version = NodePackageVersionDouble.new(raw: "^6.1.0", major_minor_patch: ["6", "1", "0"], semver_wildcard: true)
 
     expect { check_version(node_package_version, "6.0.0", false) }
-      .to output(/Webpacker::VersionChecker - Semver wildcard without a lockfile detected/)
+      .to output(/Shakapacker::VersionChecker - Semver wildcard without a lockfile detected/)
       .to_stderr
   end
 
@@ -48,28 +49,28 @@ describe "VersionChecker" do
     node_package_version = NodePackageVersionDouble.new(raw: "6.1.0", major_minor_patch: ["6", "1", "0"])
 
     expect { check_version(node_package_version, "7.0.0") }
-      .to raise_error(/\*\*ERROR\*\* Webpacker: Webpacker gem and node package versions do not match/)
+      .to raise_error(/\*\*ERROR\*\* Shakapacker: Shakapacker gem and node package versions do not match/)
   end
 
   it "raises exception on different minor version" do
     node_package_version = NodePackageVersionDouble.new(raw: "6.1.0", major_minor_patch: ["6", "1", "0"])
 
     expect { check_version(node_package_version, "6.2.0") }
-      .to raise_error(/\*\*ERROR\*\* Webpacker: Webpacker gem and node package versions do not match/)
+      .to raise_error(/\*\*ERROR\*\* Shakapacker: Shakapacker gem and node package versions do not match/)
   end
 
   it "raises exception on different patch version" do
     node_package_version = NodePackageVersionDouble.new(raw: "6.1.1", major_minor_patch: ["6", "1", "1"])
 
     expect { check_version(node_package_version, "6.1.2") }
-      .to raise_error(/\*\*ERROR\*\* Webpacker: Webpacker gem and node package versions do not match/)
+      .to raise_error(/\*\*ERROR\*\* Shakapacker: Shakapacker gem and node package versions do not match/)
   end
 
   it "raises exception on semver wildcard" do
     node_package_version = NodePackageVersionDouble.new(raw: "^6.0.0", major_minor_patch: ["6", "0", "0"], semver_wildcard: true)
 
     expect { check_version(node_package_version, "6.0.0") }
-      .to raise_error(/\*\*ERROR\*\* Webpacker: Your node package version for shakapacker contains a \^ or ~/)
+      .to raise_error(/\*\*ERROR\*\* Shakapacker: Your node package version for shakapacker contains a \^ or ~/)
   end
 
   it "doesn't raise exception on matching versions" do
@@ -100,7 +101,7 @@ end
 describe "VersionChecker::NodePackageVersion" do
   context "with no yarn.lock file" do
     def node_package_version(fixture_version:)
-      Webpacker::VersionChecker::NodePackageVersion.new(
+      Shakapacker::VersionChecker::NodePackageVersion.new(
         File.expand_path("fixtures/#{fixture_version}_package.json", __dir__),
         "file/does/not/exist",
         "file/does/not/exist"
@@ -270,7 +271,7 @@ describe "VersionChecker::NodePackageVersion" do
 
   context "with yarn.lock v1" do
     def node_package_version(fixture_version:)
-      Webpacker::VersionChecker::NodePackageVersion.new(
+      Shakapacker::VersionChecker::NodePackageVersion.new(
         File.expand_path("fixtures/#{fixture_version}_package.json", __dir__),
         File.expand_path("fixtures/#{fixture_version}_yarn.v1.lock", __dir__),
         "file/does/not/exist"
@@ -440,7 +441,7 @@ describe "VersionChecker::NodePackageVersion" do
 
   context "with yarn.lock v2" do
     def node_package_version(fixture_version:)
-      Webpacker::VersionChecker::NodePackageVersion.new(
+      Shakapacker::VersionChecker::NodePackageVersion.new(
         File.expand_path("fixtures/#{fixture_version}_package.json", __dir__),
         File.expand_path("fixtures/#{fixture_version}_yarn.v2.lock", __dir__),
         "file/does/not/exist"
@@ -610,7 +611,7 @@ describe "VersionChecker::NodePackageVersion" do
 
   context "with package-lock.json v1" do
     def node_package_version(fixture_version:)
-      Webpacker::VersionChecker::NodePackageVersion.new(
+      Shakapacker::VersionChecker::NodePackageVersion.new(
         File.expand_path("fixtures/#{fixture_version}_package.json", __dir__),
         "file/does/not/exist",
         File.expand_path("fixtures/#{fixture_version}_package-lock.v1.json", __dir__),
@@ -780,7 +781,7 @@ describe "VersionChecker::NodePackageVersion" do
 
   context "with package-lock.json v2" do
     def node_package_version(fixture_version:)
-      Webpacker::VersionChecker::NodePackageVersion.new(
+      Shakapacker::VersionChecker::NodePackageVersion.new(
         File.expand_path("fixtures/#{fixture_version}_package.json", __dir__),
         "file/does/not/exist",
         File.expand_path("fixtures/#{fixture_version}_package-lock.v2.json", __dir__),

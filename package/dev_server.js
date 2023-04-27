@@ -1,20 +1,66 @@
 const { isBoolean } = require('./utils/helpers')
 const config = require('./config')
+const { outputPath: contentBase, publicPath } = require('./config')
+const { isDevelopment } = require('./env')
 
-const fetch = (key) => {
+const fetchFromEnv = (key) => {
   const value = process.env[key]
   return isBoolean(value) ? JSON.parse(value) : value
 }
 
-const devServerConfig = config.dev_server
+let devServer = {}
 
-if (devServerConfig) {
-  const envPrefix = config.dev_server.env_prefix || 'WEBPACKER_DEV_SERVER'
+if (isDevelopment) {
+  const devServerFromConfigFile = config.dev_server
 
-  Object.keys(devServerConfig).forEach((key) => {
-    const envValue = fetch(`${envPrefix}_${key.toUpperCase()}`)
-    if (envValue !== undefined) devServerConfig[key] = envValue
+  if (devServerFromConfigFile) {
+    const envPrefix = devServerFromConfigFile.env_prefix || 'SHAKAPACKER_DEV_SERVER'
+
+    Object.keys(devServerFromConfigFile).forEach((key) => {
+      const envValue = fetchFromEnv(`${envPrefix}_${key.toUpperCase()}`)
+      if (envValue !== undefined) devServerFromConfigFile[key] = envValue
+    })
+  }
+
+  const liveReload = devServerFromConfigFile.live_reload !== undefined ? devServerFromConfigFile.live_reload : !devServerFromConfigFile.hmr
+
+  devServer = {
+    devMiddleware: {
+      publicPath
+    },
+    liveReload,
+    historyApiFallback: { disableDotRule: true },
+    static: {
+      publicPath: contentBase
+    }
+  }
+
+  if (devServerFromConfigFile.static) {
+    devServer.static = { ...devServer.static, ...devServerFromConfigFile.static }
+  }
+
+  if (devServerFromConfigFile.client) {
+    devServer.client = devServerFromConfigFile.client
+  }
+
+  const webpackSpecificKeysMapToCamelCase = {
+    allowed_hosts: 'allowedHosts',
+    magic_html: 'magicHtml',
+    on_after_setup_middleware: 'onAfterSetupMiddleware',
+    on_before_setup_middleware: 'onBeforeSetupMiddleware',
+    on_listening: 'onListening',
+    setup_exit_signals: 'setupExitSignals',
+    setup_middlewares: 'setupMiddlewares',
+    watch_files: 'watchFiles',
+    web_socket_server: 'webSocketServer'
+  }
+
+  // Copying all the entries by only converting webpack specific keys from
+  // snake_case to camelCase. Any other entries are copied identically.
+  Object.keys(devServerFromConfigFile).forEach((rubyKey) => {
+    const webpackKey = webpackSpecificKeysMapToCamelCase[rubyKey] ? webpackSpecificKeysMapToCamelCase[rubyKey] : rubyKey
+    devServer[webpackKey] = devServer[webpackKey] || devServerFromConfigFile[rubyKey]
   })
 }
 
-module.exports = devServerConfig || {}
+module.exports = devServer

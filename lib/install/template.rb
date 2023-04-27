@@ -1,11 +1,11 @@
-# Install Webpacker
-copy_file "#{__dir__}/config/webpacker.yml", "config/webpacker.yml"
+# Install Shakapacker
+copy_file "#{__dir__}/config/shakapacker.yml", "config/shakapacker.yml"
 copy_file "#{__dir__}/package.json", "package.json"
 
 say "Copying webpack core config"
 directory "#{__dir__}/config/webpack", "config/webpack"
 
-if Dir.exist?(Webpacker.config.source_path)
+if Dir.exist?(Shakapacker.config.source_path)
   say "The packs app source directory already exists"
 else
   say "Creating packs app source directory"
@@ -68,9 +68,9 @@ end
 results = []
 
 Dir.chdir(Rails.root) do
-  if Webpacker::VERSION.match?(/^[0-9]+\.[0-9]+\.[0-9]+$/)
-    say "Installing shakapacker@#{Webpacker::VERSION}"
-    results << run("yarn add shakapacker@#{Webpacker::VERSION} --exact")
+  if Shakapacker::VERSION.match?(/^[0-9]+\.[0-9]+\.[0-9]+$/)
+    say "Installing shakapacker@#{Shakapacker::VERSION}"
+    results << run("yarn add shakapacker@#{Shakapacker::VERSION} --exact")
   else
     say "Installing shakapacker@next"
     results << run("yarn add shakapacker@next --exact")
@@ -91,6 +91,6 @@ Dir.chdir(Rails.root) do
 end
 
 unless results.all?
-  say "Webpacker installation failed 😭 See above for details.", :red
+  say "Shakapacker installation failed 😭 See above for details.", :red
   exit 1
 end

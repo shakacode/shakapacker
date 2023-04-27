@@ -52,7 +52,7 @@ const productionConfig = {
     minimizer: [
       tryCssMinimizer(),
       new TerserPlugin({
-        parallel: Number.parseInt(process.env.WEBPACKER_PARALLEL, 10) || true,
+        parallel: Number.parseInt(process.env.SHAKAPACKER_PARALLEL, 10) || true,
         terserOptions: {
           parse: {
             // Let terser parse ecma 8 code but always output

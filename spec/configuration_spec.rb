@@ -1,11 +1,13 @@
-describe "Webpacker::Configuration" do
+require_relative "spec_helper_initializer"
+
+describe "Shakapacker::Configuration" do
   ROOT_PATH = Pathname.new(File.expand_path("test_app", __dir__))
 
-  context "with standard webpacker.yml" do
+  context "with standard shakapacker.yml" do
     let(:config) do
-      Webpacker::Configuration.new(
+      Shakapacker::Configuration.new(
         root_path: ROOT_PATH,
-        config_path: Pathname.new(File.expand_path("./test_app/config/webpacker.yml", __dir__)),
+        config_path: Pathname.new(File.expand_path("./test_app/config/shakapacker.yml", __dir__)),
         env: "production"
       )
     end
@@ -41,7 +43,7 @@ describe "Webpacker::Configuration" do
     end
 
     it "#cache_path returns correct path" do
-      cache_path = File.expand_path File.join(File.dirname(__FILE__), "test_app/tmp/webpacker").to_s
+      cache_path = File.expand_path File.join(File.dirname(__FILE__), "test_app/tmp/shakapacker").to_s
       expect(config.cache_path.to_s).to eq cache_path
     end
 
@@ -56,13 +58,13 @@ describe "Webpacker::Configuration" do
 
       it "returns false in developemnt environemnt" do
         with_rails_env("development") do
-          expect(Webpacker.config.cache_manifest?).to be false
+          expect(Shakapacker.config.cache_manifest?).to be false
         end
       end
 
       it "returns false in test environment" do
         with_rails_env("test") do
-          expect(Webpacker.config.cache_manifest?).to be false
+          expect(Shakapacker.config.cache_manifest?).to be false
         end
       end
     end
@@ -74,13 +76,13 @@ describe "Webpacker::Configuration" do
 
       it "returns true in developemnt environemnt" do
         with_rails_env("development") do
-          expect(Webpacker.config.compile?).to be true
+          expect(Shakapacker.config.compile?).to be true
         end
       end
 
       it "returns true in test environemnt" do
         with_rails_env("test") do
-          expect(Webpacker.config.compile?).to be true
+          expect(Shakapacker.config.compile?).to be true
         end
       end
     end
@@ -92,13 +94,13 @@ describe "Webpacker::Configuration" do
 
       it "returns false in development environment" do
         with_rails_env("development") do
-          expect(Webpacker.config.nested_entries?).to be false
+          expect(Shakapacker.config.nested_entries?).to be false
         end
       end
 
       it "returns false in test environment" do
         with_rails_env("test") do
-          expect(Webpacker.config.nested_entries?).to be false
+          expect(Shakapacker.config.nested_entries?).to be false
         end
       end
     end
@@ -110,74 +112,74 @@ describe "Webpacker::Configuration" do
 
       it "returns true in development environment" do
         with_rails_env("development") do
-          expect(Webpacker.config.ensure_consistent_versioning?).to be true
+          expect(Shakapacker.config.ensure_consistent_versioning?).to be true
         end
       end
 
       it "returns false in test environment" do
         with_rails_env("test") do
-          expect(Webpacker.config.ensure_consistent_versioning?).to be false
+          expect(Shakapacker.config.ensure_consistent_versioning?).to be false
         end
       end
     end
 
-    describe "#webpacker_precompile?" do
+    describe "#shakapacker_precompile?" do
       before :each do
-        ENV["WEBPACKER_PRECOMPILE"] = nil
+        ENV["SHAKAPACKER_PRECOMPILE"] = nil
       end
 
-      subject { config.webpacker_precompile? }
+      subject { config.shakapacker_precompile? }
 
-      it "returns true when WEBPACKER_PRECOMPILE is unset" do
+      it "returns true when SHAKAPACKER_PRECOMPILE is unset" do
         is_expected.to be true
       end
 
-      it "returns false when WEBPACKER_PRECOMPILE sets to no" do
-        ENV["WEBPACKER_PRECOMPILE"] = "no"
+      it "returns false when SHAKAPACKER_PRECOMPILE sets to no" do
+        ENV["SHAKAPACKER_PRECOMPILE"] = "no"
         is_expected.to be false
       end
 
-      it "returns true when WEBPACKER_PRECOMPILE sets to yes" do
-        ENV["WEBPACKER_PRECOMPILE"] = "yes"
+      it "returns true when SHAKAPACKER_PRECOMPILE sets to yes" do
+        ENV["SHAKAPACKER_PRECOMPILE"] = "yes"
         is_expected.to be true
       end
 
-      it "returns false when WEBPACKER_PRECOMPILE sets to false" do
-        ENV["WEBPACKER_PRECOMPILE"] = "false"
+      it "returns false when SHAKAPACKER_PRECOMPILE sets to false" do
+        ENV["SHAKAPACKER_PRECOMPILE"] = "false"
         is_expected.to be false
       end
 
-      it "returns true when WEBPACKER_PRECOMPILE sets to true" do
-        ENV["WEBPACKER_PRECOMPILE"] = "true"
+      it "returns true when SHAKAPACKER_PRECOMPILE sets to true" do
+        ENV["SHAKAPACKER_PRECOMPILE"] = "true"
         is_expected.to be true
       end
 
-      it "returns false when WEBPACKER_PRECOMPILE sets to n" do
-        ENV["WEBPACKER_PRECOMPILE"] = "n"
+      it "returns false when SHAKAPACKER_PRECOMPILE sets to n" do
+        ENV["SHAKAPACKER_PRECOMPILE"] = "n"
         is_expected.to be false
       end
 
-      it "returns true when WEBPACKER_PRECOMPILE sets to y" do
-        ENV["WEBPACKER_PRECOMPILE"] = "y"
+      it "returns true when SHAKAPACKER_PRECOMPILE sets to y" do
+        ENV["SHAKAPACKER_PRECOMPILE"] = "y"
         is_expected.to be true
       end
 
-      it "returns false when WEBPACKER_PRECOMPILE sets to f" do
-        ENV["WEBPACKER_PRECOMPILE"] = "f"
+      it "returns false when SHAKAPACKER_PRECOMPILE sets to f" do
+        ENV["SHAKAPACKER_PRECOMPILE"] = "f"
         is_expected.to be false
       end
 
-      it "returns true when WEBPACKER_PRECOMPILE sets to t" do
-        ENV["WEBPACKER_PRECOMPILE"] = "t"
+      it "returns true when SHAKAPACKER_PRECOMPILE sets to t" do
+        ENV["SHAKAPACKER_PRECOMPILE"] = "t"
         is_expected.to be true
       end
     end
   end
 
-  context "with webpacker config file containing public_output_path entry" do
-    config = Webpacker::Configuration.new(
+  context "with shakapacker config file containing public_output_path entry" do
+    config = Shakapacker::Configuration.new(
       root_path: ROOT_PATH,
-      config_path: Pathname.new(File.expand_path("./test_app/config/webpacker_public_root.yml", __dir__)),
+      config_path: Pathname.new(File.expand_path("./test_app/config/shakapacker_public_root.yml", __dir__)),
       env: "production"
     )
 
@@ -187,10 +189,10 @@ describe "Webpacker::Configuration" do
     end
   end
 
-  context "with webpacker config file containing manifext_path entry" do
-    config = Webpacker::Configuration.new(
+  context "with shakapacker config file containing manifext_path entry" do
+    config = Shakapacker::Configuration.new(
       root_path: ROOT_PATH,
-      config_path: Pathname.new(File.expand_path("./test_app/config/webpacker_manifest_path.yml", __dir__)),
+      config_path: Pathname.new(File.expand_path("./test_app/config/shakapacker_manifest_path.yml", __dir__)),
       env: "production"
     )
 
@@ -200,55 +202,55 @@ describe "Webpacker::Configuration" do
     end
   end
 
-  context "with webpacker_precompile entry set to false" do
-    describe "#webpacker_precompile?" do
+  context "with shakapacker_precompile entry set to false" do
+    describe "#shakapacker_precompile?" do
       before :each do
-        ENV["WEBPACKER_PRECOMPILE"] = nil
+        ENV["SHAKAPACKER_PRECOMPILE"] = nil
       end
 
       let(:config) {
-        Webpacker::Configuration.new(
+        Shakapacker::Configuration.new(
           root_path: ROOT_PATH,
-          config_path: Pathname.new(File.expand_path("./test_app/config/webpacker_no_precompile.yml", __dir__)),
+          config_path: Pathname.new(File.expand_path("./test_app/config/shakapacker_no_precompile.yml", __dir__)),
           env: "production"
         )
       }
 
-      subject { config.webpacker_precompile? }
+      subject { config.shakapacker_precompile? }
 
-      it "returns false with unset WEBPACKER_PRECOMPILE" do
+      it "returns false with unset SHAKAPACKER_PRECOMPILE" do
         expect(subject).to be false
       end
 
-      it "returns true with WEBPACKER_PRECOMPILE set to true" do
-        ENV["WEBPACKER_PRECOMPILE"] = "true"
+      it "returns true with SHAKAPACKER_PRECOMPILE set to true" do
+        ENV["SHAKAPACKER_PRECOMPILE"] = "true"
         expect(subject).to be true
       end
 
-      it "returns false with WEBPACKER_PRECOMPILE set to nil" do
-        ENV["WEBPACKER_PRECOMPILE"] = nil
+      it "returns false with SHAKAPACKER_PRECOMPILE set to nil" do
+        ENV["SHAKAPACKER_PRECOMPILE"] = nil
         expect(subject).to be false
       end
     end
   end
 
-  context "with webpacker config file containing invalid path" do
-    config = Webpacker::Configuration.new(
+  context "with shakapacker config file containing invalid path" do
+    config = Shakapacker::Configuration.new(
       root_path: ROOT_PATH,
       config_path: Pathname.new(File.expand_path("./test_app/config/invalid_path.yml", __dir__)),
       env: "default"
     )
 
-    it "#webpacker_precompile? returns false" do
-      expect(config.webpacker_precompile?).to be false
+    it "#shakapacker_precompile? returns false" do
+      expect(config.shakapacker_precompile?).to be false
     end
   end
 
-  context "with webpacker config file with defaults fallback" do
+  context "with shakapacker config file with defaults fallback" do
     let(:config) do
-      Webpacker::Configuration.new(
+      Shakapacker::Configuration.new(
         root_path: ROOT_PATH,
-        config_path: Pathname.new(File.expand_path("./test_app/config/webpacker_defaults_fallback.yml", __dir__)),
+        config_path: Pathname.new(File.expand_path("./test_app/config/shakapacker_defaults_fallback.yml", __dir__)),
         env: "default"
       )
     end
@@ -257,16 +259,16 @@ describe "Webpacker::Configuration" do
       expect(config.cache_manifest?).to be false
     end
 
-    it "#webpacker_precompile? uses 'default' config from custom file" do
-      expect(config.webpacker_precompile?).to be false
+    it "#shakapacker_precompile? uses 'default' config from custom file" do
+      expect(config.shakapacker_precompile?).to be false
     end
   end
 
   context "falls back to bundled production config for custom environments" do
     let(:config) do
-      Webpacker::Configuration.new(
+      Shakapacker::Configuration.new(
         root_path: ROOT_PATH,
-        config_path: Pathname.new(File.expand_path("./test_app/config/webpacker_defaults_fallback.yml", __dir__)),
+        config_path: Pathname.new(File.expand_path("./test_app/config/shakapacker_defaults_fallback.yml", __dir__)),
         env: "staging"
       )
     end
@@ -274,8 +276,48 @@ describe "Webpacker::Configuration" do
     it "#cache_manifest? fall back to 'production' config from bundled file" do
       expect(config.cache_manifest?).to be true
     end
-    it "#webpacker_precompile? use 'staging' config from custom file" do
-      expect(config.webpacker_precompile?).to be false
+    it "#shakapacker_precompile? use 'staging' config from custom file" do
+      expect(config.shakapacker_precompile?).to be false
+    end
+  end
+
+  context "#source_entry_path" do
+    let(:config) do
+      Shakapacker::Configuration.new(
+        root_path: ROOT_PATH,
+        config_path: Pathname.new(File.expand_path("./test_app/config/shakapacker.yml", __dir__)),
+        env: "production"
+      )
+    end
+
+    it "returns correct path with source_entry_path starting with 'extra_path'" do
+      allow(config).to receive(:fetch).with(:source_path).and_return("the_source_path")
+      allow(config).to receive(:fetch).with(:source_entry_path).and_return("extra_path")
+
+      actual = config.source_entry_path.to_s
+      expected = "#{config.source_path.to_s}/extra_path"
+
+      expect(actual).to eq(expected)
+    end
+
+    it "returns correct path with source_entry_path starting with /" do
+      allow(config).to receive(:fetch).with(:source_path).and_return("the_source_path")
+      allow(config).to receive(:fetch).with(:source_entry_path).and_return("/")
+
+      actual = config.source_entry_path.to_s
+      expected = config.source_path.to_s
+
+      expect(actual).to eq(expected)
+    end
+
+    it "returns correct path with source_entry_path starting with /extra_path" do
+      allow(config).to receive(:fetch).with(:source_path).and_return("the_source_path")
+      allow(config).to receive(:fetch).with(:source_entry_path).and_return("/extra_path")
+
+      actual = config.source_entry_path.to_s
+      expected = "#{config.source_path.to_s}/extra_path"
+
+      expect(actual).to eq(expected)
     end
   end
 end

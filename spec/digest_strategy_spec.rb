@@ -1,3 +1,5 @@
+require_relative "spec_helper_initializer"
+
 describe "DigestStrategy" do
   def remove_compilation_digest_path
     @digest_strategy.send(:compilation_digest_path).tap do |path|
@@ -6,7 +8,7 @@ describe "DigestStrategy" do
   end
 
   before :all do
-    @digest_strategy = Webpacker::DigestStrategy.new
+    @digest_strategy = Shakapacker::DigestStrategy.new
     remove_compilation_digest_path
   end
 
@@ -27,7 +29,7 @@ describe "DigestStrategy" do
 
   it "generates correct compilation_digest_path" do
     actual_path = @digest_strategy.send(:compilation_digest_path).basename.to_s
-    expected_path = "last-compilation-digest-#{Webpacker.env}"
+    expected_path = "last-compilation-digest-#{Shakapacker.env}"
     expect(actual_path).to eq expected_path
   end
 end

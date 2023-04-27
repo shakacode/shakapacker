@@ -1,4 +1,9 @@
 namespace :webpacker do
-  desc "Verifies if Webpacker is installed"
-  task verify_install: [:verify_config, :check_node, :check_yarn, :check_binstubs]
+  desc "DEPRECATED - Verifies if Shakapacker is installed"
+  task :verify_install do |task|
+    Shakapacker.puts_rake_deprecation_message(task.name)
+
+    prefix = task.name.split(/#|webpacker:/).first
+    Rake::Task["#{prefix}shakapacker:verify_install"].invoke
+  end
 end

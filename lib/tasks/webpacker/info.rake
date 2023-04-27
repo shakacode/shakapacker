@@ -1,21 +1,9 @@
-require "webpacker/version"
-
 namespace :webpacker do
-  desc "Provide information on Webpacker's environment"
-  task :info do
-    Dir.chdir(Rails.root) do
-      $stdout.puts "Ruby: #{`ruby --version`}"
-      $stdout.puts "Rails: #{Rails.version}"
-      $stdout.puts "Webpacker: #{Webpacker::VERSION}"
-      $stdout.puts "Node: #{`node --version`}"
-      $stdout.puts "Yarn: #{`yarn --version`}"
+  desc "DEPRECATED - Provide information on Shakapacker's environment"
+  task :info do |task|
+    Shakapacker.puts_rake_deprecation_message(task.name)
 
-      $stdout.puts "\n"
-      $stdout.puts "shakapacker: \n#{`npm list shakapacker version`}"
-
-      $stdout.puts "Is bin/webpacker present?: #{File.exist? 'bin/webpacker'}"
-      $stdout.puts "Is bin/webpacker-dev-server present?: #{File.exist? 'bin/webpacker-dev-server'}"
-      $stdout.puts "Is bin/yarn present?: #{File.exist? 'bin/yarn'}"
-    end
+    prefix = task.name.split(/#|webpacker:/).first
+    Rake::Task["#{prefix}shakapacker:info"].invoke
   end
 end

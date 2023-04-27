@@ -3,10 +3,11 @@
 const { resolve } = require('path')
 const { chdirTestApp, chdirCwd } = require('../utils/helpers')
 
+const rootPath = process.cwd()
 chdirTestApp()
 
 describe('Production environment', () => {
-  afterAll(chdirCwd)
+  afterAll(() => process.chdir(rootPath))
 
   describe('webpackConfig', () => {
     beforeEach(() => jest.resetModules())

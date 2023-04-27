@@ -1,7 +1,0 @@
-# Note: You must restart bin/webpacker-dev-server for changes to take effect
-
-default: &default
-  webpacker_precompile: false
-
-production:
-  <<: *default

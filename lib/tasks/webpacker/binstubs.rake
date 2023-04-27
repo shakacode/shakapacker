@@ -1,15 +1,9 @@
-binstubs_template_path = File.expand_path("../../install/binstubs.rb", __dir__).freeze
-bin_path = ENV["BUNDLE_BIN"] || Rails.root.join("bin")
-
 namespace :webpacker do
-  desc "Installs Webpacker binstubs in this application"
-  task binstubs: [:check_node, :check_yarn] do |task|
-    prefix = task.name.split(/#|webpacker:binstubs/).first
+  desc "DEPRECATED - Installs Shakapacker binstubs in this application"
+  task :binstubs do |task|
+    Shakapacker.puts_rake_deprecation_message(task.name)
 
-    if Rails::VERSION::MAJOR >= 5
-      exec "#{RbConfig.ruby} #{bin_path}/rails #{prefix}app:template LOCATION='#{binstubs_template_path}'"
-    else
-      exec "#{RbConfig.ruby} #{bin_path}/rake #{prefix}rails:template LOCATION='#{binstubs_template_path}'"
-    end
+    prefix = task.name.split(/#|webpacker:/).first
+    Rake::Task["#{prefix}shakapacker:binstubs"].invoke
   end
 end
