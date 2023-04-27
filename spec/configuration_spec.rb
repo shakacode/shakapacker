@@ -4,6 +4,28 @@ require "shakapacker/helper"
 describe "Shakapacker::Configuration" do
   ROOT_PATH = Pathname.new(File.expand_path("test_app", __dir__))
 
+  describe "accepts config hash" do
+    it "with string keys" do
+      config = Shakapacker::Configuration.new(
+        root_path: ROOT_PATH,
+        custom_config: { "production" => { "source_path" => "custom_source_path" } },
+        env: "production"
+      )
+
+      expect(config.source_path.to_s).to match /custom_source_path$/
+    end
+
+    it "with symbol keys" do
+      config = Shakapacker::Configuration.new(
+        root_path: ROOT_PATH,
+        custom_config: { production: { source_path: "custom_source_path" } },
+        env: "production"
+      )
+
+      expect(config.source_path.to_s).to match /custom_source_path$/
+    end
+  end
+
   context "with standard shakapacker.yml" do
     let(:config) do
       config_path = Pathname.new(File.expand_path("./test_app/config/shakapacker.yml", __dir__))
