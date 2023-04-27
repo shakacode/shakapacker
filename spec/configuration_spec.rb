@@ -302,9 +302,11 @@ describe "Shakapacker::Configuration" do
 
   context "#source_entry_path" do
     let(:config) do
+      config_path = Pathname.new(File.expand_path("./test_app/config/shakapacker.yml", __dir__))
+      config_hash = Shakapacker::Helper.parse_config_file_to_hash(config_path)
       Shakapacker::Configuration.new(
         root_path: ROOT_PATH,
-        config_path: Pathname.new(File.expand_path("./test_app/config/shakapacker.yml", __dir__)),
+        custom_config: config_hash,
         env: "production"
       )
     end
