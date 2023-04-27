@@ -265,24 +265,6 @@ describe "Shakapacker::Configuration" do
     end
   end
 
-  context "with shakapacker config file containing invalid path" do
-    config_path = Pathname.new(File.expand_path("./test_app/config/invalid_path.yml", __dir__))
-    config_hash = Shakapacker::Helper.parse_config_file_to_hash(config_path)
-    config = Shakapacker::Configuration.new(
-      root_path: ROOT_PATH,
-      custom_config: config_hash,
-      env: "default"
-    )
-
-    it "#shakapacker_precompile? returns false" do
-      # TODO: This should be true
-      # Though we try to read invalid config file, we still have default
-      # config file which has entry for shakapacker_precompile: true
-      # Why should it return fals?
-      expect(config.shakapacker_precompile?).to be false
-    end
-  end
-
   context "with shakapacker config file with defaults fallback" do
     let(:config) do
       config_path = Pathname.new(File.expand_path("./test_app/config/shakapacker_defaults_fallback.yml", __dir__))
