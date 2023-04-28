@@ -17,12 +17,12 @@ describe "DevServerRunner" do
   let(:test_app_path) { File.expand_path("test_app", __dir__) }
 
   it "run cmd via node modules" do
-    cmd = ["#{test_app_path}/node_modules/.bin/webpack", "serve", "--config", "#{test_app_path}/config/webpack/webpack.config.js", "--progress", "--color"]
+    cmd = ["#{test_app_path}/node_modules/.bin/webpack", "serve", "--config", "#{test_app_path}/config/webpack/webpack.config.js"]
     verify_command(cmd, use_node_modules: true)
   end
 
   it "run cmd via yarn" do
-    cmd = ["yarn", "webpack", "serve", "--config", "#{test_app_path}/config/webpack/webpack.config.js", "--progress", "--color"]
+    cmd = ["yarn", "webpack", "serve", "--config", "#{test_app_path}/config/webpack/webpack.config.js"]
     verify_command(cmd, use_node_modules: false)
   end
 
@@ -32,8 +32,6 @@ describe "DevServerRunner" do
       "serve",
       "--config",
       "#{test_app_path}/config/webpack/webpack.config.js",
-      "--progress",
-      "--color",
       "--quiet"
     ]
     verify_command(cmd, argv: (["--quiet"]))
@@ -59,9 +57,7 @@ describe "DevServerRunner" do
       "#{test_app_path}/node_modules/.bin/webpack",
       "serve",
       "--config",
-      "#{test_app_path}/config/webpack/webpack.config.js",
-      "--progress",
-      "--color"
+      "#{test_app_path}/config/webpack/webpack.config.js"
     ]
     env = Shakapacker::Compiler.env.dup
     ENV["SHAKAPACKER_CONFIG"] = env["SHAKAPACKER_CONFIG"] = "#{test_app_path}/config/shakapacker_other_location.yml"
