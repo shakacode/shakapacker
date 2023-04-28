@@ -16,15 +16,12 @@ module Shakapacker::Helper
       # For backward compatibility
       config_path = Shakapacker.get_config_file_path_with_backward_compatibility(config_path)
 
+      raise Errno::ENOENT unless File.exist?(config_path)
+
       config = begin
         YAML.load_file(config_path.to_s, aliases: true)
       rescue ArgumentError
-        # TODO: This error handling needs to be revised. This is added to make progress for now.
-        begin
-          YAML.load_file(config_path.to_s)
-        rescue Errno::ENOENT
-          {}
-        end
+        YAML.load_file(config_path.to_s)
       end.deep_symbolize_keys
 
       # For backward compatibility
