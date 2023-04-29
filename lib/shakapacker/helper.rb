@@ -33,7 +33,6 @@ module Shakapacker::Helper
         end
       end
 
-      # return default_config.deep_merge(user_config)
       return config
     rescue Errno::ENOENT => e
       # TODO: Can we check installing status in a better way?

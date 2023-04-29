@@ -133,9 +133,6 @@ class Shakapacker::Configuration
       )
     )
 
-    # TODO: Check for backward compatibility
-    # See how we can get the right value for backward compatibility
-    # data.fetch(key, defaults[:shakapacker_precompile])
     data.fetch(key)
   end
 
