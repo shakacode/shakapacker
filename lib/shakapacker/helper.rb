@@ -36,7 +36,7 @@ module Shakapacker::Helper
       return config
     rescue Errno::ENOENT => e
       # TODO: Can we check installing status in a better way?
-      if Shakapacker::Configuration.installing
+      if ENV["SHAKAPACKER_INSTALLING"] == true
         {}
       else
         raise "Shakapacker configuration file not found #{config_path}. " \

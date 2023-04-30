@@ -283,4 +283,27 @@ describe "Webpacker::Configuration" do
       expect(config.webpacker_precompile?).to be false
     end
   end
+
+  describe ".installing" do
+    before do
+      ENV.delete("SHAKAPACKER_INSTALLING")
+    end
+
+    it "shows warning and returns false if not in installing process" do
+      expect(Shakapacker::Configuration.installing).to be false
+      expect { Shakapacker::Configuration.installing }.to output(/DEPRECATION/).to_stdout
+    end
+
+    it "shows warning and returns true if in installing process" do
+      ENV["SHAKAPACKER_INSTALLING"] = "true"
+      expect(Shakapacker::Configuration.installing).to be true
+      expect { Shakapacker::Configuration.installing }.to output(/DEPRECATION/).to_stdout
+    end
+
+    it "????????????" do
+      Shakapacker::Configuration.installing = true
+      expect(Shakapacker::Configuration.installing).to be true
+      # expect { Shakapacker::Configuration.installing }.to output(/DEPRECATION/).to_stdout
+    end
+  end
 end
