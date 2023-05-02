@@ -4,7 +4,7 @@ _Official, actively maintained successor to [rails/webpacker](https://github.com
 
 * See [V7 Upgrade](./docs/v7_upgrade.md) for upgrading from the v6 release.
 * See [V6 Upgrade](./docs/v6_upgrade.md) for upgrading from v5 or prior v6 releases.
-* See [v6.x](./tree/v6.x) branch for Shakapacker 6.x code and documentation.
+* See the [6-stable](https://github.com/shakacode/shakapacker/tree/6-stable) branch for Shakapacker v6.x code and documentation.
 
 [![Ruby specs](https://github.com/shakacode/shakapacker/workflows/Ruby%20specs/badge.svg)](https://github.com/shakacode/shakapacker/actions)
 [![Jest specs](https://github.com/shakacode/shakapacker/workflows/Jest%20specs/badge.svg)](https://github.com/shakacode/shakapacker/actions)
