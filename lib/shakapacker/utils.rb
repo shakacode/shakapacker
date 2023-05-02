@@ -29,7 +29,6 @@ module Shakapacker
 
         return config
       rescue Errno::ENOENT => e
-        # TODO: Can we check installing status in a better way?
         if ENV["SHAKAPACKER_INSTALLING"] == true
           {}
         else
