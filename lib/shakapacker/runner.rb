@@ -1,4 +1,4 @@
-require "shakapacker/helper"
+require "shakapacker/utils"
 module Shakapacker
   class Runner
     def self.run(argv)
@@ -20,7 +20,7 @@ module Shakapacker
 
       @shakapacker_config = Shakapacker.get_config_file_path_with_backward_compatibility(@shakapacker_config)
 
-      @custom_config = Shakapacker::Helper.parse_config_file_to_hash(@shakapacker_config)
+      @custom_config = Shakapacker::Utils.parse_config_file_to_hash(@shakapacker_config)
 
       unless File.exist?(@webpack_config)
         $stderr.puts "webpack config #{@webpack_config} not found, please run 'bundle exec rails shakapacker:install' to install Shakapacker with default configs or add the missing config file for your custom environment."

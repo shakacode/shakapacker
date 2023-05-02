@@ -1,12 +1,12 @@
 require "pathname"
-require "shakapacker/helper"
+require "shakapacker/utils"
 
 class Shakapacker::Instance
   cattr_accessor(:logger) { ActiveSupport::TaggedLogging.new(ActiveSupport::Logger.new(STDOUT)) }
 
   attr_reader :root_path, :custom_config
 
-  def initialize(root_path: Rails.root, custom_config: Shakapacker::Helper.parse_config_file_to_hash)
+  def initialize(root_path: Rails.root, custom_config: Shakapacker::Utils.parse_config_file_to_hash)
     @root_path = root_path
     @custom_config = custom_config
   end

@@ -2,7 +2,7 @@ require "yaml"
 require "active_support/core_ext/hash/keys"
 require "active_support/core_ext/hash/indifferent_access"
 require "active_support/core_ext/hash/deep_merge"
-require "shakapacker/helper"
+require "shakapacker/utils"
 
 class Shakapacker::Configuration
   # For backward compatibility.
@@ -45,12 +45,12 @@ class Shakapacker::Configuration
       custom_config
     else
       config_path = ENV["SHAKAPACKER_CONFIG"] ? Pathname.new(ENV["SHAKAPACKER_CONFIG"]) : Rails.root.join("config/shakapacker.yml")
-      Shakapacker::Helper.parse_config_file_to_hash(config_path)
+      Shakapacker::Utils.parse_config_file_to_hash(config_path)
     end
 
     @custom_config = HashWithIndifferentAccess.new(@custom_config)
 
-    @default_config = default_config || Shakapacker::Helper.parse_config_file_to_hash(File.expand_path("../../install/config/shakapacker.yml", __FILE__))
+    @default_config = default_config || Shakapacker::Utils.parse_config_file_to_hash(File.expand_path("../../install/config/shakapacker.yml", __FILE__))
     @default_config = HashWithIndifferentAccess.new(@default_config)
     @env = env
   end
