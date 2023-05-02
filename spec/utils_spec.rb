@@ -1,12 +1,18 @@
 require_relative "spec_helper_initializer"
 
 describe "Shakapacker::Utils" do
+  let(:using_ruby_3_plus) { RUBY_VERSION.split(".").first.to_i >= 3 }
+
   describe ".parse_config_file_to_hash" do
     context "without passing config_path" do
       it "loads config from `config/shakapacker.yml`" do
-        default_config_path = Rails.root.join("config/shakapacker.yml")
+        config_path = Rails.root.join("config/shakapacker.yml")
 
-        expect(YAML).to receive(:load_file).with(default_config_path.to_s).and_return({})
+        if using_ruby_3_plus
+          expect(YAML).to receive(:load_file).with(config_path.to_s, { aliases: true }).and_return({})
+        else
+          expect(YAML).to receive(:load_file).with(config_path.to_s).and_return({})
+        end
         config = Shakapacker::Utils.parse_config_file_to_hash
       end
 
@@ -27,7 +33,11 @@ describe "Shakapacker::Utils" do
       let(:config_path) { Rails.root.join("config/shakapacker_nested_entries.yml") }
 
       it "loads config from the given path" do
-        expect(YAML).to receive(:load_file).with(config_path.to_s).and_return({})
+        if using_ruby_3_plus
+          expect(YAML).to receive(:load_file).with(config_path.to_s, { aliases: true }).and_return({})
+        else
+          expect(YAML).to receive(:load_file).with(config_path.to_s).and_return({})
+        end
         config = Shakapacker::Utils.parse_config_file_to_hash(config_path)
       end
 
