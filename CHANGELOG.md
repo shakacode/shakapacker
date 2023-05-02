@@ -44,6 +44,7 @@ _Please add entries here for your pull requests that are not yet released._
 
 ### Removed
 - Remove redundant enhancement for precompile task to run `yarn install` [PR 270](https://github.com/shakacode/shakapacker/pull/270) by [ahangarha](https://github.com/ahangarha).
+- Remove deprecated `check_yarn_integrity` from `Shakapacker::Configuration` [PR SP288](https://github.com/shakacode/shakapacker/pull/288) by [ahangarha](https://github.com/ahangarha).
 
 ### Added
 - All standard Webpack entries with the camelCase format are now supported in `shakapacker.yml` in snake_case format. [PR276](https://github.com/shakacode/shakapacker/pull/276) by [ahangarha](https://github.com/ahangarha).    
