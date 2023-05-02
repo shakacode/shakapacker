@@ -41,11 +41,11 @@ class Shakapacker::Configuration
     # For backward compatibility
     Shakapacker.set_shakapacker_env_variables_for_backward_compatibility
 
-    @custom_config = if custom_config
-      custom_config
-    else
+    @custom_config = if custom_config.nil?
       config_path = ENV["SHAKAPACKER_CONFIG"] ? Pathname.new(ENV["SHAKAPACKER_CONFIG"]) : Rails.root.join("config/shakapacker.yml")
       Shakapacker::Utils.parse_config_file_to_hash(config_path)
+    else
+      custom_config
     end
 
     @custom_config = HashWithIndifferentAccess.new(@custom_config)
