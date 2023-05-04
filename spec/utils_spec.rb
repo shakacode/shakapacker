@@ -63,7 +63,7 @@ describe "Shakapacker::Utils" do
       end
 
       it "returns empty hash while installing" do
-        ENV["SHAKAPACKER_INSTALLING"] = "true"
+        Shakapacker::Configuration.installing = true
         config_path = "the_missing_config_file_while_installing.yml"
         config = Shakapacker::Utils.parse_config_file_to_hash(config_path)
 

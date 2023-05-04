@@ -29,7 +29,7 @@ module Shakapacker
 
         return config
       rescue Errno::ENOENT => e
-        if ENV["SHAKAPACKER_INSTALLING"] == "true"
+        if Shakapacker::Configuration.installing
           {}
         else
           raise "Shakapacker configuration file not found #{config_path}. " \

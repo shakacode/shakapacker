@@ -20,9 +20,6 @@ _Please add entries here for your pull requests that are not yet released._
 
   Shakapacker v7 accepts a config hash instead of a config file path. You don't need to do anything if you don't interact with the Shakapacker interface directly. However, there are changes in the way Shakapacker reads configuration. The configuration gets generated based on the [bundled config file in the Shakapacker gem](https://github.com/shakacode/shakapacker/blob/master/lib/install/config/shakapacker.yml) and then overridden by the given custom configuration (loaded from `config/shakapacker.yml` by default). This means that some configurations, such as `shakapacker_precompile`, must be explicitly set to false to override the default values in the bundled config file.
 
-### Deprecated
-- `Shakapacker::Configuration.installing` is deprected in favor or using `SHAKAPACKER_INSTALLING` environment variable. [PR 285](https://github.com/shakacode/shakapacker/pull/285) by [ahangarha](https://github.com/ahangarha).
-
 ### Improved
 - Move compilation lock file into the working directory. [PR 272](https://github.com/shakacode/shakapacker/pull/272) by [tomdracz](https://github.com/tomdracz).
 

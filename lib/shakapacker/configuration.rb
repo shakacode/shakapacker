@@ -5,32 +5,8 @@ require "active_support/core_ext/hash/deep_merge"
 require "shakapacker/utils"
 
 class Shakapacker::Configuration
-  # For backward compatibility.
-  # Use ENV["SHAKAPACKER_INSTALLING"] directly.
   class << self
-    def installing
-      Shakapacker.puts_deprecation_message(
-        Shakapacker.short_deprecation_message(
-          "Shakapacker::Configuration.installing",
-          'ENV["SHAKAPACKER_INSTALLING"]'
-        )
-      )
-
-      ENV["SHAKAPACKER_INSTALLING"] == "true"
-    end
-
-    def installing=(is_installing)
-      Shakapacker.puts_deprecation_message(
-        Shakapacker.short_deprecation_message(
-          "Shakapacker::Configuration.installing",
-          'ENV["SHAKAPACKER_INSTALLING"]'
-        )
-      )
-
-      boolean_value = false
-      boolean_value = true if is_installing == true || is_installing =~ /^(true|t|yes|y|1)$/i
-      ENV["SHAKAPACKER_INSTALLING"] = boolean_value.to_s
-    end
+    attr_accessor :installing
   end
 
   attr_reader :root_path, :env
