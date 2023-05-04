@@ -20,23 +20,14 @@ describe "DevServerRunner" do
     cmd = ["#{test_app_path}/node_modules/.bin/webpack", "serve", "--config", "#{test_app_path}/config/webpack/webpack.config.js"]
     verify_command(cmd, use_node_modules: true)
   end
-
   it "run cmd via yarn" do
     cmd = ["yarn", "webpack", "serve", "--config", "#{test_app_path}/config/webpack/webpack.config.js"]
     verify_command(cmd, use_node_modules: false)
   end
-
   it "run cmd argv" do
-    cmd = [
-      "#{test_app_path}/node_modules/.bin/webpack",
-      "serve",
-      "--config",
-      "#{test_app_path}/config/webpack/webpack.config.js",
-      "--quiet"
-    ]
+    cmd = ["#{test_app_path}/node_modules/.bin/webpack", "serve", "--config", "#{test_app_path}/config/webpack/webpack.config.js", "--quiet"]
     verify_command(cmd, argv: (["--quiet"]))
   end
-
   it "run cmd argv with https" do
     cmd = ["#{test_app_path}/node_modules/.bin/webpack", "serve", "--config", "#{test_app_path}/config/webpack/webpack.config.js", "--https"]
 
@@ -51,14 +42,8 @@ describe "DevServerRunner" do
       verify_command(cmd, argv: (["--https"]))
     end.and_return(dev_server)
   end
-
   it "accepts environment variables" do
-    cmd = [
-      "#{test_app_path}/node_modules/.bin/webpack",
-      "serve",
-      "--config",
-      "#{test_app_path}/config/webpack/webpack.config.js"
-    ]
+    cmd = ["#{test_app_path}/node_modules/.bin/webpack", "serve", "--config", "#{test_app_path}/config/webpack/webpack.config.js"]
     env = Shakapacker::Compiler.env.dup
     ENV["SHAKAPACKER_CONFIG"] = env["SHAKAPACKER_CONFIG"] = "#{test_app_path}/config/shakapacker_other_location.yml"
     env["WEBPACK_SERVE"] = "true"
