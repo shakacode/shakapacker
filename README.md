@@ -2,8 +2,9 @@
 
 _Official, actively maintained successor to [rails/webpacker](https://github.com/rails/webpacker).ShakaCode stands behind the long-term maintenance and development of this project for the Rails community._
 
-* See [V7 Upgrade](./docs/v7_upgrade.md) for upgrading from v6 release.
+* See [V7 Upgrade](./docs/v7_upgrade.md) for upgrading from the v6 release.
 * See [V6 Upgrade](./docs/v6_upgrade.md) for upgrading from v5 or prior v6 releases.
+* See the [6-stable](https://github.com/shakacode/shakapacker/tree/6-stable) branch for Shakapacker v6.x code and documentation.
 
 [![Ruby specs](https://github.com/shakacode/shakapacker/workflows/Ruby%20specs/badge.svg)](https://github.com/shakacode/shakapacker/actions)
 [![Jest specs](https://github.com/shakacode/shakapacker/workflows/Jest%20specs/badge.svg)](https://github.com/shakacode/shakapacker/actions)
@@ -222,7 +223,7 @@ The Shakapacker view helpers generate the script and link tags to get the webpac
 
 Be sure to consult the API documentation in the source code of [helper.rb](./lib/shakapacker/helper.rb).
 
-**Note:** In order for your styles or static assets files to be available in your view, you would need to link them in your "pack" or entry file. Otherwise, Webpack won't know to package up those files.
+**Note:** For your styles or static assets files to be available in your view, you would need to link them in your "pack" or entry file. Otherwise, Webpack won't know to package up those files.
 
 #### View Helpers `javascript_pack_tag` and `stylesheet_pack_tag`
 
