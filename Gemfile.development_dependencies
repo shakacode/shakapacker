@@ -7,7 +7,7 @@ gem "nokogiri", ">= 1.13.6"
 gem "rails-html-sanitizer", ">= 1.4.3"
 
 group :test, :development do
-  gem "rspec-rails", "~> 5.0.0"
+  gem "rspec-rails", "~> 6.0.2"
 end
 
 group :test do
