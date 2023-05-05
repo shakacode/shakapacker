@@ -1,7 +1,7 @@
 const { loaderMatches } = require('../utils/helpers')
 const {
   webpack_loader: webpackLoader
-} = require('../config')
+} = require('../config')()
 const { isProduction } = require('../env')
 const jscommon = require('./jscommon')
 

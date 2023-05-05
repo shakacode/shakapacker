@@ -11,7 +11,7 @@ chdirWebpackerTestApp()
 const { resolve } = require('path')
 
 const baseConfig = require('../base')
-const config = require("../../config");
+const config = require("../../config")();
 
 describe('Base config', () => {
   beforeEach(() => jest.resetModules() && resetEnv())
@@ -30,7 +30,7 @@ describe('Base config', () => {
 
     test('should return true for css_extract_ignore_order_warnings when configured', () => {
       process.env.WEBPACKER_CONFIG = 'config/webpacker_css_extract_ignore_order_warnings.yml'
-      const config = require("../../config");
+      const config = require("../../config")();
 
       expect(config.css_extract_ignore_order_warnings).toEqual(true)
     })
@@ -47,7 +47,7 @@ describe('Base config', () => {
 
     test('should returns top level and nested entry points with config.nested_entries == true', () => {
       process.env.WEBPACKER_CONFIG = 'config/webpacker_nested_entries.yml'
-      const config = require("../../config");
+      const config = require("../../config")();
       const baseConfig = require('../base')
 
       expect(config.nested_entries).toEqual(true)

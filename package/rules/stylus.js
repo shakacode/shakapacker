@@ -5,7 +5,7 @@ const getStyleRule = require('../utils/get_style_rule')
 const {
   additional_paths: paths,
   source_path: sourcePath
-} = require('../config')
+} = require('../config')()
 
 module.exports = canProcess('stylus-loader', (resolvedPath) =>
   getStyleRule(/\.(styl(us)?)(\.erb)?$/i, [

@@ -1,6 +1,6 @@
 const { isBoolean } = require('./utils/helpers')
-const config = require('./config')
-const { outputPath: contentBase, publicPath } = require('./config')
+const config = require('./config')()
+const { outputPath: contentBase, publicPath } = require('./config')()
 const { isDevelopment } = require('./env')
 
 const fetchFromEnv = (key) => {

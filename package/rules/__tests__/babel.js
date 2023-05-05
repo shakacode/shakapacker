@@ -10,10 +10,10 @@ const babelConfig = require("../babel");
 
 jest.mock("../../config", () => {
   const original = jest.requireActual("../../config");
-  return {
-    ...original,
-    additional_paths: [...original.additional_paths, "node_modules/included"],
-  };
+  return () => ({
+    ...original(),
+    additional_paths: [...original().additional_paths, "node_modules/included"],
+  });
 });
 
 const createWebpackConfig = (file, use) => {

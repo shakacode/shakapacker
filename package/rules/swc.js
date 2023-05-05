@@ -2,7 +2,7 @@ const { loaderMatches } = require('../utils/helpers')
 const { getSwcLoaderConfig } = require('../swc')
 const {
   webpack_loader: webpackLoader
-} = require('../config')
+} = require('../config')()
 const jscommon = require('./jscommon')
 
 module.exports = loaderMatches(webpackLoader, 'swc', () => ({

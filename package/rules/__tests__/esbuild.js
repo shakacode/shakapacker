@@ -10,11 +10,11 @@ const esbuildConfig = require("../esbuild");
 
 jest.mock("../../config", () => {
   const original = jest.requireActual("../../config");
-  return {
-    ...original,
+  return () => ({
+    ...original(),
     webpack_loader: "esbuild",
-    additional_paths: [...original.additional_paths, "node_modules/included"],
-  };
+    additional_paths: [...original().additional_paths, "node_modules/included"],
+  });
 });
 
 const createWebpackConfig = (file, use) => {

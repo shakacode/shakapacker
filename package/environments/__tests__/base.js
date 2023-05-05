@@ -11,7 +11,7 @@ chdirTestApp()
 const { resolve } = require('path')
 
 const baseConfig = require('../base')
-const config = require("../../config");
+const config = require("../../config")();
 
 describe('Base config', () => {
   beforeEach(() => jest.resetModules() && resetEnv())
@@ -30,7 +30,7 @@ describe('Base config', () => {
 
     test('should return true for css_extract_ignore_order_warnings when configured', () => {
       process.env.SHAKAPACKER_CONFIG = 'config/shakapacker_css_extract_ignore_order_warnings.yml'
-      const config = require("../../config");
+      const config = require("../../config")();
 
       expect(config.css_extract_ignore_order_warnings).toEqual(true)
     })
@@ -50,7 +50,7 @@ describe('Base config', () => {
       const config = require("../../config");
       const baseConfig = require('../base')
 
-      expect(config.nested_entries).toEqual(true)
+      expect(config().nested_entries).toEqual(true)
 
       expect(baseConfig.entry.application).toEqual(
         resolve('app', 'javascript', 'entrypoints', 'application.js')

@@ -3,7 +3,7 @@ const { realpathSync } = require('fs')
 const {
   source_path: sourcePath,
   additional_paths: additionalPaths
-} = require('../config')
+} = require('../config')()
 
 const inclusions = [sourcePath, ...additionalPaths].map(p => {
   try {
