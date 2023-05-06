@@ -10,19 +10,26 @@ const config = require('./config')
 const devServer = require('./dev_server')
 const env = require('./env')
 const { moduleExists, canProcess } = require('./utils/helpers')
-const inliningCss = require('./inliningCss')
+const inliningCss = require('./utils/inliningCss')
 
-const webpackConfig = () => {
+const globalMutableWebpackConfig = () => {
   const { nodeEnv } = env
   const path = resolve(__dirname, 'environments', `${nodeEnv}.js`)
   const environmentConfig = existsSync(path) ? require(path) : baseConfig
   return environmentConfig
 }
 
+const webpackConfig = () => {
+  const environmentConfig = globalMutableWebpackConfig()
+  const immutable = webpackMerge.merge(environmentConfig, {})
+  return immutable
+}
+
 module.exports = {
-  config,
+  config, // shakapacker.yml
   devServer,
-  webpackConfig: webpackConfig(),
+  webpackConfig,
+  globalMutableWebpackConfig: globalMutableWebpackConfig(),
   baseConfig,
   env,
   rules,

@@ -1,6 +1,6 @@
 /* eslint global-require: 0 */
 const { canProcess, moduleExists } = require('./helpers')
-const inliningCss = require('../inliningCss')
+const inliningCss = require('./inliningCss')
 
 const getStyleRule = (test, preprocessors = []) => {
   if (moduleExists('css-loader')) {

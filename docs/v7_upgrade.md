@@ -23,6 +23,7 @@ Please note that Shakapacker v8 will remove any backward compatibility for spell
     - Rename`Shakapacker.config.webpacker_precompile?` method, replace it with `Shakapacker.config.shakapacker_precompile?`
     - Rename `config/shakapacker.yml` to `config/webpacker.yml`.
     - Change `webpacker_precompile` entry to `shakapacker_precompile` if it exists in the config file.
-    - Run `rake shakapacker:binstubs` to get the new files in place and delete the old webpacker ones. Alternatively, if you have updated these files manually, rename `bin/webpacker` and `bin/webpacker-dev-server` to `bin/shakapacker` and `bin/shakapacker-dev-server`, and update the content of these files to change 'webpacker' to 'shakapacker'.
+    - Run `rake shakapacker:binstubs` to get the new files in place. Then delete the `bin/webpacker` and `bin/webpacker-dev-server` ones.
     - `--debug-webpacker` is now `--debug-shakapacker` for your shakapacker binstubs.
     - Rename environment variables from `WEBPACKER_XYZ` to `SHAKAPACKER_XYZ`.
+    - Where you have used webpackConfig, you now need to invoke it as it is a function. Alternatively, you can rename the import to globalMutableWebpackConfig which retains the v6 behavior.

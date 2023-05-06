@@ -1,15 +1,16 @@
 const { resolve } = require('path')
 const { load } = require('js-yaml')
-const { readFileSync } = require('fs')
+const { existsSync, readFileSync } = require('fs')
+
 const { merge } = require('webpack-merge')
 const {
   ensureTrailingSlash,
   setShakapackerEnvVariablesForBackwardCompatibility
 } = require('./utils/helpers')
 const { railsEnv } = require('./env')
-const configPath = require('./configPath')
+const configPath = require('./utils/configPath')
 
-const defaultConfigPath = require.resolve('../config/shakapacker.yml')
+const defaultConfigPath = require('./utils/defaultConfigPath')
 
 const getDefaultConfig = () => {
   const defaultConfig = load(readFileSync(defaultConfigPath), 'utf8')
@@ -17,9 +18,22 @@ const getDefaultConfig = () => {
 }
 
 const defaults = getDefaultConfig()
-const app = load(readFileSync(configPath), 'utf8')[railsEnv]
+let config
 
-const config = merge(defaults, app)
+if (existsSync(configPath)) {
+  const appYmlObject = load(readFileSync(configPath), 'utf8')
+  const envAppConfig = appYmlObject[railsEnv]
+
+  if (!envAppConfig) {
+    /* eslint no-console:0 */
+    console.warn(`Warning: ${railsEnv} key not found in the configuration file. Using production configuration as a fallback.`)
+  }
+
+  config = merge(defaults, envAppConfig || {})
+} else {
+  config = merge(defaults, {})
+}
+
 config.outputPath = resolve(config.public_root_path, config.public_output_path)
 
 // Ensure that the publicPath includes our asset host so dynamic imports
