@@ -94,14 +94,6 @@ class Shakapacker::Configuration
     root_path.join(fetch(:cache_path))
   end
 
-  def check_yarn_integrity=(value)
-    warn <<~EOS
-      Shakapacker::Configuration#check_yarn_integrity=(value) is obsolete. The integrity
-      check has been removed from Webpacker (https://github.com/rails/webpacker/pull/2518)
-      so changing this setting will have no effect.
-    EOS
-  end
-
   def webpack_compile_output?
     fetch(:webpack_compile_output)
   end
