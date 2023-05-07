@@ -18,12 +18,14 @@ Please note that Shakapacker v8 will remove any backward compatibility for spell
 
 1. Upgrade Shakapacker to the latest 6.x version and ensure no issues running your application. 
 2. Upgrade Shakapacker to version 7.
-3. Change spelling from Webpacker to Shakapacker
-    - Rename constant `Webpacker` to `Shakapacker`.
-    - Rename`Shakapacker.config.webpacker_precompile?` method, replace it with `Shakapacker.config.shakapacker_precompile?`
+3. Run `rake shakapacker:binstubs` to get the new files in place. Then delete the `bin/webpacker` and `bin/webpacker-dev-server` ones.
+4. Change spelling from Webpacker to Shakapacker in the code
+   - Change `webpacker_precompile` entry to `shakapacker_precompile` if it exists in the config file.
+   - Rename Ruby constant `Webpacker` to `Shakapacker` doing a global search and replace in your code. You might not be using it.
+     - Rename`Shakapacker.config.webpacker_precompile?` method, replace it with `Shakapacker.config.shakapacker_precompile?`
+   - `--debug-webpacker` is now `--debug-shakapacker` for your shakapacker binstubs.
+5. Rename files
     - Rename `config/shakapacker.yml` to `config/webpacker.yml`.
-    - Change `webpacker_precompile` entry to `shakapacker_precompile` if it exists in the config file.
-    - Run `rake shakapacker:binstubs` to get the new files in place. Then delete the `bin/webpacker` and `bin/webpacker-dev-server` ones.
-    - `--debug-webpacker` is now `--debug-shakapacker` for your shakapacker binstubs.
     - Rename environment variables from `WEBPACKER_XYZ` to `SHAKAPACKER_XYZ`.
-    - Where you have used webpackConfig, you now need to invoke it as it is a function. Alternatively, you can rename the import to globalMutableWebpackConfig which retains the v6 behavior.
+6. Where you have used webpackConfig, you now need to invoke it as it is a function. Alternatively, you can rename the import to globalMutableWebpackConfig which retains the v6 behavior.
+7. You may need to upgrade dependencies in package.json. You should use `yarn upgrade-interactive`. Note, some upgrades introduce issues. Some will fix issues. You may need to try a few different versions of a dependency to find one that works.
