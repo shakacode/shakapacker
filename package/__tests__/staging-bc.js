@@ -16,7 +16,9 @@ describe('Backward Compatibility - Custom environment', () => {
       process.env.RAILS_ENV = 'staging'
       delete process.env.NODE_ENV
 
-      const { webpackConfig } = require('../index')
+      const { webpackConfig: getWebpackConfig } = require('../index')
+
+      const webpackConfig = getWebpackConfig()
 
       expect(webpackConfig.output.path).toEqual(
         resolve('public', 'packs-staging')

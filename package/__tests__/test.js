@@ -16,7 +16,9 @@ describe('Test environment', () => {
       process.env.RAILS_ENV = 'test'
       process.env.NODE_ENV = 'test'
 
-      const { webpackConfig } = require('../index')
+      const { webpackConfig: getWebpackConfig } = require('../index')
+
+      const webpackConfig = getWebpackConfig()
 
       expect(webpackConfig.output.path).toEqual(resolve('public', 'packs-test'))
       expect(webpackConfig.output.publicPath).toEqual('/packs-test/')

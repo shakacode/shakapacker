@@ -17,7 +17,9 @@ describe('Development environment', () => {
       process.env.RAILS_ENV = 'development'
       process.env.NODE_ENV = 'development'
       process.env.WEBPACK_SERVE = 'true'
-      const { webpackConfig } = require('../index')
+      const { webpackConfig: getWebpackConfig } = require('../index')
+
+      const webpackConfig = getWebpackConfig()
 
       expect(webpackConfig.output.path).toEqual(resolve('public', 'packs'))
       expect(webpackConfig.output.publicPath).toEqual('/packs/')
@@ -27,7 +29,9 @@ describe('Development environment', () => {
       process.env.RAILS_ENV = 'development'
       process.env.NODE_ENV = 'development'
       process.env.WEBPACK_SERVE = undefined
-      const { webpackConfig } = require('../index')
+      const { webpackConfig: getWebpackConfig } = require('../index')
+
+      const webpackConfig = getWebpackConfig()
 
       expect(webpackConfig.output.path).toEqual(resolve('public', 'packs'))
       expect(webpackConfig.output.publicPath).toEqual('/packs/')
