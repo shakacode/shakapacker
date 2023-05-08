@@ -21,7 +21,7 @@ const globalMutableWebpackConfig = () => {
 
 const webpackConfig = () => {
   const environmentConfig = globalMutableWebpackConfig()
-  const immutable = webpackMerge.merge(environmentConfig, {})
+  const immutable = webpackMerge.merge({}, environmentConfig)
   return immutable
 }
 
