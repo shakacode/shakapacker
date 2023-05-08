@@ -59,8 +59,10 @@ o do so, you need to modify your webpack configuration and use `ESBuildMinifyPlu
 Example:
 
 ```js
-const { webpackConfig: baseWebpackConfig, merge } = require('shakapacker')
+const { webpackConfig: getWebpackConfig, merge } = require('shakapacker')
 const { ESBuildMinifyPlugin } = require('esbuild-loader')
+
+const baseWebpackConfig = getWebpackConfig()
 
 const options = {
   optimization: {

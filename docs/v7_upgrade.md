@@ -2,9 +2,7 @@
 
 There will be several substantial and breaking changes in Shakapacker v7 that you need to manually account for when coming from Shakapacker v6.
 
-## Noticeable Changes
-
-### Usages of 'webpacker' should now be 'shakapacker'
+## Usages of 'webpacker' should now be 'shakapacker'
 
 Shakapacker v6 kept the 'webpacker' spelling. As a result, many config filenames, environment variables, rake tasks, etc., used the 'webpacker' spelling. Shakapacker 7 requires renaming to the 'shakapacker' spelling.
 
@@ -12,7 +10,7 @@ Shakapacker v7 provides a high degree of backward compatibility for spelling cha
 
 Please note that Shakapacker v8 will remove any backward compatibility for spelling.
 
-## Upgrade Steps
+### Upgrade Steps
 
 **Note:** At each step of changing the version, ensure that you update both gem and npm versions to the same "exact" version (like `x.y.z` and not `^x.y.z` or `>= x.y.z`).
 
@@ -29,3 +27,18 @@ Please note that Shakapacker v8 will remove any backward compatibility for spell
     - Rename environment variables from `WEBPACKER_XYZ` to `SHAKAPACKER_XYZ`.
 6. Where you have used webpackConfig, you now need to invoke it as it is a function. Alternatively, you can rename the import to globalMutableWebpackConfig which retains the v6 behavior.
 7. You may need to upgrade dependencies in package.json. You should use `yarn upgrade-interactive`. Note, some upgrades introduce issues. Some will fix issues. You may need to try a few different versions of a dependency to find one that works.
+
+
+## The `webpackConfig` property is changed
+
+The `webpackConfig` property in the `shakapacker` module has been updated to be a function instead of a global mutable webpack configuration. This function now returns an immutable webpack configuration object, which ensures that any modifications made to it will not affect any other usage of the webpack configuration. If a project still requires the old mutable object, it can be accessed by replacing `webpackConfig` with `globalMutableWebpackConfig`.
+
+### Upgrade Steps
+
+- Check config files in `config/webpack` directory. You may need to use something like the following code to get immutable config file:
+
+   ```js
+   const { webpackConfig: getWebpackConfig } = require('shakapacker')
+   const webpackConfig = getWebpackConfig()
+   ```
+- Replace `webpackConfig` with `globalMutableWebpackConfig` if the project requires to get mutable object.
