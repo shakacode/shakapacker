@@ -23,7 +23,7 @@ Please note that Shakapacker v8 will remove any backward compatibility for spell
      - Rename`Shakapacker.config.webpacker_precompile?` method, replace it with `Shakapacker.config.shakapacker_precompile?`
    - `--debug-webpacker` is now `--debug-shakapacker` for your shakapacker binstubs.
 5. Rename files
-    - Rename `config/shakapacker.yml` to `config/webpacker.yml`.
+    - Rename `config/webpacker.yml` to `config/shakapacker.yml`.
     - Rename environment variables from `WEBPACKER_XYZ` to `SHAKAPACKER_XYZ`.
 6. Where you have used webpackConfig, you now need to invoke it as it is a function. Alternatively, you can rename the import to globalMutableWebpackConfig which retains the v6 behavior.
 7. You may need to upgrade dependencies in package.json. You should use `yarn upgrade-interactive`. Note, some upgrades introduce issues. Some will fix issues. You may need to try a few different versions of a dependency to find one that works.
