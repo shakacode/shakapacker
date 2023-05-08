@@ -1,6 +1,6 @@
 const fs = require('fs')
 const { resolve } = require('path')
-const { setShakapackerEnvVariablesForBackwardCompatibility } = require('./utils/helpers')
+const { setShakapackerEnvVariablesForBackwardCompatibility } = require('./helpers')
 
 setShakapackerEnvVariablesForBackwardCompatibility()
 

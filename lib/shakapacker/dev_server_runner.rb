@@ -33,7 +33,7 @@ module Shakapacker
         @hot               = dev_server.hmr?
 
       rescue Errno::ENOENT, NoMethodError
-        $stdout.puts "webpack dev_server configuration not found in #{@config.config_path}[#{ENV["RAILS_ENV"]}]."
+        $stdout.puts "webpack 'dev_server' configuration not found in #{@config.config_path}[#{ENV["RAILS_ENV"]}]."
         $stdout.puts "Please run bundle exec rails shakapacker:install to install Shakapacker"
         exit!
       end

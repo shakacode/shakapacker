@@ -1,25 +1,13 @@
 const { merge } = require('webpack-merge')
 
 const baseConfig = require('./base')
-const devServerConfig = require('../dev_server')
+const webpackDevServerConfig  = require('../webpackDevServerConfig')
 const { runningWebpackDevServer } = require('../env')
 
-let devConfig = {
+const devConfig = {
   mode: 'development',
-  devtool: 'cheap-module-source-map'
-}
-
-if (runningWebpackDevServer) {
-  devConfig = merge(devConfig, {
-    stats: {
-      colors: true,
-      entrypoints: false,
-      errorDetails: true,
-      modules: false,
-      moduleTrace: false
-    },
-    devServer: devServerConfig
-  })
+  devtool: 'cheap-module-source-map',
+  ...(runningWebpackDevServer && { devServer: webpackDevServerConfig() })
 }
 
 module.exports = merge(baseConfig, devConfig)
