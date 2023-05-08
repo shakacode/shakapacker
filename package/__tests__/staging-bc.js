@@ -9,7 +9,7 @@ chdirWebpackerTestApp()
 describe('Backward Compatibility - Custom environment', () => {
   afterAll(() => process.chdir(rootPath))
 
-  describe('webpackConfig', () => {
+  describe('generateWebpackConfig', () => {
     beforeEach(() => jest.resetModules())
 
     test('should use staging config and default production environment', () => {

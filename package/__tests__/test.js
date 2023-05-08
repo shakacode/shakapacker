@@ -9,7 +9,7 @@ chdirTestApp()
 describe('Test environment', () => {
   afterAll(() => process.chdir(rootPath))
 
-  describe('webpackConfig', () => {
+  describe('generateWebpackConfig', () => {
     beforeEach(() => jest.resetModules())
 
     test('should use test config and production environment', () => {

@@ -10,7 +10,7 @@ describe('Development environment', () => {
   beforeEach(() => jest.resetModules() && resetEnv())
   afterAll(() => process.chdir(rootPath))
 
-  describe('webpackConfig', () => {
+  describe('generateWebpackConfig', () => {
     beforeEach(() => jest.resetModules())
 
     test('should use development config and environment including devServer if WEBPACK_SERVE', () => {
