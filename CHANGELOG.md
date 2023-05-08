@@ -21,7 +21,7 @@ _Please add entries here for your pull requests that are not yet released._
   The `webpackConfig` property in the `shakapacker` module has been updated to be a function instead of a global mutable webpack configuration. This function now returns an immutable webpack configuration object, which ensures that any modifications made to it will not affect any other usage of the webpack configuration. If a project still requires the old mutable object, it can be accessed by replacing `webpackConfig` with `globalMutableWebpackConfig`.
 
 ### Improved
-- Move compilation lock file into the working directory. [PR 272](https://github.com/shakacode/shakapacker/pull/272) by [justin808](https://github.com/justin808).
+- Move compilation lock file into the working directory. [PR 272](https://github.com/shakacode/shakapacker/pull/272) by [tomdracz](https://github.com/tomdracz).
 
 ### Changed
 - Rename Webpacker to Shakapacker in the entire project including config files, binstubs, environment variables, etc. with a high degree of backward compatibility.
