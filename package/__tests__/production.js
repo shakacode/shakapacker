@@ -29,4 +29,23 @@ describe('Production environment', () => {
       })
     })
   })
+
+  describe('globalMutableWebpackConfig', () => {
+    beforeEach(() => jest.resetModules())
+
+    test('should use production config and environment', () => {
+      process.env.RAILS_ENV = 'production'
+      process.env.NODE_ENV = 'production'
+
+      const { globalMutableWebpackConfig: webpackConfig } = require('../index')
+
+      expect(webpackConfig.output.path).toEqual(resolve('public', 'packs'))
+      expect(webpackConfig.output.publicPath).toEqual('/packs/')
+
+      expect(webpackConfig).toMatchObject({
+        devtool: 'source-map',
+        stats: 'normal'
+      })
+    })
+  })
 })

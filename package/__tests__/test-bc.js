@@ -25,4 +25,19 @@ describe('Backward Compatibility - Test environment', () => {
       expect(webpackConfig.devServer).toEqual(undefined)
     })
   })
+
+  describe('globalMutableWebpackConfig', () => {
+    beforeEach(() => jest.resetModules())
+
+    test('should use test config and production environment', () => {
+      process.env.RAILS_ENV = 'test'
+      process.env.NODE_ENV = 'test'
+
+      const { globalMutableWebpackConfig: webpackConfig } = require('../index')
+
+      expect(webpackConfig.output.path).toEqual(resolve('public', 'packs-test'))
+      expect(webpackConfig.output.publicPath).toEqual('/packs-test/')
+      expect(webpackConfig.devServer).toEqual(undefined)
+    })
+  })
 })
