@@ -467,7 +467,9 @@ The most practical webpack configuration is to take the default from Shakapacker
 ```js
 // use the new NPM package name, `shakapacker`.
 // merge is webpack-merge from https://github.com/survivejs/webpack-merge
-const { webpackConfig: baseWebpackConfig, merge } = require('shakapacker')
+const { generateWebpackConfig, merge } = require('shakapacker')
+
+const baseWebpackConfig = generateWebpackConfig()
 
 const options = {
   resolve: {
@@ -507,7 +509,9 @@ Then `require` this file in your `config/webpack/webpack.config.js`:
 ```js
 // config/webpack/webpack.config.js
 // use the new NPM package name, `shakapacker`.
-const { webpackConfig, merge } = require('shakapacker')
+const { generateWebpackConfig, merge } = require('shakapacker')
+
+const webpackConfig = generateWebpackConfig()
 const customConfig = require('./custom')
 
 module.exports = merge(webpackConfig, customConfig)
@@ -517,7 +521,9 @@ If you need access to configs within Shakapacker's configuration, you can import
 
 ```js
 // config/webpack/webpack.config.js
-const { webpackConfig } = require('shakapacker')
+const { generateWebpackConfig } = require('shakapacker')
+
+const webpackConfig = generateWebpackConfig()
 
 console.log(webpackConfig.output_path)
 console.log(webpackConfig.source_path)
@@ -606,7 +612,9 @@ Then modify the webpack config to use it as a plugin:
 
 ```js
 // config/webpack/webpack.config.js
-const { webpackConfig, merge } = require("shakapacker");
+const { generateWebpackConfig, merge } = require("shakapacker");
+
+const webpackConfig = generateWebpackConfig()
 const ForkTSCheckerWebpackPlugin = require("fork-ts-checker-webpack-plugin");
 
 module.exports = merge(webpackConfig, {
@@ -626,7 +634,10 @@ Optionally, add the `CSS` extension to webpack config for easy resolution.
 
 ```js
 // config/webpack/webpack.config.js
-const { webpackConfig, merge } = require('shakapacker')
+const { generateWebpackConfig, merge } = require('shakapacker')
+
+const webpackConfig = generateWebpackConfig()
+
 const customConfig = {
   resolve: {
     extensions: ['.css']
@@ -676,7 +687,7 @@ yarn add coffeescript coffee-loader
 
 #### Other frameworks
 
-Please follow webpack integration guide for the relevant framework or library,
+Please follow Webpack integration guide for the relevant framework or library,
 
 1. [Svelte](https://github.com/sveltejs/svelte-loader#install)
 2. [Angular](https://v2.angular.io/docs/ts/latest/guide/webpack.html#!#configure-webpack)
@@ -705,7 +716,10 @@ module.exports = {
 
 ```js
 // config/webpack/webpack.config.js
-const { webpackConfig, merge } = require('shakapacker')
+const { generateWebpackConfig, merge } = require('shakapacker')
+
+const webpackConfig = generateWebpackConfig()
+
 const vueConfig = require('./rules/vue')
 
 module.exports = merge(vueConfig, webpackConfig)
