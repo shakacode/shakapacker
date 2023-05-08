@@ -16,9 +16,9 @@ describe('Custom environment', () => {
       process.env.RAILS_ENV = 'staging'
       delete process.env.NODE_ENV
 
-      const { webpackConfig: getWebpackConfig } = require('../index')
+      const { generateWebpackConfig } = require('../index')
 
-      const webpackConfig = getWebpackConfig()
+      const webpackConfig = generateWebpackConfig()
 
       expect(webpackConfig.output.path).toEqual(
         resolve('public', 'packs-staging')

@@ -1,5 +1,4 @@
 const index = require('../index')
-const { test } = require('../rules/raw')
 
 describe('index', () => {
   test('exports webpack-merge v5 functions', () => {
@@ -9,10 +8,10 @@ describe('index', () => {
   })
 
   test('webpackConfig returns an immutable object', () => {
-    const { webpackConfig: getWebpackConfig } = require('../index')
+    const { generateWebpackConfig } = require('../index')
 
-    const webpackConfig1 = getWebpackConfig()
-    const webpackConfig2 = getWebpackConfig()
+    const webpackConfig1 = generateWebpackConfig()
+    const webpackConfig2 = generateWebpackConfig()
 
     webpackConfig1.newKey = 'new value'
     webpackConfig1.output.path = 'new path'

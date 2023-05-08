@@ -16,9 +16,9 @@ describe('Backward Compatibility - Test environment', () => {
       process.env.RAILS_ENV = 'test'
       process.env.NODE_ENV = 'test'
 
-      const { webpackConfig: getWebpackConfig } = require('../index')
+      const { generateWebpackConfig } = require('../index')
 
-      const webpackConfig = getWebpackConfig()
+      const webpackConfig = generateWebpackConfig()
 
       expect(webpackConfig.output.path).toEqual(resolve('public', 'packs-test'))
       expect(webpackConfig.output.publicPath).toEqual('/packs-test/')

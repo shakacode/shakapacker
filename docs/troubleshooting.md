@@ -150,9 +150,9 @@ To silent these warnings, please update `config/webpack/webpack.config.js`:
 ```js
 const webpack = require('webpack')
 const { resolve } = require('path')
-const { webpackConfig: getWebpackConfig, merge } = require('shakapacker')
+const { generateWebpackConfig, merge } = require('shakapacker')
 
-const webpackConfig = getWebpackConfig();
+const webpackConfig = generateWebpackConfig();
 
 module.exports = merge(webpackConfig, {
   plugins: [
@@ -201,9 +201,9 @@ Instead do:
 // config/webpack/webpack.config.js
 
 const webpack = require('webpack')
-const { webpackConfig: getWebpackConfig, merge } = require('shakapacker')
+const { generateWebpackConfig, merge } = require('shakapacker')
 
-const webpackConfig = getWebpackConfig();
+const webpackConfig = generateWebpackConfig();
 
 module.exports = merge(webpackConfig, {
   plugins: [

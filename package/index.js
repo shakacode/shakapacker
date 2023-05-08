@@ -19,7 +19,7 @@ const globalMutableWebpackConfig = () => {
   return environmentConfig
 }
 
-const webpackConfig = () => {
+const generateWebpackConfig = () => {
   const environmentConfig = globalMutableWebpackConfig()
   const immutable = webpackMerge.merge({}, environmentConfig)
   return immutable
@@ -28,7 +28,7 @@ const webpackConfig = () => {
 module.exports = {
   config, // shakapacker.yml
   devServer,
-  webpackConfig,
+  generateWebpackConfig,
   globalMutableWebpackConfig: globalMutableWebpackConfig(),
   baseConfig,
   env,

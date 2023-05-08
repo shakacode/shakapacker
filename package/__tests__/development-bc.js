@@ -17,9 +17,9 @@ describe('Backward Compatibility - Development environment', () => {
       process.env.RAILS_ENV = 'development'
       process.env.NODE_ENV = 'development'
       process.env.WEBPACK_SERVE = 'true'
-      const { webpackConfig: getWebpackConfig } = require('../index')
+      const { generateWebpackConfig } = require('../index')
 
-      const webpackConfig = getWebpackConfig()
+      const webpackConfig = generateWebpackConfig()
 
       expect(webpackConfig.output.path).toEqual(resolve('public', 'packs'))
       expect(webpackConfig.output.publicPath).toEqual('/packs/')
@@ -29,9 +29,9 @@ describe('Backward Compatibility - Development environment', () => {
       process.env.RAILS_ENV = 'development'
       process.env.NODE_ENV = 'development'
       process.env.WEBPACK_SERVE = undefined
-      const { webpackConfig: getWebpackConfig } = require('../index')
+      const { generateWebpackConfig } = require('../index')
 
-      const webpackConfig = getWebpackConfig()
+      const webpackConfig = generateWebpackConfig()
 
       expect(webpackConfig.output.path).toEqual(resolve('public', 'packs'))
       expect(webpackConfig.output.publicPath).toEqual('/packs/')

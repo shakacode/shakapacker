@@ -31,14 +31,26 @@ Please note that Shakapacker v8 will remove any backward compatibility for spell
 
 ## The `webpackConfig` property is changed
 
-The `webpackConfig` property in the `shakapacker` module has been updated to be a function instead of a global mutable webpack configuration. This function now returns an immutable webpack configuration object, which ensures that any modifications made to it will not affect any other usage of the webpack configuration. If a project still requires the old mutable object, it can be accessed by replacing `webpackConfig` with `globalMutableWebpackConfig`.
+The `webpackConfig` property in the `shakapacker` module has been changed. The shakapacker module has two options:
+1. `generatedWebpackConfig`: a function that returns an immutable webpack configuration object, which ensures that any modifications made to it will not affect any other usage of the webpack configuration. 
+2. `globalMutableWebpackConfig`: if a project still requires the old mutable object. You can rename your imports of `webpackConfig` with `globalMutableWebpackConfig`.
 
-### Upgrade Steps
+### Example Upgrade
+If you started with:
 
-- Check config files in `config/webpack` directory. You may need to use something like the following code to get immutable config file:
+```js
+const { webpackConfig } = require('shakapacker')
+```
 
-   ```js
-   const { webpackConfig: getWebpackConfig } = require('shakapacker')
-   const webpackConfig = getWebpackConfig()
-   ```
-- Replace `webpackConfig` with `globalMutableWebpackConfig` if the project requires to get mutable object.
+Swtich to:
+
+```js
+const { generateWebpackConfig } = require('shakapacker')
+const webpackConfig = generateWebpackConfig()
+```
+
+or use `globalMutableWebpackConfig` if the project desires to use a globally mutable object.
+
+```js
+const { globalMutableWebpackConfig: webpackConfig } = require('shakapacker')
+```

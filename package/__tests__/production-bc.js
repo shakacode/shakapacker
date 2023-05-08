@@ -16,9 +16,9 @@ describe('Backward Compatibility - Production environment', () => {
       process.env.RAILS_ENV = 'production'
       process.env.NODE_ENV = 'production'
 
-      const { webpackConfig: getWebpackConfig } = require('../index')
+      const { generateWebpackConfig } = require('../index')
 
-      const webpackConfig = getWebpackConfig()
+      const webpackConfig = generateWebpackConfig()
 
       expect(webpackConfig.output.path).toEqual(resolve('public', 'packs'))
       expect(webpackConfig.output.publicPath).toEqual('/packs/')
