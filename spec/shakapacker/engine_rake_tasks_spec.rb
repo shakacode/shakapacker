@@ -21,7 +21,7 @@ describe "EngineRakeTasks" do
 
   private
     def mounted_app_path
-      File.expand_path("mounted_app", __dir__)
+      File.expand_path("../mounted_app", __dir__)
     end
 
     def current_files_in_bin
@@ -29,7 +29,7 @@ describe "EngineRakeTasks" do
     end
 
     def expected_binstub_paths
-      gem_path = File.expand_path("..", __dir__)
+      gem_path = File.expand_path("../..", __dir__)
       Dir.chdir("#{gem_path}/lib/install/bin") do
         Dir.glob("*").map { |file| "#{mounted_app_path}/test/dummy/bin/#{file}" }
       end

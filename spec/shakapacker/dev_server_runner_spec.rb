@@ -14,7 +14,7 @@ describe "DevServerRunner" do
     ENV["SHAKAPACKER_CONFIG"] = @original_shakapacker_config
   end
 
-  let(:test_app_path) { File.expand_path("test_app", __dir__) }
+  let(:test_app_path) { File.expand_path("../test_app", __dir__) }
 
   it "run cmd via node modules" do
     cmd = ["#{test_app_path}/node_modules/.bin/webpack", "serve", "--config", "#{test_app_path}/config/webpack/webpack.config.js"]

@@ -1,49 +1,49 @@
 require_relative "spec_helper_initializer"
 
 describe "Shakapacker::Configuration" do
-  ROOT_PATH = Pathname.new(File.expand_path("test_app", __dir__))
+  ROOT_PATH = Pathname.new(File.expand_path("../test_app", __dir__))
 
   context "with standard shakapacker.yml" do
     let(:config) do
       Shakapacker::Configuration.new(
         root_path: ROOT_PATH,
-        config_path: Pathname.new(File.expand_path("./test_app/config/shakapacker.yml", __dir__)),
+        config_path: Pathname.new(File.expand_path("../test_app/config/shakapacker.yml", __dir__)),
         env: "production"
       )
     end
 
     it "#source_path returns correct path" do
-      source_path = File.expand_path File.join(File.dirname(__FILE__), "test_app/app/javascript").to_s
+      source_path = File.expand_path File.join(File.dirname(__FILE__), "../test_app/app/javascript").to_s
       expect(config.source_path.to_s).to eq source_path
     end
 
     it "#source_entry_path returns correct path" do
-      source_entry_path = File.expand_path File.join(File.dirname(__FILE__), "test_app/app/javascript", "entrypoints").to_s
+      source_entry_path = File.expand_path File.join(File.dirname(__FILE__), "../test_app/app/javascript", "entrypoints").to_s
       expect(config.source_entry_path.to_s).to eq source_entry_path
     end
 
     it "#public_root_path returns correct path" do
-      public_root_path = File.expand_path File.join(File.dirname(__FILE__), "test_app/public").to_s
+      public_root_path = File.expand_path File.join(File.dirname(__FILE__), "../test_app/public").to_s
       expect(config.public_path.to_s).to eq public_root_path
     end
 
     it "#public_output_path returns correct path" do
-      public_output_path = File.expand_path File.join(File.dirname(__FILE__), "test_app/public/packs").to_s
+      public_output_path = File.expand_path File.join(File.dirname(__FILE__), "../test_app/public/packs").to_s
       expect(config.public_output_path.to_s).to eq public_output_path
     end
 
     it "#public_manifest_path returns correct path" do
-      public_manifest_path = File.expand_path File.join(File.dirname(__FILE__), "test_app/public/packs", "manifest.json").to_s
+      public_manifest_path = File.expand_path File.join(File.dirname(__FILE__), "../test_app/public/packs", "manifest.json").to_s
       expect(config.public_manifest_path.to_s).to eq public_manifest_path
     end
 
     it "#manifest_path returns correct path" do
-      manifest_path = File.expand_path File.join(File.dirname(__FILE__), "test_app/public/packs", "manifest.json").to_s
+      manifest_path = File.expand_path File.join(File.dirname(__FILE__), "../test_app/public/packs", "manifest.json").to_s
       expect(config.manifest_path.to_s).to eq manifest_path
     end
 
     it "#cache_path returns correct path" do
-      cache_path = File.expand_path File.join(File.dirname(__FILE__), "test_app/tmp/shakapacker").to_s
+      cache_path = File.expand_path File.join(File.dirname(__FILE__), "../test_app/tmp/shakapacker").to_s
       expect(config.cache_path.to_s).to eq cache_path
     end
 
@@ -179,12 +179,12 @@ describe "Shakapacker::Configuration" do
   context "with shakapacker config file containing public_output_path entry" do
     config = Shakapacker::Configuration.new(
       root_path: ROOT_PATH,
-      config_path: Pathname.new(File.expand_path("./test_app/config/shakapacker_public_root.yml", __dir__)),
+      config_path: Pathname.new(File.expand_path("../test_app/config/shakapacker_public_root.yml", __dir__)),
       env: "production"
     )
 
     it "#public_output_path returns correct path" do
-      expected_public_output_path = File.expand_path File.join(File.dirname(__FILE__), "public/packs").to_s
+      expected_public_output_path = File.expand_path File.join(File.dirname(__FILE__), "../public/packs").to_s
       expect(config.public_output_path.to_s).to eq expected_public_output_path
     end
   end
@@ -192,12 +192,12 @@ describe "Shakapacker::Configuration" do
   context "with shakapacker config file containing manifext_path entry" do
     config = Shakapacker::Configuration.new(
       root_path: ROOT_PATH,
-      config_path: Pathname.new(File.expand_path("./test_app/config/shakapacker_manifest_path.yml", __dir__)),
+      config_path: Pathname.new(File.expand_path("../test_app/config/shakapacker_manifest_path.yml", __dir__)),
       env: "production"
     )
 
     it "#manifest_path returns correct expected value" do
-      expected_manifest_path = File.expand_path File.join(File.dirname(__FILE__), "test_app/app/javascript", "manifest.json").to_s
+      expected_manifest_path = File.expand_path File.join(File.dirname(__FILE__), "../test_app/app/javascript", "manifest.json").to_s
       expect(config.manifest_path.to_s).to eq expected_manifest_path
     end
   end
@@ -211,7 +211,7 @@ describe "Shakapacker::Configuration" do
       let(:config) {
         Shakapacker::Configuration.new(
           root_path: ROOT_PATH,
-          config_path: Pathname.new(File.expand_path("./test_app/config/shakapacker_no_precompile.yml", __dir__)),
+          config_path: Pathname.new(File.expand_path("../test_app/config/shakapacker_no_precompile.yml", __dir__)),
           env: "production"
         )
       }
@@ -237,7 +237,7 @@ describe "Shakapacker::Configuration" do
   context "with shakapacker config file containing invalid path" do
     config = Shakapacker::Configuration.new(
       root_path: ROOT_PATH,
-      config_path: Pathname.new(File.expand_path("./test_app/config/invalid_path.yml", __dir__)),
+      config_path: Pathname.new(File.expand_path("../test_app/config/invalid_path.yml", __dir__)),
       env: "default"
     )
 
@@ -250,7 +250,7 @@ describe "Shakapacker::Configuration" do
     let(:config) do
       Shakapacker::Configuration.new(
         root_path: ROOT_PATH,
-        config_path: Pathname.new(File.expand_path("./test_app/config/shakapacker_defaults_fallback.yml", __dir__)),
+        config_path: Pathname.new(File.expand_path("../test_app/config/shakapacker_defaults_fallback.yml", __dir__)),
         env: "default"
       )
     end
@@ -268,7 +268,7 @@ describe "Shakapacker::Configuration" do
     let(:config) do
       Shakapacker::Configuration.new(
         root_path: ROOT_PATH,
-        config_path: Pathname.new(File.expand_path("./test_app/config/shakapacker_defaults_fallback.yml", __dir__)),
+        config_path: Pathname.new(File.expand_path("../test_app/config/shakapacker_defaults_fallback.yml", __dir__)),
         env: "staging"
       )
     end
@@ -285,7 +285,7 @@ describe "Shakapacker::Configuration" do
     let(:config) do
       Shakapacker::Configuration.new(
         root_path: ROOT_PATH,
-        config_path: Pathname.new(File.expand_path("./test_app/config/shakapacker.yml", __dir__)),
+        config_path: Pathname.new(File.expand_path("../test_app/config/shakapacker.yml", __dir__)),
         env: "production"
       )
     end

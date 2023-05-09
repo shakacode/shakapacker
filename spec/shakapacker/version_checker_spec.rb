@@ -102,7 +102,7 @@ describe "VersionChecker::NodePackageVersion" do
   context "with no yarn.lock file" do
     def node_package_version(fixture_version:)
       Shakapacker::VersionChecker::NodePackageVersion.new(
-        File.expand_path("fixtures/#{fixture_version}_package.json", __dir__),
+        File.expand_path("../fixtures/#{fixture_version}_package.json", __dir__),
         "file/does/not/exist",
         "file/does/not/exist"
       )
@@ -272,8 +272,8 @@ describe "VersionChecker::NodePackageVersion" do
   context "with yarn.lock v1" do
     def node_package_version(fixture_version:)
       Shakapacker::VersionChecker::NodePackageVersion.new(
-        File.expand_path("fixtures/#{fixture_version}_package.json", __dir__),
-        File.expand_path("fixtures/#{fixture_version}_yarn.v1.lock", __dir__),
+        File.expand_path("../fixtures/#{fixture_version}_package.json", __dir__),
+        File.expand_path("../fixtures/#{fixture_version}_yarn.v1.lock", __dir__),
         "file/does/not/exist"
       )
     end
@@ -442,8 +442,8 @@ describe "VersionChecker::NodePackageVersion" do
   context "with yarn.lock v2" do
     def node_package_version(fixture_version:)
       Shakapacker::VersionChecker::NodePackageVersion.new(
-        File.expand_path("fixtures/#{fixture_version}_package.json", __dir__),
-        File.expand_path("fixtures/#{fixture_version}_yarn.v2.lock", __dir__),
+        File.expand_path("../fixtures/#{fixture_version}_package.json", __dir__),
+        File.expand_path("../fixtures/#{fixture_version}_yarn.v2.lock", __dir__),
         "file/does/not/exist"
       )
     end
@@ -612,9 +612,9 @@ describe "VersionChecker::NodePackageVersion" do
   context "with package-lock.json v1" do
     def node_package_version(fixture_version:)
       Shakapacker::VersionChecker::NodePackageVersion.new(
-        File.expand_path("fixtures/#{fixture_version}_package.json", __dir__),
+        File.expand_path("../fixtures/#{fixture_version}_package.json", __dir__),
         "file/does/not/exist",
-        File.expand_path("fixtures/#{fixture_version}_package-lock.v1.json", __dir__),
+        File.expand_path("../fixtures/#{fixture_version}_package-lock.v1.json", __dir__),
       )
     end
 
@@ -782,9 +782,9 @@ describe "VersionChecker::NodePackageVersion" do
   context "with package-lock.json v2" do
     def node_package_version(fixture_version:)
       Shakapacker::VersionChecker::NodePackageVersion.new(
-        File.expand_path("fixtures/#{fixture_version}_package.json", __dir__),
+        File.expand_path("../fixtures/#{fixture_version}_package.json", __dir__),
         "file/does/not/exist",
-        File.expand_path("fixtures/#{fixture_version}_package-lock.v2.json", __dir__),
+        File.expand_path("../fixtures/#{fixture_version}_package-lock.v2.json", __dir__),
       )
     end
 
