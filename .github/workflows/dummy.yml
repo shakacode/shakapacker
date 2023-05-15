@@ -1,0 +1,21 @@
+name: Dummy specs
+
+on: [pull_request]
+
+jobs:
+  test:
+    name: Dummy specs
+    runs-on: ${{ matrix.os }}
+    strategy:
+      os: [ubuntu-latest]
+      ruby: ['3.1.2']
+
+    env:
+      BUNDLE_GEMFILE: ${{ matrix.gemfile }}
+
+    steps:
+      - uses: actions/checkout@v2
+      - uses: ruby/setup-ruby@v1
+
+      - name: Dummy specs
+        run: bundle exec rake run_spec:dummy
