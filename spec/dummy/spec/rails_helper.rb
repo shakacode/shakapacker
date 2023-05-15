@@ -1,18 +1,18 @@
 # This file is copied to spec/ when you run 'rails generate rspec:install'
-require_relative 'spec_helper'
-ENV['RAILS_ENV'] ||= 'test'
-require_relative '../config/environment'
+require_relative "spec_helper"
+ENV["RAILS_ENV"] ||= "test"
+require_relative "../config/environment"
 # Prevent database truncation if the environment is production
-abort('The Rails environment is running in production mode!') if Rails.env.production?
-require 'rspec/rails'
+abort("The Rails environment is running in production mode!") if Rails.env.production?
+require "rspec/rails"
 # Add additional requires below this line. Rails is not loaded until this point!
 
-require 'capybara/rails'
+require "capybara/rails"
 
-SERVER_BUNDLE_PATH = File.expand_path('../public/packs/server-bundle.js', __dir__)
+SERVER_BUNDLE_PATH = File.expand_path("../public/packs/server-bundle.js", __dir__)
 
 # Prevent database truncation if the environment is production
-abort('The Rails environment is running in production mode!') if Rails.env.production?
+abort("The Rails environment is running in production mode!") if Rails.env.production?
 
 Capybara.register_driver :selenium_chrome do |app|
   options = Selenium::WebDriver::Chrome::Options.new
@@ -81,14 +81,14 @@ RSpec.configure do |config|
   default_driver = :selenium_chrome_headless
 
   supported_drivers = %i[selenium_chrome_headless selenium_chrome selenium selenium_headless]
-  driver = ENV['DRIVER'].try(:to_sym).presence || default_driver
+  driver = ENV["DRIVER"].try(:to_sym).presence || default_driver
   Capybara.javascript_driver = driver
   Capybara.default_driver = driver
 
   raise "Unsupported driver: #{driver} (supported = #{supported_drivers})" unless supported_drivers.include?(driver)
 
   Capybara.register_server(Capybara.javascript_driver) do |app, port|
-    require 'rack/handler/puma'
+    require "rack/handler/puma"
     Rack::Handler::Puma.run(app, Port: port)
   end
 
@@ -101,7 +101,7 @@ RSpec.configure do |config|
   end
 
   # Capybara.default_max_wait_time = 15
-  Capybara.save_path = Rails.root.join('tmp', 'capybara')
+  Capybara.save_path = Rails.root.join("tmp", "capybara")
   # Capybara::Screenshot.prune_strategy = { keep: 10 }
 
   # https://github.com/mattheworiordan/capybara-screenshot/issues/243#issuecomment-620423225
