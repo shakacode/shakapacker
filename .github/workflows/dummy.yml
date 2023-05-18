@@ -20,7 +20,11 @@ jobs:
       - name: Prepare for test
         run: |
           yalc publish
-          cd spec/dummy && bundle install && yalc link shakapacker && yarn install
+          cd spec/dummy
+          bundle install
+          yalc link shakapacker && yarn install
 
       - name: Run tests
-        run: bundle exec rspec
+        run: |
+          cd spec/dummy
+          bundle exec rspec
