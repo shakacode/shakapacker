@@ -21,4 +21,6 @@ jobs:
         run: |
           yalc publish
           cd spec/dummy && bundle install && yalc link shakapacker && yarn install
-          bundle exec rspec
+
+      - name: Run tests
+        run: bundle exec rspec
