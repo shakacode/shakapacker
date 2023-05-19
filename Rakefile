@@ -1,15 +1,46 @@
 # frozen_string_literal: true
 require "bundler/gem_tasks"
+require "pathname"
 
-begin
-  require "rspec/core/rake_task"
-  RSpec::Core::RakeTask.new(:test)
-rescue LoadError
-end
+desc "Run all specs"
+task test: ["run_spec:all_specs"]
 
 task default: :test
 
-desc "Run backward compatibility specs"
-task :test_bc do
-  system("bundle exec rspec spec/backward_compatibility_specs/*_spec_bc.rb")
+namespace :run_spec do
+  desc "Run shakapacker specs"
+  task :gem do
+    puts "Running Shakapacker gem specs"
+    system("bundle exec rspec spec/shakapacker/*_spec.rb")
+  end
+
+  desc "Run backward compatibility specs"
+  task :gem_bc do
+    puts "Running Shakapacker gem specs for backward compatibility"
+    system("bundle exec rspec spec/backward_compatibility_specs/*_spec_bc.rb")
+  end
+
+  desc "Run specs in the dummy app"
+  task :dummy do
+    puts "Running dummy app specs"
+    spec_dummy_dir = Pathname.new(File.join("spec", "dummy")).realpath
+    Bundler.with_unbundled_env do
+      sh_in_dir(".", "yalc publish")
+      sh_in_dir(spec_dummy_dir, [
+        "bundle install",
+        "yalc link shakapacker",
+        "yarn install",
+        "bundle exec rspec"
+      ])
+    end
+  end
+
+  desc "Run all specs"
+  task all_specs: %i[gem gem_bc dummy] do
+    puts "Completed all RSpec tests"
+  end
+end
+
+def sh_in_dir(dir, *shell_commands)
+  shell_commands.flatten.each { |shell_command| sh %(cd #{dir} && #{shell_command.strip}) }
 end

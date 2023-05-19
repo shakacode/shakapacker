@@ -40,4 +40,4 @@ jobs:
           bundler-cache: true
 
       - name: Ruby specs - Backward compatibility
-        run: bundle exec rake test_bc
+        run: bundle exec rake run_spec:gem_bc
