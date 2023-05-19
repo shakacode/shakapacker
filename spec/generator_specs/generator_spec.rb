@@ -26,7 +26,7 @@ describe "Generator" do
     FileUtils.rm_rf(TEMP_RAILS_APP_PATH)
   end
 
-  it "creates shakapacker.yml" do
+  it "creates `config/shakapacker.yml`" do
     config_file_relative_path = "config/shakapacker.yml"
     actual_content, expected_content = fetch_content(config_file_relative_path)
 
@@ -35,7 +35,7 @@ describe "Generator" do
 
   pending "updates package.json"
 
-  it "creates config directory and its files" do
+  it "creates webpack config directory and its files" do
     expected_files = [
       "webpack.config.js"
     ]
