@@ -33,7 +33,11 @@ describe "Generator" do
     expect(actual_content).to eq expected_content
   end
 
-  pending "updates package.json"
+  it "replaces package.json with template file" do
+    actual_content = File.read(the_path("package.json"))
+
+    expect(actual_content).to match /"name": "app",/
+  end
 
   it "creates webpack config directory and its files" do
     expected_files = [
@@ -58,8 +62,18 @@ describe "Generator" do
     end
   end
 
-  pending "modifies .gitignore"
-  pending 'adds <%= javascript_pack_tag "application" %> or gives message if the file is missing'
+  it "modifies .gitignore" do
+    actual_content = File.read(the_path(".gitignore"))
+
+    expect(actual_content).to match ".yarn-integrity"
+  end
+
+  it 'adds <%= javascript_pack_tag "application" %>' do
+    actual_content = File.read(the_path("app/views/layouts/application.html.erb"))
+
+    expect(actual_content).to match '<%= javascript_pack_tag "application" %>'
+  end
+
   pending "updates `bin/setup"
   pending "updates CSP file. NOTICE: the very existance of this step is under question!"
   pending "installs relevant shakapacker version depending on webpacker version,"
