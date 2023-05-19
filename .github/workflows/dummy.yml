@@ -17,14 +17,5 @@ jobs:
           yarn install
           sudo yarn global add yalc
 
-      - name: Prepare for test
-        run: |
-          yalc publish
-          cd spec/dummy
-          bundle install
-          yalc link shakapacker && yarn install
-
       - name: Run tests
-        run: |
-          cd spec/dummy
-          bundle exec rspec
+        run: bundle exec rake run_spec:dummy
