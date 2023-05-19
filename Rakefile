@@ -24,7 +24,15 @@ namespace :run_spec do
   task :dummy do
     puts "Running dummy app specs"
     spec_dummy_dir = Pathname.new(File.join("spec", "dummy")).realpath
-    sh_in_dir(spec_dummy_dir, "bundle exec rspec")
+    Bundler.with_unbundled_env do
+      sh_in_dir(".", "yalc publish")
+      sh_in_dir(spec_dummy_dir, [
+        "bundle install",
+        "yalc link shakapacker",
+        "yarn install",
+        "bundle exec rspec"
+      ])
+    end
   end
 
   desc "Run all specs"
