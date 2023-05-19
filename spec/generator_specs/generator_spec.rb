@@ -16,7 +16,7 @@ describe "Generator" do
     Bundler.with_unbundled_env do
       sh_in_dir(TEMP_RAILS_APP_PATH, [
         "bundle install",
-        "FORCE=true rails shakapacker:install",
+        "FORCE=true bundle exec rails shakapacker:install",
       ])
     end
   end
@@ -75,11 +75,35 @@ describe "Generator" do
     expect(actual_content).to match '<%= javascript_pack_tag "application" %>'
   end
 
-  pending "updates `bin/setup"
-  pending "updates CSP file. NOTICE: the very existance of this step is under question!"
+  it "updates `bin/setup" do
+    setup_file_content = read(path_in_the_app("bin/setup"))
+    expect(setup_file_content).to match %r(^\s*system!\(['"]bin/yarn['"]\))
+  end
+
   pending "installs relevant shakapacker version depending on webpacker version,"
-  pending "installs peerdependencies"
-  pending "it reports to the user if Webpacker installation failed"
+
+  it "adds Shakapacker peer dependencies to package.json" do
+    package_json_content_in_app = read(path_in_the_app("package.json"))
+
+    expected_dependencies = %w(
+      @babel/core
+      @babel/plugin-transform-runtime
+      @babel/preset-env
+      @babel/runtime
+      babel-loader
+      compression-webpack-plugin
+      terser-webpack-plugin
+      webpack
+      webpack-assets-manifest
+      webpack-cli
+      webpack-dev-server
+      webpack-merge
+    )
+
+    expected_dependencies.each do |package|
+      expect(package_json_content_in_app).to include package
+    end
+  end
 
   private
     def path_in_the_app(relative_path = nil)
