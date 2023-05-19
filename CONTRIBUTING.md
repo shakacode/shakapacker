@@ -40,7 +40,7 @@ bundle exec rubocop
 yarn test
 ```
 
-### 4. Run the Ruby test suite
+### 4. Run the all Ruby test suite
 
 ```
 bundle exec rake test
@@ -56,6 +56,26 @@ bundle exec rspec spec/configuration_spec.rb
 
 ```
 bundle exec rspec -e "#source_entry_path returns correct path"
+```
+
+#### 4.3 Run only Shakapacker gem specs
+
+```
+bundle exec rake run_spec:gem
+```
+
+#### 4.4 Run only Shakapacker gem specs for backward compatibility
+These specs are to check Shakapcker v7 backward compatibility with v6.x
+
+```
+bundle exec rake run_spec:gem_bc
+```
+
+#### 4.5 Run dummy app test
+For this you need `yalc` to be installed on your local machine
+
+```
+bundle exec rake run_spec:dummy
 ```
 
 ## Testing the generator
