@@ -40,7 +40,7 @@ bundle exec rubocop
 yarn test
 ```
 
-### 4. Run the all Ruby test suite
+### 4. Run all the Ruby test suite
 
 ```
 bundle exec rake test
