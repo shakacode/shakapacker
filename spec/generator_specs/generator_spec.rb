@@ -1,28 +1,35 @@
 require "pathname"
+require "fileutils"
+require "rake"
+require "shakapacker/utils/misc"
+
+GEM_ROOT = Pathname.new(File.expand_path("../../..", __FILE__))
+SPEC_PATH = Pathname.new(File.expand_path("../", __FILE__))
+BASE_RAILS_APP_PATH = SPEC_PATH.join("base-rails-app")
+TEMP_RAILS_APP_PATH = SPEC_PATH.join("temp-rails-app")
 
 describe "Generator" do
-  let(:base_rails_app_root_path) { "base-rails-app" }
-  let(:gem_root) { "../.." }
-
   before :all do
-    # install shakapacker from the current local project
-    # run `rails webpacker:install`
+    FileUtils.rm_rf(TEMP_RAILS_APP_PATH)
+    FileUtils.cp_r(BASE_RAILS_APP_PATH, TEMP_RAILS_APP_PATH)
 
-    # allow($stdin).to receive(:gets).and_return('y')
-
-    # Dir.chdir("base-rails-app") do
-    #   puts "Running `bundle install`"
-    #   `bundle install`
-    #   puts "Running `bundle exec rails webpacker:install`"
-    #   `bundle exec rails webpacker:install`
-    #   $stdin = STDIN
-    # end
+    Bundler.with_unbundled_env do
+      sh_in_dir(TEMP_RAILS_APP_PATH, [
+        "bundle install",
+        "FORCE=true rails shakapacker:install",
+      ])
+    end
   end
 
-  it "creates webpacker.yml" do
-    the_file = "config/webpacker.yml"
-    actual_content, expected_content = fetch_content(the_file)
-    puts original_path
+  after :all do
+    Dir.chdir(SPEC_PATH)
+    FileUtils.rm_rf(TEMP_RAILS_APP_PATH)
+  end
+
+  it "creates shakapacker.yml" do
+    config_file_relative_path = "config/shakapacker.yml"
+    actual_content, expected_content = fetch_content(config_file_relative_path)
+
     expect(actual_content).to eq expected_content
   end
 
@@ -41,14 +48,13 @@ describe "Generator" do
 
   it "adds binstubs" do
     expected_binstubs = []
-    Dir.chdir(File.join(gem_root, "lib/install")) do
+    Dir.chdir(File.join(GEM_ROOT, "lib/install/bin")) do
       expected_binstubs = Dir.glob("bin/*")
     end
 
-    Dir.chdir(the_path) do
+    Dir.chdir(File.join(TEMP_RAILS_APP_PATH, "bin")) do
       actual_binstubs = Dir.glob("*")
       expect(actual_binstubs).to include(*expected_binstubs)
-      pending "Check the content of binstubs as well"
     end
   end
 
@@ -62,11 +68,11 @@ describe "Generator" do
 
   private
     def the_path(relative_path = nil)
-      Pathname.new(File.join([base_rails_app_root_path, relative_path].compact))
+      Pathname.new(File.join([TEMP_RAILS_APP_PATH, relative_path].compact))
     end
 
     def original_path(relative_path = nil)
-      Pathname.new(File.join([gem_root, "lib/install" , relative_path].compact))
+      Pathname.new(File.join([GEM_ROOT, "lib/install" , relative_path].compact))
     end
 
     def fetch_content(the_file)
@@ -79,10 +85,14 @@ describe "Generator" do
     end
 
     def setup_project
-      Dir.chdir(base_rails_app_root_path) do
+      Dir.chdir(TEMP_RAILS_APP_PATH) do
         `bundle install`
         `bundle exec rails webpacker:install`
         $stdin = STDIN
       end
+    end
+
+    def sh_in_dir(dir, *shell_commands)
+      Shakapacker::Utils::Misc.sh_in_dir(dir, shell_commands)
     end
 end
