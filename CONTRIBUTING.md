@@ -72,7 +72,7 @@ bundle exec rake run_spec:gem_bc
 ```
 
 #### 4.5 Run dummy app test
-For this you need `yalc` to be installed on your local machine
+For this, you need `yalc` to be installed on your local machine
 
 ```
 bundle exec rake run_spec:dummy
@@ -81,12 +81,12 @@ bundle exec rake run_spec:dummy
 ## Testing the generator
 If you change the generator, check that install instructions work.
 
-1. Update the gemfile so that gem "shakapacker" has a line like this, pointing to your install of shakapacker
+1. Update the Gemfile so that gem "shakapacker" has a line like this, pointing to your install of Shakapacker
    ```ruby
    gem 'shakapacker', path: "~/shakacode/forks/shakapacker"
    ```
 2. `bundle`
-3. Run the generator confirm that you got the right changes. 
+3. Run the generator to confirm that you got the right changes. 
 
 ## Find existing issues
-You may look at the issues list to find existing known issues to be addressed. In this, we recommend to look at closed issues, particularly with "[help wanted](https://github.com/shakacode/shakapacker/issues?q=is%3Aissue+label%3A%22help+wanted%22+is%3Aclosed+)" label.
+You may look at the issues list to find existing known issues to be addressed. In this, we recommend looking at closed issues, particularly with the "[help wanted](https://github.com/shakacode/shakapacker/issues?q=is%3Aissue+label%3A%22help+wanted%22+is%3Aclosed+)" label.
