@@ -28,13 +28,14 @@ describe "Generator" do
 
   it "creates `config/shakapacker.yml`" do
     config_file_relative_path = "config/shakapacker.yml"
-    actual_content, expected_content = fetch_content(config_file_relative_path)
+    actual_content = read(path_in_the_app(config_file_relative_path))
+    expected_content = read(path_in_the_gem(config_file_relative_path))
 
     expect(actual_content).to eq expected_content
   end
 
   it "replaces package.json with template file" do
-    actual_content = File.read(the_path("package.json"))
+    actual_content = read(path_in_the_app("package.json"))
 
     expect(actual_content).to match /"name": "app",/
   end
@@ -44,7 +45,7 @@ describe "Generator" do
       "webpack.config.js"
     ]
 
-    Dir.chdir(the_path("config/webpack")) do
+    Dir.chdir(path_in_the_app("config/webpack")) do
       exisiting_files_in_config_webpack_dir = Dir.glob("*")
       expect(exisiting_files_in_config_webpack_dir).to eq expected_files
     end
@@ -63,13 +64,13 @@ describe "Generator" do
   end
 
   it "modifies .gitignore" do
-    actual_content = File.read(the_path(".gitignore"))
+    actual_content = read(path_in_the_app(".gitignore"))
 
     expect(actual_content).to match ".yarn-integrity"
   end
 
   it 'adds <%= javascript_pack_tag "application" %>' do
-    actual_content = File.read(the_path("app/views/layouts/application.html.erb"))
+    actual_content = read(path_in_the_app("app/views/layouts/application.html.erb"))
 
     expect(actual_content).to match '<%= javascript_pack_tag "application" %>'
   end
@@ -81,29 +82,16 @@ describe "Generator" do
   pending "it reports to the user if Webpacker installation failed"
 
   private
-    def the_path(relative_path = nil)
+    def path_in_the_app(relative_path = nil)
       Pathname.new(File.join([TEMP_RAILS_APP_PATH, relative_path].compact))
     end
 
-    def original_path(relative_path = nil)
+    def path_in_the_gem(relative_path = nil)
       Pathname.new(File.join([GEM_ROOT, "lib/install" , relative_path].compact))
     end
 
-    def fetch_content(the_file)
-      file_path = the_path(the_file)
-      original_file_path = original_path(the_file)
-      actual_content = File.read(file_path)
-      expected_content = File.read(original_file_path)
-
-      [actual_content, expected_content]
-    end
-
-    def setup_project
-      Dir.chdir(TEMP_RAILS_APP_PATH) do
-        `bundle install`
-        `bundle exec rails webpacker:install`
-        $stdin = STDIN
-      end
+    def read(path)
+      File.read(path)
     end
 
     def sh_in_dir(dir, *shell_commands)
