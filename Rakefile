@@ -35,8 +35,15 @@ namespace :run_spec do
     end
   end
 
+  desc "Run generator specs"
+  task :generator do
+    Bundler.with_unbundled_env do
+      system("bundle exec rspec spec/generator_specs/*_spec.rb")
+    end
+  end
+
   desc "Run all specs"
-  task all_specs: %i[gem gem_bc dummy] do
+  task all_specs: %i[gem gem_bc dummy generator] do
     puts "Completed all RSpec tests"
   end
 end
