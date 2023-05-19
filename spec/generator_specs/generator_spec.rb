@@ -2,6 +2,7 @@ require "pathname"
 require "fileutils"
 require "rake"
 require "shakapacker/utils/misc"
+require "shakapacker/utils/version_syntax_converter"
 
 GEM_ROOT = Pathname.new(File.expand_path("../../..", __FILE__))
 SPEC_PATH = Pathname.new(File.expand_path("../", __FILE__))
@@ -80,7 +81,13 @@ describe "Generator" do
     expect(setup_file_content).to match %r(^\s*system!\(['"]bin/yarn['"]\))
   end
 
-  pending "installs relevant shakapacker version depending on webpacker version,"
+  it "adds relevant shakapacker version in package.json depending on gem version," do
+    npm_version = Shakapacker::Utils::VersionSyntaxConverter.new.rubygem_to_npm(Shakapacker::VERSION)
+
+    actual_content = read(path_in_the_app("package.json"))
+
+    expect(actual_content).to match /"shakapacker": "#{npm_version}",/
+  end
 
   it "adds Shakapacker peer dependencies to package.json" do
     package_json_content_in_app = read(path_in_the_app("package.json"))
