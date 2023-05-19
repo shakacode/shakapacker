@@ -2,7 +2,6 @@ import * as React from 'react'
 import { useState, useEffect } from 'react'
 import type { FunctionComponent } from 'react'
 
-import HelloWorldMdx from './HelloWorld.mdx'
 import style from './HelloWorld.module.css'
 import logo from './logo.svg'
 
@@ -28,7 +27,7 @@ const HelloWorld: FunctionComponent<Props> = (props: Props) => {
   return (
     <>
       <img src={logo} className={style.logo} alt="logo" />
-      <HelloWorldMdx name={name} />
+      <h3>Hello, {name || 'World'}!</h3>
       <hr />
       <form>
         <label className={style.bright} htmlFor="name">

@@ -4,19 +4,7 @@
 const { generateWebpackConfig, merge } = require('shakapacker')
 const commonOptions = {
   resolve: {
-      extensions: ['.css', '.ts', '.tsx']
-  },
-  module: {
-    rules: [
-      {
-        test: /\.mdx?$/,
-        use: [
-          {
-            loader: '@mdx-js/loader',
-          }
-        ]
-      }
-    ]
+    extensions: ['.css', '.ts', '.tsx']
   }
 }
 
