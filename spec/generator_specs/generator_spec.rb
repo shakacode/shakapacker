@@ -6,25 +6,26 @@ require "shakapacker/utils/version_syntax_converter"
 
 GEM_ROOT = Pathname.new(File.expand_path("../../..", __FILE__))
 SPEC_PATH = Pathname.new(File.expand_path("../", __FILE__))
-BASE_RAILS_APP_PATH = SPEC_PATH.join("base-rails-app")
+# BASE_RAILS_APP_PATH = SPEC_PATH.join("base-rails-app")
 TEMP_RAILS_APP_PATH = SPEC_PATH.join("temp-rails-app")
 
 describe "Generator" do
   before :all do
-    FileUtils.rm_rf(TEMP_RAILS_APP_PATH)
-    FileUtils.cp_r(BASE_RAILS_APP_PATH, TEMP_RAILS_APP_PATH)
+    # FileUtils.rm_rf(TEMP_RAILS_APP_PATH)
+    # FileUtils.cp_r(BASE_RAILS_APP_PATH, TEMP_RAILS_APP_PATH)
 
     Bundler.with_unbundled_env do
-      sh_in_dir(TEMP_RAILS_APP_PATH, [
-        "bundle install",
-        "FORCE=true bundle exec rails shakapacker:install",
-      ])
+      sh_in_dir(TEMP_RAILS_APP_PATH, %(
+        bundle add shakapacker --path "#{GEM_ROOT}"
+        bundle install
+        FORCE=true bundle exec rails shakapacker:install
+      ))
     end
   end
 
   after :all do
-    Dir.chdir(SPEC_PATH)
-    FileUtils.rm_rf(TEMP_RAILS_APP_PATH)
+    # Dir.chdir(SPEC_PATH)
+    # FileUtils.rm_rf(TEMP_RAILS_APP_PATH)
   end
 
   it "creates `config/shakapacker.yml`" do

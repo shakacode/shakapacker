@@ -37,9 +37,15 @@ namespace :run_spec do
 
   desc "Run generator specs"
   task :generator do
-    Bundler.with_unbundled_env do
-      system("bundle exec rspec spec/generator_specs/*_spec.rb")
-    end
+    # Don't use --skip-git because we want .gitignore file to be generated
+    sh_in_dir("spec/generator_specs", %(
+      rails new temp-rails-app --skip-javascript --skip-bundle --skip-spring --skip-test --skip-active-record
+      rm -rf temp-rails-app/.git
+    ))
+
+    system("bundle exec rspec spec/generator_specs/*_spec.rb")
+  ensure
+    sh_in_dir("spec/generator_specs", "rm -rf temp-rails-app")
   end
 
   desc "Run all specs"
@@ -49,5 +55,5 @@ namespace :run_spec do
 end
 
 def sh_in_dir(dir, *shell_commands)
-  shell_commands.flatten.each { |shell_command| sh %(cd #{dir} && #{shell_command.strip}) }
+  Shakapacker::Utils::Misc.sh_in_dir(dir, *shell_commands)
 end
