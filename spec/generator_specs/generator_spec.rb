@@ -36,7 +36,7 @@ describe "Generator" do
     # FileUtils.rm_rf(TEMP_RAILS_APP_PATH)
   end
 
-  it "fails" do
+  it "fails" dooo
     expect(false).to be_truthy
   end
 
