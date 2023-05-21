@@ -17,7 +17,7 @@ namespace :run_spec do
   desc "Run backward compatibility specs"
   task :gem_bc do
     puts "Running Shakapacker gem specs for backward compatibility"
-    sh("bundle exec rspec spec/backward_compatibility_specs/*_spec_bc.rb")
+    sh("bundle exec rspec spec/backward_compatibility_specs/*_spec.rb")
   end
 
   desc "Run specs in the dummy app"
