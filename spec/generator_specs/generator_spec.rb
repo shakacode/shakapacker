@@ -33,7 +33,7 @@ describe "Generator" do
     actual_content = read(path_in_the_app(config_file_relative_path))
     expected_content = read(path_in_the_gem(config_file_relative_path))
 
-    expect(actual_content).to eq expected_content
+    expect(actual_content).to eq "expected_content"
   end
 
   it "replaces package.json with template file" do
