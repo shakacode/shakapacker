@@ -11,13 +11,13 @@ namespace :run_spec do
   desc "Run shakapacker specs"
   task :gem do
     puts "Running Shakapacker gem specs"
-    system("bundle exec rspec spec/shakapacker/*_spec.rb")
+    sh("bundle exec rspec spec/shakapacker/*_spec.rb")
   end
 
   desc "Run backward compatibility specs"
   task :gem_bc do
     puts "Running Shakapacker gem specs for backward compatibility"
-    system("bundle exec rspec spec/backward_compatibility_specs/*_spec_bc.rb")
+    sh("bundle exec rspec spec/backward_compatibility_specs/*_spec_bc.rb")
   end
 
   desc "Run specs in the dummy app"
@@ -43,7 +43,7 @@ namespace :run_spec do
     #   rm -rf temp-rails-app/.git
     # ))
 
-    system("bundle exec rspec spec/generator_specs/*_spec.rb")
+    sh("bundle exec rspec spec/generator_specs/*_spec.rb")
   # ensure
     # sh_in_dir("spec/generator_specs", "rm -rf temp-rails-app")
   end
