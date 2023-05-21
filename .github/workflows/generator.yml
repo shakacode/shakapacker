@@ -37,6 +37,6 @@ jobs:
         with:
           ruby-version: ${{ matrix.ruby }}
       - name: Install dependencies
-        run: |
-          bundle install &>/dev/null
-          bundle exec rake run_spec:generator
+        run: bundle install &>/dev/null
+      - run: bundle exec rake run_spec:generator
+      - run: $ echo $?
