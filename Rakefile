@@ -38,14 +38,14 @@ namespace :run_spec do
   desc "Run generator specs"
   task :generator do
     # Don't use --skip-git because we want .gitignore file to be generated
-    sh_in_dir("spec/generator_specs", %(
-      rails new temp-rails-app --skip-javascript --skip-bundle --skip-spring --skip-test --skip-active-record
-      rm -rf temp-rails-app/.git
-    ))
+    # sh_in_dir("spec/generator_specs", %(
+    #   rails new temp-rails-app --skip-javascript --skip-bundle --skip-spring --skip-test --skip-active-record
+    #   rm -rf temp-rails-app/.git
+    # ))
 
     system("bundle exec rspec spec/generator_specs/*_spec.rb")
   ensure
-    sh_in_dir("spec/generator_specs", "rm -rf temp-rails-app")
+    # sh_in_dir("spec/generator_specs", "rm -rf temp-rails-app")
   end
 
   desc "Run all specs"

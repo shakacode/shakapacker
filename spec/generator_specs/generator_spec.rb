@@ -14,6 +14,12 @@ describe "Generator" do
     # FileUtils.rm_rf(TEMP_RAILS_APP_PATH)
     # FileUtils.cp_r(BASE_RAILS_APP_PATH, TEMP_RAILS_APP_PATH)
 
+    # Don't use --skip-git because we want .gitignore file to exist in the project
+    sh_in_dir(SPEC_PATH, %(
+      rails new temp-rails-app --skip-javascript --skip-bundle --skip-spring --skip-test --skip-active-record
+      rm -rf temp-rails-app/.git
+    ))
+
     Bundler.with_unbundled_env do
       sh_in_dir(TEMP_RAILS_APP_PATH, %(
         bundle add shakapacker --path "#{GEM_ROOT}"
@@ -24,8 +30,8 @@ describe "Generator" do
   end
 
   after :all do
-    # Dir.chdir(SPEC_PATH)
-    # FileUtils.rm_rf(TEMP_RAILS_APP_PATH)
+    Dir.chdir(SPEC_PATH)
+    FileUtils.rm_rf(TEMP_RAILS_APP_PATH)
   end
 
   it "creates `config/shakapacker.yml`" do
