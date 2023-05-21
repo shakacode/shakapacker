@@ -4,11 +4,11 @@ on: [push]
 
 jobs:
   test:
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
     strategy:
       matrix:
         os: [ubuntu-latest]
-        ruby: ['3.1.2']
+        ruby: ['3.0']
         gemfile:
           # - gemfiles/Gemfile-rails.5.2.x
           # - gemfiles/Gemfile-rails.6.0.x
