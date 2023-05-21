@@ -44,7 +44,7 @@ namespace :run_spec do
     # ))
 
     system("bundle exec rspec spec/generator_specs/*_spec.rb")
-  ensure
+  # ensure
     # sh_in_dir("spec/generator_specs", "rm -rf temp-rails-app")
   end
 
