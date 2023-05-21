@@ -4,6 +4,7 @@ on: [push]
 
 jobs:
   test:
+    name: Generator specs
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
