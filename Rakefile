@@ -45,7 +45,8 @@ namespace :run_spec do
 
     system("bundle exec rspec spec/generator_specs/*_spec.rb")
   ensure
-    sh_in_dir("spec/generator_specs", "rm -rf temp-rails-app")
+    # Commented to test if this is the reason behind passing CI with failing tests
+    # sh_in_dir("spec/generator_specs", "rm -rf temp-rails-app")
   end
 
   desc "Run all specs"
