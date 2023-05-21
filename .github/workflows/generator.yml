@@ -1,6 +1,6 @@
 name: Generator specs
 
-on: [workflow_dispatch]
+on: [push]
 
 jobs:
   test:
