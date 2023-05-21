@@ -1,6 +1,6 @@
 name: Ruby specs - Backward compatibility
 
-on: [push, pull_request]
+on: [push]
 
 jobs:
   test:
