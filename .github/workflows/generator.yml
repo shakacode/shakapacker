@@ -39,4 +39,3 @@ jobs:
       - name: Install dependencies
         run: bundle install
       - run: bundle exec rake run_spec:generator
-      - run: echo $?
