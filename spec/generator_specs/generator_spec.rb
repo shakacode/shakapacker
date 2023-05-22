@@ -16,12 +16,14 @@ describe "Generator" do
       rails new temp-rails-app --skip-javascript --skip-bundle --skip-spring --skip-test --skip-active-record
       rm -rf temp-rails-app/.git
     ))
-    Bundler.with_unbundled_env do
-      sh_in_dir(TEMP_RAILS_APP_PATH, %(
-        bundle add shakapacker --path "#{GEM_ROOT}"
-        bundle install
-        FORCE=true bundle exec rails shakapacker:install
-      ))
+    Dir.chdir(TEMP_RAILS_APP_PATH) do
+      Bundler.with_unbundled_env do
+        sh_in_dir(TEMP_RAILS_APP_PATH, %(
+          bundle add shakapacker --path "#{GEM_ROOT}"
+          bundle install
+          FORCE=true bundle exec rails shakapacker:install
+        ))
+      end
     end
   end
 
