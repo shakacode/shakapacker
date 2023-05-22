@@ -129,6 +129,6 @@ describe "Generator" do
     end
 
     def sh_in_dir(dir, *shell_commands)
-      Shakapacker::Utils::Misc.sh_in_dir(dir, shell_commands)
+      Shakapacker::Utils::Misc.sh_in_dir(dir, *shell_commands)
     end
 end
