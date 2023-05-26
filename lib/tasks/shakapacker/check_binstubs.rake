@@ -2,7 +2,7 @@ namespace :shakapacker do
   desc "Verifies that bin/shakapacker is present"
   task :check_binstubs do
     if File.exist?(Rails.root.join("bin/shakapacker"))
-      exit
+      # pass
     elsif File.exist?(Rails.root.join("bin/webpacker"))
       Shakapacker.puts_deprecation_message(
         Shakapacker.short_deprecation_message(
@@ -10,7 +10,7 @@ namespace :shakapacker do
           "bin/shakapacker"
         )
       )
-      exit
+      # pass
     else
       puts <<~MSG
         Could't find shakapacker binstubs!
