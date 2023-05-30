@@ -1,4 +1,3 @@
-require "rake"
 require_relative "spec_helper_initializer"
 
 describe "RakeTasks" do
@@ -33,7 +32,7 @@ describe "RakeTasks" do
     expect(output).to_not include "Shakapacker requires Yarn"
   end
 
-  describe "shakapacker:check_binstubs" do
+  describe "`shakapacker:check_binstubs`" do
     before :all do
       Dir.chdir(TEST_APP_PATH)
     end
@@ -46,11 +45,11 @@ describe "RakeTasks" do
 
     context "without `./bin/shakapacker`" do
       before :all do
-        Rake.move("bin/shakapacker", "bin/shakapacker_renamed")
+        FileUtils.mv("bin/shakapacker", "bin/shakapacker_renamed")
       end
 
       after :all do
-        Rake.move("bin/shakapacker_renamed", "bin/shakapacker")
+        FileUtils.mv("bin/shakapacker_renamed", "bin/shakapacker")
       end
 
       it "passes if `./bin/webpacker exist" do
@@ -66,11 +65,11 @@ describe "RakeTasks" do
 
     context "without `./bin/shakapacker-dev-server`" do
       before :all do
-        Rake.move("bin/shakapacker-dev-server", "bin/shakapacker-dev-server_renamed")
+        FileUtils.mv("bin/shakapacker-dev-server", "bin/shakapacker-dev-server_renamed")
       end
 
       after :all do
-        Rake.move("bin/shakapacker-dev-server_renamed", "bin/shakapacker-dev-server")
+        FileUtils.mv("bin/shakapacker-dev-server_renamed", "bin/shakapacker-dev-server")
       end
 
       it "passes if `./bin/webpacker-dev-server exist" do
@@ -87,8 +86,8 @@ describe "RakeTasks" do
 end
 
 def with_temporary_file(file_name, &block)
-  Rake.touch(file_name)
+  FileUtils.touch(file_name, verbose: false)
   yield if block_given?
 ensure
-  Rake.rm_f(file_name)
+  FileUtils.rm_f(file_name, verbose: false)
 end
