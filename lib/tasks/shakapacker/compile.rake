@@ -5,12 +5,7 @@ namespace :shakapacker do
   task compile: ["shakapacker:verify_install", :environment] do
     Shakapacker.with_node_env(ENV.fetch("NODE_ENV", "production")) do
       Shakapacker.ensure_log_goes_to_stdout do
-        if Shakapacker.compile
-          # Successful compilation!
-        else
-          # Failed compilation
-          exit!
-        end
+        exit! unless Shakapacker.compile
       end
     end
   end
