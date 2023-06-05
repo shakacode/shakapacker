@@ -79,16 +79,27 @@ Dir.chdir(Rails.root) do
 
   package_json = File.read("#{__dir__}/../../package.json")
   peers = JSON.parse(package_json)["peerDependencies"]
-  peers_to_add = peers.reduce([]) do |result, (package, version)|
+  dev_dependencies = ["webpack-dev-server"]
+
+  dependencies_to_add = []
+  dev_dependencies_to_add = []
+
+  peers.each do |(package, version)|
     major_version = version.match(/(\d+)/)[1]
-    result << "#{package}@#{major_version}"
-  end.join(" ")
+    entry = "#{package}@#{major_version}"
+
+    if dev_dependencies.include? package
+      dev_dependencies_to_add << entry
+    else
+      dependencies_to_add << entry
+    end
+  end
 
   say "Adding shakapacker peerDependencies"
-  results << run("yarn add #{peers_to_add}")
+  results << run("yarn add #{dependencies_to_add.join(' ')}")
 
   say "Installing webpack-dev-server for live reloading as a development dependency"
-  results << run("yarn add --dev webpack-dev-server")
+  results << run("yarn add --dev #{dev_dependencies_to_add.join(' ')}")
 end
 
 unless results.all?
