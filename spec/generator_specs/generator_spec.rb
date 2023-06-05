@@ -1,5 +1,6 @@
 require "pathname"
 require "rake"
+require "json"
 require "shakapacker/utils/misc"
 require "shakapacker/utils/version_syntax_converter"
 
@@ -107,7 +108,8 @@ describe "Generator" do
       end
 
       it "adds Shakapacker peer dependencies to package.json" do
-        package_json_content_in_app = read(path_in_the_app("package.json"))
+        package_json = JSON.parse(File.read(path_in_the_app("package.json")))
+        actual_dependencies = package_json["dependencies"]&.keys
 
         expected_dependencies = %w(
           @babel/core
@@ -120,13 +122,21 @@ describe "Generator" do
           webpack
           webpack-assets-manifest
           webpack-cli
-          webpack-dev-server
           webpack-merge
         )
 
-        expected_dependencies.each do |package|
-          expect(package_json_content_in_app).to include package
-        end
+        expect(actual_dependencies).to include(*expected_dependencies)
+      end
+
+      it "adds Shakapacker peer dev dependencies to package.json" do
+        package_json = JSON.parse(File.read(path_in_the_app("package.json")))
+        actual_dev_dependencies = package_json["devDependencies"]&.keys
+
+        expected_dev_dependencies = %w(
+          webpack-dev-server
+        )
+
+        expect(actual_dev_dependencies).to include(*expected_dev_dependencies)
       end
     end
   end
