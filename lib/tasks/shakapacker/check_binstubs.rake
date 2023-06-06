@@ -1,23 +1,27 @@
 namespace :shakapacker do
   desc "Verifies that bin/shakapacker is present"
   task :check_binstubs do
-    if File.exist?(Rails.root.join("bin/shakapacker"))
-      exit
-    elsif File.exist?(Rails.root.join("bin/webpacker"))
+    verify_file_existance("bin/shakapacker", "bin/webpacker")
+    verify_file_existance("bin/shakapacker-dev-server", "bin/webpacker-dev-server")
+  end
+end
+
+def verify_file_existance(main_file, alternative_file)
+  unless File.exist?(Rails.root.join(main_file))
+    if File.exist?(Rails.root.join(alternative_file))
       Shakapacker.puts_deprecation_message(
         Shakapacker.short_deprecation_message(
-          "bin/webpacker",
-          "bin/shakapacker"
+          alternative_file,
+          main_file
         )
       )
-      exit
     else
       puts <<~MSG
-        Could't find shakapacker binstubs!
+        Couldn't find shakapacker binstubs!
         Possible solutions:
-         - Ensure you have run `rails shakapacker:install`.
-         - Run `rails shakapacker:binstubs` if you have already installed shakapacker.
-         - Ensure the `bin` directory and `bin/shakapacker` are not included in .gitignore.
+        - Ensure you have run `rails shakapacker:install`.
+        - Run `rails shakapacker:binstubs` if you have already installed shakapacker.
+        - Ensure the `bin` directory, `bin/shakapacker`, and `bin/shakapacker-dev-server` are not included in .gitignore.
       MSG
       exit!
     end
