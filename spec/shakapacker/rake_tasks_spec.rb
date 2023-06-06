@@ -33,6 +33,13 @@ describe "RakeTasks" do
   end
 
   describe "`shakapacker:check_binstubs`" do
+    def with_temporary_file(file_name, &block)
+      FileUtils.touch(file_name, verbose: false)
+      yield if block_given?
+    ensure
+      FileUtils.rm_f(file_name, verbose: false)
+    end
+
     before :all do
       Dir.chdir(TEST_APP_PATH)
     end
@@ -83,11 +90,4 @@ describe "RakeTasks" do
       end
     end
   end
-end
-
-def with_temporary_file(file_name, &block)
-  FileUtils.touch(file_name, verbose: false)
-  yield if block_given?
-ensure
-  FileUtils.rm_f(file_name, verbose: false)
 end
