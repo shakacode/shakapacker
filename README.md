@@ -854,7 +854,7 @@ This behavior is optional & can be disabled by either setting a `SHAKAPACKER_PRE
 
 When compiling assets for production on a remote server, such as a continuous integration environment, it's recommended to use `yarn install --frozen-lockfile` to install NPM packages on the remote host to ensure that the installed packages match the `yarn.lock` file.
 
-If you are using a CDN setup, Shakapacker will use the configured [asset host](https://guides.rubyonrails.org/configuring.html#rails-general-configuration) value to prefix URLs for images or font icons which are included inside JS code or CSS. It is possible to override this value during asset compilation by setting the `SHAKAPACKER_ASSET_HOST` environment variable.
+If you are using a CDN setup, Shakapacker does NOT use the `ASSET_HOST` environment variable to prefix URLs for assets. You must use the `SHAKAPACKER_ASSET_HOST` environment variable instead (`WEBPACKER_ASSET_HOST` if you're using any version of Webpacker or Shakapacker before Shakapacker v7).
 
 ## Example Apps
 * [React on Rails Tutorial With SSR, HMR fast refresh, and TypeScript](https://github.com/shakacode/react_on_rails_tutorial_with_ssr_and_hmr_fast_refresh)
