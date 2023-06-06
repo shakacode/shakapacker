@@ -13,7 +13,7 @@ describe "Generator" do
   before :all do
     # Don't use --skip-git because we want .gitignore file to exist in the project
     sh_in_dir(SPEC_PATH, %(
-      rails new base-rails-app --skip-javascript --skip-bundle --skip-spring --skip-test --skip-active-record
+      rails new base-rails-app --skip-javascript --skip-bundle --skip-spring
       rm -rf base-rails-app/.git
     ))
 
@@ -137,6 +137,15 @@ describe "Generator" do
         )
 
         expect(actual_dev_dependencies).to include(*expected_dev_dependencies)
+      end
+
+      context "with a basic react app setup" do
+        it "passes the test for rendering react component on the page" do
+          Bundler.with_unbundled_env do
+            sh_in_dir(TEMP_RAILS_APP_PATH, "./bin/rails app:template LOCATION=../e2e_template/template.rb")
+            expect(sh_in_dir(TEMP_RAILS_APP_PATH, "bundle exec rspec")).to be_truthy
+          end
+        end
       end
     end
   end
