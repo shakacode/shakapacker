@@ -8,8 +8,6 @@
 Changes since last non-beta release.
 
 _Please add entries here for your pull requests that are not yet released._
-### Improved
-- Set CSS modules mode depending on file type. [PR 261](https://github.com/shakacode/shakapacker/pull/261) by [talyuk](https://github.com/talyuk).
 
 ### Breaking changes
 - Removes defaults passed to `@babel/preset-typescript`. [PR 273](https://github.com/shakacode/shakapacker/pull/273) by [tomdracz](https://github.com/tomdracz).
@@ -18,27 +16,22 @@ _Please add entries here for your pull requests that are not yet released._
 
 - Export immutable webpackConfig function. [PR 293](https://github.com/shakacode/shakapacker/pull/293) by [tomdracz](https://github.com/tomdracz).
 
-  The `webpackConfig` property in the `shakapacker` module has been updated to be a function instead of a global mutable webpack configuration. This function now returns an immutable webpack configuration object, which ensures that any modifications made to it will not affect any other usage of the webpack configuration. If a project still requires the old mutable object, it can be accessed by replacing `webpackConfig` with `globalMutableWebpackConfig`.
+  The `webpackConfig` property in the `shakapacker` module has been updated to be a function instead of a global mutable webpack configuration. This function now returns an immutable webpack configuration object, which ensures that any modifications made to it will not affect any other usage of the webpack configuration. If a project still requires the old mutable object, it can be accessed by replacing `webpackConfig` with `globalMutableWebpackConfig`. Check [v7-upgrade](https://github.com/shakacode/shakapacker/blob/master/docs/v7_upgrade.md) documentation for more detail.
 
-### Improved
-- Move compilation lock file into the working directory. [PR 272](https://github.com/shakacode/shakapacker/pull/272) by [tomdracz](https://github.com/tomdracz).
+### Added
+- Set CSS modules mode depending on file type. [PR 261](https://github.com/shakacode/shakapacker/pull/261) by [talyuk](https://github.com/talyuk).
+- All standard webpack entries with the camelCase format are now supported in `shakapacker.yml` in snake_case format. [PR276](https://github.com/shakacode/shakapacker/pull/276) by [ahangarha](https://github.com/ahangarha).
+- The `shakapacker:install` rake task now has an option to force overriding files using `FORCE=true` environment variable [PR311](https://github.com/shakacode/shakapacker/pull/311) by [ahangarha](https://github.com/ahangarha).
 
 ### Changed
 - Rename Webpacker to Shakapacker in the entire project including config files, binstubs, environment variables, etc. with a high degree of backward compatibility.
 
   This change might be breaking for certain setups and edge cases. More information: [v7 Upgrade Guide](./docs/v7_upgrade.md) [PR157](https://github.com/shakacode/shakapacker/pull/157) by [ahangarha](https://github.com/ahangarha)
+
 - Set `source_entry_path` to `packs` and `nested_entries` to `true` in`shakapacker.yml` [PR 284](https://github.com/shakacode/shakapacker/pull/284) by [ahangarha](https://github.com/ahangarha).
-
-### Fixed
-- Process `source_entry_path` with values starting with `/` as a relative path to `source_path` [PR 284](https://github.com/shakacode/shakapacker/pull/284) by [ahangarha](https://github.com/ahangarha).
-
 - Dev server configuration is modified to follow [webpack recommended configurations](https://webpack.js.org/configuration/dev-server/) for dev server. [PR276](https://github.com/shakacode/shakapacker/pull/276) by [ahangarha](https://github.com/ahangarha):
-  - Deprecated `https` entry is removed from the default configuration file, allowing to set `server` or `https` as per the project requirements. For more detail, check Webpack documentation. The `https` entry can be effective only if there is no `server` entry in the config file.
+  - Deprecated `https` entry is removed from the default configuration file, allowing to set `server` or `https` as per the project requirements. For more detail, check webpack documentation. The `https` entry can be effective only if there is no `server` entry in the config file.
   - `allowed_hosts` is now set to `auto` instead of `all` by default.
-
-- Removes defaults passed to `@babel/preset-typescript`. [PR 273](https://github.com/shakacode/shakapacker/pull/273) by [tomdracz](https://github.com/tomdracz).
-
-  `@babel/preset-typescript` has been initialised in default configuration with `{ allExtensions: true, isTSX: true }` - meaning every file in the codebase was treated as TSX leading to potential issues. This has been removed and returns to sensible default of the preset which is to figure out the file type from the extensions. This change might affect generated output however so it is marked as breaking.
 
 - Remove the arbitrary stripping of the top-level directory when generating static file paths. [PR 283](https://github.com/shakacode/shakapacker/pull/283) by [tomdracz](https://github.com/tomdracz).
 
@@ -46,16 +39,18 @@ _Please add entries here for your pull requests that are not yet released._
 
   Going forward, the top level directory of static files will be retained so this will necessitate the update of file name references in asset helpers. In the example above, the file sourced from `app/javascript/images/image.png` will be now output to `static/images/image.png` and needs to be referenced as `image_pack_tag("images/image.jpg")` or `image_pack_tag("static/images/image.jpg")`.
 
+### Fixed
+- Move compilation lock file into the working directory. [PR 272](https://github.com/shakacode/shakapacker/pull/272) by [tomdracz](https://github.com/tomdracz).
+- Process `source_entry_path` with values starting with `/` as a relative path to `source_path` [PR 284](https://github.com/shakacode/shakapacker/pull/284) by [ahangarha](https://github.com/ahangarha).
+- Removes defaults passed to `@babel/preset-typescript` to make it possible to have projects with mix of JS and TS code [PR 273](https://github.com/shakacode/shakapacker/pull/273) by [tomdracz](https://github.com/tomdracz).
+
+  `@babel/preset-typescript` has been initialised in default configuration with `{ allExtensions: true, isTSX: true }` - meaning every file in the codebase was treated as TSX leading to potential issues. This has been removed and returns to sensible default of the preset which is to figure out the file type from the extensions. This change might affect generated output however so it is marked as breaking.
+
 - Fixed RC version detection during installation. [PR312](https://github.com/shakacode/shakapacker/pull/312) by [ahangarha](https://github.com/ahangarha)
 - Fix addition of webpack-dev-server to devDependencies during installation. [PR310](https://github.com/shakacode/shakapacker/pull/310) by [ahangarha](https://github.com/ahangarha)
-
 ### Removed
 - Remove redundant enhancement for precompile task to run `yarn install` [PR 270](https://github.com/shakacode/shakapacker/pull/270) by [ahangarha](https://github.com/ahangarha).
 - Remove deprecated `check_yarn_integrity` from `Shakapacker::Configuration` [PR SP288](https://github.com/shakacode/shakapacker/pull/288) by [ahangarha](https://github.com/ahangarha).
-
-### Added
-- All standard Webpack entries with the camelCase format are now supported in `shakapacker.yml` in snake_case format. [PR276](https://github.com/shakacode/shakapacker/pull/276) by [ahangarha](https://github.com/ahangarha).
-- The `shakapacker:install` rake task now has an option to force overriding files using `FORCE=true` environment variable [PR311](https://github.com/shakacode/shakapacker/pull/311) by [ahangarha](https://github.com/ahangarha).
 
 ## [v6.6.0] - March 7, 2023
 ### Improved
