@@ -52,7 +52,7 @@ _Please add entries here for your pull requests that are not yet released._
 
 ### Added
 - All standard Webpack entries with the camelCase format are now supported in `shakapacker.yml` in snake_case format. [PR276](https://github.com/shakacode/shakapacker/pull/276) by [ahangarha](https://github.com/ahangarha).
-- The `shakapacker:install` rake task now has an option to force overriding files using `FORCE=true` environment variable [PR300](https://github.com/shakacode/shakapacker/pull/300) by [ahangarha](https://github.com/ahangarha).
+- The `shakapacker:install` rake task now has an option to force overriding files using `FORCE=true` environment variable [PR311](https://github.com/shakacode/shakapacker/pull/311) by [ahangarha](https://github.com/ahangarha).
 
 ## [v6.6.0] - March 7, 2023
 ### Improved
