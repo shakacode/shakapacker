@@ -12,7 +12,7 @@ Thank you for your interest in contributing to Shakapacker! We welcome all contr
 ## Reporting Issues
 If you encounter any issues with the project, please first check the exisiting issues (including closed ones). If the issues is not reported before, please opening an issue on our GitHub repository. Please provide a clear and detailed description of the issue, including steps to reproduce it. Creating a demo repository to demonstrate the issue would be ideal (and in some cases necessary).
 
-If looking for contributing to the project by fixing existing issues, we recommend looking at closed issues, particularly with the "[help wanted](https://github.com/shakacode/shakapacker/issues?q=is%3Aissue+label%3A%22help+wanted%22+is%3Aclosed+)" label.
+If looking to contribute to the project by fixing existing issues, we recommend looking at issues, particularly with the "[help wanted](https://github.com/shakacode/shakapacker/issues?q=is%3Aissue+label%3A%22help+wanted%22)" label.
 
 ## Submitting Pull Requests
 We welcome pull requests that fix bugs, add new features, or improve existing ones. Before submitting a pull request, please make sure to:
