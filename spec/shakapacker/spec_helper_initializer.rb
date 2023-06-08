@@ -1,4 +1,4 @@
-require_relative "../test_app/config/environment"
+require_relative "./test_app/config/environment"
 
 Rails.env = "production"
 

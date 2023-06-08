@@ -1,7 +1,7 @@
 require_relative "spec_helper_initializer"
 
 describe "RakeTasks" do
-  TEST_APP_PATH = File.expand_path("../test_app", __dir__)
+  TEST_APP_PATH = File.expand_path("./test_app", __dir__)
 
   it "`rake -T` lists Shakapacker tasks" do
     output = Dir.chdir(TEST_APP_PATH) { `rake -T` }

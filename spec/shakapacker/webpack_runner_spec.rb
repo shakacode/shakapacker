@@ -32,7 +32,7 @@ describe "WebpackRunner" do
 
   private
     def test_app_path
-      File.expand_path("../test_app", __dir__)
+      File.expand_path("./test_app", __dir__)
     end
 
     def verify_command(cmd, use_node_modules: true, argv: [])
