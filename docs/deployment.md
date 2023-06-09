@@ -88,8 +88,7 @@ Now, you can set `brotli_static on;` in your nginx site config, as per the confi
 
 ## CDN
 
-Shakapacker out-of-the-box provides CDN support using your Rails app `config.action_controller.asset_host` setting. If you already have [CDN](http://guides.rubyonrails.org/asset_pipeline.html#cdns) added in your Rails app
-you don't need to do anything extra for Shakapacker, it just works.
+If you are using a CDN setup, Shakapacker does NOT use the `ASSET_HOST` environment variable to prefix URLs for assets during bundle compilation. You must use the `SHAKAPACKER_ASSET_HOST` environment variable instead (`WEBPACKER_ASSET_HOST` if you're using any version of Webpacker or Shakapacker before Shakapacker v7).
 
 ## Capistrano
 
