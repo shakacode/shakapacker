@@ -144,6 +144,8 @@ Then run the following to install Shakapacker:
 ./bin/rails shakapacker:install
 ```
 
+Before initiating the installation process, ensure you have committed all the changes. While installing Shakapacker, there might be some conflict between the existing file content and what Shakapacker tries to copy. You can either approve all the prompts for overriding these files or use the `FORCE=true` environment variable before the installation command to force the override without any prompt.
+
 When `package.json` and/or `yarn.lock` changes, such as when pulling down changes to your local environment in team settings, be sure to keep your NPM packages up-to-date:
 
 ```bash

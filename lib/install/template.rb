@@ -1,11 +1,14 @@
 require "shakapacker/utils/version_syntax_converter"
 
 # Install Shakapacker
-copy_file "#{__dir__}/config/shakapacker.yml", "config/shakapacker.yml"
-copy_file "#{__dir__}/package.json", "package.json"
+
+force_option = ENV["FORCE"] ? { force: true } : {}
+
+copy_file "#{__dir__}/config/shakapacker.yml", "config/shakapacker.yml", force_option
+copy_file "#{__dir__}/package.json", "package.json", force_option
 
 say "Copying webpack core config"
-directory "#{__dir__}/config/webpack", "config/webpack"
+directory "#{__dir__}/config/webpack", "config/webpack", force_option
 
 if Dir.exist?(Shakapacker.config.source_path)
   say "The packs app source directory already exists"
