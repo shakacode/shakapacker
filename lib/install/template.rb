@@ -1,3 +1,5 @@
+require "shakapacker/utils/version_syntax_converter"
+
 # Install Shakapacker
 copy_file "#{__dir__}/config/shakapacker.yml", "config/shakapacker.yml"
 copy_file "#{__dir__}/package.json", "package.json"
@@ -68,13 +70,9 @@ end
 results = []
 
 Dir.chdir(Rails.root) do
-  if Shakapacker::VERSION.match?(/^[0-9]+\.[0-9]+\.[0-9]+$/)
-    say "Installing shakapacker@#{Shakapacker::VERSION}"
-    results << run("yarn add shakapacker@#{Shakapacker::VERSION} --exact")
-  else
-    say "Installing shakapacker@next"
-    results << run("yarn add shakapacker@next --exact")
-  end
+  npm_version = Shakapacker::Utils::VersionSyntaxConverter.new.rubygem_to_npm(Shakapacker::VERSION)
+  say "Installing shakapacker@#{npm_version}"
+  results << run("yarn add shakapacker@#{npm_version} --exact")
 
   package_json = File.read("#{__dir__}/../../package.json")
   peers = JSON.parse(package_json)["peerDependencies"]
