@@ -47,6 +47,7 @@ _Please add entries here for your pull requests that are not yet released._
   Going forward, the top level directory of static files will be retained so this will necessitate the update of file name references in asset helpers. In the example above, the file sourced from `app/javascript/images/image.png` will be now output to `static/images/image.png` and needs to be referenced as `image_pack_tag("images/image.jpg")` or `image_pack_tag("static/images/image.jpg")`.
 
 - Fixed RC version detection during installation. [PR312](https://github.com/shakacode/shakapacker/pull/312) by [ahangarha](https://github.com/ahangarha)
+- Fix addition of webpack-dev-server to devDependencies during installation. [PR310](https://github.com/shakacode/shakapacker/pull/310) by [ahangarha](https://github.com/ahangarha)
 
 ### Removed
 - Remove redundant enhancement for precompile task to run `yarn install` [PR 270](https://github.com/shakacode/shakapacker/pull/270) by [ahangarha](https://github.com/ahangarha).
