@@ -11,13 +11,13 @@ namespace :run_spec do
   desc "Run shakapacker specs"
   task :gem do
     puts "Running Shakapacker gem specs"
-    system("bundle exec rspec spec/shakapacker/*_spec.rb")
+    sh("bundle exec rspec spec/shakapacker/*_spec.rb")
   end
 
   desc "Run backward compatibility specs"
   task :gem_bc do
     puts "Running Shakapacker gem specs for backward compatibility"
-    system("bundle exec rspec spec/backward_compatibility_specs/*_spec_bc.rb")
+    sh("bundle exec rspec spec/backward_compatibility_specs/*_spec_bc.rb")
   end
 
   desc "Run specs in the dummy app"
@@ -35,12 +35,17 @@ namespace :run_spec do
     end
   end
 
+  desc "Run generator specs"
+  task :generator do
+    sh("bundle exec rspec spec/generator_specs/*_spec.rb")
+  end
+
   desc "Run all specs"
-  task all_specs: %i[gem gem_bc dummy] do
+  task all_specs: %i[gem gem_bc dummy generator] do
     puts "Completed all RSpec tests"
   end
 end
 
 def sh_in_dir(dir, *shell_commands)
-  shell_commands.flatten.each { |shell_command| sh %(cd #{dir} && #{shell_command.strip}) }
+  Shakapacker::Utils::Misc.sh_in_dir(dir, *shell_commands)
 end
