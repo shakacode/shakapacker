@@ -79,7 +79,7 @@ Dir.chdir(Rails.root) do
 
   package_json = File.read("#{__dir__}/../../package.json")
   peers = JSON.parse(package_json)["peerDependencies"]
-  dev_dependencies = ["webpack-dev-server"]
+  dev_dependency_packages = ["webpack-dev-server"]
 
   dependencies_to_add = []
   dev_dependencies_to_add = []
@@ -88,7 +88,7 @@ Dir.chdir(Rails.root) do
     major_version = version.match(/(\d+)/)[1]
     entry = "#{package}@#{major_version}"
 
-    if dev_dependencies.include? package
+    if dev_dependency_packages.include? package
       dev_dependencies_to_add << entry
     else
       dependencies_to_add << entry
