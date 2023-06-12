@@ -1,3 +1,5 @@
+require "thor"
+
 module Shakapacker
   DEPRECATION_GUIDE_URL = "https://github.com/shakacode/shakapacker/docs/v7_upgrade.md"
   DEPRECATION_MESSAGE = <<~MSG
@@ -9,6 +11,7 @@ module Shakapacker
     For more information about this process, check:
     #{DEPRECATION_GUIDE_URL}
   MSG
+  SHELL = Thor::Shell::Color.new
 
   def get_config_file_path_with_backward_compatibility(config_path)
     if config_path.to_s.end_with?("shakapacker.yml") && !File.exist?(config_path)
@@ -70,11 +73,7 @@ module Shakapacker
   end
 
   def puts_deprecation_message(message)
-    puts <<~MSG
-      \e[33m
-      #{message}
-      \e[0m
-    MSG
+    SHELL.say "\n#{message}\n", :yellow
   end
 
   def puts_rake_deprecation_message(webpacker_task_name)

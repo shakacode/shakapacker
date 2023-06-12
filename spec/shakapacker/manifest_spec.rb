@@ -1,7 +1,7 @@
 require_relative "spec_helper_initializer"
 
 describe "Shakapacker::Manifest" do
-  let(:manifest_path) { File.expand_path File.join(File.dirname(__FILE__), "../test_app/public/packs", "manifest.json").to_s }
+  let(:manifest_path) { File.expand_path File.join(File.dirname(__FILE__), "./test_app/public/packs", "manifest.json").to_s }
 
   it "#lookup! throws exception for a non-existing asset file" do
     asset_file = "calendar.js"

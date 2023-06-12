@@ -2,7 +2,7 @@ const isArray = (value) => Array.isArray(value)
 const isBoolean = (str) => /^true/.test(str) || /^false/.test(str)
 const chdirTestApp = () => {
   try {
-    return process.chdir('spec/test_app')
+    return process.chdir('spec/shakapacker/test_app')
   } catch (e) {
     return null
   }

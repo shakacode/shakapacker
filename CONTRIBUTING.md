@@ -1,26 +1,60 @@
+# Contributing Guidelines
+
+Thank you for your interest in contributing to Shakapacker! We welcome all contributions that align with our project goals and values. To ensure a smooth and productive collaboration, please follow these guidelines.
+
 ## Contents
+- [Reporting Issues](#reporting-issues)
+- [Submitting Pull Requests](#submitting-pull-requests)
 - [Setting Up a Development Environment](#setting-up-a-development-environment)
 - [Making sure your changes pass all tests](#making-sure-your-changes-pass-all-tests)
 - [Testing the generator](#testing-the-generator)
-- [Find existing issues](#find-existing-issues)
+
+## Reporting Issues
+If you encounter any issues with the project, please first check the exisiting issues (including closed ones). If the issues is not reported before, please opening an issue on our GitHub repository. Please provide a clear and detailed description of the issue, including steps to reproduce it. Creating a demo repository to demonstrate the issue would be ideal (and in some cases necessary).
+
+If looking to contribute to the project by fixing existing issues, we recommend looking at issues, particularly with the "[help wanted](https://github.com/shakacode/shakapacker/issues?q=is%3Aissue+label%3A%22help+wanted%22)" label.
+
+## Submitting Pull Requests
+We welcome pull requests that fix bugs, add new features, or improve existing ones. Before submitting a pull request, please make sure to:
+
+  - Open an issue about what you want to propose before start working on.
+  - Fork the repository and create a new branch for your changes.
+  - Write clear and concise commit messages.
+  - Follow our code style guidelines.
+  - Write tests for your changes and [make sure all tests pass](#making-sure-your-changes-pass-all-tests).
+  - Update the documentation as needed.
+  - Update CHANGELOG.md if the changes affect public behavior of the project.
 
 ---
 ## Setting Up a Development Environment
 
-1. Install [Yarn](https://yarnpkg.com/)
+1. Install [Yarn](https://classic.yarnpkg.com/)
+2. To test your changes on a Rails test project do the following steps:
+   - For Ruby gem, update `Gemfile` and point the `shakapacker` to the locally developing Shakapacker project:
+      ```ruby
+      gem 'shakapacker', path: "relative_or_absolute_path_to_local_shakapacker"
+      ```
+   - For npm package, use `yalc` with following steps:
+      ```bash
+      # In Shakapacker root directory
+      yalc publish
+      # In Rails app for testing
+      yalc link shakapacker
 
-2. Run the following commands to set up the development environment.
-
-```
-bundle install
-yarn
-```
+      # After every chagnes in shakapacker, run the folloing in Shakapacker directory
+      yalc push # or yalc publish --push
+      ```
+3. Run the following commands to set up the development environment.
+   ```
+   bundle install
+   yarn install
+   ```
 
 ## Making sure your changes pass all tests
 
-There are a number of automated checks which run on GitHub Actions when a pull request is created.
+There are several specs, covering different aspects of Shakapacker gem. You may run them locally or rely on GitHub CI actions configured to test the gem functionality if different Ruby, Rails, and Node environment.
 
-You can run those checks on your own locally to make sure that your changes would not break the CI build.
+We request running tests locally to ensure the new changes would not break the CI build.
 
 ### 1. Check the code for JavaScript style violations
 
@@ -45,6 +79,8 @@ yarn test
 ```
 bundle exec rake test
 ```
+
+Note: For this, you need `yalc` to be installed on your local machine
 
 #### 4.1 Run a single ruby test file
 
@@ -90,5 +126,3 @@ To ensure that your installer works as expected, either you can run `bundle exec
 
  **Note:** Ensure that you use bundle exec otherwise the installed shakapacker gem will run and not the one you are working on.
 
-## Find existing issues
-You may look at the issues list to find existing known issues to be addressed. In this, we recommend looking at closed issues, particularly with the "[help wanted](https://github.com/shakacode/shakapacker/issues?q=is%3Aissue+label%3A%22help+wanted%22+is%3Aclosed+)" label.
