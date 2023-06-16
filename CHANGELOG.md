@@ -22,6 +22,7 @@ _Please add entries here for your pull requests that are not yet released._
 - Set CSS modules mode depending on file type. [PR 261](https://github.com/shakacode/shakapacker/pull/261) by [talyuk](https://github.com/talyuk).
 - All standard webpack entries with the camelCase format are now supported in `shakapacker.yml` in snake_case format. [PR276](https://github.com/shakacode/shakapacker/pull/276) by [ahangarha](https://github.com/ahangarha).
 - The `shakapacker:install` rake task now has an option to force overriding files using `FORCE=true` environment variable [PR311](https://github.com/shakacode/shakapacker/pull/311) by [ahangarha](https://github.com/ahangarha).
+- Allow configuration of use of contentHash for specific environment [PR 234](https://github.com/shakacode/shakapacker/pull/234) by [justin808](https://github/justin808).
 
 ### Changed
 - Rename Webpacker to Shakapacker in the entire project including config files, binstubs, environment variables, etc. with a high degree of backward compatibility.
