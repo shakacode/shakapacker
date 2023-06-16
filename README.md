@@ -216,6 +216,8 @@ Webpack intelligently includes only necessary files. In this example, the file `
 
 `nested_entries` allows you to have webpack entry points nested in subdirectories. This defaults to false so you don't accidentally create entry points for an entire tree of files. In other words, with `nested_entries: false`, you can have your entire `source_path` used for your source (using the `source_entry_path: /`) and you place files at the top level that you want as entry points. `nested_entries: true` allows you to have entries that are in subdirectories. This is useful if you have entries that are generated, so you can have a `generated` subdirectory and easily separate generated files from the rest of your codebase.
 
+To enable/disable the usage of contentHash in any specific environment, add/modify `useContentHash` with a boolean value in `config/shakapacker.yml`. This feature is disabled for all environments except production by default. Notice that despite the possibility of enabling this option for the development environment, [it is not recommended](https://webpack.js.org/guides/build-performance/#avoid-production-specific-tooling).
+
 #### Setting custom config path
 
 You can use the environment variable `SHAKAPACKER_CONFIG` to enforce a particular path to the config file rather than the default `config/shakapacker.yml`.
