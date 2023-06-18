@@ -25,27 +25,12 @@ const generateWebpackConfig = () => {
   return immutable
 }
 
-const webpackConfigForBackwardCompatibility = () => {
-  // eslint-disable-next-line no-console
-  console.log(`⚠️
-DEPRECATION NOTICE:
-The 'webpackConfig' is deprecated and will be removed in a future version.
-Please use 'globalMutableWebpackConfig' instead, or use
-'generateWebpackConfig()' to avoid unwanted config manipulation across the app.
-
-For more information, see version 7 upgrade documentation at:
-https://github.com/shakacode/shakapacker/blob/master/docs/v7_upgrade.md
-`)
-
-  return globalMutableWebpackConfig()
-}
-
 module.exports = {
   config, // shakapacker.yml
   devServer,
   generateWebpackConfig,
   globalMutableWebpackConfig: globalMutableWebpackConfig(),
-  webpackConfig: webpackConfigForBackwardCompatibility(),
+  webpackConfig: globalMutableWebpackConfig(),
   baseConfig,
   env,
   rules,
