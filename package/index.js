@@ -30,6 +30,7 @@ const shakapackerObject = {
   devServer,
   generateWebpackConfig,
   globalMutableWebpackConfig: globalMutableWebpackConfig(),
+  webpackConfig: globalMutableWebpackConfig(),
   baseConfig,
   env,
   rules,
@@ -53,7 +54,6 @@ Please use 'globalMutableWebpackConfig' instead, or use
 For more information, see version 7 upgrade documentation at:
 https://github.com/shakacode/shakapacker/blob/master/docs/v7_upgrade.md
 `)
-      return globalMutableWebpackConfig()
     }
 
     return target[prop]
