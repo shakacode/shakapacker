@@ -80,7 +80,7 @@ const productionConfig = {
 if (config.useContentHash === true) {
   // eslint-disable-next-line no-console
   console.warn(`⚠️ WARNING
-Setting 'useContentHash' to 'false' in production environment is not allowed!
+Setting 'useContentHash' to 'false' in production node environment is not allowed!
 It is considered true regardless of the value set in the config file.
 `)
 }
