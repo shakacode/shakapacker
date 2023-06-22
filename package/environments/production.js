@@ -81,7 +81,7 @@ if (config.useContentHash === true) {
   // eslint-disable-next-line no-console
   console.warn(`⚠️ WARNING
 Setting 'useContentHash' to 'false' in the production environment (specified by NODE_ENV environment variable) is not allowed!
-ContentHash gets added to the filenames regardless of the setting useContentHash to false.
+Content hashes get added to the filenames regardless of setting useContentHash in 'shakapacker.yml' to false.
 `)
 }
 
