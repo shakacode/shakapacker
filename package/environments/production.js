@@ -6,6 +6,7 @@ const CompressionPlugin = require('compression-webpack-plugin')
 const TerserPlugin = require('terser-webpack-plugin')
 const baseConfig = require('./base')
 const { moduleExists } = require('../utils/helpers')
+const config = require('../config')
 
 const getPlugins = () => {
   const plugins = []
@@ -74,6 +75,14 @@ const productionConfig = {
       })
     ].filter(Boolean)
   }
+}
+
+if (config.useContentHash === true) {
+  // eslint-disable-next-line no-console
+  console.warn(`⚠️ WARNING
+Setting 'useContentHash' to 'false' in the production environment (specified by NODE_ENV environment variable) is not allowed!
+Content hashes get added to the filenames regardless of setting useContentHash in 'shakapacker.yml' to false.
+`)
 }
 
 module.exports = merge(baseConfig, productionConfig)

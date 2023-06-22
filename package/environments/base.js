@@ -7,8 +7,8 @@ const { sync: globSync } = require('glob')
 const WebpackAssetsManifest = require('webpack-assets-manifest')
 const webpack = require('webpack')
 const rules = require('../rules')
-const { isProduction } = require('../env')
 const config = require('../config')
+const { isProduction } = require('../env')
 const { moduleExists } = require('../utils/helpers')
 
 const getEntryObject = () => {
@@ -68,7 +68,7 @@ const getPlugins = () => {
   ]
 
   if (moduleExists('css-loader') && moduleExists('mini-css-extract-plugin')) {
-    const hash = isProduction ? '-[contenthash:8]' : ''
+    const hash = isProduction || config.useContentHash ? '-[contenthash:8]' : ''
     const MiniCssExtractPlugin = require('mini-css-extract-plugin')
     plugins.push(
       new MiniCssExtractPlugin({
@@ -87,7 +87,8 @@ const getPlugins = () => {
 
 // Don't use contentHash except for production for performance
 // https://webpack.js.org/guides/build-performance/#avoid-production-specific-tooling
-const hash = isProduction ? '-[contenthash]' : ''
+const hash = isProduction || config.useContentHash ? '-[contenthash]' : ''
+
 module.exports = {
   mode: 'production',
   output: {

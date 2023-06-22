@@ -1,4 +1,5 @@
 # Note: You must restart bin/shakapacker-dev-server for changes to take effect
+# This file contains the defaults used by shakapacker.
 
 default: &default
   source_path: app/javascript
@@ -43,6 +44,11 @@ default: &default
 
   # Select whether the compiler will use SHA digest ('digest' option) or most most recent modified timestamp ('mtime') to determine freshness
   compiler_strategy: digest
+
+  # Select whether the compiler will always use a content hash and not just in production
+  # Don't use contentHash except for production for performance
+  # https://webpack.js.org/guides/build-performance/#avoid-production-specific-tooling
+  useContentHash: false
 
 development:
   <<: *default
@@ -104,6 +110,9 @@ production:
 
   # Production depends on precompilation of packs prior to booting for performance.
   compile: false
+
+  # Use content hash for naming assets. Cannot be overridden by for production.
+  useContentHash: true
 
   # Cache manifest.json for performance
   cache_manifest: true

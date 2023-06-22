@@ -65,9 +65,9 @@ describe('Base config', () => {
     })
 
     test('should return output', () => {
-      expect(baseConfig.output.filename).toEqual('js/[name].js')
+      expect(baseConfig.output.filename).toEqual('js/[name]-[contenthash].js')
       expect(baseConfig.output.chunkFilename).toEqual(
-        'js/[name].chunk.js'
+        'js/[name]-[contenthash].chunk.js'
       )
     })
 
