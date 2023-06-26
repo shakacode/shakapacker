@@ -54,3 +54,7 @@ or use `globalMutableWebpackConfig` if the project desires to use a globally mut
 ```js
 const { globalMutableWebpackConfig: webpackConfig } = require('shakapacker')
 ```
+
+## Stop stripping top-level dirs for static assets
+
+When generating file paths for static assets, a top-level directory will no longer be stripped. This will necessitate the update of file name references in asset helpers. For example, the file sourced from `app/javascript/images/image.png` will now be output to `static/images/image.png`, and needs to be referenced as `image_pack_tag("images/image.jpg")` or `image_pack_tag("static/images/image.jpg")`. Nested directories are supported.
