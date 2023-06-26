@@ -27,14 +27,21 @@ describe('Production specific config', () => {
 
   describe('with config.useContentHash = false', () => {
     test('sets filename to use contentHash', () => {
+      const consoleWarnSpy = jest.spyOn(console, 'warn');
       const config = require("../../config");
       config.useContentHash = false
       const environmnetConfig = require('../production')
+
+      expect(consoleWarnSpy).toHaveBeenCalledWith(
+        expect.stringMatching(/Setting 'useContentHash' to 'false' in the production environment/)
+      )
 
       expect(environmnetConfig.output.filename).toEqual('js/[name]-[contenthash].js')
       expect(environmnetConfig.output.chunkFilename).toEqual(
         'js/[name]-[contenthash].chunk.js'
       )
+
+      consoleWarnSpy.mockRestore()
     })
   })
 
