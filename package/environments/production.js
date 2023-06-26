@@ -77,7 +77,7 @@ const productionConfig = {
   }
 }
 
-if (config.useContentHash === true) {
+if (config.useContentHash === false) {
   // eslint-disable-next-line no-console
   console.warn(`⚠️ WARNING
 Setting 'useContentHash' to 'false' in the production environment (specified by NODE_ENV environment variable) is not allowed!
