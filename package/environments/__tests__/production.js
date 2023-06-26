@@ -24,7 +24,7 @@ describe('Production specific config', () => {
       )
     })
 
-    test('shows a warning message', () => {
+    test("doesn't shows any warning message", () => {
       const consoleWarnSpy = jest.spyOn(console, 'warn');
       const config = require("../../config");
       config.useContentHash = true
@@ -50,7 +50,7 @@ describe('Production specific config', () => {
       )
     })
 
-    test("doesn't shows any warning message", () => {
+    test('shows a warning message', () => {
       const consoleWarnSpy = jest.spyOn(console, 'warn');
       const config = require("../../config");
       config.useContentHash = false
