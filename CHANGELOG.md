@@ -9,6 +9,9 @@ Changes since last non-beta release.
 
 _Please add entries here for your pull requests that are not yet released._
 
+### Fixed
+- Fixed the condition for showing warning for setting `useContentHash` to `false` in the production environment. [PR 320](https://github.com/shakacode/shakapacker/pull/320) by [ahangarha](https://github.com/ahangarha).
+
 ### Breaking changes
 - Removes defaults passed to `@babel/preset-typescript`. [PR 273](https://github.com/shakacode/shakapacker/pull/273) by [tomdracz](https://github.com/tomdracz).
 
