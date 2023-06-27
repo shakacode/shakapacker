@@ -23,6 +23,19 @@ describe('Production specific config', () => {
         'js/[name]-[contenthash].chunk.js'
       )
     })
+
+    test("doesn't shows any warning message", () => {
+      const consoleWarnSpy = jest.spyOn(console, 'warn');
+      const config = require("../../config");
+      config.useContentHash = true
+      const environmnetConfig = require('../production')
+
+      expect(consoleWarnSpy).not.toHaveBeenCalledWith(
+        expect.stringMatching(/Setting 'useContentHash' to 'false' in the production environment/)
+      )
+
+      consoleWarnSpy.mockRestore()
+    })
   })
 
   describe('with config.useContentHash = false', () => {
@@ -36,6 +49,19 @@ describe('Production specific config', () => {
         'js/[name]-[contenthash].chunk.js'
       )
     })
+
+    test('shows a warning message', () => {
+      const consoleWarnSpy = jest.spyOn(console, 'warn');
+      const config = require("../../config");
+      config.useContentHash = false
+      const environmnetConfig = require('../production')
+
+      expect(consoleWarnSpy).toHaveBeenCalledWith(
+        expect.stringMatching(/Setting 'useContentHash' to 'false' in the production environment/)
+      )
+
+      consoleWarnSpy.mockRestore()
+    })
   })
 
   describe('with unset config.useContentHash', () => {
@@ -48,6 +74,19 @@ describe('Production specific config', () => {
       expect(environmnetConfig.output.chunkFilename).toEqual(
         'js/[name]-[contenthash].chunk.js'
       )
+    })
+
+    test("doesn't shows any warning message", () => {
+      const consoleWarnSpy = jest.spyOn(console, 'warn');
+      const config = require("../../config");
+      delete config.useContentHash
+      const environmnetConfig = require('../production')
+
+      expect(consoleWarnSpy).not.toHaveBeenCalledWith(
+        expect.stringMatching(/Setting 'useContentHash' to 'false' in the production environment/)
+      )
+
+      consoleWarnSpy.mockRestore()
     })
   })
 })
