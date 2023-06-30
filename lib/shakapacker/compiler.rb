@@ -82,7 +82,7 @@ class Shakapacker::Compiler
 
       stdout, stderr, status = Open3.capture3(
         webpack_env,
-        "#{optionalRubyRunner} #{bin_shakapacker_path}",
+        "#{optionalRubyRunner} '#{bin_shakapacker_path}'",
         chdir: File.expand_path(config.root_path)
       )
 
