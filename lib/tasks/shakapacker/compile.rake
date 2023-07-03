@@ -22,5 +22,7 @@ end
 if Shakapacker.config.shakapacker_precompile?
   if Rake::Task.task_defined?("assets:precompile")
     invoke_shakapacker_compile_in_assets_precompile_task
+  else
+    Rake::Task.define_task("assets:precompile" => ["shakapacker:compile"])
   end
 end
