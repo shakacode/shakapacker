@@ -9,6 +9,9 @@ Changes since last non-beta release.
 
 _Please add entries here for your pull requests that are not yet released._
 
+### Fixed
+- Fixed creation of assets:precompile if it is missing [PR 325](https://github.com/shakacode/shakapacker/pull/325) by [ahangarha](https://github.com/ahangarha).
+
 ## [v7.0.1] - June 27, 2023
 ### Fixed
 - Fixed the condition for showing warning for setting `useContentHash` to `false` in the production environment. [PR 320](https://github.com/shakacode/shakapacker/pull/320) by [ahangarha](https://github.com/ahangarha).
