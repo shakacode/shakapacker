@@ -2,6 +2,7 @@ require "active_support/core_ext/module/attribute_accessors"
 require "active_support/core_ext/string/inquiry"
 require "active_support/logger"
 require "active_support/tagged_logging"
+require_relative "./shakapacker/webpacker"
 
 module Shakapacker
   extend self
@@ -45,7 +46,4 @@ require "shakapacker/compiler"
 require "shakapacker/commands"
 require "shakapacker/dev_server"
 require "shakapacker/deprecation_helper"
-
 require "shakapacker/railtie" if defined?(Rails)
-
-Webpacker = Shakapacker
