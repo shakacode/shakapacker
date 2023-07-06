@@ -1,22 +1,22 @@
 declare module 'shakapacker' {
-  import { Configuration } from 'webpack';
+  import { Configuration } from 'webpack'
 
-  export { merge } from 'webpack-merge';
-  export const globalMutableWebpackConfig: Configuration;
-  export function generateWebpackConfig(): Configuration;
+  export { merge } from 'webpack-merge'
+  export const globalMutableWebpackConfig: Configuration
+  export function generateWebpackConfig(): Configuration
 }
 
 declare module 'shakapacker/package/babel/preset.js' {
-  import { ConfigAPI, PluginItem, TransformOptions } from '@babel/core';
+  import { ConfigAPI, PluginItem, TransformOptions } from '@babel/core'
 
   interface RequiredTransformOptions {
-    plugins: PluginItem[];
-    presets: PluginItem[];
+    plugins: PluginItem[]
+    presets: PluginItem[]
   }
 
   const defaultConfigFunc: (
     api: ConfigAPI
-  ) => TransformOptions & RequiredTransformOptions;
+  ) => TransformOptions & RequiredTransformOptions
 
-  export = defaultConfigFunc;
+  export = defaultConfigFunc
 }
