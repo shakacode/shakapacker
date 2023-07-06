@@ -11,8 +11,13 @@ _Please add entries here for your pull requests that are not yet released._
 - Fix commands execution for projects with space in absolute path [PR 322](https://github.com/shakacode/shakapacker/pull/322) by [kukicola](https://github.com/kukicola).
 
 ### Fixed
+- Fixed creation of assets:precompile if it is missing [PR 325](https://github.com/shakacode/shakapacker/pull/325) by [ahangarha](https://github.com/ahangarha).
+
+## [v7.0.1] - June 27, 2023
+### Fixed
 - Fixed the condition for showing warning for setting `useContentHash` to `false` in the production environment. [PR 320](https://github.com/shakacode/shakapacker/pull/320) by [ahangarha](https://github.com/ahangarha).
 
+## [v7.0.0] - June 23, 2023
 ### Breaking changes
 - Removes defaults passed to `@babel/preset-typescript`. [PR 273](https://github.com/shakacode/shakapacker/pull/273) by [tomdracz](https://github.com/tomdracz).
 
@@ -258,7 +263,9 @@ Note: [Rubygem is 6.3.0.pre.rc.1](https://rubygems.org/gems/shakapacker/versions
 ## v5.4.3 and prior changes from rails/webpacker
 See [CHANGELOG.md in rails/webpacker (up to v5.4.3)](https://github.com/rails/webpacker/blob/master/CHANGELOG.md)
 
-[Unreleased]: https://github.com/shakacode/shakapacker/compare/v6.6.0...master
+[Unreleased]: https://github.com/shakacode/shakapacker/compare/v7.0.1...master
+[v7.0.1]: https://github.com/shakacode/shakapacker/compare/v7.0.0...v7.0.1
+[v7.0.0]: https://github.com/shakacode/shakapacker/compare/v6.6.0...v7.0.0
 [v6.6.0]: https://github.com/shakacode/shakapacker/compare/v6.5.6...v6.6.0
 [v6.5.6]: https://github.com/shakacode/shakapacker/compare/v6.5.5...v6.5.6
 [v6.5.5]: https://github.com/shakacode/shakapacker/compare/v6.5.4...v6.5.5
