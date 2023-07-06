@@ -3,6 +3,7 @@
   "version": "7.0.2",
   "description": "Use webpack to manage app-like JavaScript modules in Rails",
   "main": "package/index.js",
+  "types": "package/index.d.ts",
   "files": [
     "package",
     "lib/install/config/shakapacker.yml"
@@ -12,6 +13,7 @@
     "yarn": ">=1 <4"
   },
   "peerDependencies": {
+    "@types/webpack": "^5.0.0",
     "@babel/core": "^7.17.9",
     "@babel/plugin-transform-runtime": "^7.17.0",
     "@babel/preset-env": "^7.16.11",
@@ -24,6 +26,11 @@
     "webpack-cli": "^4.9.2 || ^5.0.0",
     "webpack-dev-server": "^4.9.0",
     "webpack-merge": "^5.8.0"
+  },
+  "peerDependenciesMeta": {
+    "@types/webpack": {
+      "optional": true
+    }
   },
   "dependencies": {
     "glob": "^7.2.0",
