@@ -13,7 +13,7 @@ declare module 'shakapacker' {
   export const devServer: Record<string, unknown>
   export function generateWebpackConfig(): Configuration
   export const globalMutableWebpackConfig: Configuration
-  export const baseConfig: Record<string, unknown>
+  export const baseConfig: Configuration
   export const env: Env
   export const rules: Record<string, unknown>
   export function moduleExists(packageName: string): boolean
