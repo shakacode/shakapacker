@@ -10,7 +10,6 @@ class Webpacker
     puts "The Webpacker constant has been superseded by the Shakapacker constant. "\
          "Please change all references to the Webpacker constant, such as Webpacker::#{const_name}, "\
          "to their Shakpacker equivalent, such as Shakapacker::#{const_name}"
-    super unless const_name == :Manifest
-    Shakapacker::Manifest
+    Shakapacker.const_get(const_name)
   end
 end
