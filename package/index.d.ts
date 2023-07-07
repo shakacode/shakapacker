@@ -1,10 +1,17 @@
 declare module 'shakapacker' {
   import { Configuration } from 'webpack'
 
-  export * from 'webpack-merge'
-  export const globalMutableWebpackConfig: Configuration
+  export const config: unknown
+  export const devServer: unknown
   export function generateWebpackConfig(): Configuration
+  export const globalMutableWebpackConfig: Configuration
+  export const baseConfig: unknown
+  export const env: unknown
+  export const rules: unknown
+  export function moduleExists(...args: unknown[]): unknown
+  export function canProcess(...args: unknown[]): unknown
   export const inliningCss: boolean
+  export * from 'webpack-merge'
 }
 
 declare module 'shakapacker/package/babel/preset.js' {
