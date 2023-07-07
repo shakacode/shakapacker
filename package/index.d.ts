@@ -1,13 +1,13 @@
 declare module 'shakapacker' {
   import { Configuration } from 'webpack'
 
-  export const config: unknown
-  export const devServer: unknown
+  export const config: Record<string, unknown>
+  export const devServer: Record<string, unknown>
   export function generateWebpackConfig(): Configuration
   export const globalMutableWebpackConfig: Configuration
-  export const baseConfig: unknown
+  export const baseConfig: Record<string, unknown>
   export const env: unknown
-  export const rules: unknown
+  export const rules: Record<string, unknown>
   export function moduleExists(packageName: string): boolean
   export function canProcess<T = unknown>(rule: string, fn: (modulePath: string) => T): T | null
   export const inliningCss: boolean
