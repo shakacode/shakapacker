@@ -13,6 +13,7 @@
     "yarn": ">=1 <4"
   },
   "peerDependencies": {
+    "@types/babel__core": "^7.0.0",
     "@types/webpack": "^5.0.0",
     "@babel/core": "^7.17.9",
     "@babel/plugin-transform-runtime": "^7.17.0",
@@ -28,6 +29,9 @@
     "webpack-merge": "^5.8.0"
   },
   "peerDependenciesMeta": {
+    "@types/babel__core": {
+      "optional": true
+    },
     "@types/webpack": {
       "optional": true
     }
