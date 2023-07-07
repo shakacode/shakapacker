@@ -1,7 +1,7 @@
 declare module 'shakapacker' {
   import { Configuration } from 'webpack'
 
-  interface Config {
+  export interface Config {
     source_path: string
     source_entry_path: string
     nested_entries: boolean
@@ -24,7 +24,7 @@ declare module 'shakapacker' {
     manifestPath: string
   }
 
-  interface Env {
+  export interface Env {
     railsEnv: string
     nodeEnv: string
     isProduction: boolean
