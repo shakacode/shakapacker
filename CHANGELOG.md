@@ -10,6 +10,7 @@ Changes since last non-beta release.
 _Please add entries here for your pull requests that are not yet released._
 - Fix commands execution for projects with space in absolute path [PR 322](https://github.com/shakacode/shakapacker/pull/322) by [kukicola](https://github.com/kukicola).
 
+## [v7.0.2] - July 3, 2023
 ### Fixed
 - Fixed creation of assets:precompile if it is missing [PR 325](https://github.com/shakacode/shakapacker/pull/325) by [ahangarha](https://github.com/ahangarha).
 
@@ -263,7 +264,8 @@ Note: [Rubygem is 6.3.0.pre.rc.1](https://rubygems.org/gems/shakapacker/versions
 ## v5.4.3 and prior changes from rails/webpacker
 See [CHANGELOG.md in rails/webpacker (up to v5.4.3)](https://github.com/rails/webpacker/blob/master/CHANGELOG.md)
 
-[Unreleased]: https://github.com/shakacode/shakapacker/compare/v7.0.1...master
+[Unreleased]: https://github.com/shakacode/shakapacker/compare/v7.0.2...master
+[v7.0.2]: https://github.com/shakacode/shakapacker/compare/v7.0.1...v7.0.2
 [v7.0.1]: https://github.com/shakacode/shakapacker/compare/v7.0.0...v7.0.1
 [v7.0.0]: https://github.com/shakacode/shakapacker/compare/v6.6.0...v7.0.0
 [v6.6.0]: https://github.com/shakacode/shakapacker/compare/v6.5.6...v6.6.0
