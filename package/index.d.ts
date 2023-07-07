@@ -9,7 +9,7 @@ declare module 'shakapacker' {
   export const env: unknown
   export const rules: unknown
   export function moduleExists(packageName: string): boolean
-  export function canProcess(...args: unknown[]): unknown
+  export function canProcess<T = unknown>(rule: string, fn: (modulePath: string) => T): T | null
   export const inliningCss: boolean
   export * from 'webpack-merge'
 }
