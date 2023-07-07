@@ -1,6 +1,29 @@
 declare module 'shakapacker' {
   import { Configuration } from 'webpack'
 
+  interface Config {
+    source_path: string
+    source_entry_path: string
+    nested_entries: boolean
+    css_extract_ignore_order_warnings: boolean
+    public_root_path: string
+    public_output_path: string
+    cache_path: string
+    webpack_compile_output: boolean
+    shakapacker_precompile: boolean
+    additional_paths: string[]
+    cache_manifest: boolean
+    webpack_loader: string
+    ensure_consistent_versioning: boolean
+    compiler_strategy: string
+    useContentHash: boolean
+    compile: boolean,
+    outputPath: string
+    publicPath: string
+    publicPathWithoutCDN: string
+    manifestPath: string
+  }
+
   interface Env {
     railsEnv: string
     nodeEnv: string
@@ -9,7 +32,7 @@ declare module 'shakapacker' {
     runningWebpackDevServer: boolean
   }
 
-  export const config: Record<string, unknown>
+  export const config: Config
   export const devServer: Record<string, unknown>
   export function generateWebpackConfig(): Configuration
   export const globalMutableWebpackConfig: Configuration
