@@ -29,7 +29,7 @@ module Shakapacker
 
       # Executes a string or an array of strings in a shell in the given directory in an unbundled environment
       def self.sh_in_dir(dir, *shell_commands)
-        shell_commands.flatten.each { |shell_command| sh %(cd #{dir} && #{shell_command.strip}) }
+        shell_commands.flatten.each { |shell_command| sh %(cd '#{dir}' && #{shell_command.strip}) }
       end
     end
   end

@@ -33,7 +33,7 @@ describe "Generator" do
   describe "shakapacker:install" do
     context "in a normal Rails project" do
       before :all do
-        sh_in_dir(SPEC_PATH, "cp -r #{BASE_RAILS_APP_PATH} #{TEMP_RAILS_APP_PATH}")
+        sh_in_dir(SPEC_PATH, "cp -r '#{BASE_RAILS_APP_PATH}' '#{TEMP_RAILS_APP_PATH}'")
 
         Bundler.with_unbundled_env do
           sh_in_dir(TEMP_RAILS_APP_PATH, "FORCE=true bundle exec rails shakapacker:install")

@@ -8,6 +8,7 @@
 Changes since last non-beta release.
 
 _Please add entries here for your pull requests that are not yet released._
+- Fix commands execution for projects with space in absolute path [PR 322](https://github.com/shakacode/shakapacker/pull/322) by [kukicola](https://github.com/kukicola).
 
 ### Fixed
 - Fixed creation of assets:precompile if it is missing [PR 325](https://github.com/shakacode/shakapacker/pull/325) by [ahangarha](https://github.com/ahangarha).
