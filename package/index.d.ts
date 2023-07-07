@@ -1,7 +1,7 @@
 declare module 'shakapacker' {
   import { Configuration } from 'webpack'
 
-  export { merge } from 'webpack-merge'
+  export * from 'webpack-merge'
   export const globalMutableWebpackConfig: Configuration
   export function generateWebpackConfig(): Configuration
 }
