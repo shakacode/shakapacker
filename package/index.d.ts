@@ -4,6 +4,7 @@ declare module 'shakapacker' {
   export * from 'webpack-merge'
   export const globalMutableWebpackConfig: Configuration
   export function generateWebpackConfig(): Configuration
+  export const inliningCss: boolean
 }
 
 declare module 'shakapacker/package/babel/preset.js' {
