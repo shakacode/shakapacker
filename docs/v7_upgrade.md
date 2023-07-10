@@ -35,7 +35,7 @@ When generating file paths for static assets, a top-level directory will no long
 ## The `webpackConfig` property is changed
 
 The `webpackConfig` property in the `shakapacker` module has been changed. The shakapacker module has two options:
-1. `generatedWebpackConfig`: a function that returns a new webpack configuration object, which ensures that any modifications made to it will not affect any other usage of the webpack configuration.
+1. `generateWebpackConfig`: a function that returns a new webpack configuration object, which ensures that any modifications made to it will not affect any other usage of the webpack configuration.
 2. `globalMutableWebpackConfig`: if a project still desires the old mutable object. You can rename your imports of `webpackConfig` with `globalMutableWebpackConfig`.
 
 ## Example Upgrade
