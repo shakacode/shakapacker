@@ -1,6 +1,6 @@
 # React Integration
 
-These steps describe how to create a Rails/React app, using Shakapacker as the bundler.
+These steps describe creating a Rails/React app, using Shakapacker as the bundler.
 
 Before starting, ensure that you have Yarn installed, for example:
 
@@ -45,7 +45,7 @@ And that's it. You can now create a React app using `app/javascript/application.
 
 With HMR enabled, Shakapacker will automatically update only that part of the page that changed when it detects changes in your project files. This has the nice advantage of preserving your app’s state.
 
-To enable HMR in a React app, proceed as follows:.
+To enable HMR in a React app, proceed as follows:
 
 In `config/shakapacker.yml` set `hmr` is set to `true`.
 
@@ -262,7 +262,7 @@ module.exports = function (api) {
 }
 ```
 
-9. Start the Rails server and the webpack-dev-server in separate console windows:
+9. Start the Rails server and the `shakapacker-dev-server` in separate console windows:
 ```shell
 rails s
 ./bin/shakapacker-dev-server
@@ -272,4 +272,4 @@ rails s
 
 11. Edit either the React component at `app/javascript/App.js` or the CSS file at `app/javascript/App.css` and observe the HMR goodness.
 
-Note that HMR will not work if you edit `app/javascript/application.js` and you experience a full refresh with a warning in the console. For more info on this, see here: https://github.com/pmmmwh/react-refresh-webpack-plugin/issues/177
+Note that HMR will not work if you edit `app/javascript/application.js` and experience a full refresh with a warning in the console. For more info on this, see here: https://github.com/pmmmwh/react-refresh-webpack-plugin/issues/177
