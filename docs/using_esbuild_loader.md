@@ -59,10 +59,8 @@ o do so, you need to modify your webpack configuration and use `ESBuildMinifyPlu
 Example:
 
 ```js
-const { generateWebpackConfig, merge } = require('shakapacker')
+const { generateWebpackConfig } = require('shakapacker')
 const { ESBuildMinifyPlugin } = require('esbuild-loader')
-
-const baseWebpackConfig = generateWebpackConfig()
 
 const options = {
   optimization: {
@@ -74,7 +72,7 @@ const options = {
   }
 }
 
-module.exports = merge({}, baseWebpackConfig, options)
+module.exports = generateWebpackConfig(options)
 ```
 
 For more details, see instructions at https://github.com/shakacode/shakapacker#webpack-configuration and https://github.com/privatenumber/esbuild-loader#js-minification-eg-terser.

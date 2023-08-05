@@ -150,11 +150,9 @@ To silent these warnings, please update `config/webpack/webpack.config.js`:
 ```js
 const webpack = require('webpack')
 const { resolve } = require('path')
-const { generateWebpackConfig, merge } = require('shakapacker')
+const { generateWebpackConfig } = require('shakapacker')
 
-const webpackConfig = generateWebpackConfig();
-
-module.exports = merge(webpackConfig, {
+module.exports = generateWebpackConfig({
   plugins: [
     new webpack.ContextReplacementPlugin(
       /angular(\\|\/)core(\\|\/)(@angular|esm5)/,
@@ -201,11 +199,9 @@ Instead do:
 // config/webpack/webpack.config.js
 
 const webpack = require('webpack')
-const { generateWebpackConfig, merge } = require('shakapacker')
+const { generateWebpackConfig } = require('shakapacker')
 
-const webpackConfig = generateWebpackConfig();
-
-module.exports = merge(webpackConfig, {
+module.exports = generateWebpackConfig({
   plugins: [
     new webpack.ProvidePlugin({
       $: 'jquery',
