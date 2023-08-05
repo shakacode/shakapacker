@@ -466,14 +466,14 @@ First, you don't _need_ to use Shakapacker's webpack configuration. However, the
 1. Your output files go to the right directory
 2. Your output includes a manifest, via package [`webpack-assets-manifest`](https://github.com/webdeveric/webpack-assets-manifest) that maps output names (your 'packs') to the fingerprinted versions, including bundle-splitting dependencies. That's the main secret sauce of Shakapacker!
 
-The most practical webpack configuration is to take the default from Shakapacker and then use [webpack-merge](https://github.com/survivejs/webpack-merge) to merge your customizations with the default. For example, suppose you want to add some `resolve.extensions`:
+The easiest way to customize your webpack config beyond whats available in `config/shakapacker.yml` is to pass your desired customizations to `generateWebpackConfig` which will return a new config resulting from merging those customizations into the default config using [webpack-merge](https://github.com/survivejs/webpack-merge) to merge your customizations with the default.
+
+For example, suppose you want to add some `resolve.extensions`:
 
 ```js
 // use the new NPM package name, `shakapacker`.
 // merge is webpack-merge from https://github.com/survivejs/webpack-merge
-const { generateWebpackConfig, merge } = require('shakapacker')
-
-const baseWebpackConfig = generateWebpackConfig()
+const { generateWebpackConfig } = require('shakapacker')
 
 const options = {
   resolve: {
@@ -481,10 +481,8 @@ const options = {
   }
 }
 
-// Copy the object using merge b/c the baseClientWebpackConfig is a mutable global
-// If you want to use this object for client and server rendering configurations,
-// having a new object is essential.
-module.exports = merge({}, baseWebpackConfig, options)
+// This results in a new object copied from the mutable global
+module.exports = generateWebpackConfig(options)
 ```
 
 This example is based on [an example project](https://github.com/shakacode/react_on_rails_tutorial_with_ssr_and_hmr_fast_refresh/blob/master/config/webpack/webpack.config.js)
@@ -513,12 +511,11 @@ Then `require` this file in your `config/webpack/webpack.config.js`:
 ```js
 // config/webpack/webpack.config.js
 // use the new NPM package name, `shakapacker`.
-const { generateWebpackConfig, merge } = require('shakapacker')
+const { generateWebpackConfig } = require('shakapacker')
 
-const webpackConfig = generateWebpackConfig()
 const customConfig = require('./custom')
 
-module.exports = merge(webpackConfig, customConfig)
+module.exports = generateWebpackConfig(customConfig)
 ```
 
 If you need access to configs within Shakapacker's configuration, you can import them like so:
@@ -616,12 +613,10 @@ Then modify the webpack config to use it as a plugin:
 
 ```js
 // config/webpack/webpack.config.js
-const { generateWebpackConfig, merge } = require("shakapacker");
-
-const webpackConfig = generateWebpackConfig()
+const { generateWebpackConfig } = require("shakapacker");
 const ForkTSCheckerWebpackPlugin = require("fork-ts-checker-webpack-plugin");
 
-module.exports = merge(webpackConfig, {
+module.exports = generateWebpackConfig({
   plugins: [new ForkTSCheckerWebpackPlugin()],
 });
 ```
@@ -638,9 +633,7 @@ Optionally, add the `CSS` extension to webpack config for easy resolution.
 
 ```js
 // config/webpack/webpack.config.js
-const { generateWebpackConfig, merge } = require('shakapacker')
-
-const webpackConfig = generateWebpackConfig()
+const { generateWebpackConfig } = require('shakapacker')
 
 const customConfig = {
   resolve: {
@@ -648,7 +641,7 @@ const customConfig = {
   }
 }
 
-module.exports = merge(webpackConfig, customConfig)
+module.exports = generateWebpackConfig(customConfig)
 ```
 
 To enable `PostCSS`, `Sass` or `Less` support, add `CSS` support first and
