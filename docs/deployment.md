@@ -94,7 +94,7 @@ If you are using a CDN setup, Shakapacker does NOT use the `ASSET_HOST` environm
 
 ### Assets compiling on every deployment even if JavaScript and CSS files are not changed
 
-Make sure you have your public outputh path (default `public/packs`), the shakapacker cache path (default `tmp/shakapacker`) and `node_modules` in `:linked_dirs`
+Make sure you have your public output path (default `public/packs`), the shakapacker cache path (default `tmp/shakapacker`) and `node_modules` in `:linked_dirs`
 
 ```ruby
 append :linked_dirs, "log", "tmp/pids", "tmp/cache", "tmp/sockets", "tmp/shakapacker", "public/packs", ".bundle", "node_modules"

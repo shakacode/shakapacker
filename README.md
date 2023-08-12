@@ -15,13 +15,13 @@ _Official, actively maintained successor to [rails/webpacker](https://github.com
 [![Gem](https://img.shields.io/gem/v/shakapacker.svg)](https://rubygems.org/gems/shakapacker)
 [![npm version](https://badge.fury.io/js/shakapacker.svg)](https://badge.fury.io/js/shakapacker)
 
-Shakpacker makes it easy to use the JavaScript pre-processor and bundler [Webpack v5+](https://webpack.js.org/)
+Shakapacker makes it easy to use the JavaScript pre-processor and bundler [Webpack v5+](https://webpack.js.org/)
 to manage frontend JavaScript in Rails. It can coexist with the asset pipeline,
 leaving Webpack responsible solely for frontend JavaScript, or can be used exclusively, making it also responsible for images, fonts, and CSS.
 
 Check out 6.1.1+ for [SWC](https://swc.rs/) and [esbuild-loader](https://github.com/privatenumber/esbuild-loader) support! They are faster than Babel!
 
-See a comparison of [Shakapacker with jsbundling-rails](https://github.com/rails/jsbundling-rails/blob/main/docs/comparison_with_webpacker.md). For a in-depth discussion of choosing between `shakapacker` and `jsbundling-rails`, see the discussion [Webpacker alternatives - which path should we go to? #8783](https://github.com/decidim/decidim/discussions/8783) and the resulting PR [Switch away from Webpacker to Shakapacker #10389](https://github.com/decidim/decidim/pull/10389).
+See a comparison of [Shakapacker with jsbundling-rails](https://github.com/rails/jsbundling-rails/blob/main/docs/comparison_with_webpacker.md). For an in-depth discussion of choosing between `shakapacker` and `jsbundling-rails`, see the discussion [Webpacker alternatives - which path should we go to? #8783](https://github.com/decidim/decidim/discussions/8783) and the resulting PR [Switch away from Webpacker to Shakapacker #10389](https://github.com/decidim/decidim/pull/10389).
 
 For discussions, see our [Slack Channel](https://reactrails.slack.com/join/shared_invite/enQtNjY3NTczMjczNzYxLTlmYjdiZmY3MTVlMzU2YWE0OWM0MzNiZDI0MzdkZGFiZTFkYTFkOGVjODBmOWEyYWQ3MzA2NGE1YWJjNmVlMGE).
 

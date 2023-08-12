@@ -10,7 +10,7 @@ Thank you for your interest in contributing to Shakapacker! We welcome all contr
 - [Testing the generator](#testing-the-generator)
 
 ## Reporting Issues
-If you encounter any issues with the project, please first check the exisiting issues (including closed ones). If the issues is not reported before, please opening an issue on our GitHub repository. Please provide a clear and detailed description of the issue, including steps to reproduce it. Creating a demo repository to demonstrate the issue would be ideal (and in some cases necessary).
+If you encounter any issues with the project, please first check the existing issues (including closed ones). If the issues is not reported before, please opening an issue on our GitHub repository. Please provide a clear and detailed description of the issue, including steps to reproduce it. Creating a demo repository to demonstrate the issue would be ideal (and in some cases necessary).
 
 If looking to contribute to the project by fixing existing issues, we recommend looking at issues, particularly with the "[help wanted](https://github.com/shakacode/shakapacker/issues?q=is%3Aissue+label%3A%22help+wanted%22)" label.
 
@@ -41,7 +41,7 @@ We welcome pull requests that fix bugs, add new features, or improve existing on
       # In Rails app for testing
       yalc link shakapacker
 
-      # After every chagnes in shakapacker, run the folloing in Shakapacker directory
+      # After every change in shakapacker, run the following in Shakapacker directory
       yalc push # or yalc publish --push
       ```
 3. Run the following commands to set up the development environment.
@@ -101,7 +101,7 @@ bundle exec rake run_spec:gem
 ```
 
 #### 4.4 Run only Shakapacker gem specs for backward compatibility
-These specs are to check Shakapcker v7 backward compatibility with v6.x
+These specs are to check Shakapacker v7 backward compatibility with v6.x
 
 ```
 bundle exec rake run_spec:gem_bc
@@ -125,4 +125,3 @@ To ensure that your installer works as expected, either you can run `bundle exec
 3. Run `bundle exec rails shakapacker:install` to confirm that you got the right changes.
 
  **Note:** Ensure that you use bundle exec otherwise the installed shakapacker gem will run and not the one you are working on.
-
