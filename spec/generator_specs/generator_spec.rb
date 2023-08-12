@@ -99,7 +99,7 @@ describe "Generator" do
         expect(setup_file_content).to match %r(^\s*system!\(['"]bin/yarn['"]\))
       end
 
-      it "adds relevant shakapacker version in package.json depending on gem version," do
+      it "adds relevant shakapacker version in package.json depending on gem version" do
         npm_version = Shakapacker::Utils::VersionSyntaxConverter.new.rubygem_to_npm(Shakapacker::VERSION)
 
         actual_content = read(path_in_the_app("package.json"))
