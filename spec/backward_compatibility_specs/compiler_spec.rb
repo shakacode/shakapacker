@@ -26,7 +26,7 @@ describe "Webpacker::Compiler" do
     allow(Webpacker.compiler).to receive(:strategy).and_return(mocked_strategy)
 
     status = OpenStruct.new(success?: true)
-    allow(Open3).to receive(:capture3).and_return([:sterr, :stdout, status])
+    allow(Open3).to receive(:capture3).and_return([:stderr, :stdout, status])
 
     expect(Webpacker.compiler.compile).to be true
     expect(mocked_strategy).to have_received(:after_compile_hook)
@@ -40,7 +40,7 @@ describe "Webpacker::Compiler" do
     allow(Webpacker.compiler).to receive(:strategy).and_return(mocked_strategy)
 
     status = OpenStruct.new(success?: false)
-    allow(Open3).to receive(:capture3).and_return([:sterr, :stdout, status])
+    allow(Open3).to receive(:capture3).and_return([:stderr, :stdout, status])
 
     expect(Webpacker.compiler.compile).to be false
     expect(mocked_strategy).to have_received(:after_compile_hook)
