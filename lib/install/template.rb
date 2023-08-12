@@ -101,7 +101,7 @@ Dir.chdir(Rails.root) do
     }
   end
 
-  peers = PackageJson.new(:npm, "#{__dir__}/../../").fetch("peerDependencies")
+  peers = PackageJson.read("#{__dir__}/../../").fetch("peerDependencies")
   dev_dependency_packages = ["webpack-dev-server"]
 
   dependencies_to_add = []
