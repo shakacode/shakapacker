@@ -451,19 +451,19 @@ describe "VersionChecker::NodePackageVersion" do
     context "from exact semantic version" do
       let(:node_package_version_from_semver_exact) { node_package_version(fixture_version: "semver_exact") }
 
-      it "#raw retruns version" do
+      it "#raw returns version" do
         expect(node_package_version_from_semver_exact.raw).to eq "6.0.0"
       end
 
-      it "#major_minor_patch retruns version array" do
+      it "#major_minor_patch returns version array" do
         expect(node_package_version_from_semver_exact.major_minor_patch).to eq ["6", "0", "0"]
       end
 
-      it "#skip_processing? retruns false" do
+      it "#skip_processing? returns false" do
         expect(node_package_version_from_semver_exact.skip_processing?).to be false
       end
 
-      it "#semver_wildcard? retruns false" do
+      it "#semver_wildcard? returns false" do
         expect(node_package_version_from_semver_exact.semver_wildcard?).to be false
       end
     end

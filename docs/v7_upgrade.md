@@ -45,7 +45,7 @@ If you started with:
 const { webpackConfig } = require('shakapacker')
 ```
 
-Swtich to:
+Switch to:
 
 ```js
 const { generateWebpackConfig } = require('shakapacker')
