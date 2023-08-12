@@ -26,6 +26,7 @@ jobs:
             gemfile: gemfiles/Gemfile-rails-edge
     env:
       BUNDLE_GEMFILE: ${{ matrix.gemfile }}
+      PACKAGE_JSON_FALLBACK_MANAGER: "yarn_classic"
 
     steps:
       - uses: actions/checkout@v4

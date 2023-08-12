@@ -10,11 +10,7 @@ force_option = ENV["FORCE"] ? { force: true } : {}
 copy_file "#{__dir__}/config/shakapacker.yml", "config/shakapacker.yml", force_option
 copy_file "#{__dir__}/package.json", "package.json", force_option
 
-fallback_manager = ENV.fetch("SHAKAPACKER_NPM_PACKAGE_MANAGER", "yarn_classic").to_sym
-
-package_json = PackageJson.new(fallback_manager)
-
-package_json.merge! { |pj| { "packageManager" => pj.fetch("packageManager", fallback_manager) } }
+package_json = PackageJson.read
 
 say "Copying webpack core config"
 directory "#{__dir__}/config/webpack", "config/webpack", force_option
