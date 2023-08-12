@@ -1,11 +1,28 @@
 require "shakapacker/utils/version_syntax_converter"
 
+# TODO: replace with standard "require" call once gem is published
+def require_package_json_gem
+  require "bundler/inline"
+
+  gemfile { gem "package_json", github: "G-Rath/package_json" }
+
+  puts "using package_json v#{PackageJson::VERSION}"
+end
+
+require_package_json_gem
+
 # Install Shakapacker
 
 force_option = ENV["FORCE"] ? { force: true } : {}
 
 copy_file "#{__dir__}/config/shakapacker.yml", "config/shakapacker.yml", force_option
 copy_file "#{__dir__}/package.json", "package.json", force_option
+
+fallback_manager = ENV.fetch("SHAKAPACKER_NPM_PACKAGE_MANAGER", "yarn_classic").to_sym
+
+package_json = PackageJson.new(fallback_manager)
+
+package_json.merge! { |pj| { "packageManager" => pj.fetch("packageManager", fallback_manager) } }
 
 say "Copying webpack core config"
 directory "#{__dir__}/config/webpack", "config/webpack", force_option
@@ -43,10 +60,12 @@ end
 
 # Ensure there is `system!("bin/yarn")` command in `./bin/setup` file
 if (setup_path = Rails.root.join("bin/setup")).exist?
-  say "Run bin/yarn during bin/setup"
+  native_install_command = package_json.manager.native_install_command.join(" ")
+
+  say "Run #{native_install_command} during bin/setup"
 
   if File.read(setup_path).match? Regexp.escape("  # system('bin/yarn')\n")
-    gsub_file(setup_path, "# system('bin/yarn')", "system!('bin/yarn')")
+    gsub_file(setup_path, "# system('bin/yarn')", "system!('#{native_install_command}')")
   else
     # Due to the inconsistency of quotation usage in Rails 7 compared to
     # earlier versions, we check both single and double quotations here.
@@ -55,7 +74,7 @@ if (setup_path = Rails.root.join("bin/setup")).exist?
     string_to_add = <<-RUBY
 
   # Install JavaScript dependencies
-  system!("bin/yarn")
+  system!("#{native_install_command}")
 RUBY
 
     if File.read(setup_path).match? pattern
@@ -63,7 +82,7 @@ RUBY
     else
       say <<~MSG, :red
         It seems your `bin/setup` file doesn't have the expected content.
-        Please review the file and manually add `system!("bin/yarn")` before any
+        Please review the file and manually add `system!("#{native_install_command}")` before any
         other command that requires JavaScript dependencies being already installed.
       MSG
     end
@@ -72,13 +91,29 @@ end
 
 results = []
 
+def add_dependencies(pj, dependencies, type)
+  pj.manager.add(dependencies, type: type)
+
+  true
+rescue PackageJson::Error
+  false
+end
+
 Dir.chdir(Rails.root) do
   npm_version = Shakapacker::Utils::VersionSyntaxConverter.new.rubygem_to_npm(Shakapacker::VERSION)
   say "Installing shakapacker@#{npm_version}"
-  results << run("yarn add shakapacker@#{npm_version} --exact")
+  results << add_dependencies(package_json, ["shakapacker@#{npm_version}"], :production)
 
-  package_json = File.read("#{__dir__}/../../package.json")
-  peers = JSON.parse(package_json)["peerDependencies"]
+  package_json.merge! do |pj|
+    {
+      "dependencies" => pj["dependencies"].merge({
+        # TODO: workaround for test suite - long-run need to actually account for diff pkg manager behaviour
+        "shakapacker" => pj["dependencies"]["shakapacker"].delete_prefix("^")
+      })
+    }
+  end
+
+  peers = PackageJson.new(:npm, "#{__dir__}/../../").fetch("peerDependencies")
   dev_dependency_packages = ["webpack-dev-server"]
 
   dependencies_to_add = []
@@ -96,10 +131,10 @@ Dir.chdir(Rails.root) do
   end
 
   say "Adding shakapacker peerDependencies"
-  results << run("yarn add #{dependencies_to_add.join(' ')}")
+  results << add_dependencies(package_json, dependencies_to_add, :production)
 
   say "Installing webpack-dev-server for live reloading as a development dependency"
-  results << run("yarn add --dev #{dev_dependencies_to_add.join(' ')}")
+  results << add_dependencies(package_json, dev_dependencies_to_add, :dev)
 end
 
 unless results.all?

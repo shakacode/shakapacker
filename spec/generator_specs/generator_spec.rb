@@ -98,7 +98,7 @@ describe "Generator" do
       it "updates `bin/setup`" do
         setup_file_content = read(path_in_the_app("bin/setup"))
 
-        expect(setup_file_content).to match %r(^\s*system!\(['"]bin/yarn['"]\))
+        expect(setup_file_content).to match %r(^\s*system!\(['"]yarn install['"]\))
       end
 
       it "uses the shakapacker version in package.json depending on gem version" do
