@@ -94,7 +94,7 @@ describe "Generator" do
         expect(actual_content).to match '<%= javascript_pack_tag "application" %>'
       end
 
-      it "updates `bin/setup" do
+      it "updates `bin/setup`" do
         setup_file_content = read(path_in_the_app("bin/setup"))
         expect(setup_file_content).to match %r(^\s*system!\(['"]bin/yarn['"]\))
       end
