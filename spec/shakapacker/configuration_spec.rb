@@ -189,7 +189,7 @@ describe "Shakapacker::Configuration" do
     end
   end
 
-  context "with shakapacker config file containing manifext_path entry" do
+  context "with shakapacker config file containing manifest_path entry" do
     config = Shakapacker::Configuration.new(
       root_path: ROOT_PATH,
       config_path: Pathname.new(File.expand_path("./test_app/config/shakapacker_manifest_path.yml", __dir__)),

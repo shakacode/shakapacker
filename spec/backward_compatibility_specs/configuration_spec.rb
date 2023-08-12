@@ -190,7 +190,7 @@ describe "Webpacker::Configuration" do
     end
   end
 
-  context "with webpacker config file containing manifext_path entry" do
+  context "with webpacker config file containing manifest_path entry" do
     config = Webpacker::Configuration.new(
       root_path: ROOT_PATH,
       config_path: Pathname.new(File.expand_path("./webpacker_test_app/config/webpacker_manifest_path.yml", __dir__)),
