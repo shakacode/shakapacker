@@ -1,13 +1,6 @@
-# TODO: replace with standard "require" call once gem is published
-def require_package_json_gem
-  require "bundler/inline"
+require "shakapacker/utils/misc"
 
-  gemfile { gem "package_json", github: "G-Rath/package_json" }
-
-  puts "using package_json v#{PackageJson::VERSION}"
-end
-
-require_package_json_gem
+Shakapacker::Utils::Misc.require_package_json_gem
 
 package_json = PackageJson.new
 

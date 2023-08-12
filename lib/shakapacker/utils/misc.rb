@@ -8,6 +8,16 @@ module Shakapacker
     class Misc
       extend FileUtils
 
+      def self.require_package_json_gem
+        return if defined?(PackageJson)
+
+        require "bundler/inline"
+
+        gemfile { gem "package_json", github: "G-Rath/package_json" }
+
+        puts "using package_json v#{PackageJson::VERSION}"
+      end
+
       def self.uncommitted_changes?(message_handler)
         return false if ENV["COVERAGE"] == "true"
 

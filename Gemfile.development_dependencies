@@ -6,6 +6,8 @@ gem "rack-proxy", ">= 0.7.2"
 gem "nokogiri", ">= 1.13.6"
 gem "rails-html-sanitizer", ">= 1.4.3"
 
+gem "package_json", github: "G-Rath/package_json"
+
 group :test, :development do
   gem "rspec-rails", "~> 6.0.2"
 end

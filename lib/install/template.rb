@@ -1,15 +1,7 @@
+require "shakapacker/utils/misc"
 require "shakapacker/utils/version_syntax_converter"
 
-# TODO: replace with standard "require" call once gem is published
-def require_package_json_gem
-  require "bundler/inline"
-
-  gemfile { gem "package_json", github: "G-Rath/package_json" }
-
-  puts "using package_json v#{PackageJson::VERSION}"
-end
-
-require_package_json_gem
+Shakapacker::Utils::Misc.require_package_json_gem
 
 # Install Shakapacker
 
