@@ -65,8 +65,8 @@ describe "Generator" do
         ]
 
         Dir.chdir(path_in_the_app("config/webpack")) do
-          exisiting_files_in_config_webpack_dir = Dir.glob("*")
-          expect(exisiting_files_in_config_webpack_dir).to eq expected_files
+          existing_files_in_config_webpack_dir = Dir.glob("*")
+          expect(existing_files_in_config_webpack_dir).to eq expected_files
         end
       end
 
