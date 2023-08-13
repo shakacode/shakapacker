@@ -97,7 +97,7 @@ _If you're on webpacker v5, follow [how to upgrade to webpacker v6.0.0.rc.6 from
    ```
    If you prefer this configuration, then you will move your `app/javascript/packs/*` (including `application.js`) to `app/javascript/` and update the configuration file.
 
-   Note, moving your files is optional, as you can stil keep your entries in a separate directory, called something like `packs`, or `entries`. This directory is defined with the `source_path`.
+   Note, moving your files is optional, as you can still keep your entries in a separate directory, called something like `packs`, or `entries`. This directory is defined with the `source_path`.
 
 1. Update `webpack-dev-server` to the current version, greater than 4.2, updating `package.json`.
 

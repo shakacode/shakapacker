@@ -8,7 +8,7 @@ If you face any issues, please report them at https://github.com/shakacode/shaka
 
 [esbuild](https://esbuild.github.io/) is a Go-based bundler tool that can offer [significant improvement](https://esbuild.github.io/faq/#benchmark-details) over other similar tools.
 
-While esbuild is a complete bundler, through the usage of [esbuild-loader](https://github.com/privatenumber/esbuild-loader), you can still leverage esbuild's speedy transpilation and minifcation in your Webpack-based configs.
+While esbuild is a complete bundler, through the usage of [esbuild-loader](https://github.com/privatenumber/esbuild-loader), you can still leverage esbuild's speedy transpilation and minification in your Webpack-based configs.
 
 Please note, that unlike Babel or SWC loader, esbuild-loader has got no support for things like:
 - React Hot Module reload

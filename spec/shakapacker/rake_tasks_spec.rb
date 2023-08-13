@@ -44,7 +44,7 @@ describe "RakeTasks" do
       Dir.chdir(TEST_APP_PATH)
     end
 
-    context "with existing `./bin/shapapacker` and `./bin/shapapacker-dev-server`" do
+    context "with existing `./bin/shakapacker` and `./bin/shakapacker-dev-server`" do
       it "passes" do
         expect { system("bundle exec rake shakapacker:check_binstubs") }.to output("").to_stdout_from_any_process
       end

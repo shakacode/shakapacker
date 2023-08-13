@@ -1,6 +1,6 @@
 /* global test expect, describe, afterAll, beforeEach */
 
-// environment.js expects to find config/webapacker.yml and resolved modules from
+// environment.js expects to find config/webpacker.yml and resolved modules from
 // the root of a Rails project
 
 const { resetEnv, chdirWebpackerTestApp } = require('../../utils/helpers')

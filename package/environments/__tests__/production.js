@@ -16,10 +16,10 @@ describe('Production specific config', () => {
     test('sets filename to use contentHash', () => {
       const config = require("../../config");
       config.useContentHash = true
-      const environmnetConfig = require('../production')
+      const environmentConfig = require('../production')
 
-      expect(environmnetConfig.output.filename).toEqual('js/[name]-[contenthash].js')
-      expect(environmnetConfig.output.chunkFilename).toEqual(
+      expect(environmentConfig.output.filename).toEqual('js/[name]-[contenthash].js')
+      expect(environmentConfig.output.chunkFilename).toEqual(
         'js/[name]-[contenthash].chunk.js'
       )
     })
@@ -28,7 +28,7 @@ describe('Production specific config', () => {
       const consoleWarnSpy = jest.spyOn(console, 'warn');
       const config = require("../../config");
       config.useContentHash = true
-      const environmnetConfig = require('../production')
+      const environmentConfig = require('../production')
 
       expect(consoleWarnSpy).not.toHaveBeenCalledWith(
         expect.stringMatching(/Setting 'useContentHash' to 'false' in the production environment/)
@@ -42,10 +42,10 @@ describe('Production specific config', () => {
     test('sets filename to use contentHash', () => {
       const config = require("../../config");
       config.useContentHash = false
-      const environmnetConfig = require('../production')
+      const environmentConfig = require('../production')
 
-      expect(environmnetConfig.output.filename).toEqual('js/[name]-[contenthash].js')
-      expect(environmnetConfig.output.chunkFilename).toEqual(
+      expect(environmentConfig.output.filename).toEqual('js/[name]-[contenthash].js')
+      expect(environmentConfig.output.chunkFilename).toEqual(
         'js/[name]-[contenthash].chunk.js'
       )
     })
@@ -54,7 +54,7 @@ describe('Production specific config', () => {
       const consoleWarnSpy = jest.spyOn(console, 'warn');
       const config = require("../../config");
       config.useContentHash = false
-      const environmnetConfig = require('../production')
+      const environmentConfig = require('../production')
 
       expect(consoleWarnSpy).toHaveBeenCalledWith(
         expect.stringMatching(/Setting 'useContentHash' to 'false' in the production environment/)
@@ -68,10 +68,10 @@ describe('Production specific config', () => {
     test('sets filename to use contentHash', () => {
       const config = require("../../config");
       delete config.useContentHash
-      const environmnetConfig = require('../production')
+      const environmentConfig = require('../production')
 
-      expect(environmnetConfig.output.filename).toEqual('js/[name]-[contenthash].js')
-      expect(environmnetConfig.output.chunkFilename).toEqual(
+      expect(environmentConfig.output.filename).toEqual('js/[name]-[contenthash].js')
+      expect(environmentConfig.output.chunkFilename).toEqual(
         'js/[name]-[contenthash].chunk.js'
       )
     })
@@ -80,7 +80,7 @@ describe('Production specific config', () => {
       const consoleWarnSpy = jest.spyOn(console, 'warn');
       const config = require("../../config");
       delete config.useContentHash
-      const environmnetConfig = require('../production')
+      const environmentConfig = require('../production')
 
       expect(consoleWarnSpy).not.toHaveBeenCalledWith(
         expect.stringMatching(/Setting 'useContentHash' to 'false' in the production environment/)

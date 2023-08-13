@@ -25,7 +25,7 @@ Note, accept defaults for npmjs options. Script will pause to get 2FA tokens.
 
 Example: `rake release[2.1.0,false]`")
 task :create_release, %i[gem_version dry_run] do |_t, args|
-  # Check if there are uncommited changes
+  # Check if there are uncommitted changes
   Shakapacker::Utils::Misc.uncommitted_changes?(RaisingMessageHandler.new)
   args_hash = args.to_hash
 

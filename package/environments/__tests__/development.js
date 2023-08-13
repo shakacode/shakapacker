@@ -16,10 +16,10 @@ describe('Development specific config', () => {
     test('sets filename to use contentHash', () => {
       const config = require("../../config");
       config.useContentHash = true
-      const environmnetConfig = require('../development')
+      const environmentConfig = require('../development')
 
-      expect(environmnetConfig.output.filename).toEqual('js/[name]-[contenthash].js')
-      expect(environmnetConfig.output.chunkFilename).toEqual(
+      expect(environmentConfig.output.filename).toEqual('js/[name]-[contenthash].js')
+      expect(environmentConfig.output.chunkFilename).toEqual(
         'js/[name]-[contenthash].chunk.js'
       )
     })
@@ -29,10 +29,10 @@ describe('Development specific config', () => {
     test('sets filename without using contentHash', () => {
       const config = require("../../config");
       config.useContentHash = false
-      const environmnetConfig = require('../development')
+      const environmentConfig = require('../development')
 
-      expect(environmnetConfig.output.filename).toEqual('js/[name].js')
-      expect(environmnetConfig.output.chunkFilename).toEqual(
+      expect(environmentConfig.output.filename).toEqual('js/[name].js')
+      expect(environmentConfig.output.chunkFilename).toEqual(
         'js/[name].chunk.js'
       )
     })
@@ -42,10 +42,10 @@ describe('Development specific config', () => {
     test('sets filename without using contentHash', () => {
       const config = require("../../config");
       delete config.useContentHash
-      const environmnetConfig = require('../development')
+      const environmentConfig = require('../development')
 
-      expect(environmnetConfig.output.filename).toEqual('js/[name].js')
-      expect(environmnetConfig.output.chunkFilename).toEqual(
+      expect(environmentConfig.output.filename).toEqual('js/[name].js')
+      expect(environmentConfig.output.chunkFilename).toEqual(
         'js/[name].chunk.js'
       )
     })

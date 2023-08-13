@@ -65,8 +65,8 @@ describe "Generator" do
         ]
 
         Dir.chdir(path_in_the_app("config/webpack")) do
-          exisiting_files_in_config_webpack_dir = Dir.glob("*")
-          expect(exisiting_files_in_config_webpack_dir).to eq expected_files
+          existing_files_in_config_webpack_dir = Dir.glob("*")
+          expect(existing_files_in_config_webpack_dir).to eq expected_files
         end
       end
 
@@ -94,12 +94,12 @@ describe "Generator" do
         expect(actual_content).to match '<%= javascript_pack_tag "application" %>'
       end
 
-      it "updates `bin/setup" do
+      it "updates `bin/setup`" do
         setup_file_content = read(path_in_the_app("bin/setup"))
         expect(setup_file_content).to match %r(^\s*system!\(['"]bin/yarn['"]\))
       end
 
-      it "adds relevant shakapacker version in package.json depending on gem version," do
+      it "adds relevant shakapacker version in package.json depending on gem version" do
         npm_version = Shakapacker::Utils::VersionSyntaxConverter.new.rubygem_to_npm(Shakapacker::VERSION)
 
         actual_content = read(path_in_the_app("package.json"))

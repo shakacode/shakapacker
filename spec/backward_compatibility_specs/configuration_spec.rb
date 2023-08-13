@@ -56,7 +56,7 @@ describe "Webpacker::Configuration" do
         expect(config.cache_manifest?).to be true
       end
 
-      it "returns false in developemnt environemnt" do
+      it "returns false in development environment" do
         with_rails_env("development") do
           expect(Webpacker.config.cache_manifest?).to be false
         end
@@ -74,13 +74,13 @@ describe "Webpacker::Configuration" do
         expect(config.compile?).to be false
       end
 
-      it "returns true in developemnt environemnt" do
+      it "returns true in development environment" do
         with_rails_env("development") do
           expect(Webpacker.config.compile?).to be true
         end
       end
 
-      it "returns true in test environemnt" do
+      it "returns true in test environment" do
         with_rails_env("test") do
           expect(Webpacker.config.compile?).to be true
         end
@@ -190,7 +190,7 @@ describe "Webpacker::Configuration" do
     end
   end
 
-  context "with webpacker config file containing manifext_path entry" do
+  context "with webpacker config file containing manifest_path entry" do
     config = Webpacker::Configuration.new(
       root_path: ROOT_PATH,
       config_path: Pathname.new(File.expand_path("./webpacker_test_app/config/webpacker_manifest_path.yml", __dir__)),
