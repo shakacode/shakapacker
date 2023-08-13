@@ -99,10 +99,11 @@ describe "VersionChecker" do
 end
 
 describe "VersionChecker::NodePackageVersion" do
-  context "with no yarn.lock file" do
+  context "with no lock file" do
     def node_package_version(fixture_version:)
       Shakapacker::VersionChecker::NodePackageVersion.new(
         File.expand_path("../fixtures/#{fixture_version}_package.json", __dir__),
+        "file/does/not/exist",
         "file/does/not/exist",
         "file/does/not/exist"
       )
@@ -274,6 +275,7 @@ describe "VersionChecker::NodePackageVersion" do
       Shakapacker::VersionChecker::NodePackageVersion.new(
         File.expand_path("../fixtures/#{fixture_version}_package.json", __dir__),
         File.expand_path("../fixtures/#{fixture_version}_yarn.v1.lock", __dir__),
+        "file/does/not/exist",
         "file/does/not/exist"
       )
     end
@@ -444,6 +446,7 @@ describe "VersionChecker::NodePackageVersion" do
       Shakapacker::VersionChecker::NodePackageVersion.new(
         File.expand_path("../fixtures/#{fixture_version}_package.json", __dir__),
         File.expand_path("../fixtures/#{fixture_version}_yarn.v2.lock", __dir__),
+        "file/does/not/exist",
         "file/does/not/exist"
       )
     end
@@ -615,6 +618,7 @@ describe "VersionChecker::NodePackageVersion" do
         File.expand_path("../fixtures/#{fixture_version}_package.json", __dir__),
         "file/does/not/exist",
         File.expand_path("../fixtures/#{fixture_version}_package-lock.v1.json", __dir__),
+        "file/does/not/exist"
       )
     end
 
@@ -785,6 +789,7 @@ describe "VersionChecker::NodePackageVersion" do
         File.expand_path("../fixtures/#{fixture_version}_package.json", __dir__),
         "file/does/not/exist",
         File.expand_path("../fixtures/#{fixture_version}_package-lock.v2.json", __dir__),
+        "file/does/not/exist"
       )
     end
 
@@ -924,6 +929,348 @@ describe "VersionChecker::NodePackageVersion" do
       end
 
       it "#semver_wildcard? returns false" do
+        expect(node_package_version_from_github_url.semver_wildcard?).to be false
+      end
+    end
+
+    context "from package.json without shakapacker entry" do
+      let(:node_package_version_from_without) { node_package_version(fixture_version: "without") }
+
+      it "#raw returns empty string" do
+        expect(node_package_version_from_without.raw).to eq ""
+      end
+
+      it "#major_minor_patch returns nil" do
+        expect(node_package_version_from_without.major_minor_patch).to be nil
+      end
+
+      it "#skip_processing? returns true" do
+        expect(node_package_version_from_without.skip_processing?).to be true
+      end
+
+      it "#semver_wildcard? returns false" do
+        expect(node_package_version_from_without.semver_wildcard?).to be false
+      end
+    end
+  end
+
+  context "with pnpm-lock.yaml v7" do
+    def node_package_version(fixture_version:)
+      Shakapacker::VersionChecker::NodePackageVersion.new(
+        File.expand_path("../fixtures/#{fixture_version}_package.json", __dir__),
+        "file/does/not/exist",
+        "file/does/not/exist",
+        File.expand_path("../fixtures/#{fixture_version}_pnpm-lock.v7.yaml", __dir__)
+      )
+    end
+
+    context "from exact semantic version" do
+      let(:node_package_version_from_semver_exact) { node_package_version(fixture_version: "semver_exact") }
+
+      it "#raw retruns version" do
+        expect(node_package_version_from_semver_exact.raw).to eq "6.0.0"
+      end
+
+      it "#major_minor_patch retruns version array" do
+        expect(node_package_version_from_semver_exact.major_minor_patch).to eq ["6", "0", "0"]
+      end
+
+      it "#skip_processing? retruns false" do
+        expect(node_package_version_from_semver_exact.skip_processing?).to be false
+      end
+
+      it "#semver_wildcard? retruns false" do
+        expect(node_package_version_from_semver_exact.semver_wildcard?).to be false
+      end
+    end
+
+    context "from beta version" do
+      let(:node_package_version_from_beta) { node_package_version(fixture_version: "beta") }
+
+      it "#raw returns version" do
+        expect(node_package_version_from_beta.raw).to eq "6.1.0-beta.0"
+      end
+
+      it "#major_minor_patch returns version array" do
+        expect(node_package_version_from_beta.major_minor_patch).to eq ["6", "1", "0"]
+      end
+
+      it "#skip_processing? returns false" do
+        expect(node_package_version_from_beta.skip_processing?).to be false
+      end
+
+      it "#semver_wildcard? returns false" do
+        expect(node_package_version_from_beta.semver_wildcard?).to be false
+      end
+    end
+
+    context "from caret semantic version" do
+      let(:node_package_version_from_semver_caret) { node_package_version(fixture_version: "semver_caret") }
+
+      it "#raw returns version" do
+        expect(node_package_version_from_semver_caret.raw).to eq "6.6.0"
+      end
+
+      it "#major_minor_patch returns version array" do
+        expect(node_package_version_from_semver_caret.major_minor_patch).to eq ["6", "6", "0"]
+      end
+
+      it "#skip_processing? returns false" do
+        expect(node_package_version_from_semver_caret.skip_processing?).to be false
+      end
+
+      it "#semver_wildcard? returns false" do
+        expect(node_package_version_from_semver_caret.semver_wildcard?).to be false
+      end
+    end
+
+    context "from tilde semantic version" do
+      let(:node_package_version_from_semver_tilde) { node_package_version(fixture_version: "semver_tilde") }
+
+      it "#raw returns version" do
+        expect(node_package_version_from_semver_tilde.raw).to eq "6.0.2"
+      end
+
+      it "#major_minor_patch returns version array" do
+        expect(node_package_version_from_semver_tilde.major_minor_patch).to eq ["6", "0", "2"]
+      end
+
+      it "#skip_processing? returns false" do
+        expect(node_package_version_from_semver_tilde.skip_processing?).to be false
+      end
+
+      it "#semver_wildcard? returns false" do
+        expect(node_package_version_from_semver_tilde.semver_wildcard?).to be false
+      end
+    end
+
+    context "from relative path" do
+      let(:node_package_version_from_relative_path) { node_package_version(fixture_version: "relative_path") }
+
+      it "#raw returns version" do
+        expect(node_package_version_from_relative_path.raw).to eq "../.."
+      end
+
+      it "#major_minor_patch returns nil" do
+        expect(node_package_version_from_relative_path.major_minor_patch).to be nil
+      end
+
+      it "#skip_processing? returns true" do
+        expect(node_package_version_from_relative_path.skip_processing?).to be true
+      end
+
+      it "#semver_wildcard? returns false" do
+        expect(node_package_version_from_relative_path.semver_wildcard?).to be false
+      end
+    end
+
+    context "from git url" do
+      let(:node_package_version_from_git_url) { node_package_version(fixture_version: "git_url") }
+
+      it "#raw returns version" do
+        expect(node_package_version_from_git_url.raw).to eq "7.0.2"
+      end
+
+      it "#major_minor_patch returns version array" do
+        expect(node_package_version_from_git_url.major_minor_patch).to eq ["7", "0", "2"]
+      end
+
+      it "#skip_processing? returns false" do
+        expect(node_package_version_from_git_url.skip_processing?).to be false
+      end
+
+      it "#semver_wildcard? returns false" do
+        expect(node_package_version_from_git_url.semver_wildcard?).to be false
+      end
+    end
+
+    context "from github url" do
+      let(:node_package_version_from_github_url) { node_package_version(fixture_version: "github_url") }
+
+      it "#raw return version" do
+        expect(node_package_version_from_github_url.raw).to eq "7.0.2"
+      end
+
+      it "#major_minor_patch return version array" do
+        expect(node_package_version_from_github_url.major_minor_patch).to eq ["7", "0", "2"]
+      end
+
+      it "#skip_processing? return false" do
+        expect(node_package_version_from_github_url.skip_processing?).to be false
+      end
+
+      it "#semver_wildcard? return false" do
+        expect(node_package_version_from_github_url.semver_wildcard?).to be false
+      end
+    end
+
+    context "from package.json without shakapacker entry" do
+      let(:node_package_version_from_without) { node_package_version(fixture_version: "without") }
+
+      it "#raw returns empty string" do
+        expect(node_package_version_from_without.raw).to eq ""
+      end
+
+      it "#major_minor_patch returns nil" do
+        expect(node_package_version_from_without.major_minor_patch).to be nil
+      end
+
+      it "#skip_processing? returns true" do
+        expect(node_package_version_from_without.skip_processing?).to be true
+      end
+
+      it "#semver_wildcard? returns false" do
+        expect(node_package_version_from_without.semver_wildcard?).to be false
+      end
+    end
+  end
+
+  context "with pnpm-lock.yaml v8" do
+    def node_package_version(fixture_version:)
+      Shakapacker::VersionChecker::NodePackageVersion.new(
+        File.expand_path("../fixtures/#{fixture_version}_package.json", __dir__),
+        "file/does/not/exist",
+        "file/does/not/exist",
+        File.expand_path("../fixtures/#{fixture_version}_pnpm-lock.v8.yaml", __dir__)
+      )
+    end
+
+    context "from exact semantic version" do
+      let(:node_package_version_from_semver_exact) { node_package_version(fixture_version: "semver_exact") }
+
+      it "#raw retruns version" do
+        expect(node_package_version_from_semver_exact.raw).to eq "6.0.0"
+      end
+
+      it "#major_minor_patch retruns version array" do
+        expect(node_package_version_from_semver_exact.major_minor_patch).to eq ["6", "0", "0"]
+      end
+
+      it "#skip_processing? retruns false" do
+        expect(node_package_version_from_semver_exact.skip_processing?).to be false
+      end
+
+      it "#semver_wildcard? retruns false" do
+        expect(node_package_version_from_semver_exact.semver_wildcard?).to be false
+      end
+    end
+
+    context "from beta version" do
+      let(:node_package_version_from_beta) { node_package_version(fixture_version: "beta") }
+
+      it "#raw returns version" do
+        expect(node_package_version_from_beta.raw).to eq "6.1.0-beta.0"
+      end
+
+      it "#major_minor_patch returns version array" do
+        expect(node_package_version_from_beta.major_minor_patch).to eq ["6", "1", "0"]
+      end
+
+      it "#skip_processing? returns false" do
+        expect(node_package_version_from_beta.skip_processing?).to be false
+      end
+
+      it "#semver_wildcard? returns false" do
+        expect(node_package_version_from_beta.semver_wildcard?).to be false
+      end
+    end
+
+    context "from caret semantic version" do
+      let(:node_package_version_from_semver_caret) { node_package_version(fixture_version: "semver_caret") }
+
+      it "#raw returns version" do
+        expect(node_package_version_from_semver_caret.raw).to eq "6.0.0"
+      end
+
+      it "#major_minor_patch returns version array" do
+        expect(node_package_version_from_semver_caret.major_minor_patch).to eq ["6", "0", "0"]
+      end
+
+      it "#skip_processing? returns false" do
+        expect(node_package_version_from_semver_caret.skip_processing?).to be false
+      end
+
+      it "#semver_wildcard? returns false" do
+        expect(node_package_version_from_semver_caret.semver_wildcard?).to be false
+      end
+    end
+
+    context "from tilde semantic version" do
+      let(:node_package_version_from_semver_tilde) { node_package_version(fixture_version: "semver_tilde") }
+
+      it "#raw returns version" do
+        expect(node_package_version_from_semver_tilde.raw).to eq "6.0.0"
+      end
+
+      it "#major_minor_patch returns version array" do
+        expect(node_package_version_from_semver_tilde.major_minor_patch).to eq ["6", "0", "0"]
+      end
+
+      it "#skip_processing? returns false" do
+        expect(node_package_version_from_semver_tilde.skip_processing?).to be false
+      end
+
+      it "#semver_wildcard? returns false" do
+        expect(node_package_version_from_semver_tilde.semver_wildcard?).to be false
+      end
+    end
+
+    context "from relative path" do
+      let(:node_package_version_from_relative_path) { node_package_version(fixture_version: "relative_path") }
+
+      it "#raw returns version" do
+        expect(node_package_version_from_relative_path.raw).to eq "../.."
+      end
+
+      it "#major_minor_patch returns nil" do
+        expect(node_package_version_from_relative_path.major_minor_patch).to be nil
+      end
+
+      it "#skip_processing? returns true" do
+        expect(node_package_version_from_relative_path.skip_processing?).to be true
+      end
+
+      it "#semver_wildcard? returns false" do
+        expect(node_package_version_from_relative_path.semver_wildcard?).to be false
+      end
+    end
+
+    context "from git url" do
+      let(:node_package_version_from_git_url) { node_package_version(fixture_version: "git_url") }
+
+      it "#raw returns version" do
+        expect(node_package_version_from_git_url.raw).to eq "7.0.2"
+      end
+
+      it "#major_minor_patch returns version array" do
+        expect(node_package_version_from_git_url.major_minor_patch).to eq ["7", "0", "2"]
+      end
+
+      it "#skip_processing? returns false" do
+        expect(node_package_version_from_git_url.skip_processing?).to be false
+      end
+
+      it "#semver_wildcard? returns false" do
+        expect(node_package_version_from_git_url.semver_wildcard?).to be false
+      end
+    end
+
+    context "from github url" do
+      let(:node_package_version_from_github_url) { node_package_version(fixture_version: "github_url") }
+
+      it "#raw return version" do
+        expect(node_package_version_from_github_url.raw).to eq "7.0.2"
+      end
+
+      it "#major_minor_patch return version array" do
+        expect(node_package_version_from_github_url.major_minor_patch).to eq ["7", "0", "2"]
+      end
+
+      it "#skip_processing? return false" do
+        expect(node_package_version_from_github_url.skip_processing?).to be false
+      end
+
+      it "#semver_wildcard? return false" do
         expect(node_package_version_from_github_url.semver_wildcard?).to be false
       end
     end

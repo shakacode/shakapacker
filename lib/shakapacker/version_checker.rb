@@ -91,7 +91,7 @@ module Shakapacker
         attr_reader :package_json
 
         def self.build
-          new(package_json_path, yarn_lock_path, package_lock_path)
+          new(package_json_path, yarn_lock_path, package_lock_path, pnpm_lock_path)
         end
 
         def self.package_json_path
@@ -106,10 +106,15 @@ module Shakapacker
           Rails.root.join("package-lock.json")
         end
 
-        def initialize(package_json, yarn_lock, package_lock)
+        def self.pnpm_lock_path
+          Rails.root.join("pnpm-lock.yaml")
+        end
+
+        def initialize(package_json, yarn_lock, package_lock, pnpm_lock)
           @package_json = package_json
           @yarn_lock = yarn_lock
           @package_lock = package_lock
+          @pnpm_lock = pnpm_lock
         end
 
         def raw
@@ -170,6 +175,12 @@ module Shakapacker
               return version unless version.nil?
             end
 
+            if File.exist?(@pnpm_lock)
+              version = from_pnpm_lock
+
+              return version unless version.nil?
+            end
+
             parsed_package_contents = JSON.parse(package_json_contents)
             parsed_package_contents.dig("dependencies", "shakapacker").to_s
           end
@@ -209,6 +220,28 @@ module Shakapacker
             end
 
             version
+          end
+
+          def from_pnpm_lock
+            require "yaml"
+
+            content = YAML.load_file(@pnpm_lock)
+
+            content.fetch("packages", {}).each do |key, value|
+              return value["version"] if value["name"] == "shakapacker"
+
+              parts = key.split("/")
+
+              return parts[2] if parts[1] == "shakapacker"
+              next unless parts[1].start_with?("shakapacker@")
+
+              _, version = parts[1].split("@")
+
+              return version[0, version.index("(")] if version.include?("(")
+              return version
+            end
+
+            nil
           end
       end
   end
