@@ -3,7 +3,7 @@ bin_path = ENV["BUNDLE_BIN"] || Rails.root.join("bin")
 
 namespace :shakapacker do
   desc "Install Shakapacker in this application"
-  task install: [:check_node, :check_yarn] do |task|
+  task install: [:check_node] do |task|
     Shakapacker::Configuration.installing = true
 
     prefix = task.name.split(/#|shakapacker:install/).first
