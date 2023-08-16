@@ -77,20 +77,17 @@ RUBY
   end
 end
 
-results = []
-
 def add_dependencies(pj, dependencies, type)
-  pj.manager.add(dependencies, type: type)
-
-  true
+  pj.manager.add!(dependencies, type: type)
 rescue PackageJson::Error
-  false
+  say "Shakapacker installation failed 😭 See above for details.", :red
+  exit 1
 end
 
 Dir.chdir(Rails.root) do
   npm_version = Shakapacker::Utils::VersionSyntaxConverter.new.rubygem_to_npm(Shakapacker::VERSION)
   say "Installing shakapacker@#{npm_version}"
-  results << add_dependencies(package_json, ["shakapacker@#{npm_version}"], :production)
+  add_dependencies(package_json, ["shakapacker@#{npm_version}"], :production)
 
   package_json.merge! do |pj|
     {
@@ -119,13 +116,8 @@ Dir.chdir(Rails.root) do
   end
 
   say "Adding shakapacker peerDependencies"
-  results << add_dependencies(package_json, dependencies_to_add, :production)
+  add_dependencies(package_json, dependencies_to_add, :production)
 
   say "Installing webpack-dev-server for live reloading as a development dependency"
-  results << add_dependencies(package_json, dev_dependencies_to_add, :dev)
-end
-
-unless results.all?
-  say "Shakapacker installation failed 😭 See above for details.", :red
-  exit 1
+  add_dependencies(package_json, dev_dependencies_to_add, :dev)
 end
