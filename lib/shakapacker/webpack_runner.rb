@@ -19,6 +19,7 @@ module Shakapacker
     def run
       env = Shakapacker::Compiler.env
       env["SHAKAPACKER_CONFIG"] = @shakapacker_config
+      env["NODE_OPTIONS"] = ENV["NODE_OPTIONS"] || ""
 
       cmd = if node_modules_bin_exist?
         ["#{@node_modules_bin_path}/webpack"]
@@ -36,15 +37,15 @@ module Shakapacker
       end
 
       if @argv.delete("--debug-shakapacker") || @argv.delete("--debug-webpacker")
-        cmd = ["node", "--inspect-brk"] + cmd
+        env["NODE_OPTIONS"] += " --inspect-brk"
       end
 
       if @argv.delete "--trace-deprecation"
-        cmd = ["node", "--trace-deprecation"] + cmd
+        env["NODE_OPTIONS"] += " --trace-deprecation"
       end
 
       if @argv.delete "--no-deprecation"
-        cmd = ["node", "--no-deprecation"] + cmd
+        env["NODE_OPTIONS"] += " --no-deprecation"
       end
 
       # Webpack commands are not compatible with --config option.

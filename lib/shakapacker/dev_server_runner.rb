@@ -66,6 +66,7 @@ module Shakapacker
         env = Shakapacker::Compiler.env
         env["SHAKAPACKER_CONFIG"] = @shakapacker_config
         env["WEBPACK_SERVE"] = "true"
+        env["NODE_OPTIONS"] = ENV["NODE_OPTIONS"] || ""
 
         cmd = if node_modules_bin_exist?
           ["#{@node_modules_bin_path}/webpack", "serve"]
@@ -83,7 +84,7 @@ module Shakapacker
         end
 
         if @argv.delete("--debug-shakapacker") || @argv.delete("--debug-webpacker")
-          cmd = [ "node", "--inspect-brk", "--trace-warnings" ] + cmd
+          env["NODE_OPTIONS"] += " --inspect-brk --trace-warnings"
         end
 
         cmd += ["--config", @webpack_config]
