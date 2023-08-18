@@ -68,11 +68,7 @@ module Shakapacker
         env["WEBPACK_SERVE"] = "true"
         env["NODE_OPTIONS"] = ENV["NODE_OPTIONS"] || ""
 
-        cmd = if node_modules_bin_exist?
-          ["#{@node_modules_bin_path}/webpack", "serve"]
-        else
-          ["yarn", "webpack", "serve"]
-        end
+        cmd = package_json.manager.native_exec_command("webpack", ["serve"])
 
         if @argv.include?("--debug-webpacker")
           Shakapacker.puts_deprecation_message(
@@ -96,10 +92,6 @@ module Shakapacker
         Dir.chdir(@app_path) do
           Kernel.exec env, *cmd
         end
-      end
-
-      def node_modules_bin_exist?
-        File.exist?("#{@node_modules_bin_path}/webpack-dev-server")
       end
   end
 end
