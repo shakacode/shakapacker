@@ -8,7 +8,7 @@ describe "RakeTasks" do
     expect(output).to include "shakapacker"
     expect(output).to include "shakapacker:check_binstubs"
     expect(output).to include "shakapacker:check_node"
-    expect(output).to include "shakapacker:check_yarn"
+    expect(output).to include "shakapacker:check_manager"
     expect(output).to include "shakapacker:clean"
     expect(output).to include "shakapacker:clobber"
     expect(output).to include "shakapacker:compile"
@@ -28,11 +28,11 @@ describe "RakeTasks" do
     expect(output).to_not include "Shakapacker requires Node.js"
   end
 
-  it "`shakapacker:check_yarn` doesn't get errors related to yarn" do
-    output = Dir.chdir(TEST_APP_PATH) { `rake shakapacker:check_yarn 2>&1` }
+  it "`shakapacker:check_manager` doesn't get errors related to the package manager" do
+    output = Dir.chdir(TEST_APP_PATH) { `rake shakapacker:check_manager 2>&1` }
 
-    expect(output).to_not include "Yarn not installed"
-    expect(output).to_not include "Shakapacker requires Yarn"
+    expect(output).to_not include "not installed"
+    expect(output).to_not include "Shakapacker requires"
   end
 
   describe "`shakapacker:check_binstubs`" do
