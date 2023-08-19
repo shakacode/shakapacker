@@ -1,16 +1,12 @@
 require "shakapacker/utils/misc"
 require "shakapacker/utils/version_syntax_converter"
 
-Shakapacker::Utils::Misc.require_package_json_gem
-
 # Install Shakapacker
 
 force_option = ENV["FORCE"] ? { force: true } : {}
 
 copy_file "#{__dir__}/config/shakapacker.yml", "config/shakapacker.yml", force_option
 copy_file "#{__dir__}/package.json", "package.json", force_option
-
-package_json = PackageJson.read
 
 say "Copying webpack core config"
 directory "#{__dir__}/config/webpack", "config/webpack", force_option
@@ -46,9 +42,23 @@ else
   say %(        Add <%= javascript_pack_tag "application" %> within the <head> tag in your custom layout.)
 end
 
+def package_json
+  if @package_json.nil?
+    Shakapacker::Utils::Misc.require_package_json_gem
+
+    @package_json = PackageJson.read
+  end
+
+  @package_json
+end
+
 # Ensure there is `system!("bin/yarn")` command in `./bin/setup` file
 if (setup_path = Rails.root.join("bin/setup")).exist?
-  native_install_command = package_json.manager.native_install_command.join(" ")
+  def native_install_command
+    return "bin/yarn" unless Shakapacker::Utils::Misc.use_package_json_gem
+
+    package_json.manager.native_install_command.join(" ")
+  end
 
   say "Run #{native_install_command} during bin/setup"
 
@@ -63,7 +73,7 @@ if (setup_path = Rails.root.join("bin/setup")).exist?
 
   # Install JavaScript dependencies
   system!("#{native_install_command}")
-RUBY
+    RUBY
 
     if File.read(setup_path).match? pattern
       insert_into_file(setup_path, string_to_add, after: pattern)
@@ -77,28 +87,43 @@ RUBY
   end
 end
 
-def add_dependencies(pj, dependencies, type)
-  pj.manager.add!(dependencies, type: type)
+def add_dependencies(dependencies, type)
+  return package_json.manager.add!(dependencies, type: type) if Shakapacker::Utils::Misc.use_package_json_gem
+
+  # TODO: check that run actually errors
+  run("yarn add #{dependencies.join(" ")}") if type == :production
+  run("yarn add --dev #{dependencies.join(" ")}") if type == :dev
 rescue PackageJson::Error
   say "Shakapacker installation failed 😭 See above for details.", :red
   exit 1
 end
 
+def fetch_peer_dependencies
+  if Shakapacker::Utils::Misc.use_package_json_gem
+    return PackageJson.read("#{__dir__}/../../").fetch("peerDependencies")
+  end
+
+  package_json = File.read("#{__dir__}/../../package.json")
+  JSON.parse(package_json)["peerDependencies"]
+end
+
 Dir.chdir(Rails.root) do
   npm_version = Shakapacker::Utils::VersionSyntaxConverter.new.rubygem_to_npm(Shakapacker::VERSION)
   say "Installing shakapacker@#{npm_version}"
-  add_dependencies(package_json, ["shakapacker@#{npm_version}"], :production)
+  add_dependencies(["shakapacker@#{npm_version}"], :production)
 
-  package_json.merge! do |pj|
-    {
-      "dependencies" => pj["dependencies"].merge({
-        # TODO: workaround for test suite - long-run need to actually account for diff pkg manager behaviour
-        "shakapacker" => pj["dependencies"]["shakapacker"].delete_prefix("^")
-      })
-    }
+  if Shakapacker::Utils::Misc.use_package_json_gem
+    package_json.merge! do |pj|
+      {
+        "dependencies" => pj["dependencies"].merge({
+          # TODO: workaround for test suite - long-run need to actually account for diff pkg manager behaviour
+          "shakapacker" => pj["dependencies"]["shakapacker"].delete_prefix("^")
+        })
+      }
+    end
   end
 
-  peers = PackageJson.read("#{__dir__}/../../").fetch("peerDependencies")
+  peers = fetch_peer_dependencies
   dev_dependency_packages = ["webpack-dev-server"]
 
   dependencies_to_add = []
@@ -116,8 +141,8 @@ Dir.chdir(Rails.root) do
   end
 
   say "Adding shakapacker peerDependencies"
-  add_dependencies(package_json, dependencies_to_add, :production)
+  add_dependencies(dependencies_to_add, :production)
 
   say "Installing webpack-dev-server for live reloading as a development dependency"
-  add_dependencies(package_json, dev_dependencies_to_add, :dev)
+  add_dependencies(dev_dependencies_to_add, :dev)
 end
