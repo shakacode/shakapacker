@@ -19,8 +19,14 @@ namespace :shakapacker do
         $stdout.puts "Yarn: #{`yarn --version`}"
       end
 
+      if Shakapacker::Utils::Misc.use_package_json_gem
+        node_package_version = Shakapacker::VersionChecker.build.node_package_version.raw
+      else
+        node_package_version = `npm list shakapacker version`
+      end
+
       $stdout.puts "\n"
-      $stdout.puts "shakapacker: \n#{`npm list shakapacker version`}"
+      $stdout.puts "shakapacker: #{node_package_version}"
 
       $stdout.puts "Is bin/shakapacker present?: #{File.exist? 'bin/shakapacker'}"
       $stdout.puts "Is bin/shakapacker-dev-server present?: #{File.exist? 'bin/shakapacker-dev-server'}"
