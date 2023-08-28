@@ -1,0 +1,27 @@
+lockfileVersion: '6.0'
+
+settings:
+  autoInstallPeers: true
+  excludeLinksFromLockfile: false
+
+dependencies:
+  left-pad:
+    specifier: 1.0.2
+    version: 1.0.2
+
+devDependencies:
+  right-pad:
+    specifier: ^1.0.1
+    version: 1.0.1
+
+packages:
+
+  /left-pad@1.0.2:
+    resolution: {integrity: sha512-i+siCE/qH/g/aFBfv9alTWzGetfoI8pw4mT4L4DA1kcCZwxnLzCpW5W96BmcNZvSsEStD0mn3NInNjp+CXb1lw==}
+    deprecated: use String.prototype.padStart()
+    dev: false
+
+  /right-pad@1.0.1:
+    resolution: {integrity: sha512-bYBjgxmkvTAfgIYy328fmkwhp39v8lwVgWhhrzxPV3yHtcSqyYKe9/XOhvW48UFjATg3VuJbpsp5822ACNvkmw==}
+    engines: {node: '>= 0.10'}
+    dev: true
