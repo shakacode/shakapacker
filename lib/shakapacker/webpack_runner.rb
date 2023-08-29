@@ -37,15 +37,15 @@ module Shakapacker
       end
 
       if @argv.delete("--debug-shakapacker") || @argv.delete("--debug-webpacker")
-        env["NODE_OPTIONS"] = "#{ENV["NODE_OPTIONS"]} --inspect-brk"
+        env["NODE_OPTIONS"] = "#{env["NODE_OPTIONS"]} --inspect-brk"
       end
 
       if @argv.delete "--trace-deprecation"
-        env["NODE_OPTIONS"] = "#{ENV["NODE_OPTIONS"]} --trace-deprecation"
+        env["NODE_OPTIONS"] = "#{env["NODE_OPTIONS"]} --trace-deprecation"
       end
 
       if @argv.delete "--no-deprecation"
-        env["NODE_OPTIONS"] = "#{ENV["NODE_OPTIONS"]} --no-deprecation"
+        env["NODE_OPTIONS"] = "#{env["NODE_OPTIONS"]} --no-deprecation"
       end
 
       # Webpack commands are not compatible with --config option.

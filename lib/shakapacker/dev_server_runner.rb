@@ -84,7 +84,7 @@ module Shakapacker
         end
 
         if @argv.delete("--debug-shakapacker") || @argv.delete("--debug-webpacker")
-          env["NODE_OPTIONS"] = "#{ENV["NODE_OPTIONS"]} --inspect-brk --trace-warnings"
+          env["NODE_OPTIONS"] = "#{env["NODE_OPTIONS"]} --inspect-brk --trace-warnings"
         end
 
         cmd += ["--config", @webpack_config]
