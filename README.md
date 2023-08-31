@@ -465,14 +465,13 @@ First, you don't _need_ to use Shakapacker's webpack configuration. However, the
 
 1. Your output files go to the right directory
 2. Your output includes a manifest, via package [`webpack-assets-manifest`](https://github.com/webdeveric/webpack-assets-manifest) that maps output names (your 'packs') to the fingerprinted versions, including bundle-splitting dependencies. That's the main secret sauce of Shakapacker!
+ 
+The webpack configuration used by Shakapacker lives in `config/webpack/webpack.config.js`; this makes it easy to customize the configuration beyond what's available in `config/shakapacker.yml` by giving you complete control of the final configuration. By default, this file exports the result of `generateWebpackConfig` which handles generating a webpack configuration based on `config/shakapacker.yml`.
 
-The easiest way to customize your webpack config beyond whats available in `config/shakapacker.yml` is to pass your desired customizations to `generateWebpackConfig` which will return a new config resulting from merging those customizations into the default config using [webpack-merge](https://github.com/survivejs/webpack-merge) to merge your customizations with the default.
-
-For example, suppose you want to add some `resolve.extensions`:
+The easiest way to modify this config is to pass your desired customizations to `generateWebpackConfig` which will use [webpack-merge](https://github.com/survivejs/webpack-merge) to merge them with the configuration generated from `config/shakapacker.yml`:
 
 ```js
-// use the new NPM package name, `shakapacker`.
-// merge is webpack-merge from https://github.com/survivejs/webpack-merge
+// config/webpack/webpack.config.js
 const { generateWebpackConfig } = require('shakapacker')
 
 const options = {
@@ -483,6 +482,23 @@ const options = {
 
 // This results in a new object copied from the mutable global
 module.exports = generateWebpackConfig(options)
+```
+
+The `shakapacker` package also exports the `merge` function from [webpack-merge](https://github.com/survivejs/webpack-merge) to make it easier to do more advanced customizations:
+
+```js
+// config/webpack/webpack.config.js
+const { generateWebpackConfig, merge } = require('shakapacker')
+
+const webpackConfig = generateWebpackConfig()
+
+const options = {
+  resolve: {
+    extensions: ['.css', '.ts', '.tsx']
+  }
+}
+
+module.exports = merge(options, webpackConfig)
 ```
 
 This example is based on [an example project](https://github.com/shakacode/react_on_rails_tutorial_with_ssr_and_hmr_fast_refresh/blob/master/config/webpack/webpack.config.js)
