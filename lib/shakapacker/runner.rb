@@ -37,7 +37,7 @@ module Shakapacker
       if @package_json.nil?
         Shakapacker::Utils::Misc.require_package_json_gem
 
-        @package_json = PackageJson.read
+        @package_json = PackageJson.read(@app_path)
       end
 
       @package_json
