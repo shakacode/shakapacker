@@ -19,9 +19,13 @@ module Shakapacker
 
         return if defined?(PackageJson)
 
+        lp_before = $LOAD_PATH.clone
+
         require "bundler/inline"
 
         gemfile { gem "package_json", github: "G-Rath/package_json" }
+
+        Bundler.rubygems.add_to_load_path(lp_before)
 
         puts "using package_json v#{PackageJson::VERSION}"
       end
