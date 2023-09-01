@@ -12,7 +12,7 @@ namespace :shakapacker do
     require "package_json"
 
     package_json = PackageJson.read
-    pm = package_json.fetch("packageManager", "").split("@")[0]
+    pm = package_json.manager.binary
 
     begin
       version = package_json.manager.version

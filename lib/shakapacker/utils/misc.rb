@@ -9,7 +9,7 @@ module Shakapacker
       extend FileUtils
 
       def self.use_package_json_gem
-        @use_package_json_gem ||= ENV.fetch("SHAKAPACKER_USE_PACKAGE_JSON_GEM", "false").casecmp("true").zero?
+        ENV.fetch("SHAKAPACKER_USE_PACKAGE_JSON_GEM", "false").casecmp("true").zero?
       end
 
       def self.require_package_json_gem
@@ -23,7 +23,7 @@ module Shakapacker
 
         require "bundler/inline"
 
-        gemfile { gem "package_json", github: "G-Rath/package_json" }
+        gemfile(true) { gem "package_json", github: "G-Rath/package_json" }
 
         Bundler.rubygems.add_to_load_path(lp_before)
 

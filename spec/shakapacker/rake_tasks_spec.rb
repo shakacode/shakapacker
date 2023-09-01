@@ -28,6 +28,7 @@ describe "RakeTasks" do
     expect(output).to_not include "Shakapacker requires Node.js"
   end
 
+  # TODO: currently this test depends on external conditions & PACKAGE_JSON_FALLBACK_MANAGER
   it "`shakapacker:check_manager` doesn't get errors related to the package manager" do
     output = Dir.chdir(TEST_APP_PATH) { `rake shakapacker:check_manager 2>&1` }
 

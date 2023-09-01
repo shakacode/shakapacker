@@ -10,3 +10,5 @@ gem "rake", ">= 11.1"
 gem "rack-proxy", require: false
 gem "rspec-rails", "~> 6.0.0"
 gem "byebug"
+
+gem "package_json", github: "G-Rath/package_json"

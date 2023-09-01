@@ -9,16 +9,38 @@ describe "EngineRakeTasks" do
     remove_webpack_binstubs
   end
 
-  it "mounts app:webpacker task successfully" do
-    output = Dir.chdir(mounted_app_path) { `rake -T` }
+  ["npm", "yarn_classic", "yarn_berry", "pnpm"].each do |fallback_manager|
+    context "when using package_json with #{fallback_manager} as the manager" do
+      with_use_package_json_gem(enabled: true, fallback_manager: fallback_manager)
 
-    expect(output).to match /app:webpacker.+DEPRECATED/
-    expect(output).to match /app:webpacker:binstubs.+DEPRECATED/
+      it "mounts app:webpacker task successfully" do
+        output = Dir.chdir(mounted_app_path) { `rake -T` }
+
+        expect(output).to match /app:webpacker.+DEPRECATED/
+        expect(output).to match /app:webpacker:binstubs.+DEPRECATED/
+      end
+
+      it "only adds expected files to bin directory when binstubs is run" do
+        Dir.chdir(mounted_app_path) { `bundle exec rake app:webpacker:binstubs` }
+        expected_binstub_paths.each { |path| expect(File.exist?(path)).to be true }
+      end
+    end
   end
 
-  it "only adds expected files to bin directory when binstubs is run" do
-    Dir.chdir(mounted_app_path) { `bundle exec rake app:webpacker:binstubs` }
-    expected_binstub_paths.each { |path| expect(File.exist?(path)).to be true }
+  context "when not using package_json" do
+    with_use_package_json_gem(enabled: false)
+
+    it "mounts app:webpacker task successfully" do
+      output = Dir.chdir(mounted_app_path) { `rake -T` }
+
+      expect(output).to match /app:webpacker.+DEPRECATED/
+      expect(output).to match /app:webpacker:binstubs.+DEPRECATED/
+    end
+
+    it "only adds expected files to bin directory when binstubs is run" do
+      Dir.chdir(mounted_app_path) { `bundle exec rake app:webpacker:binstubs` }
+      expected_binstub_paths.each { |path| expect(File.exist?(path)).to be true }
+    end
   end
 
   private

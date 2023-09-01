@@ -14,22 +14,56 @@ describe "WebpackRunner" do
 
   let(:test_app_path) { File.expand_path("./test_app", __dir__) }
 
-  it "supports running via node_modules" do
-    cmd = ["#{test_app_path}/node_modules/.bin/webpack", "--config", "#{test_app_path}/config/webpack/webpack.config.js"]
+  ["npm", "yarn_classic", "yarn_berry", "pnpm"].each do |fallback_manager|
+    context "when using package_json with #{fallback_manager} as the manager" do
+      with_use_package_json_gem(enabled: true, fallback_manager: fallback_manager)
 
-    verify_command(cmd, use_node_modules: true)
+      let(:package_json) { PackageJson.read(test_app_path) }
+
+      require "package_json"
+
+      it "uses the expected package manager", unless: fallback_manager == "yarn_classic" do
+        cmd = package_json.manager.native_exec_command("webpack", ["--config", "#{test_app_path}/config/webpack/webpack.config.js"])
+
+        manager_name = fallback_manager.split("_")[0]
+
+        expect(cmd).to start_with(manager_name)
+      end
+
+      it "runs the command using the manager" do
+        cmd = package_json.manager.native_exec_command("webpack", ["--config", "#{test_app_path}/config/webpack/webpack.config.js"])
+
+        verify_command(cmd)
+      end
+
+      it "passes on arguments" do
+        cmd = package_json.manager.native_exec_command("webpack", ["--config", "#{test_app_path}/config/webpack/webpack.config.js", "--watch"])
+
+        verify_command(cmd, argv: (["--watch"]))
+      end
+    end
   end
 
-  it "supports running via yarn" do
-    cmd = ["yarn", "webpack", "--config", "#{test_app_path}/config/webpack/webpack.config.js"]
+  context "when not using package_json" do
+    with_use_package_json_gem(enabled: false)
 
-    verify_command(cmd, use_node_modules: false)
-  end
+    it "supports running via node_modules" do
+      cmd = ["#{test_app_path}/node_modules/.bin/webpack", "--config", "#{test_app_path}/config/webpack/webpack.config.js"]
 
-  it "passes on arguments" do
-    cmd = ["#{test_app_path}/node_modules/.bin/webpack", "--config", "#{test_app_path}/config/webpack/webpack.config.js", "--watch"]
+      verify_command(cmd, use_node_modules: true)
+    end
 
-    verify_command(cmd, argv: ["--watch"])
+    it "supports running via yarn" do
+      cmd = ["yarn", "webpack", "--config", "#{test_app_path}/config/webpack/webpack.config.js"]
+
+      verify_command(cmd, use_node_modules: false)
+    end
+
+    it "passes on arguments" do
+      cmd = ["#{test_app_path}/node_modules/.bin/webpack", "--config", "#{test_app_path}/config/webpack/webpack.config.js", "--watch"]
+
+      verify_command(cmd, argv: ["--watch"])
+    end
   end
 
   private
