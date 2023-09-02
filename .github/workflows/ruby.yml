@@ -36,4 +36,4 @@ jobs:
           bundler-cache: true
 
       - name: Ruby specs
-        run: bundle exec rake run_spec:gem_bc
+        run: bundle exec rake run_spec:gem
