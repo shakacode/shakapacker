@@ -10,11 +10,12 @@ if Shakapacker::Utils::Misc.use_package_json_gem
 
   # update webpack presets for react
   package_json.merge! do |pj|
-    presets = pj.fetch("presets", [])
+    babel = pj.fetch("babel", {})
 
-    presets.unshift("@babel/preset-react")
+    babel["presets"] ||= []
+    babel["presets"].unshift("@babel/preset-react")
 
-    { "presets" => presets }
+    { "babel" => babel }
   end
 else
   # install react
