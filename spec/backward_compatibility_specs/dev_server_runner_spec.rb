@@ -64,20 +64,17 @@ describe "DevServerRunner" do
   private
 
     def verify_command(cmd, use_node_modules: true, argv: [], env: Webpacker::Compiler.env)
-      cwd = Dir.pwd
-      Dir.chdir(test_app_path)
-      klass = Webpacker::DevServerRunner
-      instance = klass.new(argv)
+      Dir.chdir(test_app_path) do
+        klass = Webpacker::DevServerRunner
+        instance = klass.new(argv)
 
-      allow(klass).to receive(:new).and_return(instance)
-      allow(instance).to receive(:node_modules_bin_exist?).and_return(use_node_modules)
-      allow(Kernel).to receive(:exec).with(env, *cmd)
+        allow(klass).to receive(:new).and_return(instance)
+        allow(instance).to receive(:node_modules_bin_exist?).and_return(use_node_modules)
+        allow(Kernel).to receive(:exec).with(env, *cmd)
 
-      klass.run(argv)
+        klass.run(argv)
 
-      expect(Kernel).to have_received(:exec).with(env, *cmd)
-
-      ensure
-        Dir.chdir(cwd)
+        expect(Kernel).to have_received(:exec).with(env, *cmd)
+      end
     end
 end
