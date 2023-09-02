@@ -23,6 +23,7 @@ describe "DigestStrategy" do
 
   it "is fresh after compilation" do
     @digest_strategy.after_compile_hook
+
     expect(@digest_strategy.stale?).to be false
     expect(@digest_strategy.fresh?).to be true
   end
@@ -30,6 +31,7 @@ describe "DigestStrategy" do
   it "generates correct compilation_digest_path" do
     actual_path = @digest_strategy.send(:compilation_digest_path).basename.to_s
     expected_path = "last-compilation-digest-#{Shakapacker.env}"
+
     expect(actual_path).to eq expected_path
   end
 end

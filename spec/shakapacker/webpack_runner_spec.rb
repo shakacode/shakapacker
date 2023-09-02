@@ -12,28 +12,27 @@ describe "WebpackRunner" do
     ENV["RAILS_ENV"] = @original_rails_env
   end
 
-  it "runs cmd via node_modules" do
+  let(:test_app_path) { File.expand_path("./test_app", __dir__) }
+
+  it "supports running via node_modules" do
     cmd = ["#{test_app_path}/node_modules/.bin/webpack", "--config", "#{test_app_path}/config/webpack/webpack.config.js"]
 
     verify_command(cmd, use_node_modules: true)
   end
 
-  it "runs cmd via yarn" do
+  it "supports running via yarn" do
     cmd = ["yarn", "webpack", "--config", "#{test_app_path}/config/webpack/webpack.config.js"]
 
     verify_command(cmd, use_node_modules: false)
   end
 
-  it "runs cmd argv" do
+  it "passes on arguments" do
     cmd = ["#{test_app_path}/node_modules/.bin/webpack", "--config", "#{test_app_path}/config/webpack/webpack.config.js", "--watch"]
 
     verify_command(cmd, argv: ["--watch"])
   end
 
   private
-    def test_app_path
-      File.expand_path("./test_app", __dir__)
-    end
 
     def verify_command(cmd, use_node_modules: true, argv: [])
       cwd = Dir.pwd

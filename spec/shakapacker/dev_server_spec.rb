@@ -41,7 +41,7 @@ describe "DevServer" do
     end
   end
 
-  it "users SHAKAPACKER_DEV_SERVER for DEFAULT_ENV_PREFIX" do
+  it "uses SHAKAPACKER_DEV_SERVER for DEFAULT_ENV_PREFIX" do
     expect(Shakapacker::DevServer::DEFAULT_ENV_PREFIX).to eq "SHAKAPACKER_DEV_SERVER"
   end
 

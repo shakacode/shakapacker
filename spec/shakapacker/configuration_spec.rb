@@ -14,36 +14,43 @@ describe "Shakapacker::Configuration" do
 
     it "#source_path returns correct path" do
       source_path = File.expand_path File.join(File.dirname(__FILE__), "./test_app/app/javascript").to_s
+
       expect(config.source_path.to_s).to eq source_path
     end
 
     it "#source_entry_path returns correct path" do
       source_entry_path = File.expand_path File.join(File.dirname(__FILE__), "./test_app/app/javascript", "entrypoints").to_s
+
       expect(config.source_entry_path.to_s).to eq source_entry_path
     end
 
     it "#public_root_path returns correct path" do
       public_root_path = File.expand_path File.join(File.dirname(__FILE__), "./test_app/public").to_s
+
       expect(config.public_path.to_s).to eq public_root_path
     end
 
     it "#public_output_path returns correct path" do
       public_output_path = File.expand_path File.join(File.dirname(__FILE__), "./test_app/public/packs").to_s
+
       expect(config.public_output_path.to_s).to eq public_output_path
     end
 
     it "#public_manifest_path returns correct path" do
       public_manifest_path = File.expand_path File.join(File.dirname(__FILE__), "./test_app/public/packs", "manifest.json").to_s
+
       expect(config.public_manifest_path.to_s).to eq public_manifest_path
     end
 
     it "#manifest_path returns correct path" do
       manifest_path = File.expand_path File.join(File.dirname(__FILE__), "./test_app/public/packs", "manifest.json").to_s
+
       expect(config.manifest_path.to_s).to eq manifest_path
     end
 
     it "#cache_path returns correct path" do
       cache_path = File.expand_path File.join(File.dirname(__FILE__), "./test_app/tmp/shakapacker").to_s
+
       expect(config.cache_path.to_s).to eq cache_path
     end
 
@@ -125,7 +132,7 @@ describe "Shakapacker::Configuration" do
 
     describe "#shakapacker_precompile?" do
       before :each do
-        ENV["SHAKAPACKER_PRECOMPILE"] = nil
+        ENV.delete("SHAKAPACKER_PRECOMPILE")
       end
 
       subject { config.shakapacker_precompile? }
@@ -185,6 +192,7 @@ describe "Shakapacker::Configuration" do
 
     it "#public_output_path returns correct path" do
       expected_public_output_path = File.expand_path File.join(File.dirname(__FILE__), "./public/packs").to_s
+
       expect(config.public_output_path.to_s).to eq expected_public_output_path
     end
   end
@@ -198,6 +206,7 @@ describe "Shakapacker::Configuration" do
 
     it "#manifest_path returns correct expected value" do
       expected_manifest_path = File.expand_path File.join(File.dirname(__FILE__), "./test_app/app/javascript", "manifest.json").to_s
+
       expect(config.manifest_path.to_s).to eq expected_manifest_path
     end
   end
@@ -205,7 +214,7 @@ describe "Shakapacker::Configuration" do
   context "with shakapacker_precompile entry set to false" do
     describe "#shakapacker_precompile?" do
       before :each do
-        ENV["SHAKAPACKER_PRECOMPILE"] = nil
+        ENV.delete("SHAKAPACKER_PRECOMPILE")
       end
 
       let(:config) {
@@ -276,6 +285,7 @@ describe "Shakapacker::Configuration" do
     it "#cache_manifest? fall back to 'production' config from bundled file" do
       expect(config.cache_manifest?).to be true
     end
+
     it "#shakapacker_precompile? use 'staging' config from custom file" do
       expect(config.shakapacker_precompile?).to be false
     end

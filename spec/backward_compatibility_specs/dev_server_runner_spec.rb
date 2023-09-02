@@ -17,22 +17,25 @@ describe "DevServerRunner" do
 
   let(:test_app_path) { File.expand_path("webpacker_test_app", __dir__) }
 
-  it "run cmd via node modules" do
+  it "supports running via node modules" do
     cmd = ["#{test_app_path}/node_modules/.bin/webpack", "serve", "--config", "#{test_app_path}/config/webpack/webpack.config.js"]
+
     verify_command(cmd, use_node_modules: true)
   end
 
-  it "run cmd via yarn" do
+  it "supports running via yarn" do
     cmd = ["yarn", "webpack", "serve", "--config", "#{test_app_path}/config/webpack/webpack.config.js"]
+
     verify_command(cmd, use_node_modules: false)
   end
 
-  it "run cmd argv" do
+  it "passes on arguments" do
     cmd = ["#{test_app_path}/node_modules/.bin/webpack", "serve", "--config", "#{test_app_path}/config/webpack/webpack.config.js", "--quiet"]
+
     verify_command(cmd, argv: (["--quiet"]))
   end
 
-  it "run cmd argv with https" do
+  it "supports the https flag" do
     cmd = ["#{test_app_path}/node_modules/.bin/webpack", "serve", "--config", "#{test_app_path}/config/webpack/webpack.config.js", "--https"]
 
     dev_server = double()
@@ -54,6 +57,7 @@ describe "DevServerRunner" do
     # ENV["WEBPACKER_CONFIG"] is the interface and env["SHAKAPACKER_CONFIG"] is internal
     ENV["WEBPACKER_CONFIG"] = env["SHAKAPACKER_CONFIG"] = "#{test_app_path}/config/webpacker_other_location.yml"
     env["WEBPACK_SERVE"] = "true"
+
     verify_command(cmd, env: env)
   end
 

@@ -11,10 +11,11 @@ describe "EngineRakeTasks" do
 
   it "mounts app:shakapacker task successfully" do
     output = Dir.chdir(mounted_app_path) { `rake -T` }
+
     expect(output).to include "app:shakapacker"
   end
 
-  it "binstubs adds only expected files to bin directory" do
+  it "only adds expected files to bin directory when binstubs is run" do
     Dir.chdir(mounted_app_path) { `bundle exec rake app:shakapacker:binstubs` }
     expected_binstub_paths.each { |path| expect(File.exist?(path)).to be true }
   end

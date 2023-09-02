@@ -12,11 +12,11 @@ describe "Shakapacker" do
       allow(dev_server).to receive(:running?).and_return(true)
     end
 
-    it "returns nil with disabled dev_server" do
+    it "returns nil when the dev server is disabled" do
       expect(Shakapacker.inlining_css?).to be nil
     end
 
-    it "returns true with enabled hmr" do
+    it "returns true when hmr is enabled" do
       allow(dev_server).to receive(:hmr?).and_return(true)
       allow(dev_server).to receive(:inline_css?).and_return(true)
 
@@ -25,7 +25,7 @@ describe "Shakapacker" do
       expect(Shakapacker.inlining_css?).to be true
     end
 
-    it "returns false with enabled hmr and explicitly setting inline_css to false" do
+    it "returns false when hmr is enabled and inline_css is explicitly set to false" do
       allow(dev_server).to receive(:hmr?).and_return(true)
       allow(dev_server).to receive(:inline_css?).and_return(false)
 
@@ -35,7 +35,7 @@ describe "Shakapacker" do
     end
   end
 
-  it "has app_autoload_paths cleanup" do
+  it "automatically cleans up app_autoload_paths" do
     expect($test_app_autoload_paths_in_initializer).to eq []
   end
 end
