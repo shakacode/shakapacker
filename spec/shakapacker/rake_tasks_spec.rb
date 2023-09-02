@@ -36,7 +36,7 @@ describe "RakeTasks" do
   end
 
   describe "`shakapacker:check_binstubs`" do
-    def with_temporary_file(file_name, &block)
+    def with_temporary_file(file_name)
       FileUtils.touch(file_name, verbose: false)
       yield if block_given?
     ensure
