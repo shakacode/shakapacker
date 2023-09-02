@@ -39,3 +39,9 @@ jobs:
 
       - name: Ruby specs - Backward compatibility
         run: bundle exec rake run_spec:gem_bc
+        env:
+          SHAKAPACKER_USE_PACKAGE_JSON_GEM: "false"
+      - name: Ruby specs - Backward compatibility
+        run: bundle exec rake run_spec:gem_bc
+        env:
+          SHAKAPACKER_USE_PACKAGE_JSON_GEM: "true"

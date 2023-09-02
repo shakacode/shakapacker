@@ -26,7 +26,6 @@ jobs:
             gemfile: gemfiles/Gemfile-rails-edge
     env:
       BUNDLE_GEMFILE: ${{ matrix.gemfile }}
-      PACKAGE_JSON_FALLBACK_MANAGER: "yarn_classic"
 
     steps:
       - uses: actions/checkout@v4
@@ -38,3 +37,8 @@ jobs:
       - name: Install dependencies
         run: bundle install
       - run: bundle exec rake run_spec:generator
+        env:
+          SHAKAPACKER_USE_PACKAGE_JSON_GEM: "false"
+      - run: bundle exec rake run_spec:generator
+        env:
+          SHAKAPACKER_USE_PACKAGE_JSON_GEM: "true"

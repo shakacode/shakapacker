@@ -39,3 +39,10 @@ jobs:
 
       - name: Ruby specs
         run: bundle exec rake run_spec:gem
+        env:
+          SHAKAPACKER_USE_PACKAGE_JSON_GEM: "false"
+
+      - name: Ruby specs
+        run: bundle exec rake run_spec:gem
+        env:
+          SHAKAPACKER_USE_PACKAGE_JSON_GEM: "true"
