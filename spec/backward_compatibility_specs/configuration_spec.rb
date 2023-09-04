@@ -14,36 +14,43 @@ describe "Webpacker::Configuration" do
 
     it "#source_path returns correct path" do
       source_path = File.expand_path File.join(File.dirname(__FILE__), "webpacker_test_app/app/packs").to_s
+
       expect(config.source_path.to_s).to eq source_path
     end
 
     it "#source_entry_path returns correct path" do
       source_entry_path = File.expand_path File.join(File.dirname(__FILE__), "webpacker_test_app/app/packs", "entrypoints").to_s
+
       expect(config.source_entry_path.to_s).to eq source_entry_path
     end
 
     it "#public_root_path returns correct path" do
       public_root_path = File.expand_path File.join(File.dirname(__FILE__), "webpacker_test_app/public").to_s
+
       expect(config.public_path.to_s).to eq public_root_path
     end
 
     it "#public_output_path returns correct path" do
       public_output_path = File.expand_path File.join(File.dirname(__FILE__), "webpacker_test_app/public/packs").to_s
+
       expect(config.public_output_path.to_s).to eq public_output_path
     end
 
     it "#public_manifest_path returns correct path" do
       public_manifest_path = File.expand_path File.join(File.dirname(__FILE__), "webpacker_test_app/public/packs", "manifest.json").to_s
+
       expect(config.public_manifest_path.to_s).to eq public_manifest_path
     end
 
     it "#manifest_path returns correct path" do
       manifest_path = File.expand_path File.join(File.dirname(__FILE__), "webpacker_test_app/public/packs", "manifest.json").to_s
+
       expect(config.manifest_path.to_s).to eq manifest_path
     end
 
     it "#cache_path returns correct path" do
       cache_path = File.expand_path File.join(File.dirname(__FILE__), "webpacker_test_app/tmp/webpacker").to_s
+
       expect(config.cache_path.to_s).to eq cache_path
     end
 
@@ -186,6 +193,7 @@ describe "Webpacker::Configuration" do
 
     it "#public_output_path returns correct path" do
       expected_public_output_path = File.expand_path File.join(File.dirname(__FILE__), "public/packs").to_s
+
       expect(config.public_output_path.to_s).to eq expected_public_output_path
     end
   end
@@ -199,6 +207,7 @@ describe "Webpacker::Configuration" do
 
     it "#manifest_path returns correct expected value" do
       expected_manifest_path = File.expand_path File.join(File.dirname(__FILE__), "webpacker_test_app/app/packs", "manifest.json").to_s
+
       expect(config.manifest_path.to_s).to eq expected_manifest_path
     end
   end
@@ -206,8 +215,8 @@ describe "Webpacker::Configuration" do
   context "with webpacker_precompile entry set to false" do
     describe "#webpacker_precompile?" do
       before :each do
-        ENV.delete("WEBPACKER_PRECOMPILE")
         ENV.delete("SHAKAPACKER_PRECOMPILE")
+        ENV.delete("WEBPACKER_PRECOMPILE")
       end
 
       let(:config) {
@@ -229,9 +238,8 @@ describe "Webpacker::Configuration" do
         expect(subject).to be true
       end
 
-      it "returns false with WEBPACKER_PRECOMPILE set to falsy value" do
-        # ENV["WEBPACKER_PRECOMPILE"] = "no"
-        ENV.delete("WEBPACKER_PRECOMPILE")
+      it "returns false with WEBPACKER_PRECOMPILE set to nil" do
+        ENV["SHAKAPACKER_PRECOMPILE"] = nil
         expect(subject).to be false
       end
     end

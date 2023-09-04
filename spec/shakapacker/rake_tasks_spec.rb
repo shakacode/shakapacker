@@ -18,22 +18,25 @@ describe "RakeTasks" do
 
   it "`shakapacker:check_binstubs` doesn't get 'webpack binstub not found' error" do
     output = Dir.chdir(TEST_APP_PATH) { `rake shakapacker:check_binstubs 2>&1` }
+
     expect(output).to_not include "webpack binstub not found."
   end
 
   it "`shakapacker:check_node` doesn't get 'shakapacker requires Node.js' error" do
     output = Dir.chdir(TEST_APP_PATH) { `rake shakapacker:check_node 2>&1` }
+
     expect(output).to_not include "Shakapacker requires Node.js"
   end
 
-  it "`shakapacker:check_yarn` doesn't get error related to yarn" do
+  it "`shakapacker:check_yarn` doesn't get errors related to yarn" do
     output = Dir.chdir(TEST_APP_PATH) { `rake shakapacker:check_yarn 2>&1` }
+
     expect(output).to_not include "Yarn not installed"
     expect(output).to_not include "Shakapacker requires Yarn"
   end
 
   describe "`shakapacker:check_binstubs`" do
-    def with_temporary_file(file_name, &block)
+    def with_temporary_file(file_name)
       FileUtils.touch(file_name, verbose: false)
       yield if block_given?
     ensure

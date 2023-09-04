@@ -53,13 +53,13 @@ describe "Generator" do
         expect(actual_content).to eq expected_content
       end
 
-      it "replaces package.json with template file" do
+      it "replaces package.json with the template file" do
         actual_content = read(path_in_the_app("package.json"))
 
         expect(actual_content).to match /"name": "app",/
       end
 
-      it "creates webpack config directory and its files" do
+      it "creates the webpack config directory and its files" do
         expected_files = [
           "webpack.config.js"
         ]
@@ -78,6 +78,7 @@ describe "Generator" do
 
         Dir.chdir(File.join(TEMP_RAILS_APP_PATH, "bin")) do
           actual_binstubs = Dir.glob("*")
+
           expect(actual_binstubs).to include(*expected_binstubs)
         end
       end
@@ -96,10 +97,11 @@ describe "Generator" do
 
       it "updates `bin/setup`" do
         setup_file_content = read(path_in_the_app("bin/setup"))
+
         expect(setup_file_content).to match %r(^\s*system!\(['"]bin/yarn['"]\))
       end
 
-      it "adds relevant shakapacker version in package.json depending on gem version" do
+      it "uses the shakapacker version in package.json depending on gem version" do
         npm_version = Shakapacker::Utils::VersionSyntaxConverter.new.rubygem_to_npm(Shakapacker::VERSION)
 
         actual_content = read(path_in_the_app("package.json"))
@@ -143,6 +145,7 @@ describe "Generator" do
         it "passes the test for rendering react component on the page" do
           Bundler.with_unbundled_env do
             sh_in_dir(TEMP_RAILS_APP_PATH, "./bin/rails app:template LOCATION=../e2e_template/template.rb")
+
             expect(sh_in_dir(TEMP_RAILS_APP_PATH, "bundle exec rspec")).to be_truthy
           end
         end
@@ -151,6 +154,7 @@ describe "Generator" do
   end
 
   private
+
     def path_in_the_app(relative_path = nil)
       Pathname.new(File.join([TEMP_RAILS_APP_PATH, relative_path].compact))
     end

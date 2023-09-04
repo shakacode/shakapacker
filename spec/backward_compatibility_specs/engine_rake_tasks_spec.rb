@@ -11,11 +11,12 @@ describe "EngineRakeTasks" do
 
   it "mounts app:webpacker task successfully" do
     output = Dir.chdir(mounted_app_path) { `rake -T` }
+
     expect(output).to match /app:webpacker.+DEPRECATED/
     expect(output).to match /app:webpacker:binstubs.+DEPRECATED/
   end
 
-  it "binstubs adds only expected files to bin directory" do
+  it "only adds expected files to bin directory when binstubs is run" do
     Dir.chdir(mounted_app_path) { `bundle exec rake app:webpacker:binstubs` }
     expected_binstub_paths.each { |path| expect(File.exist?(path)).to be true }
   end

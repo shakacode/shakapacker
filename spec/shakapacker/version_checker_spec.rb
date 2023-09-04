@@ -45,53 +45,53 @@ describe "VersionChecker" do
       .to_stderr
   end
 
-  it "raises exception on different major version" do
+  it "raises an exception on different major versions" do
     node_package_version = NodePackageVersionDouble.new(raw: "6.1.0", major_minor_patch: ["6", "1", "0"])
 
     expect { check_version(node_package_version, "7.0.0") }
       .to raise_error(/\*\*ERROR\*\* Shakapacker: Shakapacker gem and node package versions do not match/)
   end
 
-  it "raises exception on different minor version" do
+  it "raises an exception on different minor versions" do
     node_package_version = NodePackageVersionDouble.new(raw: "6.1.0", major_minor_patch: ["6", "1", "0"])
 
     expect { check_version(node_package_version, "6.2.0") }
       .to raise_error(/\*\*ERROR\*\* Shakapacker: Shakapacker gem and node package versions do not match/)
   end
 
-  it "raises exception on different patch version" do
+  it "raises an exception on different patch versions" do
     node_package_version = NodePackageVersionDouble.new(raw: "6.1.1", major_minor_patch: ["6", "1", "1"])
 
     expect { check_version(node_package_version, "6.1.2") }
       .to raise_error(/\*\*ERROR\*\* Shakapacker: Shakapacker gem and node package versions do not match/)
   end
 
-  it "raises exception on semver wildcard" do
+  it "raises an exception on a semver wildcard" do
     node_package_version = NodePackageVersionDouble.new(raw: "^6.0.0", major_minor_patch: ["6", "0", "0"], semver_wildcard: true)
 
     expect { check_version(node_package_version, "6.0.0") }
       .to raise_error(/\*\*ERROR\*\* Shakapacker: Your node package version for shakapacker contains a \^ or ~/)
   end
 
-  it "doesn't raise exception on matching versions" do
+  it "doesn't raise an exception on matching versions" do
     node_package_version = NodePackageVersionDouble.new(raw: "6.0.0", major_minor_patch: ["6", "0", "0"])
 
     expect { check_version(node_package_version, "6.0.0") }.to_not raise_error
   end
 
-  it "doesn't raise exception on matching versions beta" do
+  it "doesn't raise an exception on matching beta versions" do
     node_package_version = NodePackageVersionDouble.new(raw: "6.0.0-beta.1", major_minor_patch: ["6", "0", "0"])
 
     expect { check_version(node_package_version, "6.0.0.beta.1") }.to_not raise_error
   end
 
-  it "doesn't raise exception on no package" do
+  it "doesn't raise an exception on no package" do
     node_package_version = NodePackageVersionDouble.new(raw: nil, skip_processing: true)
 
     expect { check_version(node_package_version, "6.0.0") }.to_not raise_error
   end
 
-  it "doesn't raise exception on skipped path" do
+  it "doesn't raise an exception on skipped paths" do
     node_package_version = NodePackageVersionDouble.new(raw: "../..", skip_processing: true)
 
     expect { check_version(node_package_version, "6.0.0") }.to_not raise_error
@@ -109,14 +109,14 @@ describe "VersionChecker::NodePackageVersion" do
       )
     end
 
-    context "from exact semantic version" do
+    context "when using an exact semantic version" do
       let(:node_package_version_from_semver_exact) { node_package_version(fixture_version: "semver_exact") }
 
-      it "#raw returns raw version" do
+      it "#raw returns the raw version" do
         expect(node_package_version_from_semver_exact.raw).to eq "6.0.0"
       end
 
-      it "#major_minor_patch returns version array" do
+      it "#major_minor_patch returns an array" do
         expect(node_package_version_from_semver_exact.major_minor_patch).to eq ["6", "0", "0"]
       end
 
@@ -129,14 +129,14 @@ describe "VersionChecker::NodePackageVersion" do
       end
     end
 
-    context "from beta version" do
+    context "when using a beta version" do
       let(:node_package_version_from_beta) { node_package_version(fixture_version: "beta") }
 
-      it "#raw returns raw version" do
+      it "#raw returns the raw version" do
         expect(node_package_version_from_beta.raw).to eq "6.1.0-beta.0"
       end
 
-      it "#major_minor_patch returns version array" do
+      it "#major_minor_patch returns an array" do
         expect(node_package_version_from_beta.major_minor_patch).to eq ["6", "1", "0"]
       end
 
@@ -149,14 +149,14 @@ describe "VersionChecker::NodePackageVersion" do
       end
     end
 
-    context "from caret semantic version" do
+    context "when using a caret constraint" do
       let(:node_package_version_from_semver_caret) { node_package_version(fixture_version: "semver_caret") }
 
-      it "#raw returns version" do
+      it "#raw returns the raw version" do
         expect(node_package_version_from_semver_caret.raw).to eq "^6.0.0"
       end
 
-      it "#major_minor_patch returns version array" do
+      it "#major_minor_patch returns an array" do
         expect(node_package_version_from_semver_caret.major_minor_patch).to eq ["6", "0", "0"]
       end
 
@@ -169,10 +169,10 @@ describe "VersionChecker::NodePackageVersion" do
       end
     end
 
-    context "from tilde semantic version" do
+    context "when using a tilde constraint" do
       let(:node_package_version_from_semver_tilde) { node_package_version(fixture_version: "semver_tilde") }
 
-      it "#raw returns version" do
+      it "#raw returns the raw version" do
         expect(node_package_version_from_semver_tilde.raw).to eq "~6.0.0"
       end
 
@@ -189,10 +189,10 @@ describe "VersionChecker::NodePackageVersion" do
       end
     end
 
-    context "from relative path" do
+    context "when using a relative path" do
       let(:node_package_version_from_relative_path) { node_package_version(fixture_version: "relative_path") }
 
-      it "#raw returns relative path" do
+      it "#raw returns the relative path" do
         expect(node_package_version_from_relative_path.raw).to eq "../.."
       end
 
@@ -209,10 +209,10 @@ describe "VersionChecker::NodePackageVersion" do
       end
     end
 
-    context "from git url" do
+    context "when using a git url" do
       let(:node_package_version_from_git_url) { node_package_version(fixture_version: "git_url") }
 
-      it "#raw returns git url" do
+      it "#raw returns the git url" do
         expect(node_package_version_from_git_url.raw).to eq "git@github.com:shakacode/shakapacker.git"
       end
 
@@ -229,10 +229,10 @@ describe "VersionChecker::NodePackageVersion" do
       end
     end
 
-    context "from github url" do
-      let (:node_package_version_from_github_url) { node_package_version(fixture_version: "github_url") }
+    context "when using a github url" do
+      let(:node_package_version_from_github_url) { node_package_version(fixture_version: "github_url") }
 
-      it "#raw returns GitHub repo address" do
+      it "#raw returns the GitHub repo address" do
         expect(node_package_version_from_github_url.raw).to eq "shakacode/shakapacker#master"
       end
 
@@ -249,10 +249,10 @@ describe "VersionChecker::NodePackageVersion" do
       end
     end
 
-    context "from package.json without shakapacker entry" do
+    context "when shakapacker is not a dependency" do
       let(:node_package_version_from_without) { node_package_version(fixture_version: "without") }
 
-      it "#raw returns empty string" do
+      it "#raw returns an empty string" do
         expect(node_package_version_from_without.raw).to eq ""
       end
 
@@ -280,14 +280,14 @@ describe "VersionChecker::NodePackageVersion" do
       )
     end
 
-    context "from exact semantic version" do
+    context "when using an exact semantic version" do
       let(:node_package_version_from_semver_exact) { node_package_version(fixture_version: "semver_exact") }
 
-      it "#raw returns version" do
+      it "#raw returns the raw version" do
         expect(node_package_version_from_semver_exact.raw).to eq "6.0.0"
       end
 
-      it "#major_minor_patch returns version array" do
+      it "#major_minor_patch returns an array" do
         expect(node_package_version_from_semver_exact.major_minor_patch).to eq ["6", "0", "0"]
       end
 
@@ -300,14 +300,14 @@ describe "VersionChecker::NodePackageVersion" do
       end
     end
 
-    context "from beta version" do
+    context "when using a beta version" do
       let(:node_package_version_from_beta) { node_package_version(fixture_version: "beta") }
 
-      it "#raw returns version" do
+      it "#raw returns the raw version" do
         expect(node_package_version_from_beta.raw).to eq "6.1.0-beta.0"
       end
 
-      it "#major_minor_patch returns version array" do
+      it "#major_minor_patch returns an array" do
         expect(node_package_version_from_beta.major_minor_patch).to eq ["6", "1", "0"]
       end
 
@@ -320,14 +320,14 @@ describe "VersionChecker::NodePackageVersion" do
       end
     end
 
-    context "from caret semantic version" do
+    context "when using a caret constraint" do
       let(:node_package_version_from_semver_caret) { node_package_version(fixture_version: "semver_caret") }
 
-      it "#raw returns version" do
+      it "#raw returns the raw version" do
         expect(node_package_version_from_semver_caret.raw).to eq "6.5.0"
       end
 
-      it "#major_minor_patch returns version array" do
+      it "#major_minor_patch returns an array" do
         expect(node_package_version_from_semver_caret.major_minor_patch).to eq ["6", "5", "0"]
       end
 
@@ -340,14 +340,14 @@ describe "VersionChecker::NodePackageVersion" do
       end
     end
 
-    context "from tilde semantic version" do
+    context "when using a tilde constraint" do
       let(:node_package_version_from_semver_tilde) { node_package_version(fixture_version: "semver_tilde") }
 
-      it "#raw returns version" do
+      it "#raw returns the raw version" do
         expect(node_package_version_from_semver_tilde.raw).to eq "6.0.2"
       end
 
-      it "#major_minor_patch returns version array" do
+      it "#major_minor_patch returns an array" do
         expect(node_package_version_from_semver_tilde.major_minor_patch).to eq ["6", "0", "2"]
       end
 
@@ -360,14 +360,14 @@ describe "VersionChecker::NodePackageVersion" do
       end
     end
 
-    context "from relative path" do
+    context "when using a relative path" do
       let(:node_package_version_from_relative_path) { node_package_version(fixture_version: "relative_path") }
 
-      it "#raw returns version" do
+      it "#raw returns the raw version" do
         expect(node_package_version_from_relative_path.raw).to eq "6.5.0"
       end
 
-      it "#major_minor_patch returns version array" do
+      it "#major_minor_patch returns an array" do
         expect(node_package_version_from_relative_path.major_minor_patch).to eq ["6", "5", "0"]
       end
 
@@ -380,14 +380,14 @@ describe "VersionChecker::NodePackageVersion" do
       end
     end
 
-    context "from git url" do
+    context "when using a git url" do
       let(:node_package_version_from_git_url) { node_package_version(fixture_version: "git_url") }
 
-      it "#raw returns version" do
+      it "#raw returns the raw version" do
         expect(node_package_version_from_git_url.raw).to eq "6.5.0"
       end
 
-      it "#major_minor_patch returns version array" do
+      it "#major_minor_patch returns an array" do
         expect(node_package_version_from_git_url.major_minor_patch).to eq ["6", "5", "0"]
       end
 
@@ -403,11 +403,11 @@ describe "VersionChecker::NodePackageVersion" do
     context "from GitHub url" do
       let(:node_package_version_from_github_url) { node_package_version(fixture_version: "github_url") }
 
-      it "#raw returns version" do
+      it "#raw returns the raw version" do
         expect(node_package_version_from_github_url.raw).to eq "6.5.0"
       end
 
-      it "#major_minor_patch returns version array" do
+      it "#major_minor_patch returns an array" do
         expect(node_package_version_from_github_url.major_minor_patch).to eq ["6", "5", "0"]
       end
 
@@ -420,10 +420,10 @@ describe "VersionChecker::NodePackageVersion" do
       end
     end
 
-    context "from package.json without shakapacker entry" do
+    context "when shakapacker is not a dependency" do
       let(:node_package_version_from_without) { node_package_version(fixture_version: "without") }
 
-      it "#raw returns empty string" do
+      it "#raw returns an empty string" do
         expect(node_package_version_from_without.raw).to eq ""
       end
 
@@ -451,14 +451,14 @@ describe "VersionChecker::NodePackageVersion" do
       )
     end
 
-    context "from exact semantic version" do
+    context "when using an exact semantic version" do
       let(:node_package_version_from_semver_exact) { node_package_version(fixture_version: "semver_exact") }
 
-      it "#raw returns version" do
+      it "#raw returns the raw version" do
         expect(node_package_version_from_semver_exact.raw).to eq "6.0.0"
       end
 
-      it "#major_minor_patch returns version array" do
+      it "#major_minor_patch returns an array" do
         expect(node_package_version_from_semver_exact.major_minor_patch).to eq ["6", "0", "0"]
       end
 
@@ -471,14 +471,14 @@ describe "VersionChecker::NodePackageVersion" do
       end
     end
 
-    context "from beta version" do
+    context "when using a beta version" do
       let(:node_package_version_from_beta) { node_package_version(fixture_version: "beta") }
 
-      it "#raw returns version" do
+      it "#raw returns the raw version" do
         expect(node_package_version_from_beta.raw).to eq "6.1.0-beta.0"
       end
 
-      it "#major_minor_patch returns version array" do
+      it "#major_minor_patch returns an array" do
         expect(node_package_version_from_beta.major_minor_patch).to eq ["6", "1", "0"]
       end
 
@@ -491,14 +491,14 @@ describe "VersionChecker::NodePackageVersion" do
       end
     end
 
-    context "from caret semantic version" do
+    context "when using a caret constraint" do
       let(:node_package_version_from_semver_caret) { node_package_version(fixture_version: "semver_caret") }
 
-      it "#raw returns version" do
+      it "#raw returns the raw version" do
         expect(node_package_version_from_semver_caret.raw).to eq "6.5.0"
       end
 
-      it "#major_minor_patch returns version array" do
+      it "#major_minor_patch returns an array" do
         expect(node_package_version_from_semver_caret.major_minor_patch).to eq ["6", "5", "0"]
       end
 
@@ -511,14 +511,14 @@ describe "VersionChecker::NodePackageVersion" do
       end
     end
 
-    context "from tilde semantic version" do
+    context "when using a tilde constraint" do
       let(:node_package_version_from_semver_tilde) { node_package_version(fixture_version: "semver_tilde") }
 
-      it "#raw returns version" do
+      it "#raw returns the raw version" do
         expect(node_package_version_from_semver_tilde.raw).to eq "6.0.2"
       end
 
-      it "#major_minor_patch returns version array" do
+      it "#major_minor_patch returns an array" do
         expect(node_package_version_from_semver_tilde.major_minor_patch).to eq ["6", "0", "2"]
       end
 
@@ -531,14 +531,14 @@ describe "VersionChecker::NodePackageVersion" do
       end
     end
 
-    context "from relative path" do
+    context "when using a relative path" do
       let(:node_package_version_from_relative_path) { node_package_version(fixture_version: "relative_path") }
 
-      it "#raw returns version" do
+      it "#raw returns the raw version" do
         expect(node_package_version_from_relative_path.raw).to eq "6.5.0"
       end
 
-      it "#major_minor_patch returns version array" do
+      it "#major_minor_patch returns an array" do
         expect(node_package_version_from_relative_path.major_minor_patch).to eq ["6", "5", "0"]
       end
 
@@ -551,14 +551,14 @@ describe "VersionChecker::NodePackageVersion" do
       end
     end
 
-    context "from git url" do
+    context "when using a git url" do
       let(:node_package_version_from_git_url) { node_package_version(fixture_version: "git_url") }
 
-      it "#raw returns version" do
+      it "#raw returns the raw version" do
         expect(node_package_version_from_git_url.raw).to eq "6.5.0"
       end
 
-      it "#major_minor_patch returns version array" do
+      it "#major_minor_patch returns an array" do
         expect(node_package_version_from_git_url.major_minor_patch).to eq ["6", "5", "0"]
       end
 
@@ -571,30 +571,30 @@ describe "VersionChecker::NodePackageVersion" do
       end
     end
 
-    context "from github url" do
-      let (:node_package_version_from_github_url) { node_package_version(fixture_version: "github_url") }
+    context "when using a github url" do
+      let(:node_package_version_from_github_url) { node_package_version(fixture_version: "github_url") }
 
-      it "#raw return version" do
+      it "#raw returns the raw version" do
         expect(node_package_version_from_github_url.raw).to eq "6.5.0"
       end
 
-      it "#major_minor_patch return version array" do
+      it "#major_minor_patch returns version array" do
         expect(node_package_version_from_github_url.major_minor_patch).to eq ["6", "5", "0"]
       end
 
-      it "#skip_processing? return false" do
+      it "#skip_processing? returns false" do
         expect(node_package_version_from_github_url.skip_processing?).to be false
       end
 
-      it "#semver_wildcard? return false" do
+      it "#semver_wildcard? returns false" do
         expect(node_package_version_from_github_url.semver_wildcard?).to be false
       end
     end
 
-    context "from package.json without shakapacker entry" do
+    context "when shakapacker is not a dependency" do
       let(:node_package_version_from_without) { node_package_version(fixture_version: "without") }
 
-      it "#raw returns empty string" do
+      it "#raw returns an empty string" do
         expect(node_package_version_from_without.raw).to eq ""
       end
 
@@ -622,14 +622,14 @@ describe "VersionChecker::NodePackageVersion" do
       )
     end
 
-    context "from exact semantic version" do
+    context "when using an exact semantic version" do
       let(:node_package_version_from_semver_exact) { node_package_version(fixture_version: "semver_exact") }
 
-      it "#raw returns version" do
+      it "#raw returns the raw version" do
         expect(node_package_version_from_semver_exact.raw).to eq "6.0.0"
       end
 
-      it "#major_minor_patch returns version array" do
+      it "#major_minor_patch returns an array" do
         expect(node_package_version_from_semver_exact.major_minor_patch).to eq ["6", "0", "0"]
       end
 
@@ -642,14 +642,14 @@ describe "VersionChecker::NodePackageVersion" do
       end
     end
 
-    context "from beta version" do
+    context "when using a beta version" do
       let(:node_package_version_from_beta) { node_package_version(fixture_version: "beta") }
 
-      it "#raw returns version" do
+      it "#raw returns the raw version" do
         expect(node_package_version_from_beta.raw).to eq "6.1.0-beta.0"
       end
 
-      it "#major_minor_patch returns version array" do
+      it "#major_minor_patch returns an array" do
         expect(node_package_version_from_beta.major_minor_patch).to eq ["6", "1", "0"]
       end
 
@@ -662,14 +662,14 @@ describe "VersionChecker::NodePackageVersion" do
       end
     end
 
-    context "from caret semantic version" do
+    context "when using a caret constraint" do
       let(:node_package_version_from_semver_caret) { node_package_version(fixture_version: "semver_caret") }
 
-      it "#raw returns version" do
+      it "#raw returns the raw version" do
         expect(node_package_version_from_semver_caret.raw).to eq "6.5.0"
       end
 
-      it "#major_minor_patch returns version array" do
+      it "#major_minor_patch returns an array" do
         expect(node_package_version_from_semver_caret.major_minor_patch).to eq ["6", "5", "0"]
       end
 
@@ -682,14 +682,14 @@ describe "VersionChecker::NodePackageVersion" do
       end
     end
 
-    context "from tilde semantic version" do
+    context "when using a tilde constraint" do
       let(:node_package_version_from_semver_tilde) { node_package_version(fixture_version: "semver_tilde") }
 
-      it "#raw returns version" do
+      it "#raw returns the raw version" do
         expect(node_package_version_from_semver_tilde.raw).to eq "6.0.2"
       end
 
-      it "#major_minor_patch returns version array" do
+      it "#major_minor_patch returns an array" do
         expect(node_package_version_from_semver_tilde.major_minor_patch).to eq ["6", "0", "2"]
       end
 
@@ -702,10 +702,10 @@ describe "VersionChecker::NodePackageVersion" do
       end
     end
 
-    context "from relative path" do
+    context "when using a relative path" do
       let(:node_package_version_from_relative_path) { node_package_version(fixture_version: "relative_path") }
 
-      it "#raw returns relative path" do
+      it "#raw returns the relative path" do
         expect(node_package_version_from_relative_path.raw).to eq "file:../.."
       end
 
@@ -722,10 +722,10 @@ describe "VersionChecker::NodePackageVersion" do
       end
     end
 
-    context "from git url" do
+    context "when using a git url" do
       let(:node_package_version_from_git_url) { node_package_version(fixture_version: "git_url") }
 
-      it "#raw returns git url" do
+      it "#raw returns the git url" do
         expect(node_package_version_from_git_url.raw).to eq "git+ssh://git@github.com/shakacode/shakapacker.git#31854a58be49f736f3486a946b72d7e4f334e2b2"
       end
 
@@ -742,10 +742,10 @@ describe "VersionChecker::NodePackageVersion" do
       end
     end
 
-    context "from github url" do
-      let (:node_package_version_from_github_url) { node_package_version(fixture_version: "github_url") }
+    context "when using a github url" do
+      let(:node_package_version_from_github_url) { node_package_version(fixture_version: "github_url") }
 
-      it "#raw returns GitHub address" do
+      it "#raw returns the GitHub repo address" do
         expect(node_package_version_from_github_url.raw).to eq "github:shakacode/shakapacker#31854a58be49f736f3486a946b72d7e4f334e2b2"
       end
 
@@ -762,10 +762,10 @@ describe "VersionChecker::NodePackageVersion" do
       end
     end
 
-    context "from package.json without shakapacker entry" do
+    context "when shakapacker is not a dependency" do
       let(:node_package_version_from_without) { node_package_version(fixture_version: "without") }
 
-      it "#raw returns empty string" do
+      it "#raw returns an empty string" do
         expect(node_package_version_from_without.raw).to eq ""
       end
 
@@ -793,14 +793,14 @@ describe "VersionChecker::NodePackageVersion" do
       )
     end
 
-    context "from exact semantic version" do
+    context "when using an exact semantic version" do
       let(:node_package_version_from_semver_exact) { node_package_version(fixture_version: "semver_exact") }
 
-      it "#raw returns version" do
+      it "#raw returns the raw version" do
         expect(node_package_version_from_semver_exact.raw).to eq "6.0.0"
       end
 
-      it "#major_minor_patch returns version array" do
+      it "#major_minor_patch returns an array" do
         expect(node_package_version_from_semver_exact.major_minor_patch).to eq ["6", "0", "0"]
       end
 
@@ -813,14 +813,14 @@ describe "VersionChecker::NodePackageVersion" do
       end
     end
 
-    context "from beta version" do
+    context "when using a beta version" do
       let(:node_package_version_from_beta) { node_package_version(fixture_version: "beta") }
 
-      it "#raw returns version" do
+      it "#raw returns the raw version" do
         expect(node_package_version_from_beta.raw).to eq "6.1.0-beta.0"
       end
 
-      it "#major_minor_patch returns version array" do
+      it "#major_minor_patch returns an array" do
         expect(node_package_version_from_beta.major_minor_patch).to eq ["6", "1", "0"]
       end
 
@@ -833,14 +833,14 @@ describe "VersionChecker::NodePackageVersion" do
       end
     end
 
-    context "from caret semantic version" do
+    context "when using a caret constraint" do
       let(:node_package_version_from_semver_caret) { node_package_version(fixture_version: "semver_caret") }
 
-      it "#raw returns version" do
+      it "#raw returns the raw version" do
         expect(node_package_version(fixture_version: "semver_caret").raw).to eq "6.5.0"
       end
 
-      it "#major_minor_patch returns version array" do
+      it "#major_minor_patch returns an array" do
         expect(node_package_version(fixture_version: "semver_caret").major_minor_patch).to eq ["6", "5", "0"]
       end
 
@@ -853,14 +853,14 @@ describe "VersionChecker::NodePackageVersion" do
       end
     end
 
-    context "from tilde semantic version" do
+    context "when using a tilde constraint" do
       let(:node_package_version_from_semver_tilde) { node_package_version(fixture_version: "semver_tilde") }
 
-      it "#raw returns version" do
+      it "#raw returns the raw version" do
         expect(node_package_version_from_semver_tilde.raw).to eq "6.0.2"
       end
 
-      it "#major_minor_patch returns version array" do
+      it "#major_minor_patch returns an array" do
         expect(node_package_version_from_semver_tilde.major_minor_patch).to eq ["6", "0", "2"]
       end
 
@@ -873,10 +873,10 @@ describe "VersionChecker::NodePackageVersion" do
       end
     end
 
-    context "from relative path" do
+    context "when using a relative path" do
       let(:node_package_version_from_relative_path) { node_package_version(fixture_version: "relative_path") }
 
-      it "#raw returns relative path" do
+      it "#raw returns the relative path" do
         expect(node_package_version_from_relative_path.raw).to eq "../.."
       end
 
@@ -893,14 +893,14 @@ describe "VersionChecker::NodePackageVersion" do
       end
     end
 
-    context "from git url" do
+    context "when using a git url" do
       let(:node_package_version_from_git_url) { node_package_version(fixture_version: "git_url") }
 
-      it "#raw returns version" do
+      it "#raw returns the raw version" do
         expect(node_package_version_from_git_url.raw).to eq "6.5.0"
       end
 
-      it "#major_minor_patch returns version array" do
+      it "#major_minor_patch returns an array" do
         expect(node_package_version_from_git_url.major_minor_patch).to eq ["6", "5", "0"]
       end
 
@@ -913,14 +913,14 @@ describe "VersionChecker::NodePackageVersion" do
       end
     end
 
-    context "from github url" do
-      let (:node_package_version_from_github_url) { node_package_version(fixture_version: "github_url") }
+    context "when using a github url" do
+      let(:node_package_version_from_github_url) { node_package_version(fixture_version: "github_url") }
 
-      it "#raw returns version" do
+      it "#raw returns the raw version" do
         expect(node_package_version_from_github_url.raw).to eq "6.5.0"
       end
 
-      it "#major_minor_patch returns version array" do
+      it "#major_minor_patch returns an array" do
         expect(node_package_version_from_github_url.major_minor_patch).to eq ["6", "5", "0"]
       end
 
@@ -933,10 +933,10 @@ describe "VersionChecker::NodePackageVersion" do
       end
     end
 
-    context "from package.json without shakapacker entry" do
+    context "when shakapacker is not a dependency" do
       let(:node_package_version_from_without) { node_package_version(fixture_version: "without") }
 
-      it "#raw returns empty string" do
+      it "#raw returns an empty string" do
         expect(node_package_version_from_without.raw).to eq ""
       end
 
@@ -964,34 +964,34 @@ describe "VersionChecker::NodePackageVersion" do
       )
     end
 
-    context "from exact semantic version" do
+    context "when using an exact semantic version" do
       let(:node_package_version_from_semver_exact) { node_package_version(fixture_version: "semver_exact") }
 
-      it "#raw retruns version" do
+      it "#raw returns version" do
         expect(node_package_version_from_semver_exact.raw).to eq "6.0.0"
       end
 
-      it "#major_minor_patch retruns version array" do
+      it "#major_minor_patch returns an array" do
         expect(node_package_version_from_semver_exact.major_minor_patch).to eq ["6", "0", "0"]
       end
 
-      it "#skip_processing? retruns false" do
+      it "#skip_processing? returns false" do
         expect(node_package_version_from_semver_exact.skip_processing?).to be false
       end
 
-      it "#semver_wildcard? retruns false" do
+      it "#semver_wildcard? returns false" do
         expect(node_package_version_from_semver_exact.semver_wildcard?).to be false
       end
     end
 
-    context "from beta version" do
+    context "when using a beta version" do
       let(:node_package_version_from_beta) { node_package_version(fixture_version: "beta") }
 
-      it "#raw returns version" do
+      it "#raw returns the raw version" do
         expect(node_package_version_from_beta.raw).to eq "6.1.0-beta.0"
       end
 
-      it "#major_minor_patch returns version array" do
+      it "#major_minor_patch returns an array" do
         expect(node_package_version_from_beta.major_minor_patch).to eq ["6", "1", "0"]
       end
 
@@ -1004,14 +1004,14 @@ describe "VersionChecker::NodePackageVersion" do
       end
     end
 
-    context "from caret semantic version" do
+    context "when using a caret constraint" do
       let(:node_package_version_from_semver_caret) { node_package_version(fixture_version: "semver_caret") }
 
-      it "#raw returns version" do
+      it "#raw returns the raw version" do
         expect(node_package_version_from_semver_caret.raw).to eq "6.6.0"
       end
 
-      it "#major_minor_patch returns version array" do
+      it "#major_minor_patch returns an array" do
         expect(node_package_version_from_semver_caret.major_minor_patch).to eq ["6", "6", "0"]
       end
 
@@ -1024,14 +1024,14 @@ describe "VersionChecker::NodePackageVersion" do
       end
     end
 
-    context "from tilde semantic version" do
+    context "when using a tilde constraint" do
       let(:node_package_version_from_semver_tilde) { node_package_version(fixture_version: "semver_tilde") }
 
-      it "#raw returns version" do
+      it "#raw returns the raw version" do
         expect(node_package_version_from_semver_tilde.raw).to eq "6.0.2"
       end
 
-      it "#major_minor_patch returns version array" do
+      it "#major_minor_patch returns an array" do
         expect(node_package_version_from_semver_tilde.major_minor_patch).to eq ["6", "0", "2"]
       end
 
@@ -1044,10 +1044,10 @@ describe "VersionChecker::NodePackageVersion" do
       end
     end
 
-    context "from relative path" do
+    context "when using a relative path" do
       let(:node_package_version_from_relative_path) { node_package_version(fixture_version: "relative_path") }
 
-      it "#raw returns version" do
+      it "#raw returns the raw version" do
         expect(node_package_version_from_relative_path.raw).to eq "../.."
       end
 
@@ -1064,14 +1064,14 @@ describe "VersionChecker::NodePackageVersion" do
       end
     end
 
-    context "from git url" do
+    context "when using a git url" do
       let(:node_package_version_from_git_url) { node_package_version(fixture_version: "git_url") }
 
-      it "#raw returns version" do
+      it "#raw returns the raw version" do
         expect(node_package_version_from_git_url.raw).to eq "7.0.2"
       end
 
-      it "#major_minor_patch returns version array" do
+      it "#major_minor_patch returns an array" do
         expect(node_package_version_from_git_url.major_minor_patch).to eq ["7", "0", "2"]
       end
 
@@ -1084,30 +1084,30 @@ describe "VersionChecker::NodePackageVersion" do
       end
     end
 
-    context "from github url" do
+    context "when using a github url" do
       let(:node_package_version_from_github_url) { node_package_version(fixture_version: "github_url") }
 
-      it "#raw return version" do
+      it "#raw returns the raw version" do
         expect(node_package_version_from_github_url.raw).to eq "7.0.2"
       end
 
-      it "#major_minor_patch return version array" do
+      it "#major_minor_patch returns version array" do
         expect(node_package_version_from_github_url.major_minor_patch).to eq ["7", "0", "2"]
       end
 
-      it "#skip_processing? return false" do
+      it "#skip_processing? returns false" do
         expect(node_package_version_from_github_url.skip_processing?).to be false
       end
 
-      it "#semver_wildcard? return false" do
+      it "#semver_wildcard? returns false" do
         expect(node_package_version_from_github_url.semver_wildcard?).to be false
       end
     end
 
-    context "from package.json without shakapacker entry" do
+    context "when shakapacker is not a dependency" do
       let(:node_package_version_from_without) { node_package_version(fixture_version: "without") }
 
-      it "#raw returns empty string" do
+      it "#raw returns an empty string" do
         expect(node_package_version_from_without.raw).to eq ""
       end
 
@@ -1135,34 +1135,34 @@ describe "VersionChecker::NodePackageVersion" do
       )
     end
 
-    context "from exact semantic version" do
+    context "when using an exact semantic version" do
       let(:node_package_version_from_semver_exact) { node_package_version(fixture_version: "semver_exact") }
 
-      it "#raw retruns version" do
+      it "#raw returns the raw version" do
         expect(node_package_version_from_semver_exact.raw).to eq "6.0.0"
       end
 
-      it "#major_minor_patch retruns version array" do
+      it "#major_minor_patch returns an array" do
         expect(node_package_version_from_semver_exact.major_minor_patch).to eq ["6", "0", "0"]
       end
 
-      it "#skip_processing? retruns false" do
+      it "#skip_processing? returns false" do
         expect(node_package_version_from_semver_exact.skip_processing?).to be false
       end
 
-      it "#semver_wildcard? retruns false" do
+      it "#semver_wildcard? returns false" do
         expect(node_package_version_from_semver_exact.semver_wildcard?).to be false
       end
     end
 
-    context "from beta version" do
+    context "when using a beta version" do
       let(:node_package_version_from_beta) { node_package_version(fixture_version: "beta") }
 
-      it "#raw returns version" do
+      it "#raw returns the raw version" do
         expect(node_package_version_from_beta.raw).to eq "6.1.0-beta.0"
       end
 
-      it "#major_minor_patch returns version array" do
+      it "#major_minor_patch returns an array" do
         expect(node_package_version_from_beta.major_minor_patch).to eq ["6", "1", "0"]
       end
 
@@ -1175,14 +1175,14 @@ describe "VersionChecker::NodePackageVersion" do
       end
     end
 
-    context "from caret semantic version" do
+    context "when using a caret constraint" do
       let(:node_package_version_from_semver_caret) { node_package_version(fixture_version: "semver_caret") }
 
-      it "#raw returns version" do
+      it "#raw returns the raw version" do
         expect(node_package_version_from_semver_caret.raw).to eq "6.0.0"
       end
 
-      it "#major_minor_patch returns version array" do
+      it "#major_minor_patch returns an array" do
         expect(node_package_version_from_semver_caret.major_minor_patch).to eq ["6", "0", "0"]
       end
 
@@ -1195,14 +1195,14 @@ describe "VersionChecker::NodePackageVersion" do
       end
     end
 
-    context "from tilde semantic version" do
+    context "when using a tilde constraint" do
       let(:node_package_version_from_semver_tilde) { node_package_version(fixture_version: "semver_tilde") }
 
-      it "#raw returns version" do
+      it "#raw returns the raw version" do
         expect(node_package_version_from_semver_tilde.raw).to eq "6.0.0"
       end
 
-      it "#major_minor_patch returns version array" do
+      it "#major_minor_patch returns an array" do
         expect(node_package_version_from_semver_tilde.major_minor_patch).to eq ["6", "0", "0"]
       end
 
@@ -1215,10 +1215,10 @@ describe "VersionChecker::NodePackageVersion" do
       end
     end
 
-    context "from relative path" do
+    context "when using a relative path" do
       let(:node_package_version_from_relative_path) { node_package_version(fixture_version: "relative_path") }
 
-      it "#raw returns version" do
+      it "#raw returns the raw version" do
         expect(node_package_version_from_relative_path.raw).to eq "../.."
       end
 
@@ -1235,14 +1235,14 @@ describe "VersionChecker::NodePackageVersion" do
       end
     end
 
-    context "from git url" do
+    context "when using a git url" do
       let(:node_package_version_from_git_url) { node_package_version(fixture_version: "git_url") }
 
-      it "#raw returns version" do
+      it "#raw returns the raw version" do
         expect(node_package_version_from_git_url.raw).to eq "7.0.2"
       end
 
-      it "#major_minor_patch returns version array" do
+      it "#major_minor_patch returns an array" do
         expect(node_package_version_from_git_url.major_minor_patch).to eq ["7", "0", "2"]
       end
 
@@ -1255,30 +1255,30 @@ describe "VersionChecker::NodePackageVersion" do
       end
     end
 
-    context "from github url" do
+    context "when using a github url" do
       let(:node_package_version_from_github_url) { node_package_version(fixture_version: "github_url") }
 
-      it "#raw return version" do
+      it "#raw returns the raw version" do
         expect(node_package_version_from_github_url.raw).to eq "7.0.2"
       end
 
-      it "#major_minor_patch return version array" do
+      it "#major_minor_patch returns an array" do
         expect(node_package_version_from_github_url.major_minor_patch).to eq ["7", "0", "2"]
       end
 
-      it "#skip_processing? return false" do
+      it "#skip_processing? returns false" do
         expect(node_package_version_from_github_url.skip_processing?).to be false
       end
 
-      it "#semver_wildcard? return false" do
+      it "#semver_wildcard? returns false" do
         expect(node_package_version_from_github_url.semver_wildcard?).to be false
       end
     end
 
-    context "from package.json without shakapacker entry" do
+    context "when shakapacker is not a dependency" do
       let(:node_package_version_from_without) { node_package_version(fixture_version: "without") }
 
-      it "#raw returns empty string" do
+      it "#raw returns an empty string" do
         expect(node_package_version_from_without.raw).to eq ""
       end
 

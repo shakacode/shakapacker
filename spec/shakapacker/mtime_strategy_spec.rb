@@ -5,7 +5,7 @@ describe "Shakapacker::MtimeStrategy" do
   let(:manifest_timestamp) { Time.parse("2021-01-01 12:34:56 UTC") }
 
   describe "#fresh?" do
-    it "returns false when manifest is missing" do
+    it "returns false when the manifest is missing" do
       latest_timestamp = manifest_timestamp + 3600
 
       with_stubs(latest_timestamp: latest_timestamp.to_i, manifest_exists: false) do
@@ -13,7 +13,7 @@ describe "Shakapacker::MtimeStrategy" do
       end
     end
 
-    it "returns false when manifest is older" do
+    it "returns false when the manifest is older" do
       latest_timestamp = manifest_timestamp + 3600
 
       with_stubs(latest_timestamp: latest_timestamp.to_i) do
@@ -21,7 +21,7 @@ describe "Shakapacker::MtimeStrategy" do
       end
     end
 
-    it "returns true when manifest is new" do
+    it "returns true when the manifest is new" do
       latest_timestamp = manifest_timestamp - 3600
 
       with_stubs(latest_timestamp: latest_timestamp.to_i) do
