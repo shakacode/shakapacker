@@ -19,9 +19,15 @@ const globalMutableWebpackConfig = () => {
   return environmentConfig
 }
 
-const generateWebpackConfig = () => {
+const generateWebpackConfig = (extraConfig = {}, ...extraArgs) => {
+  if (extraArgs.length > 0) {
+    throw new Error(
+      'Only one extra config may be passed here - use webpack-merge to merge configs before passing them to Shakapacker'
+    )
+  }
+
   const environmentConfig = globalMutableWebpackConfig()
-  const immutable = webpackMerge.merge({}, environmentConfig)
+  const immutable = webpackMerge.merge({}, environmentConfig, extraConfig)
   return immutable
 }
 

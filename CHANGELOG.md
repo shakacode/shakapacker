@@ -9,6 +9,9 @@ Changes since last non-beta release.
 
 _Please add entries here for your pull requests that are not yet released._
 
+### Added
+- Support passing custom webpack config directly to `generateWebpackConfig` for merging [PR 343](https://github.com/shakacode/shakapacker/pull/343) by [G-Rath](https://github.com/g-rath)
+
 ### Fixed
 - Use `NODE_OPTIONS` to enable Node-specific debugging flags [PR 350](https://github.com/shakacode/shakapacker/pull/350)
 
