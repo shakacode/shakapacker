@@ -17,17 +17,7 @@ module Shakapacker
           raise "PackageJson should not be used unless SHAKAPACKER_USE_PACKAGE_JSON_GEM is true"
         end
 
-        return if defined?(PackageJson)
-
-        lp_before = $LOAD_PATH.clone
-
-        require "bundler/inline"
-
-        gemfile(true) { gem "package_json", github: "G-Rath/package_json" }
-
-        Bundler.rubygems.add_to_load_path(lp_before)
-
-        puts "using package_json v#{PackageJson::VERSION}"
+        require "package_json"
       end
 
       def self.uncommitted_changes?(message_handler)
