@@ -9,7 +9,7 @@ describe "EngineRakeTasks" do
     remove_webpack_binstubs
   end
 
-  ["npm", "yarn_classic", "yarn_berry", "pnpm"].each do |fallback_manager|
+  NODE_PACKAGE_MANAGERS.each do |fallback_manager|
     context "when using package_json with #{fallback_manager} as the manager" do
       with_use_package_json_gem(enabled: true, fallback_manager: fallback_manager)
 

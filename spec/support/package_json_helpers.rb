@@ -1,3 +1,5 @@
+NODE_PACKAGE_MANAGERS = ["npm", "yarn_classic", "yarn_berry", "pnpm", "bun"]
+
 def with_use_package_json_gem(enabled:, fallback_manager: nil)
   around do |example|
     old_use_package_json_gem_value = ENV["SHAKAPACKER_USE_PACKAGE_JSON_GEM"]
