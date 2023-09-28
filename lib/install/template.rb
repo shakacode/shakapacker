@@ -14,8 +14,8 @@ if Dir.exist?(Shakapacker.config.source_path)
   say "The packs app source directory already exists"
 else
   say "Creating packs app source directory"
-  empty_directory "app/javascript"
-  copy_file "#{__dir__}/application.js", "app/javascript/application.js"
+  empty_directory "app/javascript/packs"
+  copy_file "#{__dir__}/application.js", "app/javascript/packs/application.js"
 end
 
 apply "#{__dir__}/binstubs.rb"
