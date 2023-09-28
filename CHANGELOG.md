@@ -14,6 +14,7 @@ _Please add entries here for your pull requests that are not yet released._
 
 ### Fixed
 - Use `NODE_OPTIONS` to enable Node-specific debugging flags [PR 350](https://github.com/shakacode/shakapacker/pull/350)
+- Add the boilplate `application.js` into `packs/` [PR 363](https://github.com/shakacode/shakapacker/pull/363)
 
 ## [v7.0.3] - July 7, 2023
 ### Fixed
