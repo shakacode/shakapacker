@@ -1,6 +1,6 @@
 {
   "name": "shakapacker",
-  "version": "7.0.3",
+  "version": "7.1.0",
   "description": "Use webpack to manage app-like JavaScript modules in Rails",
   "main": "package/index.js",
   "types": "package/index.d.ts",
