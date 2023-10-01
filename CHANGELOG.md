@@ -5,20 +5,22 @@
 
 ## Versions
 ## [Unreleased]
-Changes since last non-beta release.
+Changes since the last non-beta release.
 
 _Please add entries here for your pull requests that are not yet released._
 
+## [v7.1.0] - September 30, 2023
+
 ### Added
-- Support passing custom webpack config directly to `generateWebpackConfig` for merging [PR 343](https://github.com/shakacode/shakapacker/pull/343) by [G-Rath](https://github.com/g-rath)
+- Support passing custom webpack config directly to `generateWebpackConfig` for merging [PR 343](https://github.com/shakacode/shakapacker/pull/343) by [G-Rath](https://github.com/g-rath).
 
 ### Fixed
-- Use `NODE_OPTIONS` to enable Node-specific debugging flags [PR 350](https://github.com/shakacode/shakapacker/pull/350)
-- Add the boilplate `application.js` into `packs/` [PR 363](https://github.com/shakacode/shakapacker/pull/363)
+- Use `NODE_OPTIONS` to enable Node-specific debugging flags [PR 350](https://github.com/shakacode/shakapacker/pull/350).
+- Add the boilerplate `application.js` into `packs/` [PR 363](https://github.com/shakacode/shakapacker/pull/363).
 
 ## [v7.0.3] - July 7, 2023
 ### Fixed
-- Fixed commands execution for projects with space in absolute path [PR 322](https://github.com/shakacode/shakapacker/pull/322) by [kukicola](https://github.com/kukicola).
+- Fixed commands execution for projects with space in the absolute path [PR 322](https://github.com/shakacode/shakapacker/pull/322) by [kukicola](https://github.com/kukicola).
 
 ## [v7.0.2] - July 3, 2023
 ### Fixed
@@ -274,7 +276,8 @@ Note: [Rubygem is 6.3.0.pre.rc.1](https://rubygems.org/gems/shakapacker/versions
 ## v5.4.3 and prior changes from rails/webpacker
 See [CHANGELOG.md in rails/webpacker (up to v5.4.3)](https://github.com/rails/webpacker/blob/master/CHANGELOG.md)
 
-[Unreleased]: https://github.com/shakacode/shakapacker/compare/v7.0.3...master
+[Unreleased]: https://github.com/shakacode/shakapacker/compare/v7.1.0...master
+[v7.1.0]: https://github.com/shakacode/shakapacker/compare/v7.0.3...v7.1.0
 [v7.0.3]: https://github.com/shakacode/shakapacker/compare/v7.0.2...v7.0.3
 [v7.0.2]: https://github.com/shakacode/shakapacker/compare/v7.0.1...v7.0.2
 [v7.0.1]: https://github.com/shakacode/shakapacker/compare/v7.0.0...v7.0.1
