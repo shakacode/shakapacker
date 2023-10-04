@@ -14,6 +14,7 @@ _Please add entries here for your pull requests that are not yet released._
 
 ### Fixed
 - Recommend `server` option instead of deprecated `https` option when `--https` is provided [PR 380](https://github.com/shakacode/shakapacker/pull/380) by [G-Rath](https://github.com/g-rath)
+- Recompile assets on asset host change [PR 364](https://github.com/shakacode/shakapacker/pull/364) by [ahangarha](https://github.com/ahangarha).
 
 ## [v7.1.0] - September 30, 2023
 
