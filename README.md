@@ -447,6 +447,8 @@ For more details see
 
 If you want to use live code reloading, or you have enough JavaScript that on-demand compilation is too slow, you'll need to run `./bin/shakapacker-dev-server`. This process will watch for changes in the relevant files, defined by `shakapacker.yml` configuration settings for `source_path`, `source_entry_path`, and `additional_paths`, and it will then automatically reload the browser to match. This feature is also known as [Hot Module Replacement](https://webpack.js.org/concepts/hot-module-replacement/).
 
+**Note:** If you want to enforce recompilation on asset host change (for example, through `SHAKAPACKER_ASSET_HOST` environment variable), in addition to using digest strategy, you should set `compiler_strategy_asset_host_sensitive: true` in `config/shakapacker.yml`.
+
 #### Common Development Commands
 
 ```bash
