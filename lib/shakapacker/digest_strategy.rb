@@ -53,7 +53,10 @@ module Shakapacker
       end
 
       def compilation_digest_path
-        config.cache_path.join("last-compilation-digest-#{Shakapacker.env}-#{generate_host_hash}")
+        path = "last-compilation-digest-#{Shakapacker.env}"
+        path += "-#{generate_host_hash}" if Shakapacker.config.fetch(:compiler_strategy_asset_host_sensitive)
+
+        config.cache_path.join(path)
       end
 
       def generate_host_hash(*keys)
