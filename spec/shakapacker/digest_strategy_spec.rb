@@ -28,9 +28,23 @@ describe "DigestStrategy" do
     expect(@digest_strategy.fresh?).to be true
   end
 
+  it "is stale when host changes" do
+    ENV["SHAKAPACKER_ASSET_HOST"] = "the-host"
+
+    @digest_strategy.after_compile_hook
+
+    ENV["SHAKAPACKER_ASSET_HOST"] = "new-host"
+
+    expect(@digest_strategy.stale?).to be true
+    expect(@digest_strategy.fresh?).to be_falsey
+
+    ENV["SHAKAPACKER_ASSET_HOST"] = ""
+  end
+
   it "generates correct compilation_digest_path" do
     actual_path = @digest_strategy.send(:compilation_digest_path).basename.to_s
-    expected_path = "last-compilation-digest-#{Shakapacker.env}"
+    host_hash = Digest::SHA1.hexdigest("")
+    expected_path = "last-compilation-digest-#{Shakapacker.env}-#{host_hash}"
 
     expect(actual_path).to eq expected_path
   end

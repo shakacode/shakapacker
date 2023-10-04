@@ -53,7 +53,12 @@ module Shakapacker
       end
 
       def compilation_digest_path
-        config.cache_path.join("last-compilation-digest-#{Shakapacker.env}")
+        config.cache_path.join("last-compilation-digest-#{Shakapacker.env}-#{generate_host_hash}")
+      end
+
+      def generate_host_hash(*keys)
+        keys = [Rails.application.config.asset_host, ENV["SHAKAPACKER_ASSET_HOST"]] if keys.empty?
+        Digest::SHA1.hexdigest(keys.join("-"))
       end
   end
 end
