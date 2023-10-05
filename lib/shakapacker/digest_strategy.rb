@@ -59,10 +59,10 @@ module Shakapacker
         config.cache_path.join(path)
       end
 
-      def generate_host_hash(*keys)
+      def generate_host_hash
         @generated_host_hashes ||= {}
 
-        keys = [Rails.application.config.asset_host, ENV["SHAKAPACKER_ASSET_HOST"]] if keys.empty?
+        keys = [Rails.application.config.asset_host, ENV["SHAKAPACKER_ASSET_HOST"]]
 
         @generated_host_hashes[keys] ||= Digest::SHA1.hexdigest(keys.join("-"))
       end
