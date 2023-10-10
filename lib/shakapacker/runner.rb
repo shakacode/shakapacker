@@ -2,7 +2,7 @@ module Shakapacker
   class Runner
     def self.run(argv)
       $stdout.sync = true
-      ENV["NODE_ENV"] ||= (ENV["RAILS_ENV"] == "production") ? "production" : "development"
+      ENV["NODE_ENV"] ||= ENV["RAILS_ENV"] || "development"
       new(argv).run
     end
 

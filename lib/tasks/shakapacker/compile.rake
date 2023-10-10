@@ -3,7 +3,7 @@ $stdout.sync = true
 namespace :shakapacker do
   desc "Compile JavaScript packs using webpack for production with digests"
   task compile: ["shakapacker:verify_install", :environment] do
-    Shakapacker.with_node_env(ENV.fetch("NODE_ENV", "production")) do
+    Shakapacker.with_node_env(ENV.fetch("NODE_ENV", ENV["RAILS_ENV"] || "production")) do
       Shakapacker.ensure_log_goes_to_stdout do
         exit! unless Shakapacker.compile
       end

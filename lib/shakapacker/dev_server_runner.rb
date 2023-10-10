@@ -21,7 +21,7 @@ module Shakapacker
         @config = Configuration.new(
           root_path: app_root,
           config_path: Pathname.new(@shakapacker_config),
-          env: ENV["RAILS_ENV"]
+          env: ENV["RAILS_ENV"] || "development"
         )
 
         dev_server = DevServer.new(@config)
