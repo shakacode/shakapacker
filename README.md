@@ -272,7 +272,11 @@ Note, the default of "defer" for the `javascript_pack_tag`. You can override tha
 <%= javascript_pack_tag 'calendar' %>
 <%= javascript_pack_tag 'map' %>
 ```
-While this also generally applies to `stylesheet_pack_tag`, you may use multiple calls to stylesheet_pack_tag if, say, you require multiple <style> tags for different output media:
+
+While this also generally applies to `stylesheet_pack_tag`,
+you may use multiple calls to stylesheet_pack_tag if,
+say,
+you require multiple `<style>` tags for different output media:
 
 ``` erb
 <%= stylesheet_pack_tag 'application', media: 'screen' %>
@@ -417,7 +421,16 @@ In production or CI environments, the `digest` strategy is more suitable, unless
 
 You can control what strategy is used by the `compiler_strategy` option in `shakapacker.yml` config file. By default `mtime` strategy is used in development environment, `digest` is used elsewhere.
 
-**Note:** If you are not using the `shakapacker-dev-server`, your packs will be served by the Rails public file server. If you've enabled caching (Rails application `config.action_controller.perform_caching` setting), your changes will likely not be picked up due to `Cache-Control` header being set and assets being cached in the browser memory. For more details see [issue](https://github.com/shakacode/shakapacker/issues/88)[ #88](https://github.com/shakacode/shakapacker/issues/88)](https://github.com/shakacode/shakapacker/issues/88).
+**Note:**
+If you are not using the `shakapacker-dev-server`,
+your packs will be served by the Rails public file server.
+If you've enabled caching
+(Rails application `config.action_controller.perform_caching` setting),
+your changes will likely not be picked up due to `Cache-Control` header being set
+and
+assets being cached in the browser memory.
+For more details see
+[issue 88: Caching issues in Development since migrating to Shakapacker](https://github.com/shakacode/shakapacker/issues/88).
 
 If you want to use live code reloading, or you have enough JavaScript that on-demand compilation is too slow, you'll need to run `./bin/shakapacker-dev-server`. This process will watch for changes in the relevant files, defined by `shakapacker.yml` configuration settings for `source_path`, `source_entry_path`, and `additional_paths`, and it will then automatically reload the browser to match. This feature is also known as [Hot Module Replacement](https://webpack.js.org/concepts/hot-module-replacement/).
 
