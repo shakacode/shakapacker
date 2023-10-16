@@ -29,8 +29,8 @@ describe "DigestStrategy" do
   end
 
   it "is stale when host changes" do
-    allow(Shakapacker.config).to receive(:fetch).with(any_args).and_call_original
-    allow(Shakapacker.config).to receive(:fetch).with(:compiler_strategy_asset_host_sensitive).and_return(true)
+    # allow(Shakapacker.config).to receive(:fetch).with(any_args).and_call_original
+    # allow(Shakapacker.config).to receive(:fetch).with(:compiler_strategy_asset_host_sensitive).and_return(true)
 
     ENV["SHAKAPACKER_ASSET_HOST"] = "the-host"
 
@@ -52,8 +52,8 @@ describe "DigestStrategy" do
   end
 
   it "generates correct compilation_digest_path with " do
-    allow(Shakapacker.config).to receive(:fetch).with(any_args).and_call_original
-    allow(Shakapacker.config).to receive(:fetch).with(:compiler_strategy_asset_host_sensitive).and_return(true)
+    # allow(Shakapacker.config).to receive(:fetch).with(any_args).and_call_original
+    # allow(Shakapacker.config).to receive(:fetch).with(:compiler_strategy_asset_host_sensitive).and_return(true)
 
     ENV["SHAKAPACKER_ASSET_HOST"] = "custom-path"
 

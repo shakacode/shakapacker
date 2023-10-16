@@ -9,6 +9,7 @@ describe "DigestStrategy" do
 
   before :all do
     @digest_strategy = Webpacker::DigestStrategy.new
+    ENV["SHAKAPACKER_ASSET_HOST"] = nil
     remove_compilation_digest_path
   end
 
