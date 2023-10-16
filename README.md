@@ -272,7 +272,11 @@ Note, the default of "defer" for the `javascript_pack_tag`. You can override tha
 <%= javascript_pack_tag 'calendar' %>
 <%= javascript_pack_tag 'map' %>
 ```
-While this also generally applies to `stylesheet_pack_tag`, you may use multiple calls to stylesheet_pack_tag if, say, you require multiple <style> tags for different output media:
+
+While this also generally applies to `stylesheet_pack_tag`,
+you may use multiple calls to stylesheet_pack_tag if,
+say,
+you require multiple `<style>` tags for different output media:
 
 ``` erb
 <%= stylesheet_pack_tag 'application', media: 'screen' %>
