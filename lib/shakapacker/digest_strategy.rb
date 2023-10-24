@@ -54,20 +54,12 @@ module Shakapacker
 
       def compilation_digest_path
         path = "last-compilation-digest-#{Shakapacker.env}"
-        path += "-#{generate_host_hash}" if generate_host_hash.present?
+        if Shakapacker::Compiler.env["SHAKAPACKER_ASSET_HOST"].present?
+          host_hash = Digest::SHA1.hexdigest(Shakapacker::Compiler.env["SHAKAPACKER_ASSET_HOST"])
+          path += "-#{host_hash}"
+        end
 
         config.cache_path.join(path)
-      end
-
-      def generate_host_hash
-        # Using hash for memoizing the host hash is to make testing easier.
-        # The default value, prevents generating hash in the situation where no value for asset_host
-        # and SHAKAPACKER_ASSET_HOST are provided, leading to not add hash to the asset path.
-        @generated_host_hashes ||= { [nil, nil] => "" }
-
-        keys = [Rails.application.config.asset_host, ENV["SHAKAPACKER_ASSET_HOST"]]
-
-        @generated_host_hashes[keys] ||= Digest::SHA1.hexdigest(keys.join("-"))
       end
   end
 end
