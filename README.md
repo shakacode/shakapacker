@@ -51,6 +51,7 @@ Read the [full review here](https://clutch.co/profile/shakacode#reviews?sort_by=
     - [Optional support](#optional-support)
   - [Installation](#installation)
     - [Rails v6+](#rails-v6)
+    - [Using alternative package managers](#using-alternative-package-managers)
     - [Note for Yarn v2 usage](#note-for-yarn-v2-usage)
   - [Concepts](#concepts)
   - [Usage](#usage)
@@ -163,9 +164,21 @@ yarn add @babel/core @babel/plugin-transform-runtime @babel/preset-env @babel/ru
 Previously, these "webpack" and "babel" packages were direct dependencies for `shakapacker`. By
 making these peer dependencies, you have control over the versions used in your webpack and babel configs.
 
+### Using alternative package managers
+
+There is experimental support for using package managers besides Yarn classic for managing JavaScript dependencies using the [`package_json`](https://github.com/G-Rath/package_json) gem.
+
+This can be enabled by setting the environment variable `SHAKAPACKER_USE_PACKAGE_JSON_GEM` to `true`; Shakapacker will then use the `package_json` gem which in turn will look for the [`packageManager`](https://nodejs.org/api/packages.html#packagemanager) property in the `package.json` or otherwise the `PACKAGE_JSON_FALLBACK_MANAGER` environment variable to determine which manager to use, defaulting to `npm` if neither are found.
+
+See [here](https://github.com/G-Rath/package_json#specifying-a-package-manager) for a list of the supported package managers and more information; note that `package_json` does not handle ensuring the manager is installed.
+
+> **Note**
+> 
+> The rest of the documentation assumes that `package_json` is not being used, and so always references `yarn` - you should instead use the package manager of your choice for these commands.  
+
 ### Note for Yarn v2 usage
 
-If you are using Yarn v2 (berry), please note that PnP modules are not supported.
+If you are using Yarn v2 (berry), please note that PnP modules are not supported unless you're using `SHAKAPACKER_USE_PACKAGE_JSON_GEM`.
 
 To use Shakapacker with Yarn v2, make sure you set `nodeLinker: node-modules` in your `.yarnrc.yml` file as per the [Yarn docs](https://yarnpkg.com/getting-started/migration#step-by-step) to opt out of Plug'n'Play behavior.
 

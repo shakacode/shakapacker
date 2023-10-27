@@ -1,7 +1,8 @@
-require "semantic_range"
 namespace :shakapacker do
   desc "Verifies if Yarn is installed"
   task :check_yarn do
+    require "semantic_range"
+
     begin
       which_command = Gem.win_platform? ? "where" : "which"
       raise Errno::ENOENT if `#{which_command} yarn`.strip.empty?

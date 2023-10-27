@@ -1,3 +1,4 @@
+require "shakapacker/utils/misc"
 require "shakapacker/utils/version_syntax_converter"
 
 # Install Shakapacker
@@ -41,12 +42,28 @@ else
   say %(        Add <%= javascript_pack_tag "application" %> within the <head> tag in your custom layout.)
 end
 
+def package_json
+  if @package_json.nil?
+    Shakapacker::Utils::Misc.require_package_json_gem
+
+    @package_json = PackageJson.read
+  end
+
+  @package_json
+end
+
 # Ensure there is `system!("bin/yarn")` command in `./bin/setup` file
 if (setup_path = Rails.root.join("bin/setup")).exist?
-  say "Run bin/yarn during bin/setup"
+  def native_install_command
+    return "bin/yarn" unless Shakapacker::Utils::Misc.use_package_json_gem
+
+    package_json.manager.native_install_command.join(" ")
+  end
+
+  say "Run #{native_install_command} during bin/setup"
 
   if File.read(setup_path).match? Regexp.escape("  # system('bin/yarn')\n")
-    gsub_file(setup_path, "# system('bin/yarn')", "system!('bin/yarn')")
+    gsub_file(setup_path, "# system('bin/yarn')", "system!('#{native_install_command}')")
   else
     # Due to the inconsistency of quotation usage in Rails 7 compared to
     # earlier versions, we check both single and double quotations here.
@@ -55,30 +72,58 @@ if (setup_path = Rails.root.join("bin/setup")).exist?
     string_to_add = <<-RUBY
 
   # Install JavaScript dependencies
-  system!("bin/yarn")
-RUBY
+  system!("#{native_install_command}")
+    RUBY
 
     if File.read(setup_path).match? pattern
       insert_into_file(setup_path, string_to_add, after: pattern)
     else
       say <<~MSG, :red
         It seems your `bin/setup` file doesn't have the expected content.
-        Please review the file and manually add `system!("bin/yarn")` before any
+        Please review the file and manually add `system!("#{native_install_command}")` before any
         other command that requires JavaScript dependencies being already installed.
       MSG
     end
   end
 end
 
-results = []
+def add_dependencies(dependencies, type)
+  return package_json.manager.add!(dependencies, type: type) if Shakapacker::Utils::Misc.use_package_json_gem
+
+  # TODO: check that run actually errors
+  run("yarn add #{dependencies.join(" ")}") if type == :production
+  run("yarn add --dev #{dependencies.join(" ")}") if type == :dev
+rescue PackageJson::Error
+  say "Shakapacker installation failed 😭 See above for details.", :red
+  exit 1
+end
+
+def fetch_peer_dependencies
+  if Shakapacker::Utils::Misc.use_package_json_gem
+    return PackageJson.read("#{__dir__}/../../").fetch("peerDependencies")
+  end
+
+  package_json = File.read("#{__dir__}/../../package.json")
+  JSON.parse(package_json)["peerDependencies"]
+end
 
 Dir.chdir(Rails.root) do
   npm_version = Shakapacker::Utils::VersionSyntaxConverter.new.rubygem_to_npm(Shakapacker::VERSION)
   say "Installing shakapacker@#{npm_version}"
-  results << run("yarn add shakapacker@#{npm_version} --exact")
+  add_dependencies(["shakapacker@#{npm_version}"], :production)
 
-  package_json = File.read("#{__dir__}/../../package.json")
-  peers = JSON.parse(package_json)["peerDependencies"]
+  if Shakapacker::Utils::Misc.use_package_json_gem
+    package_json.merge! do |pj|
+      {
+        "dependencies" => pj["dependencies"].merge({
+          # TODO: workaround for test suite - long-run need to actually account for diff pkg manager behaviour
+          "shakapacker" => pj["dependencies"]["shakapacker"].delete_prefix("^")
+        })
+      }
+    end
+  end
+
+  peers = fetch_peer_dependencies
   dev_dependency_packages = ["webpack-dev-server"]
 
   dependencies_to_add = []
@@ -96,13 +141,8 @@ Dir.chdir(Rails.root) do
   end
 
   say "Adding shakapacker peerDependencies"
-  results << run("yarn add #{dependencies_to_add.join(' ')}")
+  add_dependencies(dependencies_to_add, :production)
 
   say "Installing webpack-dev-server for live reloading as a development dependency"
-  results << run("yarn add --dev #{dev_dependencies_to_add.join(' ')}")
-end
-
-unless results.all?
-  say "Shakapacker installation failed 😭 See above for details.", :red
-  exit 1
+  add_dependencies(dev_dependencies_to_add, :dev)
 end

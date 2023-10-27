@@ -10,6 +10,7 @@ jobs:
       matrix:
         os: [ubuntu-latest]
         ruby: ['2.6', '2.7', '3.0']
+        use_package_json_gem: ['true', 'false']
         gemfile:
           - gemfiles/Gemfile-rails.6.0.x
           - gemfiles/Gemfile-rails.6.1.x
@@ -37,3 +38,5 @@ jobs:
       - name: Install dependencies
         run: bundle install
       - run: bundle exec rake run_spec:generator
+        env:
+          SHAKAPACKER_USE_PACKAGE_JSON_GEM: ${{ matrix.use_package_json_gem }}

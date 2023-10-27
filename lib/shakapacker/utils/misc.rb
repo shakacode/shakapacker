@@ -8,6 +8,18 @@ module Shakapacker
     class Misc
       extend FileUtils
 
+      def self.use_package_json_gem
+        ENV.fetch("SHAKAPACKER_USE_PACKAGE_JSON_GEM", "false").casecmp("true").zero?
+      end
+
+      def self.require_package_json_gem
+        unless use_package_json_gem
+          raise "PackageJson should not be used unless SHAKAPACKER_USE_PACKAGE_JSON_GEM is true"
+        end
+
+        require "package_json"
+      end
+
       def self.uncommitted_changes?(message_handler)
         return false if ENV["COVERAGE"] == "true"
 

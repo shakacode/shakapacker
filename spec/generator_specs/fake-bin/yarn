@@ -1,0 +1,10 @@
+#!/usr/bin/env ruby
+
+binary = "yarn"
+major_version = "1"
+
+unless ENV["SHAKAPACKER_EXPECTED_PACKAGE_MANGER"] == "#{binary}_classic"
+  raise StandardError, "(#{binary}) this is not the package manager you're looking for..."
+end
+
+exec("npx", "-y", "#{binary}@#{major_version}", *ARGV)

@@ -3,7 +3,7 @@ bin_path = ENV["BUNDLE_BIN"] || Rails.root.join("bin")
 
 namespace :shakapacker do
   desc "Installs Shakapacker binstubs in this application"
-  task binstubs: [:check_node, :check_yarn] do |task|
+  task binstubs: [:check_node, :check_manager] do |task|
     prefix = task.name.split(/#|shakapacker:binstubs/).first
 
     if Rails::VERSION::MAJOR >= 5
