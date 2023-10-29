@@ -356,4 +356,30 @@ describe "Shakapacker::Configuration" do
       expect(config.asset_host).to eq "domain.abc"
     end
   end
+
+  describe "#relative_url_root" do
+    let(:config) do
+      Shakapacker::Configuration.new(
+        root_path: ROOT_PATH,
+        config_path: Pathname.new(File.expand_path("./test_app/config/shakapacker.yml", __dir__)),
+        env: "production"
+      )
+    end
+
+    it "returns the value of SHAKAPACKER_RELATIVE_URL_ROOT if set" do
+      original_env_value = ENV["SHAKAPACKER_RELATIVE_URL_ROOT"]
+      ENV["SHAKAPACKER_RELATIVE_URL_ROOT"] = "custom_value"
+
+      expect(config.relative_url_root).to eq "custom_value"
+
+    ensure
+      ENV["SHAKAPACKER_RELATIVE_URL_ROOT"] = original_env_value
+    end
+
+    it "returns ActionController::Base.helpers.compute_asset_host if SHAKAPACKER_RELATIVE_URL_ROOT is not set" do
+      allow(ActionController::Base).to receive(:relative_url_root).and_return("abcd")
+
+      expect(config.relative_url_root).to eq "abcd"
+    end
+  end
 end
