@@ -51,8 +51,8 @@ describe "Shakapacker::Compiler" do
     expect(Shakapacker.compiler.send(:webpack_env)["SHAKAPACKER_RELATIVE_URL_ROOT"]).to be nil
 
     custom_env_variables = {
-      "WEBPACKER_ASSET_HOST" => "foo.bar",
-      "WEBPACKER_RELATIVE_URL_ROOT" => "/baz"
+      "SHAKAPACKER_ASSET_HOST" => "foo.bar",
+      "SHAKAPACKER_RELATIVE_URL_ROOT" => "/baz"
     }
 
     with_env_variable(custom_env_variables) do
