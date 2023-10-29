@@ -351,9 +351,14 @@ describe "Shakapacker::Configuration" do
     end
 
     it "returns ActionController::Base.helpers.compute_asset_host if SHAKAPACKER_ASSET_HOST is not set" do
+      original_env_value = ENV["SHAKAPACKER_ASSET_HOST"]
+      ENV["SHAKAPACKER_ASSET_HOST"] = nil
+
       allow(ActionController::Base.helpers).to receive(:compute_asset_host).and_return("domain.abc")
 
       expect(config.asset_host).to eq "domain.abc"
+    ensure
+      ENV["SHAKAPACKER_ASSET_HOST"] = original_env_value
     end
   end
 
@@ -377,9 +382,15 @@ describe "Shakapacker::Configuration" do
     end
 
     it "returns ActionController::Base.helpers.compute_asset_host if SHAKAPACKER_RELATIVE_URL_ROOT is not set" do
+      original_env_value = ENV["SHAKAPACKER_RELATIVE_URL_ROOT"]
+      ENV["SHAKAPACKER_RELATIVE_URL_ROOT"] = nil
+
       allow(ActionController::Base).to receive(:relative_url_root).and_return("abcd")
 
       expect(config.relative_url_root).to eq "abcd"
+
+    ensure
+      ENV["SHAKAPACKER_RELATIVE_URL_ROOT"] = original_env_value
     end
   end
 end
