@@ -330,4 +330,30 @@ describe "Shakapacker::Configuration" do
       expect(actual).to eq(expected)
     end
   end
+
+  describe "#asset_host" do
+    let(:config) do
+      Shakapacker::Configuration.new(
+        root_path: ROOT_PATH,
+        config_path: Pathname.new(File.expand_path("./test_app/config/shakapacker.yml", __dir__)),
+        env: "production"
+      )
+    end
+
+    it "returns the value of SHAKAPACKER_ASSET_HOST if set" do
+      original_env_value = ENV["SHAKAPACKER_ASSET_HOST"]
+      ENV["SHAKAPACKER_ASSET_HOST"] = "custom_host.abc"
+
+      expect(config.asset_host).to eq "custom_host.abc"
+
+    ensure
+      ENV["SHAKAPACKER_ASSET_HOST"] = original_env_value
+    end
+
+    it "returns ActionController::Base.helpers.compute_asset_host if SHAKAPACKER_ASSET_HOST is not set" do
+      allow(ActionController::Base.helpers).to receive(:compute_asset_host).and_return("domain.abc")
+
+      expect(config.asset_host).to eq "domain.abc"
+    end
+  end
 end
