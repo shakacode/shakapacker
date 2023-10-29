@@ -341,24 +341,17 @@ describe "Shakapacker::Configuration" do
     end
 
     it "returns the value of SHAKAPACKER_ASSET_HOST if set" do
-      original_env_value = ENV["SHAKAPACKER_ASSET_HOST"]
-      ENV["SHAKAPACKER_ASSET_HOST"] = "custom_host.abc"
-
-      expect(config.asset_host).to eq "custom_host.abc"
-
-    ensure
-      ENV["SHAKAPACKER_ASSET_HOST"] = original_env_value
+      with_env_variable("SHAKAPACKER_ASSET_HOST" => "custom_host.abc") do
+        expect(config.asset_host).to eq "custom_host.abc"
+      end
     end
 
     it "returns ActionController::Base.helpers.compute_asset_host if SHAKAPACKER_ASSET_HOST is not set" do
-      original_env_value = ENV["SHAKAPACKER_ASSET_HOST"]
-      ENV["SHAKAPACKER_ASSET_HOST"] = nil
-
       allow(ActionController::Base.helpers).to receive(:compute_asset_host).and_return("domain.abc")
 
-      expect(config.asset_host).to eq "domain.abc"
-    ensure
-      ENV["SHAKAPACKER_ASSET_HOST"] = original_env_value
+      with_env_variable("SHAKAPACKER_ASSET_HOST" => nil) do
+        expect(config.asset_host).to eq "domain.abc"
+      end
     end
   end
 
@@ -372,25 +365,17 @@ describe "Shakapacker::Configuration" do
     end
 
     it "returns the value of SHAKAPACKER_RELATIVE_URL_ROOT if set" do
-      original_env_value = ENV["SHAKAPACKER_RELATIVE_URL_ROOT"]
-      ENV["SHAKAPACKER_RELATIVE_URL_ROOT"] = "custom_value"
-
-      expect(config.relative_url_root).to eq "custom_value"
-
-    ensure
-      ENV["SHAKAPACKER_RELATIVE_URL_ROOT"] = original_env_value
+      with_env_variable("SHAKAPACKER_RELATIVE_URL_ROOT" => "custom_value") do
+        expect(config.relative_url_root).to eq "custom_value"
+      end
     end
 
     it "returns ActionController::Base.helpers.compute_asset_host if SHAKAPACKER_RELATIVE_URL_ROOT is not set" do
-      original_env_value = ENV["SHAKAPACKER_RELATIVE_URL_ROOT"]
-      ENV["SHAKAPACKER_RELATIVE_URL_ROOT"] = nil
-
       allow(ActionController::Base).to receive(:relative_url_root).and_return("abcd")
 
-      expect(config.relative_url_root).to eq "abcd"
-
-    ensure
-      ENV["SHAKAPACKER_RELATIVE_URL_ROOT"] = original_env_value
+      with_env_variable("SHAKAPACKER_RELATIVE_URL_ROOT" => nil) do
+        expect(config.relative_url_root).to eq "abcd"
+      end
     end
   end
 end
