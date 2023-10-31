@@ -29,31 +29,33 @@ describe "DigestStrategy" do
   end
 
   it "is stale when host changes" do
-    old_host = Shakapacker::Compiler.env["SHAKAPACKER_ASSET_HOST"]
+    with_env_variable("SHAKAPACKER_ASSET_HOST" => "old-host") do
+      # Record the digests for old-host
+      @digest_strategy.after_compile_hook
 
-    Shakapacker::Compiler.env["SHAKAPACKER_ASSET_HOST"] = "the-host"
-
-    @digest_strategy.after_compile_hook
-
-    Shakapacker::Compiler.env["SHAKAPACKER_ASSET_HOST"] = "new-host"
-
-    expect(@digest_strategy.stale?).to be true
-    expect(@digest_strategy.fresh?).to be_falsey
-
-    Shakapacker::Compiler.env["SHAKAPACKER_ASSET_HOST"] = old_host
+      with_env_variable("SHAKAPACKER_ASSET_HOST" => "new-host") do
+        expect(@digest_strategy.stale?).to be true
+        expect(@digest_strategy.fresh?).to be_falsey
+      end
+    end
   end
 
   it "generates correct compilation_digest_path" do
-    old_host = Shakapacker::Compiler.env["SHAKAPACKER_ASSET_HOST"]
+    with_env_variable("SHAKAPACKER_ASSET_HOST" => "custom-path") do
+      actual_path = @digest_strategy.send(:compilation_digest_path).basename.to_s
+      host_hash = Digest::SHA1.hexdigest("custom-path")
+      expected_path = "last-compilation-digest-#{Shakapacker.env}-#{host_hash}"
 
-    Shakapacker::Compiler.env["SHAKAPACKER_ASSET_HOST"] = "custom-path"
+      expect(actual_path).to eq expected_path
+    end
+  end
 
-    actual_path = @digest_strategy.send(:compilation_digest_path).basename.to_s
-    host_hash = Digest::SHA1.hexdigest("custom-path")
-    expected_path = "last-compilation-digest-#{Shakapacker.env}-#{host_hash}"
+  it "generates correct compilation_digest_path without the digest of the asset host if asset host is not set" do
+    with_env_variable("SHAKAPACKER_ASSET_HOST" => nil) do
+      actual_path = @digest_strategy.send(:compilation_digest_path).basename.to_s
+      expected_path = "last-compilation-digest-#{Shakapacker.env}"
 
-    expect(actual_path).to eq expected_path
-
-    Shakapacker::Compiler.env["SHAKAPACKER_ASSET_HOST"] = old_host
+      expect(actual_path).to eq expected_path
+    end
   end
 end

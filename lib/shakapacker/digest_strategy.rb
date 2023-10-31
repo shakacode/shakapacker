@@ -54,8 +54,8 @@ module Shakapacker
 
       def compilation_digest_path
         path = "last-compilation-digest-#{Shakapacker.env}"
-        if Shakapacker::Compiler.env["SHAKAPACKER_ASSET_HOST"].present?
-          host_hash = Digest::SHA1.hexdigest(Shakapacker::Compiler.env["SHAKAPACKER_ASSET_HOST"])
+        if Shakapacker.config.asset_host.present?
+          host_hash = Digest::SHA1.hexdigest(Shakapacker.config.asset_host)
           path += "-#{host_hash}"
         end
 
