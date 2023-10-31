@@ -53,11 +53,10 @@ module Shakapacker
       end
 
       def compilation_digest_path
+        asset_host = Shakapacker.config.asset_host
+
         path = "last-compilation-digest-#{Shakapacker.env}"
-        if Shakapacker.config.asset_host.present?
-          host_hash = Digest::SHA1.hexdigest(Shakapacker.config.asset_host)
-          path += "-#{host_hash}"
-        end
+        path += "-#{Digest::SHA1.hexdigest(asset_host)}" if asset_host.present?
 
         config.cache_path.join(path)
       end
