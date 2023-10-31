@@ -24,8 +24,10 @@ ensure
 end
 
 # Temportarily set env variables to a custom value
-# arg: a hash with key:value for each custom env
-#      Keys could be string or symbol
+#
+# Params
+# +custom_env_hash+:: A hash with key:value for each custom env.
+#                     Keys could be string or symbol
 def with_env_variable(custom_env_hash)
   original_env = {}
   custom_env_hash.each do |key, new_value|
