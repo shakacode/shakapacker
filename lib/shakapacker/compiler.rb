@@ -106,9 +106,11 @@ class Shakapacker::Compiler
 
       Shakapacker.set_shakapacker_env_variables_for_backward_compatibility
 
-      env.merge("SHAKAPACKER_ASSET_HOST"        => ENV.fetch("SHAKAPACKER_ASSET_HOST", ActionController::Base.helpers.compute_asset_host),
-                "SHAKAPACKER_RELATIVE_URL_ROOT" => ENV.fetch("SHAKAPACKER_RELATIVE_URL_ROOT", ActionController::Base.relative_url_root),
-                "SHAKAPACKER_CONFIG" => instance.config_path.to_s)
+      env.merge(
+        "SHAKAPACKER_ASSET_HOST"        => instance.config.asset_host,
+        "SHAKAPACKER_RELATIVE_URL_ROOT" => instance.config.relative_url_root,
+        "SHAKAPACKER_CONFIG"            => instance.config_path.to_s
+      )
     end
 
     def bin_shakapacker_path
