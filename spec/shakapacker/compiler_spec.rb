@@ -50,14 +50,10 @@ describe "Shakapacker::Compiler" do
     expect(Shakapacker.compiler.send(:webpack_env)["SHAKAPACKER_ASSET_HOST"]).to be nil
     expect(Shakapacker.compiler.send(:webpack_env)["SHAKAPACKER_RELATIVE_URL_ROOT"]).to be nil
 
-    custom_env_variables = {
-      "SHAKAPACKER_ASSET_HOST" => "foo.bar",
-      "SHAKAPACKER_RELATIVE_URL_ROOT" => "/baz"
-    }
+    allow(ENV).to receive(:fetch).with("SHAKAPACKER_ASSET_HOST", nil).and_return("foo.bar")
+    allow(ENV).to receive(:fetch).with("SHAKAPACKER_RELATIVE_URL_ROOT", nil).and_return("/baz")
 
-    with_env_variable(custom_env_variables) do
-      expect(Shakapacker.compiler.send(:webpack_env)["SHAKAPACKER_ASSET_HOST"]).to eq "foo.bar"
-      expect(Shakapacker.compiler.send(:webpack_env)["SHAKAPACKER_RELATIVE_URL_ROOT"]).to eq "/baz"
-    end
+    expect(Shakapacker.compiler.send(:webpack_env)["SHAKAPACKER_ASSET_HOST"]).to eq "foo.bar"
+    expect(Shakapacker.compiler.send(:webpack_env)["SHAKAPACKER_RELATIVE_URL_ROOT"]).to eq "/baz"
   end
 end
