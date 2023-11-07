@@ -43,7 +43,7 @@ describe "DigestStrategy" do
 
     actual_path = @digest_strategy.send(:compilation_digest_path).basename.to_s
     host_hash = Digest::SHA1.hexdigest("custom-path")
-    expected_path = "last-compilation-digest-#{Shakapacker.env}-#{host_hash}"
+    expected_path = "last-compilation-digest-#{Shakapacker.env}"
 
     expect(actual_path).to eq expected_path
   end
