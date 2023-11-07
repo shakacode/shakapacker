@@ -369,7 +369,7 @@ describe "Shakapacker::Configuration" do
       expect(config.relative_url_root).to eq "custom_value"
     end
 
-    it "returns ActionController::Base.helpers.compute_asset_host if SHAKAPACKER_RELATIVE_URL_ROOT is not set" do
+    it "returns ActionController::Base.relative_url_root if SHAKAPACKER_RELATIVE_URL_ROOT is not set" do
       allow(ActionController::Base).to receive(:relative_url_root).and_return("abcd")
       allow(ENV).to receive(:fetch).with("SHAKAPACKER_RELATIVE_URL_ROOT", "abcd").and_return("abcd")
 
