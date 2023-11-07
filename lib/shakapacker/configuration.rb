@@ -117,11 +117,11 @@ class Shakapacker::Configuration
   end
 
   def asset_host
-    ENV.fetch("SHAKAPACKER_ASSET_HOST", ActionController::Base.helpers.compute_asset_host)
+    ENV.fetch("SHAKAPACKER_ASSET_HOST", ActionController::Base.helpers.compute_asset_host).to_s
   end
 
   def relative_url_root
-    ENV.fetch("SHAKAPACKER_RELATIVE_URL_ROOT", ActionController::Base.relative_url_root)
+    ENV.fetch("SHAKAPACKER_RELATIVE_URL_ROOT", ActionController::Base.relative_url_root).to_s
   end
 
   private

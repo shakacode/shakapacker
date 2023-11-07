@@ -340,6 +340,12 @@ describe "Shakapacker::Configuration" do
       )
     end
 
+    it "returns an empty string if neither SHAKAPACKER_ASSET_HOST nor ActionController::Base.helpers.compute_asset_host is set" do
+      expect(ENV).to receive(:fetch).with("SHAKAPACKER_ASSET_HOST", nil).and_return(nil)
+
+      expect(config.asset_host).to eq ""
+    end
+
     it "returns the value of SHAKAPACKER_ASSET_HOST if set" do
       expect(ENV).to receive(:fetch).with("SHAKAPACKER_ASSET_HOST", nil).and_return("custom_host.abc")
 
@@ -361,6 +367,12 @@ describe "Shakapacker::Configuration" do
         config_path: Pathname.new(File.expand_path("./test_app/config/shakapacker.yml", __dir__)),
         env: "production"
       )
+    end
+
+    it "returns an empty string if neither SHAKAPACKER_RELATIVE_URL_ROOT nor ActionController::Base.relative_url_root is set" do
+      expect(ENV).to receive(:fetch).with("SHAKAPACKER_RELATIVE_URL_ROOT", nil).and_return(nil)
+
+      expect(config.relative_url_root).to eq ""
     end
 
     it "returns the value of SHAKAPACKER_RELATIVE_URL_ROOT if set" do
