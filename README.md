@@ -449,10 +449,9 @@ If you want to use live code reloading, or you have enough JavaScript that on-de
 
 **Note:**
 In digest strategy,
-if you set a custom asset host either through
+setting or changing the asset host either through
 `Rails.application.config.asset_host` or `SHAKAPACKER_ASSET_HOST` environment variable,
-a hash gets added to the asset path.
-This feature causes recompilation of assets by changing the asset host.
+forces the recompilation of assets.
 
 #### Common Development Commands
 
