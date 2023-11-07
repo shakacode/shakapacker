@@ -340,23 +340,37 @@ describe "Shakapacker::Configuration" do
       )
     end
 
-    it "returns an empty string if neither SHAKAPACKER_ASSET_HOST nor ActionController::Base.helpers.compute_asset_host is set" do
-      expect(ENV).to receive(:fetch).with("SHAKAPACKER_ASSET_HOST", nil).and_return(nil)
-
-      expect(config.asset_host).to eq ""
-    end
-
     it "returns the value of SHAKAPACKER_ASSET_HOST if set" do
       expect(ENV).to receive(:fetch).with("SHAKAPACKER_ASSET_HOST", nil).and_return("custom_host.abc")
 
       expect(config.asset_host).to eq "custom_host.abc"
     end
 
-    it "returns ActionController::Base.helpers.compute_asset_host if SHAKAPACKER_ASSET_HOST is not set" do
-      allow(ActionController::Base.helpers).to receive(:compute_asset_host).and_return("domain.abc")
-      allow(ENV).to receive(:fetch).with("SHAKAPACKER_ASSET_HOST", "domain.abc").and_return("domain.abc")
+    context "without SHAKAPACKER_ASSET_HOST set" do
+      it "returns asset_host in shakapacker.yml if set" do
+        expect(config).to receive(:fetch).with(:asset_host).and_return("value-in-config-file.com")
+        expect(ENV).to receive(:fetch).with("SHAKAPACKER_ASSET_HOST", "value-in-config-file.com").and_return("value-in-config-file.com")
 
-      expect(config.asset_host).to eq "domain.abc"
+        expect(config.asset_host).to eq "value-in-config-file.com"
+      end
+
+      context "without asset_host set in the shakapacker.yml" do
+        it "returns ActionController::Base.helpers.compute_asset_host if SHAKAPACKER_ASSET_HOST is not set" do
+          expect(config).to receive(:fetch).with(:asset_host).and_return(nil)
+          expect(ActionController::Base.helpers).to receive(:compute_asset_host).and_return("domain.abc")
+          allow(ENV).to receive(:fetch).with("SHAKAPACKER_ASSET_HOST", "domain.abc").and_return("domain.abc")
+
+          expect(config.asset_host).to eq "domain.abc"
+        end
+
+        context "without ActionController::Base.helpers.compute_asset_host returing any value" do
+          it "returns an empty string" do
+            expect(ENV).to receive(:fetch).with("SHAKAPACKER_ASSET_HOST", nil).and_return(nil)
+
+            expect(config.asset_host).to eq ""
+          end
+        end
+      end
     end
   end
 
@@ -369,23 +383,36 @@ describe "Shakapacker::Configuration" do
       )
     end
 
-    it "returns an empty string if neither SHAKAPACKER_RELATIVE_URL_ROOT nor ActionController::Base.relative_url_root is set" do
-      expect(ENV).to receive(:fetch).with("SHAKAPACKER_RELATIVE_URL_ROOT", nil).and_return(nil)
-
-      expect(config.relative_url_root).to eq ""
-    end
-
     it "returns the value of SHAKAPACKER_RELATIVE_URL_ROOT if set" do
-      allow(ENV).to receive(:fetch).with("SHAKAPACKER_RELATIVE_URL_ROOT", nil).and_return("custom_value")
+      expect(ENV).to receive(:fetch).with("SHAKAPACKER_RELATIVE_URL_ROOT", nil).and_return("custom_value")
 
       expect(config.relative_url_root).to eq "custom_value"
     end
 
-    it "returns ActionController::Base.relative_url_root if SHAKAPACKER_RELATIVE_URL_ROOT is not set" do
-      allow(ActionController::Base).to receive(:relative_url_root).and_return("abcd")
-      allow(ENV).to receive(:fetch).with("SHAKAPACKER_RELATIVE_URL_ROOT", "abcd").and_return("abcd")
+    context "without SHAKAPACKER_RELATIVE_URL_ROOT set" do
+      it "returns relative_url_root in shakapacker.yml if set" do
+        expect(config).to receive(:fetch).with(:relative_url_root).and_return("value-in-config-file")
+        expect(ENV).to receive(:fetch).with("SHAKAPACKER_RELATIVE_URL_ROOT", "value-in-config-file").and_return("value-in-config-file")
 
-      expect(config.relative_url_root).to eq "abcd"
+        expect(config.relative_url_root).to eq "value-in-config-file"
+      end
+
+      context "without relative_url_root set in the shakapacker.yml" do
+        it "returns ActionController::Base.relative_url_root if SHAKAPACKER_RELATIVE_URL_ROOT is not set" do
+          expect(ActionController::Base).to receive(:relative_url_root).and_return("abcd")
+          expect(ENV).to receive(:fetch).with("SHAKAPACKER_RELATIVE_URL_ROOT", "abcd").and_return("abcd")
+
+          expect(config.relative_url_root).to eq "abcd"
+        end
+
+        context "without ActionController::Base.relative_url_root returing any value" do
+          it "returns an empty string" do
+            expect(ENV).to receive(:fetch).with("SHAKAPACKER_RELATIVE_URL_ROOT", nil).and_return(nil)
+
+            expect(config.relative_url_root).to eq ""
+          end
+        end
+      end
     end
   end
 end
