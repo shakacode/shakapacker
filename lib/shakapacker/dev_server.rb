@@ -31,7 +31,13 @@ class Shakapacker::DevServer
   end
 
   def https?
-    case fetch(:https)
+    value = fetch(:https)
+
+    unless value.nil?
+      puts "WARNING: `https: true` has been deprecated in favor of `server: 'https'`"
+    end
+
+    case value
     when true, "true", Hash
       true
     else
