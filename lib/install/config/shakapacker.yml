@@ -59,8 +59,6 @@ development:
   # Keys not described there are documented inline and in https://github.com/shakacode/shakapacker/
   dev_server:
     # For running dev server with https, set `server: https`.
-    # You may use `https: true` instead but notice that it is deprecated in favor of `server: https`
-    # Ensure only one of these entries is set.
     # server: https
 
     host: localhost
