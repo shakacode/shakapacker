@@ -45,19 +45,52 @@ describe "DevServerRunner" do
         verify_command(cmd, argv: (["--quiet"]))
       end
 
+      it "does not automatically pass the --https flag" do
+        cmd = package_json.manager.native_exec_command("webpack", ["serve", "--config", "#{test_app_path}/config/webpack/webpack.config.js"])
+
+        allow(Shakapacker::DevServer).to receive(:new).and_return(
+          double(
+            host: "localhost",
+            port: "3035",
+            pretty?: false,
+            protocol: "https",
+            hmr?: false
+          )
+        )
+
+        verify_command(cmd)
+      end
+
       it "supports the https flag" do
         cmd = package_json.manager.native_exec_command("webpack", ["serve", "--config", "#{test_app_path}/config/webpack/webpack.config.js", "--https"])
 
-        dev_server = double()
-        allow(dev_server).to receive(:host).and_return("localhost")
-        allow(dev_server).to receive(:port).and_return("3035")
-        allow(dev_server).to receive(:pretty?).and_return(false)
-        allow(dev_server).to receive(:https?).and_return(true)
-        allow(dev_server).to receive(:hmr?).and_return(false)
+        allow(Shakapacker::DevServer).to receive(:new).and_return(
+          double(
+            host: "localhost",
+            port: "3035",
+            pretty?: false,
+            protocol: "https",
+            hmr?: false
+          )
+        )
 
-        allow(Shakapacker::DevServer).to receive(:new) do
-          verify_command(cmd, argv: (["--https"]))
-        end.and_return(dev_server)
+        verify_command(cmd, argv: ["--https"])
+      end
+
+      it "supports hot module reloading" do
+        cmd = package_json.manager.native_exec_command("webpack", ["serve", "--config", "#{test_app_path}/config/webpack/webpack.config.js", "--hot"])
+
+        allow(Shakapacker::DevServer).to receive(:new).and_return(
+          double(
+            host: "localhost",
+            port: "3035",
+            pretty?: false,
+            protocol: "http",
+            hmr?: true
+          )
+        )
+
+        verify_command(cmd)
       end
 
       it "accepts environment variables" do
@@ -94,19 +127,52 @@ describe "DevServerRunner" do
       verify_command(cmd, argv: (["--quiet"]))
     end
 
+    it "does not automatically pass the --https flag" do
+      cmd = ["#{test_app_path}/node_modules/.bin/webpack", "serve", "--config", "#{test_app_path}/config/webpack/webpack.config.js"]
+
+      allow(Shakapacker::DevServer).to receive(:new).and_return(
+        double(
+          host: "localhost",
+          port: "3035",
+          pretty?: false,
+          protocol: "https",
+          hmr?: false
+        )
+      )
+
+      verify_command(cmd)
+    end
+
     it "supports the https flag" do
       cmd = ["#{test_app_path}/node_modules/.bin/webpack", "serve", "--config", "#{test_app_path}/config/webpack/webpack.config.js", "--https"]
 
-      dev_server = double()
-      allow(dev_server).to receive(:host).and_return("localhost")
-      allow(dev_server).to receive(:port).and_return("3035")
-      allow(dev_server).to receive(:pretty?).and_return(false)
-      allow(dev_server).to receive(:https?).and_return(true)
-      allow(dev_server).to receive(:hmr?).and_return(false)
+      allow(Shakapacker::DevServer).to receive(:new).and_return(
+        double(
+          host: "localhost",
+          port: "3035",
+          pretty?: false,
+          protocol: "https",
+          hmr?: false
+        )
+      )
 
-      allow(Shakapacker::DevServer).to receive(:new) do
-        verify_command(cmd, argv: (["--https"]))
-      end.and_return(dev_server)
+      verify_command(cmd, argv: ["--https"])
+    end
+
+    it "supports hot module reloading" do
+      cmd = ["#{test_app_path}/node_modules/.bin/webpack", "serve", "--config", "#{test_app_path}/config/webpack/webpack.config.js", "--hot"]
+
+      allow(Shakapacker::DevServer).to receive(:new).and_return(
+        double(
+          host: "localhost",
+          port: "3035",
+          pretty?: false,
+          protocol: "http",
+          hmr?: true
+        )
+      )
+
+      verify_command(cmd)
     end
 
     it "accepts environment variables" do
