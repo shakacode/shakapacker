@@ -48,12 +48,9 @@ describe "Webpacker::Compiler" do
 
   it "accepts external env variables" do
     expect(Webpacker.compiler.send(:webpack_env)["SHAKAPACKER_ASSET_HOST"]).to eq ""
-    expect(Webpacker.compiler.send(:webpack_env)["SHAKAPACKER_RELATIVE_URL_ROOT"]).to eq ""
 
     ENV["WEBPACKER_ASSET_HOST"] = "foo.bar"
-    ENV["WEBPACKER_RELATIVE_URL_ROOT"] = "/baz"
 
     expect(Webpacker.compiler.send(:webpack_env)["SHAKAPACKER_ASSET_HOST"]).to eq "foo.bar"
-    expect(Webpacker.compiler.send(:webpack_env)["SHAKAPACKER_RELATIVE_URL_ROOT"]).to eq "/baz"
   end
 end

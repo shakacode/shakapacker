@@ -55,8 +55,6 @@ default: &default
   # SHAKAPACKER_ASSET_HOST will override both configurations.
   # asset_host: custom-path
 
-  # relative_url_root: custom-path
-
 development:
   <<: *default
   compile: true

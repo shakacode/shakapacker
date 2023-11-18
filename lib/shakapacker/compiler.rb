@@ -108,7 +108,6 @@ class Shakapacker::Compiler
 
       env.merge(
         "SHAKAPACKER_ASSET_HOST"        => instance.config.asset_host,
-        "SHAKAPACKER_RELATIVE_URL_ROOT" => instance.config.relative_url_root,
         "SHAKAPACKER_CONFIG"            => instance.config_path.to_s
       )
     end
