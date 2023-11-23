@@ -173,6 +173,22 @@ describe "DevServerRunner" do
       verify_command(cmd)
     end
 
+    it "supports --hot being 'only'" do
+      cmd = ["#{test_app_path}/node_modules/.bin/webpack", "serve", "--config", "#{test_app_path}/config/webpack/webpack.config.js", "--hot", "only"]
+
+      allow(Shakapacker::DevServer).to receive(:new).and_return(
+        double(
+          host: "localhost",
+          port: "3035",
+          pretty?: false,
+          protocol: "http",
+          hmr?: "only"
+        )
+      )
+
+      verify_command(cmd)
+    end
+
     it "accepts environment variables" do
       cmd = ["#{test_app_path}/node_modules/.bin/webpack", "serve", "--config", "#{test_app_path}/config/webpack/webpack.config.js"]
       env = Shakapacker::Compiler.env.dup
