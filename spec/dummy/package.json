@@ -39,6 +39,5 @@
     "fork-ts-checker-webpack-plugin": "^6.5.2",
     "react-refresh": "^0.14.0",
     "webpack-dev-server": "^4.9.2"
-  },
-  "packageManager": "yarn@3.2.1"
+  }
 }
