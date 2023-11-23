@@ -48,7 +48,7 @@ module Shakapacker
         end
 
         if @argv.include?("--https") && !@https
-          $stdout.puts "Please set https: true in shakapacker.yml to use the --https command line flag."
+          $stdout.puts "--https requires that 'server' in shakapacker.yml is set to 'https'"
           exit!
         end
       end
