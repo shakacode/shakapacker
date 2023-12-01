@@ -341,17 +341,16 @@ describe "Shakapacker::Configuration" do
     end
 
     it "returns the value of SHAKAPACKER_ASSET_HOST if set" do
-      with_env_variable("SHAKAPACKER_ASSET_HOST" => "custom_host.abc") do
-        expect(config.asset_host).to eq "custom_host.abc"
-      end
+      expect(ENV).to receive(:fetch).with("SHAKAPACKER_ASSET_HOST", nil).and_return("custom_host.abc")
+
+      expect(config.asset_host).to eq "custom_host.abc"
     end
 
     it "returns ActionController::Base.helpers.compute_asset_host if SHAKAPACKER_ASSET_HOST is not set" do
       allow(ActionController::Base.helpers).to receive(:compute_asset_host).and_return("domain.abc")
+      allow(ENV).to receive(:fetch).with("SHAKAPACKER_ASSET_HOST", "domain.abc").and_return("domain.abc")
 
-      with_env_variable("SHAKAPACKER_ASSET_HOST" => nil) do
-        expect(config.asset_host).to eq "domain.abc"
-      end
+      expect(config.asset_host).to eq "domain.abc"
     end
   end
 
@@ -365,17 +364,16 @@ describe "Shakapacker::Configuration" do
     end
 
     it "returns the value of SHAKAPACKER_RELATIVE_URL_ROOT if set" do
-      with_env_variable("SHAKAPACKER_RELATIVE_URL_ROOT" => "custom_value") do
-        expect(config.relative_url_root).to eq "custom_value"
-      end
+      allow(ENV).to receive(:fetch).with("SHAKAPACKER_RELATIVE_URL_ROOT", nil).and_return("custom_value")
+
+      expect(config.relative_url_root).to eq "custom_value"
     end
 
     it "returns ActionController::Base.helpers.compute_asset_host if SHAKAPACKER_RELATIVE_URL_ROOT is not set" do
       allow(ActionController::Base).to receive(:relative_url_root).and_return("abcd")
+      allow(ENV).to receive(:fetch).with("SHAKAPACKER_RELATIVE_URL_ROOT", "abcd").and_return("abcd")
 
-      with_env_variable("SHAKAPACKER_RELATIVE_URL_ROOT" => nil) do
-        expect(config.relative_url_root).to eq "abcd"
-      end
+      expect(config.relative_url_root).to eq "abcd"
     end
   end
 end
