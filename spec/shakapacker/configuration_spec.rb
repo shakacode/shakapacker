@@ -373,4 +373,46 @@ describe "Shakapacker::Configuration" do
       end
     end
   end
+
+  describe "#relative_url_root" do
+    let(:config) do
+      Shakapacker::Configuration.new(
+        root_path: ROOT_PATH,
+        config_path: Pathname.new(File.expand_path("./test_app/config/shakapacker.yml", __dir__)),
+        env: "production"
+      )
+    end
+
+    it "returns the value of SHAKAPACKER_RELATIVE_URL_ROOT if set" do
+      expect(ENV).to receive(:fetch).with("SHAKAPACKER_RELATIVE_URL_ROOT", nil).and_return("custom_value")
+
+      expect(config.relative_url_root).to eq "custom_value"
+    end
+
+    context "without SHAKAPACKER_RELATIVE_URL_ROOT set" do
+      it "returns relative_url_root in shakapacker.yml if set" do
+        expect(config).to receive(:fetch).with(:relative_url_root).and_return("value-in-config-file")
+        expect(ENV).to receive(:fetch).with("SHAKAPACKER_RELATIVE_URL_ROOT", "value-in-config-file").and_return("value-in-config-file")
+
+        expect(config.relative_url_root).to eq "value-in-config-file"
+      end
+
+      context "without relative_url_root set in the shakapacker.yml" do
+        it "returns ActionController::Base.relative_url_root if SHAKAPACKER_RELATIVE_URL_ROOT is not set" do
+          expect(ActionController::Base).to receive(:relative_url_root).and_return("abcd")
+          expect(ENV).to receive(:fetch).with("SHAKAPACKER_RELATIVE_URL_ROOT", "abcd").and_return("abcd")
+
+          expect(config.relative_url_root).to eq "abcd"
+        end
+
+        context "without ActionController::Base.relative_url_root returing any value" do
+          it "returns an empty string" do
+            expect(ENV).to receive(:fetch).with("SHAKAPACKER_RELATIVE_URL_ROOT", nil).and_return(nil)
+
+            expect(config.relative_url_root).to eq ""
+          end
+        end
+      end
+    end
+  end
 end

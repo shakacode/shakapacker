@@ -123,6 +123,13 @@ class Shakapacker::Configuration
     ).to_s
   end
 
+  def relative_url_root
+    ENV.fetch(
+      "SHAKAPACKER_RELATIVE_URL_ROOT",
+      fetch(:relative_url_root) || ActionController::Base.relative_url_root
+    ).to_s
+  end
+
   private
     def data
       @data ||= load
