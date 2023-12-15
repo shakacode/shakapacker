@@ -87,6 +87,8 @@ module Shakapacker
         cmd += ["--progress", "--color"] if @pretty
 
         cmd += ["--hot"] if @hot
+        cmd += ["only"] if @hot == "only"
+
         cmd += @argv
 
         Dir.chdir(@app_path) do
