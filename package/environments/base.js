@@ -3,7 +3,7 @@
 
 const { basename, dirname, join, relative, resolve } = require('path')
 const extname = require('path-complete-extname')
-const { sync: globSync } = require('glob')
+const { globSync } = require('glob')
 const WebpackAssetsManifest = require('webpack-assets-manifest')
 const webpack = require('webpack')
 const rules = require('../rules')
