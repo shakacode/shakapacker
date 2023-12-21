@@ -364,10 +364,10 @@ describe "Shakapacker::Configuration" do
         end
 
         context "without ActionController::Base.helpers.compute_asset_host returing any value" do
-          it "returns an empty string" do
+          it "returns nil" do
             expect(ENV).to receive(:fetch).with("SHAKAPACKER_ASSET_HOST", nil).and_return(nil)
 
-            expect(config.asset_host).to eq ""
+            expect(config.asset_host).to be nil
           end
         end
       end
@@ -413,7 +413,7 @@ describe "Shakapacker::Configuration" do
           it "returns an empty string" do
             expect(ENV).to receive(:fetch).with("SHAKAPACKER_RELATIVE_URL_ROOT", nil).and_return(nil)
 
-            expect(config.relative_url_root).to eq ""
+            expect(config.relative_url_root).to be nil
           end
         end
       end

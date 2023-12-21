@@ -120,7 +120,7 @@ class Shakapacker::Configuration
     ENV.fetch(
       "SHAKAPACKER_ASSET_HOST",
       fetch(:asset_host) || ActionController::Base.helpers.compute_asset_host
-    ).to_s
+    )
   end
 
   def relative_url_root
@@ -129,7 +129,7 @@ class Shakapacker::Configuration
     ENV.fetch(
       "SHAKAPACKER_RELATIVE_URL_ROOT",
       fetch(:relative_url_root) || ActionController::Base.relative_url_root
-    ).to_s
+    )
   end
 
   private
