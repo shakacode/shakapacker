@@ -9,7 +9,7 @@
     "lib/install/config/shakapacker.yml"
   ],
   "engines": {
-    "node": "^12.13.0 || ^14 || >=16",
+    "node": ">=16",
     "yarn": ">=1 <5"
   },
   "peerDependencies": {
