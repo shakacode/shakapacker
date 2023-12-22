@@ -48,7 +48,7 @@ development:
     host: localhost
     port: 3035
     public: localhost:3035
-    hmr: false
+    hmr: true
     overlay: true
     disable_host_check: true
     use_local_ip: false
