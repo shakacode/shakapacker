@@ -117,11 +117,19 @@ class Shakapacker::Configuration
   end
 
   def asset_host
-    ENV.fetch("SHAKAPACKER_ASSET_HOST", ActionController::Base.helpers.compute_asset_host)
+    ENV.fetch(
+      "SHAKAPACKER_ASSET_HOST",
+      fetch(:asset_host) || ActionController::Base.helpers.compute_asset_host
+    )
   end
 
   def relative_url_root
-    ENV.fetch("SHAKAPACKER_RELATIVE_URL_ROOT", ActionController::Base.relative_url_root)
+    Shakapacker.puts_deprecation_message "The usage of relative_url_root is deprecated in Shakapacker and will be removed in v8."
+
+    ENV.fetch(
+      "SHAKAPACKER_RELATIVE_URL_ROOT",
+      fetch(:relative_url_root) || ActionController::Base.relative_url_root
+    )
   end
 
   private

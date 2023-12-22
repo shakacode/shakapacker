@@ -12,11 +12,15 @@ _Please add entries here for your pull requests that are not yet released._
 ### Added
 - Experimental support for other JS package managers using `package_json` gem [PR 349](https://github.com/shakacode/shakapacker/pull/349) by [G-Rath](https://github.com/g-rath).
 - Support `hmr: only` configuration [PR 378](https://github.com/shakacode/shakapacker/pull/378) by [SimenB](https://github.com/SimenB).
+- Use `config/shakapacker.yml` as the secondary source for `asset_host` and `relative_url_root` configurations [PR 376](https://github.com/shakacode/shakapacker/pull/376) by [ahangarha](https://github.com/ahangarha).
 
 ### Fixed
 - Recommend `server` option instead of deprecated `https` option when `--https` is provided [PR 380](https://github.com/shakacode/shakapacker/pull/380) by [G-Rath](https://github.com/g-rath)
 - Recompile assets on asset host change [PR 364](https://github.com/shakacode/shakapacker/pull/364) by [ahangarha](https://github.com/ahangarha).
 - Add deprecation warning for `https` option in `shakapacker.yml` (use `server: 'https'` instead) [PR 382](https://github.com/shakacode/shakapacker/pull/382) by [G-Rath](https://github.com/g-rath).
+
+### Deprecated
+- The usage of relative_url_root is deprecated in Shakapacker and will be removed in v8. [PR 376](https://github.com/shakacode/shakapacker/pull/376) by [ahangarha](https://github.com/ahangarha).
 
 ## [v7.1.0] - September 30, 2023
 
