@@ -2,39 +2,35 @@
   "name": "shakapacker",
   "version": "7.2.0-rc.0",
   "description": "Use webpack to manage app-like JavaScript modules in Rails",
+  "homepage": "https://github.com/shakacode/shakapacker",
+  "bugs": {
+    "url": "https://github.com/shakacode/shakapacker/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/shakacode/shakapacker.git"
+  },
+  "license": "MIT",
+  "author": "David Heinemeier Hansson <david@basecamp.com>, Justin Gordon <justin@shakacode.com>",
   "main": "package/index.js",
   "types": "package/index.d.ts",
   "files": [
     "package",
     "lib/install/config/shakapacker.yml"
   ],
-  "engines": {
-    "node": "^12.13.0 || ^14 || >=16",
-    "yarn": ">=1 <5"
+  "scripts": {
+    "lint": "eslint package/",
+    "test": "jest"
   },
-  "peerDependencies": {
-    "@types/babel__core": "^7.0.0",
-    "@types/webpack": "^5.0.0",
-    "@babel/core": "^7.17.9",
-    "@babel/plugin-transform-runtime": "^7.17.0",
-    "@babel/preset-env": "^7.16.11",
-    "@babel/runtime": "^7.17.9",
-    "babel-loader": "^8.2.4 || ^9.0.0",
-    "compression-webpack-plugin": "^9.0.0 || ^10.0.0",
-    "terser-webpack-plugin": "^5.3.1",
-    "webpack": "^5.72.0",
-    "webpack-assets-manifest": "^5.0.6",
-    "webpack-cli": "^4.9.2 || ^5.0.0",
-    "webpack-dev-server": "^4.9.0",
-    "webpack-merge": "^5.8.0"
-  },
-  "peerDependenciesMeta": {
-    "@types/babel__core": {
-      "optional": true
-    },
-    "@types/webpack": {
-      "optional": true
-    }
+  "jest": {
+    "roots": [
+      "<rootDir>/package"
+    ],
+    "testPathIgnorePatterns": [
+      "/__fixtures__/",
+      "/__utils__/"
+    ],
+    "testRegex": "(/__tests__/.*|(\\.|/))\\.jsx?$"
   },
   "dependencies": {
     "glob": "^7.2.0",
@@ -59,31 +55,35 @@
     "webpack-assets-manifest": "^5.0.6",
     "webpack-merge": "^5.8.0"
   },
-  "jest": {
-    "testRegex": "(/__tests__/.*|(\\.|/))\\.jsx?$",
-    "testPathIgnorePatterns": [
-      "/__fixtures__/",
-      "/__utils__/"
-    ],
-    "roots": [
-      "<rootDir>/package"
-    ]
+  "peerDependencies": {
+    "@babel/core": "^7.17.9",
+    "@babel/plugin-transform-runtime": "^7.17.0",
+    "@babel/preset-env": "^7.16.11",
+    "@babel/runtime": "^7.17.9",
+    "@types/babel__core": "^7.0.0",
+    "@types/webpack": "^5.0.0",
+    "babel-loader": "^8.2.4 || ^9.0.0",
+    "compression-webpack-plugin": "^9.0.0 || ^10.0.0",
+    "terser-webpack-plugin": "^5.3.1",
+    "webpack": "^5.72.0",
+    "webpack-assets-manifest": "^5.0.6",
+    "webpack-cli": "^4.9.2 || ^5.0.0",
+    "webpack-dev-server": "^4.9.0",
+    "webpack-merge": "^5.8.0"
+  },
+  "peerDependenciesMeta": {
+    "@types/babel__core": {
+      "optional": true
+    },
+    "@types/webpack": {
+      "optional": true
+    }
+  },
+  "engines": {
+    "node": "^12.13.0 || ^14 || >=16",
+    "yarn": ">=1 <5"
   },
   "publishConfig": {
     "access": "public"
-  },
-  "scripts": {
-    "test": "jest",
-    "lint": "eslint package/"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/shakacode/shakapacker.git"
-  },
-  "author": "David Heinemeier Hansson <david@basecamp.com>, Justin Gordon <justin@shakacode.com>",
-  "license": "MIT",
-  "bugs": {
-    "url": "https://github.com/shakacode/shakapacker/issues"
-  },
-  "homepage": "https://github.com/shakacode/shakapacker"
+  }
 }
