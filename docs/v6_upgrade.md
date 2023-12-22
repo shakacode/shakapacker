@@ -168,5 +168,5 @@ _If you're on webpacker v5, follow [how to upgrade to webpacker v6.0.0.rc.6 from
 
 ## Examples of v5 to v6
 
-1. [React on Rails Project with HMR and SSR](https://github.com/shakacode/react_on_rails_tutorial_with_ssr_and_hmr_fast_refresh/compare/webpacker-5.x...master)
+1. [React on Rails Project with HMR and SSR](https://github.com/shakacode/react_on_rails_tutorial_with_ssr_and_hmr_fast_refresh/compare/webpacker-5.x...61e897f2c604085f45b9ab5e23642501e430fb28)
 2. [Vue and Sass Example](https://github.com/guillaumebriday/upgrade-webpacker-5-to-6)
