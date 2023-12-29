@@ -9,13 +9,15 @@ Changes since the last non-beta release.
 
 _Please add entries here for your pull requests that are not yet released._
 
+## [v7.2.0] - December 28, 2023
+
 ### Added
 - Experimental support for other JS package managers using `package_json` gem [PR 349](https://github.com/shakacode/shakapacker/pull/349) by [G-Rath](https://github.com/g-rath).
 - Support `hmr: only` configuration [PR 378](https://github.com/shakacode/shakapacker/pull/378) by [SimenB](https://github.com/SimenB).
 - Use `config/shakapacker.yml` as the secondary source for `asset_host` and `relative_url_root` configurations [PR 376](https://github.com/shakacode/shakapacker/pull/376) by [ahangarha](https://github.com/ahangarha).
 
 ### Fixed
-- Recommend `server` option instead of deprecated `https` option when `--https` is provided [PR 380](https://github.com/shakacode/shakapacker/pull/380) by [G-Rath](https://github.com/g-rath)
+- Recommend `server` option instead of the deprecated `https` option when `--https` is provided [PR 380](https://github.com/shakacode/shakapacker/pull/380) by [G-Rath](https://github.com/g-rath)
 - Recompile assets on asset host change [PR 364](https://github.com/shakacode/shakapacker/pull/364) by [ahangarha](https://github.com/ahangarha).
 - Add deprecation warning for `https` option in `shakapacker.yml` (use `server: 'https'` instead) [PR 382](https://github.com/shakacode/shakapacker/pull/382) by [G-Rath](https://github.com/g-rath).
 - Disable Hot Module Replacement in `webpack-dev-server` when `hmr: false` [PR 392](https://github.com/shakacode/shakapacker/pull/392) by [thedanbob](https://github.com/thedanbob).
@@ -290,7 +292,8 @@ Note: [Rubygem is 6.3.0.pre.rc.1](https://rubygems.org/gems/shakapacker/versions
 ## v5.4.3 and prior changes from rails/webpacker
 See [CHANGELOG.md in rails/webpacker (up to v5.4.3)](https://github.com/rails/webpacker/blob/master/CHANGELOG.md)
 
-[Unreleased]: https://github.com/shakacode/shakapacker/compare/v7.1.0...master
+[Unreleased]: https://github.com/shakacode/shakapacker/compare/v7.2.0...master
+[v7.2.0]: https://github.com/shakacode/shakapacker/compare/v7.1.0...v7.2.0
 [v7.1.0]: https://github.com/shakacode/shakapacker/compare/v7.0.3...v7.1.0
 [v7.0.3]: https://github.com/shakacode/shakapacker/compare/v7.0.2...v7.0.3
 [v7.0.2]: https://github.com/shakacode/shakapacker/compare/v7.0.1...v7.0.2
