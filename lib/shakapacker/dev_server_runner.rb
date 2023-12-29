@@ -86,8 +86,9 @@ module Shakapacker
         cmd += ["--config", @webpack_config]
         cmd += ["--progress", "--color"] if @pretty
 
-        cmd += ["--hot"] if @hot
-        cmd += ["only"] if @hot == "only"
+        # Default behavior of webpack-dev-server is @hot = true
+        cmd += ["--hot", "only"] if @hot == "only"
+        cmd += ["--no-hot"] if !@hot
 
         cmd += @argv
 

@@ -53,7 +53,7 @@ describe "DevServerRunner" do
             port: "3035",
             pretty?: false,
             protocol: "https",
-            hmr?: false
+            hmr?: true
           )
         )
 
@@ -69,15 +69,15 @@ describe "DevServerRunner" do
             port: "3035",
             pretty?: false,
             protocol: "https",
-            hmr?: false
+            hmr?: true
           )
         )
 
         verify_command(cmd, argv: ["--https"])
       end
 
-      it "supports hot module reloading" do
-        cmd = package_json.manager.native_exec_command("webpack", ["serve", "--config", "#{test_app_path}/config/webpack/webpack.config.js", "--hot"])
+      it "supports disabling hot module reloading" do
+        cmd = package_json.manager.native_exec_command("webpack", ["serve", "--config", "#{test_app_path}/config/webpack/webpack.config.js", "--no-hot"])
 
         allow(Shakapacker::DevServer).to receive(:new).and_return(
           double(
@@ -85,7 +85,7 @@ describe "DevServerRunner" do
             port: "3035",
             pretty?: false,
             protocol: "http",
-            hmr?: true
+            hmr?: false
           )
         )
 
@@ -134,7 +134,7 @@ describe "DevServerRunner" do
           port: "3035",
           pretty?: false,
           protocol: "https",
-          hmr?: false
+          hmr?: true
         )
       )
 
@@ -150,15 +150,15 @@ describe "DevServerRunner" do
           port: "3035",
           pretty?: false,
           protocol: "https",
-          hmr?: false
+          hmr?: true
         )
       )
 
       verify_command(cmd, argv: ["--https"])
     end
 
-    it "supports hot module reloading" do
-      cmd = ["#{test_app_path}/node_modules/.bin/webpack", "serve", "--config", "#{test_app_path}/config/webpack/webpack.config.js", "--hot"]
+    it "supports disabling hot module reloading" do
+      cmd = ["#{test_app_path}/node_modules/.bin/webpack", "serve", "--config", "#{test_app_path}/config/webpack/webpack.config.js", "--no-hot"]
 
       allow(Shakapacker::DevServer).to receive(:new).and_return(
         double(
@@ -166,7 +166,7 @@ describe "DevServerRunner" do
           port: "3035",
           pretty?: false,
           protocol: "http",
-          hmr?: true
+          hmr?: false
         )
       )
 
