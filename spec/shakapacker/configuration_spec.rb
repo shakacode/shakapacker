@@ -383,14 +383,17 @@ describe "Shakapacker::Configuration" do
       )
     end
 
-    it "shows deprecation message" do
-      expect { config.relative_url_root }.to output(/deprecated/).to_stdout
-    end
+    context "with SHAKAPACKER_RELATIVE_URL_ROOT set" do
+      before do
+        expect(ENV).to receive(:fetch).with("SHAKAPACKER_RELATIVE_URL_ROOT", nil).and_return("custom_value")
+      end
+      it "shows deprecation message" do
+        expect { config.relative_url_root }.to output(/deprecated/).to_stdout
+      end
 
-    it "returns the value of SHAKAPACKER_RELATIVE_URL_ROOT if set" do
-      expect(ENV).to receive(:fetch).with("SHAKAPACKER_RELATIVE_URL_ROOT", nil).and_return("custom_value")
-
-      expect(config.relative_url_root).to eq "custom_value"
+      it "returns the value of SHAKAPACKER_RELATIVE_URL_ROOT" do
+        expect(config.relative_url_root).to eq "custom_value"
+      end
     end
 
     context "without SHAKAPACKER_RELATIVE_URL_ROOT set" do
@@ -414,6 +417,10 @@ describe "Shakapacker::Configuration" do
             expect(ENV).to receive(:fetch).with("SHAKAPACKER_RELATIVE_URL_ROOT", nil).and_return(nil)
 
             expect(config.relative_url_root).to be nil
+          end
+
+          it "doesn't shows deprecation message" do
+            expect { config.relative_url_root }.to_not output(/deprecated/).to_stdout
           end
         end
       end

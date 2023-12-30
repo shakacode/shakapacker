@@ -124,12 +124,16 @@ class Shakapacker::Configuration
   end
 
   def relative_url_root
-    Shakapacker.puts_deprecation_message "The usage of relative_url_root is deprecated in Shakapacker and will be removed in v8."
-
-    ENV.fetch(
+    result = ENV.fetch(
       "SHAKAPACKER_RELATIVE_URL_ROOT",
       fetch(:relative_url_root) || ActionController::Base.relative_url_root
     )
+
+    if result
+      Shakapacker.puts_deprecation_message("The usage of relative_url_root is deprecated in Shakapacker and will be removed in v8.")
+    end
+
+    result
   end
 
   private
