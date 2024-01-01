@@ -9,6 +9,9 @@ Changes since the last non-beta release.
 
 _Please add entries here for your pull requests that are not yet released._
 
+### Fixed
+- Show deprecation message for `relative_url_root` only if it is set. [PR 400](https://github.com/shakacode/shakapacker/pull/400) by [ahangarha](https://github.com/ahangarha).
+
 ## [v7.2.0] - December 28, 2023
 
 ### Added
@@ -23,7 +26,7 @@ _Please add entries here for your pull requests that are not yet released._
 - Disable Hot Module Replacement in `webpack-dev-server` when `hmr: false` [PR 392](https://github.com/shakacode/shakapacker/pull/392) by [thedanbob](https://github.com/thedanbob).
 
 ### Deprecated
-- The usage of relative_url_root is deprecated in Shakapacker and will be removed in v8. [PR 376](https://github.com/shakacode/shakapacker/pull/376) by [ahangarha](https://github.com/ahangarha).
+- The usage of `relative_url_root` is deprecated in Shakapacker and will be removed in v8. [PR 376](https://github.com/shakacode/shakapacker/pull/376) by [ahangarha](https://github.com/ahangarha).
 
 ## [v7.1.0] - September 30, 2023
 
