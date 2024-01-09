@@ -1,5 +1,7 @@
 const { dirname } = require('path')
-const { source_path: sourcePath } = require('../config')
+const { includePaths } = require('../config')
+
+console.log(includePaths);
 
 module.exports = {
   test: /\.(bmp|gif|jpe?g|png|tiff|ico|avif|webp|eot|otf|ttf|woff|woff2|svg)$/,
@@ -7,12 +9,15 @@ module.exports = {
   type: 'asset/resource',
   generator: {
     filename: (pathData) => {
-      const folders = dirname(pathData.filename)
-        .replace(`${sourcePath}`, '')
-        .split('/')
-        .filter(Boolean)
+      let path = dirname(pathData.filename)
 
+      for (const includePath of includePaths) {
+        path = path.replace(`${includePath}`, '')
+      }
+
+      const folders = path.split('/').filter(Boolean)
       const foldersWithStatic = ['static', ...folders].join('/')
+
       return `${foldersWithStatic}/[name]-[hash][ext][query]`
     }
   }

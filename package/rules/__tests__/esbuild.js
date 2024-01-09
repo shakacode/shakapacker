@@ -13,7 +13,7 @@ jest.mock("../../config", () => {
   return {
     ...original,
     webpack_loader: "esbuild",
-    additional_paths: [...original.additional_paths, "node_modules/included"],
+    includePaths: [...original.includePaths, "node_modules/included"]
   };
 });
 

@@ -1,11 +1,8 @@
 const { resolve } = require('path')
 const { realpathSync } = require('fs')
-const {
-  source_path: sourcePath,
-  additional_paths: additionalPaths
-} = require('../config')
+const { includePaths } = require('../config')
 
-const inclusions = [sourcePath, ...additionalPaths].map(p => {
+const inclusions = includePaths.map(p => {
   try {
     return realpathSync(p)
   } catch (e) {

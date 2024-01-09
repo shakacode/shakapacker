@@ -1,5 +1,13 @@
 const file = require('../file')
 
+jest.mock("../../config", () => {
+  const original = jest.requireActual("../../config");
+  return {
+    ...original,
+    includePaths: [...original.includePaths, 'app/assets']
+  };
+});
+
 describe('file', () => {
   test('test expected file types', () => {
     const types = [
@@ -57,6 +65,15 @@ describe('file', () => {
     };
     expect(file.generator.filename(pathData)).toEqual(
       'static/images/nested/deeply/[name]-[hash][ext][query]'
+    );
+  });
+
+  test('correct generated output path is returned for all include paths', () => {
+    const pathData = {
+      filename: 'app/assets/images/image.svg',
+    };
+    expect(file.generator.filename(pathData)).toEqual(
+      'static/images/[name]-[hash][ext][query]'
     );
   });
 })

@@ -53,4 +53,6 @@ if (config.manifest_path) {
   config.manifestPath = resolve(config.outputPath, 'manifest.json')
 }
 
+config.includePaths = [config.source_path, ...config.additional_paths]
+
 module.exports = config
