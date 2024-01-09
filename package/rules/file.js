@@ -7,15 +7,15 @@ module.exports = {
   type: 'asset/resource',
   generator: {
     filename: (pathData) => {
-      let path = dirname(pathData.filename)
+      const path = dirname(pathData.filename)
+      const includePath = includePaths.find((includePath) => path.includes(includePath))
 
-      includePaths.forEach((includePath) => {
-        path = path.replace(`${includePath}`, '')
-      })
+      const folders = path
+        .replace(`${includePath}`, '')
+        .split('/')
+        .filter(Boolean)
 
-      const folders = path.split('/').filter(Boolean)
       const foldersWithStatic = ['static', ...folders].join('/')
-
       return `${foldersWithStatic}/[name]-[hash][ext][query]`
     }
   }
