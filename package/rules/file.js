@@ -8,10 +8,10 @@ module.exports = {
   generator: {
     filename: (pathData) => {
       const path = dirname(pathData.filename)
-      const includePath = includePaths.find((includePath) => path.includes(includePath))
+      const selectedIncludePath = includePaths.find((includePath) => path.includes(includePath))
 
       const folders = path
-        .replace(`${includePath}`, '')
+        .replace(`${selectedIncludePath}`, '')
         .split('/')
         .filter(Boolean)
 
