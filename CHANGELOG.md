@@ -7,7 +7,9 @@
 ## [Unreleased]
 Changes since the last non-beta release.
 
-_Please add entries here for your pull requests that are not yet released._
+### Added
+
+- Allow `compression-webpack-plugin` v11. [PR 406](https://github.com/shakacode/shakapacker/pull/406) by [tagliala](https://github.com/tagliala).
 
 ## [v7.2.1] - December 30, 2023
 
