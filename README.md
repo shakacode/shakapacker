@@ -882,7 +882,7 @@ import 'images/rails.png'
 
 Assets put in these folders will have their directory stripped just like with the `source_path`. For example:
 
-A file in `app/assets/images/image.svg` with `additional_paths: ['app/assets']` would result in `static/images/image.svg`
+A file in `app/assets/images/image.svg` with `additional_paths: ['app/assets']` will result in `static/images/image.svg`
 
 **Note:** Please be careful when adding paths here otherwise it will make the compilation slow, consider adding specific paths instead of the whole parent directory if you just need to reference one or two modules
 
