@@ -7,7 +7,9 @@
 ## [Unreleased]
 Changes since the last non-beta release.
 
-_Please add entries here for your pull requests that are not yet released._
+### Added
+
+- Allow `compression-webpack-plugin` v11. [PR 406](https://github.com/shakacode/shakapacker/pull/406) by [tagliala](https://github.com/tagliala).
 
 ### Changed
 - Just like with the `source_path` the paths in `additional_paths` will now also be stripped from asset paths. [PR 403](https://github.com/shakacode/shakapacker/pull/403) by [paypro-leon](https://github.com/paypro-leon).
