@@ -7,8 +7,9 @@
 ## [Unreleased]
 Changes since the last non-beta release.
 
-### Added
+## [v7.2.2] - January 19, 2024
 
+### Added
 - Allow `compression-webpack-plugin` v11. [PR 406](https://github.com/shakacode/shakapacker/pull/406) by [tagliala](https://github.com/tagliala).
 
 ## [v7.2.1] - December 30, 2023
@@ -299,7 +300,8 @@ Note: [Rubygem is 6.3.0.pre.rc.1](https://rubygems.org/gems/shakapacker/versions
 ## v5.4.3 and prior changes from rails/webpacker
 See [CHANGELOG.md in rails/webpacker (up to v5.4.3)](https://github.com/rails/webpacker/blob/master/CHANGELOG.md)
 
-[Unreleased]: https://github.com/shakacode/shakapacker/compare/v7.2.1...master
+[Unreleased]: https://github.com/shakacode/shakapacker/compare/v7.2.2...master
+[v7.2.2]: https://github.com/shakacode/shakapacker/compare/v7.2.1...v7.2.2
 [v7.2.1]: https://github.com/shakacode/shakapacker/compare/v7.2.0...v7.2.1
 [v7.2.0]: https://github.com/shakacode/shakapacker/compare/v7.1.0...v7.2.0
 [v7.1.0]: https://github.com/shakacode/shakapacker/compare/v7.0.3...v7.1.0
