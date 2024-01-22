@@ -9,8 +9,8 @@ Changes since the last non-beta release.
 
 _Please add entries here for your pull requests that are not yet released._
 
-### Changed
-- Just like with the `source_path` the paths in `additional_paths` will now also be stripped from asset paths. [PR 403](https://github.com/shakacode/shakapacker/pull/403) by [paypro-leon](https://github.com/paypro-leon).
+### Added
+- Opt-in support for stripping `additional_paths` from the asset paths just like with the `source_path`. This will be the default behavior in version 8. [PR 403](https://github.com/shakacode/shakapacker/pull/403) by [paypro-leon](https://github.com/paypro-leon).
 
 ## [v7.2.1] - December 30, 2023
 
