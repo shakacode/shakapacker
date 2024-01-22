@@ -22,7 +22,6 @@ declare module 'shakapacker' {
     publicPath: string
     publicPathWithoutCDN: string
     manifestPath: string
-    includePaths: string[]
   }
 
   export interface Env {

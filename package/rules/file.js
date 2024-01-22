@@ -1,5 +1,8 @@
 const { dirname } = require('path')
-const { includePaths } = require('../config')
+const {
+  additional_paths: additionalPaths,
+  source_path: sourcePath
+} = require('../config')
 
 module.exports = {
   test: /\.(bmp|gif|jpe?g|png|tiff|ico|avif|webp|eot|otf|ttf|woff|woff2|svg)$/,
@@ -8,10 +11,12 @@ module.exports = {
   generator: {
     filename: (pathData) => {
       const path = dirname(pathData.filename)
-      const selectedIncludePath = includePaths.find((includePath) => path.includes(includePath))
+      const stripPaths = process.env.SHAKAPACKER_STRIP_ADDITIONAL_PATHS === 'true' ? [...additionalPaths, sourcePath] : [sourcePath]
+
+      const selectedStripPath = stripPaths.find((includePath) => path.includes(includePath))
 
       const folders = path
-        .replace(`${selectedIncludePath}`, '')
+        .replace(`${selectedStripPath}`, '')
         .split('/')
         .filter(Boolean)
 

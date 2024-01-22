@@ -12,7 +12,7 @@ jest.mock("../../config", () => {
   const original = jest.requireActual("../../config");
   return {
     ...original,
-    includePaths: [...original.includePaths, "node_modules/included"]
+    additional_paths: [...original.additional_paths, "node_modules/included"],
   };
 });
 

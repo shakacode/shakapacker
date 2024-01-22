@@ -4,7 +4,7 @@ jest.mock("../../config", () => {
   const original = jest.requireActual("../../config");
   return {
     ...original,
-    includePaths: [...original.includePaths, 'app/assets']
+    additional_paths: [...original.additional_paths, "app/assets"],
   };
 });
 
@@ -68,10 +68,23 @@ describe('file', () => {
     );
   });
 
-  test('correct generated output path is returned for all include paths', () => {
+  test('correct generated output path is returned for additional_paths', () => {
     const pathData = {
       filename: 'app/assets/images/image.svg',
     };
+
+    expect(file.generator.filename(pathData)).toEqual(
+      'static/app/assets/images/[name]-[hash][ext][query]'
+    );
+  });
+
+  test('correct generated output path is returned for additional_paths when opting in', () => {
+    const pathData = {
+      filename: 'app/assets/images/image.svg',
+    };
+
+    process.env.SHAKAPACKER_STRIP_ADDITIONAL_PATHS = 'true';
+
     expect(file.generator.filename(pathData)).toEqual(
       'static/images/[name]-[hash][ext][query]'
     );
