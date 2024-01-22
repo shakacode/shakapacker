@@ -1,6 +1,7 @@
 const path = require('path')
 const { canProcess } = require('../utils/helpers')
 const getStyleRule = require('../utils/get_style_rule')
+
 const {
   additional_paths: paths,
   source_path: sourcePath
