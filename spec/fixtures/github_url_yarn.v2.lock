@@ -124,7 +124,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"shakapacker@shakacode/shakapacker#master":
+"shakapacker@shakacode/shakapacker#main":
   version: 6.5.0
   resolution: "shakapacker@https://github.com/shakacode/shakapacker.git#commit=31854a58be49f736f3486a946b72d7e4f334e2b2"
   dependencies:
@@ -153,7 +153,7 @@ __metadata:
   resolution: "test_app@workspace:."
   dependencies:
     right-pad: ^1.0.1
-    shakapacker: "shakacode/shakapacker#master"
+    shakapacker: "shakacode/shakapacker#main"
   languageName: unknown
   linkType: soft
 

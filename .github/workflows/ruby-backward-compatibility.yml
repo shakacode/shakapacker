@@ -3,7 +3,8 @@ name: Ruby specs - Backward compatibility
 on:
   push:
     branches:
-      - 'master'
+      - 'main'
+      - 'next'
   pull_request:
 
 jobs:

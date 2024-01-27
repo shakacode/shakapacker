@@ -3,7 +3,8 @@ name: Jest specs
 on:
   push:
     branches:
-      - 'master'
+      - 'main'
+      - 'next'
   pull_request:
 
 jobs:
