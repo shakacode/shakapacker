@@ -3,6 +3,8 @@
 * Please see the [v6 Upgrade Guide](./docs/v6_upgrade.md) to go from versions prior to v6.
 * [ShakaCode](https://www.shakacode.com) offers support for upgrading from Webpacker or using Shakapacker. If interested, contact Justin Gordon, [justin@shakacode.com](mailto:justin@shakacode.com).
 
+_next_ branch is for v8 changes
+
 ## Versions
 ## [Unreleased]
 Changes since the last non-beta release.
