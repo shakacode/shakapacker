@@ -233,7 +233,7 @@ describe "VersionChecker::NodePackageVersion" do
       let(:node_package_version_from_github_url) { node_package_version(fixture_version: "github_url") }
 
       it "#raw returns the GitHub repo address" do
-        expect(node_package_version_from_github_url.raw).to eq "shakacode/shakapacker#master"
+        expect(node_package_version_from_github_url.raw).to eq "shakacode/shakapacker#main"
       end
 
       it "#major_minor_patch returns nil" do

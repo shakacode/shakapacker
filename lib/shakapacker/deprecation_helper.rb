@@ -1,7 +1,7 @@
 require "thor"
 
 module Shakapacker
-  DEPRECATION_GUIDE_URL = "https://github.com/shakacode/shakapacker/blob/master/docs/v7_upgrade.md"
+  DEPRECATION_GUIDE_URL = "https://github.com/shakacode/shakapacker/blob/main/docs/v7_upgrade.md"
   DEPRECATION_MESSAGE = <<~MSG
     DEPRECATION NOTICE:
 

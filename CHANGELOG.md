@@ -62,7 +62,7 @@ Changes since the last non-beta release.
 
 - Export immutable webpackConfig function. [PR 293](https://github.com/shakacode/shakapacker/pull/293) by [tomdracz](https://github.com/tomdracz).
 
-  The `webpackConfig` property in the `shakapacker` module has been updated to be a function instead of a global mutable webpack configuration. This function now returns an immutable webpack configuration object, which ensures that any modifications made to it will not affect any other usage of the webpack configuration. If a project still requires the old mutable object, it can be accessed by replacing `webpackConfig` with `globalMutableWebpackConfig`. Check [v7-upgrade](https://github.com/shakacode/shakapacker/blob/master/docs/v7_upgrade.md) documentation for more detail.
+  The `webpackConfig` property in the `shakapacker` module has been updated to be a function instead of a global mutable webpack configuration. This function now returns an immutable webpack configuration object, which ensures that any modifications made to it will not affect any other usage of the webpack configuration. If a project still requires the old mutable object, it can be accessed by replacing `webpackConfig` with `globalMutableWebpackConfig`. Check [v7-upgrade](https://github.com/shakacode/shakapacker/blob/main/docs/v7_upgrade.md) documentation for more detail.
 
 ### Added
 - Set CSS modules mode depending on file type. [PR 261](https://github.com/shakacode/shakapacker/pull/261) by [talyuk](https://github.com/talyuk).
@@ -300,7 +300,7 @@ Note: [Rubygem is 6.3.0.pre.rc.1](https://rubygems.org/gems/shakapacker/versions
 ## v5.4.3 and prior changes from rails/webpacker
 See [CHANGELOG.md in rails/webpacker (up to v5.4.3)](https://github.com/rails/webpacker/blob/master/CHANGELOG.md)
 
-[Unreleased]: https://github.com/shakacode/shakapacker/compare/v7.2.2...master
+[Unreleased]: https://github.com/shakacode/shakapacker/compare/v7.2.2...main
 [v7.2.2]: https://github.com/shakacode/shakapacker/compare/v7.2.1...v7.2.2
 [v7.2.1]: https://github.com/shakacode/shakapacker/compare/v7.2.0...v7.2.1
 [v7.2.0]: https://github.com/shakacode/shakapacker/compare/v7.1.0...v7.2.0

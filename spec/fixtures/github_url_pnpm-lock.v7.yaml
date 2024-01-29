@@ -2,7 +2,7 @@ lockfileVersion: 5.4
 
 specifiers:
   right-pad: ^1.0.1
-  shakapacker: shakacode/shakapacker#master
+  shakapacker: shakacode/shakapacker#main
 
 dependencies:
   shakapacker: github.com/shakacode/shakapacker/cdf32835d3e0949952b8b4b53063807f714f9b24

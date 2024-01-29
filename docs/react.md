@@ -226,7 +226,7 @@ module.exports = webpackConfig;
 - },
 ```
 
-11. Create a `babel.config.js` file in the project root and add the following [sample code](https://github.com/shakacode/shakapacker/blob/master/docs/customizing_babel_config.md#react-configuration):
+11. Create a `babel.config.js` file in the project root and add the following [sample code](https://github.com/shakacode/shakapacker/blob/main/docs/customizing_babel_config.md#react-configuration):
 ```js
 module.exports = function (api) {
   const defaultConfigFunc = require('shakapacker/package/babel/preset.js')
