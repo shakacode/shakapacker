@@ -88,7 +88,7 @@ class Shakapacker::Compiler
 
       if status.success?
         logger.info "Compiled all packs in #{config.public_output_path}"
-        logger.error "#{stderr}" unless stderr.empty?
+        logger.warn "#{stderr}" unless stderr.empty?
 
         if config.webpack_compile_output?
           logger.info stdout
