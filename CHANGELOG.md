@@ -7,6 +7,8 @@
 ## [Unreleased]
 Changes since the last non-beta release.
 
+- Emit warnings instead of errors when compilation is success but stderr is not empty. [PR 416](https://github.com/shakacode/shakapacker/pull/416) by [n-rodriguez](https://github.com/n-rodriguez).
+
 ## [v7.2.2] - January 19, 2024
 
 ### Added
