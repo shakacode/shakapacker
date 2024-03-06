@@ -104,8 +104,6 @@ class Shakapacker::Compiler
     def webpack_env
       return env unless defined?(ActionController::Base)
 
-      Shakapacker.set_shakapacker_env_variables_for_backward_compatibility
-
       env.merge(
         "SHAKAPACKER_ASSET_HOST"        => instance.config.asset_host,
         "SHAKAPACKER_RELATIVE_URL_ROOT" => instance.config.relative_url_root,
