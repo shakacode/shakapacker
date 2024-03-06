@@ -2,7 +2,7 @@ namespace :shakapacker do
   desc "Verifies that bin/shakapacker is present"
   task :check_binstubs do
     verify_file_existence("bin/shakapacker")
-    verify_file_existence("bin/shakapacker-dev-server",)
+    verify_file_existence("bin/shakapacker-dev-server")
   end
 end
 
