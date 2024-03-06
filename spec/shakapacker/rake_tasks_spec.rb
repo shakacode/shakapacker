@@ -63,13 +63,7 @@ describe "RakeTasks" do
         FileUtils.mv("bin/shakapacker_renamed", "bin/shakapacker")
       end
 
-      it "passes if `./bin/webpacker exist" do
-        with_temporary_file("bin/webpacker") do
-          expect { system("bundle exec rake shakapacker:check_binstubs") }.to output(/DEPRECATION/).to_stdout_from_any_process
-        end
-      end
-
-      it "fails otherwise" do
+      it "fails" do
         expect { system("bundle exec rake shakapacker:check_binstubs") }.to output(/Couldn't find shakapacker binstubs!/).to_stdout_from_any_process
       end
     end
@@ -83,13 +77,7 @@ describe "RakeTasks" do
         FileUtils.mv("bin/shakapacker-dev-server_renamed", "bin/shakapacker-dev-server")
       end
 
-      it "passes if `./bin/webpacker-dev-server exist" do
-        with_temporary_file("bin/webpacker-dev-server") do
-          expect { system("bundle exec rake shakapacker:check_binstubs") }.to output(/DEPRECATION/).to_stdout_from_any_process
-        end
-      end
-
-      it "fails otherwise" do
+      it "fails" do
         expect { system("bundle exec rake shakapacker:check_binstubs") }.to output(/Couldn't find shakapacker binstubs!/).to_stdout_from_any_process
       end
     end

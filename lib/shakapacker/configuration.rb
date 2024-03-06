@@ -43,17 +43,6 @@ class Shakapacker::Configuration
     fetch(:shakapacker_precompile)
   end
 
-  def webpacker_precompile?
-    Shakapacker.puts_deprecation_message(
-      Shakapacker.short_deprecation_message(
-        "webpacker_precompile?",
-        "shakapacker_precompile?"
-      )
-    )
-
-    shakapacker_precompile?
-  end
-
   def source_path
     root_path.join(fetch(:source_path))
   end
@@ -103,17 +92,7 @@ class Shakapacker::Configuration
   end
 
   def fetch(key)
-    return data.fetch(key, defaults[key]) unless key == :webpacker_precompile
-
-    # for backward compatibility
-    Shakapacker.puts_deprecation_message(
-      Shakapacker.short_deprecation_message(
-        "webpacker_precompile",
-        "shakapacker_precompile"
-      )
-    )
-
-    data.fetch(key, defaults[:shakapacker_precompile])
+    data.fetch(key, defaults[key]) 
   end
 
   def asset_host
@@ -148,13 +127,6 @@ class Shakapacker::Configuration
         YAML.load_file(config_path.to_s)
       end
       symbolized_config = config[env].deep_symbolize_keys
-
-      # For backward compatibility
-      if symbolized_config.key?(:shakapacker_precompile) && !symbolized_config.key?(:webpacker_precompile)
-        symbolized_config[:webpacker_precompile] = symbolized_config[:shakapacker_precompile]
-      elsif !symbolized_config.key?(:shakapacker_precompile) && symbolized_config.key?(:webpacker_precompile)
-        symbolized_config[:shakapacker_precompile] = symbolized_config[:webpacker_precompile]
-      end
 
       return symbolized_config
     rescue Errno::ENOENT => e

@@ -114,18 +114,6 @@ class Shakapacker::Compiler
     end
 
     def bin_shakapacker_path
-      if File.exist?(config.root_path.join("bin/shakapacker"))
-        config.root_path.join("bin/shakapacker")
-      elsif File.exist?(config.root_path.join("bin/webpacker"))
-        Shakapacker.puts_deprecation_message(
-          Shakapacker.short_deprecation_message(
-            "bin/webpacker",
-            "bin/shakapacker"
-          )
-        )
-        config.root_path.join("bin/webpacker")
-      else
-        config.root_path.join("bin/shakapacker")
-      end
+      config.root_path.join("bin/shakapacker")
     end
 end
