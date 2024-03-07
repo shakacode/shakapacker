@@ -21,5 +21,5 @@ def verify_file_existence(binstub_file)
       - Ensure the `bin` directory, `bin/shakapacker`, and `bin/shakapacker-dev-server` are not included in .gitignore.
     MSG
     exit!
-end
+  end
 end

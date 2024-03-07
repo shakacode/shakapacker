@@ -89,7 +89,7 @@ class Shakapacker::Configuration
   end
 
   def fetch(key)
-    data.fetch(key, defaults[key]) 
+    data.fetch(key, defaults[key])
   end
 
   def asset_host
