@@ -12,13 +12,6 @@ const env = require('./env')
 const { moduleExists, canProcess } = require('./utils/helpers')
 const inliningCss = require('./utils/inliningCss')
 
-const globalMutableWebpackConfig = () => {
-  const { nodeEnv } = env
-  const path = resolve(__dirname, 'environments', `${nodeEnv}.js`)
-  const environmentConfig = existsSync(path) ? require(path) : baseConfig
-  return environmentConfig
-}
-
 const generateWebpackConfig = (extraConfig = {}, ...extraArgs) => {
   if (extraArgs.length > 0) {
     throw new Error(
@@ -26,16 +19,17 @@ const generateWebpackConfig = (extraConfig = {}, ...extraArgs) => {
     )
   }
 
-  const environmentConfig = globalMutableWebpackConfig()
-  const immutable = webpackMerge.merge({}, environmentConfig, extraConfig)
-  return immutable
+  const { nodeEnv } = env
+  const path = resolve(__dirname, 'environments', `${nodeEnv}.js`)
+  const environmentConfig = existsSync(path) ? require(path) : baseConfig
+
+  return webpackMerge.merge({}, environmentConfig, extraConfig)
 }
 
 module.exports = {
   config, // shakapacker.yml
   devServer,
   generateWebpackConfig,
-  globalMutableWebpackConfig: globalMutableWebpackConfig(),
   baseConfig,
   env,
   rules,
