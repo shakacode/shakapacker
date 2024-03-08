@@ -14,12 +14,6 @@ namespace :run_spec do
     sh("bundle exec rspec spec/shakapacker/*_spec.rb")
   end
 
-  desc "Run backward compatibility specs"
-  task :gem_bc do
-    puts "Running Shakapacker gem specs for backward compatibility"
-    sh("bundle exec rspec spec/backward_compatibility_specs/*_spec.rb")
-  end
-
   desc "Run specs in the dummy app"
   task :dummy do
     puts "Running dummy app specs"
@@ -41,7 +35,7 @@ namespace :run_spec do
   end
 
   desc "Run all specs"
-  task all_specs: %i[gem gem_bc dummy generator] do
+  task all_specs: %i[gem dummy generator] do
     puts "Completed all RSpec tests"
   end
 end

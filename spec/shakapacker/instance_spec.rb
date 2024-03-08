@@ -2,13 +2,11 @@ require_relative "spec_helper_initializer"
 
 describe "Shakapacker::Instance" do
   before :each do
-    ENV.delete("WEBPACKER_CONFIG")
     ENV.delete("SHAKAPACKER_CONFIG")
     Shakapacker.instance = Shakapacker::Instance.new
   end
 
   after :each do
-    ENV.delete("WEBPACKER_CONFIG")
     ENV.delete("SHAKAPACKER_CONFIG")
     Shakapacker.instance = Shakapacker::Instance.new
   end
