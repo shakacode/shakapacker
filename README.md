@@ -100,7 +100,7 @@ Read the [full review here](https://clutch.co/profile/shakacode#reviews?sort_by=
 
 - Ruby 2.7+
 - Rails 5.2+
-- Node.js 12.13.0+ || 14+
+- Node.js 14+
 - Yarn
 
 ## Features
