@@ -2,13 +2,7 @@ require "shakapacker/utils/misc"
 
 namespace :shakapacker do
   desc "Verifies if the expected JS package manager is installed"
-  task :check_manager do |task|
-    unless Shakapacker::Utils::Misc.use_package_json_gem
-      prefix = task.name.split(/#|shakapacker:/).first
-      Rake::Task["#{prefix}shakapacker:check_manager"].invoke
-      next
-    end
-
+  task :check_manager do
     require "package_json"
 
     package_json = PackageJson.read

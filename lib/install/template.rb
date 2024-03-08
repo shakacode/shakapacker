@@ -44,7 +44,7 @@ end
 
 def package_json
   if @package_json.nil?
-    Shakapacker::Utils::Misc.require_package_json_gem
+    require "package_json"
 
     @package_json = PackageJson.read
   end
@@ -54,11 +54,7 @@ end
 
 # Ensure there is `system!("bin/yarn")` command in `./bin/setup` file
 if (setup_path = Rails.root.join("bin/setup")).exist?
-  def native_install_command
-    return "bin/yarn" unless Shakapacker::Utils::Misc.use_package_json_gem
-
-    package_json.manager.native_install_command.join(" ")
-  end
+  native_install_command = package_json.manager.native_install_command.join(" ")
 
   say "Run #{native_install_command} during bin/setup"
 
@@ -88,23 +84,14 @@ if (setup_path = Rails.root.join("bin/setup")).exist?
 end
 
 def add_dependencies(dependencies, type)
-  return package_json.manager.add!(dependencies, type: type) if Shakapacker::Utils::Misc.use_package_json_gem
-
-  # TODO: check that run actually errors
-  run("yarn add #{dependencies.join(" ")}") if type == :production
-  run("yarn add --dev #{dependencies.join(" ")}") if type == :dev
+  package_json.manager.add!(dependencies, type: type)
 rescue PackageJson::Error
   say "Shakapacker installation failed 😭 See above for details.", :red
   exit 1
 end
 
 def fetch_peer_dependencies
-  if Shakapacker::Utils::Misc.use_package_json_gem
-    return PackageJson.read("#{__dir__}/../../").fetch("peerDependencies")
-  end
-
-  package_json = File.read("#{__dir__}/../../package.json")
-  JSON.parse(package_json)["peerDependencies"]
+  PackageJson.read("#{__dir__}/../../").fetch("peerDependencies")
 end
 
 Dir.chdir(Rails.root) do
@@ -112,15 +99,13 @@ Dir.chdir(Rails.root) do
   say "Installing shakapacker@#{npm_version}"
   add_dependencies(["shakapacker@#{npm_version}"], :production)
 
-  if Shakapacker::Utils::Misc.use_package_json_gem
-    package_json.merge! do |pj|
-      {
-        "dependencies" => pj["dependencies"].merge({
-          # TODO: workaround for test suite - long-run need to actually account for diff pkg manager behaviour
-          "shakapacker" => pj["dependencies"]["shakapacker"].delete_prefix("^")
-        })
-      }
-    end
+  package_json.merge! do |pj|
+    {
+      "dependencies" => pj["dependencies"].merge({
+        # TODO: workaround for test suite - long-run need to actually account for diff pkg manager behaviour
+        "shakapacker" => pj["dependencies"]["shakapacker"].delete_prefix("^")
+      })
+    }
   end
 
   peers = fetch_peer_dependencies

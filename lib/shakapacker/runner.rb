@@ -13,8 +13,6 @@ module Shakapacker
 
       @app_path              = File.expand_path(".", Dir.pwd)
       @webpack_config        = File.join(@app_path, "config/webpack/webpack.config.js")
-
-      @node_modules_bin_path = fetch_node_modules_bin_path
       @shakapacker_config    = ENV["SHAKAPACKER_CONFIG"] || File.join(@app_path, "config/shakapacker.yml")
 
       unless File.exist?(@webpack_config)
@@ -23,15 +21,9 @@ module Shakapacker
       end
     end
 
-    def fetch_node_modules_bin_path
-      return nil if Shakapacker::Utils::Misc.use_package_json_gem
-
-      ENV["SHAKAPACKER_NODE_MODULES_BIN_PATH"] || `yarn bin`.chomp
-    end
-
     def package_json
       if @package_json.nil?
-        Shakapacker::Utils::Misc.require_package_json_gem
+        require "package_json"
 
         @package_json = PackageJson.read(@app_path)
       end

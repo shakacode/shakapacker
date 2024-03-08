@@ -11,7 +11,7 @@ describe "EngineRakeTasks" do
 
   NODE_PACKAGE_MANAGERS.each do |fallback_manager|
     context "when using package_json with #{fallback_manager} as the manager" do
-      with_use_package_json_gem(enabled: true, fallback_manager: fallback_manager)
+      with_use_package_json_gem(fallback_manager)
 
       it "mounts app:shakapacker task successfully" do
         output = Dir.chdir(mounted_app_path) { `rake -T` }
@@ -23,21 +23,6 @@ describe "EngineRakeTasks" do
         Dir.chdir(mounted_app_path) { `bundle exec rake app:shakapacker:binstubs` }
         expected_binstub_paths.each { |path| expect(File.exist?(path)).to be true }
       end
-    end
-  end
-
-  context "when not using package_json" do
-    with_use_package_json_gem(enabled: false)
-
-    it "mounts app:shakapacker task successfully" do
-      output = Dir.chdir(mounted_app_path) { `rake -T` }
-
-      expect(output).to include "app:shakapacker"
-    end
-
-    it "only adds expected files to bin directory when binstubs is run" do
-      Dir.chdir(mounted_app_path) { `bundle exec rake app:shakapacker:binstubs` }
-      expected_binstub_paths.each { |path| expect(File.exist?(path)).to be true }
     end
   end
 
