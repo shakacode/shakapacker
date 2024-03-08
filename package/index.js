@@ -31,7 +31,7 @@ const generateWebpackConfig = (extraConfig = {}, ...extraArgs) => {
   return immutable
 }
 
-const shakapackerObject = {
+module.exports = {
   config, // shakapacker.yml
   devServer,
   generateWebpackConfig,
@@ -44,26 +44,3 @@ const shakapackerObject = {
   inliningCss,
   ...webpackMerge
 }
-
-// For backward compatibility
-const shakapackerProxyHandler = {
-  get(target, prop) {
-    if (prop === 'webpackConfig') {
-      // eslint-disable-next-line no-console
-      console.warn(`⚠️
-DEPRECATION NOTICE:
-The 'webpackConfig' is deprecated and will be removed in a future version.
-Please use 'globalMutableWebpackConfig' instead, or use
-'generateWebpackConfig()' to avoid unwanted config mutation across the app.
-
-For more information, see version 7 upgrade documentation at:
-https://github.com/shakacode/shakapacker/blob/main/docs/v7_upgrade.md
-`)
-      return globalMutableWebpackConfig()
-    }
-
-    return target[prop]
-  }
-}
-
-module.exports = new Proxy(shakapackerObject, shakapackerProxyHandler)
