@@ -1,6 +1,6 @@
 NODE_PACKAGE_MANAGERS = ["npm", "yarn_classic", "yarn_berry", "pnpm", "bun"]
 
-def with_use_package_json_gem(fallback_manager)
+def with_package_json_fallback_manager(fallback_manager)
   around do |example|
     old_package_json_fallback_manager_value = ENV["PACKAGE_JSON_FALLBACK_MANAGER"]
 

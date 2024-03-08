@@ -16,7 +16,7 @@ describe "WebpackRunner" do
 
   NODE_PACKAGE_MANAGERS.each do |fallback_manager|
     context "when using package_json with #{fallback_manager} as the manager" do
-      with_use_package_json_gem(fallback_manager)
+      with_package_json_fallback_manager(fallback_manager)
 
       let(:package_json) { PackageJson.read(test_app_path) }
 
