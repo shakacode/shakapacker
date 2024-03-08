@@ -24,7 +24,7 @@ We're essentially doing the following here:
 * Adding the Heroku NodeJS and Ruby buildpacks for your app. This allows the `npm` or `yarn` executables to properly function when compiling your app - as well as Ruby.
 * Pushing your code to Heroku and kicking off the deployment
 
-Your production build process is responsible for running `yarn install` before `rake assets:precompile`. For example, if you are on Heroku, the `heroku/nodejs` buildpack must run **prior** to the `heroku/ruby` buildpack for precompilation to run successfully.
+Your production build process is responsible for installing your JavaScript dependencies before `rake assets:precompile`. For example, if you are on Heroku, the `heroku/nodejs` buildpack must run **prior** to the `heroku/ruby` buildpack for precompilation to run successfully.
 
 ## Nginx
 
@@ -100,18 +100,25 @@ Make sure you have your public output path (default `public/packs`), the shakapa
 append :linked_dirs, "log", "tmp/pids", "tmp/cache", "tmp/sockets", "tmp/shakapacker", "public/packs", ".bundle", "node_modules"
 ```
 
-If you have `node_modules` added to `:linked_dirs` you'll need to run yarn install before `deploy:assets:precompile`, so you can add this code snippet at the bottom deploy.rb
+If you have `node_modules` added to `:linked_dirs` you'll need to install your JavaScript dependencies before `deploy:assets:precompile`; you can use `package_json` to do this generically:
 
 ```ruby
-before "deploy:assets:precompile", "deploy:yarn_install"
+before "deploy:assets:precompile", "deploy:js_install"
 namespace :deploy do
-  desc "Run rake yarn install"
-  task :yarn_install do
+  desc "Run rake js install"
+  task :js_install do
+    require "package_json"
+    
+    # this will use the package manager specified via `packageManager`, or otherwise fallback to `npm`
+    native_js_install_command = PackageJson.read.manager.native_install_command(frozen: true).join(" ")
+    
     on roles(:web) do
       within release_path do
-        execute("cd #{release_path} && yarn install --silent --no-progress --no-audit --no-optional")
+        execute("cd #{release_path} && #{native_js_install_command}")
       end
     end
   end
 end
 ```
+
+You can also replace the use of `package_json` with the underlying native install command for your preferred package manager.
