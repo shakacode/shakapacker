@@ -14,7 +14,7 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest]
-        ruby: ['2.6', '2.7', '3.0']
+        ruby: ['2.7', '3.0']
         use_package_json_gem: ['true', 'false']
         gemfile:
           - gemfiles/Gemfile-rails.6.0.x
@@ -23,13 +23,7 @@ jobs:
           # Uncomment the following line only to ensure compatibility with the
           # upcomming Rails versions, maybe before a release.
           #- gemfiles/Gemfile-rails-edge
-        exclude:
-          - ruby: 2.6
-            os: ubuntu-latest
-            gemfile: gemfiles/Gemfile-rails.7.0.x
-          - ruby: 2.6
-            os: ubuntu-latest
-            gemfile: gemfiles/Gemfile-rails-edge
+
     env:
       BUNDLE_GEMFILE: ${{ matrix.gemfile }}
 
