@@ -1,4 +1,3 @@
-const isArray = (value) => Array.isArray(value)
 const isBoolean = (str) => /^true/.test(str) || /^false/.test(str)
 const chdirTestApp = () => {
   try {
@@ -58,7 +57,6 @@ const loaderMatches = (configLoader, loaderToCheck, fn) => {
 module.exports = {
   chdirTestApp,
   chdirCwd,
-  isArray,
   isBoolean,
   ensureTrailingSlash,
   canProcess,
