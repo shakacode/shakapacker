@@ -14,7 +14,7 @@ concurrency:
 
 jobs:
   lint:
-    name: JS Lint
+    name: Linting
     strategy:
       matrix:
         os: [ubuntu-latest]
@@ -38,7 +38,7 @@ jobs:
       - name: Lint
         run: yarn lint
   test:
-    name: JS Test
+    name: Testing
     strategy:
       matrix:
         os: [ubuntu-latest]

@@ -14,7 +14,7 @@ concurrency:
 
 jobs:
   lint:
-    name: Ruby Lint
+    name: Linting
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
@@ -34,7 +34,7 @@ jobs:
         run: bundle exec rubocop
 
   test:
-    name: Ruby Test
+    name: Testing
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
