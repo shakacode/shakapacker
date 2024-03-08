@@ -65,6 +65,7 @@ module Shakapacker
         [match[1], match[2], match[3]]
       end
 
+      # TODO: this might as well use package_json
       class NodePackageVersion
         attr_reader :package_json
 

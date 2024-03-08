@@ -16,7 +16,7 @@ describe "WebpackRunner" do
 
   NODE_PACKAGE_MANAGERS.each do |fallback_manager|
     context "when using package_json with #{fallback_manager} as the manager" do
-      with_use_package_json_gem(enabled: true, fallback_manager: fallback_manager)
+      with_use_package_json_gem(fallback_manager)
 
       let(:package_json) { PackageJson.read(test_app_path) }
 
@@ -44,28 +44,6 @@ describe "WebpackRunner" do
     end
   end
 
-  context "when not using package_json" do
-    with_use_package_json_gem(enabled: false)
-
-    it "supports running via node_modules" do
-      cmd = ["#{test_app_path}/node_modules/.bin/webpack", "--config", "#{test_app_path}/config/webpack/webpack.config.js"]
-
-      verify_command(cmd, use_node_modules: true)
-    end
-
-    it "supports running via yarn" do
-      cmd = ["yarn", "webpack", "--config", "#{test_app_path}/config/webpack/webpack.config.js"]
-
-      verify_command(cmd, use_node_modules: false)
-    end
-
-    it "passes on arguments" do
-      cmd = ["#{test_app_path}/node_modules/.bin/webpack", "--config", "#{test_app_path}/config/webpack/webpack.config.js", "--watch"]
-
-      verify_command(cmd, argv: ["--watch"])
-    end
-  end
-
   private
 
     def verify_command(cmd, use_node_modules: true, argv: [])
@@ -74,7 +52,6 @@ describe "WebpackRunner" do
         instance = klass.new(argv)
 
         allow(klass).to receive(:new).and_return(instance)
-        allow(instance).to receive(:node_modules_bin_exist?).and_return(use_node_modules)
         allow(Kernel).to receive(:exec)
 
         klass.run(argv)
