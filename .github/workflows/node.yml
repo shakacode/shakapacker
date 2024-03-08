@@ -1,4 +1,4 @@
-name: Jest specs
+name: Node based checks
 
 on:
   push:
@@ -13,8 +13,32 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  jest:
-    name: Jest specs
+  lint:
+    name: Linting
+    strategy:
+      matrix:
+        os: [ubuntu-latest]
+        node: [14.x, 16.x, 18.x]
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Use Node.js ${{ matrix.node }}
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ matrix.node }}
+          cache: yarn
+
+      - name: Install dependencies
+        run: yarn --frozen-lockfile --non-interactive --prefer-offline
+
+      - name: Lint
+        run: yarn lint
+  test:
+    name: Testing
     strategy:
       matrix:
         os: [ubuntu-latest]
