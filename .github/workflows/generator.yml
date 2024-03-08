@@ -25,6 +25,7 @@ jobs:
           - gemfiles/Gemfile-rails.6.0.x
           - gemfiles/Gemfile-rails.6.1.x
           - gemfiles/Gemfile-rails.7.0.x
+          - gemfiles/Gemfile-rails.7.1.x
           # Uncomment the following line only to ensure compatibility with the
           # upcomming Rails versions, maybe before a release.
           #- gemfiles/Gemfile-rails-edge
