@@ -16,6 +16,9 @@ Changes since the last non-beta release.
 
   The usage of those has been deprecated in Shakapacker v7 and now fully removed in v8. See the [v7 Upgrade Guide](./docs/v7_upgrade.md) for more information if you are still yet to address this deprecation.
 
+
+- Remove `yarn_install` rake task, and stop installing js packages automatically as part of `assets:precompile` [PR 412](https://github.com/shakacode/shakapacker/pull/412) by [G-Rath](https://github.com/g-rath).
+
 - Remove `https` option for `webpack-dev-server` [PR 414](https://github.com/shakacode/shakapacker/pull/414) by [G-Rath](https://github.com/g-rath).
 
 - Drop support for Ruby 2.6 [PR 415](https://github.com/shakacode/shakapacker/pull/415) by [G-Rath](https://github.com/g-rath).
