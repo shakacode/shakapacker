@@ -46,7 +46,7 @@ describe "WebpackRunner" do
 
   private
 
-    def verify_command(cmd, use_node_modules: true, argv: [])
+    def verify_command(cmd, argv: [])
       Dir.chdir(test_app_path) do
         klass = Shakapacker::WebpackRunner
         instance = klass.new(argv)

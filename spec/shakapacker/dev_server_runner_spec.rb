@@ -106,7 +106,7 @@ describe "DevServerRunner" do
 
   private
 
-    def verify_command(cmd, use_node_modules: true, argv: [], env: Shakapacker::Compiler.env)
+    def verify_command(cmd, argv: [], env: Shakapacker::Compiler.env)
       Dir.chdir(test_app_path) do
         klass = Shakapacker::DevServerRunner
         instance = klass.new(argv)
