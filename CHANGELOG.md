@@ -24,6 +24,8 @@ Changes since the last non-beta release.
 
 - Remove `https` option for `webpack-dev-server` [PR 414](https://github.com/shakacode/shakapacker/pull/414) by [G-Rath](https://github.com/g-rath).
 
+- Remove `verify_file_existance` method [PR 446](https://github.com/shakacode/shakapacker/pull/446) by [G-Rath](https://github.com/g-rath).
+
 - Drop support for Ruby 2.6 [PR 415](https://github.com/shakacode/shakapacker/pull/415) by [G-Rath](https://github.com/g-rath).
 
 - Drop support for Node v12 [PR 431](https://github.com/shakacode/shakapacker/pull/431) by [G-Rath](https://github.com/g-rath).

@@ -6,11 +6,6 @@ namespace :shakapacker do
   end
 end
 
-def verify_file_existance(binstub_file)
-  puts "verify_file_existance is deprecated - use verify_file_existence instead"
-  verify_file_existence(binstub_file)
-end
-
 def verify_file_existence(binstub_file)
   unless File.exist?(Rails.root.join(binstub_file))
     puts <<~MSG
