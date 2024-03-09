@@ -45,13 +45,7 @@ jobs:
       - uses: ruby/setup-ruby@v1
         with:
           ruby-version: ${{ matrix.ruby }}
-      # Bundler 2.5.0 dropped support for Ruby 2.6 and 2.7
-      - name: Use Bundler 2.4.22
-        run: |
-          gem install bundler -v '2.4.22'
-          bundle config --local path vendor/bundle
-      - name: Install dependencies
-        run: bundle install
+          bundler-cache: true
       - run: bundle exec rake run_spec:generator
         env:
           SHAKAPACKER_USE_PACKAGE_JSON_GEM: ${{ matrix.use_package_json_gem }}
