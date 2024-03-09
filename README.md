@@ -147,7 +147,16 @@ Before initiating the installation process, ensure you have committed all the ch
 
 Shakapacker uses the [`package_json`](https://github.com/shakacode/package_json) gem to handle updating the `package.json` and interacting with the underlying package manager of choice for managing dependencies and running commands; the package manager is managed using the [`packageManager`](https://nodejs.org/api/packages.html#packagemanager) property in the `package.json`, otherwise falling back to the value of `PACKAGE_JSON_FALLBACK_MANAGER` if set or otherwise `npm`.
 
-Since generally when running `shakapacker:install` for the first time a `package.json` won't exist so `npm` will be used unless you choose to explicitly set the `PACKAGE_JSON_FALLBACK_MANAGER` to your preferred package manager; you can later switch to another manager by specifying your preferred manager in your `package.json`, removing the `package-lock.json` file, and running the `install` command of your preferred manager. 
+Since generally when running `shakapacker:install` for the first time a `package.json` won't exist so `npm` will be used unless you choose to explicitly set the `PACKAGE_JSON_FALLBACK_MANAGER` to your preferred package manager; you can later switch to another manager by specifying your preferred manager in your `package.json`, removing the `package-lock.json` file, and running the `install` command of your preferred manager.
+
+> **Note**
+>
+> The `packageManager` property is only used to determine the package manager to use, based primarily on its name.
+> The version (if present) is only used to determine if Yarn Classic or Yarn Berry should be used, but is otherwise
+> _not_ checked, nor is [`corepack`](https://nodejs.org/api/corepack.html) used to ensure that the package manager is installed.
+>
+> It is up to the developer to ensure that the desired package manager is actually install at the right version, which can be done
+> using `corepack` or by other means.
 
 See [here](https://github.com/G-Rath/package_json#specifying-a-package-manager) for a list of the supported package managers and more information; note that `package_json` does not handle ensuring the manager is installed.
 
