@@ -10,19 +10,40 @@ SPEC_PATH = Pathname.new(File.expand_path("../", __FILE__))
 BASE_RAILS_APP_PATH = SPEC_PATH.join("base-rails-app")
 TEMP_RAILS_APP_PATH = SPEC_PATH.join("temp-rails-app")
 
+def log_time_elapsed(loggable, &block)
+  puts "======"
+  puts "Starting #{loggable}"
+  start = ::Process.clock_gettime(::Process::CLOCK_MONOTONIC)
+  yield
+  elapsed = (::Process.clock_gettime(::Process::CLOCK_MONOTONIC) - start).round(3)
+  puts "#{loggable} took #{elapsed}"
+  puts "======"
+end
+
+
 describe "Generator" do
+  around(:example) do |ex|
+    log_time_elapsed(ex.full_description) do
+      ex.run
+    end
+  end
+
   before :all do
     # Don't use --skip-git because we want .gitignore file to exist in the project
-    sh_in_dir({}, SPEC_PATH, %(
-      rails new base-rails-app --skip-javascript --skip-bundle --skip-spring
-      rm -rf base-rails-app/.git
-    ))
-
-    Bundler.with_unbundled_env do
-      sh_in_dir({}, BASE_RAILS_APP_PATH, %(
-        gem update bundler
-        bundle add shakapacker --path "#{GEM_ROOT}"
+    log_time_elapsed('creating new rails app') do
+      sh_in_dir({}, SPEC_PATH, %(
+        rails new base-rails-app --skip-javascript --skip-bundle --skip-spring
+        rm -rf base-rails-app/.git
       ))
+    end
+
+    log_time_elapsed('installing shakapacker gem') do
+      Bundler.with_unbundled_env do
+        sh_in_dir({}, BASE_RAILS_APP_PATH, %(
+          gem update bundler
+          bundle add shakapacker --path "#{GEM_ROOT}"
+        ))
+      end
     end
   end
 
@@ -36,12 +57,14 @@ describe "Generator" do
     NODE_PACKAGE_MANAGERS.reject { |fm| fm == "yarn_berry" }.each do |fallback_manager|
       context "when using package_json with #{fallback_manager} as the manager" do
         before :all do
-          sh_opts = { fallback_manager: fallback_manager }
+          log_time_elapsed("shakapacker install with #{fallback_manager}") do
+            sh_opts = { fallback_manager: fallback_manager }
 
-          sh_in_dir(sh_opts, SPEC_PATH, "cp -r '#{BASE_RAILS_APP_PATH}' '#{TEMP_RAILS_APP_PATH}'")
+            sh_in_dir(sh_opts, SPEC_PATH, "cp -r '#{BASE_RAILS_APP_PATH}' '#{TEMP_RAILS_APP_PATH}'")
 
-          Bundler.with_unbundled_env do
-            sh_in_dir(sh_opts, TEMP_RAILS_APP_PATH, "FORCE=true bundle exec rails shakapacker:install")
+            Bundler.with_unbundled_env do
+              sh_in_dir(sh_opts, TEMP_RAILS_APP_PATH, "FORCE=true bundle exec rails shakapacker:install")
+            end
           end
         end
 
@@ -164,12 +187,14 @@ describe "Generator" do
 
     context "when not using package_json" do
       before :all do
-        sh_opts = { fallback_manager: nil }
+        log_time_elapsed("shakapacker install without package_json") do
+          sh_opts = { fallback_manager: nil }
 
-        sh_in_dir(sh_opts, SPEC_PATH, "cp -r '#{BASE_RAILS_APP_PATH}' '#{TEMP_RAILS_APP_PATH}'")
+          sh_in_dir(sh_opts, SPEC_PATH, "cp -r '#{BASE_RAILS_APP_PATH}' '#{TEMP_RAILS_APP_PATH}'")
 
-        Bundler.with_unbundled_env do
-          sh_in_dir(sh_opts, TEMP_RAILS_APP_PATH, "FORCE=true bundle exec rails shakapacker:install")
+          Bundler.with_unbundled_env do
+            sh_in_dir(sh_opts, TEMP_RAILS_APP_PATH, "FORCE=true bundle exec rails shakapacker:install")
+          end
         end
       end
 
