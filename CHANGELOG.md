@@ -32,6 +32,8 @@ Changes since the last non-beta release.
 
 - Drop support for Node v12 [PR 431](https://github.com/shakacode/shakapacker/pull/431) by [G-Rath](https://github.com/g-rath).
 
+- Enable `ensure_consistent_versioning` by default [PR 447](https://github.com/shakacode/shakapacker/pull/447) by [G-Rath](https://github.com/g-rath).
+
 ## [v7.2.3] - March 23, 2024
 
 ### Added
