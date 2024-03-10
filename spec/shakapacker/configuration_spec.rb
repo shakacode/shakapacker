@@ -113,8 +113,8 @@ describe "Shakapacker::Configuration" do
     end
 
     describe "#ensure_consistent_versioning?" do
-      it "returns false in production environment" do
-        expect(config.ensure_consistent_versioning?).to be false
+      it "returns true in production environment" do
+        expect(config.ensure_consistent_versioning?).to be true
       end
 
       it "returns true in development environment" do
@@ -123,9 +123,9 @@ describe "Shakapacker::Configuration" do
         end
       end
 
-      it "returns false in test environment" do
+      it "returns true in test environment" do
         with_rails_env("test") do
-          expect(Shakapacker.config.ensure_consistent_versioning?).to be false
+          expect(Shakapacker.config.ensure_consistent_versioning?).to be true
         end
       end
     end
