@@ -3,7 +3,6 @@ require_relative "spec_helper_initializer"
 describe "Shakapacker::Instance" do
   before :each do
     ENV.delete("SHAKAPACKER_CONFIG")
-    Shakapacker.instance = Shakapacker::Instance.new
   end
 
   after :each do
@@ -20,6 +19,7 @@ describe "Shakapacker::Instance" do
 
   it "uses the SHAKAPACKER_CONFIG env variable for the config file path" do
     ENV["SHAKAPACKER_CONFIG"] = "/some/random/path.yml"
+    Shakapacker.instance = Shakapacker::Instance.new
 
     actual_config_path = "/some/random/path.yml"
     expected_config_path = Shakapacker.config.config_path.to_s
