@@ -1,5 +1,6 @@
 class Shakapacker::Env
-  delegate :config_path, :logger, to: :@instance
+  delegate :config, :logger, to: :@instance
+  delegate :config_path, to: :config
 
   def self.inquire(instance)
     new(instance).inquire
