@@ -1,4 +1,4 @@
-// These are the raw webpacker dev server config settings from the YML file with ENV overrides applied.
+// These are the raw shakapacker dev server config settings from the YML file with ENV overrides applied.
 const { isBoolean } = require('./utils/helpers')
 const config = require('./config')
 

@@ -33,7 +33,6 @@
     "testRegex": "(/__tests__/.*|(\\.|/))\\.jsx?$"
   },
   "dependencies": {
-    "glob": "^7.2.0",
     "js-yaml": "^4.1.0",
     "path-complete-extname": "^1.0.0"
   },
@@ -80,7 +79,7 @@
     }
   },
   "engines": {
-    "node": "^12.13.0 || ^14 || >=16",
+    "node": ">= 14",
     "yarn": ">=1 <5"
   },
   "publishConfig": {

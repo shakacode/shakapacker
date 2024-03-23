@@ -20,7 +20,7 @@ class Shakapacker::Env
     end
 
     def fallback_env_warning
-      logger.info "RAILS_ENV=#{Rails.env} environment is not defined in config/shakapacker.yml, falling back to #{Shakapacker::DEFAULT_ENV} environment"
+      logger.info "RAILS_ENV=#{Rails.env} environment is not defined in #{config_path}, falling back to #{Shakapacker::DEFAULT_ENV} environment"
     end
 
     def available_environments

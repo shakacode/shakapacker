@@ -30,21 +30,6 @@ class Shakapacker::DevServer
     fetch(:port)
   end
 
-  def https?
-    value = fetch(:https)
-
-    unless value.nil?
-      puts "WARNING: `https: true` has been deprecated in favor of `server: 'https'`"
-    end
-
-    case value
-    when true, "true", Hash
-      true
-    else
-      false
-    end
-  end
-
   def server
     server_value = fetch(:server)
     server_type = server_value.is_a?(Hash) ? server_value[:type] : server_value
@@ -65,7 +50,7 @@ class Shakapacker::DevServer
   end
 
   def protocol
-    return "https" if server == "https" || https? == true
+    return "https" if server == "https"
 
     "http"
   end

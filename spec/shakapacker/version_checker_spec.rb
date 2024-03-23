@@ -29,19 +29,19 @@ describe "VersionChecker" do
     version_checker.raise_if_gem_and_node_package_versions_differ
   end
 
-  it "prints error in stderr if consistency check is disabled and version mismatch" do
+  it "does nothing if consistency check is disabled and version mismatch" do
     node_package_version = NodePackageVersionDouble.new(raw: "6.1.0", major_minor_patch: ["6", "1", "0"])
 
     expect { check_version(node_package_version, "6.0.0", false) }
-      .to output(/Shakapacker::VersionChecker - Version mismatch/)
+      .not_to output
       .to_stderr
   end
 
-  it "prints error in stderr if consistency check is disabled and we have semver" do
+  it "does nothing if consistency check is disabled and we have semver" do
     node_package_version = NodePackageVersionDouble.new(raw: "^6.1.0", major_minor_patch: ["6", "1", "0"], semver_wildcard: true)
 
     expect { check_version(node_package_version, "6.0.0", false) }
-      .to output(/Shakapacker::VersionChecker - Semver wildcard without a lockfile detected/)
+      .not_to output
       .to_stderr
   end
 

@@ -8,7 +8,6 @@ describe "Shakapacker" do
       allow(dev_server).to receive(:host).and_return("localhost")
       allow(dev_server).to receive(:port).and_return("3035")
       allow(dev_server).to receive(:pretty?).and_return(false)
-      allow(dev_server).to receive(:https?).and_return(true)
       allow(dev_server).to receive(:running?).and_return(true)
     end
 

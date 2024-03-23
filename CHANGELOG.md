@@ -3,12 +3,48 @@
 * Please see the [v6 Upgrade Guide](./docs/v6_upgrade.md) to go from versions prior to v6.
 * [ShakaCode](https://www.shakacode.com) offers support for upgrading from Webpacker or using Shakapacker. If interested, contact Justin Gordon, [justin@shakacode.com](mailto:justin@shakacode.com).
 
+_next_ branch is for v8 changes
+
 ## Versions
 ## [Unreleased]
 Changes since the last non-beta release.
 
+### Breaking changes
+- Remove `relative_url_root` [PR 413](https://github.com/shakacode/shakapacker/pull/413) by [G-Rath](https://github.com/g-rath).
+
+- Removes deprecated support of `Webpacker` spelling, config variables and constants. [PR 429](https://github.com/shakacode/shakapacker/pull/429) by [tomdracz](https://github.com/tomdracz).
+
+  The usage of those has been deprecated in Shakapacker v7 and now fully removed in v8. See the [v7 Upgrade Guide](./docs/v7_upgrade.md) for more information if you are still yet to address this deprecation.
+
+- Remove `globalMutableWebpackConfig` global [PR 439](https://github.com/shakacode/shakapacker/pull/439) by [G-Rath](https://github.com/g-rath).
+
+  Use `generateWebpackConfig` instead.
+
+- Remove `yarn_install` rake task, and stop installing js packages automatically as part of `assets:precompile` [PR 412](https://github.com/shakacode/shakapacker/pull/412) by [G-Rath](https://github.com/g-rath).
+
+- Remove `check_yarn` rake task [PR 443](https://github.com/shakacode/shakapacker/pull/443) by [G-Rath](https://github.com/g-rath).
+
+- Remove `https` option for `webpack-dev-server` [PR 414](https://github.com/shakacode/shakapacker/pull/414) by [G-Rath](https://github.com/g-rath).
+
+- Remove `verify_file_existance` method [PR 446](https://github.com/shakacode/shakapacker/pull/446) by [G-Rath](https://github.com/g-rath).
+
+- Drop support for Ruby 2.6 [PR 415](https://github.com/shakacode/shakapacker/pull/415) by [G-Rath](https://github.com/g-rath).
+
+- Drop support for Node v12 [PR 431](https://github.com/shakacode/shakapacker/pull/431) by [G-Rath](https://github.com/g-rath).
+
+- Enable `ensure_consistent_versioning` by default [PR 447](https://github.com/shakacode/shakapacker/pull/447) by [G-Rath](https://github.com/g-rath).
+
+### Added
 - Emit warnings instead of errors when compilation is success but stderr is not empty. [PR 416](https://github.com/shakacode/shakapacker/pull/416) by [n-rodriguez](https://github.com/n-rodriguez).
 - Allow `webpack-dev-server` v5. [PR 418](https://github.com/shakacode/shakapacker/pull/418) by [G-Rath](https://github.com/g-rath)
+
+### Removed
+- Removes dependency on `glob` library. [PR 435](https://github.com/shakacode/shakapacker/pull/435) by [tomdracz](https://github.com/tomdracz).
+
+### Fixed
+- Uses config file passed in `SHAKAPACKER_CONFIG` consistently.[PR 448](https://github.com/shakacode/shakapacker/pull/448) by [tomdracz](https://github.com/tomdracz).
+
+   Previously this could have been ignored in few code branches, especially when checking for available environments.
 
 ## [v7.2.2] - January 19, 2024
 

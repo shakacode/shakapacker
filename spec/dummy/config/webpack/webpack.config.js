@@ -16,7 +16,7 @@ const webpackConfiguration = envSpecificConfig()
 
 // To debug the webpack configuration
 // 1. Uncomment debugger line below
-// 2. Run `bin/webpacker --debug-webpacker`
+// 2. Run `bin/shakapacker --debug-shakapacker`
 // 3. Examine the webpackConfiguration variable
 // 4. Consider adding a 'debugger` line to the beginning of this file.
 // debugger

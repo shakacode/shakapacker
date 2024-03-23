@@ -1,15 +1,33 @@
 /* eslint global-require: 0 */
 /* eslint import/no-dynamic-require: 0 */
 
+const { existsSync, readdirSync } = require('fs')
 const { basename, dirname, join, relative, resolve } = require('path')
 const extname = require('path-complete-extname')
-const { sync: globSync } = require('glob')
 const WebpackAssetsManifest = require('webpack-assets-manifest')
 const webpack = require('webpack')
 const rules = require('../rules')
 const config = require('../config')
 const { isProduction } = require('../env')
 const { moduleExists } = require('../utils/helpers')
+
+const getFilesInDirectory = (dir, includeNested) => {
+  if (!existsSync(dir)) {
+    return []
+  }
+
+  return readdirSync(dir, { withFileTypes: true }).flatMap((dirent) => {
+    const filePath = join(dir, dirent.name)
+
+    if (dirent.isDirectory() && includeNested) {
+      return getFilesInDirectory(filePath, includeNested)
+    }
+    if (dirent.isFile()) {
+      return filePath
+    }
+    return []
+  })
+}
 
 const getEntryObject = () => {
   const entries = {}
@@ -20,9 +38,8 @@ const getEntryObject = () => {
       "'true'. Doing this would result in packs for every one of your source files"
     )
   }
-  const nesting = config.nested_entries ? '**/' : ''
 
-  globSync(`${rootPath}/${nesting}*.*`).forEach((path) => {
+  getFilesInDirectory(rootPath, config.nested_entries).forEach((path) => {
     const namespace = relative(join(rootPath), dirname(path))
     const name = join(namespace, basename(path, extname(path)))
     let assetPaths = resolve(path)
