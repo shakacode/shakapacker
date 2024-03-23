@@ -7,6 +7,9 @@
 ## [Unreleased]
 Changes since the last non-beta release.
 
+## [v7.2.3] - March 23, 2024
+
+### Added
 - Emit warnings instead of errors when compilation is success but stderr is not empty. [PR 416](https://github.com/shakacode/shakapacker/pull/416) by [n-rodriguez](https://github.com/n-rodriguez).
 - Allow `webpack-dev-server` v5. [PR 418](https://github.com/shakacode/shakapacker/pull/418) by [G-Rath](https://github.com/g-rath)
 
@@ -303,7 +306,8 @@ Note: [Rubygem is 6.3.0.pre.rc.1](https://rubygems.org/gems/shakapacker/versions
 ## v5.4.3 and prior changes from rails/webpacker
 See [CHANGELOG.md in rails/webpacker (up to v5.4.3)](https://github.com/rails/webpacker/blob/master/CHANGELOG.md)
 
-[Unreleased]: https://github.com/shakacode/shakapacker/compare/v7.2.2...main
+[Unreleased]: https://github.com/shakacode/shakapacker/compare/v7.2.3...main
+[v7.2.3]: https://github.com/shakacode/shakapacker/compare/v7.2.2...v7.2.3
 [v7.2.2]: https://github.com/shakacode/shakapacker/compare/v7.2.1...v7.2.2
 [v7.2.1]: https://github.com/shakacode/shakapacker/compare/v7.2.0...v7.2.1
 [v7.2.0]: https://github.com/shakacode/shakapacker/compare/v7.1.0...v7.2.0
