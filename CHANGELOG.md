@@ -41,6 +41,11 @@ Changes since the last non-beta release.
 ### Removed
 - Removes dependency on `glob` library. [PR 435](https://github.com/shakacode/shakapacker/pull/435) by [tomdracz](https://github.com/tomdracz).
 
+### Fixed
+- Uses config file passed in `SHAKAPACKER_CONFIG` consistently.[PR 448](https://github.com/shakacode/shakapacker/pull/448) by [tomdracz](https://github.com/tomdracz).
+
+   Previously this could have been ignored in few code branches, especially when checking for available environments.
+
 ## [v7.2.2] - January 19, 2024
 
 ### Added
