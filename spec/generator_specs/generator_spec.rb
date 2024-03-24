@@ -58,7 +58,7 @@ describe "Generator" do
           expect(actual_content).to eq expected_content
         end
 
-        it "replaces package.json with the template file" do
+        it "replaces the package.json completely" do
           package_json = PackageJson.read(path_in_the_app)
 
           expect(package_json.fetch("name", "")).to eq("app")

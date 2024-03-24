@@ -6,7 +6,7 @@ require "shakapacker/utils/version_syntax_converter"
 force_option = ENV["FORCE"] ? { force: true } : {}
 
 copy_file "#{__dir__}/config/shakapacker.yml", "config/shakapacker.yml", force_option
-copy_file "#{__dir__}/package.json", "package.json", force_option
+remove_file "#{__dir__}/package.json" if force_option[:force]
 
 say "Copying webpack core config"
 directory "#{__dir__}/config/webpack", "config/webpack", force_option
@@ -46,10 +46,28 @@ def package_json
   if @package_json.nil?
     require "package_json"
 
-    @package_json = PackageJson.read
+    @package_json = PackageJson.new
   end
 
   @package_json
+end
+
+# setup the package manager with default values
+package_json.merge! do |pj|
+  babel = pj.fetch("babel", {})
+
+  babel["presets"] ||= []
+  babel["presets"].push("./node_modules/shakapacker/package/babel/preset.js")
+
+  {
+    "name" => "app",
+    "private" => true,
+    "version" => "0.1.0",
+    "babel" => babel,
+    "browserslist" => [
+      "defaults"
+    ]
+  }.merge(pj)
 end
 
 # Ensure there is `system!("bin/yarn")` command in `./bin/setup` file
