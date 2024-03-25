@@ -1,5 +1,6 @@
 require "shakapacker/utils/misc"
 require "shakapacker/utils/manager"
+require "package_json"
 
 module Shakapacker
   class Runner
@@ -25,13 +26,7 @@ module Shakapacker
     end
 
     def package_json
-      if @package_json.nil?
-        require "package_json"
-
-        @package_json = PackageJson.read(@app_path)
-      end
-
-      @package_json
+      @package_json ||= PackageJson.read(@app_path)
     end
   end
 end

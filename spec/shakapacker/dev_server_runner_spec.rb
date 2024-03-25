@@ -37,8 +37,6 @@ describe "DevServerRunner" do
 
       let(:package_json) { PackageJson.read(test_app_path) }
 
-      require "package_json"
-
       it "uses the expected package manager", unless: fallback_manager == "yarn_classic" do
         cmd = package_json.manager.native_exec_command("webpack", ["serve", "--config", "#{test_app_path}/config/webpack/webpack.config.js"])
 

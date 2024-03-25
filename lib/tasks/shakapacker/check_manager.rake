@@ -6,8 +6,6 @@ namespace :shakapacker do
   task :check_manager do
     Shakapacker::Utils::Manager.error_unless_package_manager_is_obvious!
 
-    require "package_json"
-
     package_json = PackageJson.read
     pm = package_json.manager.binary
 

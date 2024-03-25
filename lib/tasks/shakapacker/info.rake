@@ -13,8 +13,6 @@ namespace :shakapacker do
 
       Shakapacker::Utils::Manager.error_unless_package_manager_is_obvious!
 
-      require "package_json"
-
       pj_manager = PackageJson.read.manager
 
       $stdout.puts "#{pj_manager.binary}: #{pj_manager.version}"

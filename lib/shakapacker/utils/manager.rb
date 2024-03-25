@@ -1,5 +1,5 @@
 # frozen_string_literal: true
-#
+
 require "package_json"
 
 module Shakapacker
