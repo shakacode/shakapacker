@@ -3,6 +3,7 @@ require "rake"
 require "json"
 require "shakapacker/utils/misc"
 require "shakapacker/utils/version_syntax_converter"
+require "shakapacker/manager_checker"
 require "package_json"
 
 GEM_ROOT = Pathname.new(File.expand_path("../../..", __FILE__))
@@ -58,10 +59,12 @@ describe "Generator" do
           expect(actual_content).to eq expected_content
         end
 
-        it "replaces the package.json completely" do
+        it "ensures the 'packageManager' field is set" do
           package_json = PackageJson.read(path_in_the_app)
 
-          expect(package_json.fetch("name", "")).to eq("app")
+          manager_name = fallback_manager.split("_")[0]
+
+          expect(package_json.fetch("packageManager", "")).to match(/#{manager_name}@\d+\.\d+\.\d+/)
         end
 
         it "creates webpack config directory and its files" do
