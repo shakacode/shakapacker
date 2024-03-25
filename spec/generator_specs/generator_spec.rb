@@ -3,7 +3,6 @@ require "rake"
 require "json"
 require "shakapacker/utils/misc"
 require "shakapacker/utils/version_syntax_converter"
-require "shakapacker/manager_checker"
 require "package_json"
 
 GEM_ROOT = Pathname.new(File.expand_path("../../..", __FILE__))

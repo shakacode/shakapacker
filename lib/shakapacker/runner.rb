@@ -1,4 +1,5 @@
 require "shakapacker/utils/misc"
+require "shakapacker/utils/manager"
 
 module Shakapacker
   class Runner
@@ -20,7 +21,7 @@ module Shakapacker
         exit!
       end
 
-      ManagerChecker.new.warn_unless_package_manager_is_obvious!
+      Shakapacker::Utils::Manager.warn_unless_package_manager_is_obvious!
     end
 
     def package_json
