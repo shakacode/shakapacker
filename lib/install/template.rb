@@ -1,6 +1,7 @@
 require "shakapacker/utils/misc"
 require "shakapacker/utils/manager"
 require "shakapacker/utils/version_syntax_converter"
+require "package_json"
 
 # Install Shakapacker
 
@@ -44,13 +45,7 @@ else
 end
 
 def package_json
-  if @package_json.nil?
-    require "package_json"
-
-    @package_json = PackageJson.new
-  end
-
-  @package_json
+  @package_json ||= PackageJson.new
 end
 
 # setup the package manager with default values
