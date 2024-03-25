@@ -1,12 +1,6 @@
 require_relative "spec_helper_initializer"
 require "shakapacker/dev_server_runner"
 
-def within_temp_directory(tmpdir = nil, &block)
-  Dir.mktmpdir("shakapacker-", tmpdir) do |dir|
-    Dir.chdir(dir, &block)
-  end
-end
-
 describe "DevServerRunner" do
   around do |example|
     within_temp_directory do

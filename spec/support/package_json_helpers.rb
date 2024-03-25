@@ -11,3 +11,9 @@ def with_package_json_fallback_manager(fallback_manager)
     ENV["PACKAGE_JSON_FALLBACK_MANAGER"] = old_package_json_fallback_manager_value
   end
 end
+
+def within_temp_directory(tmpdir = nil, &block)
+  Dir.mktmpdir("shakapacker-", tmpdir) do |dir|
+    Dir.chdir(dir, &block)
+  end
+end

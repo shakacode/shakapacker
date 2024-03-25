@@ -11,12 +11,6 @@ Struct.new("Status", :exit_code) do
   end
 end
 
-def within_temp_directory(tmpdir = nil, &block)
-  Dir.mktmpdir("shakapacker-", tmpdir) do |dir|
-    Dir.chdir(dir, &block)
-  end
-end
-
 describe "ManagerChecker" do
   around do |example|
     within_temp_directory { example.run }

@@ -1,12 +1,6 @@
 require_relative "spec_helper_initializer"
 require "shakapacker/webpack_runner"
 
-def within_temp_directory(tmpdir = nil, &block)
-  Dir.mktmpdir("shakapacker-", tmpdir) do |dir|
-    Dir.chdir(dir, &block)
-  end
-end
-
 describe "WebpackRunner" do
   around do |example|
     within_temp_directory do
