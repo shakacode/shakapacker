@@ -1,5 +1,6 @@
 require "shakapacker/version"
 require "shakapacker/utils/misc"
+require "shakapacker/utils/manager"
 
 namespace :shakapacker do
   desc "Provide information on Shakapacker's environment"
@@ -9,6 +10,8 @@ namespace :shakapacker do
       $stdout.puts "Rails: #{Rails.version}"
       $stdout.puts "Shakapacker: #{Shakapacker::VERSION}"
       $stdout.puts "Node: #{`node --version`}"
+
+      Shakapacker::Utils::Manager.warn_unless_package_manager_is_obvious!
 
       require "package_json"
 
