@@ -59,6 +59,14 @@ package_json.merge! do |pj|
   babel["presets"] ||= []
   babel["presets"].push("./node_modules/shakapacker/package/babel/preset.js")
 
+  package_manager = pj.fetch("packageManager", nil)
+
+  if package_manager.nil?
+    manager_checker = Shakapacker::ManagerChecker.new
+
+    package_manager = "#{manager_checker.guess_manager}@#{manager_checker.guess_manager_version}"
+  end
+
   {
     "name" => "app",
     "private" => true,
@@ -66,9 +74,12 @@ package_json.merge! do |pj|
     "babel" => babel,
     "browserslist" => [
       "defaults"
-    ]
+    ],
+    "packageManager" => package_manager
   }.merge(pj)
 end
+
+Shakapacker::ManagerChecker.new.warn_unless_package_manager_is_obvious!
 
 # Ensure there is `system!("bin/yarn")` command in `./bin/setup` file
 if (setup_path = Rails.root.join("bin/setup")).exist?
