@@ -147,7 +147,7 @@ Before initiating the installation process, ensure you have committed all the ch
 
 Shakapacker uses the [`package_json`](https://github.com/shakacode/package_json) gem to handle updating the `package.json` and interacting with the underlying package manager of choice for managing dependencies and running commands; the package manager is managed using the [`packageManager`](https://nodejs.org/api/packages.html#packagemanager) property in the `package.json`, otherwise falling back to the value of `PACKAGE_JSON_FALLBACK_MANAGER` if set or otherwise `npm`.
 
-Since generally when running `shakapacker:install` for the first time a `package.json` won't exist so `npm` will be used unless you choose to explicitly set the `PACKAGE_JSON_FALLBACK_MANAGER` to your preferred package manager; you can later switch to another manager by specifying your preferred manager in your `package.json`, removing the `package-lock.json` file, and running the `install` command of your preferred manager.
+If `packageManager` is not set when running `shakapacker:install`, Shakapacker will set it based on the lockfile and the result of calling `--version` on the inferred manager; if no lockfile is present, then `npm` be used unless you choose to explicitly set the `PACKAGE_JSON_FALLBACK_MANAGER` to your preferred package manager.
 
 > **Note**
 >
