@@ -11,7 +11,7 @@ namespace :shakapacker do
       $stdout.puts "Shakapacker: #{Shakapacker::VERSION}"
       $stdout.puts "Node: #{`node --version`}"
 
-      Shakapacker::Utils::Manager.warn_unless_package_manager_is_obvious!
+      Shakapacker::Utils::Manager.error_unless_package_manager_is_obvious!
 
       require "package_json"
 

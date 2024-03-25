@@ -16,7 +16,7 @@ describe "Shakapacker::Utils::Manager" do
     within_temp_directory { example.run }
   end
 
-  describe "~warn_unless_package_manager_is_obvious!" do
+  describe "~error_unless_package_manager_is_obvious!" do
     before do
       allow(Shakapacker).to receive(:puts_deprecation_message)
     end
@@ -27,7 +27,7 @@ describe "Shakapacker::Utils::Manager" do
       end
 
       it "does nothing" do
-        Shakapacker::Utils::Manager.warn_unless_package_manager_is_obvious!
+        Shakapacker::Utils::Manager.error_unless_package_manager_is_obvious!
 
         expect(Shakapacker).not_to have_received(:puts_deprecation_message)
       end
@@ -38,7 +38,7 @@ describe "Shakapacker::Utils::Manager" do
         File.write("package.json", {}.to_json)
         FileUtils.touch("package-lock.json")
 
-        Shakapacker::Utils::Manager.warn_unless_package_manager_is_obvious!
+        Shakapacker::Utils::Manager.error_unless_package_manager_is_obvious!
 
         expect(Shakapacker).not_to have_received(:puts_deprecation_message)
       end
@@ -50,13 +50,11 @@ describe "Shakapacker::Utils::Manager" do
           allow(Open3).to receive(:capture3).and_return(["1.2.3\n", "", Struct::Status.new(0)])
         end
 
-        it "recommends setting 'packageManager' for #{manager}" do
+        it "raises an error about setting 'packageManager' for #{manager}" do
           File.write("package.json", {}.to_json)
           FileUtils.touch(lock)
 
-          Shakapacker::Utils::Manager.warn_unless_package_manager_is_obvious!
-
-          expect(Shakapacker).to have_received(:puts_deprecation_message).with(<<~MSG)
+          expect { Shakapacker::Utils::Manager.error_unless_package_manager_is_obvious! }.to raise_error(Shakapacker::Utils::Manager::Error, <<~MSG)
             You have not got "packageManager" set in your package.json meaning that Shakapacker will use npm
             but you've got a #{lock} file meaning you probably want
             to be using #{manager} instead.

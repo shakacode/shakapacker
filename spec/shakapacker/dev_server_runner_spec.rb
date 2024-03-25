@@ -32,7 +32,7 @@ describe "DevServerRunner" do
 
         PackageJson.read.merge! { { "packageManager" => "#{manager_name}@#{manager_version}" } }
 
-        allow(Shakapacker::Utils::Manager).to receive(:warn_unless_package_manager_is_obvious!)
+        allow(Shakapacker::Utils::Manager).to receive(:error_unless_package_manager_is_obvious!)
       end
 
       let(:package_json) { PackageJson.read(test_app_path) }
@@ -132,7 +132,7 @@ describe "DevServerRunner" do
         klass.run(argv)
 
         expect(Kernel).to have_received(:exec).with(env, *cmd)
-        expect(Shakapacker::Utils::Manager).to have_received(:warn_unless_package_manager_is_obvious!)
+        expect(Shakapacker::Utils::Manager).to have_received(:error_unless_package_manager_is_obvious!)
       end
     end
 end

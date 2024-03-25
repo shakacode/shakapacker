@@ -21,7 +21,7 @@ module Shakapacker
         exit!
       end
 
-      Shakapacker::Utils::Manager.warn_unless_package_manager_is_obvious!
+      Shakapacker::Utils::Manager.error_unless_package_manager_is_obvious!
     end
 
     def package_json
