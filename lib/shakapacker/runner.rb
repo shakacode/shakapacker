@@ -19,6 +19,8 @@ module Shakapacker
         $stderr.puts "webpack config #{@webpack_config} not found, please run 'bundle exec rails shakapacker:install' to install Shakapacker with default configs or add the missing config file for your custom environment."
         exit!
       end
+
+      ManagerChecker.new.warn_unless_package_manager_is_obvious!
     end
 
     def package_json
