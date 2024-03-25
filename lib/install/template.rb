@@ -76,7 +76,7 @@ package_json.merge! do |pj|
   }.merge(pj)
 end
 
-Shakapacker::Utils::Manager.warn_unless_package_manager_is_obvious!
+Shakapacker::Utils::Manager.error_unless_package_manager_is_obvious!
 
 # Ensure there is `system!("bin/yarn")` command in `./bin/setup` file
 if (setup_path = Rails.root.join("bin/setup")).exist?

@@ -4,7 +4,7 @@ require "shakapacker/utils/manager"
 namespace :shakapacker do
   desc "Verifies if the expected JS package manager is installed"
   task :check_manager do
-    Shakapacker::Utils::Manager.warn_unless_package_manager_is_obvious!
+    Shakapacker::Utils::Manager.error_unless_package_manager_is_obvious!
 
     require "package_json"
 

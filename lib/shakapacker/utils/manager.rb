@@ -15,14 +15,14 @@ module Shakapacker
       }
 
       # Emits a warning if it's not obvious what package manager to use
-      def self.warn_unless_package_manager_is_obvious!
+      def self.error_unless_package_manager_is_obvious!
         return unless PackageJson.read.fetch("packageManager", nil).nil?
 
         guessed_binary = guess_binary
 
         return if guessed_binary == "npm"
 
-        Shakapacker.puts_deprecation_message(<<~MSG)
+        raise Error, <<~MSG
           You have not got "packageManager" set in your package.json meaning that Shakapacker will use npm
           but you've got a #{MANAGER_LOCKS[guessed_binary]} file meaning you probably want
           to be using #{guessed_binary} instead.
