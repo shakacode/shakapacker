@@ -30,11 +30,9 @@ describe "WebpackRunner" do
 
         PackageJson.read.merge! { { "packageManager" => "#{manager_name}@#{manager_version}" } }
 
-        allow(Shakapacker::ManagerChecker).to receive(:new).and_return(fake_manager_checker)
-        allow(fake_manager_checker).to receive(:warn_unless_package_manager_is_obvious!)
+        allow(Shakapacker::Utils::Manager).to receive(:warn_unless_package_manager_is_obvious!)
       end
 
-      let(:fake_manager_checker) { instance_double(Shakapacker::ManagerChecker).as_null_object }
       let(:package_json) { PackageJson.read(test_app_path) }
 
       require "package_json"
@@ -74,7 +72,7 @@ describe "WebpackRunner" do
         klass.run(argv)
 
         expect(Kernel).to have_received(:exec).with(Shakapacker::Compiler.env, *cmd)
-        expect(fake_manager_checker).to have_received(:warn_unless_package_manager_is_obvious!)
+        expect(Shakapacker::Utils::Manager).to have_received(:warn_unless_package_manager_is_obvious!)
       end
     end
 end

@@ -1,5 +1,4 @@
 require "pathname"
-require "shakapacker/manager_checker"
 
 class Shakapacker::Instance
   cattr_accessor(:logger) { ActiveSupport::TaggedLogging.new(ActiveSupport::Logger.new(STDOUT)) }

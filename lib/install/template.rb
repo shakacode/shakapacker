@@ -1,4 +1,5 @@
 require "shakapacker/utils/misc"
+require "shakapacker/utils/manager"
 require "shakapacker/utils/version_syntax_converter"
 
 # Install Shakapacker
@@ -59,12 +60,8 @@ package_json.merge! do |pj|
   babel["presets"] ||= []
   babel["presets"].push("./node_modules/shakapacker/package/babel/preset.js")
 
-  package_manager = pj.fetch("packageManager", nil)
-
-  if package_manager.nil?
-    manager_checker = Shakapacker::ManagerChecker.new
-
-    package_manager = "#{manager_checker.guess_manager}@#{manager_checker.guess_manager_version}"
+  package_manager = pj.fetch("packageManager") do
+    "#{Shakapacker::Utils::Manager.guess_binary}@#{Shakapacker::Utils::Manager.guess_version}"
   end
 
   {
@@ -79,7 +76,7 @@ package_json.merge! do |pj|
   }.merge(pj)
 end
 
-Shakapacker::ManagerChecker.new.warn_unless_package_manager_is_obvious!
+Shakapacker::Utils::Manager.warn_unless_package_manager_is_obvious!
 
 # Ensure there is `system!("bin/yarn")` command in `./bin/setup` file
 if (setup_path = Rails.root.join("bin/setup")).exist?
