@@ -23,9 +23,9 @@ module Shakapacker
         return if guessed_binary == "npm"
 
         raise Error, <<~MSG
-          You have not got "packageManager" set in your package.json meaning that Shakapacker will use npm
-          but you've got a #{MANAGER_LOCKS[guessed_binary]} file meaning you probably want
-          to be using #{guessed_binary} instead.
+          You don't have "packageManager" set in your package.json
+          meaning that Shakapacker will use npm but you've got a #{MANAGER_LOCKS[guessed_binary]}
+          file meaning you probably want to be using #{guessed_binary} instead.
 
           To make this happen, set "packageManager" in your package.json to #{guessed_binary}@#{guess_version}
         MSG

@@ -55,9 +55,9 @@ describe "Shakapacker::Utils::Manager" do
           FileUtils.touch(lock)
 
           expect { Shakapacker::Utils::Manager.error_unless_package_manager_is_obvious! }.to raise_error(Shakapacker::Utils::Manager::Error, <<~MSG)
-            You have not got "packageManager" set in your package.json meaning that Shakapacker will use npm
-            but you've got a #{lock} file meaning you probably want
-            to be using #{manager} instead.
+            You don't have "packageManager" set in your package.json
+            meaning that Shakapacker will use npm but you've got a #{lock}
+            file meaning you probably want to be using #{manager} instead.
 
             To make this happen, set "packageManager" in your package.json to #{manager}@1.2.3
           MSG
