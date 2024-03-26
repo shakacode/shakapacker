@@ -17,12 +17,6 @@ describe "DevServer" do
     end
   end
 
-  it "doesn't use https in development environment" do
-    with_rails_env("development") do
-      expect(Shakapacker.dev_server.https?).to be false
-    end
-  end
-
   it "uses http protocol in development environment" do
     with_rails_env("development") do
       expect(Shakapacker.dev_server.protocol).to eq "http"
@@ -48,7 +42,7 @@ describe "DevServer" do
   context "#protocol in development environment" do
     let(:dev_server) { Shakapacker.dev_server }
 
-    it "returns `http` by default (with unset `server` and `https`)" do
+    it "returns `http` by default (with unset `server`)" do
       with_rails_env("development") do
         expect(dev_server.protocol).to eq "http"
       end
@@ -56,15 +50,6 @@ describe "DevServer" do
 
     it "returns `https` when `server` is set to `https`" do
       expect(dev_server).to receive(:server).and_return("https")
-
-      with_rails_env("development") do
-        expect(dev_server.protocol).to eq "https"
-      end
-    end
-
-    it "returns `https` with unset `server` and `https` set to `true`" do
-      expect(dev_server).to receive(:server).and_return("http")
-      expect(dev_server).to receive(:https?).and_return(true)
 
       with_rails_env("development") do
         expect(dev_server.protocol).to eq "https"

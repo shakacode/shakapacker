@@ -3,11 +3,53 @@
 * Please see the [v6 Upgrade Guide](./docs/v6_upgrade.md) to go from versions prior to v6.
 * [ShakaCode](https://www.shakacode.com) offers support for upgrading from Webpacker or using Shakapacker. If interested, contact Justin Gordon, [justin@shakacode.com](mailto:justin@shakacode.com).
 
+_next_ branch is for v8 changes
+
 ## Versions
 ## [Unreleased]
 Changes since the last non-beta release.
 
-_Please add entries here for your pull requests that are not yet released._
+### Breaking changes
+- Remove `relative_url_root` [PR 413](https://github.com/shakacode/shakapacker/pull/413) by [G-Rath](https://github.com/g-rath).
+
+- Removes deprecated support of `Webpacker` spelling, config variables and constants. [PR 429](https://github.com/shakacode/shakapacker/pull/429) by [tomdracz](https://github.com/tomdracz).
+
+  The usage of those has been deprecated in Shakapacker v7 and now fully removed in v8. See the [v7 Upgrade Guide](./docs/v7_upgrade.md) for more information if you are still yet to address this deprecation.
+
+- Remove `globalMutableWebpackConfig` global [PR 439](https://github.com/shakacode/shakapacker/pull/439) by [G-Rath](https://github.com/g-rath).
+
+  Use `generateWebpackConfig` instead.
+
+- Remove `yarn_install` rake task, and stop installing js packages automatically as part of `assets:precompile` [PR 412](https://github.com/shakacode/shakapacker/pull/412) by [G-Rath](https://github.com/g-rath).
+
+- Remove `check_yarn` rake task [PR 443](https://github.com/shakacode/shakapacker/pull/443) by [G-Rath](https://github.com/g-rath).
+
+- Remove `https` option for `webpack-dev-server` [PR 414](https://github.com/shakacode/shakapacker/pull/414) by [G-Rath](https://github.com/g-rath).
+
+- Remove `verify_file_existance` method [PR 446](https://github.com/shakacode/shakapacker/pull/446) by [G-Rath](https://github.com/g-rath).
+
+- Drop support for Ruby 2.6 [PR 415](https://github.com/shakacode/shakapacker/pull/415) by [G-Rath](https://github.com/g-rath).
+
+- Drop support for Node v12 [PR 431](https://github.com/shakacode/shakapacker/pull/431) by [G-Rath](https://github.com/g-rath).
+
+- Enable `ensure_consistent_versioning` by default [PR 447](https://github.com/shakacode/shakapacker/pull/447) by [G-Rath](https://github.com/g-rath).
+
+### Added
+- Emit warnings instead of errors when compilation is success but stderr is not empty. [PR 416](https://github.com/shakacode/shakapacker/pull/416) by [n-rodriguez](https://github.com/n-rodriguez).
+- Allow `webpack-dev-server` v5. [PR 418](https://github.com/shakacode/shakapacker/pull/418) by [G-Rath](https://github.com/g-rath)
+
+### Removed
+- Removes dependency on `glob` library. [PR 435](https://github.com/shakacode/shakapacker/pull/435) by [tomdracz](https://github.com/tomdracz).
+
+### Fixed
+- Uses config file passed in `SHAKAPACKER_CONFIG` consistently.[PR 448](https://github.com/shakacode/shakapacker/pull/448) by [tomdracz](https://github.com/tomdracz).
+
+   Previously this could have been ignored in few code branches, especially when checking for available environments.
+
+## [v7.2.2] - January 19, 2024
+
+### Added
+- Allow `compression-webpack-plugin` v11. [PR 406](https://github.com/shakacode/shakapacker/pull/406) by [tagliala](https://github.com/tagliala).
 
 ### Added
 - Opt-in support for stripping `additional_paths` from the asset paths just like with the `source_path`. This will be the default behavior in version 8. [PR 403](https://github.com/shakacode/shakapacker/pull/403) by [paypro-leon](https://github.com/paypro-leon).
@@ -62,7 +104,7 @@ _Please add entries here for your pull requests that are not yet released._
 
 - Export immutable webpackConfig function. [PR 293](https://github.com/shakacode/shakapacker/pull/293) by [tomdracz](https://github.com/tomdracz).
 
-  The `webpackConfig` property in the `shakapacker` module has been updated to be a function instead of a global mutable webpack configuration. This function now returns an immutable webpack configuration object, which ensures that any modifications made to it will not affect any other usage of the webpack configuration. If a project still requires the old mutable object, it can be accessed by replacing `webpackConfig` with `globalMutableWebpackConfig`. Check [v7-upgrade](https://github.com/shakacode/shakapacker/blob/master/docs/v7_upgrade.md) documentation for more detail.
+  The `webpackConfig` property in the `shakapacker` module has been updated to be a function instead of a global mutable webpack configuration. This function now returns an immutable webpack configuration object, which ensures that any modifications made to it will not affect any other usage of the webpack configuration. If a project still requires the old mutable object, it can be accessed by replacing `webpackConfig` with `globalMutableWebpackConfig`. Check [v7-upgrade](https://github.com/shakacode/shakapacker/blob/main/docs/v7_upgrade.md) documentation for more detail.
 
 ### Added
 - Set CSS modules mode depending on file type. [PR 261](https://github.com/shakacode/shakapacker/pull/261) by [talyuk](https://github.com/talyuk).
@@ -300,7 +342,8 @@ Note: [Rubygem is 6.3.0.pre.rc.1](https://rubygems.org/gems/shakapacker/versions
 ## v5.4.3 and prior changes from rails/webpacker
 See [CHANGELOG.md in rails/webpacker (up to v5.4.3)](https://github.com/rails/webpacker/blob/master/CHANGELOG.md)
 
-[Unreleased]: https://github.com/shakacode/shakapacker/compare/v7.2.1...master
+[Unreleased]: https://github.com/shakacode/shakapacker/compare/v7.2.2...main
+[v7.2.2]: https://github.com/shakacode/shakapacker/compare/v7.2.1...v7.2.2
 [v7.2.1]: https://github.com/shakacode/shakapacker/compare/v7.2.0...v7.2.1
 [v7.2.0]: https://github.com/shakacode/shakapacker/compare/v7.1.0...v7.2.0
 [v7.1.0]: https://github.com/shakacode/shakapacker/compare/v7.0.3...v7.1.0

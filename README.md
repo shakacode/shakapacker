@@ -98,9 +98,9 @@ Read the [full review here](https://clutch.co/profile/shakacode#reviews?sort_by=
 
 ## Prerequisites
 
-- Ruby 2.6+
+- Ruby 2.7+
 - Rails 5.2+
-- Node.js 12.13.0+ || 14+
+- Node.js 14+
 - Yarn
 
 ## Features
@@ -703,7 +703,26 @@ yarn add postcss-preset-env postcss-flexbugs-fixes
 #### Sass
 
 ```bash
-yarn add sass sass-loader
+yarn add sass-loader
+```
+
+You will also need to install [Dart Sass](https://github.com/sass/dart-sass), [Node Sass](https://github.com/sass/node-sass) or [Sass Embedded](https://github.com/sass/embedded-host-node) to pick the implementation to use. sass-loader will automatically pick an implementation based on installed packages.
+
+Please refer to [sass-loader documentation](https://www.npmjs.com/package/sass-loader) and individual packages repos for more information on all the options.
+
+##### Dart Sass
+```bash
+yarn add sass
+```
+
+##### Node Sass
+```bash
+yarn add node-sass
+```
+
+##### Sass Embedded
+```bash
+yarn add sass-embedded
 ```
 
 #### Less

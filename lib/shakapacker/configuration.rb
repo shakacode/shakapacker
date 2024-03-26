@@ -12,10 +12,7 @@ class Shakapacker::Configuration
   def initialize(root_path:, config_path:, env:)
     @root_path = root_path
     @env = env
-
-    # For backward compatibility
-    Shakapacker.set_shakapacker_env_variables_for_backward_compatibility
-    @config_path = Pathname.new(ENV["SHAKAPACKER_CONFIG"] || config_path)
+    @config_path = config_path
   end
 
   def dev_server
@@ -41,17 +38,6 @@ class Shakapacker::Configuration
 
     return false unless config_path.exist?
     fetch(:shakapacker_precompile)
-  end
-
-  def webpacker_precompile?
-    Shakapacker.puts_deprecation_message(
-      Shakapacker.short_deprecation_message(
-        "webpacker_precompile?",
-        "shakapacker_precompile?"
-      )
-    )
-
-    shakapacker_precompile?
   end
 
   def source_path
@@ -103,17 +89,7 @@ class Shakapacker::Configuration
   end
 
   def fetch(key)
-    return data.fetch(key, defaults[key]) unless key == :webpacker_precompile
-
-    # for backward compatibility
-    Shakapacker.puts_deprecation_message(
-      Shakapacker.short_deprecation_message(
-        "webpacker_precompile",
-        "shakapacker_precompile"
-      )
-    )
-
-    data.fetch(key, defaults[:shakapacker_precompile])
+    data.fetch(key, defaults[key])
   end
 
   def asset_host
@@ -121,19 +97,6 @@ class Shakapacker::Configuration
       "SHAKAPACKER_ASSET_HOST",
       fetch(:asset_host) || ActionController::Base.helpers.compute_asset_host
     )
-  end
-
-  def relative_url_root
-    result = ENV.fetch(
-      "SHAKAPACKER_RELATIVE_URL_ROOT",
-      fetch(:relative_url_root) || ActionController::Base.relative_url_root
-    )
-
-    if result
-      Shakapacker.puts_deprecation_message("The usage of relative_url_root is deprecated in Shakapacker and will be removed in v8.")
-    end
-
-    result
   end
 
   private
@@ -148,13 +111,6 @@ class Shakapacker::Configuration
         YAML.load_file(config_path.to_s)
       end
       symbolized_config = config[env].deep_symbolize_keys
-
-      # For backward compatibility
-      if symbolized_config.key?(:shakapacker_precompile) && !symbolized_config.key?(:webpacker_precompile)
-        symbolized_config[:webpacker_precompile] = symbolized_config[:shakapacker_precompile]
-      elsif !symbolized_config.key?(:shakapacker_precompile) && symbolized_config.key?(:webpacker_precompile)
-        symbolized_config[:shakapacker_precompile] = symbolized_config[:webpacker_precompile]
-      end
 
       return symbolized_config
     rescue Errno::ENOENT => e

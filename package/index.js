@@ -12,13 +12,6 @@ const env = require('./env')
 const { moduleExists, canProcess } = require('./utils/helpers')
 const inliningCss = require('./utils/inliningCss')
 
-const globalMutableWebpackConfig = () => {
-  const { nodeEnv } = env
-  const path = resolve(__dirname, 'environments', `${nodeEnv}.js`)
-  const environmentConfig = existsSync(path) ? require(path) : baseConfig
-  return environmentConfig
-}
-
 const generateWebpackConfig = (extraConfig = {}, ...extraArgs) => {
   if (extraArgs.length > 0) {
     throw new Error(
@@ -26,16 +19,17 @@ const generateWebpackConfig = (extraConfig = {}, ...extraArgs) => {
     )
   }
 
-  const environmentConfig = globalMutableWebpackConfig()
-  const immutable = webpackMerge.merge({}, environmentConfig, extraConfig)
-  return immutable
+  const { nodeEnv } = env
+  const path = resolve(__dirname, 'environments', `${nodeEnv}.js`)
+  const environmentConfig = existsSync(path) ? require(path) : baseConfig
+
+  return webpackMerge.merge({}, environmentConfig, extraConfig)
 }
 
-const shakapackerObject = {
+module.exports = {
   config, // shakapacker.yml
   devServer,
   generateWebpackConfig,
-  globalMutableWebpackConfig: globalMutableWebpackConfig(),
   baseConfig,
   env,
   rules,
@@ -44,26 +38,3 @@ const shakapackerObject = {
   inliningCss,
   ...webpackMerge
 }
-
-// For backward compatibility
-const shakapackerProxyHandler = {
-  get(target, prop) {
-    if (prop === 'webpackConfig') {
-      // eslint-disable-next-line no-console
-      console.warn(`⚠️
-DEPRECATION NOTICE:
-The 'webpackConfig' is deprecated and will be removed in a future version.
-Please use 'globalMutableWebpackConfig' instead, or use
-'generateWebpackConfig()' to avoid unwanted config mutation across the app.
-
-For more information, see version 7 upgrade documentation at:
-https://github.com/shakacode/shakapacker/blob/master/docs/v7_upgrade.md
-`)
-      return globalMutableWebpackConfig()
-    }
-
-    return target[prop]
-  }
-}
-
-module.exports = new Proxy(shakapackerObject, shakapackerProxyHandler)

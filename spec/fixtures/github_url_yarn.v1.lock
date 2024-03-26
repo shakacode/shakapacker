@@ -91,7 +91,7 @@ right-pad@^1.0.1:
   resolved "https://registry.yarnpkg.com/right-pad/-/right-pad-1.0.1.tgz#8ca08c2cbb5b55e74dafa96bf7fd1a27d568c8d0"
   integrity sha512-bYBjgxmkvTAfgIYy328fmkwhp39v8lwVgWhhrzxPV3yHtcSqyYKe9/XOhvW48UFjATg3VuJbpsp5822ACNvkmw==
 
-shakapacker@shakacode/shakapacker#master:
+shakapacker@shakacode/shakapacker#main:
   version "6.5.0"
   resolved "https://codeload.github.com/shakacode/shakapacker/tar.gz/31854a58be49f736f3486a946b72d7e4f334e2b2"
   dependencies:

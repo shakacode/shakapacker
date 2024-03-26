@@ -3,8 +3,13 @@ name: Dummy specs
 on:
   push:
     branches:
-      - 'master'
+      - 'main'
   pull_request:
+
+concurrency:
+  # Pushing new changes to a branch will cancel any in-progress CI runs
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   test:

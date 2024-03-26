@@ -9,7 +9,7 @@
       "version": "1.0.0",
       "license": "MIT",
       "dependencies": {
-        "shakapacker": "shakacode/shakapacker#master"
+        "shakapacker": "shakacode/shakapacker#main"
       },
       "devDependencies": {
         "right-pad": "^1.0.1"
@@ -9594,7 +9594,7 @@
     },
     "shakapacker": {
       "version": "git+ssh://git@github.com/shakacode/shakapacker.git#31854a58be49f736f3486a946b72d7e4f334e2b2",
-      "from": "shakapacker@shakacode/shakapacker#master",
+      "from": "shakapacker@shakacode/shakapacker#main",
       "requires": {
         "glob": "^7.2.0",
         "js-yaml": "^4.1.0",
