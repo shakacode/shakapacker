@@ -11,7 +11,7 @@ module.exports = {
   generator: {
     filename: (pathData) => {
       const path = dirname(pathData.filename)
-      const stripPaths = process.env.SHAKAPACKER_STRIP_ADDITIONAL_PATHS === 'true' ? [...additionalPaths, sourcePath] : [sourcePath]
+      const stripPaths = [...additionalPaths, sourcePath]
 
       const selectedStripPath = stripPaths.find((includePath) => path.includes(includePath))
 

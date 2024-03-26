@@ -74,18 +74,6 @@ describe('file', () => {
     };
 
     expect(file.generator.filename(pathData)).toEqual(
-      'static/app/assets/images/[name]-[hash][ext][query]'
-    );
-  });
-
-  test('correct generated output path is returned for additional_paths when opting in', () => {
-    const pathData = {
-      filename: 'app/assets/images/image.svg',
-    };
-
-    process.env.SHAKAPACKER_STRIP_ADDITIONAL_PATHS = 'true';
-
-    expect(file.generator.filename(pathData)).toEqual(
       'static/images/[name]-[hash][ext][query]'
     );
   });
