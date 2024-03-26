@@ -72,7 +72,7 @@ class Shakapacker::Compiler
       config.root_path.join("tmp/shakapacker.lock")
     end
 
-    def optionalRubyRunner
+    def optional_ruby_runner
       first_line = File.readlines(bin_shakapacker_path).first.chomp
       /ruby/.match?(first_line) ? RbConfig.ruby : ""
     end
@@ -82,7 +82,7 @@ class Shakapacker::Compiler
 
       stdout, stderr, status = Open3.capture3(
         webpack_env,
-        "#{optionalRubyRunner} '#{bin_shakapacker_path}'",
+        "#{optional_ruby_runner} '#{bin_shakapacker_path}'",
         chdir: File.expand_path(config.root_path)
       )
 
