@@ -899,7 +899,7 @@ import 'stylesheets/main'
 import 'images/rails.png'
 ```
 
-There is experimental support for stripping these paths from the asset paths by setting the env variable `SHAKAPACKER_STRIP_ADDITIONAL_PATHS=true`. In Shakapacker version 8 this will be the default behavior.
+Assets put in these folders will also have their path stripped just like with the `source_path`.
 
 Example:
 

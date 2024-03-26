@@ -34,6 +34,8 @@ Changes since the last non-beta release.
 
 - Enable `ensure_consistent_versioning` by default [PR 447](https://github.com/shakacode/shakapacker/pull/447) by [G-Rath](https://github.com/g-rath).
 
+- Asset files put in `additional_paths` will have their path stripped just like with the `source_path`. [PR 403](https://github.com/shakacode/shakapacker/pull/403) by [paypro-leon](https://github.com/paypro-leon).
+
 ### Added
 - Emit warnings instead of errors when compilation is success but stderr is not empty. [PR 416](https://github.com/shakacode/shakapacker/pull/416) by [n-rodriguez](https://github.com/n-rodriguez).
 - Allow `webpack-dev-server` v5. [PR 418](https://github.com/shakacode/shakapacker/pull/418) by [G-Rath](https://github.com/g-rath)
@@ -50,9 +52,6 @@ Changes since the last non-beta release.
 
 ### Added
 - Allow `compression-webpack-plugin` v11. [PR 406](https://github.com/shakacode/shakapacker/pull/406) by [tagliala](https://github.com/tagliala).
-
-### Added
-- Opt-in support for stripping `additional_paths` from the asset paths just like with the `source_path`. This will be the default behavior in version 8. [PR 403](https://github.com/shakacode/shakapacker/pull/403) by [paypro-leon](https://github.com/paypro-leon).
 
 ## [v7.2.1] - December 30, 2023
 
