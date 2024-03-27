@@ -76,5 +76,12 @@ describe('file', () => {
     expect(file.generator.filename(pathData)).toEqual(
       'static/images/[name]-[hash][ext][query]'
     );
+
+    const pathData2 = {
+      filename: 'app/javascript/app/assets/image.svg',
+    };
+    expect(file.generator.filename(pathData2)).toEqual(
+      'static/app/assets/[name]-[hash][ext][query]'
+    );
   });
 })

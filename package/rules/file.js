@@ -13,7 +13,7 @@ module.exports = {
       const path = dirname(pathData.filename)
       const stripPaths = [...additionalPaths, sourcePath]
 
-      const selectedStripPath = stripPaths.find((includePath) => path.includes(includePath))
+      const selectedStripPath = stripPaths.find((includePath) => path.startsWith(includePath))
 
       const folders = path
         .replace(`${selectedStripPath}`, '')
