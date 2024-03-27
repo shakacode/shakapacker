@@ -3,6 +3,7 @@ require "rails/railtie"
 require "shakapacker/helper"
 require "shakapacker/dev_server_proxy"
 require "shakapacker/version_checker"
+require "shakapacker/utils/manager"
 
 class Shakapacker::Engine < ::Rails::Engine
   # Allows Shakapacker config values to be set via Rails env config files
@@ -11,6 +12,12 @@ class Shakapacker::Engine < ::Rails::Engine
   initializer "shakapacker.version_checker" do
     if File.exist?(Shakapacker::VersionChecker::NodePackageVersion.package_json_path)
       Shakapacker::VersionChecker.build.raise_if_gem_and_node_package_versions_differ
+    end
+  end
+
+  initializer "shakapacker.manager_checker" do
+    if File.exist?(Shakapacker::VersionChecker::NodePackageVersion.package_json_path)
+      Shakapacker::Utils::Manager.error_unless_package_manager_is_obvious!
     end
   end
 

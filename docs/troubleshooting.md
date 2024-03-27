@@ -18,9 +18,9 @@
 4. You can also pass additional options to the command to run the webpack-dev-server and start the webpack-dev-server with the option `--debug-shakapacker`
 
 ## Incorrect peer dependencies
-The latest version of Shakapacker uses peer dependencies to make upgrading easier. However, there's a catch.
-
-If you fail to update peer dependencies, you'll see an easy-to-overlook warning from `yarn install`. 
+Shakapacker uses peer dependencies to make it easier to manage what versions are being used for your app, which is especially
+useful for patching security vulnerabilities. However, not all package managers will actually enforce these versions - notably,
+Yarn will omit a warning rather than erroring if you forget to update a peer dependency:
 
 ```
 warning " > shakapacker@6.1.1" has incorrect peer dependency "compression-webpack-plugin@^9.0.0".
@@ -31,7 +31,7 @@ This omission resulted in an error in the browser:
 Failed to load resource: net::ERR_CONTENT_DECODING_FAILED
 ```
 
-The error was caused by an old version of the peer dependency webpack-compression-plugin.
+The error was caused by an old version of the peer dependency `webpack-compression-plugin`.
 
 So, be sure to investigate warnings from `yarn install`!
 

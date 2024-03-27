@@ -20,8 +20,8 @@ This example shows how you can create an object and apply _additional_ presets a
 To use this example file,
 
 ```
-yarn add react react-dom @babel/preset-react
-yarn add --dev @pmmmwh/react-refresh-webpack-plugin react-refresh
+npm install react react-dom @babel/preset-react
+npm install --dev @pmmmwh/react-refresh-webpack-plugin react-refresh
 ```
 
 ```js

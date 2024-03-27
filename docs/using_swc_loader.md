@@ -19,7 +19,7 @@ In order to use SWC as your compiler today. You need to do two things:
 1. Make sure you've installed `@swc/core` and `swc-loader` packages.
 
 ```
-yarn add @swc/core swc-loader
+npm install @swc/core swc-loader
 ```
 
 2. Add or change `webpack_loader` value in your default `shakapacker.yml` config to `swc`

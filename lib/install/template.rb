@@ -1,12 +1,14 @@
 require "shakapacker/utils/misc"
+require "shakapacker/utils/manager"
 require "shakapacker/utils/version_syntax_converter"
+require "package_json"
 
 # Install Shakapacker
 
 force_option = ENV["FORCE"] ? { force: true } : {}
 
 copy_file "#{__dir__}/config/shakapacker.yml", "config/shakapacker.yml", force_option
-copy_file "#{__dir__}/package.json", "package.json", force_option
+remove_file "#{__dir__}/package.json" if force_option[:force]
 
 say "Copying webpack core config"
 directory "#{__dir__}/config/webpack", "config/webpack", force_option
@@ -43,22 +45,37 @@ else
 end
 
 def package_json
-  if @package_json.nil?
-    Shakapacker::Utils::Misc.require_package_json_gem
+  @package_json ||= PackageJson.new
+end
 
-    @package_json = PackageJson.read
+# setup the package manager with default values
+package_json.merge! do |pj|
+  babel = pj.fetch("babel", {})
+
+  babel["presets"] ||= []
+  babel["presets"].push("./node_modules/shakapacker/package/babel/preset.js")
+
+  package_manager = pj.fetch("packageManager") do
+    "#{Shakapacker::Utils::Manager.guess_binary}@#{Shakapacker::Utils::Manager.guess_version}"
   end
 
-  @package_json
+  {
+    "name" => "app",
+    "private" => true,
+    "version" => "0.1.0",
+    "babel" => babel,
+    "browserslist" => [
+      "defaults"
+    ],
+    "packageManager" => package_manager
+  }.merge(pj)
 end
+
+Shakapacker::Utils::Manager.error_unless_package_manager_is_obvious!
 
 # Ensure there is `system!("bin/yarn")` command in `./bin/setup` file
 if (setup_path = Rails.root.join("bin/setup")).exist?
-  def native_install_command
-    return "bin/yarn" unless Shakapacker::Utils::Misc.use_package_json_gem
-
-    package_json.manager.native_install_command.join(" ")
-  end
+  native_install_command = package_json.manager.native_install_command.join(" ")
 
   say "Run #{native_install_command} during bin/setup"
 
@@ -88,23 +105,14 @@ if (setup_path = Rails.root.join("bin/setup")).exist?
 end
 
 def add_dependencies(dependencies, type)
-  return package_json.manager.add!(dependencies, type: type) if Shakapacker::Utils::Misc.use_package_json_gem
-
-  # TODO: check that run actually errors
-  run("yarn add #{dependencies.join(" ")}") if type == :production
-  run("yarn add --dev #{dependencies.join(" ")}") if type == :dev
+  package_json.manager.add!(dependencies, type: type)
 rescue PackageJson::Error
   say "Shakapacker installation failed 😭 See above for details.", :red
   exit 1
 end
 
 def fetch_peer_dependencies
-  if Shakapacker::Utils::Misc.use_package_json_gem
-    return PackageJson.read("#{__dir__}/../../").fetch("peerDependencies")
-  end
-
-  package_json = File.read("#{__dir__}/../../package.json")
-  JSON.parse(package_json)["peerDependencies"]
+  PackageJson.read("#{__dir__}/../../").fetch("peerDependencies")
 end
 
 Dir.chdir(Rails.root) do
@@ -112,15 +120,13 @@ Dir.chdir(Rails.root) do
   say "Installing shakapacker@#{npm_version}"
   add_dependencies(["shakapacker@#{npm_version}"], :production)
 
-  if Shakapacker::Utils::Misc.use_package_json_gem
-    package_json.merge! do |pj|
-      {
-        "dependencies" => pj["dependencies"].merge({
-          # TODO: workaround for test suite - long-run need to actually account for diff pkg manager behaviour
-          "shakapacker" => pj["dependencies"]["shakapacker"].delete_prefix("^")
-        })
-      }
-    end
+  package_json.merge! do |pj|
+    {
+      "dependencies" => pj["dependencies"].merge({
+        # TODO: workaround for test suite - long-run need to actually account for diff pkg manager behaviour
+        "shakapacker" => pj["dependencies"]["shakapacker"].delete_prefix("^")
+      })
+    }
   end
 
   peers = fetch_peer_dependencies
