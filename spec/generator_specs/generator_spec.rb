@@ -58,10 +58,12 @@ describe "Generator" do
           expect(actual_content).to eq expected_content
         end
 
-        it "replaces package.json with the template file" do
+        it "ensures the 'packageManager' field is set" do
           package_json = PackageJson.read(path_in_the_app)
 
-          expect(package_json.fetch("name", "")).to eq("app")
+          manager_name = fallback_manager.split("_")[0]
+
+          expect(package_json.fetch("packageManager", "")).to match(/#{manager_name}@\d+\.\d+\.\d+/)
         end
 
         it "creates webpack config directory and its files" do
@@ -161,132 +163,6 @@ describe "Generator" do
         end
       end
     end
-
-    context "when not using package_json" do
-      before :all do
-        sh_opts = { fallback_manager: nil }
-
-        sh_in_dir(sh_opts, SPEC_PATH, "cp -r '#{BASE_RAILS_APP_PATH}' '#{TEMP_RAILS_APP_PATH}'")
-
-        Bundler.with_unbundled_env do
-          sh_in_dir(sh_opts, TEMP_RAILS_APP_PATH, "FORCE=true bundle exec rails shakapacker:install")
-        end
-      end
-
-      after :all do
-        Dir.chdir(SPEC_PATH)
-        FileUtils.rm_rf(TEMP_RAILS_APP_PATH)
-      end
-
-      it "creates `config/shakapacker.yml`" do
-        config_file_relative_path = "config/shakapacker.yml"
-        actual_content = read(path_in_the_app(config_file_relative_path))
-        expected_content = read(path_in_the_gem(config_file_relative_path))
-
-        expect(actual_content).to eq expected_content
-      end
-
-      it "replaces package.json with template file" do
-        package_json = PackageJson.read(path_in_the_app)
-
-        expect(package_json.fetch("name", "")).to eq("app")
-      end
-
-      it "creates the webpack config directory and its files" do
-        expected_files = [
-          "webpack.config.js"
-        ]
-
-        Dir.chdir(path_in_the_app("config/webpack")) do
-          existing_files_in_config_webpack_dir = Dir.glob("*")
-          expect(existing_files_in_config_webpack_dir).to eq expected_files
-        end
-      end
-
-      it "adds binstubs" do
-        expected_binstubs = []
-        Dir.chdir(File.join(GEM_ROOT, "lib/install/bin")) do
-          expected_binstubs = Dir.glob("bin/*")
-        end
-
-        Dir.chdir(File.join(TEMP_RAILS_APP_PATH, "bin")) do
-          actual_binstubs = Dir.glob("*")
-
-          expect(actual_binstubs).to include(*expected_binstubs)
-        end
-      end
-
-      it "modifies .gitignore" do
-        actual_content = read(path_in_the_app(".gitignore"))
-
-        expect(actual_content).to match ".yarn-integrity"
-      end
-
-      it 'adds <%= javascript_pack_tag "application" %>' do
-        actual_content = read(path_in_the_app("app/views/layouts/application.html.erb"))
-
-        expect(actual_content).to match '<%= javascript_pack_tag "application" %>'
-      end
-
-      it "updates `bin/setup`" do
-        setup_file_content = read(path_in_the_app("bin/setup"))
-
-        expect(setup_file_content).to match %r(^\s*system!\(['"]bin/yarn['"]\))
-      end
-
-      it "uses the shakapacker version in package.json depending on gem version" do
-        npm_version = Shakapacker::Utils::VersionSyntaxConverter.new.rubygem_to_npm(Shakapacker::VERSION)
-
-        package_json = PackageJson.read(path_in_the_app)
-        actual_version = package_json.fetch("dependencies", {})["shakapacker"]
-
-        expect(actual_version).to eq(npm_version)
-      end
-
-      it "adds Shakapacker peer dependencies to package.json" do
-        package_json = PackageJson.read(path_in_the_app)
-        actual_dependencies = package_json.fetch("dependencies", {}).keys
-
-        expected_dependencies = %w(
-          @babel/core
-          @babel/plugin-transform-runtime
-          @babel/preset-env
-          @babel/runtime
-          babel-loader
-          compression-webpack-plugin
-          terser-webpack-plugin
-          webpack
-          webpack-assets-manifest
-          webpack-cli
-          webpack-merge
-        )
-
-        expect(actual_dependencies).to include(*expected_dependencies)
-      end
-
-      it "adds Shakapacker peer dev dependencies to package.json" do
-        package_json = PackageJson.read(path_in_the_app)
-        actual_dev_dependencies = package_json.fetch("devDependencies", {}).keys
-
-        expected_dev_dependencies = %w(
-          webpack-dev-server
-        )
-
-        expect(actual_dev_dependencies).to include(*expected_dev_dependencies)
-      end
-
-      context "with a basic react app setup" do
-        it "passes the test for rendering react component on the page" do
-          sh_opts = { fallback_manager: nil }
-
-          Bundler.with_unbundled_env do
-            sh_in_dir(sh_opts, TEMP_RAILS_APP_PATH, "./bin/rails app:template LOCATION=../e2e_template/template.rb")
-
-            expect(sh_in_dir(sh_opts, TEMP_RAILS_APP_PATH, "bundle exec rspec")).to be_truthy
-          end
-        end
-      end
-    end
   end
 
   private
@@ -306,14 +182,8 @@ describe "Generator" do
     def sort_out_package_json(opts)
       ENV["PATH"] = "#{SPEC_PATH}/fake-bin:#{ENV["PATH"]}"
 
-      if opts[:fallback_manager].nil?
-        ENV["SHAKAPACKER_EXPECTED_PACKAGE_MANGER"] = "yarn_classic"
-        ENV["SHAKAPACKER_USE_PACKAGE_JSON_GEM"] = "false"
-      else
-        ENV["SHAKAPACKER_EXPECTED_PACKAGE_MANGER"] = opts[:fallback_manager]
-        ENV["SHAKAPACKER_USE_PACKAGE_JSON_GEM"] = "true"
-        ENV["PACKAGE_JSON_FALLBACK_MANAGER"] = opts[:fallback_manager]
-      end
+      ENV["SHAKAPACKER_EXPECTED_PACKAGE_MANGER"] = opts[:fallback_manager]
+      ENV["PACKAGE_JSON_FALLBACK_MANAGER"] = opts[:fallback_manager]
     end
 
     def sh_in_dir(opts, dir, *shell_commands)

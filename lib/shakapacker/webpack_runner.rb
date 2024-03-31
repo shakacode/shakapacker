@@ -50,17 +50,7 @@ module Shakapacker
     private
 
       def build_cmd
-        if Shakapacker::Utils::Misc.use_package_json_gem
-          return package_json.manager.native_exec_command("webpack")
-        end
-
-        return ["#{@node_modules_bin_path}/webpack"] if node_modules_bin_exist?
-
-        ["yarn", "webpack"]
-      end
-
-      def node_modules_bin_exist?
-        File.exist?("#{@node_modules_bin_path}/webpack")
+        package_json.manager.native_exec_command("webpack")
       end
   end
 end

@@ -24,7 +24,7 @@ To use esbuild as your transpiler today. You need to do two things:
 1. Make sure you've installed `esbuild` and `esbuild-loader` packages.
 
 ```
-yarn add esbuild esbuild-loader
+npm install esbuild esbuild-loader
 ```
 
 2. Add or change `shakapacker_loader` value in your default `shakapacker.yml` config to `esbuild`

@@ -16,7 +16,8 @@ module Shakapacker
         [
           *config.additional_paths.map { |path| "#{path}{,/**/*}" },
           "#{config.source_path}{,/**/*}",
-          "yarn.lock", "package.json",
+          "package.json", "package-lock.json", "yarn.lock",
+          "pnpm-lock.yaml", "bun.lockb",
           "config/webpack{,/**/*}"
         ].freeze
       end
