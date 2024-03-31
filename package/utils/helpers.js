@@ -55,6 +55,13 @@ const loaderMatches = (configLoader, loaderToCheck, fn) => {
   return fn()
 }
 
+function regexEqualityCheck(r1, r2) {
+  return r1 instanceof RegExp && 
+         r2 instanceof RegExp &&
+         r1.source === r2.source &&
+         r1.flags.split("").sort().join("") === r2.flags.split("").sort().join("");
+}
+
 module.exports = {
   chdirTestApp,
   chdirCwd,
@@ -64,5 +71,6 @@ module.exports = {
   canProcess,
   moduleExists,
   resetEnv,
-  loaderMatches
+  loaderMatches,
+  regexEqualityCheck
 }
