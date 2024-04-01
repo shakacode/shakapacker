@@ -578,8 +578,11 @@ console.log(JSON.stringify(webpackConfig, undefined, 2))
 You may want to modify the rules in the default configuration. For instance, if you are using a custom svg loader, you may want to remove `.svg` from the default file loader rules. You can search and filter the default rules like so:
 
 ```js
-const svgRule = config.module.rules.find(rule => rule.test.test('.svg'));
-svgRule.test = svgRule.test.filter(t => !t.test('.svg'))
+const fileRule = config.module.rules.find(rule => rule.test.test('.svg'));
+// removing svg from asset file rule's test RegExp
+fileRule.test = /\.(bmp|gif|jpe?g|png|tiff|ico|avif|webp|eot|otf|ttf|woff|woff2)$/
+// changing the rule type from 'asset/resource' to 'asset'. See https://webpack.js.org/guides/asset-modules/
+fileRule.type = 'asset'
 ```
 
 ### Babel configuration
