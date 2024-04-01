@@ -41,6 +41,8 @@ Changes since the last non-beta release.
 
 - Asset files put in `additional_paths` will have their path stripped just like with the `source_path`. [PR 403](https://github.com/shakacode/shakapacker/pull/403) by [paypro-leon](https://github.com/paypro-leon).
 
+- Remove `isArray` utility (just use `Array.isArray` directly) and renamed a few files [PR 454](https://github.com/shakacode/shakapacker/pull/454) by [G-Rath](https://github.com/g-rath).
+
 ## [v7.2.3] - March 23, 2024
 
 ### Added
