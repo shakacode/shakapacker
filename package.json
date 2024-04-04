@@ -19,7 +19,7 @@
     "lib/install/config/shakapacker.yml"
   ],
   "scripts": {
-    "lint": "eslint package/",
+    "lint": "eslint .",
     "test": "jest"
   },
   "dependencies": {
