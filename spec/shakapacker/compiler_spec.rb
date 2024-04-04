@@ -1,4 +1,5 @@
 require_relative "spec_helper_initializer"
+require "ostruct"
 
 describe "Shakapacker::Compiler" do
   it "accepts custom environment variables" do
