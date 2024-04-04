@@ -43,6 +43,8 @@ Changes since the last non-beta release.
 
 - Remove `isArray` utility (just use `Array.isArray` directly) and renamed a few files [PR 454](https://github.com/shakacode/shakapacker/pull/454) by [G-Rath](https://github.com/g-rath).
 
+- Make JavaScript test helper utilities internal (`chdirTestApp`, `chdirCwd`, `resetEnv`)  [PR 458](https://github.com/shakacode/shakapacker/pull/458) by [G-Rath](https://github.com/g-rath).
+
 ## [v7.2.3] - March 23, 2024
 
 ### Added
