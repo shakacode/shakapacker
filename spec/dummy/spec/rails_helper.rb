@@ -18,6 +18,8 @@ Capybara.register_driver :selenium_chrome do |app|
   options = Selenium::WebDriver::Chrome::Options.new
   options.add_argument("--headless")
   options.add_argument("--disable-gpu")
+  options.add_argument("--no-sandbox")
+  options.add_argument("--disable-dev-shm-usage")
   Capybara::Selenium::Driver.new(app, browser: :chrome, options: options)
 end
 
@@ -76,21 +78,6 @@ RSpec.configure do |config|
 
   # Capybara config
   config.include Capybara::DSL
-  #
-  # selenium_firefox webdriver only works for Travis-CI builds.
-  default_driver = :selenium_chrome_headless
-
-  supported_drivers = %i[selenium_chrome_headless selenium_chrome selenium selenium_headless]
-  driver = ENV["DRIVER"].try(:to_sym).presence || default_driver
-  Capybara.javascript_driver = driver
-  Capybara.default_driver = driver
-
-  raise "Unsupported driver: #{driver} (supported = #{supported_drivers})" unless supported_drivers.include?(driver)
-
-  Capybara.register_server(Capybara.javascript_driver) do |app, port|
-    require "rack/handler/puma"
-    Rack::Handler::Puma.run(app, Port: port)
-  end
 
   config.before(:each, type: :system, js: true) do
     driven_by driver
