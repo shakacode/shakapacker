@@ -14,27 +14,21 @@ concurrency:
 jobs:
   lint:
     name: Linting
-    strategy:
-      matrix:
-        os: [ubuntu-latest]
-        node: [14.x, 16.x, 18.x, 20.x]
-
-    runs-on: ${{ matrix.os }}
+    runs-on: ubuntu-latest
 
     steps:
       - uses: actions/checkout@v4
         with:
           persist-credentials: false
-      - name: Use Node.js ${{ matrix.node }}
-        uses: actions/setup-node@v3
+      - uses: actions/setup-node@v4
         with:
-          node-version: ${{ matrix.node }}
+          node-version: 20.x
           cache: yarn
 
       - name: Install dependencies
         run: yarn --frozen-lockfile --non-interactive --prefer-offline
 
-      - name: Lint
+      - name: Node eslint
         run: yarn lint
   test:
     name: Testing
