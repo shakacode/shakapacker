@@ -22,15 +22,6 @@
     "lint": "eslint package/",
     "test": "jest"
   },
-  "jest": {
-    "roots": [
-      "<rootDir>/test"
-    ],
-    "testPathIgnorePatterns": [
-      "/__fixtures__/",
-      "/__utils__/"
-    ]
-  },
   "dependencies": {
     "js-yaml": "^4.1.0",
     "path-complete-extname": "^1.0.0"
