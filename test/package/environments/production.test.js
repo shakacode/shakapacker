@@ -1,6 +1,7 @@
 /* global test expect, describe, afterAll, beforeEach */
 
 const { chdirTestApp, resetEnv } = require('../../helpers')
+
 const rootPath = process.cwd()
 chdirTestApp()
 
@@ -8,13 +9,13 @@ describe('Production specific config', () => {
   beforeEach(() => {
     jest.resetModules()
     resetEnv()
-    process.env['NODE_ENV'] = 'production'
+    process.env.NODE_ENV = 'production'
   })
   afterAll(() => process.chdir(rootPath))
 
   describe('with config.useContentHash = true', () => {
     test('sets filename to use contentHash', () => {
-      const config = require("../../../package/config");
+      const config = require("../../../package/config")
       config.useContentHash = true
       const environmentConfig = require('../../../package/environments/production')
 
@@ -25,8 +26,8 @@ describe('Production specific config', () => {
     })
 
     test("doesn't shows any warning message", () => {
-      const consoleWarnSpy = jest.spyOn(console, 'warn');
-      const config = require("../../../package/config");
+      const consoleWarnSpy = jest.spyOn(console, 'warn')
+      const config = require("../../../package/config")
       config.useContentHash = true
       const environmentConfig = require('../../../package/environments/production')
 
@@ -40,7 +41,7 @@ describe('Production specific config', () => {
 
   describe('with config.useContentHash = false', () => {
     test('sets filename to use contentHash', () => {
-      const config = require("../../../package/config");
+      const config = require("../../../package/config")
       config.useContentHash = false
       const environmentConfig = require('../../../package/environments/production')
 
@@ -51,8 +52,8 @@ describe('Production specific config', () => {
     })
 
     test('shows a warning message', () => {
-      const consoleWarnSpy = jest.spyOn(console, 'warn');
-      const config = require("../../../package/config");
+      const consoleWarnSpy = jest.spyOn(console, 'warn')
+      const config = require("../../../package/config")
       config.useContentHash = false
       const environmentConfig = require('../../../package/environments/production')
 
@@ -66,7 +67,7 @@ describe('Production specific config', () => {
 
   describe('with unset config.useContentHash', () => {
     test('sets filename to use contentHash', () => {
-      const config = require("../../../package/config");
+      const config = require("../../../package/config")
       delete config.useContentHash
       const environmentConfig = require('../../../package/environments/production')
 
@@ -77,8 +78,8 @@ describe('Production specific config', () => {
     })
 
     test("doesn't shows any warning message", () => {
-      const consoleWarnSpy = jest.spyOn(console, 'warn');
-      const config = require("../../../package/config");
+      const consoleWarnSpy = jest.spyOn(console, 'warn')
+      const config = require("../../../package/config")
       delete config.useContentHash
       const environmentConfig = require('../../../package/environments/production')
 

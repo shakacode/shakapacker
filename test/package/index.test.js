@@ -25,9 +25,9 @@ describe('index', () => {
     const { generateWebpackConfig } = require('../../package/index')
 
     const webpackConfig = generateWebpackConfig({
-       newKey: 'new value',
-       output: {
-         path: 'new path'
+      newKey: 'new value',
+      output: {
+        path: 'new path'
       }
     })
 

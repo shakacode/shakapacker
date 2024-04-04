@@ -11,7 +11,7 @@ chdirTestApp()
 const { resolve } = require('path')
 
 const baseConfig = require('../../../package/environments/base')
-const config = require("../../../package/config");
+const config = require("../../../package/config")
 
 describe('Base config', () => {
   beforeEach(() => jest.resetModules() && resetEnv())
@@ -30,7 +30,7 @@ describe('Base config', () => {
 
     test('should return true for css_extract_ignore_order_warnings when configured', () => {
       process.env.SHAKAPACKER_CONFIG = 'config/shakapacker_css_extract_ignore_order_warnings.yml'
-      const config = require("../../../package/config");
+      const config = require("../../../package/config")
 
       expect(config.css_extract_ignore_order_warnings).toEqual(true)
     })
@@ -47,7 +47,7 @@ describe('Base config', () => {
 
     test('should returns top level and nested entry points with config.nested_entries == true', () => {
       process.env.SHAKAPACKER_CONFIG = 'config/shakapacker_nested_entries.yml'
-      const config = require("../../../package/config");
+      const config = require("../../../package/config")
       const baseConfig = require('../../../package/environments/base')
 
       expect(config.nested_entries).toEqual(true)
