@@ -24,13 +24,12 @@
   },
   "jest": {
     "roots": [
-      "<rootDir>/package"
+      "<rootDir>/test"
     ],
     "testPathIgnorePatterns": [
       "/__fixtures__/",
       "/__utils__/"
-    ],
-    "testRegex": "(/__tests__/.*|(\\.|/))\\.jsx?$"
+    ]
   },
   "dependencies": {
     "js-yaml": "^4.1.0",
