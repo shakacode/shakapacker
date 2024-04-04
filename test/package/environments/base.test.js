@@ -1,7 +1,7 @@
 // environment.js expects to find config/shakapacker.yml and resolved modules from
 // the root of a Rails project
 
-const { chdirTestApp, chdirCwd, resetEnv } = require('../../helpers')
+const { chdirTestApp, resetEnv } = require('../../helpers')
 
 const rootPath = process.cwd()
 chdirTestApp()

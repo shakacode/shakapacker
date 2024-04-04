@@ -1,5 +1,4 @@
 const index = require('../../package/index')
-const { generateWebpackConfig } = require('../helpers')
 
 describe('index', () => {
   test('exports webpack-merge v5 functions', () => {
