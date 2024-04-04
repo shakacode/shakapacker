@@ -27,7 +27,8 @@ describe('Production specific config', () => {
       const consoleWarnSpy = jest.spyOn(console, 'warn')
       const config = require("../../../package/config")
       config.useContentHash = true
-      const environmentConfig = require('../../../package/environments/production')
+
+      require('../../../package/environments/production')
 
       expect(consoleWarnSpy).not.toHaveBeenCalledWith(
         expect.stringMatching(/Setting 'useContentHash' to 'false' in the production environment/)
@@ -53,7 +54,8 @@ describe('Production specific config', () => {
       const consoleWarnSpy = jest.spyOn(console, 'warn')
       const config = require("../../../package/config")
       config.useContentHash = false
-      const environmentConfig = require('../../../package/environments/production')
+
+      require('../../../package/environments/production')
 
       expect(consoleWarnSpy).toHaveBeenCalledWith(
         expect.stringMatching(/Setting 'useContentHash' to 'false' in the production environment/)
@@ -79,7 +81,8 @@ describe('Production specific config', () => {
       const consoleWarnSpy = jest.spyOn(console, 'warn')
       const config = require("../../../package/config")
       delete config.useContentHash
-      const environmentConfig = require('../../../package/environments/production')
+
+      require('../../../package/environments/production')
 
       expect(consoleWarnSpy).not.toHaveBeenCalledWith(
         expect.stringMatching(/Setting 'useContentHash' to 'false' in the production environment/)
