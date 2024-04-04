@@ -1,7 +1,7 @@
 /* test expect, describe, afterAll, beforeEach */
 
 const { resolve } = require('path')
-const { chdirTestApp } = require('../../package/utils/helpers')
+const { chdirTestApp } = require('../helpers')
 
 const rootPath = process.cwd()
 chdirTestApp()

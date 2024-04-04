@@ -1,17 +1,4 @@
 const isBoolean = (str) => /^true/.test(str) || /^false/.test(str)
-const chdirTestApp = () => {
-  try {
-    return process.chdir('spec/shakapacker/test_app')
-  } catch (e) {
-    return null
-  }
-}
-
-const chdirCwd = () => process.chdir(process.cwd())
-
-const resetEnv = () => {
-  process.env = {}
-}
 
 const ensureTrailingSlash = (path) => (path.endsWith('/') ? path : `${path}/`)
 
@@ -55,12 +42,9 @@ const loaderMatches = (configLoader, loaderToCheck, fn) => {
 }
 
 module.exports = {
-  chdirTestApp,
-  chdirCwd,
   isBoolean,
   ensureTrailingSlash,
   canProcess,
   moduleExists,
-  resetEnv,
   loaderMatches
 }

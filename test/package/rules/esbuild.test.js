@@ -5,7 +5,7 @@ const {
   node_modules_included,
   createTestCompiler,
   createTrackLoader,
-} = require("./__utils__/webpack");
+} = require("../../helpers");
 const esbuildConfig = require("../../../package/rules/esbuild");
 
 jest.mock("../../../package/config", () => {

@@ -5,7 +5,7 @@ const {
   node_modules_included,
   createTestCompiler,
   createTrackLoader,
-} = require("./__utils__/webpack");
+} = require("../../helpers");
 const babelConfig = require("../../../package/rules/babel");
 
 jest.mock("../../../package/config", () => {

@@ -1,6 +1,6 @@
 /* global test expect, describe */
 
-const { chdirTestApp, resetEnv } = require('../../package/utils/helpers')
+const { chdirTestApp, resetEnv } = require('../helpers')
 const { resolve } = require('path')
 
 const rootPath = process.cwd()

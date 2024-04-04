@@ -4,7 +4,7 @@ const {
   node_modules_included,
   createTestCompiler,
   createTrackLoader,
-} = require("./__utils__/webpack");
+} = require("../../helpers");
 const swcConfig = require("../../../package/rules/swc");
 
 jest.mock("../../../package/config", () => {
