@@ -1,8 +1,9 @@
-# Shakapacker (v7)
+# Shakapacker (v8)
 
 _Official, actively maintained successor to [rails/webpacker](https://github.com/rails/webpacker).ShakaCode stands behind the long-term maintenance and development of this project for the Rails community._
 
 * ⚠️ See the [6-stable](https://github.com/shakacode/shakapacker/tree/6-stable) branch for Shakapacker v6.x code and documentation. :warning:
+* See [V8 Upgrade](./docs/v8_upgrade.md) for upgrading from the v7 release.
 * See [V7 Upgrade](./docs/v7_upgrade.md) for upgrading from the v6 release.
 * See [V6 Upgrade](./docs/v6_upgrade.md) for upgrading from v5 or prior v6 releases.
 
