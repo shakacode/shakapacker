@@ -1,5 +1,3 @@
-/* global test expect, describe */
-
 const { resolve } = require('path')
 const { chdirTestApp, resetEnv } = require('../helpers')
 

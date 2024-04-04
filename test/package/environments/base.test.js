@@ -1,5 +1,3 @@
-/* global test expect, describe, afterAll, beforeEach */
-
 // environment.js expects to find config/shakapacker.yml and resolved modules from
 // the root of a Rails project
 

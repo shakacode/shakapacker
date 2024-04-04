@@ -1,5 +1,3 @@
-/* global test expect, describe, afterAll, beforeEach */
-
 const { chdirTestApp, resetEnv } = require('../../helpers')
 
 const rootPath = process.cwd()
