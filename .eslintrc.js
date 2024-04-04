@@ -16,7 +16,10 @@ module.exports = {
     {
       files: ["test/**"],
       // todo: these should be sourced from eslint-plugin-jest
-      env: { jest: true }
+      env: { jest: true },
+      rules: {
+        'global-require': 'off'
+      }
     }
   ]
 }
