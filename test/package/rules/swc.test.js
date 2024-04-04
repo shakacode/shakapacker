@@ -1,7 +1,7 @@
 const {
-  app_javascript,
-  node_modules,
-  node_modules_included,
+  pathToAppJavascript,
+  pathToNodeModules,
+  pathToNodeModulesIncluded,
   createTestCompiler,
   createTrackLoader
 } = require("../../helpers")
@@ -34,7 +34,7 @@ const createWebpackConfig = (file, use) => ({
 
 describe("swc", () => {
   test("process files in source_path", async () => {
-    const normalPath = `${app_javascript}/a.js`
+    const normalPath = `${pathToAppJavascript}/a.js`
     const [tracked, loader] = createTrackLoader()
     const compiler = createTestCompiler(
       createWebpackConfig(normalPath, loader)
@@ -44,7 +44,7 @@ describe("swc", () => {
   })
 
   test("exclude node_modules", async () => {
-    const ignored = `${node_modules}/a.js`
+    const ignored = `${pathToNodeModules}/a.js`
     const [tracked, loader] = createTrackLoader()
     const compiler = createTestCompiler(createWebpackConfig(ignored, loader))
     await compiler.run()
@@ -52,7 +52,7 @@ describe("swc", () => {
   })
 
   test("explicitly included node_modules should be transpiled", async () => {
-    const included = `${node_modules_included}/a.js`
+    const included = `${pathToNodeModulesIncluded}/a.js`
     const [tracked, loader] = createTrackLoader()
     const compiler = createTestCompiler(createWebpackConfig(included, loader))
     await compiler.run()

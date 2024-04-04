@@ -14,16 +14,16 @@ const createTrackLoader = () => {
   ]
 }
 
-const node_modules = path.resolve("node_modules")
-const node_modules_included = path.resolve("node_modules/included")
-const app_javascript = path.resolve("app/javascript")
+const pathToNodeModules = path.resolve("node_modules")
+const pathToNodeModulesIncluded = path.resolve("node_modules/included")
+const pathToAppJavascript = path.resolve("app/javascript")
 
 const createInMemoryFs = () => {
   const fs = new MemoryFS()
 
-  fs.mkdirpSync(node_modules)
-  fs.mkdirpSync(node_modules_included)
-  fs.mkdirpSync(app_javascript)
+  fs.mkdirpSync(pathToNodeModules)
+  fs.mkdirpSync(pathToNodeModulesIncluded)
+  fs.mkdirpSync(pathToAppJavascript)
 
   return fs
 }
@@ -59,9 +59,9 @@ module.exports = {
   chdirCwd,
   resetEnv,
   createTrackLoader,
-  node_modules,
-  node_modules_included,
-  app_javascript,
+  pathToNodeModules,
+  pathToNodeModulesIncluded,
+  pathToAppJavascript,
   createInMemoryFs,
   createTestCompiler
 }
