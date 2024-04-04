@@ -1,7 +1,7 @@
 /* test expect, describe, afterAll, beforeEach */
 
 const { resolve } = require('path')
-const { chdirTestApp } = require('../utils/helpers')
+const { chdirTestApp } = require('../../package/utils/helpers')
 
 const rootPath = process.cwd()
 chdirTestApp()
@@ -16,7 +16,7 @@ describe('Custom environment', () => {
       process.env.RAILS_ENV = 'staging'
       delete process.env.NODE_ENV
 
-      const { generateWebpackConfig } = require('../index')
+      const { generateWebpackConfig } = require('../../package/index')
 
       const webpackConfig = generateWebpackConfig()
 

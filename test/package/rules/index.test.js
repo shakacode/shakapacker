@@ -1,4 +1,4 @@
-const rules = require('../index')
+const rules = require('../../../package/rules/index')
 
 describe('index', () => {
   test('rule tests are regexes', () => {

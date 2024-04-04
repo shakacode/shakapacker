@@ -1,7 +1,7 @@
 /* test expect, describe, afterAll, beforeEach */
 
 const { resolve } = require('path')
-const { chdirTestApp, resetEnv } = require('../utils/helpers')
+const { chdirTestApp, resetEnv } = require('../../package/utils/helpers')
 
 const rootPath = process.cwd()
 chdirTestApp()
@@ -17,7 +17,7 @@ describe('Development environment', () => {
       process.env.RAILS_ENV = 'development'
       process.env.NODE_ENV = 'development'
       process.env.WEBPACK_SERVE = 'true'
-      const { generateWebpackConfig } = require('../index')
+      const { generateWebpackConfig } = require('../../package/index')
 
       const webpackConfig = generateWebpackConfig()
 
@@ -29,7 +29,7 @@ describe('Development environment', () => {
       process.env.RAILS_ENV = 'development'
       process.env.NODE_ENV = 'development'
       process.env.WEBPACK_SERVE = undefined
-      const { generateWebpackConfig } = require('../index')
+      const { generateWebpackConfig } = require('../../package/index')
 
       const webpackConfig = generateWebpackConfig()
 

@@ -5,10 +5,10 @@ const {
   createTestCompiler,
   createTrackLoader,
 } = require("./__utils__/webpack");
-const swcConfig = require("../swc");
+const swcConfig = require("../../../package/rules/swc");
 
-jest.mock("../../config", () => {
-  const original = jest.requireActual("../../config");
+jest.mock("../../../package/config", () => {
+  const original = jest.requireActual("../../../package/config");
   return {
     ...original,
     webpack_loader: "swc",

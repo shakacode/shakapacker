@@ -6,10 +6,10 @@ const {
   createTestCompiler,
   createTrackLoader,
 } = require("./__utils__/webpack");
-const esbuildConfig = require("../esbuild");
+const esbuildConfig = require("../../../package/rules/esbuild");
 
-jest.mock("../../config", () => {
-  const original = jest.requireActual("../../config");
+jest.mock("../../../package/config", () => {
+  const original = jest.requireActual("../../../package/config");
   return {
     ...original,
     webpack_loader: "esbuild",

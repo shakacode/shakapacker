@@ -6,10 +6,10 @@ const {
   createTestCompiler,
   createTrackLoader,
 } = require("./__utils__/webpack");
-const babelConfig = require("../babel");
+const babelConfig = require("../../../package/rules/babel");
 
-jest.mock("../../config", () => {
-  const original = jest.requireActual("../../config");
+jest.mock("../../../package/config", () => {
+  const original = jest.requireActual("../../../package/config");
   return {
     ...original,
     additional_paths: [...original.additional_paths, "node_modules/included"],
