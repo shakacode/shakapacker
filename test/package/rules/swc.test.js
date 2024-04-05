@@ -1,18 +1,17 @@
-const path = require("path");
 const {
   app_javascript,
   node_modules,
   node_modules_included,
   createTestCompiler,
   createTrackLoader,
-} = require("./__utils__/webpack");
-const esbuildConfig = require("../esbuild");
+} = require("../../helpers");
+const swcConfig = require("../../../package/rules/swc");
 
-jest.mock("../../config", () => {
-  const original = jest.requireActual("../../config");
+jest.mock("../../../package/config", () => {
+  const original = jest.requireActual("../../../package/config");
   return {
     ...original,
-    webpack_loader: "esbuild",
+    webpack_loader: "swc",
     additional_paths: [...original.additional_paths, "node_modules/included"],
   };
 });
@@ -23,7 +22,7 @@ const createWebpackConfig = (file, use) => {
     module: {
       rules: [
         {
-          ...esbuildConfig,
+          ...swcConfig,
           use,
         },
       ],
@@ -36,7 +35,7 @@ const createWebpackConfig = (file, use) => {
 };
 
 describe("swc", () => {
-  test("process source path", async () => {
+  test("process files in source_path", async () => {
     const normalPath = `${app_javascript}/a.js`;
     const [tracked, loader] = createTrackLoader();
     const compiler = createTestCompiler(

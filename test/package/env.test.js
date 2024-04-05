@@ -1,6 +1,6 @@
 /* global test expect, describe */
 
-const { chdirTestApp } = require('../utils/helpers')
+const { chdirTestApp } = require('../helpers')
 
 const rootPath = process.cwd()
 chdirTestApp()
@@ -12,7 +12,7 @@ describe('Env', () => {
   test('with NODE_ENV and RAILS_ENV set to development', () => {
     process.env.RAILS_ENV = 'development'
     process.env.NODE_ENV = 'development'
-    expect(require('../env')).toEqual({
+    expect(require('../../package/env')).toEqual({
       railsEnv: 'development',
       nodeEnv: 'development',
       isProduction: false,
@@ -24,7 +24,7 @@ describe('Env', () => {
   test('with undefined NODE_ENV and RAILS_ENV set to development', () => {
     process.env.RAILS_ENV = 'development'
     delete process.env.NODE_ENV
-    expect(require('../env')).toEqual({
+    expect(require('../../package/env')).toEqual({
       railsEnv: 'development',
       nodeEnv: 'production',
       isProduction: true,
@@ -36,7 +36,7 @@ describe('Env', () => {
   test('with undefined NODE_ENV and RAILS_ENV', () => {
     delete process.env.NODE_ENV
     delete process.env.RAILS_ENV
-    expect(require('../env')).toEqual({
+    expect(require('../../package/env')).toEqual({
       railsEnv: 'production',
       nodeEnv: 'production',
       isProduction: true,
@@ -48,7 +48,7 @@ describe('Env', () => {
   test('with a non-standard environment', () => {
     process.env.RAILS_ENV = 'staging'
     process.env.NODE_ENV = 'staging'
-    expect(require('../env')).toEqual({
+    expect(require('../../package/env')).toEqual({
       railsEnv: 'staging',
       nodeEnv: 'production',
       isProduction: true,

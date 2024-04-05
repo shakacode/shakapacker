@@ -1,4 +1,4 @@
-const raw = require('../raw')
+const raw = require('../../../package/rules/raw')
 
 describe('raw', () => {
   test('test expected file types', () => {

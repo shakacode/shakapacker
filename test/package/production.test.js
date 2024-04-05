@@ -1,7 +1,7 @@
 /* test expect, describe, afterAll, beforeEach */
 
 const { resolve } = require('path')
-const { chdirTestApp, chdirCwd } = require('../utils/helpers')
+const { chdirTestApp, chdirCwd } = require('../helpers')
 
 const rootPath = process.cwd()
 chdirTestApp()
@@ -16,7 +16,7 @@ describe('Production environment', () => {
       process.env.RAILS_ENV = 'production'
       process.env.NODE_ENV = 'production'
 
-      const { generateWebpackConfig } = require('../index')
+      const { generateWebpackConfig } = require('../../package/index')
 
       const webpackConfig = generateWebpackConfig()
 

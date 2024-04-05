@@ -40,7 +40,24 @@ const createTestCompiler = (config, fs = createInMemoryFs()) => {
   return compiler;
 };
 
+const chdirTestApp = () => {
+  try {
+    return process.chdir('spec/shakapacker/test_app')
+  } catch (e) {
+    return null
+  }
+}
+
+const chdirCwd = () => process.chdir(process.cwd())
+
+const resetEnv = () => {
+  process.env = {}
+}
+
 module.exports = {
+  chdirTestApp,
+  chdirCwd,
+  resetEnv,
   createTrackLoader,
   node_modules,
   node_modules_included,

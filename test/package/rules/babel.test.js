@@ -1,17 +1,17 @@
+const path = require("path");
 const {
   app_javascript,
   node_modules,
   node_modules_included,
   createTestCompiler,
   createTrackLoader,
-} = require("./__utils__/webpack");
-const swcConfig = require("../swc");
+} = require("../../helpers");
+const babelConfig = require("../../../package/rules/babel");
 
-jest.mock("../../config", () => {
-  const original = jest.requireActual("../../config");
+jest.mock("../../../package/config", () => {
+  const original = jest.requireActual("../../../package/config");
   return {
     ...original,
-    webpack_loader: "swc",
     additional_paths: [...original.additional_paths, "node_modules/included"],
   };
 });
@@ -22,7 +22,7 @@ const createWebpackConfig = (file, use) => {
     module: {
       rules: [
         {
-          ...swcConfig,
+          ...babelConfig,
           use,
         },
       ],
@@ -34,8 +34,8 @@ const createWebpackConfig = (file, use) => {
   };
 };
 
-describe("swc", () => {
-  test("process files in source_path", async () => {
+describe("babel", () => {
+  test("process source path", async () => {
     const normalPath = `${app_javascript}/a.js`;
     const [tracked, loader] = createTrackLoader();
     const compiler = createTestCompiler(

@@ -1,5 +1,5 @@
-const index = require('../index')
-const { generateWebpackConfig } = require("../index");
+const index = require('../../package/index')
+const { generateWebpackConfig } = require('../helpers')
 
 describe('index', () => {
   test('exports webpack-merge v5 functions', () => {
@@ -9,7 +9,7 @@ describe('index', () => {
   })
 
   test('webpackConfig returns an immutable object', () => {
-    const { generateWebpackConfig } = require('../index')
+    const { generateWebpackConfig } = require('../../package/index')
 
     const webpackConfig1 = generateWebpackConfig()
     const webpackConfig2 = generateWebpackConfig()
@@ -22,7 +22,7 @@ describe('index', () => {
   })
 
   test('webpackConfig merges extra config', () => {
-    const { generateWebpackConfig } = require('../index')
+    const { generateWebpackConfig } = require('../../package/index')
 
     const webpackConfig = generateWebpackConfig({
        newKey: 'new value',
@@ -37,7 +37,7 @@ describe('index', () => {
   })
 
   test('webpackConfig errors if multiple configs are provided', () => {
-    const { generateWebpackConfig } = require('../index')
+    const { generateWebpackConfig } = require('../../package/index')
 
     expect(() => generateWebpackConfig({}, {})).toThrow(
       'use webpack-merge to merge configs before passing them to Shakapacker'

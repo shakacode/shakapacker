@@ -3,15 +3,15 @@
 // environment.js expects to find config/shakapacker.yml and resolved modules from
 // the root of a Rails project
 
-const { chdirTestApp, chdirCwd, resetEnv } = require('../../utils/helpers')
+const { chdirTestApp, chdirCwd, resetEnv } = require('../../helpers')
 
 const rootPath = process.cwd()
 chdirTestApp()
 
 const { resolve } = require('path')
 
-const baseConfig = require('../base')
-const config = require("../../config");
+const baseConfig = require('../../../package/environments/base')
+const config = require("../../../package/config");
 
 describe('Base config', () => {
   beforeEach(() => jest.resetModules() && resetEnv())
@@ -30,7 +30,7 @@ describe('Base config', () => {
 
     test('should return true for css_extract_ignore_order_warnings when configured', () => {
       process.env.SHAKAPACKER_CONFIG = 'config/shakapacker_css_extract_ignore_order_warnings.yml'
-      const config = require("../../config");
+      const config = require("../../../package/config");
 
       expect(config.css_extract_ignore_order_warnings).toEqual(true)
     })
@@ -47,8 +47,8 @@ describe('Base config', () => {
 
     test('should returns top level and nested entry points with config.nested_entries == true', () => {
       process.env.SHAKAPACKER_CONFIG = 'config/shakapacker_nested_entries.yml'
-      const config = require("../../config");
-      const baseConfig = require('../base')
+      const config = require("../../../package/config");
+      const baseConfig = require('../../../package/environments/base')
 
       expect(config.nested_entries).toEqual(true)
 
@@ -72,7 +72,7 @@ describe('Base config', () => {
     })
 
     test('should return default loader rules for each file in config/loaders', () => {
-      const rules = require('../../rules')
+      const rules = require('../../../package/rules')
 
       const defaultRules = Object.keys(rules)
       const configRules = baseConfig.module.rules

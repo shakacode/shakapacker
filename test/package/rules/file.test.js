@@ -1,7 +1,7 @@
-const file = require('../file')
+const file = require('../../../package/rules/file')
 
-jest.mock("../../config", () => {
-  const original = jest.requireActual("../../config");
+jest.mock("../../../package/config", () => {
+  const original = jest.requireActual("../../../package/config");
   return {
     ...original,
     additional_paths: [...original.additional_paths, "app/assets"],

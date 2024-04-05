@@ -5,13 +5,14 @@ const {
   node_modules_included,
   createTestCompiler,
   createTrackLoader,
-} = require("./__utils__/webpack");
-const babelConfig = require("../babel");
+} = require("../../helpers");
+const esbuildConfig = require("../../../package/rules/esbuild");
 
-jest.mock("../../config", () => {
-  const original = jest.requireActual("../../config");
+jest.mock("../../../package/config", () => {
+  const original = jest.requireActual("../../../package/config");
   return {
     ...original,
+    webpack_loader: "esbuild",
     additional_paths: [...original.additional_paths, "node_modules/included"],
   };
 });
@@ -22,7 +23,7 @@ const createWebpackConfig = (file, use) => {
     module: {
       rules: [
         {
-          ...babelConfig,
+          ...esbuildConfig,
           use,
         },
       ],
@@ -34,7 +35,7 @@ const createWebpackConfig = (file, use) => {
   };
 };
 
-describe("babel", () => {
+describe("swc", () => {
   test("process source path", async () => {
     const normalPath = `${app_javascript}/a.js`;
     const [tracked, loader] = createTrackLoader();
