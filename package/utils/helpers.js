@@ -1,12 +1,12 @@
 const isBoolean = (str) => /^true/.test(str) || /^false/.test(str)
 
-const ensureTrailingSlash = (path) => (path.endsWith('/') ? path : `${path}/`)
+const ensureTrailingSlash = (path) => (path.endsWith("/") ? path : `${path}/`)
 
 const resolvedPath = (packageName) => {
   try {
     return require.resolve(packageName)
   } catch (e) {
-    if (e.code !== 'MODULE_NOT_FOUND') {
+    if (e.code !== "MODULE_NOT_FOUND") {
       throw e
     }
     return null

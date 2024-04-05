@@ -1,15 +1,15 @@
 /* eslint global-require: 0 */
 /* eslint import/no-dynamic-require: 0 */
 
-const { existsSync, readdirSync } = require('fs')
-const { basename, dirname, join, relative, resolve } = require('path')
-const extname = require('path-complete-extname')
-const WebpackAssetsManifest = require('webpack-assets-manifest')
-const webpack = require('webpack')
-const rules = require('../rules')
-const config = require('../config')
-const { isProduction } = require('../env')
-const { moduleExists } = require('../utils/helpers')
+const { existsSync, readdirSync } = require("fs")
+const { basename, dirname, join, relative, resolve } = require("path")
+const extname = require("path-complete-extname")
+const WebpackAssetsManifest = require("webpack-assets-manifest")
+const webpack = require("webpack")
+const rules = require("../rules")
+const config = require("../config")
+const { isProduction } = require("../env")
+const { moduleExists } = require("../utils/helpers")
 
 const getFilesInDirectory = (dir, includeNested) => {
   if (!existsSync(dir)) {
@@ -32,10 +32,10 @@ const getFilesInDirectory = (dir, includeNested) => {
 const getEntryObject = () => {
   const entries = {}
   const rootPath = join(config.source_path, config.source_entry_path)
-  if (config.source_entry_path === '/' && config.nested_entries) {
+  if (config.source_entry_path === "/" && config.nested_entries) {
     throw new Error(
       "Your shakapacker config specified using a source_entry_path of '/' with 'nested_entries' == " +
-      "'true'. Doing this would result in packs for every one of your source files"
+        "'true'. Doing this would result in packs for every one of your source files"
     )
   }
 
@@ -67,7 +67,7 @@ const getModulePaths = () => {
   if (config.additional_paths) {
     config.additional_paths.forEach((path) => result.push(resolve(path)))
   }
-  result.push('node_modules')
+  result.push("node_modules")
 
   return result
 }
@@ -84,9 +84,9 @@ const getPlugins = () => {
     })
   ]
 
-  if (moduleExists('css-loader') && moduleExists('mini-css-extract-plugin')) {
-    const hash = isProduction || config.useContentHash ? '-[contenthash:8]' : ''
-    const MiniCssExtractPlugin = require('mini-css-extract-plugin')
+  if (moduleExists("css-loader") && moduleExists("mini-css-extract-plugin")) {
+    const hash = isProduction || config.useContentHash ? "-[contenthash:8]" : ""
+    const MiniCssExtractPlugin = require("mini-css-extract-plugin")
     plugins.push(
       new MiniCssExtractPlugin({
         filename: `css/[name]${hash}.css`,
@@ -104,35 +104,35 @@ const getPlugins = () => {
 
 // Don't use contentHash except for production for performance
 // https://webpack.js.org/guides/build-performance/#avoid-production-specific-tooling
-const hash = isProduction || config.useContentHash ? '-[contenthash]' : ''
+const hash = isProduction || config.useContentHash ? "-[contenthash]" : ""
 
 module.exports = {
-  mode: 'production',
+  mode: "production",
   output: {
     filename: `js/[name]${hash}.js`,
     chunkFilename: `js/[name]${hash}.chunk.js`,
 
     // https://webpack.js.org/configuration/output/#outputhotupdatechunkfilename
-    hotUpdateChunkFilename: 'js/[id].[fullhash].hot-update.js',
+    hotUpdateChunkFilename: "js/[id].[fullhash].hot-update.js",
     path: config.outputPath,
     publicPath: config.publicPath
   },
   entry: getEntryObject(),
   resolve: {
-    extensions: ['.js', '.jsx', '.mjs', '.ts', '.tsx', '.coffee'],
+    extensions: [".js", ".jsx", ".mjs", ".ts", ".tsx", ".coffee"],
     modules: getModulePaths()
   },
 
   plugins: getPlugins(),
 
   resolveLoader: {
-    modules: ['node_modules']
+    modules: ["node_modules"]
   },
 
   optimization: {
-    splitChunks: { chunks: 'all' },
+    splitChunks: { chunks: "all" },
 
-    runtimeChunk: 'single'
+    runtimeChunk: "single"
   },
 
   module: {

@@ -1,35 +1,38 @@
-const shakapackerDevServerYamlConfig = require('./dev_server')
-const snakeToCamelCase = require('./utils/snakeToCamelCase')
-const { outputPath: contentBase, publicPath } = require('./config')
+const shakapackerDevServerYamlConfig = require("./dev_server")
+const snakeToCamelCase = require("./utils/snakeToCamelCase")
+const { outputPath: contentBase, publicPath } = require("./config")
 
 const webpackDevServerMappedKeys = new Set([
   // client, server, liveReload, devMiddleware are handled separately
-  'allowedHosts',
-  'bonjour',
-  'compress',
-  'headers',
-  'historyApiFallback',
-  'host',
-  'hot',
-  'http2',
-  'https',
-  'ipc',
-  'magicHtml',
-  'onAfterSetupMiddleware',
-  'onBeforeSetupMiddleware',
-  'open',
-  'port',
-  'proxy',
-  'server',
-  'setupExitSignals',
-  'setupMiddlewares',
-  'watchFiles',
-  'webSocketServer'
+  "allowedHosts",
+  "bonjour",
+  "compress",
+  "headers",
+  "historyApiFallback",
+  "host",
+  "hot",
+  "http2",
+  "https",
+  "ipc",
+  "magicHtml",
+  "onAfterSetupMiddleware",
+  "onBeforeSetupMiddleware",
+  "open",
+  "port",
+  "proxy",
+  "server",
+  "setupExitSignals",
+  "setupMiddlewares",
+  "watchFiles",
+  "webSocketServer"
 ])
 
 function createDevServerConfig() {
   const devServerYamlConfig = { ...shakapackerDevServerYamlConfig }
-  const liveReload = devServerYamlConfig.live_reload !== undefined ? devServerYamlConfig.live_reload : !devServerYamlConfig.hmr
+  const liveReload =
+    devServerYamlConfig.live_reload !== undefined
+      ? devServerYamlConfig.live_reload
+      : !devServerYamlConfig.hmr
   delete devServerYamlConfig.live_reload
 
   const config = {

@@ -42,7 +42,7 @@ const createTestCompiler = (config, fs = createInMemoryFs()) => {
 
 const chdirTestApp = () => {
   try {
-    return process.chdir('spec/shakapacker/test_app')
+    return process.chdir("spec/shakapacker/test_app")
   } catch (e) {
     return null
   }

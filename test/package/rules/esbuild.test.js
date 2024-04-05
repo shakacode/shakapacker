@@ -36,9 +36,7 @@ describe("swc", () => {
   test("process source path", async () => {
     const normalPath = `${pathToAppJavascript}/a.js`
     const [tracked, loader] = createTrackLoader()
-    const compiler = createTestCompiler(
-      createWebpackConfig(normalPath, loader)
-    )
+    const compiler = createTestCompiler(createWebpackConfig(normalPath, loader))
     await compiler.run()
     expect(tracked[normalPath]).toBeTruthy()
   })

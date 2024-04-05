@@ -1,4 +1,4 @@
-const file = require('../../../package/rules/file')
+const file = require("../../../package/rules/file")
 
 jest.mock("../../../package/config", () => {
   const original = jest.requireActual("../../../package/config")
@@ -8,80 +8,74 @@ jest.mock("../../../package/config", () => {
   }
 })
 
-describe('file', () => {
-  test('test expected file types', () => {
+describe("file", () => {
+  test("test expected file types", () => {
     const types = [
-      '.bmp',
-      '.gif',
-      '.jpg',
-      '.jpeg',
-      '.png',
-      '.tiff',
-      '.ico',
-      '.avif',
-      '.webp',
-      '.eot',
-      '.otf',
-      '.ttf',
-      '.woff',
-      '.woff2',
-      '.svg'
+      ".bmp",
+      ".gif",
+      ".jpg",
+      ".jpeg",
+      ".png",
+      ".tiff",
+      ".ico",
+      ".avif",
+      ".webp",
+      ".eot",
+      ".otf",
+      ".ttf",
+      ".woff",
+      ".woff2",
+      ".svg"
     ]
-    types.forEach(type => expect(file.test.test(type)).toBe(true))
+    types.forEach((type) => expect(file.test.test(type)).toBe(true))
   })
 
-  test('exclude expected file types', () => {
-    const types = [
-      '.js',
-      '.mjs',
-      '.jsx',
-      '.ts',
-      '.tsx'
-    ]
-    types.forEach(type => expect(file.exclude.test(type)).toBe(true))
+  test("exclude expected file types", () => {
+    const types = [".js", ".mjs", ".jsx", ".ts", ".tsx"]
+    types.forEach((type) => expect(file.exclude.test(type)).toBe(true))
   })
 
-  test('correct generated output path is returned for top level files', () => {
+  test("correct generated output path is returned for top level files", () => {
     const pathData = {
-      filename: 'app/javascript/image.svg'
+      filename: "app/javascript/image.svg"
     }
     expect(file.generator.filename(pathData)).toEqual(
-      'static/[name]-[hash][ext][query]'
+      "static/[name]-[hash][ext][query]"
     )
   })
 
-  test('correct generated output path is returned for nested files', () => {
+  test("correct generated output path is returned for nested files", () => {
     const pathData = {
-      filename: 'app/javascript/images/image.svg'
+      filename: "app/javascript/images/image.svg"
     }
     expect(file.generator.filename(pathData)).toEqual(
-      'static/images/[name]-[hash][ext][query]'
+      "static/images/[name]-[hash][ext][query]"
     )
   })
 
-  test('correct generated output path is returned for deeply nested files', () => {
+  test("correct generated output path is returned for deeply nested files", () => {
     const pathData = {
-      filename: 'app/javascript/images/nested/deeply/image.svg'
+      filename: "app/javascript/images/nested/deeply/image.svg"
     }
     expect(file.generator.filename(pathData)).toEqual(
-      'static/images/nested/deeply/[name]-[hash][ext][query]'
+      "static/images/nested/deeply/[name]-[hash][ext][query]"
     )
   })
 
-  test('correct generated output path is returned for additional_paths', () => {
+  test("correct generated output path is returned for additional_paths", () => {
     const pathData = {
-      filename: 'app/assets/images/image.svg'
+      filename: "app/assets/images/image.svg"
     }
 
     expect(file.generator.filename(pathData)).toEqual(
-      'static/images/[name]-[hash][ext][query]'
+      "static/images/[name]-[hash][ext][query]"
     )
 
     const pathData2 = {
-      filename: 'app/javascript/app/assets/image.svg'
+      filename: "app/javascript/app/assets/image.svg"
     }
     expect(file.generator.filename(pathData2)).toEqual(
-      'static/app/assets/[name]-[hash][ext][query]'
+      "static/app/assets/[name]-[hash][ext][query]"
     )
   })
 })

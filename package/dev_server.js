@@ -1,6 +1,6 @@
 // These are the raw shakapacker dev server config settings from the YML file with ENV overrides applied.
-const { isBoolean } = require('./utils/helpers')
-const config = require('./config')
+const { isBoolean } = require("./utils/helpers")
+const config = require("./config")
 
 const envFetch = (key) => {
   const value = process.env[key]
@@ -10,7 +10,7 @@ const envFetch = (key) => {
 const devServerConfig = config.dev_server
 
 if (devServerConfig) {
-  const envPrefix = config.dev_server.env_prefix || 'SHAKAPACKER_DEV_SERVER'
+  const envPrefix = config.dev_server.env_prefix || "SHAKAPACKER_DEV_SERVER"
 
   Object.keys(devServerConfig).forEach((key) => {
     const envValue = envFetch(`${envPrefix}_${key.toUpperCase()}`)
