@@ -16,7 +16,7 @@ describe("Base config", () => {
 
   describe("config", () => {
     test("should return entry", () => {
-      expect(baseConfig.entry.application).toEqual(
+      expect(baseConfig.entry.application).toStrictEqual(
         resolve("app", "javascript", "entrypoints", "application.js")
       )
     })
@@ -36,7 +36,7 @@ describe("Base config", () => {
     test("should return only 2 entry points with config.nested_entries == false", () => {
       expect(config.nested_entries).toBe(false)
 
-      expect(baseConfig.entry.multi_entry.sort()).toEqual([
+      expect(baseConfig.entry.multi_entry.sort()).toStrictEqual([
         resolve("app", "javascript", "entrypoints", "multi_entry.css"),
         resolve("app", "javascript", "entrypoints", "multi_entry.js")
       ])
@@ -50,14 +50,14 @@ describe("Base config", () => {
 
       expect(config2.nested_entries).toBe(true)
 
-      expect(baseConfig2.entry.application).toEqual(
+      expect(baseConfig2.entry.application).toStrictEqual(
         resolve("app", "javascript", "entrypoints", "application.js")
       )
-      expect(baseConfig2.entry.multi_entry.sort()).toEqual([
+      expect(baseConfig2.entry.multi_entry.sort()).toStrictEqual([
         resolve("app", "javascript", "entrypoints", "multi_entry.css"),
         resolve("app", "javascript", "entrypoints", "multi_entry.js")
       ])
-      expect(baseConfig2.entry["generated/something"]).toEqual(
+      expect(baseConfig2.entry["generated/something"]).toStrictEqual(
         resolve("app", "javascript", "entrypoints", "generated", "something.js")
       )
     })
@@ -84,11 +84,11 @@ describe("Base config", () => {
     })
 
     test("should return default resolveLoader", () => {
-      expect(baseConfig.resolveLoader.modules).toEqual(["node_modules"])
+      expect(baseConfig.resolveLoader.modules).toStrictEqual(["node_modules"])
     })
 
     test("should return default resolve.modules with additions", () => {
-      expect(baseConfig.resolve.modules).toEqual([
+      expect(baseConfig.resolve.modules).toStrictEqual([
         resolve("app", "javascript"),
         resolve("app/assets"),
         resolve("/etc/yarn"),

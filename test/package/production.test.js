@@ -18,7 +18,9 @@ describe("Production environment", () => {
 
       const webpackConfig = generateWebpackConfig()
 
-      expect(webpackConfig.output.path).toEqual(resolve("public", "packs"))
+      expect(webpackConfig.output.path).toStrictEqual(
+        resolve("public", "packs")
+      )
       expect(webpackConfig.output.publicPath).toBe("/packs/")
 
       expect(webpackConfig).toMatchObject({

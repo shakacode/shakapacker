@@ -28,7 +28,7 @@ module.exports = {
           { ignoreTopLevelDescribe: true }
         ],
         "jest/prefer-spy-on": "error",
-        // "jest/prefer-strict-equal": "error",
+        "jest/prefer-strict-equal": "error",
         "jest/prefer-todo": "error"
       }
     }

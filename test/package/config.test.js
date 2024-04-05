@@ -24,7 +24,7 @@ describe("Config", () => {
   test("should return additional paths as listed in app config, with resolved paths", () => {
     const config = require("../../package/config")
 
-    expect(config.additional_paths).toEqual([
+    expect(config.additional_paths).toStrictEqual([
       "app/assets",
       "/etc/yarn",
       "some.config.js",
@@ -35,12 +35,16 @@ describe("Config", () => {
   test("should default manifestPath to the public dir", () => {
     const config = require("../../package/config")
 
-    expect(config.manifestPath).toEqual(resolve("public/packs/manifest.json"))
+    expect(config.manifestPath).toStrictEqual(
+      resolve("public/packs/manifest.json")
+    )
   })
 
   test("should allow overriding manifestPath", () => {
     process.env.SHAKAPACKER_CONFIG = "config/shakapacker_manifest_path.yml"
     const config = require("../../package/config")
-    expect(config.manifestPath).toEqual(resolve("app/javascript/manifest.json"))
+    expect(config.manifestPath).toStrictEqual(
+      resolve("app/javascript/manifest.json")
+    )
   })
 })

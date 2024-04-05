@@ -39,6 +39,6 @@ describe("DevServer", () => {
   test("with NODE_ENV and RAILS_ENV set to production", () => {
     process.env.RAILS_ENV = "production"
     process.env.NODE_ENV = "production"
-    expect(require("../../package/dev_server")).toEqual({})
+    expect(require("../../package/dev_server")).toStrictEqual({})
   })
 })

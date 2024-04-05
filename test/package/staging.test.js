@@ -18,7 +18,7 @@ describe("Custom environment", () => {
 
       const webpackConfig = generateWebpackConfig()
 
-      expect(webpackConfig.output.path).toEqual(
+      expect(webpackConfig.output.path).toStrictEqual(
         resolve("public", "packs-staging")
       )
       expect(webpackConfig.output.publicPath).toBe("/packs-staging/")

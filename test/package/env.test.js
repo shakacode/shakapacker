@@ -10,7 +10,7 @@ describe("Env", () => {
   test("with NODE_ENV and RAILS_ENV set to development", () => {
     process.env.RAILS_ENV = "development"
     process.env.NODE_ENV = "development"
-    expect(require("../../package/env")).toEqual({
+    expect(require("../../package/env")).toStrictEqual({
       railsEnv: "development",
       nodeEnv: "development",
       isProduction: false,
@@ -22,7 +22,7 @@ describe("Env", () => {
   test("with undefined NODE_ENV and RAILS_ENV set to development", () => {
     process.env.RAILS_ENV = "development"
     delete process.env.NODE_ENV
-    expect(require("../../package/env")).toEqual({
+    expect(require("../../package/env")).toStrictEqual({
       railsEnv: "development",
       nodeEnv: "production",
       isProduction: true,
@@ -34,7 +34,7 @@ describe("Env", () => {
   test("with undefined NODE_ENV and RAILS_ENV", () => {
     delete process.env.NODE_ENV
     delete process.env.RAILS_ENV
-    expect(require("../../package/env")).toEqual({
+    expect(require("../../package/env")).toStrictEqual({
       railsEnv: "production",
       nodeEnv: "production",
       isProduction: true,
@@ -46,7 +46,7 @@ describe("Env", () => {
   test("with a non-standard environment", () => {
     process.env.RAILS_ENV = "staging"
     process.env.NODE_ENV = "staging"
-    expect(require("../../package/env")).toEqual({
+    expect(require("../../package/env")).toStrictEqual({
       railsEnv: "staging",
       nodeEnv: "production",
       isProduction: true,
