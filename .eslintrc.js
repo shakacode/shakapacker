@@ -1,12 +1,10 @@
 module.exports = {
-  extends: ['airbnb', 'prettier'],
+  extends: ['airbnb', 'plugin:prettier/recommended'],
   rules: {
-    'comma-dangle': ['error', 'never'],
     'import/no-unresolved': 'off',
     'import/no-extraneous-dependencies': 'off',
     'import/extensions': 'off',
     "indent": ["error", 2],
-    semi: ['error', 'never']
   },
   env: {
     browser: true,
