@@ -1,4 +1,5 @@
 * For the changelog of versions prior to v6, see the [5.x stable branch of rails/webpacker](https://github.com/rails/webpacker/tree/5-x-stable).
+* Please see the [v8 Upgrade Guide](./docs/v8_upgrade.md) for upgrading to version 8 and accounting for breaking changes.
 * Please see the [v7 Upgrade Guide](./docs/v7_upgrade.md) for upgrading to new spelling in version 7.
 * Please see the [v6 Upgrade Guide](./docs/v6_upgrade.md) to go from versions prior to v6.
 * [ShakaCode](https://www.shakacode.com) offers support for upgrading from Webpacker or using Shakapacker. If interested, contact Justin Gordon, [justin@shakacode.com](mailto:justin@shakacode.com).
