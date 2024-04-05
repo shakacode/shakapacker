@@ -39,7 +39,7 @@ describe("file", () => {
     const pathData = {
       filename: "app/javascript/image.svg"
     }
-    expect(file.generator.filename(pathData)).toEqual(
+    expect(file.generator.filename(pathData)).toBe(
       "static/[name]-[hash][ext][query]"
     )
   })
@@ -48,7 +48,7 @@ describe("file", () => {
     const pathData = {
       filename: "app/javascript/images/image.svg"
     }
-    expect(file.generator.filename(pathData)).toEqual(
+    expect(file.generator.filename(pathData)).toBe(
       "static/images/[name]-[hash][ext][query]"
     )
   })
@@ -57,7 +57,7 @@ describe("file", () => {
     const pathData = {
       filename: "app/javascript/images/nested/deeply/image.svg"
     }
-    expect(file.generator.filename(pathData)).toEqual(
+    expect(file.generator.filename(pathData)).toBe(
       "static/images/nested/deeply/[name]-[hash][ext][query]"
     )
   })
@@ -67,14 +67,14 @@ describe("file", () => {
       filename: "app/assets/images/image.svg"
     }
 
-    expect(file.generator.filename(pathData)).toEqual(
+    expect(file.generator.filename(pathData)).toBe(
       "static/images/[name]-[hash][ext][query]"
     )
 
     const pathData2 = {
       filename: "app/javascript/app/assets/image.svg"
     }
-    expect(file.generator.filename(pathData2)).toEqual(
+    expect(file.generator.filename(pathData2)).toBe(
       "static/app/assets/[name]-[hash][ext][query]"
     )
   })

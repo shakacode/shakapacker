@@ -11,14 +11,14 @@ describe("Config", () => {
   test("public path", () => {
     process.env.RAILS_ENV = "development"
     const config = require("../../package/config")
-    expect(config.publicPath).toEqual("/packs/")
+    expect(config.publicPath).toBe("/packs/")
   })
 
   test("public path with asset host", () => {
     process.env.RAILS_ENV = "development"
     process.env.SHAKAPACKER_ASSET_HOST = "http://foo.com/"
     const config = require("../../package/config")
-    expect(config.publicPath).toEqual("http://foo.com/packs/")
+    expect(config.publicPath).toBe("http://foo.com/packs/")
   })
 
   test("should return additional paths as listed in app config, with resolved paths", () => {

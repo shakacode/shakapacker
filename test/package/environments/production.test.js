@@ -17,10 +17,10 @@ describe("Production specific config", () => {
       config.useContentHash = true
       const environmentConfig = require("../../../package/environments/production")
 
-      expect(environmentConfig.output.filename).toEqual(
+      expect(environmentConfig.output.filename).toBe(
         "js/[name]-[contenthash].js"
       )
-      expect(environmentConfig.output.chunkFilename).toEqual(
+      expect(environmentConfig.output.chunkFilename).toBe(
         "js/[name]-[contenthash].chunk.js"
       )
     })
@@ -48,10 +48,10 @@ describe("Production specific config", () => {
       config.useContentHash = false
       const environmentConfig = require("../../../package/environments/production")
 
-      expect(environmentConfig.output.filename).toEqual(
+      expect(environmentConfig.output.filename).toBe(
         "js/[name]-[contenthash].js"
       )
-      expect(environmentConfig.output.chunkFilename).toEqual(
+      expect(environmentConfig.output.chunkFilename).toBe(
         "js/[name]-[contenthash].chunk.js"
       )
     })
@@ -79,10 +79,10 @@ describe("Production specific config", () => {
       delete config.useContentHash
       const environmentConfig = require("../../../package/environments/production")
 
-      expect(environmentConfig.output.filename).toEqual(
+      expect(environmentConfig.output.filename).toBe(
         "js/[name]-[contenthash].js"
       )
-      expect(environmentConfig.output.chunkFilename).toEqual(
+      expect(environmentConfig.output.chunkFilename).toBe(
         "js/[name]-[contenthash].chunk.js"
       )
     })

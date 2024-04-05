@@ -19,7 +19,7 @@ describe("Production environment", () => {
       const webpackConfig = generateWebpackConfig()
 
       expect(webpackConfig.output.path).toEqual(resolve("public", "packs"))
-      expect(webpackConfig.output.publicPath).toEqual("/packs/")
+      expect(webpackConfig.output.publicPath).toBe("/packs/")
 
       expect(webpackConfig).toMatchObject({
         devtool: "source-map",

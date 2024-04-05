@@ -17,7 +17,7 @@ describe("index", () => {
     webpackConfig1.output.path = "new path"
 
     expect(webpackConfig2).not.toHaveProperty("newKey")
-    expect(webpackConfig2.output.path).not.toEqual("new value")
+    expect(webpackConfig2.output.path).not.toBe("new value")
   })
 
   test("webpackConfig merges extra config", () => {

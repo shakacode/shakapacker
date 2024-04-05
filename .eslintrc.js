@@ -13,7 +13,7 @@ module.exports = {
   overrides: [
     {
       files: ["test/**"],
-      extends: ["plugin:jest/recommended"],
+      extends: ["plugin:jest/recommended", "plugin:jest/style"],
       rules: {
         "global-require": "off"
       }

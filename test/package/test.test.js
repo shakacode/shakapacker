@@ -19,8 +19,8 @@ describe("Test environment", () => {
       const webpackConfig = generateWebpackConfig()
 
       expect(webpackConfig.output.path).toEqual(resolve("public", "packs-test"))
-      expect(webpackConfig.output.publicPath).toEqual("/packs-test/")
-      expect(webpackConfig.devServer).toEqual(undefined)
+      expect(webpackConfig.output.publicPath).toBe("/packs-test/")
+      expect(webpackConfig.devServer).toBeUndefined()
     })
   })
 })
