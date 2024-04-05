@@ -13,8 +13,7 @@ module.exports = {
   overrides: [
     {
       files: ["test/**"],
-      // todo: these should be sourced from eslint-plugin-jest
-      env: { jest: true },
+      extends: ["plugin:jest/recommended"],
       rules: {
         "global-require": "off"
       }

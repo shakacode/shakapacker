@@ -1,7 +1,7 @@
 const raw = require("../../../package/rules/raw")
 
 describe("raw", () => {
-  test("test expected file types", () => {
+  test("expected file types", () => {
     expect(raw.test.test(".html")).toBe(true)
   })
 

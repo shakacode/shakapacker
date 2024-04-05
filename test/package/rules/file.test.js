@@ -9,7 +9,7 @@ jest.mock("../../../package/config", () => {
 })
 
 describe("file", () => {
-  test("test expected file types", () => {
+  test("expected file types", () => {
     const types = [
       ".bmp",
       ".gif",
