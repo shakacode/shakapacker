@@ -1,12 +1,12 @@
 const file = require('../../../package/rules/file')
 
 jest.mock("../../../package/config", () => {
-  const original = jest.requireActual("../../../package/config");
+  const original = jest.requireActual("../../../package/config")
   return {
     ...original,
-    additional_paths: [...original.additional_paths, "app/assets"],
-  };
-});
+    additional_paths: [...original.additional_paths, "app/assets"]
+  }
+})
 
 describe('file', () => {
   test('test expected file types', () => {
@@ -25,7 +25,7 @@ describe('file', () => {
       '.ttf',
       '.woff',
       '.woff2',
-      '.svg',
+      '.svg'
     ]
     types.forEach(type => expect(file.test.test(type)).toBe(true))
   })
@@ -36,52 +36,52 @@ describe('file', () => {
       '.mjs',
       '.jsx',
       '.ts',
-      '.tsx',
+      '.tsx'
     ]
     types.forEach(type => expect(file.exclude.test(type)).toBe(true))
   })
 
   test('correct generated output path is returned for top level files', () => {
     const pathData = {
-      filename: 'app/javascript/image.svg',
-    };
+      filename: 'app/javascript/image.svg'
+    }
     expect(file.generator.filename(pathData)).toEqual(
       'static/[name]-[hash][ext][query]'
-    );
-  });
+    )
+  })
 
   test('correct generated output path is returned for nested files', () => {
     const pathData = {
-      filename: 'app/javascript/images/image.svg',
-    };
+      filename: 'app/javascript/images/image.svg'
+    }
     expect(file.generator.filename(pathData)).toEqual(
       'static/images/[name]-[hash][ext][query]'
-    );
+    )
   })
 
   test('correct generated output path is returned for deeply nested files', () => {
     const pathData = {
-      filename: 'app/javascript/images/nested/deeply/image.svg',
-    };
+      filename: 'app/javascript/images/nested/deeply/image.svg'
+    }
     expect(file.generator.filename(pathData)).toEqual(
       'static/images/nested/deeply/[name]-[hash][ext][query]'
-    );
-  });
+    )
+  })
 
   test('correct generated output path is returned for additional_paths', () => {
     const pathData = {
-      filename: 'app/assets/images/image.svg',
-    };
+      filename: 'app/assets/images/image.svg'
+    }
 
     expect(file.generator.filename(pathData)).toEqual(
       'static/images/[name]-[hash][ext][query]'
-    );
+    )
 
     const pathData2 = {
-      filename: 'app/javascript/app/assets/image.svg',
-    };
+      filename: 'app/javascript/app/assets/image.svg'
+    }
     expect(file.generator.filename(pathData2)).toEqual(
       'static/app/assets/[name]-[hash][ext][query]'
-    );
-  });
+    )
+  })
 })

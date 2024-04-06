@@ -1,12 +1,8 @@
-/* global test expect, describe */
-
-const { chdirTestApp, resetEnv } = require('../helpers')
 const { resolve } = require('path')
+const { chdirTestApp, resetEnv } = require('../helpers')
 
 const rootPath = process.cwd()
 chdirTestApp()
-
-const config = require('../../package/config')
 
 describe('Config', () => {
   beforeEach(() => jest.resetModules() && resetEnv())
@@ -26,6 +22,8 @@ describe('Config', () => {
   })
 
   test('should return additional paths as listed in app config, with resolved paths', () => {
+    const config = require('../../package/config')
+
     expect(config.additional_paths).toEqual([
       'app/assets',
       '/etc/yarn',
@@ -35,6 +33,8 @@ describe('Config', () => {
   })
 
   test('should default manifestPath to the public dir', () => {
+    const config = require('../../package/config')
+
     expect(config.manifestPath).toEqual(resolve('public/packs/manifest.json'))
   })
 

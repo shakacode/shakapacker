@@ -1,5 +1,3 @@
-/* global test expect, describe */
-
 const { chdirTestApp } = require('../helpers')
 
 const rootPath = process.cwd()

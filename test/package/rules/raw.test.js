@@ -11,7 +11,7 @@ describe('raw', () => {
       '.mjs',
       '.jsx',
       '.ts',
-      '.tsx',
+      '.tsx'
     ]
     types.forEach(type => expect(raw.exclude.test(type)).toBe(true))
   })
