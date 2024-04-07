@@ -1,10 +1,10 @@
-const { canProcess } = require('../utils/helpers')
+const { canProcess } = require("../utils/helpers")
 
-const runner = /^win/.test(process.platform) ? 'ruby ' : ''
+const runner = /^win/.test(process.platform) ? "ruby " : ""
 
-module.exports = canProcess('rails-erb-loader', (resolvedPath) => ({
+module.exports = canProcess("rails-erb-loader", (resolvedPath) => ({
   test: /\.erb$/,
-  enforce: 'pre',
+  enforce: "pre",
   exclude: /node_modules/,
   use: [
     {
