@@ -16,13 +16,13 @@ describe("Base config", () => {
 
   describe("config", () => {
     test("should return entry", () => {
-      expect(baseConfig.entry.application).toEqual(
+      expect(baseConfig.entry.application).toStrictEqual(
         resolve("app", "javascript", "entrypoints", "application.js")
       )
     })
 
     test("should return false for css_extract_ignore_order_warnings when using default config", () => {
-      expect(config.css_extract_ignore_order_warnings).toEqual(false)
+      expect(config.css_extract_ignore_order_warnings).toBe(false)
     })
 
     test("should return true for css_extract_ignore_order_warnings when configured", () => {
@@ -30,17 +30,17 @@ describe("Base config", () => {
         "config/shakapacker_css_extract_ignore_order_warnings.yml"
       const config2 = require("../../../package/config")
 
-      expect(config2.css_extract_ignore_order_warnings).toEqual(true)
+      expect(config2.css_extract_ignore_order_warnings).toBe(true)
     })
 
     test("should return only 2 entry points with config.nested_entries == false", () => {
-      expect(config.nested_entries).toEqual(false)
+      expect(config.nested_entries).toBe(false)
 
-      expect(baseConfig.entry.multi_entry.sort()).toEqual([
+      expect(baseConfig.entry.multi_entry.sort()).toStrictEqual([
         resolve("app", "javascript", "entrypoints", "multi_entry.css"),
         resolve("app", "javascript", "entrypoints", "multi_entry.js")
       ])
-      expect(baseConfig.entry["generated/something"]).toEqual(undefined)
+      expect(baseConfig.entry["generated/something"]).toBeUndefined()
     })
 
     test("should returns top level and nested entry points with config.nested_entries == true", () => {
@@ -48,23 +48,23 @@ describe("Base config", () => {
       const config2 = require("../../../package/config")
       const baseConfig2 = require("../../../package/environments/base")
 
-      expect(config2.nested_entries).toEqual(true)
+      expect(config2.nested_entries).toBe(true)
 
-      expect(baseConfig2.entry.application).toEqual(
+      expect(baseConfig2.entry.application).toStrictEqual(
         resolve("app", "javascript", "entrypoints", "application.js")
       )
-      expect(baseConfig2.entry.multi_entry.sort()).toEqual([
+      expect(baseConfig2.entry.multi_entry.sort()).toStrictEqual([
         resolve("app", "javascript", "entrypoints", "multi_entry.css"),
         resolve("app", "javascript", "entrypoints", "multi_entry.js")
       ])
-      expect(baseConfig2.entry["generated/something"]).toEqual(
+      expect(baseConfig2.entry["generated/something"]).toStrictEqual(
         resolve("app", "javascript", "entrypoints", "generated", "something.js")
       )
     })
 
     test("should return output", () => {
-      expect(baseConfig.output.filename).toEqual("js/[name]-[contenthash].js")
-      expect(baseConfig.output.chunkFilename).toEqual(
+      expect(baseConfig.output.filename).toBe("js/[name]-[contenthash].js")
+      expect(baseConfig.output.chunkFilename).toBe(
         "js/[name]-[contenthash].chunk.js"
       )
     })
@@ -75,20 +75,20 @@ describe("Base config", () => {
       const defaultRules = Object.keys(rules)
       const configRules = baseConfig.module.rules
 
-      expect(defaultRules.length).toEqual(3)
-      expect(configRules.length).toEqual(3)
+      expect(defaultRules).toHaveLength(3)
+      expect(configRules).toHaveLength(3)
     })
 
     test("should return default plugins", () => {
-      expect(baseConfig.plugins.length).toEqual(2)
+      expect(baseConfig.plugins).toHaveLength(2)
     })
 
     test("should return default resolveLoader", () => {
-      expect(baseConfig.resolveLoader.modules).toEqual(["node_modules"])
+      expect(baseConfig.resolveLoader.modules).toStrictEqual(["node_modules"])
     })
 
     test("should return default resolve.modules with additions", () => {
-      expect(baseConfig.resolve.modules).toEqual([
+      expect(baseConfig.resolve.modules).toStrictEqual([
         resolve("app", "javascript"),
         resolve("app/assets"),
         resolve("/etc/yarn"),

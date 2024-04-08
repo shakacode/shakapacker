@@ -16,8 +16,8 @@ describe("DevServer", () => {
 
     const devServer = require("../../package/dev_server")
     expect(devServer).toBeDefined()
-    expect(devServer.host).toEqual("0.0.0.0")
-    expect(devServer.port).toEqual("5000")
+    expect(devServer.host).toBe("0.0.0.0")
+    expect(devServer.port).toBe("5000")
     expect(devServer.disable_host_check).toBe(false)
   })
 
@@ -32,13 +32,13 @@ describe("DevServer", () => {
 
     const devServer = require("../../package/dev_server")
     expect(devServer).toBeDefined()
-    expect(devServer.host).toEqual("0.0.0.0")
-    expect(devServer.port).toEqual("5000")
+    expect(devServer.host).toBe("0.0.0.0")
+    expect(devServer.port).toBe("5000")
   })
 
   test("with NODE_ENV and RAILS_ENV set to production", () => {
     process.env.RAILS_ENV = "production"
     process.env.NODE_ENV = "production"
-    expect(require("../../package/dev_server")).toEqual({})
+    expect(require("../../package/dev_server")).toStrictEqual({})
   })
 })

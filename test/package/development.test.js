@@ -19,8 +19,10 @@ describe("Development environment", () => {
 
       const webpackConfig = generateWebpackConfig()
 
-      expect(webpackConfig.output.path).toEqual(resolve("public", "packs"))
-      expect(webpackConfig.output.publicPath).toEqual("/packs/")
+      expect(webpackConfig.output.path).toStrictEqual(
+        resolve("public", "packs")
+      )
+      expect(webpackConfig.output.publicPath).toBe("/packs/")
     })
 
     test("should use development config and environment if WEBPACK_SERVE", () => {
@@ -31,9 +33,11 @@ describe("Development environment", () => {
 
       const webpackConfig = generateWebpackConfig()
 
-      expect(webpackConfig.output.path).toEqual(resolve("public", "packs"))
-      expect(webpackConfig.output.publicPath).toEqual("/packs/")
-      expect(webpackConfig.devServer).toEqual(undefined)
+      expect(webpackConfig.output.path).toStrictEqual(
+        resolve("public", "packs")
+      )
+      expect(webpackConfig.output.publicPath).toBe("/packs/")
+      expect(webpackConfig.devServer).toBeUndefined()
     })
   })
 })

@@ -18,10 +18,10 @@ describe("Custom environment", () => {
 
       const webpackConfig = generateWebpackConfig()
 
-      expect(webpackConfig.output.path).toEqual(
+      expect(webpackConfig.output.path).toStrictEqual(
         resolve("public", "packs-staging")
       )
-      expect(webpackConfig.output.publicPath).toEqual("/packs-staging/")
+      expect(webpackConfig.output.publicPath).toBe("/packs-staging/")
       expect(webpackConfig).toMatchObject({
         devtool: "source-map",
         stats: "normal"
