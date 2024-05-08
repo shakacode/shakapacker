@@ -70,16 +70,7 @@ module Shakapacker
 
         cmd = build_cmd
 
-        if @argv.include?("--debug-webpacker")
-          Shakapacker.puts_deprecation_message(
-            Shakapacker.short_deprecation_message(
-              "--debug-webpacker",
-              "--debug-shakapacker"
-            )
-          )
-        end
-
-        if @argv.delete("--debug-shakapacker") || @argv.delete("--debug-webpacker")
+        if @argv.delete("--debug-shakapacker")
           env["NODE_OPTIONS"] = "#{env["NODE_OPTIONS"]} --inspect-brk --trace-warnings"
         end
 
@@ -98,17 +89,7 @@ module Shakapacker
       end
 
       def build_cmd
-        if Shakapacker::Utils::Misc.use_package_json_gem
-          return package_json.manager.native_exec_command("webpack", ["serve"])
-        end
-
-        return ["#{@node_modules_bin_path}/webpack", "serve"] if node_modules_bin_exist?
-
-        ["yarn", "webpack", "serve"]
-      end
-
-      def node_modules_bin_exist?
-        File.exist?("#{@node_modules_bin_path}/webpack-dev-server")
+        package_json.manager.native_exec_command("webpack", ["serve"])
       end
   end
 end

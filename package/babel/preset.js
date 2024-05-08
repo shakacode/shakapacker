@@ -1,11 +1,11 @@
-const { moduleExists } = require('shakapacker')
+const { moduleExists } = require("shakapacker")
 
 module.exports = function config(api) {
-  const validEnv = ['development', 'test', 'production']
+  const validEnv = ["development", "test", "production"]
   const currentEnv = api.env()
-  const isDevelopmentEnv = api.env('development')
-  const isProductionEnv = api.env('production')
-  const isTestEnv = api.env('test')
+  const isDevelopmentEnv = api.env("development")
+  const isProductionEnv = api.env("production")
+  const isTestEnv = api.env("test")
 
   if (!validEnv.includes(currentEnv)) {
     throw new Error(
@@ -17,21 +17,21 @@ module.exports = function config(api) {
 
   return {
     presets: [
-      isTestEnv && ['@babel/preset-env', { targets: { node: 'current' } }],
+      isTestEnv && ["@babel/preset-env", { targets: { node: "current" } }],
       (isProductionEnv || isDevelopmentEnv) && [
-        '@babel/preset-env',
+        "@babel/preset-env",
         {
-          useBuiltIns: 'entry',
-          corejs: '3.8',
-          modules: 'auto',
+          useBuiltIns: "entry",
+          corejs: "3.8",
+          modules: "auto",
           bugfixes: true,
-          exclude: ['transform-typeof-symbol']
+          exclude: ["transform-typeof-symbol"]
         }
       ],
-      moduleExists('@babel/preset-typescript') && '@babel/preset-typescript'
+      moduleExists("@babel/preset-typescript") && "@babel/preset-typescript"
     ].filter(Boolean),
-    plugins: [
-      ['@babel/plugin-transform-runtime', { helpers: false }]
-    ].filter(Boolean)
+    plugins: [["@babel/plugin-transform-runtime", { helpers: false }]].filter(
+      Boolean
+    )
   }
 }

@@ -1,33 +1,20 @@
 require "shakapacker/utils/misc"
 
-if Shakapacker::Utils::Misc.use_package_json_gem
-  Shakapacker::Utils::Misc.require_package_json_gem
+require "package_json"
 
-  package_json = PackageJson.new
+package_json = PackageJson.new
 
-  # install react
-  package_json.manager.add(["react", "react-dom", "@babel/preset-react"])
+# install react
+package_json.manager.add(["react", "react-dom", "@babel/preset-react"])
 
-  # update webpack presets for react
-  package_json.merge! do |pj|
-    babel = pj.fetch("babel", {})
+# update webpack presets for react
+package_json.merge! do |pj|
+  babel = pj.fetch("babel", {})
 
-    babel["presets"] ||= []
-    babel["presets"].unshift("@babel/preset-react")
+  babel["presets"] ||= []
+  babel["presets"].unshift("@babel/preset-react")
 
-    { "babel" => babel }
-  end
-else
-  # install react
-  system("yarn add react react-dom @babel/preset-react")
-
-  # update webpack presets for react
-  package_json_path = Rails.root.join("./package.json")
-  insert_into_file(
-    package_json_path,
-    %(      "@babel/preset-react",\n),
-    after: /"presets": \[\n/
-  )
+  { "babel" => babel }
 end
 
 # install rspec-rails

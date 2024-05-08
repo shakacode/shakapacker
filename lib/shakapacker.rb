@@ -47,5 +47,3 @@ require "shakapacker/dev_server"
 require "shakapacker/deprecation_helper"
 
 require "shakapacker/railtie" if defined?(Rails)
-
-Webpacker = Shakapacker

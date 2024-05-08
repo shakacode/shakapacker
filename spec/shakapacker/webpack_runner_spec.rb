@@ -2,6 +2,13 @@ require_relative "spec_helper_initializer"
 require "shakapacker/webpack_runner"
 
 describe "WebpackRunner" do
+  around do |example|
+    within_temp_directory do
+      FileUtils.cp_r(File.expand_path("./test_app", __dir__), Dir.pwd)
+      Dir.chdir("test_app") { example.run }
+    end
+  end
+
   before :all do
     @original_node_env, ENV["NODE_ENV"] = ENV["NODE_ENV"], "development"
     @original_rails_env, ENV["RAILS_ENV"] = ENV["RAILS_ENV"], "development"
@@ -12,15 +19,21 @@ describe "WebpackRunner" do
     ENV["RAILS_ENV"] = @original_rails_env
   end
 
-  let(:test_app_path) { File.expand_path("./test_app", __dir__) }
+  let(:test_app_path) { Dir.pwd }
 
   NODE_PACKAGE_MANAGERS.each do |fallback_manager|
     context "when using package_json with #{fallback_manager} as the manager" do
-      with_use_package_json_gem(enabled: true, fallback_manager: fallback_manager)
+      before do
+        manager_name = fallback_manager.split("_")[0]
+        manager_version = "1.2.3"
+        manager_version = "4.5.6" if fallback_manager == "yarn_berry"
+
+        PackageJson.read.merge! { { "packageManager" => "#{manager_name}@#{manager_version}" } }
+
+        allow(Shakapacker::Utils::Manager).to receive(:error_unless_package_manager_is_obvious!)
+      end
 
       let(:package_json) { PackageJson.read(test_app_path) }
-
-      require "package_json"
 
       it "uses the expected package manager", unless: fallback_manager == "yarn_classic" do
         cmd = package_json.manager.native_exec_command("webpack", ["--config", "#{test_app_path}/config/webpack/webpack.config.js"])
@@ -44,42 +57,20 @@ describe "WebpackRunner" do
     end
   end
 
-  context "when not using package_json" do
-    with_use_package_json_gem(enabled: false)
-
-    it "supports running via node_modules" do
-      cmd = ["#{test_app_path}/node_modules/.bin/webpack", "--config", "#{test_app_path}/config/webpack/webpack.config.js"]
-
-      verify_command(cmd, use_node_modules: true)
-    end
-
-    it "supports running via yarn" do
-      cmd = ["yarn", "webpack", "--config", "#{test_app_path}/config/webpack/webpack.config.js"]
-
-      verify_command(cmd, use_node_modules: false)
-    end
-
-    it "passes on arguments" do
-      cmd = ["#{test_app_path}/node_modules/.bin/webpack", "--config", "#{test_app_path}/config/webpack/webpack.config.js", "--watch"]
-
-      verify_command(cmd, argv: ["--watch"])
-    end
-  end
-
   private
 
-    def verify_command(cmd, use_node_modules: true, argv: [])
+    def verify_command(cmd, argv: [])
       Dir.chdir(test_app_path) do
         klass = Shakapacker::WebpackRunner
         instance = klass.new(argv)
 
         allow(klass).to receive(:new).and_return(instance)
-        allow(instance).to receive(:node_modules_bin_exist?).and_return(use_node_modules)
         allow(Kernel).to receive(:exec)
 
         klass.run(argv)
 
         expect(Kernel).to have_received(:exec).with(Shakapacker::Compiler.env, *cmd)
+        expect(Shakapacker::Utils::Manager).to have_received(:error_unless_package_manager_is_obvious!)
       end
     end
 end

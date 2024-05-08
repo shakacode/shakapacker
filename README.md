@@ -1,8 +1,9 @@
-# Shakapacker (v7)
+# Shakapacker (v8)
 
 _Official, actively maintained successor to [rails/webpacker](https://github.com/rails/webpacker).ShakaCode stands behind the long-term maintenance and development of this project for the Rails community._
 
 * ⚠️ See the [6-stable](https://github.com/shakacode/shakapacker/tree/6-stable) branch for Shakapacker v6.x code and documentation. :warning:
+* See [V8 Upgrade](./docs/v8_upgrade.md) for upgrading from the v7 release.
 * See [V7 Upgrade](./docs/v7_upgrade.md) for upgrading from the v6 release.
 * See [V6 Upgrade](./docs/v6_upgrade.md) for upgrading from v5 or prior v6 releases.
 
@@ -51,8 +52,6 @@ Read the [full review here](https://clutch.co/profile/shakacode#reviews?sort_by=
     - [Optional support](#optional-support)
   - [Installation](#installation)
     - [Rails v6+](#rails-v6)
-    - [Using alternative package managers](#using-alternative-package-managers)
-    - [Note for Yarn v2 usage](#note-for-yarn-v2-usage)
   - [Concepts](#concepts)
   - [Usage](#usage)
     - [Configuration and Code](#configuration-and-code)
@@ -98,16 +97,16 @@ Read the [full review here](https://clutch.co/profile/shakacode#reviews?sort_by=
 
 ## Prerequisites
 
-- Ruby 2.6+
+- Ruby 2.7+
 - Rails 5.2+
-- Node.js 12.13.0+ || 14+
-- Yarn
+- Node.js 14+
 
 ## Features
 - Rails view helpers that fully support Webpack output, including HMR and code splitting.
 - Convenient but not required webpack configuration. The only requirement is that your webpack configuration creates a manifest.
 - HMR with the `shakapacker-dev-server`, such as for hot-reloading React!
 - Automatic code splitting using multiple entry points to optimize JavaScript downloads.
+- Support for [NPM](https://www.npmjs.com/package/npm), Yarn ([classic](https://classic.yarnpkg.com/lang/en/) and [berry](https://yarnpkg.com/getting-started)), [PNPM](https://pnpm.io/), and [Bun](https://bun.sh/)
 - [Webpack v5+](https://webpack.js.org/)
 - ES6 with [babel](https://babeljs.io/), [SWC](https://swc.rs/), or [Esbuild](https://github.com/privatenumber/esbuild-loader)
 - Asset compression, source-maps, and minification
@@ -147,40 +146,45 @@ Then run the following to install Shakapacker:
 
 Before initiating the installation process, ensure you have committed all the changes. While installing Shakapacker, there might be some conflict between the existing file content and what Shakapacker tries to copy. You can either approve all the prompts for overriding these files or use the `FORCE=true` environment variable before the installation command to force the override without any prompt.
 
-When `package.json` and/or `yarn.lock` changes, such as when pulling down changes to your local environment in team settings, be sure to keep your NPM packages up-to-date:
+Shakapacker uses the [`package_json`](https://github.com/shakacode/package_json) gem to handle updating the `package.json` and interacting with the underlying package manager of choice for managing dependencies and running commands; the package manager is managed using the [`packageManager`](https://nodejs.org/api/packages.html#packagemanager) property in the `package.json`, otherwise falling back to the value of `PACKAGE_JSON_FALLBACK_MANAGER` if set or otherwise `npm`.
 
-```bash
-yarn
-```
+If `packageManager` is not set when running `shakapacker:install`, Shakapacker will set it based on the lockfile and the result of calling `--version` on the inferred manager; if no lockfile is present, then `npm` be used unless you choose to explicitly set the `PACKAGE_JSON_FALLBACK_MANAGER` to your preferred package manager.
 
-Note, in v6+, most JS packages are peer dependencies. Thus, the installer will add the packages:
-
-```bash
-yarn add @babel/core @babel/plugin-transform-runtime @babel/preset-env @babel/runtime babel-loader \
-  compression-webpack-plugin terser-webpack-plugin \
-  webpack webpack-assets-manifest webpack-cli webpack-merge webpack-sources webpack-dev-server
-```
-
-Previously, these "webpack" and "babel" packages were direct dependencies for `shakapacker`. By
-making these peer dependencies, you have control over the versions used in your webpack and babel configs.
-
-### Using alternative package managers
-
-There is experimental support for using package managers besides Yarn classic for managing JavaScript dependencies using the [`package_json`](https://github.com/G-Rath/package_json) gem.
-
-This can be enabled by setting the environment variable `SHAKAPACKER_USE_PACKAGE_JSON_GEM` to `true`; Shakapacker will then use the `package_json` gem which in turn will look for the [`packageManager`](https://nodejs.org/api/packages.html#packagemanager) property in the `package.json` or otherwise the `PACKAGE_JSON_FALLBACK_MANAGER` environment variable to determine which manager to use, defaulting to `npm` if neither are found.
+> **Note**
+>
+> The `packageManager` property is only used to determine the package manager to use, based primarily on its name.
+> The version (if present) is only used to determine if Yarn Classic or Yarn Berry should be used, but is otherwise
+> _not_ checked, nor is [`corepack`](https://nodejs.org/api/corepack.html) used to ensure that the package manager is installed.
+>
+> It is up to the developer to ensure that the desired package manager is actually install at the right version, which can be done
+> using `corepack` or by other means.
 
 See [here](https://github.com/G-Rath/package_json#specifying-a-package-manager) for a list of the supported package managers and more information; note that `package_json` does not handle ensuring the manager is installed.
 
-> **Note**
-> 
-> The rest of the documentation assumes that `package_json` is not being used, and so always references `yarn` - you should instead use the package manager of your choice for these commands.  
+> [NOTE]
+>
+> The rest of the documentation will only reference `npm` when providing commands such as to install optional packages except in cases where
+> a particular package manager requires a very different command; otherwise it should be safe to just replace `npm` with the name of your 
+> preferred package manager when running the command
 
-### Note for Yarn v2 usage
+Note, in v6+, most JS packages are peer dependencies. Thus, the installer will add the packages:
 
-If you are using Yarn v2 (berry), please note that PnP modules are not supported unless you're using `SHAKAPACKER_USE_PACKAGE_JSON_GEM`.
+- `@babel/core`
+- `@babel/plugin-transform-runtime`
+- `@babel/preset-env`
+- `@babel/runtime`
+- `babel-loader`
+- `compression-webpack-plugin`
+- `terser-webpack-plugin`
+- `webpack`
+- `webpack-assets-manifest`
+- `webpack-cli`
+- `webpack-merge`
+- `webpack-sources`
+- `webpack-dev-server`
 
-To use Shakapacker with Yarn v2, make sure you set `nodeLinker: node-modules` in your `.yarnrc.yml` file as per the [Yarn docs](https://yarnpkg.com/getting-started/migration#step-by-step) to opt out of Plug'n'Play behavior.
+Previously, these "webpack" and "babel" packages were direct dependencies for `shakapacker`. By
+making these peer dependencies, you have control over the versions used in your webpack and babel configs.
 
 ## Concepts
 
@@ -624,13 +628,13 @@ See also [Customizing Babel Config](./docs/customizing_babel_config.md) for an e
 #### TypeScript
 
 ```bash
-yarn add typescript @babel/preset-typescript
+npm install typescript @babel/preset-typescript
 ```
 
 Babel won’t perform any type-checking on TypeScript code. To optionally use type-checking run:
 
 ```bash
-yarn add fork-ts-checker-webpack-plugin
+npm install fork-ts-checker-webpack-plugin
 ```
 
 Add tsconfig.json
@@ -671,7 +675,7 @@ module.exports = generateWebpackConfig({
 To enable CSS support in your application, add the following packages:
 
 ```bash
-yarn add css-loader style-loader mini-css-extract-plugin css-minimizer-webpack-plugin
+npm install css-loader style-loader mini-css-extract-plugin css-minimizer-webpack-plugin
 ```
 
 Optionally, add the `CSS` extension to webpack config for easy resolution.
@@ -695,18 +699,18 @@ then add the relevant pre-processors:
 #### Postcss
 
 ```bash
-yarn add postcss postcss-loader
+npm install postcss postcss-loader
 ```
 
 Optionally add these two plugins if they are required in your `postcss.config.js`:
 ```bash
-yarn add postcss-preset-env postcss-flexbugs-fixes
+npm install postcss-preset-env postcss-flexbugs-fixes
 ```
 
 #### Sass
 
 ```bash
-yarn add sass-loader
+npm install sass-loader
 ```
 
 You will also need to install [Dart Sass](https://github.com/sass/dart-sass), [Node Sass](https://github.com/sass/node-sass) or [Sass Embedded](https://github.com/sass/embedded-host-node) to pick the implementation to use. sass-loader will automatically pick an implementation based on installed packages.
@@ -715,35 +719,35 @@ Please refer to [sass-loader documentation](https://www.npmjs.com/package/sass-l
 
 ##### Dart Sass
 ```bash
-yarn add sass
+npm install sass
 ```
 
 ##### Node Sass
 ```bash
-yarn add node-sass
+npm install node-sass
 ```
 
 ##### Sass Embedded
 ```bash
-yarn add sass-embedded
+npm install sass-embedded
 ```
 
 #### Less
 
 ```bash
-yarn add less less-loader
+npm install less less-loader
 ```
 
 #### Stylus
 
 ```bash
-yarn add stylus stylus-loader
+npm install stylus stylus-loader
 ```
 
 #### CoffeeScript
 
 ```bash
-yarn add coffeescript coffee-loader
+npm install coffeescript coffee-loader
 ```
 
 #### Other frameworks
@@ -843,16 +847,24 @@ bundle update shakapacker
 # overwrite your changes to the default install files and revert any unwanted changes from the install
 rails shakapacker:install
 
-# yarn 1 instructions
+# using npm
+npm install shakapacker@latest
+npm install webpack-dev-server@latest
+
+# using yarn classic
 yarn upgrade shakapacker --latest
 yarn upgrade webpack-dev-server --latest
 
-# yarn 2 instructions
+# using yarn berry
 yarn up shakapacker@latest
 yarn up webpack-dev-server@latest
 
+# using pnpm
+pnpm up shakapacker@latest
+pnpm up webpack-dev-server@latest
+
 # Or to install the latest release (including pre-releases)
-yarn add shakapacker@next
+npm install shakapacker@next
 ```
 
 Also, consult the [CHANGELOG](./CHANGELOG.md) for additional upgrade links.
@@ -902,6 +914,12 @@ import 'stylesheets/main'
 import 'images/rails.png'
 ```
 
+Assets put in these folders will also have their path stripped just like with the `source_path`.
+
+Example:
+
+A file in `app/assets/images/image.svg` with `additional_paths: ['app/assets']` will result in `static/images/image.svg`
+
 **Note:** Please be careful when adding paths here otherwise it will make the compilation slow, consider adding specific paths instead of the whole parent directory if you just need to reference one or two modules
 
 **Also note:** While importing assets living outside your `source_path` defined in shakapacker.yml (like, for instance, assets under `app/assets`) from within your packs using _relative_ paths like `import '../../assets/javascripts/file.js'` will work in development, Shakapacker won't recompile the bundle in production unless a file that lives in one of it's watched paths has changed (check out `Shakapacker::MtimeStrategy#latest_modified_timestamp` or `Shakapacker::DigestStrategy#watched_files_digest` depending on strategy configured by `compiler_strategy` option in `shakapacker.yml`). That's why you'd need to add `app/assets` to the additional_paths as stated above and use `import 'javascripts/file.js'` instead.
@@ -913,7 +931,24 @@ Shakapacker hooks up a new `shakapacker:compile` task to `assets:precompile`, wh
 
 This behavior is optional & can be disabled by either setting a `SHAKAPACKER_PRECOMPILE` environment variable to `false`, `no`, `n`, or `f`, or by setting a `shakapacker_precompile` key in your `shakapacker.yml` to `false`. ([source code](./lib/shakapacker/configuration.rb#L34))
 
-When compiling assets for production on a remote server, such as a continuous integration environment, it's recommended to use `yarn install --frozen-lockfile` to install NPM packages on the remote host to ensure that the installed packages match the `yarn.lock` file.
+When compiling assets for production on a remote server, such as a continuous integration environment, it's recommended to ensure the exact versions specified in your lockfile are installed:
+
+```
+# using npm
+npm ci
+
+# using yarn classic
+yarn install --frozen-lockfile
+
+# using yarn berry
+yarn install --immutable
+
+# using pnpm
+pnpm install --frozen-lockfile
+
+# using bun
+bun install --frozen-lockfile
+```
 
 If you are using a CDN setup, Shakapacker does NOT use the `ASSET_HOST` environment variable to prefix URLs for assets during bundle compilation. You must use the `SHAKAPACKER_ASSET_HOST` environment variable instead (`WEBPACKER_ASSET_HOST` if you're using any version of Webpacker or Shakapacker before Shakapacker v7).
 

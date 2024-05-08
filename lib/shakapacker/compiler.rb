@@ -72,7 +72,7 @@ class Shakapacker::Compiler
       config.root_path.join("tmp/shakapacker.lock")
     end
 
-    def optionalRubyRunner
+    def optional_ruby_runner
       first_line = File.readlines(bin_shakapacker_path).first.chomp
       /ruby/.match?(first_line) ? RbConfig.ruby : ""
     end
@@ -82,7 +82,7 @@ class Shakapacker::Compiler
 
       stdout, stderr, status = Open3.capture3(
         webpack_env,
-        "#{optionalRubyRunner} '#{bin_shakapacker_path}'",
+        "#{optional_ruby_runner} '#{bin_shakapacker_path}'",
         chdir: File.expand_path(config.root_path)
       )
 
@@ -104,28 +104,13 @@ class Shakapacker::Compiler
     def webpack_env
       return env unless defined?(ActionController::Base)
 
-      Shakapacker.set_shakapacker_env_variables_for_backward_compatibility
-
       env.merge(
-        "SHAKAPACKER_ASSET_HOST"        => instance.config.asset_host,
-        "SHAKAPACKER_RELATIVE_URL_ROOT" => instance.config.relative_url_root,
-        "SHAKAPACKER_CONFIG"            => instance.config_path.to_s
+        "SHAKAPACKER_ASSET_HOST" => instance.config.asset_host,
+        "SHAKAPACKER_CONFIG"     => instance.config.config_path.to_s
       )
     end
 
     def bin_shakapacker_path
-      if File.exist?(config.root_path.join("bin/shakapacker"))
-        config.root_path.join("bin/shakapacker")
-      elsif File.exist?(config.root_path.join("bin/webpacker"))
-        Shakapacker.puts_deprecation_message(
-          Shakapacker.short_deprecation_message(
-            "bin/webpacker",
-            "bin/shakapacker"
-          )
-        )
-        config.root_path.join("bin/webpacker")
-      else
-        config.root_path.join("bin/shakapacker")
-      end
+      config.root_path.join("bin/shakapacker")
     end
 end

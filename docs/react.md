@@ -2,12 +2,6 @@
 
 These steps describe creating a Rails/React app, using Shakapacker as the bundler.
 
-Before starting, ensure that you have Yarn installed, for example:
-
-```shell
-npm i -g yarn
-```
-
 ## Easy Setup
 If you'd like easy integration of React with Ruby on Rails, see [React on Rails](https://github.com/shakacode/react_on_rails).
 
@@ -24,8 +18,8 @@ Create a new Rails app as per the [installation instructions in the README](http
 Add React, as well as the necessary libraries to enable CSS support in your application:
 
 ```shell
-yarn add react react-dom @babel/preset-react
-yarn add css-loader style-loader mini-css-extract-plugin css-minimizer-webpack-plugin
+npm install react react-dom @babel/preset-react
+npm install css-loader style-loader mini-css-extract-plugin css-minimizer-webpack-plugin
 ```
 
 Update the Babel configuration in the `package.json` file:
@@ -52,7 +46,7 @@ In `config/shakapacker.yml` set `hmr` is set to `true`.
 Install the [react-refresh](https://www.npmjs.com/package/react-refresh) package, as well as [@pmmmwh/react-refresh-webpack-plugin](https://www.npmjs.com/package/@pmmmwh/react-refresh-webpack-plugin):
 
 ```shell
-yarn add --dev react-refresh @pmmmwh/react-refresh-webpack-plugin
+npm install --dev react-refresh @pmmmwh/react-refresh-webpack-plugin
 ```
 
 Alter `config/webpack/webpack.config.js` like so:
@@ -142,8 +136,8 @@ cd myapp
 bundle add shakapacker --strict
 ./bin/bundle install
 ./bin/rails shakapacker:install
-yarn add react react-dom @babel/preset-react
-yarn add css-loader style-loader mini-css-extract-plugin css-minimizer-webpack-plugin
+npm install react react-dom @babel/preset-react
+npm install css-loader style-loader mini-css-extract-plugin css-minimizer-webpack-plugin
 ```
 
 2. Generate a controller
@@ -192,7 +186,7 @@ hmr: true
 8. Install the [react-refresh](https://www.npmjs.com/package/react-refresh) package, as well as [@pmmmwh/react-refresh-webpack-plugin](https://www.npmjs.com/package/@pmmmwh/react-refresh-webpack-plugin):
 
 ```shell
-yarn add --dev react-refresh @pmmmwh/react-refresh-webpack-plugin
+npm install --dev react-refresh @pmmmwh/react-refresh-webpack-plugin
 ```
 
 9. Alter `config/webpack/webpack.config.js` like so:
