@@ -1,0 +1,28 @@
+lockfileVersion: '9.0'
+
+settings:
+  autoInstallPeers: true
+  excludeLinksFromLockfile: false
+
+importers:
+
+  .:
+    dependencies:
+      shakapacker:
+        specifier: ../..
+        version: link:../..
+    devDependencies:
+      right-pad:
+        specifier: ^1.0.1
+        version: 1.0.1
+
+packages:
+
+  right-pad@1.0.1:
+    resolution: {integrity: sha512-bYBjgxmkvTAfgIYy328fmkwhp39v8lwVgWhhrzxPV3yHtcSqyYKe9/XOhvW48UFjATg3VuJbpsp5822ACNvkmw==}
+    engines: {node: '>= 0.10'}
+    deprecated: Please use String.prototype.padEnd() over this package.
+
+snapshots:
+
+  right-pad@1.0.1: {}
