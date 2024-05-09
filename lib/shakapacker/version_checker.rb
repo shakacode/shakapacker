@@ -207,7 +207,12 @@ module Shakapacker
             content = YAML.load_file(@pnpm_lock)
 
             content.fetch("packages", {}).each do |key, value|
+              # git-based constraints will include a "version" key with their pseudo semantic version
+              return value["version"] if key.start_with?("shakapacker") && value.key?("version")
               return value["version"] if value["name"] == "shakapacker"
+
+              # v9+ uses the same key format just without the leading slash, so we just add one in
+              key = "/#{key}" unless key.start_with?("/")
 
               parts = key.split("/")
 
