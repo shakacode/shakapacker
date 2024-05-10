@@ -10,6 +10,8 @@ _next_ branch is for v8 changes
 ## [Unreleased]
 Changes since the last non-beta release.
 
+## [v8.0.0.rc.3] - May 9, 2024
+
 ### Fixed
 
 - Support v9 PNPM lockfiles [PR 472](https://github.com/shakacode/shakapacker/pull/472) by [G-Rath](https://github.com/g-rath).
@@ -359,7 +361,8 @@ Note: [Rubygem is 6.3.0.pre.rc.1](https://rubygems.org/gems/shakapacker/versions
 ## v5.4.3 and prior changes from rails/webpacker
 See [CHANGELOG.md in rails/webpacker (up to v5.4.3)](https://github.com/rails/webpacker/blob/master/CHANGELOG.md)
 
-[Unreleased]: https://github.com/shakacode/shakapacker/compare/v8.0.0-rc.2...main
+[Unreleased]: https://github.com/shakacode/shakapacker/compare/v8.0.0-rc.3...main
+[v8.0.0.rc.3]: https://github.com/shakacode/shakapacker/compare/v8.0.0-rc.2...v8.0.0-rc.3
 [v8.0.0.rc.2]: https://github.com/shakacode/shakapacker/compare/v7.2.3...v8.0.0-rc.2
 [v7.2.3]: https://github.com/shakacode/shakapacker/compare/v7.2.2...v7.2.3
 [v7.2.2]: https://github.com/shakacode/shakapacker/compare/v7.2.1...v7.2.2
