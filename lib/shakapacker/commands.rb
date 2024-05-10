@@ -61,7 +61,7 @@ class Shakapacker::Commands
 
       packs = all_files - manifest_config - current_version
       packs.reject { |file| File.directory?(file) }.group_by do |path|
-        base, _, ext = File.basename(path).scan(/(.*)(-[\da-f]+)(\.\w+)/).flatten
+        base, _, ext = File.basename(path).scan(/(.*)(-[\da-f]+)((?:\.\w+)+)/).flatten
         "#{File.dirname(path)}/#{base}#{ext}"
       end.values
     end
