@@ -10,6 +10,10 @@ _next_ branch is for v8 changes
 ## [Unreleased]
 Changes since the last non-beta release.
 
+### Fixed
+
+- Support v9 PNPM lockfiles [PR 472](https://github.com/shakacode/shakapacker/pull/472) by [G-Rath](https://github.com/g-rath).
+
 ## [v8.0.0.rc.2] - May 7, 2024
 
 ### Breaking changes
