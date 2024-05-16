@@ -35,6 +35,24 @@ __webpack_public_path__ = 'https://mycdn.url.com/packs';
 
 In your code and ensuring it is run first in the app, will allow the dynamic imports lookup path to be overriden at runtime.
 
+You can also try Webpack `output.publicPath` option of `'auto'` as per https://webpack.js.org/guides/public-path/#automatic-publicpath.
+
+For example in your `webpack.config.js`:
+
+```
+const { generateWebpackConfig } = require('shakapacker')
+
+const customConfig = {
+  output: {
+    publicPath: 'auto'
+  }
+};
+
+module.exports = generateWebpackConfig(customConfig);
+```
+
+This will work in number of environments although some older browsers like IE will require a polyfill as mentioned in the Webpack documentation linked above.
+
 ## The `packageManager` property in `package.json` is used to determine the package manager
 
 The biggest functional change in v8, `shakapacker` is now able to work with any
