@@ -27,7 +27,7 @@ See a comparison of [Shakapacker with jsbundling-rails](https://github.com/rails
 For discussions, see our [Slack Channel](https://reactrails.slack.com/join/shared_invite/enQtNjY3NTczMjczNzYxLTlmYjdiZmY3MTVlMzU2YWE0OWM0MzNiZDI0MzdkZGFiZTFkYTFkOGVjODBmOWEyYWQ3MzA2NGE1YWJjNmVlMGE).
 
 ---
-### ShakaCode Support
+## ShakaCode Support
 
 [ShakaCode](https://www.shakacode.com) focuses on helping Ruby on Rails teams use React and Webpack better. We can upgrade your project and improve your development and customer experiences, allowing you to focus on building new features or fixing bugs instead. 
 
@@ -46,7 +46,7 @@ Here's a testimonial of how ShakaCode can help from [Florian Gößler](https://g
 >
 > Have a great 2023 and maybe we get to work together again later in the year! 🙌
 
-Read the [full review here](https://clutch.co/profile/shakacode#reviews?sort_by=date_DESC#review-2118154). Here's [another review of a Shakapacker migration that led to more work](https://clutch.co/profile/shakacode#reviews?sort_by=date_DESC#review-2096078).
+Read the [full review here](https://clutch.co/profile/shakacode#reviews?sort_by=date_DESC#review-2118154).
 
 ---
 
