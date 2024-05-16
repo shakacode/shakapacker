@@ -46,6 +46,18 @@ describe "Command" do
         "js/brandnew-0002.js" => now - 10,
         "js/brandnew-0003.js" => now - 20,
         "js/brandnew-0004.js" => now - 40,
+
+        # Compressed and map files
+        "js/application-deadbeef.js.br" => now - 4000,
+        "js/application-deadbeef.js.gz" => now - 4000,
+        "js/application-deadbeef.js.map" => now - 4000,
+        "js/application-deadbeef.js.map.br" => now - 4000,
+        "js/application-deadbeef.js.map.gz" => now - 4000,
+        "js/application-1eadbeef.js.br" => now - 4000,
+        "js/application-1eadbeef.js.gz" => now - 4000,
+        "js/application-1eadbeef.js.map" => now - 4000,
+        "js/application-1eadbeef.js.map.br" => now - 4000,
+        "js/application-1eadbeef.js.map.gz" => now - 4000,
       }.transform_keys { |path| "#{Shakapacker.config.public_output_path}/#{path}" }
     end
 
@@ -56,6 +68,12 @@ describe "Command" do
         "js/common-0eadbeee.js" => now - 9002,
         "css/common-0eadbeed.css" => now - 9004,
         "js/brandnew-0005.js" => now - 3640,
+        # Compressed and map files
+        "js/application-0eadbeef.js.br" => now - 9000,
+        "js/application-0eadbeef.js.gz" => now - 9000,
+        "js/application-0eadbeef.js.map" => now - 9000,
+        "js/application-0eadbeef.js.map.br" => now - 9000,
+        "js/application-0eadbeef.js.map.gz" => now - 9000,
       }.transform_keys { |path| "#{Shakapacker.config.public_output_path}/#{path}" }
     end
 
