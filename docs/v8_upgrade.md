@@ -23,6 +23,8 @@ If your host might differ, between various environments for example, you will ei
 
 Second option has got a certain gotcha - dynamic imports and static asset references (like image paths in CSS) will end up without host reference and the app will try and fetch them from your app host rather than defined `config.asset_host`.
 
+Make sure the assets are compiled with `SHAKAPACKER_ASSET_HOST=''` ENV variable to avoid hardcoding URLs in packs output.
+
 To get around that, you can use dynamic override as outlined by [Webpack documentation](https://webpack.js.org/guides/asset-modules/#on-the-fly-override).
 
 Setting for example:
