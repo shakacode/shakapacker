@@ -9,7 +9,7 @@ at this point.
 
 ## CDN host is stripped from the manifest output
 
-In Webpacker v5 the manifest.json file did not include the CDN asset host if defined. THis has been added in the aborted v6 and we've retained this in Shakapacker.
+In Webpacker v5, the manifest.json file did not include the CDN asset host if defined. THis has been added in the aborted v6 and we've retained this in Shakapacker.
 
 Presence of this host in the output could lead to unexpected issues and required [some workarounds](https://github.com/shakacode/shakapacker/blob/main/docs/troubleshooting.md#wrong-cdn-src-from-javascript_pack_tag) in certain cases.
 
