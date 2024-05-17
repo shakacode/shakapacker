@@ -55,7 +55,7 @@ This will work in number of environments although some older browsers like IE wi
 
 ## The `packageManager` property in `package.json` is used to determine the package manager
 
-The biggest functional change in v8, `shakapacker` is now able to work with any
+The biggest functional change in v8, `shakapacker` can now work with any
 of the major JavaScript package managers thanks to the
 [`package_json`](https://github.com/shakacode/package_json) gem which uses the
 [`packageManager`](https://nodejs.org/api/packages.html#packagemanager) property
