@@ -7,9 +7,55 @@ manager is used to manage JavaScript dependencies.
 Support for Ruby 2.6 and Node v12 has also been dropped since they're very old
 at this point.
 
+## CDN host is stripped from the manifest output
+
+In Webpacker v5, the manifest.json file did not include the CDN asset host if defined. THis has been added in the aborted v6 and we've retained this in Shakapacker.
+
+Presence of this host in the output could lead to unexpected issues and required [some workarounds](https://github.com/shakacode/shakapacker/blob/main/docs/troubleshooting.md#wrong-cdn-src-from-javascript_pack_tag) in certain cases.
+
+If you are not using CDN, then this change will have no effect on your setup.
+
+If you are using CDN and your CDN host is static, `config.asset_host` setting in Rails will be respected during compilation and when referencing assets through view helpers.
+
+If your host might differ, between various environments for example, you will either need to:
+- Ensure the assets are specifically rebuilt for each environment (Heroku pipeline promote feature for example does not do that by default).
+- Make sure the assets are compiled with `SHAKAPACKER_ASSET_HOST=''` ENV variable to avoid hardcording URLs in packs output.
+
+Second option has got a certain gotcha - dynamic imports and static asset references (like image paths in CSS) will end up without host reference and the app will try and fetch them from your app host rather than defined `config.asset_host`.
+
+Make sure the assets are compiled with `SHAKAPACKER_ASSET_HOST=''` ENV variable to avoid hardcoding URLs in packs output.
+
+To get around that, you can use dynamic override as outlined by [Webpack documentation](https://webpack.js.org/guides/asset-modules/#on-the-fly-override).
+
+Setting for example:
+
+```
+__webpack_public_path__ = 'https://mycdn.url.com/packs';
+```
+
+In your code and ensuring it is run first in the app, will allow the dynamic imports lookup path to be overriden at runtime.
+
+You can also try Webpack `output.publicPath` option of `'auto'` as per https://webpack.js.org/guides/public-path/#automatic-publicpath.
+
+For example in your `webpack.config.js`:
+
+```
+const { generateWebpackConfig } = require('shakapacker')
+
+const customConfig = {
+  output: {
+    publicPath: 'auto'
+  }
+};
+
+module.exports = generateWebpackConfig(customConfig);
+```
+
+This will work in number of environments although some older browsers like IE will require a polyfill as mentioned in the Webpack documentation linked above.
+
 ## The `packageManager` property in `package.json` is used to determine the package manager
 
-The biggest functional change in v8, `shakapacker` is now able to work with any
+The biggest functional change in v8, `shakapacker` can now work with any
 of the major JavaScript package managers thanks to the
 [`package_json`](https://github.com/shakacode/package_json) gem which uses the
 [`packageManager`](https://nodejs.org/api/packages.html#packagemanager) property

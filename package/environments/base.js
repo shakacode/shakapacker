@@ -80,7 +80,7 @@ const getPlugins = () => {
       writeToDisk: true,
       output: config.manifestPath,
       entrypointsUseAssets: true,
-      publicPath: true
+      publicPath: config.publicPathWithoutCDN
     })
   ]
 

@@ -10,6 +10,11 @@ _next_ branch is for v8 changes
 ## [Unreleased]
 Changes since the last non-beta release.
 
+### Breaking changes
+- Removes CDN url from the manifest.json paths. [PR 473](https://github.com/shakacode/shakapacker/pull/473) by [tomdracz](https://github.com/tomdracz).
+
+  This returns to the Webpacker behaviour prior to the aborted Webpacker v6.
+
 ### Fixed
 
 - Fixes incorrect removal of files in the assets:clean task [PR 474](https://github.com/shakacode/shakapacker/pull/474) by [tomdracz](https://github.com/tomdracz).

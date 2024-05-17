@@ -21,6 +21,13 @@ describe("Config", () => {
     expect(config.publicPath).toBe("http://foo.com/packs/")
   })
 
+  test("public path without CDN is not affected by the asset host", () => {
+    process.env.RAILS_ENV = "development"
+    process.env.SHAKAPACKER_ASSET_HOST = "http://foo.com/"
+    const config = require("../../package/config")
+    expect(config.publicPathWithoutCDN).toBe("/packs/")
+  })
+
   test("should return additional paths as listed in app config, with resolved paths", () => {
     const config = require("../../package/config")
 
