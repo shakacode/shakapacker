@@ -10,24 +10,20 @@ _next_ branch is for v8 changes
 ## [Unreleased]
 Changes since the last non-beta release.
 
-### Breaking changes
-- Removes CDN url from the manifest.json paths. [PR 473](https://github.com/shakacode/shakapacker/pull/473) by [tomdracz](https://github.com/tomdracz).
+## [v8.0.0] - May 17, 2024
 
-  This returns to the Webpacker behaviour prior to the aborted Webpacker v6.
+See the [v8 Upgrade Guide](https://github.com/shakacode/shakapacker/blob/main/docs/v8_upgrade.md).
 
 ### Fixed
 
 - Fixes incorrect removal of files in the assets:clean task [PR 474](https://github.com/shakacode/shakapacker/pull/474) by [tomdracz](https://github.com/tomdracz).
 
-## [v8.0.0.rc.3] - May 9, 2024
-
-### Fixed
-
 - Support v9 PNPM lockfiles [PR 472](https://github.com/shakacode/shakapacker/pull/472) by [G-Rath](https://github.com/g-rath).
 
-## [v8.0.0.rc.2] - May 7, 2024
-
 ### Breaking changes
+
+- Removes CDN url from the manifest.json paths. [PR 473](https://github.com/shakacode/shakapacker/pull/473) by [tomdracz](https://github.com/tomdracz). This returns to the Webpacker behaviour prior to the aborted Webpacker v6.
+
 - Remove `relative_url_root` [PR 413](https://github.com/shakacode/shakapacker/pull/413) by [G-Rath](https://github.com/g-rath).
 
 - Removes deprecated support of `Webpacker` spelling, config variables and constants. [PR 429](https://github.com/shakacode/shakapacker/pull/429) by [tomdracz](https://github.com/tomdracz).
@@ -370,9 +366,8 @@ Note: [Rubygem is 6.3.0.pre.rc.1](https://rubygems.org/gems/shakapacker/versions
 ## v5.4.3 and prior changes from rails/webpacker
 See [CHANGELOG.md in rails/webpacker (up to v5.4.3)](https://github.com/rails/webpacker/blob/master/CHANGELOG.md)
 
-[Unreleased]: https://github.com/shakacode/shakapacker/compare/v8.0.0-rc.3...main
-[v8.0.0.rc.3]: https://github.com/shakacode/shakapacker/compare/v8.0.0-rc.2...v8.0.0-rc.3
-[v8.0.0.rc.2]: https://github.com/shakacode/shakapacker/compare/v7.2.3...v8.0.0-rc.2
+[Unreleased]: https://github.com/shakacode/shakapacker/compare/v8.0.0...main
+[v8.0.0]: https://github.com/shakacode/shakapacker/compare/v7.2.3...v8.0.0
 [v7.2.3]: https://github.com/shakacode/shakapacker/compare/v7.2.2...v7.2.3
 [v7.2.2]: https://github.com/shakacode/shakapacker/compare/v7.2.1...v7.2.2
 [v7.2.1]: https://github.com/shakacode/shakapacker/compare/v7.2.0...v7.2.1
