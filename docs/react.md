@@ -5,7 +5,7 @@ These steps describe creating a Rails/React app, using Shakapacker as the bundle
 ## Easy Setup
 If you'd like easy integration of React with Ruby on Rails, see [React on Rails](https://github.com/shakacode/react_on_rails).
 
-The below information applies to a React on Rails app, except that you need to setup some environment variables as follows:
+The below information applies to a React on Rails app, except that you need to set up some environment variables as follows:
 
 ```
 EXECJS_RUNTIME=Node
