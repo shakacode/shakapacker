@@ -33,7 +33,7 @@ Setting for example:
 __webpack_public_path__ = 'https://mycdn.url.com/packs';
 ```
 
-In your code and ensuring it is run first in the app, will allow the dynamic imports lookup path to be overriden at runtime.
+In your code and ensuring it is run first in the app, will allow the dynamic imports lookup path to be overridden at runtime.
 
 You can also try Webpack `output.publicPath` option of `'auto'` as per https://webpack.js.org/guides/public-path/#automatic-publicpath.
 

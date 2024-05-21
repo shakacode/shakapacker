@@ -363,7 +363,7 @@ describe "Shakapacker::Configuration" do
           expect(config.asset_host).to eq "domain.abc"
         end
 
-        context "without ActionController::Base.helpers.compute_asset_host returing any value" do
+        context "without ActionController::Base.helpers.compute_asset_host returning any value" do
           it "returns nil" do
             expect(ENV).to receive(:fetch).with("SHAKAPACKER_ASSET_HOST", nil).and_return(nil)
 
