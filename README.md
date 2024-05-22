@@ -167,6 +167,8 @@ If `packageManager` is not set when running `shakapacker:install`, Shakapacker w
 
 See [here](https://github.com/G-Rath/package_json#specifying-a-package-manager) for a list of the supported package managers and more information; note that `package_json` does not handle ensuring the manager is installed.
 
+If you wish to use [Yarn PnP](https://yarnpkg.com/features/pnp) you will need to configure Babel using a `babel.config.js` file rather than via `package.json` - see [customizing Babel Config](./docs/customizing_babel_config.md) for examples on how to do this.
+
 > [NOTE]
 >
 > The rest of the documentation will only reference `npm` when providing commands such as to install optional packages except in cases where

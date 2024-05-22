@@ -14,15 +14,43 @@ The default configuration of babel is done by using `package.json` to use the fi
 ```
 
 ## Customizing the Babel Config
-This example shows how you can create an object and apply _additional_ presets and plugins on top of the default.
+
+### Basic Configuration
+
+This is a very basic skeleton that you can use that includes the Shakapacker preset, and makes it easy to add new plugins and presents:
+
+```js
+// babel.config.js
+module.exports = function (api) {
+  const defaultConfigFunc = require('shakapacker/package/babel/preset.js')
+  const resultConfig = defaultConfigFunc(api)
+
+  const changesOnDefault = {
+    presets: [
+      // put custom presets here
+    ].filter(Boolean),
+    plugins: [
+      // put custom plugins here
+    ].filter(Boolean),
+  }
+
+  resultConfig.presets = [...resultConfig.presets, ...changesOnDefault.presets]
+  resultConfig.plugins = [...resultConfig.plugins, ...changesOnDefault.plugins]
+
+  return resultConfig
+}
+```
 
 ### React Configuration
-To use this example file,
 
-```
+This shows how you can add to the above skeleton to support React - to use this, install the following dependencies:
+
+```bash
 npm install react react-dom @babel/preset-react
 npm install --dev @pmmmwh/react-refresh-webpack-plugin react-refresh
 ```
+
+And then update the configuration:
 
 ```js
 // babel.config.js
@@ -54,7 +82,7 @@ module.exports = function (api) {
   }
 
   resultConfig.presets = [...resultConfig.presets, ...changesOnDefault.presets]
-  resultConfig.plugins = [...resultConfig.plugins, ...changesOnDefault.plugins ]
+  resultConfig.plugins = [...resultConfig.plugins, ...changesOnDefault.plugins]
 
   return resultConfig
 }
