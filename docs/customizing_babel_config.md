@@ -45,7 +45,7 @@ module.exports = function (api) {
 
 This shows how you can add to the above skeleton to support React - to use this, install the following dependencies:
 
-```
+```bash
 npm install react react-dom @babel/preset-react
 npm install --dev @pmmmwh/react-refresh-webpack-plugin react-refresh
 ```
