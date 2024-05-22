@@ -10,6 +10,10 @@ _next_ branch is for v8 changes
 ## [Unreleased]
 Changes since the last non-beta release.
 
+### Fixed
+
+- Improve documentation for using Yarn PnP [PR 484](https://github.com/shakacode/shakapacker/pull/484) by [G-Rath](https://github.com/g-rath).
+
 ## [v8.0.0] - May 17, 2024
 
 See the [v8 Upgrade Guide](https://github.com/shakacode/shakapacker/blob/main/docs/v8_upgrade.md).
