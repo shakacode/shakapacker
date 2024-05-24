@@ -156,7 +156,7 @@ Shakapacker uses the [`package_json`](https://github.com/shakacode/package_json)
 
 If `packageManager` is not set when running `shakapacker:install`, Shakapacker will set it based on the lockfile and the result of calling `--version` on the inferred manager; if no lockfile is present, then `npm` be used unless you choose to explicitly set the `PACKAGE_JSON_FALLBACK_MANAGER` to your preferred package manager.
 
-> **Note**
+> [!NOTE]
 >
 > The `packageManager` property is only used to determine the package manager to use, based primarily on its name.
 > The version (if present) is only used to determine if Yarn Classic or Yarn Berry should be used, but is otherwise
@@ -169,7 +169,7 @@ See [here](https://github.com/G-Rath/package_json#specifying-a-package-manager) 
 
 If you wish to use [Yarn PnP](https://yarnpkg.com/features/pnp) you will need to configure Babel using a `babel.config.js` file rather than via `package.json` - see [customizing Babel Config](./docs/customizing_babel_config.md) for examples on how to do this.
 
-> [NOTE]
+> [!NOTE]
 >
 > The rest of the documentation will only reference `npm` when providing commands such as to install optional packages except in cases where
 > a particular package manager requires a very different command; otherwise it should be safe to just replace `npm` with the name of your 
@@ -446,16 +446,13 @@ In production or CI environments, the `digest` strategy is more suitable, unless
 
 You can control what strategy is used by the `compiler_strategy` option in `shakapacker.yml` config file. By default `mtime` strategy is used in development environment, `digest` is used elsewhere.
 
-**Note:**
-If you are not using the `shakapacker-dev-server`,
-your packs will be served by the Rails public file server.
-If you've enabled caching
-(Rails application `config.action_controller.perform_caching` setting),
-your changes will likely not be picked up due to `Cache-Control` header being set
-and
-assets being cached in the browser memory.
-For more details see
-[issue 88: Caching issues in Development since migrating to Shakapacker](https://github.com/shakacode/shakapacker/issues/88).
+> [!NOTE]
+>
+> If you are not using the `shakapacker-dev-server`, your packs will be served by the Rails public file server.
+> If you've enabled caching (Rails application `config.action_controller.perform_caching` setting),
+> your changes will likely not be picked up due to `Cache-Control` header being set and assets being cached in the browser memory.
+>
+> For more details see [issue 88: Caching issues in Development since migrating to Shakapacker](https://github.com/shakacode/shakapacker/issues/88).
 
 If you want to use live code reloading, or you have enough JavaScript that on-demand compilation is too slow, you'll need to run `./bin/shakapacker-dev-server`. This process will watch for changes in the relevant files, defined by `shakapacker.yml` configuration settings for `source_path`, `source_entry_path`, and `additional_paths`, and it will then automatically reload the browser to match. This feature is also known as [Hot Module Replacement](https://webpack.js.org/concepts/hot-module-replacement/).
 
