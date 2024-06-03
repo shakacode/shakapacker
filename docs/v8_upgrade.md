@@ -152,7 +152,7 @@ module.exports = merge(globalMutableWebpackConfig, customConfig);
 
 ```js
 // after
-const { generateWebpackConfig } = require('shakapacker');
+const { generateWebpackConfig, merge } = require('shakapacker');
 
 const customConfig = {
   module: {
