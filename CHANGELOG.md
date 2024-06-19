@@ -45,6 +45,8 @@ See the [v8 Upgrade Guide](https://github.com/shakacode/shakapacker/blob/main/do
   This enables support for package managers other than `yarn`, with `npm` being the default; to continue using Yarn,
   specify it in `package.json` using the [`packageManager`](https://nodejs.org/api/packages.html#packagemanager) property.
 
+  This also removed `@node_modules_bin_path`, `SHAKAPACKER_NODE_MODULES_BIN_PATH`, and support for installing `Shakapacker`'s javascript package in a separate directory from the Gemfile containing `Shakapacker`'s ruby gem.
+
 - Remove `yarn_install` rake task, and stop installing js packages automatically as part of `assets:precompile` [PR 412](https://github.com/shakacode/shakapacker/pull/412) by [G-Rath](https://github.com/g-rath).
 
 - Remove `check_yarn` rake task [PR 443](https://github.com/shakacode/shakapacker/pull/443) by [G-Rath](https://github.com/g-rath).
