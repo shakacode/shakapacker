@@ -88,8 +88,9 @@ RSpec.configure do |config|
   raise "Unsupported driver: #{driver} (supported = #{supported_drivers})" unless supported_drivers.include?(driver)
 
   Capybara.register_server(Capybara.javascript_driver) do |app, port|
-    require "rack/handler/puma"
-    Rack::Handler::Puma.run(app, Port: port)
+    require "rackup/handler/puma"
+    puma_rack_handler = defined?(Rackup::Handler::Puma) ? Rackup::Handler::Puma : Rack::Handler::Puma
+    puma_rack_handler.run(app, Port: port)
   end
 
   config.before(:each, type: :system, js: true) do
