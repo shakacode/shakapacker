@@ -12,6 +12,8 @@ Changes since the last non-beta release.
 
 ### Fixed
 
+- Fixes failing tests for Ruby 2.7 due to `Rack::Handler::Puma.respond_to?(:config)` [PR 501](https://github.com/shakacode/shakapacker/pull/501) by [adriangohjw](https://github.com/adriangohjw)
+
 - Improve documentation for using Yarn PnP [PR 484](https://github.com/shakacode/shakapacker/pull/484) by [G-Rath](https://github.com/g-rath).
 
 - Remove old `yarn` bin script [PR 483](https://github.com/shakacode/shakapacker/pull/483) by [G-Rath](https://github.com/g-rath).
