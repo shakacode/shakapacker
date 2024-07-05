@@ -19,10 +19,19 @@ describe "Generator" do
     ))
 
     Bundler.with_unbundled_env do
-      sh_in_dir({}, BASE_RAILS_APP_PATH, %(
-        gem update bundler
-        bundle add shakapacker --path "#{GEM_ROOT}"
-      ))
+      if RUBY_VERSION.start_with?("2.")
+        # Bundler's version compatible with Ruby 2 does not support "--path" switch
+        sh_in_dir({}, BASE_RAILS_APP_PATH, %(
+          gem update bundler
+          echo 'gem "shakapacker", :path => "#{GEM_ROOT}"' >> Gemfile
+          bundle install
+        ))
+      else
+        sh_in_dir({}, BASE_RAILS_APP_PATH, %(
+          gem update bundler
+          bundle add shakapacker --path "#{GEM_ROOT}"
+        ))
+      end
     end
   end
 
