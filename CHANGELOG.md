@@ -10,7 +10,7 @@ _next_ branch is for v8 changes
 ## [Unreleased]
 Changes since the last non-beta release.
 
-#### Changed
+### Changed
 - Update outdated GitHub Actions to use Node.js 20.0 versions instead [PR 497](https://github.com/shakacode/shakapacker/pull/497) by [adriangohjw](https://github.com/adriangohjw).
 
 ### Fixed
