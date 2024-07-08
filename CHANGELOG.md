@@ -12,6 +12,7 @@ Changes since the last non-beta release.
 
 ### Changed
 - Update outdated GitHub Actions to use Node.js 20.0 versions instead [PR 497](https://github.com/shakacode/shakapacker/pull/497) by [adriangohjw](https://github.com/adriangohjw).
+- Allow `webpack-merge` v6 to be used [PR 502](https://github.com/shakacode/shakapacker/pull/502) by [G-Rath](https://github.com/g-rath).
 
 ### Fixed
 
