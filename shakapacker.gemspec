@@ -31,6 +31,5 @@ Gem::Specification.new do |s|
     f.match(%r{^(test|spec|features|tmp|node_modules|packages|coverage|Gemfile.lock|rakelib)/})
   }
 
-
-  s.test_files    = `git ls-files -- test/*`.split("\n")
+  s.test_files = `git ls-files -- test/*`.split("\n")
 end
