@@ -27,7 +27,6 @@ Gem::Specification.new do |s|
   s.add_development_dependency "rubocop"
   s.add_development_dependency "rubocop-performance"
 
-  s.files         = `git ls-files`.split("\n")
   s.files = `git ls-files -z`.split("\x0").reject { |f|
     f.match(%r{^(test|spec|features|tmp|node_modules|packages|coverage|Gemfile.lock|rakelib)/})
   }
