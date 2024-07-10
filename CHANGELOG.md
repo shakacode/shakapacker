@@ -10,6 +10,8 @@ _next_ branch is for v8 changes
 ## [Unreleased]
 Changes since the last non-beta release.
 
+## [v8.0.1] - July 10, 2024
+
 ### Changed
 - Update outdated GitHub Actions to use Node.js 20.0 versions instead [PR 497](https://github.com/shakacode/shakapacker/pull/497) by [adriangohjw](https://github.com/adriangohjw).
 - Allow `webpack-merge` v6 to be used [PR 502](https://github.com/shakacode/shakapacker/pull/502) by [G-Rath](https://github.com/g-rath).
@@ -380,7 +382,8 @@ Note: [Rubygem is 6.3.0.pre.rc.1](https://rubygems.org/gems/shakapacker/versions
 ## v5.4.3 and prior changes from rails/webpacker
 See [CHANGELOG.md in rails/webpacker (up to v5.4.3)](https://github.com/rails/webpacker/blob/master/CHANGELOG.md)
 
-[Unreleased]: https://github.com/shakacode/shakapacker/compare/v8.0.0...main
+[Unreleased]: https://github.com/shakacode/shakapacker/compare/v8.0.1...main
+[v8.0.1]: https://github.com/shakacode/shakapacker/compare/v8.0.0...v8.0.1
 [v8.0.0]: https://github.com/shakacode/shakapacker/compare/v7.2.3...v8.0.0
 [v7.2.3]: https://github.com/shakacode/shakapacker/compare/v7.2.2...v7.2.3
 [v7.2.2]: https://github.com/shakacode/shakapacker/compare/v7.2.1...v7.2.2
