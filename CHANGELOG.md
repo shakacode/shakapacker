@@ -10,6 +10,10 @@ _next_ branch is for v8 changes
 ## [Unreleased]
 Changes since the last non-beta release.
 
+### Changed
+
+- Fix wrong instruction in esbuild loader documentation [PR 504](https://github.com/shakacode/shakapacker/pull/504) by [adriangohjw](https://github.com/adriangohjw)
+
 ## [v8.0.1] - July 10, 2024
 
 ### Changed

@@ -27,7 +27,7 @@ To use esbuild as your transpiler today. You need to do two things:
 npm install esbuild esbuild-loader
 ```
 
-2. Add or change `shakapacker_loader` value in your default `shakapacker.yml` config to `esbuild`
+2. Add or change `webpack_loader` value in your default `shakapacker.yml` config to `esbuild`
 The default configuration of babel is done by using `package.json` to use the file within the `shakapacker` package.
 
 ```yml
