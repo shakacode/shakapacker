@@ -96,6 +96,10 @@ describe "Generator" do
             expected_binstubs = Dir.glob("bin/*")
           end
 
+          puts "ZYXYZ"
+          puts expected_binstubs
+          puts Dir.entries(File.join(GEM_ROOT, "lib/install/bin"))
+
           Dir.chdir(File.join(TEMP_RAILS_APP_PATH, "bin")) do
             actual_binstubs = Dir.glob("*")
             expect(actual_binstubs).to include(*expected_binstubs)
