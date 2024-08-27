@@ -24,7 +24,6 @@ namespace :run_spec do
         "bundle install",
         "yalc link shakapacker",
         "yarn install",
-        "yarn list shakapacker",
         "bundle exec rspec"
       ])
     end
