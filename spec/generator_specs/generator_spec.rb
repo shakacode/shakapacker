@@ -93,7 +93,7 @@ describe "Generator" do
         it "adds binstubs" do
           expected_binstubs = []
           Dir.chdir(File.join(GEM_ROOT, "lib/install/bin")) do
-            expected_binstubs = Dir.glob("bin/*")
+            expected_binstubs = Dir.glob("*")
           end
 
           Dir.chdir(File.join(TEMP_RAILS_APP_PATH, "bin")) do
