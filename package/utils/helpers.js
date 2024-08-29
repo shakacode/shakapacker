@@ -41,10 +41,18 @@ const loaderMatches = (configLoader, loaderToCheck, fn) => {
   return fn()
 }
 
+const packageMajorVersion = (packageName) => {
+  // eslint-disable-next-line import/no-dynamic-require
+  const packageJsonPath = require.resolve(`${packageName}/package.json`)
+  // eslint-disable-next-line import/no-dynamic-require, global-require
+  return require(packageJsonPath).version.match(/^\d+/)[0]
+}
+
 module.exports = {
   isBoolean,
   ensureTrailingSlash,
   canProcess,
   moduleExists,
-  loaderMatches
+  loaderMatches,
+  packageMajorVersion
 }

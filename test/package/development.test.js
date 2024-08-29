@@ -4,6 +4,15 @@ const { chdirTestApp, resetEnv } = require("../helpers")
 const rootPath = process.cwd()
 chdirTestApp()
 
+jest.mock("../../package/utils/helpers", () => {
+  const original = jest.requireActual("../../package/utils/helpers")
+  const moduleExists = () => false
+  return {
+    ...original,
+    moduleExists
+  }
+})
+
 describe("Development environment", () => {
   beforeEach(() => jest.resetModules() && resetEnv())
   afterAll(() => process.chdir(rootPath))
