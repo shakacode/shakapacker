@@ -5,11 +5,9 @@ jest.mock("../../../package/utils/helpers", () => {
   const canProcess = (rule, fn) => {
     return fn("This path was mocked")
   }
-  const moduleExists = () => true
   return {
     ...original,
-    canProcess,
-    moduleExists
+    canProcess
   }
 })
 

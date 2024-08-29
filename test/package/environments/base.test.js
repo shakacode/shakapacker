@@ -10,6 +10,15 @@ chdirTestApp()
 const baseConfig = require("../../../package/environments/base")
 const config = require("../../../package/config")
 
+jest.mock("../../../package/utils/helpers", () => {
+  const original = jest.requireActual("../../../package/utils/helpers")
+  const moduleExists = () => false
+  return {
+    ...original,
+    moduleExists
+  }
+})
+
 describe("Base config", () => {
   beforeEach(() => jest.resetModules() && resetEnv())
   afterAll(() => process.chdir(rootPath))

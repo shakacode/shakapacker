@@ -1,5 +1,14 @@
 const index = require("../../package/index")
 
+jest.mock("../../package/utils/helpers", () => {
+  const original = jest.requireActual("../../package/utils/helpers")
+  const moduleExists = () => false
+  return {
+    ...original,
+    moduleExists
+  }
+})
+
 describe("index", () => {
   test("exports webpack-merge v5 functions", () => {
     expect(index.merge).toBeInstanceOf(Function)
