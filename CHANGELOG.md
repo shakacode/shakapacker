@@ -10,9 +10,11 @@ _next_ branch is for v8 changes
 ## [Unreleased]
 Changes since the last non-beta release.
 
-### Changed
+## [v8.0.2] - August 28, 2024
 
-- Fix wrong instruction in esbuild loader documentation [PR 504](https://github.com/shakacode/shakapacker/pull/504) by [adriangohjw](https://github.com/adriangohjw)
+### Fixed
+- Fix wrong instruction in esbuild loader documentation [PR 504](https://github.com/shakacode/shakapacker/pull/504) by [adriangohjw](https://github.com/adriangohjw).
+- Add logic to sass rule conditional on sass-loader version [PR 508](https://github.com/shakacode/shakapacker/pull/508) by [Judahmeek](https://github.com/Judahmeek).
 
 ## [v8.0.1] - July 10, 2024
 
@@ -386,7 +388,8 @@ Note: [Rubygem is 6.3.0.pre.rc.1](https://rubygems.org/gems/shakapacker/versions
 ## v5.4.3 and prior changes from rails/webpacker
 See [CHANGELOG.md in rails/webpacker (up to v5.4.3)](https://github.com/rails/webpacker/blob/master/CHANGELOG.md)
 
-[Unreleased]: https://github.com/shakacode/shakapacker/compare/v8.0.1...main
+[Unreleased]: https://github.com/shakacode/shakapacker/compare/v8.0.2...main
+[v8.0.2]: https://github.com/shakacode/shakapacker/compare/v8.0.1...v8.0.2
 [v8.0.1]: https://github.com/shakacode/shakapacker/compare/v8.0.0...v8.0.1
 [v8.0.0]: https://github.com/shakacode/shakapacker/compare/v7.2.3...v8.0.0
 [v7.2.3]: https://github.com/shakacode/shakapacker/compare/v7.2.2...v7.2.3
