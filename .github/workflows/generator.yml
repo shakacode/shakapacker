@@ -24,10 +24,15 @@ jobs:
           - gemfiles/Gemfile-rails.6.1.x
           - gemfiles/Gemfile-rails.7.0.x
           - gemfiles/Gemfile-rails.7.1.x
+          - gemfiles/Gemfile-rails.7.2.x
           # Uncomment the following line only to ensure compatibility with the
           # upcomming Rails versions, maybe before a release.
           #- gemfiles/Gemfile-rails-edge
         exclude:
+          - ruby: '2.7'
+            gemfile: gemfiles/Gemfile-rails.7.2.x
+          - ruby: '3.0'
+            gemfile: gemfiles/Gemfile-rails.7.2.x
           - ruby: '3.1'
             gemfile: gemfiles/Gemfile-rails.6.0.x
           - ruby: '3.2'
