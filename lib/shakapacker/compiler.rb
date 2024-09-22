@@ -1,6 +1,7 @@
 require "open3"
-require "shakapacker/compiler_strategy"
 require "fileutils"
+
+require_relative "compiler_strategy"
 
 class Shakapacker::Compiler
   # Additional environment variables that the compiler is being run with

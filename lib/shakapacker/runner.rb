@@ -1,5 +1,6 @@
-require "shakapacker/utils/misc"
-require "shakapacker/utils/manager"
+require_relative "utils/misc"
+require_relative "utils/manager"
+
 require "package_json"
 
 module Shakapacker

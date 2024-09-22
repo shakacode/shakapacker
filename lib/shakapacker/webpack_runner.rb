@@ -1,5 +1,6 @@
 require "shellwords"
-require "shakapacker/runner"
+
+require_relative "runner"
 
 module Shakapacker
   class WebpackRunner < Shakapacker::Runner

@@ -1,5 +1,5 @@
 # frozen_string_literal: true
-require "shakapacker/version"
+require_relative "version"
 
 module Shakapacker
   class VersionChecker

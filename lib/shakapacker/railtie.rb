@@ -1,9 +1,9 @@
 require "rails/railtie"
 
-require "shakapacker/helper"
-require "shakapacker/dev_server_proxy"
-require "shakapacker/version_checker"
-require "shakapacker/utils/manager"
+require_relative "helper"
+require_relative "dev_server_proxy"
+require_relative "version_checker"
+require_relative "utils/manager"
 
 class Shakapacker::Engine < ::Rails::Engine
   # Allows Shakapacker config values to be set via Rails env config files
