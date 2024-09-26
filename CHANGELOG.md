@@ -10,6 +10,9 @@ _next_ branch is for v8 changes
 ## [Unreleased]
 Changes since the last non-beta release.
 
+### Changed
+- Changed internal `require`s to `require_relative` to make code less dependent on the load path. [PR 516](https://github.com/shakacode/shakapacker/pull/516) by [tagliala](https://github.com/tagliala).
+
 ## [v8.0.2] - August 28, 2024
 
 ### Fixed
