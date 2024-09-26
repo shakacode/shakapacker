@@ -1,4 +1,4 @@
-require "shakapacker/base_strategy"
+require_relative "base_strategy"
 
 module Shakapacker
   class MtimeStrategy < BaseStrategy

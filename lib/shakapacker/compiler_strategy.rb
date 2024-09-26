@@ -1,5 +1,5 @@
-require "shakapacker/mtime_strategy"
-require "shakapacker/digest_strategy"
+require_relative "mtime_strategy"
+require_relative "digest_strategy"
 
 module Shakapacker
   class CompilerStrategy

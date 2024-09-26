@@ -1,5 +1,6 @@
 require "digest/sha1"
-require "shakapacker/base_strategy"
+
+require_relative "base_strategy"
 
 module Shakapacker
   class DigestStrategy < BaseStrategy

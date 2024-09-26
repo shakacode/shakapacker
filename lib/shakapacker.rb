@@ -37,13 +37,13 @@ module Shakapacker
   delegate :bootstrap, :clean, :clobber, :compile, to: :commands
 end
 
-require "shakapacker/instance"
-require "shakapacker/env"
-require "shakapacker/configuration"
-require "shakapacker/manifest"
-require "shakapacker/compiler"
-require "shakapacker/commands"
-require "shakapacker/dev_server"
-require "shakapacker/deprecation_helper"
+require_relative "shakapacker/instance"
+require_relative "shakapacker/env"
+require_relative "shakapacker/configuration"
+require_relative "shakapacker/manifest"
+require_relative "shakapacker/compiler"
+require_relative "shakapacker/commands"
+require_relative "shakapacker/dev_server"
+require_relative "shakapacker/deprecation_helper"
 
-require "shakapacker/railtie" if defined?(Rails)
+require_relative "shakapacker/railtie" if defined?(Rails)

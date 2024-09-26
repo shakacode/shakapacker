@@ -1,8 +1,9 @@
 require "shellwords"
 require "socket"
-require "shakapacker/configuration"
-require "shakapacker/dev_server"
-require "shakapacker/runner"
+
+require_relative "configuration"
+require_relative "dev_server"
+require_relative "runner"
 
 module Shakapacker
   class DevServerRunner < Shakapacker::Runner
