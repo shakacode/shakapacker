@@ -13,6 +13,9 @@ Changes since the last non-beta release.
 ### Changed
 - Changed internal `require`s to `require_relative` to make code less dependent on the load path. [PR 516](https://github.com/shakacode/shakapacker/pull/516) by [tagliala](https://github.com/tagliala).
 
+### Fixed
+- Fix error when rails environment is required from outside the rails root directory [PR 520](https://github.com/shakacode/shakapacker/pull/520)
+
 ## [v8.0.2] - August 28, 2024
 
 ### Fixed
