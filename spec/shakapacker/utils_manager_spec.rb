@@ -48,6 +48,7 @@ describe "Shakapacker::Utils::Manager" do
       context "when there is a #{lock}" do
         before do
           allow(Open3).to receive(:capture3).and_return(["1.2.3\n", "", Struct::Status.new(0)])
+          allow(Rails).to receive(:root).and_return(Pathname.new("."))
         end
 
         it "raises an error about setting 'packageManager' for #{manager}" do
@@ -63,13 +64,51 @@ describe "Shakapacker::Utils::Manager" do
           MSG
         end
       end
+
+      context "when lockfile is in Rails.root, but pwd is different" do
+        before do
+          allow(Open3).to receive(:capture3).and_return(["1.2.3\n", "", Struct::Status.new(0)])
+        end
+
+        it "raises an error about setting 'packageManager' for #{manager}" do
+          rails_root = Pathname.new("rails_root_#{lock}")
+          FileUtils.mkdir_p(rails_root)
+          allow(Rails).to receive(:root).and_return(rails_root)
+
+          File.write(rails_root.join("package.json"), {}.to_json)
+          FileUtils.touch(rails_root.join(lock))
+
+          expect { Shakapacker::Utils::Manager.error_unless_package_manager_is_obvious! }.to raise_error(Shakapacker::Utils::Manager::Error, <<~MSG)
+            You don't have "packageManager" set in your package.json
+            meaning that Shakapacker will use npm but you've got a #{lock}
+            file meaning you probably want to be using #{manager} instead.
+
+            To make this happen, set "packageManager" in your package.json to #{manager}@1.2.3
+          MSG
+        end
+      end
     end
   end
 
   describe "~guess_binary" do
+    before { allow(Rails).to receive(:root).and_return(Pathname.new(".")) }
+
     Shakapacker::Utils::Manager::MANAGER_LOCKS.each do |manager, lock|
       context "when a #{lock} exists" do
         before { FileUtils.touch(lock) }
+
+        it "guesses #{manager}" do
+          expect(Shakapacker::Utils::Manager.guess_binary).to eq manager
+        end
+      end
+
+      context "when lockfile is in Rails.root, but pwd is different" do
+        before do
+          rails_root = Pathname.new("rails_root_#{lock}")
+          FileUtils.mkdir_p(rails_root)
+          FileUtils.touch(rails_root.join(lock))
+          allow(Rails).to receive(:root).and_return(rails_root)
+        end
 
         it "guesses #{manager}" do
           expect(Shakapacker::Utils::Manager.guess_binary).to eq manager
@@ -91,7 +130,25 @@ describe "Shakapacker::Utils::Manager" do
 
     Shakapacker::Utils::Manager::MANAGER_LOCKS.each do |manager, lock|
       context "when a #{lock} exists" do
-        before { FileUtils.touch(lock) }
+        before do
+          FileUtils.touch(lock)
+          allow(Rails).to receive(:root).and_return(Pathname.new("."))
+        end
+
+        it "calls #{manager} with --version" do
+          Shakapacker::Utils::Manager.guess_version
+
+          expect(Open3).to have_received(:capture3).with("#{manager} --version")
+        end
+      end
+
+      context "when lockfile is in Rails.root, but pwd is different" do
+        before do
+          rails_root = Pathname.new("rails_root_#{lock}")
+          FileUtils.mkdir_p(rails_root)
+          FileUtils.touch(rails_root.join(lock))
+          allow(Rails).to receive(:root).and_return(rails_root)
+        end
 
         it "calls #{manager} with --version" do
           Shakapacker::Utils::Manager.guess_version
@@ -110,6 +167,7 @@ describe "Shakapacker::Utils::Manager" do
     context "when the command errors" do
       before do
         allow(Open3).to receive(:capture3).and_return(["", "oh noes!", Struct::Status.new(1)])
+        allow(Rails).to receive(:root).and_return(Pathname.new("."))
       end
 
       it "raises an error" do

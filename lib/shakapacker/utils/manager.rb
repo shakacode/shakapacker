@@ -16,7 +16,7 @@ module Shakapacker
 
       # Emits a warning if it's not obvious what package manager to use
       def self.error_unless_package_manager_is_obvious!
-        return unless PackageJson.read.fetch("packageManager", nil).nil?
+        return unless PackageJson.read(rails_root).fetch("packageManager", nil).nil?
 
         guessed_binary = guess_binary
 
@@ -35,7 +35,7 @@ module Shakapacker
       #
       # @return [String]
       def self.guess_binary
-        MANAGER_LOCKS.find { |_, lock| File.exist?(lock) }&.first || "npm"
+        MANAGER_LOCKS.find { |_, lock| File.exist?(rails_root.join(lock)) }&.first || "npm"
       end
 
       # Guesses the version of the package manager to use by calling `<manager> --version`
@@ -53,6 +53,17 @@ module Shakapacker
 
         stdout.chomp
       end
+
+      private
+        def self.rails_root
+          if defined?(APP_ROOT)
+            Pathname.new(APP_ROOT)
+          elsif defined?(Rails)
+            Rails.root
+          else
+            raise "can only be called from a rails environment or with APP_ROOT defined"
+          end
+        end
     end
   end
 end
