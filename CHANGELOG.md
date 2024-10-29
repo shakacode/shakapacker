@@ -12,6 +12,7 @@ Changes since the last non-beta release.
 
 ### Changed
 - Changed internal `require`s to `require_relative` to make code less dependent on the load path. [PR 516](https://github.com/shakacode/shakapacker/pull/516) by [tagliala](https://github.com/tagliala).
+- Allow configuring webpack from a Typescript file (`config/webpack/webpack.config.ts`). [PR 524](https://github.com/shakacode/shakapacker/pull/524) by [jdelStrother](https://github.com/jdelStrother).
 
 ### Fixed
 - Fix error when rails environment is required from outside the rails root directory [PR 520](https://github.com/shakacode/shakapacker/pull/520)

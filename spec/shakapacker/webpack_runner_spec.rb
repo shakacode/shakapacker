@@ -54,6 +54,17 @@ describe "WebpackRunner" do
 
         verify_command(cmd, argv: (["--watch"]))
       end
+
+      it "loads webpack.config.ts if present" do
+        ts_config = "#{test_app_path}/config/webpack/webpack.config.ts"
+        FileUtils.touch(ts_config)
+
+        cmd = package_json.manager.native_exec_command("webpack", ["--config", ts_config])
+
+        verify_command(cmd)
+      ensure
+        FileUtils.rm(ts_config)
+      end
     end
   end
 

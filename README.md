@@ -675,6 +675,24 @@ module.exports = generateWebpackConfig({
 });
 ```
 
+Optionally, your webpack config file itself can be written in Typescript:
+
+``` bash
+npm install ts-node @types/node @types/webpack
+```
+
+```ts
+// config/webpack/webpack.config.ts
+import { generateWebpackConfig } from "shakapacker";
+import ForkTSCheckerWebpackPlugin from "fork-ts-checker-webpack-plugin";
+
+const config = generateWebpackConfig({
+  plugins: [new ForkTSCheckerWebpackPlugin()],
+});
+
+export default config;
+```
+
 #### CSS
 
 To enable CSS support in your application, add the following packages:
