@@ -21,9 +21,7 @@ If your host might differ, between various environments for example, you will ei
 - Ensure the assets are specifically rebuilt for each environment (Heroku pipeline promote feature for example does not do that by default).
 - Make sure the assets are compiled with `SHAKAPACKER_ASSET_HOST=''` ENV variable to avoid hardcording URLs in packs output.
 
-Second option has got a certain gotcha - dynamic imports and static asset references (like image paths in CSS) will end up without host reference and the app will try and fetch them from your app host rather than defined `config.asset_host`.
-
-Make sure the assets are compiled with `SHAKAPACKER_ASSET_HOST=''` ENV variable to avoid hardcoding URLs in packs output.
+The second option has got a certain gotcha - dynamic imports and static asset references (like image paths in CSS) will end up without a host reference and the app will try and fetch them from your app host rather than defined `config.asset_host`.
 
 To get around that, you can use dynamic override as outlined by [Webpack documentation](https://webpack.js.org/guides/asset-modules/#on-the-fly-override).
 
@@ -102,10 +100,10 @@ namespace :assets do
     raise if File.exist?("package.json") && !(system "npm ci")
 
     # yarn v1.x (classic)
-    raise if File.exist?("package.json") && !(system "yarn install --immutable")
+    raise if File.exist?("package.json") && !(system "yarn install --frozen-lockfile")
 
     # yarn v2+ (berry)
-    raise if File.exist?("package.json") && !(system "yarn install --frozen-lockfile")
+    raise if File.exist?("package.json") && !(system "yarn install --immutable")
 
     # bun v1+
     raise if File.exist?("package.json") && !(system "bun install --frozen-lockfile")
