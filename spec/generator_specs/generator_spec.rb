@@ -31,8 +31,17 @@ describe "Generator" do
           bundle install
         ))
       else
+        # TODO: remove when Ruby < 3.1 support will be dropped
+        # Ref: https://github.com/shakacode/shakapacker/issues/534
+        bundler_update_command =
+          if RUBY_VERSION.start_with?("3.1")
+            "gem update bundler"
+          else
+            "gem install bundler --version '< 2.6'"
+          end
+
         sh_in_dir({}, BASE_RAILS_APP_PATH, %(
-          gem update bundler
+          #{bundler_update_command}
           bundle add shakapacker --path "#{GEM_ROOT}"
         ))
       end
