@@ -25,14 +25,12 @@ describe "Generator" do
         # Issue resolved in Capybara v3.40.0, but Ruby 2.7 support dropped; last compatible version is v3.39.2.
         # Ref: https://github.com/shakacode/shakapacker/issues/498
         sh_in_dir({}, BASE_RAILS_APP_PATH, %(
-          gem update bundler
           echo 'gem "shakapacker", :path => "#{GEM_ROOT}"' >> Gemfile
           echo 'gem "rack", "< 3.0.0"' >> Gemfile
           bundle install
         ))
       else
         sh_in_dir({}, BASE_RAILS_APP_PATH, %(
-          gem update bundler
           bundle add shakapacker --path "#{GEM_ROOT}"
         ))
       end
