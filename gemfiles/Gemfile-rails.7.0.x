@@ -7,5 +7,5 @@ gemspec path: "../"
 gem "rails", '~>7.0.0'
 gem "rake", ">= 11.1"
 gem "rack-proxy", require: false
-gem "rspec-rails", "~> 6.0.0"
+gem "rspec-rails", "~> 7.0"
 gem "byebug"
