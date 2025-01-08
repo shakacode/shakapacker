@@ -53,6 +53,9 @@ describe "Generator" do
 
           Bundler.with_unbundled_env do
             Dir.chdir(TEMP_RAILS_APP_PATH)
+            puts "--- DEBUG ---"
+            puts "Running with #{fallback_manager} as the manager"
+            puts "--- DEBUG ---"
             sort_out_package_json(sh_opts)
             `FORCE=true bundle exec rails shakapacker:install`
           end
