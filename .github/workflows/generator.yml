@@ -70,4 +70,5 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22.x'
+          cache: 'npm'
       - run: bundle exec rake run_spec:generator
