@@ -1,7 +1,7 @@
 #!/usr/bin/env ruby
 
 binary = "npm"
-major_version = "11"
+major_version = "9"
 
 unless ENV["SHAKAPACKER_EXPECTED_PACKAGE_MANGER"] == binary
   raise StandardError, "(#{binary}) this is not the package manager you're looking for..."
