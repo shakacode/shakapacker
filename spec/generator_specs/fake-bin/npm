@@ -7,4 +7,8 @@ unless ENV["SHAKAPACKER_EXPECTED_PACKAGE_MANGER"] == binary
   raise StandardError, "(#{binary}) this is not the package manager you're looking for..."
 end
 
-exec({ "NPM_CONFIG_FETCH_RETRY_MINTIMEOUT" => "20000", "NPM_CONFIG_FETCH_RETRY_MAXTIMEOUT" => "120000" }, "npx", "-y", "#{binary}@#{major_version}", *ARGV)
+exec({ 
+  "NPM_CONFIG_FETCH_RETRY_MINTIMEOUT" => "20000", 
+  "NPM_CONFIG_FETCH_RETRY_MAXTIMEOUT" => "120000",
+  "NPM_CONFIG_MAXSOCKETS" => "1" 
+}, "npx", "-y", "#{binary}@#{major_version}", *ARGV)
