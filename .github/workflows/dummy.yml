@@ -21,10 +21,10 @@ jobs:
           persist-credentials: false
       - uses: actions/setup-node@v4
         with:
-          node-version: '16'
+          node-version: '24.x'
       - uses: ruby/setup-ruby@v1
         with:
-          ruby-version: '3.1.2'
+          ruby-version: '3.4'
           rubygems: latest
       - name: Install dependencies
         run: |
