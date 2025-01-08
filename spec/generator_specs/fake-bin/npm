@@ -7,4 +7,4 @@ unless ENV["SHAKAPACKER_EXPECTED_PACKAGE_MANGER"] == binary
   raise StandardError, "(#{binary}) this is not the package manager you're looking for..."
 end
 
-exec("npx", "-y", "#{binary}@#{major_version}", *ARGV)
+exec("npx", "-y", "#{binary}@#{major_version}", "--fetch-retry-mintimeout", "20000", "--fetch-retry-maxtimeout", "120000", *ARGV)
