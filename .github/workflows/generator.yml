@@ -15,6 +15,11 @@ jobs:
   test:
     name: Generator specs
     runs-on: ${{ matrix.os }}
+    # Generator specs experience random failures likely due to numerous
+    # network requests to the node registry.
+    # To mitigate this, `continue-on-error: true` is set, allowing the current
+    # combination to fail without halting other matrix combinations.
+    continue-on-error: true
     strategy:
       matrix:
         os: [ubuntu-latest]
