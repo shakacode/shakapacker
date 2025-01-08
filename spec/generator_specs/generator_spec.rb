@@ -57,6 +57,7 @@ describe "Generator" do
             puts "Running with #{fallback_manager} as the manager"
             puts "--- DEBUG ---"
             sort_out_package_json(sh_opts)
+            puts "Running the install command"
             `FORCE=true bundle exec rails shakapacker:install`
           end
         end
