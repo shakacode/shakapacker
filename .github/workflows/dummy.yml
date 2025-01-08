@@ -24,7 +24,7 @@ jobs:
           node-version: '22.x'
       - uses: ruby/setup-ruby@v1
         with:
-          ruby-version: '3.4'
+          ruby-version: '3.3'
           rubygems: latest
       - name: Install dependencies
         run: |
