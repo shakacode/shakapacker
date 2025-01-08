@@ -44,7 +44,7 @@ describe "Generator" do
 
   describe "shakapacker:install" do
     # TODO: ideally "yarn_berry" should be here too, but it requires more complex setup
-    NODE_PACKAGE_MANAGERS.reject { |fm| fm == "yarn_berry" || fm == "npm" }.each do |fallback_manager|
+    NODE_PACKAGE_MANAGERS.reject { |fm| fm == "yarn_berry" }.each do |fallback_manager|
       context "when using package_json with #{fallback_manager} as the manager" do
         before :all do
           sh_opts = { fallback_manager: fallback_manager }
