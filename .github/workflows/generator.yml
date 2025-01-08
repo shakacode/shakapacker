@@ -67,4 +67,7 @@ jobs:
           ruby-version: ${{ matrix.ruby }}
           rubygems: latest
           bundler-cache: true
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
       - run: bundle exec rake run_spec:generator
