@@ -47,5 +47,5 @@ jobs:
           bundler-cache: true
       - uses: actions/setup-node@v4
         with:
-          node-version: '24.x'
+          node-version: '22.x'
       - run: bundle exec rake run_spec:generator
