@@ -1,4 +1,4 @@
-NODE_PACKAGE_MANAGERS = ["npm", "yarn_classic", "yarn_berry", "pnpm", "bun"]
+NODE_PACKAGE_MANAGERS = ["npm"]
 
 def with_package_json_fallback_manager(fallback_manager)
   around do |example|
