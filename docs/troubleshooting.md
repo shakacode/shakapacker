@@ -228,3 +228,32 @@ issue.
 
 See [this issue](https://github.com/rails/webpacker/issues/3005) for more
 details.
+
+## Static file dependencies emitted outside of public output path
+
+For static file assets (images, fonts), we use [a Webpack rule](https://github.com/shakacode/shakapacker/blob/main/package/rules/file.js) to handle those files as `asset/resource` type and output them in the `static` folder in the public output path.
+
+In order to generate the storage path, we rely on the filename that's [provided by webpack internals](https://webpack.js.org/configuration/output/#outputfilename).
+
+This usually works out of the box. There's a potential problem however, if you use the [context setting](https://webpack.js.org/configuration/entry-context/#context) in your webpack config. By default this is set to current Node working directory/project root.
+
+If you were to override it like:
+```
+{
+  context: path.resolve(__dirname, '../../app/javascript')
+}
+```
+
+Then the filename available in the rule generator will be relative to that directory.
+
+This means for example:
+- a static asset from `node_modules` folder could end up being referenced with path of `../../node_modules/some_module/static_file.jpg` rather than simply `node_modules/some_module/static_file.jpg`.
+- a static asset in one of the `additional_paths`, example `app/assets/images/image.jpg`, would end up being referenced with path of `../assets/images/image.jpg`.
+
+Those paths are later passed to [output path generation in the rule](https://github.com/shakacode/shakapacker/blob/e52b335dbabfb934fe7d3076a8322b97d5ef3470/package/rules/file.js#L25-L26), where we would end up with a path like `static/../../node_modules/some_module/static_file.jpg`, resulting in the file being output in a location two directories above the desired path.
+
+You can avoid this by:
+- not using overridden `context` in your webpack config, if there's no good reason for it.
+- using custom Webpack config to modify the static file rule, following a similar process as outlined in the [Webpack Configuration](https://github.com/shakacode/shakapacker/blob/main/README.md#webpack-configuration) section of the readme.
+
+See [this issue](https://github.com/shakacode/shakapacker/issues/538) for more details.
