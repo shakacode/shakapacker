@@ -9,4 +9,3 @@ gem "rake", ">= 11.1"
 gem "rack-proxy", require: false
 gem "rspec-rails", "~> 7.0"
 gem "byebug"
-gem "concurrent-ruby", "1.3.4"
