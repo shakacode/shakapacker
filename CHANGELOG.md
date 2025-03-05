@@ -10,6 +10,10 @@ _next_ branch is for v8 changes
 ## [Unreleased]
 Changes since the last non-beta release.
 
+### Added
+
+- Allow `babel-loader` v10. [PR 552](https://github.com/shakacode/shakapacker/pull/552) by [shoeyn](https://github.com/shoeyn).
+
 ## [v8.1.0] - January 20, 2025
 
 ### Added
