@@ -19,11 +19,9 @@ describe "Generator" do
     ))
 
     Bundler.with_unbundled_env do
-      if Rails::VERSION::MAJOR < 7 || (Rails::VERSION::MAJOR == 7 && Rails::VERSION::MINOR < 1)
-        sh_in_dir({}, BASE_RAILS_APP_PATH, %(
-          echo 'gem "concurrent-ruby", "1.3.4"' >> Gemfile
-        ))
-      end
+      sh_in_dir({}, BASE_RAILS_APP_PATH, %(
+        echo 'gem "concurrent-ruby", "1.3.4"' >> Gemfile
+      ))
 
       if RUBY_VERSION.start_with?("2.")
         # Bundler's version compatible with Ruby 2 does not support "--path" switch
