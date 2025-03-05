@@ -19,6 +19,10 @@ describe "Generator" do
     ))
 
     Bundler.with_unbundled_env do
+      sh_in_dir({}, BASE_RAILS_APP_PATH, %(
+        echo 'gem "concurrent-ruby", "1.3.4"' >> Gemfile
+      ))
+
       if RUBY_VERSION.start_with?("2.")
         # Bundler's version compatible with Ruby 2 does not support "--path" switch
         # Overwriting "rack" version due to unless Rack::Handler::Puma.respond_to?(:config) in Capybara gem v3.39.2 or earlier.
