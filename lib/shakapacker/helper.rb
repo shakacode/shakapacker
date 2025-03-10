@@ -95,22 +95,25 @@ module Shakapacker::Helper
   #
   #   <%= javascript_pack_tag 'calendar' %>
   #   <%= javascript_pack_tag 'map' %>
-  def javascript_pack_tag(*names, defer: true, **options)
+  def javascript_pack_tag(*names, defer: true, async: false, **options)
     if @javascript_pack_tag_loaded
       raise "To prevent duplicated chunks on the page, you should call javascript_pack_tag only once on the page. " \
       "Please refer to https://github.com/shakacode/shakapacker/blob/main/README.md#view-helpers-javascript_pack_tag-and-stylesheet_pack_tag for the usage guide"
     end
 
-    append_javascript_pack_tag(*names, defer: defer)
-    non_deferred = sources_from_manifest_entrypoints(javascript_pack_tag_queue[:non_deferred], type: :javascript)
-    deferred = sources_from_manifest_entrypoints(javascript_pack_tag_queue[:deferred], type: :javascript) - non_deferred
+    append_javascript_pack_tag(*names, defer: defer, async: async)
+    sync = sources_from_manifest_entrypoints(javascript_pack_tag_queue[:sync], type: :javascript)
+    async = sources_from_manifest_entrypoints(javascript_pack_tag_queue[:async], type: :javascript) - sync
+    deferred = sources_from_manifest_entrypoints(javascript_pack_tag_queue[:deferred], type: :javascript) - sync - async
 
     @javascript_pack_tag_loaded = true
 
     capture do
-      concat javascript_include_tag(*deferred, **options.tap { |o| o[:defer] = true })
-      concat "\n" if non_deferred.any? && deferred.any?
-      concat javascript_include_tag(*non_deferred, **options.tap { |o| o[:defer] = false })
+      concat javascript_include_tag(*async, **options.dup.tap { |o| o[:async] = true })
+      concat "\n" if async.any? && deferred.any?
+      concat javascript_include_tag(*deferred, **options.dup.tap { |o| o[:defer] = true })
+      concat "\n" if sync.any? && deferred.any?
+      concat javascript_include_tag(*sync, **options)
     end
   end
 
@@ -179,27 +182,35 @@ module Shakapacker::Helper
     nil
   end
 
-  def append_javascript_pack_tag(*names, defer: true)
-    update_javascript_pack_tag_queue(defer: defer) do |hash_key|
+  def append_javascript_pack_tag(*names, defer: true, async: false)
+    update_javascript_pack_tag_queue(defer: defer, async: async) do |hash_key|
       javascript_pack_tag_queue[hash_key] |= names
     end
   end
 
-  def prepend_javascript_pack_tag(*names, defer: true)
-    update_javascript_pack_tag_queue(defer: defer) do |hash_key|
+  def prepend_javascript_pack_tag(*names, defer: true, async: false)
+    update_javascript_pack_tag_queue(defer: defer, async: async) do |hash_key|
       javascript_pack_tag_queue[hash_key].unshift(*names)
     end
   end
 
   private
 
-    def update_javascript_pack_tag_queue(defer:)
+    def update_javascript_pack_tag_queue(defer:, async:)
       if @javascript_pack_tag_loaded
         raise "You can only call #{caller_locations(1..1).first.base_label} before javascript_pack_tag helper. " \
         "Please refer to https://github.com/shakacode/shakapacker/blob/main/README.md#view-helper-append_javascript_pack_tag-prepend_javascript_pack_tag-and-append_stylesheet_pack_tag for the usage guide"
       end
 
-      yield(defer ? :deferred : :non_deferred)
+      # When both async and defer are specified, async takes precedence per HTML5 spec
+      hash_key = if async
+        :async
+      elsif defer
+        :deferred
+      else
+        :sync
+      end
+      yield(hash_key)
 
       # prevent rendering Array#to_s representation when used with <%= … %> syntax
       nil
@@ -207,8 +218,9 @@ module Shakapacker::Helper
 
     def javascript_pack_tag_queue
       @javascript_pack_tag_queue ||= {
+        async: [],
         deferred: [],
-        non_deferred: []
+        sync: []
       }
     end
 
