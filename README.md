@@ -275,7 +275,7 @@ You can provide multiple packs and other attributes. Note, `defer` defaults to s
 ```
 
 The resulting HTML would look like this:
-```
+```html
 <script src="/packs/vendor-16838bab065ae1e314.js" data-turbo-track="reload" defer></script>
 <script src="/packs/calendar~runtime-16838bab065ae1e314.js" data-turbo-track="reload" defer></script>
 <script src="/packs/calendar-1016838bab065ae1e314.js" data-turbo-track="reload" defer"></script>
@@ -286,6 +286,26 @@ The resulting HTML would look like this:
 In this output, both the calendar and map codes might refer to other common libraries. Those get placed in something like the vendor bundle. The view helper removes any duplication.
 
 Note, the default of "defer" for the `javascript_pack_tag`. You can override that to `false`. If you expose jquery globally with `expose-loader,` by using `import $ from "expose-loader?exposes=$,jQuery!jquery"` in your `app/javascript/application.js`, pass the option `defer: false` to your `javascript_pack_tag`.
+
+The `javascript_pack_tag` also supports the `async` attribute, which you can enable by passing `async: true`:
+
+```erb
+<%= javascript_pack_tag 'application', async: true %>
+```
+
+This will generate script tags with the `async` attribute, which allows the browser to download and execute the script asynchronously without blocking HTML parsing:
+
+```html
+<script src="/packs/vendor-16838bab065ae1e314.js" async></script>
+<script src="/packs/application~runtime-16838bab065ae1e314.js" async></script>
+<script src="/packs/application-1016838bab065ae1e314.js" async></script>
+```
+
+Note that when using `async: true`, scripts may execute in any order as soon as they're downloaded, which could cause issues if your code has dependencies between files. In most cases, `defer` (the default) is preferred as it maintains execution order.
+
+> [!NOTE]
+>
+> When both `async` and `defer` attributes are specified, `async` takes precedence according to HTML5 specifications. So if you pass both `async: true` and `defer: true`, the script tag will use `async`.
 
 **Important:** Pass all your pack names as multiple arguments, not multiple calls, when using `javascript_pack_tag` and the `stylesheet_pack_tag`. Otherwise, you will get duplicated chunks on the page. 
 
