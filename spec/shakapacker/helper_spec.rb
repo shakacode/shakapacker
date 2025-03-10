@@ -175,6 +175,53 @@ module ActionView::TestCase::Behavior
       }.to raise_error(expected_error_message)
     end
 
+    it "#javascript_pack_tag generates the correct tags when passing `async: true`" do
+      expected = <<~HTML.chomp
+        <script src="/packs/vendors~application~bootstrap-c20632e7baf2c81200d3.chunk.js" async="async"></script>
+        <script src="/packs/vendors~application-e55f2aae30c07fb6d82a.chunk.js" async="async"></script>
+        <script src="/packs/application-k344a6d59eef8632c9d1.js" async="async"></script>
+      HTML
+
+      expect(javascript_pack_tag("application", async: true)).to eq expected
+    end
+
+    it "#javascript_pack_tag generates the correct tags when passing both `defer: true` and `async: true`" do
+      # When both async and defer are specified, async takes precedence per HTML5 spec
+      expected = <<~HTML.chomp
+        <script src="/packs/vendors~application~bootstrap-c20632e7baf2c81200d3.chunk.js" async="async"></script>
+        <script src="/packs/vendors~application-e55f2aae30c07fb6d82a.chunk.js" async="async"></script>
+        <script src="/packs/application-k344a6d59eef8632c9d1.js" async="async"></script>
+      HTML
+
+      expect(javascript_pack_tag("application", defer: true, async: true)).to eq expected
+    end
+
+    it "#append_javascript_pack_tag supports the async attribute" do
+      append_javascript_pack_tag("bootstrap", async: true)
+
+      expected = <<~HTML.chomp
+        <script src="/packs/bootstrap-300631c4f0e0f9c865bc.js" async="async"></script>
+        <script src="/packs/vendors~application~bootstrap-c20632e7baf2c81200d3.chunk.js" defer="defer"></script>
+        <script src="/packs/vendors~application-e55f2aae30c07fb6d82a.chunk.js" defer="defer"></script>
+        <script src="/packs/application-k344a6d59eef8632c9d1.js" defer="defer"></script>
+      HTML
+
+      expect(javascript_pack_tag("application")).to eq expected
+    end
+
+    it "#prepend_javascript_pack_tag supports the async attribute" do
+      prepend_javascript_pack_tag("main", async: true)
+
+      expected = <<~HTML.chomp
+        <script src="/packs/main-e323a53c7f30f5d53cbb.js" async="async"></script>
+        <script src="/packs/vendors~application~bootstrap-c20632e7baf2c81200d3.chunk.js" defer="defer"></script>
+        <script src="/packs/vendors~application-e55f2aae30c07fb6d82a.chunk.js" defer="defer"></script>
+        <script src="/packs/application-k344a6d59eef8632c9d1.js" defer="defer"></script>
+      HTML
+
+      expect(javascript_pack_tag("application")).to eq expected
+    end
+
     it "#stylesheet_pack_tag generates the correct link tag with string arguments" do
       expected = (application_stylesheet_chunks + hello_stimulus_stylesheet_chunks)
         .uniq
