@@ -12,6 +12,7 @@ Changes since the last non-beta release.
 
 ### Added
 
+- Support for `async` attribute in `javascript_pack_tag`, `append_javascript_pack_tag`, and `prepend_javascript_pack_tag`. [PR 554](https://github.com/shakacode/shakapacker/pull/554) by [AbanoubGhadban](https://github.com/abanoubghadban).
 - Allow `babel-loader` v10. [PR 552](https://github.com/shakacode/shakapacker/pull/552) by [shoeyn](https://github.com/shoeyn).
 
 ## [v8.1.0] - January 20, 2025
