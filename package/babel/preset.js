@@ -1,5 +1,18 @@
-const { moduleExists } = require("shakapacker")
+const { moduleExists, packageFullVersion } = require("../utils/helpers")
 
+const coreJsVersion = () => {
+  try {
+    return packageFullVersion("core-js").match(/^\d+\.\d+/)[0]
+  } catch (e) {
+    if (e.code !== "MODULE_NOT_FOUND") {
+      throw e
+    }
+
+    return "3.8"
+  }
+}
+
+/** @param api {import("@babel/core").ConfigAPI} */
 module.exports = function config(api) {
   const validEnv = ["development", "test", "production"]
   const currentEnv = api.env()
@@ -9,9 +22,7 @@ module.exports = function config(api) {
 
   if (!validEnv.includes(currentEnv)) {
     throw new Error(
-      `Please specify a valid NODE_ENV or BABEL_ENV environment variable. Valid values are "development", "test", and "production". Instead, received: "${JSON.stringify(
-        currentEnv
-      )}".`
+      `Please specify a valid NODE_ENV or BABEL_ENV environment variable. Valid values are "development", "test", and "production". Instead, received: "${currentEnv}".`
     )
   }
 
@@ -22,7 +33,7 @@ module.exports = function config(api) {
         "@babel/preset-env",
         {
           useBuiltIns: "entry",
-          corejs: "3.8",
+          corejs: coreJsVersion(),
           modules: "auto",
           bugfixes: true,
           exclude: ["transform-typeof-symbol"]
