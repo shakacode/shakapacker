@@ -1,5 +1,6 @@
 declare module 'shakapacker' {
-  import { Configuration } from 'webpack'
+  import { Configuration, RuleSetRule } from 'webpack'
+  import { Configuration as WebpackDevServerConfiguration } from 'webpack-dev-server'
 
   export interface Config {
     source_path: string
@@ -32,12 +33,26 @@ declare module 'shakapacker' {
     runningWebpackDevServer: boolean
   }
 
+  type CamelToSnakeCase<S extends string> = S extends `${infer First}${infer Rest}`
+    ? Rest extends Uncapitalize<Rest> // Check if `Rest` starts with a lowercase letter
+      ? `${Lowercase<First>}${CamelToSnakeCase<Rest>}`
+      : `${Lowercase<First>}_${CamelToSnakeCase<Uncapitalize<Rest>>}`
+    : S
+
+  type SnakeCase<T> = {
+    [K in keyof T as CamelToSnakeCase<string & K>]: T[K];
+  }
+
+  type DevServerConfig = SnakeCase<Omit<WebpackDevServerConfiguration, 'hot'>> & {
+    hmr?: boolean
+  }
+
   export const config: Config
-  export const devServer: Record<string, unknown>
+  export const devServer: DevServerConfig
   export function generateWebpackConfig(extraConfig?: Configuration): Configuration
   export const baseConfig: Configuration
   export const env: Env
-  export const rules: Record<string, unknown>
+  export const rules: RuleSetRule[]
   export function moduleExists(packageName: string): boolean
   export function canProcess<T = unknown>(rule: string, fn: (modulePath: string) => T): T | null
   export const inliningCss: boolean
