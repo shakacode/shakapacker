@@ -10,6 +10,7 @@ _next_ branch is for v8 changes
 ## [Unreleased]
 Changes since the last non-beta release.
 
+## [v8.2.0] - March 12, 2025
 ### Added
 
 - Support for `async` attribute in `javascript_pack_tag`, `append_javascript_pack_tag`, and `prepend_javascript_pack_tag`. [PR 554](https://github.com/shakacode/shakapacker/pull/554) by [AbanoubGhadban](https://github.com/abanoubghadban).
