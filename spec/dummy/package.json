@@ -40,5 +40,5 @@
     "react-refresh": "^0.14.0",
     "webpack-dev-server": "^4.9.2"
   },
-  "packageManager": "yarn@1.22.24"
+  "packageManager": "yarn@1.22.22"
 }

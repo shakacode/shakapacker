@@ -407,7 +407,8 @@ Note: [Rubygem is 6.3.0.pre.rc.1](https://rubygems.org/gems/shakapacker/versions
 ## v5.4.3 and prior changes from rails/webpacker
 See [CHANGELOG.md in rails/webpacker (up to v5.4.3)](https://github.com/rails/webpacker/blob/master/CHANGELOG.md)
 
-[Unreleased]: https://github.com/shakacode/shakapacker/compare/v8.1.0...main
+[Unreleased]: https://github.com/shakacode/shakapacker/compare/v8.2.0...main
+[v8.2.0]: https://github.com/shakacode/shakapacker/compare/v8.1.0...v8.2.0
 [v8.1.0]: https://github.com/shakacode/shakapacker/compare/v8.0.2...v8.1.0
 [v8.0.2]: https://github.com/shakacode/shakapacker/compare/v8.0.1...v8.0.2
 [v8.0.1]: https://github.com/shakacode/shakapacker/compare/v8.0.0...v8.0.1

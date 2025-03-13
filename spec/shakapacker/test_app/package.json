@@ -10,5 +10,5 @@
   "devDependencies": {
     "right-pad": "^1.0.1"
   },
-  "packageManager": "yarn@1.22.24"
+  "packageManager": "yarn@1.22.22"
 }
