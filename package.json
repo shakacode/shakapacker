@@ -27,6 +27,8 @@
     "path-complete-extname": "^1.0.0"
   },
   "devDependencies": {
+    "@types/webpack-dev-middleware": "5.0.2",
+    "@types/webpack-dev-server": "4.5.1",
     "babel-loader": "^8.2.4",
     "compression-webpack-plugin": "^9.0.0",
     "esbuild-loader": "^2.18.0",
@@ -54,7 +56,6 @@
     "@babel/preset-env": "^7.16.11",
     "@babel/runtime": "^7.17.9",
     "@types/babel__core": "^7.0.0",
-    "@types/webpack": "^5.0.0",
     "babel-loader": "^8.2.4 || ^9.0.0 || ^10.0.0",
     "compression-webpack-plugin": "^9.0.0 || ^10.0.0|| ^11.0.0",
     "terser-webpack-plugin": "^5.3.1",
@@ -66,9 +67,6 @@
   },
   "peerDependenciesMeta": {
     "@types/babel__core": {
-      "optional": true
-    },
-    "@types/webpack": {
       "optional": true
     }
   },
