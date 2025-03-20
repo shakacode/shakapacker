@@ -6,19 +6,23 @@
 
 _next_ branch is for v8 changes
 
-## Versions
+# Versions
 ## [Unreleased]
 Changes since the last non-beta release.
+
+### Changed
+
+- Instead of a fixed `core-js` version, take the current one from `node_modules` if available. [PR 556](https://github.com/shakacode/shakapacker/pull/556) by [alexeyr-ci2](https://github.com/alexeyr-ci2).
+
+### Fixed
+
+- More precise types for `devServer` and `rules` in the configuration. [PR 555](https://github.com/shakacode/shakapacker/pull/555) by [alexeyr-ci2](https://github.com/alexeyr-ci2).
 
 ## [v8.2.0] - March 12, 2025
 ### Added
 
 - Support for `async` attribute in `javascript_pack_tag`, `append_javascript_pack_tag`, and `prepend_javascript_pack_tag`. [PR 554](https://github.com/shakacode/shakapacker/pull/554) by [AbanoubGhadban](https://github.com/abanoubghadban).
 - Allow `babel-loader` v10. [PR 552](https://github.com/shakacode/shakapacker/pull/552) by [shoeyn](https://github.com/shoeyn).
-
-### Changed
-
-- Instead of a fixed `core-js` version, take the current one from `node_modules` if available. [PR 556](https://github.com/shakacode/shakapacker/pull/556) by [alexeyr-ci2](https://github.com/alexeyr-ci2).
 
 ## [v8.1.0] - January 20, 2025
 
