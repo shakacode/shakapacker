@@ -8,6 +8,10 @@
 ## [Unreleased]
 Changes since the last non-beta release.
 
+### Added
+
+- Allow `webpack-assets-manifest` v6. [PR 562](https://github.com/shakacode/shakapacker/pull/562) by [tagliala](https://github.com/tagliala)[shoeyn](https://github.com/shoeyn).
+
 ### Changed
 
 - Instead of a fixed `core-js` version, take the current one from `node_modules` if available. [PR 556](https://github.com/shakacode/shakapacker/pull/556) by [alexeyr-ci2](https://github.com/alexeyr-ci2).
