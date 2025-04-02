@@ -75,7 +75,8 @@ const getModulePaths = () => {
 const getPlugins = () => {
   const plugins = [
     new webpack.EnvironmentPlugin(process.env),
-    new WebpackAssetsManifest({
+    const webpackAssetsManifest = WebpackAssetsManifest.hasOwnProperty("WebpackAssetsManifest") ? WebpackAssetsManifest.WebpackAssetsManifest : WebpackAssetsManifest
+    new webpackAssetsManifest({
       entrypoints: true,
       writeToDisk: true,
       output: config.manifestPath,
