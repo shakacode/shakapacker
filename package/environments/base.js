@@ -4,6 +4,7 @@
 const { existsSync, readdirSync } = require("fs")
 const { basename, dirname, join, relative, resolve } = require("path")
 const extname = require("path-complete-extname")
+// TODO: Change to `const { WebpackAssetsManifest }` when dropping 'webpack-assets-manifest < 6.0.0' (Node >=20.10.0) support
 const WebpackAssetsManifest = require("webpack-assets-manifest")
 const webpack = require("webpack")
 const rules = require("../rules")
@@ -72,10 +73,15 @@ const getModulePaths = () => {
   return result
 }
 
+// TODO: Remove WebpackAssetsManifestConstructor workaround when dropping 'webpack-assets-manifest < 6.0.0' (Node >=20.10.0) support
+const WebpackAssetsManifestConstructor =
+  "WebpackAssetsManifest" in WebpackAssetsManifest
+    ? WebpackAssetsManifest.WebpackAssetsManifest
+    : WebpackAssetsManifest
 const getPlugins = () => {
   const plugins = [
     new webpack.EnvironmentPlugin(process.env),
-    new WebpackAssetsManifest({
+    new WebpackAssetsManifestConstructor({
       entrypoints: true,
       writeToDisk: true,
       output: config.manifestPath,
