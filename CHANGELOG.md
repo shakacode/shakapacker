@@ -10,7 +10,7 @@ Changes since the last non-beta release.
 
 ### Added
 
-- Allow `webpack-assets-manifest` v6. [PR 562](https://github.com/shakacode/shakapacker/pull/562) by [tagliala](https://github.com/tagliala)[shoeyn](https://github.com/shoeyn).
+- Allow `webpack-assets-manifest` v6. [PR 562](https://github.com/shakacode/shakapacker/pull/562) by [tagliala](https://github.com/tagliala), [shoeyn](https://github.com/shoeyn).
 
 ### Changed
 
