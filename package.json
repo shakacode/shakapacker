@@ -44,7 +44,7 @@
     "prettier": "^3.2.5",
     "swc-loader": "^0.1.15",
     "thenify": "^3.3.1",
-    "webpack": "^5.72.0",
+    "webpack": "^5.99.2",
     "webpack-assets-manifest": "^5.0.6",
     "webpack-merge": "^5.8.0"
   },
