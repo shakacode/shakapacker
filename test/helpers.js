@@ -9,7 +9,7 @@ const createTrackLoader = () => {
     filesTracked,
     (source) => {
       filesTracked[source.resource] = true
-      return source
+      return "" // Fix #567
     }
   ]
 }
