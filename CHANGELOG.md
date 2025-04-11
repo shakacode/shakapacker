@@ -8,6 +8,11 @@
 ## [Unreleased]
 Changes since the last non-beta release.
 
+
+### Added
+
+- Support for subresource integrity. [PR 570](https://github.com/shakacode/shakapacker/pull/570) by [panagiotisplytas](https://github.com/panagiotisplytas)
+
 ### Fixed
 
 - Install the latest major version of peer dependencies [PR 576](https://github.com/shakacode/shakapacker/pull/576) by [G-Rath](https://github.com/g-rath).
