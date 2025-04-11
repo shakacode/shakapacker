@@ -86,7 +86,9 @@ const getPlugins = () => {
       writeToDisk: true,
       output: config.manifestPath,
       entrypointsUseAssets: true,
-      publicPath: config.publicPathWithoutCDN
+      publicPath: config.publicPathWithoutCDN,
+      integrity: config.integrity.enabled,
+      integrityHashes: config.integrity.hash_functions
     })
   ]
 
@@ -101,6 +103,22 @@ const getPlugins = () => {
         // the css order warnings can be disabled by setting the ignoreOrder flag.
         // Read: https://stackoverflow.com/questions/51971857/mini-css-extract-plugin-warning-in-chunk-chunkname-mini-css-extract-plugin-con
         ignoreOrder: config.css_extract_ignore_order_warnings
+      })
+    )
+  }
+
+  if (
+    moduleExists("webpack-subresource-integrity") &&
+    config.integrity.enabled
+  ) {
+    const {
+      SubresourceIntegrityPlugin
+    } = require("webpack-subresource-integrity")
+
+    plugins.push(
+      new SubresourceIntegrityPlugin({
+        hashFuncNames: config.integrity.hash_functions,
+        enabled: isProduction
       })
     )
   }
@@ -121,7 +139,12 @@ module.exports = {
     // https://webpack.js.org/configuration/output/#outputhotupdatechunkfilename
     hotUpdateChunkFilename: "js/[id].[fullhash].hot-update.js",
     path: config.outputPath,
-    publicPath: config.publicPath
+    publicPath: config.publicPath,
+
+    // This is required for SRI to work.
+    crossOriginLoading: config.integrity.enabled
+      ? config.integrity.cross_origin
+      : false
   },
   entry: getEntryObject(),
   resolve: {
