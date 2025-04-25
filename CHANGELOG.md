@@ -15,6 +15,7 @@ Changes since the last non-beta release.
 ### Changed
 
 - Instead of a fixed `core-js` version, take the current one from `node_modules` if available. [PR 556](https://github.com/shakacode/shakapacker/pull/556) by [alexeyr-ci2](https://github.com/alexeyr-ci2).
+- Require webpack >= 5.76.0 to reduce exposure to CVE-2023-28154. [PR 568](https://github.com/shakacode/shakapacker/pull/568) by [granowski](https://github.com/granowski).
 
 ### Fixed
 
