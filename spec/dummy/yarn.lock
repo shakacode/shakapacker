@@ -3980,7 +3980,7 @@ setprototypeof@1.2.0:
   integrity sha512-E5LDX7Wrp85Kil5bhZv46j8jOeboKq5JMmYM3gVGdGH8xFpPWXUMsNrlODCrkoxMEeNi/XZIwuRvY4XNwYMJpw==
 
 "shakapacker@file:.yalc/shakapacker":
-  version "8.2.0"
+  version "8.3.0"
   dependencies:
     js-yaml "^4.1.0"
     path-complete-extname "^1.0.0"
