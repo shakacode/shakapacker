@@ -54,4 +54,44 @@ describe("Config", () => {
       resolve("app/javascript/manifest.json")
     )
   })
+
+  test("should have integrity disabled by default", () => {
+    const config = require("../../package/config")
+    expect(config.integrity.enabled).toBe(false)
+  })
+
+  test("should have sha384 as default hash function", () => {
+    const config = require("../../package/config")
+    expect(config.integrity.hash_functions).toStrictEqual(["sha384"])
+  })
+
+  test("should have anonymous as default crossorigin", () => {
+    const config = require("../../package/config")
+    expect(config.integrity.cross_origin).toBe("anonymous")
+  })
+
+  test("should allow enabling integrity", () => {
+    process.env.SHAKAPACKER_CONFIG = "config/shakapacker_integrity.yml"
+    const config = require("../../package/config")
+
+    expect(config.integrity.enabled).toBe(true)
+  })
+
+  test("should allow configuring hash functions", () => {
+    process.env.SHAKAPACKER_CONFIG = "config/shakapacker_integrity.yml"
+    const config = require("../../package/config")
+
+    expect(config.integrity.hash_functions).toStrictEqual([
+      "sha384",
+      "sha256",
+      "sha512"
+    ])
+  })
+
+  test("should allow configuring crossorigin", () => {
+    process.env.SHAKAPACKER_CONFIG = "config/shakapacker_integrity.yml"
+    const config = require("../../package/config")
+
+    expect(config.integrity.cross_origin).toBe("use-credentials")
+  })
 })
