@@ -625,7 +625,7 @@ By default, you will find the Shakapacker preset in your `package.json`. Note, y
   ]
 },
 ```
-Optionally, you can change your Babel configuration by removing these lines in your `package.json` and adding [a Babel](https://babeljs.io/docs/en/config-files) configuration file](https://babeljs.io/docs/en/config-files) to your project. For an example of customization based on the original, see [Customizing Babel Config](./docs/customizing_babel_config.md).
+Optionally, you can change your Babel configuration by removing these lines in your `package.json` and adding [a Babel configuration file](https://babeljs.io/docs/en/config-files) to your project. For an example of customization based on the original, see [Customizing Babel Config](./docs/customizing_babel_config.md).
 
 
 ### SWC configuration
