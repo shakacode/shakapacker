@@ -8,6 +8,9 @@
 ## [Unreleased]
 Changes since the last non-beta release.
 
+### Added
+- Support for subresource integrity. [PR 570](https://github.com/shakacode/shakapacker/pull/570) by [panagiotisplytas](https://github.com/panagiotisplytas)
+
 ## [v8.3.0] - April 25, 2025
 ### Added
 

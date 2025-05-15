@@ -109,11 +109,11 @@ module Shakapacker::Helper
     @javascript_pack_tag_loaded = true
 
     capture do
-      concat javascript_include_tag(*async, **options.dup.tap { |o| o[:async] = true })
+      render_tags(async, :javascript, **options.dup.tap { |o| o[:async] = true })
       concat "\n" if async.any? && deferred.any?
-      concat javascript_include_tag(*deferred, **options.dup.tap { |o| o[:defer] = true })
+      render_tags(deferred, :javascript, **options.dup.tap { |o| o[:defer] = true })
       concat "\n" if sync.any? && deferred.any?
-      concat javascript_include_tag(*sync, **options)
+      render_tags(sync, :javascript, options)
     end
   end
 
@@ -166,7 +166,9 @@ module Shakapacker::Helper
 
     @stylesheet_pack_tag_loaded = true
 
-    stylesheet_link_tag(*(requested_packs | appended_packs), **options)
+    capture do
+      render_tags(requested_packs | appended_packs, :stylesheet, options)
+    end
   end
 
   def append_stylesheet_pack_tag(*names)
@@ -237,5 +239,39 @@ module Shakapacker::Helper
       path_to_asset(current_shakapacker_instance.manifest.lookup!(path), options)
     rescue
       path_to_asset(current_shakapacker_instance.manifest.lookup!(name), options)
+    end
+
+    def lookup_integrity(source)
+      (source.respond_to?(:dig) && source.dig("integrity")) || nil
+    end
+
+    def lookup_source(source)
+      (source.respond_to?(:dig) && source.dig("src")) || source
+    end
+
+    # Handles rendering javascript and stylesheet tags with integrity, if that's enabled.
+    def render_tags(sources, type, options)
+      return unless sources.present? || type.present?
+
+      sources.each.with_index do |source, index|
+        tag_source = lookup_source(source)
+
+        if current_shakapacker_instance.config.integrity[:enabled]
+          integrity = lookup_integrity(source)
+
+          if integrity.present?
+            options[:integrity] = integrity
+            options[:crossorigin] = current_shakapacker_instance.config.integrity[:cross_origin]
+          end
+        end
+
+        if type == :javascript
+          concat javascript_include_tag(tag_source, **options)
+        else
+          concat stylesheet_link_tag(tag_source, **options)
+        end
+
+        concat "\n" unless index == sources.size - 1
+      end
     end
 end

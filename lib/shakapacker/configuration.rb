@@ -99,6 +99,10 @@ class Shakapacker::Configuration
     )
   end
 
+  def integrity
+    fetch(:integrity)
+  end
+
   private
     def data
       @data ||= load
