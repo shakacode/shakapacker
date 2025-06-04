@@ -8,6 +8,11 @@
 ## [Unreleased]
 Changes since the last non-beta release.
 
+
+### Added
+
+- Support for subresource integrity. [PR 570](https://github.com/shakacode/shakapacker/pull/570) by [panagiotisplytas](https://github.com/panagiotisplytas)
+
 ### Fixed
 
 - Remove duplicate word in comment from generated `shakapacker.yml` config [PR 572](https://github.com/shakacode/shakapacker/pull/572) by [G-Rath](https://github.com/g-rath).
