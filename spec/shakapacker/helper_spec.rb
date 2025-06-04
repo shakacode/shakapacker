@@ -371,7 +371,7 @@ module ActionView::TestCase::Behavior
             <script src="/packs/bootstrap-300631c4f0e0f9c865bc.js" crossorigin="anonymous" defer="defer" integrity="sha384-hash"></script>
         HTML
 
-        expect(javascript_pack_tag("application_with_integrity", "bootstrap_with_integrity")).to eq expected
+        expect_script_tags_match(javascript_pack_tag("application_with_integrity", "bootstrap_with_integrity"), expected)
       end
 
       it "#javascript_pack_tag generates the correct tags when passing `defer: false`" do
@@ -382,7 +382,7 @@ module ActionView::TestCase::Behavior
           <script src="/packs/bootstrap-300631c4f0e0f9c865bc.js" crossorigin="anonymous" integrity="sha384-hash"></script>
         HTML
 
-        expect(javascript_pack_tag("application_with_integrity", "bootstrap_with_integrity", defer: false)).to eq expected
+        expect_script_tags_match(javascript_pack_tag("application_with_integrity", "bootstrap_with_integrity", defer: false), expected)
       end
 
       it "#javascript_pack_tag generates the correct appended tag" do
@@ -395,7 +395,7 @@ module ActionView::TestCase::Behavior
           <script src="/packs/bootstrap-300631c4f0e0f9c865bc.js" crossorigin="anonymous" integrity="sha384-hash"></script>
         HTML
 
-        expect(javascript_pack_tag("application_with_integrity")).to eq expected
+        expect_script_tags_match(javascript_pack_tag("application_with_integrity"), expected)
       end
 
       it "#javascript_pack_tag generates the correct prepended tag" do
@@ -410,7 +410,7 @@ module ActionView::TestCase::Behavior
           <script src="/packs/application-k344a6d59eef8632c9d1.js" crossorigin="anonymous" defer="defer" integrity="sha384-hash"></script>
         HTML
 
-        expect(javascript_pack_tag("application_with_integrity")).to eq expected
+        expect_script_tags_match(javascript_pack_tag("application_with_integrity"), expected)
       end
 
       it "#append_javascript_pack_tag raises an error if called after calling #javascript_pack_tag" do
@@ -442,7 +442,7 @@ module ActionView::TestCase::Behavior
             <script src="/packs/application-k344a6d59eef8632c9d1.js" crossorigin="anonymous" defer="defer" integrity="sha384-hash"></script>
         HTML
 
-        expect(javascript_pack_tag("application_with_integrity", defer: true)).to eq expected
+        expect_script_tags_match(javascript_pack_tag("application_with_integrity", defer: true), expected)
       end
 
       it "#javascript_pack_tag generates the correct tags when passing a symbol" do
@@ -452,7 +452,7 @@ module ActionView::TestCase::Behavior
             <script src="/packs/application-k344a6d59eef8632c9d1.js" crossorigin="anonymous" defer="defer" integrity="sha384-hash"></script>
         HTML
 
-        expect(javascript_pack_tag(:application_with_integrity)).to eq expected
+        expect_script_tags_match(javascript_pack_tag(:application_with_integrity), expected)
       end
 
       it "#javascript_pack_tag raises error on multiple invocations" do
@@ -472,7 +472,7 @@ module ActionView::TestCase::Behavior
             <script src="/packs/application-k344a6d59eef8632c9d1.js" crossorigin="anonymous" async="async" integrity="sha384-hash"></script>
         HTML
 
-        expect(javascript_pack_tag("application_with_integrity", async: true)).to eq expected
+        expect_script_tags_match(javascript_pack_tag("application_with_integrity", async: true), expected)
       end
 
       it "#javascript_pack_tag generates the correct tags when passing both `defer: true` and `async: true`" do
@@ -483,7 +483,7 @@ module ActionView::TestCase::Behavior
           <script src="/packs/application-k344a6d59eef8632c9d1.js" crossorigin="anonymous" async="async" integrity="sha384-hash"></script>
         HTML
 
-        expect(javascript_pack_tag("application_with_integrity", defer: true, async: true)).to eq expected
+        expect_script_tags_match(javascript_pack_tag("application_with_integrity", defer: true, async: true), expected)
       end
 
       it "#append_javascript_pack_tag supports the async attribute" do
@@ -496,7 +496,7 @@ module ActionView::TestCase::Behavior
           <script src="/packs/application-k344a6d59eef8632c9d1.js" crossorigin="anonymous" defer="defer" integrity="sha384-hash"></script>
         HTML
 
-        expect(javascript_pack_tag("application_with_integrity")).to eq expected
+        expect_script_tags_match(javascript_pack_tag("application_with_integrity"), expected)
       end
 
       it "#prepend_javascript_pack_tag supports the async attribute" do
@@ -509,7 +509,7 @@ module ActionView::TestCase::Behavior
           <script src="/packs/application-k344a6d59eef8632c9d1.js" crossorigin="anonymous" defer="defer" integrity="sha384-hash"></script>
         HTML
 
-        expect(javascript_pack_tag("application_with_integrity")).to eq expected
+        expect_script_tags_match(javascript_pack_tag("application_with_integrity"), expected)
       end
 
       it "#stylesheet_pack_tag generates the correct link tag with string arguments" do
@@ -518,7 +518,7 @@ module ActionView::TestCase::Behavior
                      .map { |chunk| stylesheet_link_tag(chunk, crossorigin: "anonymous", integrity: "sha384-hash") }
                      .join("\n")
 
-        expect(stylesheet_pack_tag("application_with_integrity", "hello_stimulus_with_integrity")).to eq expected
+        expect_stylesheet_link_tags_match(stylesheet_pack_tag("application_with_integrity", "hello_stimulus_with_integrity"), expected)
       end
 
       it "#stylesheet_pack_tag generates the correct link tag with symbol arguments" do
@@ -527,7 +527,7 @@ module ActionView::TestCase::Behavior
                      .map { |chunk| stylesheet_link_tag(chunk, crossorigin: "anonymous", integrity: "sha384-hash") }
                      .join("\n")
 
-        expect(stylesheet_pack_tag(:application_with_integrity, :hello_stimulus_with_integrity)).to eq expected
+        expect_stylesheet_link_tags_match(stylesheet_pack_tag(:application_with_integrity, :hello_stimulus_with_integrity), expected)
       end
 
       it "#stylesheet_pack_tag generates the correct link tag with mixed arguments" do
@@ -535,16 +535,16 @@ module ActionView::TestCase::Behavior
                      .map { |chunk| stylesheet_link_tag(chunk, media: "all", crossorigin: "anonymous", integrity: "sha384-hash") }
                      .join("\n")
 
-        expect(stylesheet_pack_tag("application_with_integrity", media: "all")).to eq expected
+        expect_stylesheet_link_tags_match(stylesheet_pack_tag("application_with_integrity", media: "all"), expected)
       end
 
       it "#stylesheet_pack_tag allows multiple invocations" do
         app_style = stylesheet_pack_tag(:application_with_integrity)
         stimulus_style = stylesheet_pack_tag(:hello_stimulus_with_integrity)
 
-        expect(app_style).to eq application_stylesheet_chunks.map { |chunk| stylesheet_link_tag(chunk, crossorigin: "anonymous", integrity: "sha384-hash") }.join("\n")
+        expect_stylesheet_link_tags_match(app_style, application_stylesheet_chunks.map { |chunk| stylesheet_link_tag(chunk, crossorigin: "anonymous", integrity: "sha384-hash") }.join("\n"))
 
-        expect(stimulus_style).to eq hello_stimulus_stylesheet_chunks.map { |chunk| stylesheet_link_tag(chunk, crossorigin: "anonymous", integrity: "sha384-hash") }.join("\n")
+        expect_stylesheet_link_tags_match(stimulus_style, hello_stimulus_stylesheet_chunks.map { |chunk| stylesheet_link_tag(chunk, crossorigin: "anonymous", integrity: "sha384-hash") }.join("\n"))
 
         expect {
           stylesheet_pack_tag(:application_with_integrity)
@@ -555,16 +555,16 @@ module ActionView::TestCase::Behavior
       it "#stylesheet_pack_tag appends tags" do
         append_stylesheet_pack_tag(:hello_stimulus_with_integrity)
 
-        expect(stylesheet_pack_tag("application_with_integrity")).to eq \
-                                                       (application_stylesheet_chunks + hello_stimulus_stylesheet_chunks).uniq.map { |chunk| stylesheet_link_tag(chunk, crossorigin: "anonymous", integrity: "sha384-hash") }.join("\n")
+        expect_stylesheet_link_tags_match(stylesheet_pack_tag("application_with_integrity"),
+                                          (application_stylesheet_chunks + hello_stimulus_stylesheet_chunks).uniq.map { |chunk| stylesheet_link_tag(chunk, crossorigin: "anonymous", integrity: "sha384-hash") }.join("\n"))
       end
 
       it "#stylesheet_pack_tag appends duplicate" do
         append_stylesheet_pack_tag("hello_stimulus_with_integrity")
         append_stylesheet_pack_tag(:application_with_integrity)
 
-        expect(stylesheet_pack_tag("application_with_integrity")).to eq \
-                                                       (application_stylesheet_chunks + hello_stimulus_stylesheet_chunks).uniq.map { |chunk| stylesheet_link_tag(chunk, crossorigin: "anonymous", integrity: "sha384-hash") }.join("\n")
+        expect_stylesheet_link_tags_match(stylesheet_pack_tag("application_with_integrity"),
+                                                       (application_stylesheet_chunks + hello_stimulus_stylesheet_chunks).uniq.map { |chunk| stylesheet_link_tag(chunk, crossorigin: "anonymous", integrity: "sha384-hash") }.join("\n"))
       end
 
       it "#stylesheet_pack_tag supports multiple invocations with different media attr values" do
@@ -572,9 +572,9 @@ module ActionView::TestCase::Behavior
         app_style_with_media = stylesheet_pack_tag(:application_with_integrity, media: "print")
         hello_stimulus_style_with_media = stylesheet_pack_tag(:hello_stimulus_with_integrity, media: "all")
 
-        expect(app_style).to eq application_stylesheet_chunks.map { |chunk| stylesheet_link_tag(chunk, crossorigin: "anonymous", integrity: "sha384-hash") }.join("\n")
-        expect(app_style_with_media).to eq application_stylesheet_chunks.map { |chunk| stylesheet_link_tag(chunk, media: "print", crossorigin: "anonymous", integrity: "sha384-hash") }.join("\n")
-        expect(hello_stimulus_style_with_media).to eq hello_stimulus_stylesheet_chunks.map { |chunk| stylesheet_link_tag(chunk, media: "all", crossorigin: "anonymous", integrity: "sha384-hash") }.join("\n")
+        expect_stylesheet_link_tags_match(app_style, application_stylesheet_chunks.map { |chunk| stylesheet_link_tag(chunk, crossorigin: "anonymous", integrity: "sha384-hash") }.join("\n"))
+        expect_stylesheet_link_tags_match(app_style_with_media, application_stylesheet_chunks.map { |chunk| stylesheet_link_tag(chunk, media: "print", crossorigin: "anonymous", integrity: "sha384-hash") }.join("\n"))
+        expect_stylesheet_link_tags_match(hello_stimulus_style_with_media, hello_stimulus_stylesheet_chunks.map { |chunk| stylesheet_link_tag(chunk, media: "all", crossorigin: "anonymous", integrity: "sha384-hash") }.join("\n"))
       end
     end
   end
