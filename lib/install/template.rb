@@ -136,7 +136,7 @@ Dir.chdir(Rails.root) do
   dev_dependencies_to_add = []
 
   peers.each do |(package, version)|
-    major_version = version.match(/(\d+)/)[1]
+    major_version = version.split("||").last.match(/(\d+)/)[1]
     entry = "#{package}@#{major_version}"
 
     if dev_dependency_packages.include? package
