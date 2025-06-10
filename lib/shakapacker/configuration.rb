@@ -100,7 +100,11 @@ class Shakapacker::Configuration
   end
 
   def integrity
-    fetch(:integrity)
+    integrity_configuration = fetch(:integrity)
+
+    return integrity_configuration if integrity_configuration.is_a?(Hash)
+
+    defaults[:integrity].merge({ enabled: integrity_configuration })
   end
 
   private
