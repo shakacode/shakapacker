@@ -51,4 +51,17 @@ if (config.manifest_path) {
   config.manifestPath = resolve(config.outputPath, "manifest.json")
 }
 
+if (typeof config.integrity === "boolean") {
+  config.integrity = {
+    enabled: config.integrity,
+    hash_functions: ["sha384"],
+    cross_origin: "anonymous"
+  }
+} else {
+  // Ensure no duplicate hash functions exist in the returned config object
+  config.integrity.hash_functions = [
+    ...new Set(config.integrity.hash_functions)
+  ]
+}
+
 module.exports = config
