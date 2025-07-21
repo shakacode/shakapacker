@@ -10,6 +10,7 @@ Changes since the last non-beta release.
 
 ### Fixed
 
+- Install the latest major version of peer dependencies [PR 576](https://github.com/shakacode/shakapacker/pull/576) by [G-Rath](https://github.com/g-rath).
 - Remove duplicate word in comment from generated `shakapacker.yml` config [PR 572](https://github.com/shakacode/shakapacker/pull/572) by [G-Rath](https://github.com/g-rath).
 
 ## [v8.3.0] - April 25, 2025
