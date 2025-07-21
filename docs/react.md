@@ -61,11 +61,7 @@ const webpackConfig = generateWebpackConfig();
 
 if (isDevelopment && inliningCss) {
   webpackConfig.plugins.push(
-    new ReactRefreshWebpackPlugin({
-      overlay: {
-        sockPort: webpackConfig.devServer.port,
-      },
-    })
+    new ReactRefreshWebpackPlugin()
   );
 }
 
@@ -201,11 +197,7 @@ const webpackConfig = generateWebpackConfig();
 
 if (isDevelopment && inliningCss) {
   webpackConfig.plugins.push(
-    new ReactRefreshWebpackPlugin({
-      overlay: {
-        sockPort: webpackConfig.devServer.port,
-      },
-    })
+    new ReactRefreshWebpackPlugin()
   );
 }
 
