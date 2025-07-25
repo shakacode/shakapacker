@@ -11,6 +11,54 @@
   "static/nested/image.jpg": "/packs/static/nested/image-c38deda30895059837cf.jpg",
   "static/mb-icon.png": "/packs/static/mb-icon-c38deda30895059837cf.png",
   "static/nested/mb-icon.png": "/packs/static/nested/mb-icon-c38deda30895059837cf.png",
+  "bootstrap_with_integrity.css": {
+    "src": "/packs/bootstrap_with_integrity-c38deda30895059837cf.css",
+    "integrity": "sha384-hash"
+  },
+  "bootstrap_with_integrity.js": {
+    "src": "/packs/bootstrap_with_integrity-300631c4f0e0f9c865bc.js",
+    "integrity": "sha384-hash"
+  },
+  "application_with_integrity.css": {
+    "src": "/packs/application_with_integrity-dd6b1cd38bfa093df600.css",
+    "integrity": "sha384-hash"
+  },
+  "main_with_integrity.js": {
+    "src": "/packs/main_with_integrity-e323a53c7f30f5d53cbb.js",
+    "integrity": "sha384-hash"
+  },
+  "application_with_integrity.js": {
+    "src": "/packs/application_with_integrity-k344a6d59eef8632c9d1.js",
+    "integrity": "sha384-hash"
+  },
+  "application_with_integrity.png": {
+    "src": "/packs/application_with_integrity-k344a6d59eef8632c9d1.png",
+    "integrity": "sha384-hash"
+  },
+  "fonts/fa-regular-400_with_integrity.woff2": {
+    "src": "/packs/fonts/fa-regular-400_with_integrity-944fb546bd7018b07190a32244f67dc9.woff2",
+    "integrity": "sha384-hash"
+  },
+  "static/image_with_integrity.jpg": {
+    "src": "/packs/static/image_with_integrity-c38deda30895059837cf.jpg",
+    "integrity": "sha384-hash"
+  },
+  "static/image-2x_with_integrity.jpg": {
+    "src": "/packs/static/image-2x_with_integrity-7cca48e6cae66ec07b8e.jpg",
+    "integrity": "sha384-hash"
+  },
+  "static/nested/image_with_integrity.jpg": {
+    "src": "/packs/static/nested/image_with_integrity-c38deda30895059837cf.jpg",
+    "integrity": "sha384-hash"
+  },
+  "static/mb-icon_with_integrity.png": {
+    "src": "/packs/static/mb-icon_with_integrity-c38deda30895059837cf.png",
+    "integrity": "sha384-hash"
+  },
+  "static/nested/mb-icon_with_integrity.png": {
+    "src": "/packs/static/nested/mb-icon_with_integrity-c38deda30895059837cf.png",
+    "integrity": "sha384-hash"
+  },
   "entrypoints": {
     "application": {
       "assets": {
@@ -51,6 +99,78 @@
       "assets": {
         "css": [
           "/packs/print/application-983b6c164a47f7ed49cd.css"
+        ]
+      }
+    },
+    "application_with_integrity": {
+      "assets": {
+        "js": [
+          {
+            "src": "/packs/vendors~application~bootstrap-c20632e7baf2c81200d3.chunk.js",
+            "integrity": "sha384-hash"
+          },
+          {
+            "src": "/packs/vendors~application-e55f2aae30c07fb6d82a.chunk.js",
+            "integrity": "sha384-hash"
+          },
+          {
+            "src": "/packs/application-k344a6d59eef8632c9d1.js",
+            "integrity": "sha384-hash"
+          }
+        ],
+        "css": [
+          {
+            "src": "/packs/1-c20632e7baf2c81200d3.chunk.css",
+            "integrity": "sha384-hash"
+          },
+          {
+            "src": "/packs/application-k344a6d59eef8632c9d1.chunk.css",
+            "integrity": "sha384-hash"
+          }
+        ]
+      }
+    },
+    "bootstrap_with_integrity": {
+      "assets": {
+        "js": [
+          {
+            "src": "/packs/bootstrap-300631c4f0e0f9c865bc.js",
+            "integrity": "sha384-hash"
+          }
+        ]
+      }
+    },
+    "main_with_integrity": {
+      "assets": {
+        "js": [
+          {
+            "src": "/packs/main-e323a53c7f30f5d53cbb.js",
+            "integrity": "sha384-hash"
+          }
+        ]
+      }
+    },
+    "hello_stimulus_with_integrity": {
+      "assets": {
+        "css": [
+          {
+            "src": "/packs/1-c20632e7baf2c81200d3.chunk.css",
+            "integrity": "sha384-hash"
+          },
+          {
+            "src": "/packs/hello_stimulus-k344a6d59eef8632c9d1.chunk.css",
+            "integrity": "sha384-hash"
+          }
+        ]
+      }
+    },
+    "print/application_with_integrity": {
+      "assets": {
+        "css": [
+          {
+            "src": "/packs/print/application-983b6c164a47f7ed49cd.css",
+            "integrity": "sha384-hash"
+          }
         ]
       }
     }

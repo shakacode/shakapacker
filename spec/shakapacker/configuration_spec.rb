@@ -181,6 +181,54 @@ describe "Shakapacker::Configuration" do
         is_expected.to be true
       end
     end
+
+    describe "#integrity" do
+      it "contains the key :enabled" do
+        expect(config.integrity).to have_key(:enabled)
+      end
+
+      it "contains the key :hash_functions" do
+        expect(config.integrity).to have_key(:hash_functions)
+      end
+
+      it "contains the key :cross_origin" do
+        expect(config.integrity).to have_key(:cross_origin)
+      end
+
+      it "is by default disabled" do
+        expect(config.integrity[:enabled]).to be false
+      end
+
+      it "returns default cross_origin configuration" do
+        expect(config.integrity[:cross_origin]).to eq "anonymous"
+      end
+
+      it "returns default hash_functions" do
+        expect(config.integrity[:hash_functions]).to eq ["sha384"]
+      end
+    end
+  end
+
+  context "with shakapacker config file containing integrity" do
+    let(:config) do
+      Shakapacker::Configuration.new(
+        root_path: ROOT_PATH,
+        config_path: Pathname.new(File.expand_path("./test_app/config/shakapacker_integrity.yml", __dir__)),
+        env: "production"
+      )
+    end
+
+    it "has integrity enabled" do
+      expect(config.integrity[:enabled]).to be true
+    end
+
+    it "has all hash functions set" do
+      expect(config.integrity[:hash_functions]).to eq ["sha256", "sha384", "sha512"]
+    end
+
+    it "has cross_origin set to use-credentials" do
+      expect(config.integrity[:cross_origin]).to eq "use-credentials"
+    end
   end
 
   context "with shakapacker config file containing public_output_path entry" do
@@ -373,5 +421,4 @@ describe "Shakapacker::Configuration" do
       end
     end
   end
-
 end

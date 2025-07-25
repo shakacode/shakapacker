@@ -1,0 +1,20 @@
+# Note: You must restart bin/shakapacker-dev-server for changes to take effect
+
+default: &default
+  integrity:
+    enabled: false
+    hash_functions: ["sha384"]
+    cross_origin: "anonymous"
+
+development:
+  <<: *default
+
+test:
+  <<: *default
+
+production:
+  <<: *default
+  integrity:
+    enabled: true
+    hash_functions: ["sha256", "sha384", "sha512"]
+    cross_origin: "use-credentials"

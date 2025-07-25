@@ -67,7 +67,12 @@ class Shakapacker::Manifest
     end
 
     def find(name)
-      data[name.to_s].presence
+      return nil unless data[name.to_s].present?
+
+      return data[name.to_s] unless data[name.to_s].respond_to?(:dig)
+
+      # Try to return src, if that fails, (ex. entrypoints object) return the whole object.
+      data[name.to_s].dig("src") || data[name.to_s]
     end
 
     def full_pack_name(name, pack_type)
