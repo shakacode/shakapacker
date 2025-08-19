@@ -97,8 +97,23 @@ const getPlugins = () => {
           
           // Use a helper function to resolve file paths consistently
           const resolveFilePath = (file) => {
-            // Return the full path from manifest, trying both the file path and filename
-            return manifest[file] || manifest[file.split('/').pop()] || file
+            // Try exact match first
+            if (manifest[file]) return manifest[file]
+            
+            // Try filename only
+            const filename = file.split('/').pop()
+            if (manifest[filename]) return manifest[filename]
+            
+            // For hashed files, try to find the base name without hash
+            // e.g., "css/org-350a7e61.css" -> "org.css"
+            const baseMatch = filename.match(/^(.+?)-[a-f0-9]+(\.\w+)$/)
+            if (baseMatch) {
+              const baseName = baseMatch[1] + baseMatch[2] // "org.css"
+              if (manifest[baseName]) return manifest[baseName]
+            }
+            
+            // Fallback to original file path
+            return file
           }
           
           entrypointsManifest[entrypointName] = {
