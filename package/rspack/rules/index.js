@@ -1,6 +1,6 @@
 /* eslint global-require: 0 */
 
-const { canProcess, moduleExists } = require("../../utils/helpers")
+const { moduleExists } = require("../../utils/helpers")
 
 const rules = []
 
