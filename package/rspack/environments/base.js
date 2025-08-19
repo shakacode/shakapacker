@@ -112,6 +112,15 @@ const getPlugins = () => {
               if (manifest[baseName]) return manifest[baseName]
             }
             
+            // For webpack chunk files with full directory path
+            // e.g., "js/598-7f94a9abddc251f3.js" -> "js/598-js"
+            const chunkMatch = file.match(/^(.+\/)?(\d+)-[a-f0-9]+\.(js|css)$/)
+            if (chunkMatch) {
+              const [, dir = '', chunkNum, ext] = chunkMatch
+              const chunkKey = `${dir}${chunkNum}-${ext}` // "js/598-js"
+              if (manifest[chunkKey]) return manifest[chunkKey]
+            }
+            
             // Fallback to original file path
             return file
           }
