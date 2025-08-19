@@ -111,8 +111,9 @@ const getPlugins = () => {
   if (moduleExists("css-loader")) {
     const hash = isProduction || config.useContentHash ? "-[contenthash:8]" : ""
     // Use Rspack's built-in CSS extraction
+    const { CssExtractRspackPlugin } = rspack
     plugins.push(
-      new rspack.CssExtractRspackPlugin({
+      new CssExtractRspackPlugin({
         filename: `css/[name]${hash}.css`,
         chunkFilename: `css/[id]${hash}.css`,
         // For projects where css ordering has been mitigated through consistent use of scoping or naming conventions,
