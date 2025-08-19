@@ -2,7 +2,7 @@ const { dirname } = require("path")
 const {
   additional_paths: additionalPaths,
   source_path: sourcePath
-} = require("../config")
+} = require("../../config")
 
 module.exports = {
   test: /\.(bmp|gif|jpe?g|png|tiff|ico|avif|webp|eot|otf|ttf|woff|woff2|svg)$/,
