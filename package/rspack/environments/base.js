@@ -118,7 +118,9 @@ const getPlugins = () => {
         chunkFilename: `css/[id]${hash}.css`,
         // For projects where css ordering has been mitigated through consistent use of scoping or naming conventions,
         // the css order warnings can be disabled by setting the ignoreOrder flag.
-        ignoreOrder: config.css_extract_ignore_order_warnings
+        ignoreOrder: config.css_extract_ignore_order_warnings,
+        // Force writing CSS files to disk in development for Rails compatibility
+        emit: true
       })
     )
   }
