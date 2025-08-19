@@ -2,7 +2,7 @@ const path = require("path")
 const { rspack } = require("@rspack/core")
 const { canProcess } = require("../../utils/helpers")
 const { getStyleRule } = require("../../utils/getStyleRule")
-const { inliningCss } = require("../../utils/inliningCss")
+const inliningCss = require("../../utils/inliningCss")
 
 const {
   additional_paths: paths,
