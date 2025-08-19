@@ -76,6 +76,22 @@ const getModulePaths = () => {
 const getPlugins = () => {
   const plugins = [
     new rspack.EnvironmentPlugin(process.env),
+    // Copy static assets to preserve directory structure
+    new rspack.CopyRspackPlugin({
+      patterns: [
+        {
+          from: "static",
+          to: "static",
+          noErrorOnMissing: true
+        },
+        // Also copy images to static/images to match Rails expectations
+        {
+          from: "images",
+          to: "static/images",
+          noErrorOnMissing: true
+        }
+      ]
+    }),
     new RspackManifestPlugin({
       fileName: config.manifestPath.split('/').pop(), // Get just the filename
       publicPath: config.publicPathWithoutCDN,
@@ -86,10 +102,14 @@ const getPlugins = () => {
         
         // Add entrypoints information
         const entrypointsManifest = {}
-        for (const [entrypointName, chunks] of Object.entries(entrypoints)) {
+        for (const [entrypointName, entrypointFiles] of Object.entries(entrypoints)) {
+          // rspack-manifest-plugin provides files as arrays, not objects with js/css properties
+          const jsFiles = entrypointFiles.filter(file => file.endsWith('.js'))
+          const cssFiles = entrypointFiles.filter(file => file.endsWith('.css'))
+          
           entrypointsManifest[entrypointName] = {
-            js: chunks.js || [],
-            css: chunks.css || []
+            js: jsFiles,
+            css: cssFiles
           }
         }
         manifest.entrypoints = entrypointsManifest
