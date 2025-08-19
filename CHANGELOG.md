@@ -8,6 +8,9 @@
 ## [Unreleased]
 Changes since the last non-beta release.
 
+- Rspack support as an alternative bundler to webpack. Configure `bundler: 'rspack'` in `shakapacker.yml` to use Rspack's faster Rust-based bundling with webpack-compatible
+  APIs, built-in SWC loader, and CSS extraction. Automatic bundler detection in `bin/shakapacker` with fallback support for webpack configurations.
+
 ## [v8.4.0] - September 8, 2025
 
 ### Added
