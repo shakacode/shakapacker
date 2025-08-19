@@ -35,6 +35,7 @@ const getStyleRule = (test, preprocessors = []) => {
 
     return {
       test,
+      type: 'javascript/auto', // Required for rspack CSS extraction
       use
     }
   }
