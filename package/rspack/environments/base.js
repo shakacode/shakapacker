@@ -97,8 +97,14 @@ const getPlugins = () => {
           const cssFiles = entrypointFiles.filter(file => file.endsWith('.css'))
           
           // Convert relative paths to full paths using the manifest mapping
-          const jsFilesWithPaths = jsFiles.map(file => manifest[file] || file)
-          const cssFilesWithPaths = cssFiles.map(file => manifest[file] || file)
+          const jsFilesWithPaths = jsFiles.map(file => {
+            // Try exact match first, then try without directory prefix
+            return manifest[file] || manifest[file.split('/').pop()] || file
+          })
+          const cssFilesWithPaths = cssFiles.map(file => {
+            // Try exact match first, then try without directory prefix
+            return manifest[file] || manifest[file.split('/').pop()] || file
+          })
           
           entrypointsManifest[entrypointName] = {
             assets: {
