@@ -1,5 +1,5 @@
 const { rspack } = require("@rspack/core")
-const { inliningCss } = require("../../utils/inliningCss")
+const inliningCss = require("../../utils/inliningCss")
 const { moduleExists } = require("../../utils/helpers")
 
 const { CssExtractRspackPlugin } = rspack
