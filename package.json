@@ -51,6 +51,7 @@
     "jest": "^29.7.0",
     "memory-fs": "^0.5.0",
     "prettier": "^3.2.5",
+    "rspack-manifest-plugin": "^5.0.3",
     "swc-loader": "^0.1.15",
     "thenify": "^3.3.1",
     "webpack": "5.93.0",
@@ -69,6 +70,7 @@
     "@types/webpack": "^5.0.0",
     "babel-loader": "^8.2.4 || ^9.0.0 || ^10.0.0",
     "compression-webpack-plugin": "^9.0.0 || ^10.0.0|| ^11.0.0",
+    "rspack-manifest-plugin": "^5.0.0",
     "terser-webpack-plugin": "^5.3.1",
     "webpack": "^5.76.0",
     "webpack-assets-manifest": "^5.0.6 || ^6.0.0",
@@ -91,6 +93,9 @@
       "optional": true
     },
     "@rspack/cli": {
+      "optional": true
+    },
+    "rspack-manifest-plugin": {
       "optional": true
     }
   },
