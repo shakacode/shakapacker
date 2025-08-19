@@ -84,7 +84,7 @@ const getPlugins = () => {
       generate: (seed, files, entrypoints) => {
         const manifest = seed || {}
         
-        // Add entrypoints information
+        // Add entrypoints information in Shakapacker-compatible format
         const entrypointsManifest = {}
         for (const [entrypointName, entrypointFiles] of Object.entries(entrypoints)) {
           // rspack-manifest-plugin provides files as arrays, not objects with js/css properties
@@ -92,8 +92,10 @@ const getPlugins = () => {
           const cssFiles = entrypointFiles.filter(file => file.endsWith('.css'))
           
           entrypointsManifest[entrypointName] = {
-            js: jsFiles,
-            css: cssFiles
+            assets: {
+              js: jsFiles,
+              css: cssFiles
+            }
           }
         }
         manifest.entrypoints = entrypointsManifest
