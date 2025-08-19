@@ -4,10 +4,22 @@ ENV["RAILS_ENV"] ||= "development"
 ENV["BUNDLE_GEMFILE"] ||= File.expand_path("../../Gemfile", __FILE__)
 
 require "bundler/setup"
+require "pathname"
 require "shakapacker"
-require "shakapacker/webpack_runner"
 
 APP_ROOT = File.expand_path("..", __dir__)
 Dir.chdir(APP_ROOT) do
-  Shakapacker::WebpackRunner.run(ARGV)
+  config = Shakapacker::Configuration.new(
+    root_path: Pathname.new(APP_ROOT),
+    config_path: Pathname.new(File.join(APP_ROOT, "config/shakapacker.yml")),
+    env: ENV["RAILS_ENV"] || ENV["NODE_ENV"] || "development"
+  )
+
+  if config.rspack?
+    require "shakapacker/rspack_runner"
+    Shakapacker::RspackRunner.run(ARGV)
+  else
+    require "shakapacker/webpack_runner"
+    Shakapacker::WebpackRunner.run(ARGV)
+  end
 end

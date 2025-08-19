@@ -88,6 +88,18 @@ class Shakapacker::Configuration
     fetch(:compiler_strategy)
   end
 
+  def bundler
+    fetch(:bundler)
+  end
+
+  def rspack?
+    bundler == "rspack"
+  end
+
+  def webpack?
+    bundler == "webpack"
+  end
+
   def fetch(key)
     data.fetch(key, defaults[key])
   end
