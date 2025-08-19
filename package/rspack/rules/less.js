@@ -1,7 +1,7 @@
 const path = require("path")
 const { rspack } = require("@rspack/core")
 const { canProcess } = require("../../utils/helpers")
-const getStyleRule = require("../../utils/getStyleRule")
+const { getStyleRule } = require("../../utils/getStyleRule")
 const { inliningCss } = require("../../utils/inliningCss")
 
 const {
@@ -9,27 +9,11 @@ const {
   source_path: sourcePath
 } = require("../../config")
 
-const cssLoader = {
-  loader: "css-loader",
-  options: {
-    sourceMap: true,
-    importLoaders: 2,
-    modules: false
-  }
-}
-
-const postcssLoader = {
-  loader: "postcss-loader",
-  options: {
-    sourceMap: true
-  }
-}
-
+// getStyleRule handles css-loader and postcss-loader internally
+// We only need to pass the extraction loader and less-loader
 module.exports = canProcess("less-loader", (resolvedPath) =>
   getStyleRule(/\.(less)(\.erb)?$/i, [
     inliningCss ? "style-loader" : rspack.CssExtractRspackPlugin.loader,
-    cssLoader,
-    postcssLoader,
     {
       loader: resolvedPath,
       options: {
