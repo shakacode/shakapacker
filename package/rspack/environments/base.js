@@ -84,6 +84,11 @@ const getPlugins = () => {
       generate: (seed, files, entrypoints) => {
         const manifest = seed || {}
         
+        // Add files mapping first
+        files.forEach(file => {
+          manifest[file.name] = file.path
+        })
+        
         // Add entrypoints information in Shakapacker-compatible format
         const entrypointsManifest = {}
         for (const [entrypointName, entrypointFiles] of Object.entries(entrypoints)) {
@@ -91,19 +96,18 @@ const getPlugins = () => {
           const jsFiles = entrypointFiles.filter(file => file.endsWith('.js'))
           const cssFiles = entrypointFiles.filter(file => file.endsWith('.css'))
           
+          // Convert relative paths to full paths using the manifest mapping
+          const jsFilesWithPaths = jsFiles.map(file => manifest[file] || file)
+          const cssFilesWithPaths = cssFiles.map(file => manifest[file] || file)
+          
           entrypointsManifest[entrypointName] = {
             assets: {
-              js: jsFiles,
-              css: cssFiles
+              js: jsFilesWithPaths,
+              css: cssFilesWithPaths
             }
           }
         }
         manifest.entrypoints = entrypointsManifest
-        
-        // Add files mapping
-        files.forEach(file => {
-          manifest[file.name] = file.path
-        })
         
         return manifest
       }
