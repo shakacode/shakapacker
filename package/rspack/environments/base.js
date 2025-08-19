@@ -4,8 +4,8 @@
 const { existsSync, readdirSync } = require("fs")
 const { basename, dirname, join, relative, resolve } = require("path")
 const extname = require("path-complete-extname")
-// TODO: Change to `const { WebpackAssetsManifest }` when dropping 'webpack-assets-manifest < 6.0.0' (Node >=20.10.0) support
-const WebpackAssetsManifest = require("webpack-assets-manifest")
+// Use rspack-manifest-plugin for rspack compatibility
+const { RspackManifestPlugin } = require("rspack-manifest-plugin")
 const { rspack } = require("@rspack/core")
 const rules = require("../rules")
 const config = require("../../config")
@@ -73,23 +73,34 @@ const getModulePaths = () => {
   return result
 }
 
-// TODO: Remove WebpackAssetsManifestConstructor workaround when dropping 'webpack-assets-manifest < 6.0.0' (Node >=20.10.0) support
-const WebpackAssetsManifestConstructor =
-  "WebpackAssetsManifest" in WebpackAssetsManifest
-    ? WebpackAssetsManifest.WebpackAssetsManifest
-    : WebpackAssetsManifest
-
 const getPlugins = () => {
   const plugins = [
     new rspack.EnvironmentPlugin(process.env),
-    new WebpackAssetsManifestConstructor({
-      entrypoints: true,
-      writeToDisk: true,
-      output: config.manifestPath,
-      entrypointsUseAssets: true,
+    new RspackManifestPlugin({
+      fileName: config.manifestPath.split('/').pop(), // Get just the filename
       publicPath: config.publicPathWithoutCDN,
-      integrity: config.integrity.enabled,
-      integrityHashes: config.integrity.hash_functions
+      writeToFileEmit: true,
+      // rspack-manifest-plugin uses different option names than webpack-assets-manifest
+      generate: (seed, files, entrypoints) => {
+        const manifest = seed || {}
+        
+        // Add entrypoints information
+        const entrypointsManifest = {}
+        for (const [entrypointName, chunks] of Object.entries(entrypoints)) {
+          entrypointsManifest[entrypointName] = {
+            js: chunks.js || [],
+            css: chunks.css || []
+          }
+        }
+        manifest.entrypoints = entrypointsManifest
+        
+        // Add files mapping
+        files.forEach(file => {
+          manifest[file.name] = file.path
+        })
+        
+        return manifest
+      }
     })
   ]
 
