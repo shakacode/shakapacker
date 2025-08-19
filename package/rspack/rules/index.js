@@ -1,6 +1,6 @@
 /* eslint global-require: 0 */
 
-const { canProcess } = require("../../utils/helpers")
+const { canProcess, moduleExists } = require("../../utils/helpers")
 
 const rules = []
 
@@ -31,25 +31,25 @@ rules.push({
 })
 
 // CSS rules using Rspack's built-in CSS handling
-if (canProcess("css", "css-loader")) {
+if (moduleExists("css-loader")) {
   const css = require("./css")
   rules.push(css)
 }
 
 // Sass rules
-if (canProcess("sass", "sass-loader")) {
+if (moduleExists("sass") && moduleExists("sass-loader")) {
   const sass = require("./sass")
   rules.push(sass)
 }
 
 // Less rules  
-if (canProcess("less", "less-loader")) {
+if (moduleExists("less") && moduleExists("less-loader")) {
   const less = require("./less")
   rules.push(less)
 }
 
 // Stylus rules
-if (canProcess("stylus", "stylus-loader")) {
+if (moduleExists("stylus") && moduleExists("stylus-loader")) {
   const stylus = require("./stylus")
   rules.push(stylus)
 }
