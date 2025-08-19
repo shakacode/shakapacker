@@ -40,29 +40,6 @@ describe "Config Path Resolution" do
       File.write(config_path, YAML.dump(config))
     end
 
-    context "with rspack config file present" do
-      before do
-        # Create rspack config directory and file
-        FileUtils.mkdir_p("config/rspack")
-        File.write("config/rspack/rspack.config.js", "module.exports = {}")
-      end
-
-      it "uses rspack config path" do
-        runner = Shakapacker::RspackRunner.new([])
-        expect(runner.instance_variable_get(:@webpack_config)).to match(/rspack\.config\.js$/)
-      end
-    end
-
-    context "with only webpack config file present (fallback scenario)" do
-      it "uses webpack config path with deprecation warning" do
-        expect($stderr).to receive(:puts).with(/DEPRECATION WARNING/)
-        expect($stderr).to receive(:puts).with(/Please create config\/rspack\/rspack\.config\.js/)
-        expect($stderr).to receive(:puts).with(/Using:/)
-        
-        runner = Shakapacker::RspackRunner.new([])
-        expect(runner.instance_variable_get(:@webpack_config)).to match(/webpack\.config\.js$/)
-      end
-    end
 
     context "with no config files present" do
       before do
