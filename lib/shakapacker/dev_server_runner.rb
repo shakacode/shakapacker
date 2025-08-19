@@ -76,11 +76,19 @@ module Shakapacker
         end
 
         cmd += ["--config", @webpack_config]
-        cmd += ["--progress", "--color"] if @pretty
-
-        # Default behavior of webpack-dev-server is @hot = true
-        cmd += ["--hot", "only"] if @hot == "only"
-        cmd += ["--no-hot"] if !@hot
+        
+        # Add bundler-specific flags
+        bundler = get_bundler_type
+        if bundler == "webpack"
+          cmd += ["--progress", "--color"] if @pretty
+          # Default behavior of webpack-dev-server is @hot = true
+          cmd += ["--hot", "only"] if @hot == "only"
+          cmd += ["--no-hot"] if !@hot
+        elsif bundler == "rspack"
+          # Rspack supports --hot but not --no-hot or --progress/--color
+          cmd += ["--hot"] if @hot && @hot != false
+          # For rspack, HMR control should be done via config file if needed
+        end
 
         cmd += @argv
 
