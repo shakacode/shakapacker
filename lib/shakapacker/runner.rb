@@ -1,7 +1,9 @@
 require_relative "utils/misc"
 require_relative "utils/manager"
+require_relative "configuration"
 
 require "package_json"
+require "pathname"
 
 module Shakapacker
   class Runner
@@ -16,6 +18,11 @@ module Shakapacker
 
       @app_path              = File.expand_path(".", Dir.pwd)
       @shakapacker_config    = ENV["SHAKAPACKER_CONFIG"] || File.join(@app_path, "config/shakapacker.yml")
+      @config                = Configuration.new(
+        root_path: Pathname.new(@app_path),
+        config_path: Pathname.new(@shakapacker_config),
+        env: ENV["RAILS_ENV"] || ENV["NODE_ENV"] || "development"
+      )
       @webpack_config        = find_bundler_config
 
       Shakapacker::Utils::Manager.error_unless_package_manager_is_obvious!
@@ -27,9 +34,7 @@ module Shakapacker
 
     private
       def find_bundler_config
-        bundler = get_bundler_type
-        
-        if bundler == "rspack"
+        if @config.rspack?
           find_rspack_config_with_fallback
         else
           find_webpack_config
@@ -37,17 +42,7 @@ module Shakapacker
       end
 
       def get_bundler_type
-        # Load the shakapacker configuration to determine bundler type
-        return "webpack" unless File.exist?(@shakapacker_config)
-        
-        require "yaml"
-        config = YAML.load_file(@shakapacker_config)
-        rails_env = ENV["RAILS_ENV"] || ENV["NODE_ENV"] || "development"
-        env_config = config[rails_env] || config["production"] || {}
-        
-        env_config["bundler"] || config.dig("default", "bundler") || "webpack"
-      rescue
-        "webpack" # fallback to webpack on any error
+        @config.bundler
       end
 
       def find_rspack_config_with_fallback
