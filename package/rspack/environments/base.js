@@ -89,27 +89,29 @@ const getPlugins = () => {
           manifest[file.name] = file.path
         })
         
-        // Add entrypoints information in Shakapacker-compatible format
+        // Add entrypoints information in webpack-assets-manifest compatible format
         const entrypointsManifest = {}
         for (const [entrypointName, entrypointFiles] of Object.entries(entrypoints)) {
           // rspack-manifest-plugin provides files as arrays, not objects with js/css properties
           const jsFiles = entrypointFiles.filter(file => file.endsWith('.js'))
           const cssFiles = entrypointFiles.filter(file => file.endsWith('.css'))
           
-          // Convert relative paths to full paths using the manifest mapping
-          const jsFilesWithPaths = jsFiles.map(file => {
+          // Convert to manifest keys (like webpack-assets-manifest does)
+          const jsManifestKeys = jsFiles.map(file => {
             // Try exact match first, then try without directory prefix
-            return manifest[file] || manifest[file.split('/').pop()] || file
+            const manifestKey = manifest[file] ? file : file.split('/').pop()
+            return manifestKey
           })
-          const cssFilesWithPaths = cssFiles.map(file => {
-            // Try exact match first, then try without directory prefix
-            return manifest[file] || manifest[file.split('/').pop()] || file
+          const cssManifestKeys = cssFiles.map(file => {
+            // Try exact match first, then try without directory prefix  
+            const manifestKey = manifest[file] ? file : file.split('/').pop()
+            return manifestKey
           })
           
           entrypointsManifest[entrypointName] = {
             assets: {
-              js: jsFilesWithPaths,
-              css: cssFilesWithPaths
+              js: jsManifestKeys,
+              css: cssManifestKeys
             }
           }
         }
