@@ -30,7 +30,7 @@ productionConfig.optimization = {
   minimize: true,
   minimizer: [
     new rspack.SwcJsMinimizerRspackPlugin(),
-    new rspack.SwcCssMinimizerRspackPlugin()
+    new rspack.LightningCssMinimizerRspackPlugin()
   ]
 }
 
