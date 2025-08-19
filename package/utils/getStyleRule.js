@@ -37,4 +37,4 @@ const getStyleRule = (test, preprocessors = []) => {
   return null
 }
 
-module.exports = getStyleRule
+module.exports = { getStyleRule }
