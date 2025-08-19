@@ -1,7 +1,7 @@
 const { rspack } = require("@rspack/core")
 const { canProcess } = require("../../utils/helpers")
 const { getStyleRule } = require("../../utils/getStyleRule")
-const { inliningCss } = require("../../utils/inliningCss")
+const inliningCss = require("../../utils/inliningCss")
 
 // getStyleRule handles css-loader and postcss-loader internally
 // We only need to pass the extraction loader and stylus-loader
