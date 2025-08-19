@@ -90,7 +90,9 @@ module Shakapacker
       end
 
       def build_cmd
-        package_json.manager.native_exec_command("webpack", ["serve"])
+        bundler = get_bundler_type
+        command = bundler == "rspack" ? "rspack" : "webpack"
+        package_json.manager.native_exec_command(command, ["serve"])
       end
   end
 end
