@@ -14,6 +14,13 @@
   "author": "David Heinemeier Hansson <david@basecamp.com>, Justin Gordon <justin@shakacode.com>",
   "main": "package/index.js",
   "types": "package/index.d.ts",
+  "exports": {
+    ".": "./package/index.js",
+    "./rspack": "./package/rspack/index.js",
+    "./swc": "./package/swc/index.js",
+    "./esbuild": "./package/esbuild/index.js",
+    "./package.json": "./package.json"
+  },
   "files": [
     "package",
     "lib/install/config/shakapacker.yml"
