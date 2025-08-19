@@ -76,22 +76,6 @@ const getModulePaths = () => {
 const getPlugins = () => {
   const plugins = [
     new rspack.EnvironmentPlugin(process.env),
-    // Copy static assets to preserve directory structure
-    new rspack.CopyRspackPlugin({
-      patterns: [
-        {
-          from: "static",
-          to: "static",
-          noErrorOnMissing: true
-        },
-        // Also copy images to static/images to match Rails expectations
-        {
-          from: "images",
-          to: "static/images",
-          noErrorOnMissing: true
-        }
-      ]
-    }),
     new RspackManifestPlugin({
       fileName: config.manifestPath.split('/').pop(), // Get just the filename
       publicPath: config.publicPathWithoutCDN,
