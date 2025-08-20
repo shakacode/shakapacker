@@ -1,8 +1,7 @@
 const { merge } = require("webpack-merge")
 
 const baseConfig = require("./base")
-const devServerConfig = require("../../webpackDevServerConfig") 
-const { runningWebpackDevServer } = require("../../env")
+const devServerConfig = require("../../webpackDevServerConfig")
 
 const devConfig = {
   mode: "development",
