@@ -4,9 +4,34 @@ const { moduleExists } = require("../../utils/helpers")
 
 const rules = []
 
-// Use Rspack's built-in SWC loader for JS/TS/JSX/TSX files
+// Use Rspack's built-in SWC loader for JavaScript files
 rules.push({
-  test: /\.(js|jsx|ts|tsx|mjs)$/,
+  test: /\.(js|jsx|mjs)$/,
+  exclude: /node_modules/,
+  type: "javascript/auto",
+  use: [
+    {
+      loader: "builtin:swc-loader",
+      options: {
+        jsc: {
+          parser: {
+            syntax: "ecmascript",
+            jsx: true
+          },
+          transform: {
+            react: {
+              runtime: "automatic"
+            }
+          }
+        }
+      }
+    }
+  ]
+})
+
+// Use Rspack's built-in SWC loader for TypeScript files
+rules.push({
+  test: /\.(ts|tsx)$/,
   exclude: /node_modules/,
   type: "javascript/auto",
   use: [
@@ -16,8 +41,7 @@ rules.push({
         jsc: {
           parser: {
             syntax: "typescript",
-            tsx: true,
-            jsx: true
+            tsx: true
           },
           transform: {
             react: {
@@ -42,7 +66,7 @@ if (moduleExists("sass") && moduleExists("sass-loader")) {
   rules.push(sass)
 }
 
-// Less rules  
+// Less rules
 if (moduleExists("less") && moduleExists("less-loader")) {
   const less = require("./less")
   rules.push(less)
@@ -56,14 +80,17 @@ if (moduleExists("stylus") && moduleExists("stylus-loader")) {
 
 // ERB template support
 const erb = require("./erb")
+
 rules.push(erb)
 
 // File/asset handling using Rspack's built-in asset modules
 const file = require("./file")
+
 rules.push(file)
 
 // Raw file loading
 const raw = require("./raw")
+
 rules.push(raw)
 
 module.exports = rules

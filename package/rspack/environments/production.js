@@ -4,6 +4,12 @@ const { rspack } = require("@rspack/core")
 const baseConfig = require("./base")
 const { moduleExists } = require("../../utils/helpers")
 
+let CompressionPlugin = null
+if (moduleExists("compression-webpack-plugin")) {
+  // eslint-disable-next-line global-require
+  CompressionPlugin = require("compression-webpack-plugin")
+}
+
 const productionConfig = {
   mode: "production",
   devtool: "source-map",
@@ -12,8 +18,7 @@ const productionConfig = {
 
 const plugins = []
 
-if (moduleExists("compression-webpack-plugin")) {
-  const CompressionPlugin = require("compression-webpack-plugin")
+if (CompressionPlugin) {
   plugins.push(
     new CompressionPlugin({
       filename: "[path][base].gz[query]",
@@ -26,12 +31,20 @@ if (moduleExists("compression-webpack-plugin")) {
 }
 
 // Use Rspack's built-in minification instead of terser-webpack-plugin
-productionConfig.optimization = {
-  minimize: true,
-  minimizer: [
-    new rspack.SwcJsMinimizerRspackPlugin(),
-    new rspack.LightningCssMinimizerRspackPlugin()
-  ]
+try {
+  productionConfig.optimization = {
+    minimize: true,
+    minimizer: [
+      new rspack.SwcJsMinimizerRspackPlugin(),
+      new rspack.LightningCssMinimizerRspackPlugin()
+    ]
+  }
+} catch (error) {
+  // eslint-disable-next-line no-console
+  console.warn("Warning: Could not configure Rspack minimizers:", error.message)
+  productionConfig.optimization = {
+    minimize: true
+  }
 }
 
 if (plugins.length > 0) {

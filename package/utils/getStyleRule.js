@@ -12,9 +12,10 @@ const getStyleRule = (test, preprocessors = []) => {
 
     // Extract the first loader (usually the extraction loader) and remaining preprocessors
     const [extractionLoader, ...otherPreprocessors] = preprocessors
-    
+
     // Fallback to mini-css-extract-plugin if no extraction loader provided (for webpack compatibility)
-    const finalExtractionLoader = extractionLoader || 
+    const finalExtractionLoader =
+      extractionLoader ||
       (inliningCss ? "style-loader" : require("mini-css-extract-plugin").loader)
 
     const use = [
@@ -35,7 +36,7 @@ const getStyleRule = (test, preprocessors = []) => {
 
     return {
       test,
-      type: 'javascript/auto', // Required for rspack CSS extraction
+      type: "javascript/auto", // Required for rspack CSS extraction
       use
     }
   }
