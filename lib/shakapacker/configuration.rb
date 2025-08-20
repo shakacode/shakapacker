@@ -89,7 +89,7 @@ class Shakapacker::Configuration
   end
 
   def bundler
-    fetch(:bundler)
+    fetch(:bundler) || "webpack"
   end
 
   def rspack?

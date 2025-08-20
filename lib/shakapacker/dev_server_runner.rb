@@ -75,19 +75,19 @@ module Shakapacker
           env["NODE_OPTIONS"] = "#{env["NODE_OPTIONS"]} --inspect-brk --trace-warnings"
         end
 
-        cmd += ["--config", @webpack_config]
-        
-        # Add bundler-specific flags
+        # Add bundler-specific flags and config
         bundler = get_bundler_type
         if bundler == "webpack"
+          cmd += ["--config", @webpack_config]
           cmd += ["--progress", "--color"] if @pretty
           # Default behavior of webpack-dev-server is @hot = true
           cmd += ["--hot", "only"] if @hot == "only"
           cmd += ["--no-hot"] if !@hot
         elsif bundler == "rspack"
+          # Only add config for rspack if it's not a rspack-specific command
+          cmd += ["--config", @webpack_config]
           # Rspack supports --hot but not --no-hot or --progress/--color
           cmd += ["--hot"] if @hot && @hot != false
-          # For rspack, HMR control should be done via config file if needed
         end
 
         cmd += @argv

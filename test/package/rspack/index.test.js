@@ -1,7 +1,10 @@
-const { generateRspackConfig, config, rules } = require("../../../package/rspack")
+const {
+  generateRspackConfig,
+  config,
+  rules
+} = require("../../../package/rspack")
 
 describe("Rspack integration", () => {
-
   test("generateRspackConfig exists and is a function", () => {
     expect(typeof generateRspackConfig).toBe("function")
   })
@@ -16,23 +19,27 @@ describe("Rspack integration", () => {
 
   test("uses rspack-specific plugins", () => {
     const rspackConfig = generateRspackConfig()
-    const pluginNames = rspackConfig.plugins.map(plugin => plugin.constructor.name)
-    
+    const pluginNames = rspackConfig.plugins.map(
+      (plugin) => plugin.constructor.name
+    )
+
     // Should include rspack environment plugin
     expect(pluginNames).toContain("EnvironmentPlugin")
-    
-    // Should include webpack assets manifest (compatible with rspack)
-    expect(pluginNames).toContain("WebpackAssetsManifest")
+
+    // Should include rspack manifest plugin
+    expect(pluginNames).toContain("WebpackManifestPlugin")
   })
 
   test("includes rspack-specific rules", () => {
     expect(Array.isArray(rules)).toBe(true)
     expect(rules.length).toBeGreaterThan(0)
-    
+
     // Should have JavaScript/TypeScript rule using builtin:swc-loader
-    const jsRule = rules.find(rule => 
-      rule.test && rule.test.test && rule.test.test("test.js")
-    )
+    const jsRule = rules.find((rule) => {
+      // eslint-disable-next-line jest/no-conditional-in-test
+      if (!rule.test || !rule.test.test) return false
+      return rule.test.test("test.js")
+    })
     expect(jsRule).toBeDefined()
     expect(jsRule.use[0].loader).toBe("builtin:swc-loader")
   })
@@ -45,9 +52,11 @@ describe("Rspack integration", () => {
   })
 
   test("supports asset modules", () => {
-    const fileRule = rules.find(rule => 
-      rule && rule.test && rule.test.test && rule.test.test("image.png")
-    )
+    const fileRule = rules.find((rule) => {
+      // eslint-disable-next-line jest/no-conditional-in-test
+      if (!rule || !rule.test || !rule.test.test) return false
+      return rule.test.test("image.png")
+    })
     expect(fileRule).toBeDefined()
     expect(fileRule.type).toBe("asset/resource")
   })

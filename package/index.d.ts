@@ -81,6 +81,20 @@ declare module 'shakapacker' {
   export * from 'webpack-merge'
 }
 
+declare module 'shakapacker/rspack' {
+  import type { RspackOptions, RuleSetRule } from '@rspack/core'
+  
+  export const config: Config
+  export function generateRspackConfig(extraConfig?: RspackOptions): RspackOptions
+  export const baseConfig: RspackOptions
+  export const env: Env
+  export const rules: RuleSetRule[]
+  export function moduleExists(packageName: string): boolean
+  export function canProcess<T = unknown>(rule: string, fn: (modulePath: string) => T): T | null
+  export const inliningCss: boolean
+  export * from 'webpack-merge'
+}
+
 declare module 'shakapacker/package/babel/preset.js' {
   import { ConfigAPI, PluginItem, TransformOptions } from '@babel/core'
 
