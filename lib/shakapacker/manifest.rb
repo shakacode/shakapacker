@@ -41,7 +41,7 @@ class Shakapacker::Manifest
   def lookup(name, pack_type = {})
     compile if compiling?
 
-    find(full_pack_name(name, pack_type[:type]))
+    find(full_pack_name(name, pack_type[:type])) || find(name)
   end
 
   # Like lookup, except that if no asset is found, raises a Shakapacker::Manifest::MissingEntryError.
