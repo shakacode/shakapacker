@@ -5,7 +5,7 @@ const { existsSync, readdirSync } = require("fs")
 const { basename, dirname, join, relative, resolve } = require("path")
 const extname = require("path-complete-extname")
 const { RspackManifestPlugin } = require("rspack-manifest-plugin")
-const webpack = require("webpack")
+const rspack = require("@rspack/core")
 const rules = require("../rules")
 const config = require("../config")
 const { isProduction } = require("../env")
@@ -74,7 +74,7 @@ const getModulePaths = () => {
 
 const getPlugins = () => {
   const plugins = [
-    new webpack.EnvironmentPlugin(process.env),
+    new rspack.EnvironmentPlugin(process.env),
     new RspackManifestPlugin({
       fileName: 'manifest.json',
       publicPath: config.publicPathWithoutCDN,
