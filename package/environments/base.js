@@ -4,8 +4,7 @@
 const { existsSync, readdirSync } = require("fs")
 const { basename, dirname, join, relative, resolve } = require("path")
 const extname = require("path-complete-extname")
-// TODO: Change to `const { WebpackAssetsManifest }` when dropping 'webpack-assets-manifest < 6.0.0' (Node >=20.10.0) support
-const WebpackAssetsManifest = require("webpack-assets-manifest")
+const { RspackManifestPlugin } = require("rspack-manifest-plugin")
 const webpack = require("webpack")
 const rules = require("../rules")
 const config = require("../config")
@@ -36,7 +35,7 @@ const getEntryObject = () => {
   if (config.source_entry_path === "/" && config.nested_entries) {
     throw new Error(
       "Your shakapacker config specified using a source_entry_path of '/' with 'nested_entries' == " +
-        "'true'. Doing this would result in packs for every one of your source files"
+      "'true'. Doing this would result in packs for every one of your source files"
     )
   }
 
@@ -73,22 +72,14 @@ const getModulePaths = () => {
   return result
 }
 
-// TODO: Remove WebpackAssetsManifestConstructor workaround when dropping 'webpack-assets-manifest < 6.0.0' (Node >=20.10.0) support
-const WebpackAssetsManifestConstructor =
-  "WebpackAssetsManifest" in WebpackAssetsManifest
-    ? WebpackAssetsManifest.WebpackAssetsManifest
-    : WebpackAssetsManifest
 const getPlugins = () => {
   const plugins = [
     new webpack.EnvironmentPlugin(process.env),
-    new WebpackAssetsManifestConstructor({
-      entrypoints: true,
-      writeToDisk: true,
-      output: config.manifestPath,
-      entrypointsUseAssets: true,
+    new RspackManifestPlugin({
+      fileName: 'manifest.json',
       publicPath: config.publicPathWithoutCDN,
-      integrity: config.integrity.enabled,
-      integrityHashes: config.integrity.hash_functions
+      useEntryKeys: true,
+      writeToFileEmit: true,
     })
   ]
 
