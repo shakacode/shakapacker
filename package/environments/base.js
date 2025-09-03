@@ -78,7 +78,6 @@ const getPlugins = () => {
     new RspackManifestPlugin({
       fileName: config.manifestPath.split("/").pop(), // Get just the filename
       publicPath: config.publicPathWithoutCDN,
-      useEntryKeys: true,
       writeToFileEmit: true,
       // rspack-manifest-plugin uses different option names than webpack-assets-manifest
       generate: (seed, files, entrypoints) => {
@@ -165,31 +164,27 @@ const getPlugins = () => {
     })
   ]
 
-  if (moduleExists("css-loader") && moduleExists("mini-css-extract-plugin")) {
+  if (moduleExists("css-loader")) {
     const hash = isProduction || config.useContentHash ? "-[contenthash:8]" : ""
-    const MiniCssExtractPlugin = require("mini-css-extract-plugin")
+    // Use Rspack's built-in CSS extraction
+    const { CssExtractRspackPlugin } = rspack
     plugins.push(
-      new MiniCssExtractPlugin({
+      new CssExtractRspackPlugin({
         filename: `css/[name]${hash}.css`,
         chunkFilename: `css/[id]${hash}.css`,
         // For projects where css ordering has been mitigated through consistent use of scoping or naming conventions,
         // the css order warnings can be disabled by setting the ignoreOrder flag.
-        // Read: https://stackoverflow.com/questions/51971857/mini-css-extract-plugin-warning-in-chunk-chunkname-mini-css-extract-plugin-con
-        ignoreOrder: config.css_extract_ignore_order_warnings
+        ignoreOrder: config.css_extract_ignore_order_warnings,
+        // Force writing CSS files to disk in development for Rails compatibility
+        emit: true
       })
     )
   }
 
-  if (
-    moduleExists("webpack-subresource-integrity") &&
-    config.integrity.enabled
-  ) {
-    const {
-      SubresourceIntegrityPlugin
-    } = require("webpack-subresource-integrity")
-
+  // Use Rspack's built-in SubresourceIntegrityPlugin
+  if (config.integrity.enabled) {
     plugins.push(
-      new SubresourceIntegrityPlugin({
+      new rspack.SubresourceIntegrityPlugin({
         hashFuncNames: config.integrity.hash_functions,
         enabled: isProduction
       })
@@ -233,12 +228,10 @@ module.exports = {
 
   optimization: {
     splitChunks: { chunks: "all" },
-
     runtimeChunk: "single"
   },
 
   module: {
-    strictExportPresence: true,
     rules
   }
 }
