@@ -76,10 +76,92 @@ const getPlugins = () => {
   const plugins = [
     new rspack.EnvironmentPlugin(process.env),
     new RspackManifestPlugin({
-      fileName: 'manifest.json',
+      fileName: config.manifestPath.split("/").pop(), // Get just the filename
       publicPath: config.publicPathWithoutCDN,
       useEntryKeys: true,
       writeToFileEmit: true,
+      // rspack-manifest-plugin uses different option names than webpack-assets-manifest
+      generate: (seed, files, entrypoints) => {
+        const manifest = seed || {}
+
+        // Add files mapping first
+        files.forEach((file) => {
+          manifest[file.name] = file.path
+        })
+
+        // Add entrypoints information compatible with Shakapacker expectations
+        const entrypointsManifest = {}
+        Object.entries(entrypoints).forEach(
+          ([entrypointName, entrypointFiles]) => {
+            const jsFiles = entrypointFiles.filter((file) =>
+              file.endsWith(".js")
+            )
+            const cssFiles = entrypointFiles.filter((file) =>
+              file.endsWith(".css")
+            )
+
+            // Helper function to resolve file paths consistently
+            const resolveFilePath = (file) => {
+              // Try exact match first
+              if (manifest[file]) return manifest[file]
+
+              // Try filename only
+              const filename = file.split("/").pop()
+              if (manifest[filename]) return manifest[filename]
+
+              // For hashed files, try to find the base name without hash
+              // e.g., "css/org-350a7e61.css" -> "org.css"
+              const baseMatch = filename.match(/^(.+?)-[a-f0-9]+(\.\w+)$/)
+              if (baseMatch) {
+                const baseName = baseMatch[1] + baseMatch[2] // "org.css"
+                if (manifest[baseName]) return manifest[baseName]
+              }
+
+              // For webpack chunk files with full directory path
+              // e.g., "js/598-7f94a9abddc251f3.js" -> "js/598-js"
+              const chunkMatch = file.match(
+                /^(.+\/)?(\d+)-[a-f0-9]+\.(js|css)$/
+              )
+              if (chunkMatch) {
+                const [, dir = "", chunkNum, ext] = chunkMatch
+                const chunkKey = `${dir}${chunkNum}-${ext}` // "js/598-js"
+                if (manifest[chunkKey]) return manifest[chunkKey]
+              }
+
+              // Fallback to original file path
+              return file
+            }
+
+            entrypointsManifest[entrypointName] = {
+              assets: {
+                js: jsFiles.map(resolveFilePath),
+                css: cssFiles.map(resolveFilePath)
+              }
+            }
+          }
+        )
+        manifest.entrypoints = entrypointsManifest
+
+        return manifest
+      },
+      serialize: (manifest) => {
+        // Load existing manifest if it exists to handle concurrent builds
+        let existingManifest = {};
+
+        try {
+          if (fs.existsSync(config.manifestPath)) {
+            const existingContent = fs.readFileSync(config.manifestPath, 'utf8');
+            const parsed = JSON.parse(existingContent);
+            existingManifest = parsed && typeof parsed === 'object' ? parsed : {};
+          }
+        } catch (error) {
+          console.warn('Warning: Could not read existing manifest.json:', String(error));
+        }
+
+        const mergedManifest = { ...existingManifest, ...manifest };
+
+        return JSON.stringify(mergedManifest, Object.keys(mergedManifest).sort(), 2);
+      }
     })
   ]
 
