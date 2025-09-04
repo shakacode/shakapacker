@@ -81,7 +81,23 @@ const getPlugins = () => {
       writeToFileEmit: true,
       // rspack-manifest-plugin uses different option names than webpack-assets-manifest
       generate: (seed, files, entrypoints) => {
-        const manifest = seed || {}
+        let manifest = seed || {};
+
+        // Load existing manifest if it exists to handle concurrent builds
+        try {
+          if (fs.existsSync(config.manifestPath)) {
+            const existingContent = fs.readFileSync(config.manifestPath, 'utf8');
+            const parsed = JSON.parse(existingContent);
+            if (parsed && typeof parsed === 'object') {
+              manifest = {
+                ...manifest,
+                ...parsed,
+              };
+            }
+          }
+        } catch (error) {
+          console.warn('Warning: Could not read existing manifest.json:', String(error));
+        }
 
         // Add files mapping first
         files.forEach((file) => {
@@ -142,24 +158,6 @@ const getPlugins = () => {
         manifest.entrypoints = entrypointsManifest
 
         return manifest
-      },
-      serialize: (manifest) => {
-        // Load existing manifest if it exists to handle concurrent builds
-        let existingManifest = {};
-
-        try {
-          if (fs.existsSync(config.manifestPath)) {
-            const existingContent = fs.readFileSync(config.manifestPath, 'utf8');
-            const parsed = JSON.parse(existingContent);
-            existingManifest = parsed && typeof parsed === 'object' ? parsed : {};
-          }
-        } catch (error) {
-          console.warn('Warning: Could not read existing manifest.json:', String(error));
-        }
-
-        const mergedManifest = { ...existingManifest, ...manifest };
-
-        return JSON.stringify(mergedManifest, Object.keys(mergedManifest).sort(), 2);
       }
     })
   ]
