@@ -17,6 +17,11 @@
 
 4. You can also pass additional options to the command to run the webpack-dev-server and start the webpack-dev-server with the option `--debug-shakapacker`
 
+5. ChatGPT and other AI tools can consume this output file. Change the NODE_ENV per your needs. Then upload the file to your favorite AI tool.
+   ```
+   NODE_ENV=development bin/shakapacker --profile --json > /tmp/webpack-stats.json
+   ```
+
 ## Incorrect peer dependencies
 Shakapacker uses peer dependencies to make it easier to manage what versions are being used for your app, which is especially
 useful for patching security vulnerabilities. However, not all package managers will actually enforce these versions - notably,
