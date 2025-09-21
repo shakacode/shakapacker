@@ -1,40 +1,16 @@
 /* eslint global-require: 0 */
 /* eslint import/no-dynamic-require: 0 */
 
-const webpackMerge = require("webpack-merge")
-const { resolve } = require("path")
-const { existsSync } = require("fs")
-const baseConfig = require("./environments/base")
-const rules = require("./rules")
-const config = require("./config")
-const devServer = require("./dev_server")
-const env = require("./env")
-const { moduleExists, canProcess } = require("./utils/helpers")
-const inliningCss = require("./utils/inliningCss")
+// Legacy compatibility wrapper
+// For backward compatibility, default to webpack exports
+// New usage should prefer explicit imports:
+//   require('shakapacker/webpack') or require('shakapacker/rspack')
 
-const generateWebpackConfig = (extraConfig = {}, ...extraArgs) => {
-  if (extraArgs.length > 0) {
-    throw new Error(
-      "Only one extra config may be passed here - use webpack-merge to merge configs before passing them to Shakapacker"
-    )
-  }
+const webpackExports = require("./webpack")
 
-  const { nodeEnv } = env
-  const path = resolve(__dirname, "environments", `${nodeEnv}.js`)
-  const environmentConfig = existsSync(path) ? require(path) : baseConfig
-
-  return webpackMerge.merge({}, environmentConfig, extraConfig)
-}
-
+// Re-export all webpack functionality for backward compatibility
 module.exports = {
-  config, // shakapacker.yml
-  devServer,
-  generateWebpackConfig,
-  baseConfig,
-  env,
-  rules,
-  moduleExists,
-  canProcess,
-  inliningCss,
-  ...webpackMerge
+  ...webpackExports,
+  // Explicit re-export of the main function for clarity
+  generateWebpackConfig: webpackExports.generateWebpackConfig
 }

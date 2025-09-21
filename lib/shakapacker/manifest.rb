@@ -23,12 +23,21 @@ class Shakapacker::Manifest
 
     manifest_pack_type = manifest_type(pack_type[:type])
     manifest_pack_name = manifest_name(name, manifest_pack_type)
-    find("entrypoints")[manifest_pack_name]["assets"][manifest_pack_type]
-  rescue NoMethodError
-    path = find(name)
-    return [path] if path.present?
 
-    nil
+    # Navigate the manifest structure safely
+    entrypoints = find("entrypoints")
+    return fallback_lookup(name) unless entrypoints.is_a?(Hash)
+
+    pack_entry = entrypoints[manifest_pack_name]
+    return fallback_lookup(name) unless pack_entry.is_a?(Hash)
+
+    assets = pack_entry["assets"]
+    return fallback_lookup(name) unless assets.is_a?(Hash)
+
+    assets[manifest_pack_type]
+  rescue NoMethodError => e
+    Shakapacker.logger.debug("Manifest lookup failed for #{name} (#{manifest_pack_type}): #{e.message}")
+    fallback_lookup(name)
   end
 
   def lookup_pack_with_chunks!(name, pack_type = {})
@@ -53,6 +62,13 @@ class Shakapacker::Manifest
   end
 
   private
+    def fallback_lookup(name)
+      path = find(name)
+      return [path] if path.present?
+
+      nil
+    end
+
     def compiling?
       config.compile? && !dev_server.running?
     end
@@ -117,9 +133,10 @@ Shakapacker can't find #{bundle_name} in #{config.manifest_path}. Possible cause
 2. Your app has code with a non-standard extension (like a `.jsx` file) but the extension is not in the `extensions` config in `config/shakapacker.yml`
 3. You have set compile: false (see `config/shakapacker.yml`) for this environment
    (unless you are using the `bin/shakapacker -w` or the `bin/shakapacker-dev-server`, in which case maybe you aren't running the dev server in the background?)
-4. webpack has not yet FINISHED running to reflect updates.
+4. Your bundler (webpack/rspack) has not yet FINISHED running to reflect updates.
 5. You have misconfigured Shakapacker's `config/shakapacker.yml` file.
-6. Your webpack configuration is not creating a manifest.
+6. Your bundler configuration is not creating a manifest with the expected structure.
+7. There's a mismatch between your bundler choice (webpack vs rspack) and the manifest format.
 
 Your manifest contains:
 #{JSON.pretty_generate(@data)}

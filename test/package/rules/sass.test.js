@@ -16,8 +16,13 @@ jest.mock("../../../package/utils/helpers", () => {
 jest.mock("../../../package/utils/inliningCss", () => true)
 
 describe("sass rule", () => {
-  test("contains loadPaths as the sassOptions key if sass-loader is v15 or earlier", () => {
-    expect(typeof sass.use[3].options.sassOptions.includePaths).toBe("object")
-    expect(typeof sass.use[3].options.sassOptions.loadPaths).toBe("undefined")
+  test("contains includePaths as the sassOptions key if sass-loader is v15 or earlier", () => {
+    expect(sass).not.toBeNull()
+    expect(sass.use).toBeDefined()
+    // sass-loader is the first loader in the use array
+    const sassLoader = sass.use[0]
+    expect(sassLoader).toBeDefined()
+    expect(typeof sassLoader.options.sassOptions.includePaths).toBe("object")
+    expect(typeof sassLoader.options.sassOptions.loadPaths).toBe("undefined")
   })
 })

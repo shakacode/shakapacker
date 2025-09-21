@@ -16,6 +16,7 @@
   "types": "package/index.d.ts",
   "exports": {
     ".": "./package/index.js",
+    "./webpack": "./package/webpack/index.js",
     "./rspack": "./package/rspack/index.js",
     "./swc": "./package/swc/index.js",
     "./esbuild": "./package/esbuild/index.js",
@@ -38,6 +39,7 @@
     "@rspack/core": "^1.4.11",
     "babel-loader": "^8.2.4",
     "compression-webpack-plugin": "^9.0.0",
+    "css-loader": "^7.1.2",
     "esbuild-loader": "^2.18.0",
     "eslint": "^8.0.0",
     "eslint-config-airbnb": "^19.0.0",
@@ -50,8 +52,10 @@
     "eslint-plugin-react-hooks": "^4.6.0",
     "jest": "^29.7.0",
     "memory-fs": "^0.5.0",
+    "mini-css-extract-plugin": "^2.9.4",
     "prettier": "^3.2.5",
     "rspack-manifest-plugin": "^5.0.3",
+    "sass-loader": "^16.0.5",
     "swc-loader": "^0.1.15",
     "thenify": "^3.3.1",
     "webpack": "5.93.0",
@@ -70,7 +74,11 @@
     "@types/webpack": "^5.0.0",
     "babel-loader": "^8.2.4 || ^9.0.0 || ^10.0.0",
     "compression-webpack-plugin": "^9.0.0 || ^10.0.0|| ^11.0.0",
+    "css-loader": "^6.0.0 || ^7.0.0",
+    "mini-css-extract-plugin": "^2.0.0",
     "rspack-manifest-plugin": "^5.0.0",
+    "sass-loader": "^13.0.0 || ^14.0.0 || ^15.0.0 || ^16.0.0",
+    "style-loader": "^3.0.0 || ^4.0.0",
     "terser-webpack-plugin": "^5.3.1",
     "webpack": "^5.76.0",
     "webpack-assets-manifest": "^5.0.6 || ^6.0.0",
@@ -96,6 +104,39 @@
       "optional": true
     },
     "rspack-manifest-plugin": {
+      "optional": true
+    },
+    "webpack": {
+      "optional": true
+    },
+    "webpack-assets-manifest": {
+      "optional": true
+    },
+    "webpack-cli": {
+      "optional": true
+    },
+    "webpack-dev-server": {
+      "optional": true
+    },
+    "webpack-merge": {
+      "optional": true
+    },
+    "compression-webpack-plugin": {
+      "optional": true
+    },
+    "terser-webpack-plugin": {
+      "optional": true
+    },
+    "css-loader": {
+      "optional": true
+    },
+    "mini-css-extract-plugin": {
+      "optional": true
+    },
+    "sass-loader": {
+      "optional": true
+    },
+    "style-loader": {
       "optional": true
     }
   },

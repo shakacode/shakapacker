@@ -13,10 +13,18 @@ const getStyleRule = (test, preprocessors = []) => {
     // Extract the first loader (usually the extraction loader) and remaining preprocessors
     const [extractionLoader, ...otherPreprocessors] = preprocessors
 
+    // Conditional require for mini-css-extract-plugin
+    const getMiniCssLoader = () => {
+      try {
+        return require("mini-css-extract-plugin").loader
+      } catch (error) {
+        return "style-loader" // Fallback to style-loader if mini-css-extract-plugin not available
+      }
+    }
+
     // Fallback to mini-css-extract-plugin if no extraction loader provided (for webpack compatibility)
     const finalExtractionLoader =
-      extractionLoader ||
-      (inliningCss ? "style-loader" : require("mini-css-extract-plugin").loader)
+      extractionLoader || (inliningCss ? "style-loader" : getMiniCssLoader())
 
     const use = [
       finalExtractionLoader,
