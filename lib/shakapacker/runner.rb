@@ -50,7 +50,7 @@ module Shakapacker
         rspack_paths = %w[ts js].map do |ext|
           File.join(@app_path, "config/rspack/rspack.config.#{ext}")
         end
-        
+
         rspack_path = rspack_paths.find { |f| File.exist?(f) }
         return rspack_path if rspack_path
 
@@ -58,7 +58,7 @@ module Shakapacker
         webpack_paths = %w[ts js].map do |ext|
           File.join(@app_path, "config/webpack/webpack.config.#{ext}")
         end
-        
+
         webpack_path = webpack_paths.find { |f| File.exist?(f) }
         if webpack_path
           $stderr.puts "⚠️  DEPRECATION WARNING: Using webpack config file for Rspack bundler."

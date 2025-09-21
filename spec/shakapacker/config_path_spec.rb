@@ -40,7 +40,6 @@ describe "Config Path Resolution" do
       File.write(config_path, YAML.dump(config))
     end
 
-
     context "with no config files present" do
       before do
         FileUtils.rm_f("config/webpack/webpack.config.js")
