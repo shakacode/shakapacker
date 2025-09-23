@@ -25,6 +25,9 @@ class Shakapacker::Manifest
     manifest_pack_name = manifest_name(name, manifest_pack_type)
     find("entrypoints")[manifest_pack_name]["assets"][manifest_pack_type]
   rescue NoMethodError
+    path = find(name)
+    return [path] if path.present?
+
     nil
   end
 
