@@ -54,6 +54,12 @@ describe "Shakapacker::Configuration" do
       expect(config.cache_path.to_s).to eq cache_path
     end
 
+    it "#private_output_path returns correct path" do
+      private_output_path = File.expand_path File.join(File.dirname(__FILE__), "./test_app/ssr-generated").to_s
+
+      expect(config.private_output_path.to_s).to eq private_output_path
+    end
+
     it "#additional_paths returns correct path" do
       expect(config.additional_paths).to eq ["app/assets", "/etc/yarn", "some.config.js", "app/elm"]
     end
