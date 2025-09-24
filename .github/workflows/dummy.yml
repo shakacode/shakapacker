@@ -32,8 +32,5 @@ jobs:
           yarn install
           sudo yarn global add yalc
 
-      - name: Compile webpack bundle
-        run: cd spec/dummy && bundle && yarn && bundle exec bin/shakapacker
-
       - name: Run tests
         run: bundle exec rake run_spec:dummy
