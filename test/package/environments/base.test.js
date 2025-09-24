@@ -79,7 +79,7 @@ describe("Base config", () => {
     })
 
     test("should return default loader rules for each file in config/loaders", () => {
-      const rules = require("../../../package/rules")
+      const rules = require("../../../package/rules/webpack")
 
       const defaultRules = Object.keys(rules)
       const configRules = baseConfig.module.rules

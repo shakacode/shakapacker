@@ -56,7 +56,7 @@ describe "Generator" do
           sh_in_dir(sh_opts, SPEC_PATH, "cp -r '#{BASE_RAILS_APP_PATH}' '#{TEMP_RAILS_APP_PATH}'")
 
           Bundler.with_unbundled_env do
-            sh_in_dir(sh_opts, TEMP_RAILS_APP_PATH, "FORCE=true bundle exec rails shakapacker:install")
+            sh_in_dir(sh_opts, TEMP_RAILS_APP_PATH, "USE_BABEL_PACKAGES=true FORCE=true bundle exec rails shakapacker:install")
           end
         end
 
