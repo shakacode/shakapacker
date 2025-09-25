@@ -16,11 +16,10 @@ const webpackDevConfig = () => ({
 
 const rspackDevConfig = () => ({
   ...baseDevConfig,
-  // Force writing assets to disk in development for Rails compatibility
   devServer: {
     ...webpackDevServerConfig(),
     devMiddleware: {
-      writeToDisk: true
+      writeToDisk: (filePath) => !filePath.includes(".hot-update.")
     }
   }
 })
