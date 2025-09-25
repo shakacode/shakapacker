@@ -1,4 +1,5 @@
 const { requireOrError } = require("../utils/requireOrError")
+
 const rspack = requireOrError("@rspack/core")
 
 const getOptimization = () => {

@@ -7,7 +7,12 @@ const baseConfig = require("./base")
 const { moduleExists } = require("../utils/helpers")
 const config = require("../config")
 
-const optimizationPath = resolve(__dirname, "..", "optimization", `${config.bundler}.js`)
+const optimizationPath = resolve(
+  __dirname,
+  "..",
+  "optimization",
+  `${config.bundler}.js`
+)
 const { getOptimization } = require(optimizationPath)
 
 let CompressionPlugin = null
