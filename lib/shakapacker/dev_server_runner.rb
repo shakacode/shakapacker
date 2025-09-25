@@ -7,6 +7,10 @@ require_relative "runner"
 
 module Shakapacker
   class DevServerRunner < Shakapacker::Runner
+    def self.run(argv)
+      new(argv).run
+    end
+
     def run
       load_config
       detect_unsupported_switches!
