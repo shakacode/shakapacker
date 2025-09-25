@@ -52,14 +52,13 @@ const configureServer = () => {
 
   // Custom output for the server-bundle that matches the config in
   // config/initializers/react_on_rails.rb
-  // Server bundles are output to a private directory (not public) for security
   serverWebpackConfig.output = {
     filename: 'server-bundle.js',
     globalObject: 'this',
     // If using the React on Rails Pro node server renderer, uncomment the next line
     // libraryTarget: 'commonjs2',
-    path: require('path').resolve(__dirname, '../../ssr-generated'),
-    // No publicPath needed since server bundles are not served via web
+    path: config.outputPath,
+    publicPath: config.publicPath,
     // https://webpack.js.org/configuration/output/#outputglobalobject
   };
 

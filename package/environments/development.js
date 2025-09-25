@@ -11,23 +11,31 @@ const baseDevConfig = {
 }
 
 const webpackDevConfig = () => {
-  const config = {
+  const webpackConfig = {
     ...baseDevConfig,
     ...(runningWebpackDevServer && { devServer: webpackDevServerConfig() })
   }
 
   const devServerConfig = webpackDevServerConfig()
-  if (runningWebpackDevServer && devServerConfig.hot && moduleExists("@pmmmwh/react-refresh-webpack-plugin")) {
+  if (
+    runningWebpackDevServer &&
+    devServerConfig.hot &&
+    moduleExists("@pmmmwh/react-refresh-webpack-plugin")
+  ) {
+    // eslint-disable-next-line global-require
     const ReactRefreshWebpackPlugin = require("@pmmmwh/react-refresh-webpack-plugin")
-    config.plugins = [...(config.plugins || []), new ReactRefreshWebpackPlugin()]
+    webpackConfig.plugins = [
+      ...(webpackConfig.plugins || []),
+      new ReactRefreshWebpackPlugin()
+    ]
   }
 
-  return config
+  return webpackConfig
 }
 
 const rspackDevConfig = () => {
   const devServerConfig = webpackDevServerConfig()
-  const config = {
+  const rspackConfig = {
     ...baseDevConfig,
     devServer: {
       ...devServerConfig,
@@ -38,12 +46,20 @@ const rspackDevConfig = () => {
     }
   }
 
-  if (runningWebpackDevServer && devServerConfig.hot && moduleExists("@rspack/plugin-react-refresh")) {
+  if (
+    runningWebpackDevServer &&
+    devServerConfig.hot &&
+    moduleExists("@rspack/plugin-react-refresh")
+  ) {
+    // eslint-disable-next-line global-require
     const ReactRefreshPlugin = require("@rspack/plugin-react-refresh")
-    config.plugins = [...(config.plugins || []), new ReactRefreshPlugin()]
+    rspackConfig.plugins = [
+      ...(rspackConfig.plugins || []),
+      new ReactRefreshPlugin()
+    ]
   }
 
-  return config
+  return rspackConfig
 }
 
 const bundlerConfig =

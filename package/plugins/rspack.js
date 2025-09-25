@@ -48,10 +48,15 @@ const getPlugins = () => {
         Object.entries(entrypoints).forEach(
           ([entrypointName, entrypointFiles]) => {
             const jsFiles = entrypointFiles
-              .filter((file) => file.endsWith(".js") && !file.includes(".hot-update."))
+              .filter(
+                (file) => file.endsWith(".js") && !file.includes(".hot-update.")
+              )
               .map((file) => config.publicPathWithoutCDN + file)
             const cssFiles = entrypointFiles
-              .filter((file) => file.endsWith(".css") && !file.includes(".hot-update."))
+              .filter(
+                (file) =>
+                  file.endsWith(".css") && !file.includes(".hot-update.")
+              )
               .map((file) => config.publicPathWithoutCDN + file)
 
             entrypointsManifest[entrypointName] = {
