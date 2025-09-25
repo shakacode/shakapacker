@@ -82,13 +82,13 @@ declare module 'shakapacker' {
 }
 
 declare module 'shakapacker/rspack' {
-  import type { RspackOptions, RuleSetUse } from '@rspack/core'
+  import type { RspackOptions } from '@rspack/core'
 
   export const config: import('shakapacker').Config
   export function generateRspackConfig(extraConfig?: RspackOptions): RspackOptions
   export const baseConfig: RspackOptions
   export const env: import('shakapacker').Env
-  export const rules: RuleSetUse[]
+  export const rules: NonNullable<RspackOptions['module']>['rules']
   export function moduleExists(packageName: string): boolean
   export function canProcess<T = unknown>(rule: string, fn: (modulePath: string) => T): T | null
   export const inliningCss: boolean
