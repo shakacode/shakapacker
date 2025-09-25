@@ -47,12 +47,12 @@ const getPlugins = () => {
         const entrypointsManifest = {}
         Object.entries(entrypoints).forEach(
           ([entrypointName, entrypointFiles]) => {
-            const jsFiles = entrypointFiles.filter((file) =>
-              file.endsWith(".js")
-            )
-            const cssFiles = entrypointFiles.filter((file) =>
-              file.endsWith(".css")
-            )
+            const jsFiles = entrypointFiles
+              .filter((file) => file.endsWith(".js"))
+              .map((file) => config.publicPathWithoutCDN + file)
+            const cssFiles = entrypointFiles
+              .filter((file) => file.endsWith(".css"))
+              .map((file) => config.publicPathWithoutCDN + file)
 
             entrypointsManifest[entrypointName] = {
               assets: {
