@@ -12,4 +12,4 @@ const webpackRawConfig = () => ({
 })
 
 module.exports =
-  config.bundler === "rspack" ? rspackRawConfig() : webpackRawConfig()
+  config.assets_bundler === "rspack" ? rspackRawConfig() : webpackRawConfig()

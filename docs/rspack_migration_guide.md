@@ -143,7 +143,7 @@ npm install --save-dev @rspack/core @rspack/cli
 1. Create `config/rspack/rspack.config.js` based on your webpack config
 2. Update `config/shakapacker.yml`:
 ```yaml
-bundler: 'rspack'
+assets_bundler: 'rspack'
 ```
 
 ### Step 3: Replace Loaders

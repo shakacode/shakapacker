@@ -9,7 +9,7 @@ const developmentEnvOnly = (clientWebpackConfig, _serverWebpackConfig) => {
   // React Refresh (Fast Refresh) setup - only when webpack-dev-server is running (HMR mode)
   // This matches the condition in generateWebpackConfigs.js and babel.config.js
   if (process.env.WEBPACK_SERVE) {
-    if (config.bundler === 'rspack') {
+    if (config.assets_bundler === 'rspack') {
       // eslint-disable-next-line global-require
       const ReactRefreshPlugin = require('@rspack/plugin-react-refresh');
       clientWebpackConfig.plugins.push(new ReactRefreshPlugin());

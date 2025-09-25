@@ -7,9 +7,9 @@ const extname = require("path-complete-extname")
 const config = require("../config")
 const { isProduction } = require("../env")
 
-const pluginsPath = resolve(__dirname, "..", "plugins", `${config.bundler}.js`)
+const pluginsPath = resolve(__dirname, "..", "plugins", `${config.assets_bundler}.js`)
 const { getPlugins } = require(pluginsPath)
-const rulesPath = resolve(__dirname, "..", "rules", `${config.bundler}.js`)
+const rulesPath = resolve(__dirname, "..", "rules", `${config.assets_bundler}.js`)
 const rules = require(rulesPath)
 
 // Don't use contentHash except for production for performance

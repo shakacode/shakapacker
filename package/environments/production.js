@@ -11,7 +11,7 @@ const optimizationPath = resolve(
   __dirname,
   "..",
   "optimization",
-  `${config.bundler}.js`
+  `${config.assets_bundler}.js`
 )
 const { getOptimization } = require(optimizationPath)
 

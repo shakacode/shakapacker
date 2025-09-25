@@ -46,7 +46,7 @@ const configureServer = () => {
   };
 
   // Only use LimitChunkCountPlugin for webpack, not Rspack
-  if (config.bundler !== 'rspack') {
+  if (config.assets_bundler !== 'rspack') {
     serverWebpackConfig.plugins.unshift(new webpack.optimize.LimitChunkCountPlugin({ maxChunks: 1 }));
   }
 

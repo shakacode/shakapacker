@@ -31,7 +31,7 @@ module Shakapacker
       config = runner.instance_variable_get(:@config)
 
       bundler_type = config.rspack? ? "rspack" : "webpack"
-      puts "[Shakapacker] Using #{bundler_type} bundler"
+      puts "[Shakapacker] Using #{bundler_type} assets bundler"
 
       if config.rspack?
         require_relative "rspack_runner"
@@ -52,7 +52,7 @@ module Shakapacker
         config_path: Pathname.new(@shakapacker_config),
         env: ENV["RAILS_ENV"] || ENV["NODE_ENV"] || "development"
       )
-      @webpack_config        = find_bundler_config
+      @webpack_config        = find_assets_bundler_config
 
       Shakapacker::Utils::Manager.error_unless_package_manager_is_obvious!
     end
@@ -62,7 +62,7 @@ module Shakapacker
     end
 
     def run
-      puts "[Shakapacker] Preparing environment for bundler execution..."
+      puts "[Shakapacker] Preparing environment for assets bundler execution..."
       env = Shakapacker::Compiler.env
       env["SHAKAPACKER_CONFIG"] = @shakapacker_config
       env["NODE_OPTIONS"] = ENV["NODE_OPTIONS"] || ""
@@ -86,11 +86,11 @@ module Shakapacker
       end
 
       # Commands are not compatible with --config option.
-      if (@argv & bundler_commands).empty?
+      if (@argv & assets_bundler_commands).empty?
         puts "[Shakapacker] Adding config file: #{@webpack_config}"
         cmd += ["--config", @webpack_config]
       else
-        puts "[Shakapacker] Skipping config file (running bundler command: #{(@argv & bundler_commands).join(", ")})"
+        puts "[Shakapacker] Skipping config file (running assets bundler command: #{(@argv & assets_bundler_commands).join(", ")})"
       end
 
       cmd += @argv
@@ -104,12 +104,12 @@ module Shakapacker
 
     protected
 
-      def bundler_commands
+      def assets_bundler_commands
         BASE_COMMANDS
       end
 
     private
-      def find_bundler_config
+      def find_assets_bundler_config
         if @config.rspack?
           find_rspack_config_with_fallback
         else
@@ -117,8 +117,8 @@ module Shakapacker
         end
       end
 
-      def get_bundler_type
-        @config.bundler
+      def get_assets_bundler_type
+        @config.assets_bundler
       end
 
       def find_rspack_config_with_fallback
@@ -142,7 +142,7 @@ module Shakapacker
         puts "[Shakapacker] Rspack config not found, checking for webpack config fallback..."
         webpack_path = webpack_paths.find { |f| File.exist?(f) }
         if webpack_path
-          $stderr.puts "⚠️  DEPRECATION WARNING: Using webpack config file for Rspack bundler."
+          $stderr.puts "⚠️  DEPRECATION WARNING: Using webpack config file for Rspack assets bundler."
           $stderr.puts "   Please create config/rspack/rspack.config.js and migrate your configuration."
           $stderr.puts "   Using: #{webpack_path}"
           return webpack_path

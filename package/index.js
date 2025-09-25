@@ -7,7 +7,7 @@ const { existsSync } = require("fs")
 const config = require("./config")
 const baseConfig = require("./environments/base")
 
-const rulesPath = resolve(__dirname, "rules", `${config.bundler}.js`)
+const rulesPath = resolve(__dirname, "rules", `${config.assets_bundler}.js`)
 const rules = require(rulesPath)
 const devServer = require("./dev_server")
 const env = require("./env")

@@ -15,7 +15,7 @@ const getStyleRule = (test, preprocessors = []) => {
     // style-loader is required when using css modules with HMR on the webpack-dev-server
 
     const extractionPlugin =
-      config.bundler === "rspack"
+      config.assets_bundler === "rspack"
         ? requireOrError("@rspack/core").CssExtractRspackPlugin.loader
         : requireOrError("mini-css-extract-plugin").loader
 
@@ -40,7 +40,7 @@ const getStyleRule = (test, preprocessors = []) => {
       use
     }
 
-    if (config.bundler === "rspack") {
+    if (config.assets_bundler === "rspack") {
       result.type = "javascript/auto"
     }
 

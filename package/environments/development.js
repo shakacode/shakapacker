@@ -63,6 +63,6 @@ const rspackDevConfig = () => {
 }
 
 const bundlerConfig =
-  config.bundler === "rspack" ? rspackDevConfig() : webpackDevConfig()
+  config.assets_bundler === "rspack" ? rspackDevConfig() : webpackDevConfig()
 
 module.exports = merge(baseConfig, bundlerConfig)

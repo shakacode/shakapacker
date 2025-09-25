@@ -8,8 +8,9 @@
 ## [Unreleased]
 Changes since the last non-beta release.
 
-- Rspack support as an alternative bundler to webpack. Configure `bundler: 'rspack'` in `shakapacker.yml` to use Rspack's faster Rust-based bundling with webpack-compatible
-  APIs, built-in SWC loader, and CSS extraction. Automatic bundler detection in `bin/shakapacker` with fallback support for webpack configurations.
+- Rspack support as an alternative assets bundler to webpack. Configure `assets_bundler: 'rspack'` in `shakapacker.yml` to use Rspack's faster Rust-based bundling with webpack-compatible
+  APIs, built-in SWC loader, and CSS extraction. Automatic assets bundler detection in `bin/shakapacker` with fallback support for webpack configurations.
+- BREAKING CHANGE: Configuration option renamed from `bundler` to `assets_bundler` to avoid confusion with Ruby's Bundler gem manager. The old `bundler` option is deprecated but still supported with a warning.
 
 ## [v8.4.0] - September 8, 2025
 ### Added

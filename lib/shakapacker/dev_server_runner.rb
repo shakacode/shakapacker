@@ -82,7 +82,7 @@ module Shakapacker
         # Add config file
         cmd += ["--config", @webpack_config]
 
-        # Add bundler-specific flags
+        # Add assets bundler-specific flags
         if webpack?
           cmd += ["--progress", "--color"] if @pretty
           # Default behavior of webpack-dev-server is @hot = true
@@ -106,11 +106,11 @@ module Shakapacker
       end
 
       def webpack?
-        get_bundler_type == "webpack"
+        get_assets_bundler_type == "webpack"
       end
 
       def rspack?
-        get_bundler_type == "rspack"
+        get_assets_bundler_type == "rspack"
       end
   end
 end

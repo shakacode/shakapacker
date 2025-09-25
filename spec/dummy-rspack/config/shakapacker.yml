@@ -39,8 +39,8 @@ default: &default
   # Select loader to use, available options are 'babel' (default), 'swc' or 'esbuild'
   webpack_loader: 'babel'
 
-  # Select bundler to use, available options are 'webpack' (default) or 'rspack'
-  bundler: 'rspack'
+  # Select assets bundler to use, available options are 'webpack' (default) or 'rspack'
+  assets_bundler: 'rspack'
 
   # Raises an error if there is a mismatch in the shakapacker gem and npm package being used
   ensure_consistent_versioning: true

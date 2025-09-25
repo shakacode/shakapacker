@@ -15,9 +15,9 @@ describe "Config Path Resolution" do
     allow(Shakapacker::Utils::Manager).to receive(:error_unless_package_manager_is_obvious!)
   end
 
-  context "when bundler is webpack" do
+  context "when assets bundler is webpack" do
     before do
-      # Set bundler to webpack in config
+      # Set assets bundler to webpack in config
       config_path = File.join(Dir.pwd, "config/shakapacker.yml")
       # error rescue is for support of ruby 2.7 ~ 3.0
       config = begin
@@ -25,7 +25,7 @@ describe "Config Path Resolution" do
       rescue ArgumentError
         YAML.load_file(config_path)
       end
-      config["development"]["bundler"] = "webpack"
+      config["development"]["assets_bundler"] = "webpack"
       File.write(config_path, YAML.dump(config))
     end
 
@@ -35,9 +35,9 @@ describe "Config Path Resolution" do
     end
   end
 
-  context "when bundler is rspack" do
+  context "when assets bundler is rspack" do
     before do
-      # Set bundler to rspack in config
+      # Set assets bundler to rspack in config
       config_path = File.join(Dir.pwd, "config/shakapacker.yml")
       # error rescue is for support of ruby 2.7 ~ 3.0
       config = begin
@@ -46,7 +46,7 @@ describe "Config Path Resolution" do
         YAML.load_file(config_path)
       end
       config["development"] ||= {}
-      config["development"]["bundler"] = "rspack"
+      config["development"]["assets_bundler"] = "rspack"
       File.write(config_path, YAML.dump(config))
     end
 

@@ -88,16 +88,24 @@ class Shakapacker::Configuration
     fetch(:compiler_strategy)
   end
 
+  def assets_bundler
+    fetch(:assets_bundler) || fetch(:bundler) || "webpack"
+  end
+
+  # Deprecated: Use assets_bundler instead
   def bundler
-    fetch(:bundler) || "webpack"
+    if data.has_key?(:bundler) && !data.has_key?(:assets_bundler)
+      $stderr.puts "⚠️  DEPRECATION WARNING: The 'bundler' configuration option is deprecated. Please use 'assets_bundler' instead to avoid confusion with Ruby's Bundler gem manager."
+    end
+    assets_bundler
   end
 
   def rspack?
-    bundler == "rspack"
+    assets_bundler == "rspack"
   end
 
   def webpack?
-    bundler == "webpack"
+    assets_bundler == "webpack"
   end
 
   def fetch(key)

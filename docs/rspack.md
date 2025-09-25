@@ -1,6 +1,6 @@
 # Rspack Integration
 
-Shakapacker supports [Rspack](https://rspack.rs) as an alternative bundler to Webpack. Rspack is a fast Rust-based web bundler with webpack-compatible API that can significantly speed up your build times.
+Shakapacker supports [Rspack](https://rspack.rs) as an alternative assets bundler to Webpack. Rspack is a fast Rust-based web bundler with webpack-compatible API that can significantly speed up your build times.
 
 ## Installation
 
@@ -25,7 +25,7 @@ To enable Rspack, update your `config/shakapacker.yml`:
 ```yaml
 default: &default
   # ... other config options
-  bundler: 'rspack'  # Change from 'webpack' to 'rspack'
+  assets_bundler: 'rspack'  # Change from 'webpack' to 'rspack'
 ```
 
 ## Configuration
@@ -73,7 +73,7 @@ const { generateRspackConfig } = require('shakapacker/rspack')
 module.exports = generateRspackConfig()
 ```
 
-> **Note:** Shakapacker will show a deprecation warning if you use `config/webpack/webpack.config.js` with `bundler: 'rspack'`. Please migrate to `config/rspack/rspack.config.js`.
+> **Note:** Shakapacker will show a deprecation warning if you use `config/webpack/webpack.config.js` with `assets_bundler: 'rspack'`. Please migrate to `config/rspack/rspack.config.js`.
 
 ## Key Differences from Webpack
 
@@ -119,10 +119,10 @@ optimization: {
 All existing Shakapacker commands work the same way and automatically use Rspack when configured:
 
 ```bash
-# Build (automatically uses rspack when bundler: 'rspack')
+# Build (automatically uses rspack when assets_bundler: 'rspack')
 ./bin/shakapacker
 
-# Development server (automatically uses rspack when bundler: 'rspack')  
+# Development server (automatically uses rspack when assets_bundler: 'rspack')
 ./bin/shakapacker-dev-server
 
 # Watch mode
@@ -151,7 +151,7 @@ Rspack typically provides:
    ```yaml
    # config/shakapacker.yml
    default: &default
-     bundler: 'rspack'
+     assets_bundler: 'rspack'
    ```
 
 3. **Create Rspack config:**
