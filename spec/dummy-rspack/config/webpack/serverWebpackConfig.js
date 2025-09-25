@@ -28,7 +28,6 @@ const configureServer = () => {
 
   // Remove the mini-css-extract-plugin from the style loaders because
   // the client build will handle exporting CSS.
-  // replace file-loader with null-loader
   serverWebpackConfig.module.rules.forEach((loader) => {
     if (loader.use && loader.use.filter) {
       loader.use = loader.use.filter(
@@ -80,7 +79,6 @@ const configureServer = () => {
   // Configure loader rules for SSR
   // Remove the mini-css-extract-plugin from the style loaders because
   // the client build will handle exporting CSS.
-  // replace file-loader with null-loader
   const rules = serverWebpackConfig.module.rules;
   rules.forEach((rule) => {
     if (Array.isArray(rule.use)) {
