@@ -1,6 +1,5 @@
 const { requireOrError } = require("../utils/requireOrError")
-
-const { rspack } = requireOrError("@rspack/core")
+const rspack = requireOrError("@rspack/core")
 
 const getOptimization = () => {
   // Use Rspack's built-in minification instead of terser-webpack-plugin

@@ -4,15 +4,18 @@ const baseConfig = require("./base")
 const webpackDevServerConfig = require("../webpackDevServerConfig")
 const { runningWebpackDevServer } = require("../env")
 
-const webpackDevConfig = () => ({
+const baseDevConfig = {
   mode: "development",
-  devtool: "cheap-module-source-map",
+  devtool: "cheap-module-source-map"
+}
+
+const webpackDevConfig = () => ({
+  ...baseDevConfig,
   ...(runningWebpackDevServer && { devServer: webpackDevServerConfig() })
 })
 
 const rspackDevConfig = () => ({
-  mode: "development",
-  devtool: "cheap-module-source-map",
+  ...baseDevConfig,
   // Force writing assets to disk in development for Rails compatibility
   devServer: {
     ...webpackDevServerConfig(),
