@@ -39,6 +39,7 @@ function createDevServerConfig() {
     devMiddleware: {
       publicPath
     },
+    hot: devServerYamlConfig.hmr,
     liveReload,
     historyApiFallback: {
       disableDotRule: true
@@ -47,6 +48,7 @@ function createDevServerConfig() {
       publicPath: contentBase
     }
   }
+  delete devServerYamlConfig.hmr
 
   if (devServerYamlConfig.static) {
     config.static = { ...config.static, ...devServerYamlConfig.static }
