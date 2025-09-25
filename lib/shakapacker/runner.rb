@@ -10,7 +10,18 @@ module Shakapacker
     def self.run(argv)
       $stdout.sync = true
       ENV["NODE_ENV"] ||= (ENV["RAILS_ENV"] == "production") ? "production" : "development"
-      new(argv).run
+
+      # Determine which runner to use based on configuration
+      runner = new(argv)
+      config = runner.instance_variable_get(:@config)
+
+      if config.rspack?
+        require_relative "rspack_runner"
+        RspackRunner.new(argv).run
+      else
+        require_relative "webpack_runner"
+        WebpackRunner.new(argv).run
+      end
     end
 
     def initialize(argv)
