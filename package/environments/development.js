@@ -4,13 +4,13 @@ const baseConfig = require("./base")
 const webpackDevServerConfig = require("../webpackDevServerConfig")
 const { runningWebpackDevServer } = require("../env")
 
-const webpackDevConfig = {
+const webpackDevConfig = () => ({
   mode: "development",
   devtool: "cheap-module-source-map",
   ...(runningWebpackDevServer && { devServer: webpackDevServerConfig() })
-}
+})
 
-const rspackDevConfig = {
+const rspackDevConfig = () => ({
   mode: "development",
   devtool: "cheap-module-source-map",
   // Force writing assets to disk in development for Rails compatibility
@@ -20,9 +20,9 @@ const rspackDevConfig = {
       writeToDisk: true
     }
   }
-}
+})
 
 const bundlerConfig =
-  config.bundler === "rspack" ? rspackDevConfig : webpackDevConfig
+  config.bundler === "rspack" ? rspackDevConfig() : webpackDevConfig()
 
 module.exports = merge(baseConfig, bundlerConfig)

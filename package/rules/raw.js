@@ -1,15 +1,15 @@
 const config = require("../config")
 
-const rspackRawConfig = {
+const rspackRawConfig = () => ({
   resourceQuery: /raw/,
   type: "asset/source"
-}
+})
 
-const webpackRawConfig = {
+const webpackRawConfig = () => ({
   test: /\.html$/,
   exclude: /\.(js|mjs|jsx|ts|tsx)$/,
   type: "asset/source"
-}
+})
 
 module.exports =
-  config.bundler === "rspack" ? rspackRawConfig : webpackRawConfig
+  config.bundler === "rspack" ? rspackRawConfig() : webpackRawConfig()

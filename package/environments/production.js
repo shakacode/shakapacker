@@ -1,14 +1,14 @@
 /* eslint global-require: 0 */
 /* eslint import/no-dynamic-require: 0 */
 
-const { merge } = require("webpack-merge")
 const { resolve } = require("path")
+const { merge } = require("webpack-merge")
 const baseConfig = require("./base")
 const { moduleExists } = require("../utils/helpers")
 const config = require("../config")
 
-const path = resolve(__dirname, "..", "optimization", `${config.bundler}.js`)
-const { getOptimization } = require(path)
+const optimizationPath = resolve(__dirname, "..", "optimization", `${config.bundler}.js`)
+const { getOptimization } = require(optimizationPath)
 
 let CompressionPlugin = null
 if (moduleExists("compression-webpack-plugin")) {
