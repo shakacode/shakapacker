@@ -12,6 +12,8 @@ It supports all ECMAScript features and it's designed to be a drop-in replacemen
 
 For comparison between SWC and Babel, see the docs at https://swc.rs/docs/migrating-from-babel.
 
+> **Note:** SWC is also natively built into RSpack bundler, providing even faster compilation speeds. When using RSpack (`assets_bundler: 'rspack'`), SWC is used automatically regardless of the `javascript_transpiler` setting.
+
 ## Switching your Shakapacker project to SWC
 
 In order to use SWC as your compiler today. You need to do two things:

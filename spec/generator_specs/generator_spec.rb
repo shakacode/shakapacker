@@ -172,8 +172,8 @@ describe "Generator" do
 
             Bundler.with_unbundled_env do
               sh_in_dir(sh_opts, TEMP_RAILS_APP_PATH, "./bin/rails app:template LOCATION=../e2e_template/template.rb")
-              # Compile assets before running tests
-              sh_in_dir(sh_opts, TEMP_RAILS_APP_PATH, "NODE_ENV=test RAILS_ENV=test yarn run webpack --config config/webpack/webpack.config.js")
+              # Compile assets before running tests using bin/shakapacker
+              sh_in_dir(sh_opts, TEMP_RAILS_APP_PATH, "NODE_ENV=test RAILS_ENV=test bin/shakapacker")
               expect(sh_in_dir(sh_opts, TEMP_RAILS_APP_PATH, "bundle exec rspec")).to be_truthy
             end
           end

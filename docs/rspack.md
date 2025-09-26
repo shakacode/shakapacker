@@ -28,7 +28,7 @@ default: &default
   assets_bundler: 'rspack'  # Change from 'webpack' to 'rspack'
 ```
 
-## Configuration
+### Configuration Files
 
 Rspack uses its own configuration directory to keep things organized. Create your Rspack configuration file at `config/rspack/rspack.config.js`:
 
