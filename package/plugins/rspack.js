@@ -5,7 +5,6 @@ const rspack = requireOrError("@rspack/core")
 const config = require("../config")
 const { isProduction } = require("../env")
 const { moduleExists } = require("../utils/helpers")
-const { warn } = require("../utils/debug")
 
 const getPlugins = () => {
   const plugins = [

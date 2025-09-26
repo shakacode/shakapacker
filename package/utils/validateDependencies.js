@@ -6,10 +6,7 @@ const { moduleExists } = require("./helpers")
 const { error } = require("./debug")
 
 const validateRspackDependencies = () => {
-  const requiredDependencies = [
-    "@rspack/core",
-    "rspack-manifest-plugin"
-  ]
+  const requiredDependencies = ["@rspack/core", "rspack-manifest-plugin"]
 
   const missingDependencies = requiredDependencies.filter(
     (dep) => !moduleExists(dep)
@@ -19,7 +16,9 @@ const validateRspackDependencies = () => {
     error(
       `Missing required dependencies for RSpack:\n${missingDependencies
         .map((dep) => `  - ${dep}`)
-        .join("\n")}\n\nPlease install them with:\n  npm install ${missingDependencies.join(
+        .join(
+          "\n"
+        )}\n\nPlease install them with:\n  npm install ${missingDependencies.join(
         " "
       )}`
     )
@@ -44,7 +43,9 @@ const validateWebpackDependencies = () => {
     error(
       `Missing required dependencies for Webpack:\n${missingDependencies
         .map((dep) => `  - ${dep}`)
-        .join("\n")}\n\nPlease install them with:\n  npm install ${missingDependencies.join(
+        .join(
+          "\n"
+        )}\n\nPlease install them with:\n  npm install ${missingDependencies.join(
         " "
       )}`
     )

@@ -1,5 +1,5 @@
 const { requireOrError } = require("../utils/requireOrError")
-const { error: logError, warn } = require("../utils/debug")
+const { error: logError } = require("../utils/debug")
 
 const rspack = requireOrError("@rspack/core")
 

@@ -17,20 +17,24 @@ const isDebugMode = () => {
 
 const debug = (message, ...args) => {
   if (isDebugMode()) {
+    // eslint-disable-next-line no-console
     console.log(`[Shakapacker] ${message}`, ...args)
   }
 }
 
 const warn = (message, ...args) => {
+  // eslint-disable-next-line no-console
   console.warn(`[Shakapacker] WARNING: ${message}`, ...args)
 }
 
 const error = (message, ...args) => {
+  // eslint-disable-next-line no-console
   console.error(`[Shakapacker] ERROR: ${message}`, ...args)
 }
 
 const info = (message, ...args) => {
   if (isDebugMode()) {
+    // eslint-disable-next-line no-console
     console.info(`[Shakapacker] INFO: ${message}`, ...args)
   }
 }
