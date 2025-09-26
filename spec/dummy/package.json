@@ -33,13 +33,19 @@
     "webpack-cli": "^4.9.2",
     "webpack-merge": "^5.8.0",
     "webpack-sources": "^3.2.3",
-    "webpack-subresource-integrity": "^5.1.0"
+    "webpack-subresource-integrity": "^5.1.0",
+    "@rspack/core": "^1.1.8",
+    "@rspack/cli": "^1.1.8",
+    "rspack-manifest-plugin": "^5.0.0",
+    "@swc/core": "^1.9.0",
+    "@swc/helpers": "^0.5.15"
   },
   "devDependencies": {
     "@pmmmwh/react-refresh-webpack-plugin": "^0.5.10",
     "fork-ts-checker-webpack-plugin": "^6.5.2",
     "react-refresh": "^0.14.0",
-    "webpack-dev-server": "^4.9.2"
+    "webpack-dev-server": "^4.9.2",
+    "@rspack/dev-server": "^1.1.8"
   },
   "packageManager": "yarn@1.22.22"
 }
