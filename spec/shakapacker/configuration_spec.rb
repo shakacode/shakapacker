@@ -467,7 +467,8 @@ describe "Shakapacker::Configuration" do
       it "defaults to 'babel'" do
         allow(config).to receive(:fetch).with(:javascript_transpiler).and_return(nil)
         allow(config).to receive(:fetch).with(:webpack_loader).and_return(nil)
-        allow(config).to receive(:fetch).with(:assets_bundler).and_return("webpack")
+        allow(config).to receive(:fetch).with(:assets_bundler).and_return(nil)
+        allow(config).to receive(:fetch).with(:bundler).and_return(nil)
         expect(config.javascript_transpiler).to eq "babel"
       end
     end
@@ -505,7 +506,8 @@ describe "Shakapacker::Configuration" do
       it "shows deprecation warning and returns javascript_transpiler value" do
         data_mock = { webpack_loader: "swc" }
         allow(config).to receive(:data).and_return(data_mock)
-        allow(config).to receive(:fetch).with(:assets_bundler).and_return("webpack")
+        allow(config).to receive(:fetch).with(:assets_bundler).and_return(nil)
+        allow(config).to receive(:fetch).with(:bundler).and_return(nil)
 
         expect($stderr).to receive(:puts).with(/DEPRECATION WARNING.*webpack_loader.*deprecated.*javascript_transpiler/)
         expect(config.javascript_transpiler).to eq "swc"
