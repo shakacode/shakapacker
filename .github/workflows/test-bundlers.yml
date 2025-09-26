@@ -30,8 +30,18 @@ jobs:
           cache: 'npm'
           cache-dependency-path: spec/dummy/package-lock.json
 
+      - name: Install yalc
+        run: npm install -g yalc
+
+      - name: Publish shakapacker to yalc
+        run: |
+          cd ../..
+          yalc publish
+
       - name: Install dependencies
-        run: npm ci
+        run: |
+          yalc link shakapacker
+          npm ci
 
       - name: Switch to Webpack
         run: bin/test-bundler webpack
@@ -67,8 +77,18 @@ jobs:
           cache: 'npm'
           cache-dependency-path: spec/dummy/package-lock.json
 
+      - name: Install yalc
+        run: npm install -g yalc
+
+      - name: Publish shakapacker to yalc
+        run: |
+          cd ../..
+          yalc publish
+
       - name: Install dependencies
-        run: npm ci
+        run: |
+          yalc link shakapacker
+          npm ci
 
       - name: Switch to RSpack
         run: bin/test-bundler rspack
@@ -104,8 +124,18 @@ jobs:
           cache: 'npm'
           cache-dependency-path: spec/dummy/package-lock.json
 
+      - name: Install yalc
+        run: npm install -g yalc
+
+      - name: Publish shakapacker to yalc
+        run: |
+          cd ../..
+          yalc publish
+
       - name: Install dependencies
-        run: npm ci
+        run: |
+          yalc link shakapacker
+          npm ci
 
       - name: Test switching between bundlers
         run: |
