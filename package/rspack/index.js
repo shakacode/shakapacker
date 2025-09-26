@@ -31,7 +31,7 @@ const generateRspackConfig = (extraConfig = {}, ...extraArgs) => {
   const rspackConfig = {
     ...environmentConfig,
     module: {
-      rules: rules
+      rules
     },
     plugins: getPlugins(),
     optimization: getOptimization()
