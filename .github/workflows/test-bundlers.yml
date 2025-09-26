@@ -51,7 +51,7 @@ jobs:
 
       - name: Run tests with Webpack
         run: |
-          bundle exec rspec --tag webpack
+          bundle exec rspec
 
   test-rspack:
     name: Test with RSpack
@@ -98,7 +98,7 @@ jobs:
 
       - name: Run tests with RSpack
         run: |
-          bundle exec rspec --tag rspack
+          bundle exec rspec
 
   test-switching:
     name: Test Bundler Switching
