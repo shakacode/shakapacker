@@ -26,12 +26,14 @@ module Shakapacker
       $stdout.sync = true
       ENV["NODE_ENV"] ||= (ENV["RAILS_ENV"] == "production") ? "production" : "development"
 
-      # Determine which runner to use based on configuration
+      # Create a single runner instance to avoid loading configuration twice.
+      # We extend it with the appropriate build command based on the bundler type.
       runner = new(argv)
 
       if runner.config.rspack?
         require_relative "rspack_runner"
-        # Pass the already initialized runner to avoid double configuration loading
+        # Extend the runner instance with rspack-specific methods
+        # This avoids creating a new RspackRunner which would reload the configuration
         runner.extend(Module.new do
           def build_cmd
             package_json.manager.native_exec_command("rspack")
@@ -44,7 +46,8 @@ module Shakapacker
         runner.run
       else
         require_relative "webpack_runner"
-        # Pass the already initialized runner to avoid double configuration loading
+        # Extend the runner instance with webpack-specific methods
+        # This avoids creating a new WebpackRunner which would reload the configuration
         runner.extend(Module.new do
           def build_cmd
             package_json.manager.native_exec_command("webpack")

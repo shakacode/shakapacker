@@ -4,11 +4,12 @@
  */
 
 const isDebugMode = () => {
-  // Explicitly check for debug mode being enabled
+  // Explicitly check for debug mode being disabled
   if (process.env.SHAKAPACKER_DEBUG === "false") {
     return false
   }
 
+  // Support both SHAKAPACKER_DEBUG (new) and DEBUG_SHAKAPACKER (legacy) for backwards compatibility
   return (
     process.env.SHAKAPACKER_DEBUG === "true" ||
     process.env.DEBUG_SHAKAPACKER === "true"
