@@ -3,13 +3,13 @@
 
 # Script to test Shakapacker with different bundlers (webpack or rspack)
 
-require 'fileutils'
-require 'yaml'
+require "fileutils"
+require "yaml"
 
 bundler = ARGV[0]
-command = ARGV[1..-1].join(' ') if ARGV.length > 1
+command = ARGV[1..-1].join(" ") if ARGV.length > 1
 
-unless ['webpack', 'rspack'].include?(bundler)
+unless ["webpack", "rspack"].include?(bundler)
   puts "Usage: bin/test-bundler [webpack|rspack] [command]"
   puts ""
   puts "Examples:"
@@ -23,10 +23,10 @@ unless ['webpack', 'rspack'].include?(bundler)
   exit 1
 end
 
-config_dir = File.expand_path('../config', __dir__)
-shakapacker_config = File.join(config_dir, 'shakapacker.yml')
-webpack_config = File.join(config_dir, 'shakapacker-webpack.yml')
-rspack_config = File.join(config_dir, 'shakapacker-rspack.yml')
+config_dir = File.expand_path("../config", __dir__)
+shakapacker_config = File.join(config_dir, "shakapacker.yml")
+webpack_config = File.join(config_dir, "shakapacker-webpack.yml")
+rspack_config = File.join(config_dir, "shakapacker-rspack.yml")
 
 # Ensure config files exist
 unless File.exist?(webpack_config)
@@ -40,15 +40,15 @@ unless File.exist?(rspack_config)
 end
 
 # Switch configuration based on bundler
-if bundler == 'rspack'
+if bundler == "rspack"
   puts "📦 Switching to RSpack configuration..."
   FileUtils.cp(rspack_config, shakapacker_config)
-  ENV['SHAKAPACKER_ASSET_BUNDLER'] = 'rspack'
+  ENV["SHAKAPACKER_ASSET_BUNDLER"] = "rspack"
   puts "✅ Now using RSpack as the asset bundler"
 else
   puts "📦 Switching to Webpack configuration..."
   FileUtils.cp(webpack_config, shakapacker_config)
-  ENV['SHAKAPACKER_ASSET_BUNDLER'] = 'webpack'
+  ENV["SHAKAPACKER_ASSET_BUNDLER"] = "webpack"
   puts "✅ Now using Webpack as the asset bundler"
 end
 
