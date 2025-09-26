@@ -4,6 +4,7 @@ require "json"
 require "shakapacker/utils/misc"
 require "shakapacker/utils/version_syntax_converter"
 require "package_json"
+require_relative "../support/package_json_helpers"
 
 GEM_ROOT = Pathname.new(File.expand_path("../../..", __FILE__))
 SPEC_PATH = Pathname.new(File.expand_path("../", __FILE__))
@@ -173,7 +174,7 @@ describe "Generator" do
             Bundler.with_unbundled_env do
               sh_in_dir(sh_opts, TEMP_RAILS_APP_PATH, "./bin/rails app:template LOCATION=../e2e_template/template.rb")
               # Compile assets before running tests using bin/shakapacker
-              sh_in_dir(sh_opts, TEMP_RAILS_APP_PATH, "NODE_ENV=test RAILS_ENV=test bin/shakapacker")
+              sh_in_dir(sh_opts, TEMP_RAILS_APP_PATH, "APP_ROOT=#{TEMP_RAILS_APP_PATH} NODE_ENV=test RAILS_ENV=test bin/shakapacker")
               expect(sh_in_dir(sh_opts, TEMP_RAILS_APP_PATH, "bundle exec rspec")).to be_truthy
             end
           end

@@ -24,14 +24,9 @@ module Shakapacker
       $stdout.sync = true
       ENV["NODE_ENV"] ||= (ENV["RAILS_ENV"] == "production") ? "production" : "development"
 
-      puts "[Shakapacker] Starting runner with NODE_ENV=#{ENV["NODE_ENV"]}, RAILS_ENV=#{ENV["RAILS_ENV"]}"
-
       # Determine which runner to use based on configuration
       runner = new(argv)
       config = runner.instance_variable_get(:@config)
-
-      bundler_type = config.rspack? ? "rspack" : "webpack"
-      puts "[Shakapacker] Using #{bundler_type} assets bundler"
 
       if config.rspack?
         require_relative "rspack_runner"

@@ -58,6 +58,8 @@ module Shakapacker
         def self.rails_root
           if defined?(APP_ROOT)
             Pathname.new(APP_ROOT)
+          elsif ENV["APP_ROOT"]
+            Pathname.new(ENV["APP_ROOT"])
           elsif defined?(Rails)
             Rails.root
           else
