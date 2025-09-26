@@ -15,8 +15,11 @@ const { moduleExists, canProcess } = require("../utils/helpers")
 const inliningCss = require("../utils/inliningCss")
 const { getPlugins } = require("../plugins/rspack")
 const { getOptimization } = require("../optimization/rspack")
+const { validateRspackDependencies } = require("../utils/validateDependencies")
 
 const generateRspackConfig = (extraConfig = {}, ...extraArgs) => {
+  // Validate required dependencies first
+  validateRspackDependencies()
   if (extraArgs.length > 0) {
     throw new Error(
       "Only one extra config may be passed here - use webpack-merge to merge configs before passing them to Shakapacker"

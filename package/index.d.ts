@@ -1,6 +1,6 @@
-declare module 'shakapacker' {
-  import { Configuration, RuleSetRule } from 'webpack'
-  import * as https from 'node:https';
+declare module "shakapacker" {
+  import { Configuration, RuleSetRule } from "webpack"
+  import * as https from "node:https"
 
   export interface Config {
     source_path: string
@@ -18,7 +18,7 @@ declare module 'shakapacker' {
     ensure_consistent_versioning: boolean
     compiler_strategy: string
     useContentHash: boolean
-    compile: boolean,
+    compile: boolean
     outputPath: string
     publicPath: string
     publicPathWithoutCDN: string
@@ -33,9 +33,11 @@ declare module 'shakapacker' {
     runningWebpackDevServer: boolean
   }
 
-  type Header = Array<{ key: string; value: string }> | Record<string, string | string[]>
-  type ServerType = 'http' | 'https' | 'spdy'
-  type WebSocketType = 'sockjs' | 'ws'
+  type Header =
+    | Array<{ key: string; value: string }>
+    | Record<string, string | string[]>
+  type ServerType = "http" | "https" | "spdy"
+  type WebSocketType = "sockjs" | "ws"
 
   /**
    * This has the same keys and behavior as https://webpack.js.org/configuration/dev-server/ except:
@@ -44,59 +46,85 @@ declare module 'shakapacker' {
    * @see {import('webpack-dev-server').Configuration}
    */
   interface DevServerConfig {
-    allowed_hosts?: 'all' | 'auto' | string | string[]
+    allowed_hosts?: "all" | "auto" | string | string[]
     bonjour?: boolean | Record<string, unknown> // bonjour.BonjourOptions
     client?: Record<string, unknown> // Client
     compress?: boolean
     dev_middleware?: Record<string, unknown> // webpackDevMiddleware.Options
     headers?: Header | (() => Header)
     history_api_fallback?: boolean | Record<string, unknown> // HistoryApiFallbackOptions
-    hmr?: 'only' | boolean
-    host?: 'local-ip' | 'local-ipv4' | 'local-ipv6' | string
+    hmr?: "only" | boolean
+    host?: "local-ip" | "local-ipv4" | "local-ipv6" | string
     http2?: boolean
     https?: boolean | https.ServerOptions
     ipc?: boolean | string
     magic_html?: boolean
     live_reload?: boolean
-    open?: boolean | string | string[] | Record<string, unknown> | Record<string, unknown>[]
-    port?: 'auto' | string | number
+    open?:
+      | boolean
+      | string
+      | string[]
+      | Record<string, unknown>
+      | Record<string, unknown>[]
+    port?: "auto" | string | number
     proxy?: unknown // ProxyConfigMap | ProxyConfigArray
     setup_exit_signals?: boolean
     static?: boolean | string | unknown // Static | Array<string | Static>
     watch_files?: string | string[] | unknown // WatchFiles | Array<WatchFiles | string>
-    web_socket_server?: string | boolean | WebSocketType | { type?: string | boolean | WebSocketType, options?: Record<string, unknown> }
-    server?: string | boolean | ServerType | { type?: string | boolean | ServerType, options?: https.ServerOptions }
+    web_socket_server?:
+      | string
+      | boolean
+      | WebSocketType
+      | {
+          type?: string | boolean | WebSocketType
+          options?: Record<string, unknown>
+        }
+    server?:
+      | string
+      | boolean
+      | ServerType
+      | { type?: string | boolean | ServerType; options?: https.ServerOptions }
     [otherWebpackDevServerConfigKey: string]: unknown
   }
 
   export const config: Config
   export const devServer: DevServerConfig
-  export function generateWebpackConfig(extraConfig?: Configuration): Configuration
+  export function generateWebpackConfig(
+    extraConfig?: Configuration
+  ): Configuration
   export const baseConfig: Configuration
   export const env: Env
   export const rules: RuleSetRule[]
   export function moduleExists(packageName: string): boolean
-  export function canProcess<T = unknown>(rule: string, fn: (modulePath: string) => T): T | null
+  export function canProcess<T = unknown>(
+    rule: string,
+    fn: (modulePath: string) => T
+  ): T | null
   export const inliningCss: boolean
-  export * from 'webpack-merge'
+  export * from "webpack-merge"
 }
 
-declare module 'shakapacker/rspack' {
-  import type { RspackOptions } from '@rspack/core'
+declare module "shakapacker/rspack" {
+  import type { RspackOptions } from "@rspack/core"
 
-  export const config: import('shakapacker').Config
-  export function generateRspackConfig(extraConfig?: RspackOptions): RspackOptions
+  export const config: import("shakapacker").Config
+  export function generateRspackConfig(
+    extraConfig?: RspackOptions
+  ): RspackOptions
   export const baseConfig: RspackOptions
-  export const env: import('shakapacker').Env
-  export const rules: NonNullable<RspackOptions['module']>['rules']
+  export const env: import("shakapacker").Env
+  export const rules: NonNullable<RspackOptions["module"]>["rules"]
   export function moduleExists(packageName: string): boolean
-  export function canProcess<T = unknown>(rule: string, fn: (modulePath: string) => T): T | null
+  export function canProcess<T = unknown>(
+    rule: string,
+    fn: (modulePath: string) => T
+  ): T | null
   export const inliningCss: boolean
-  export * from 'webpack-merge'
+  export * from "webpack-merge"
 }
 
-declare module 'shakapacker/package/babel/preset.js' {
-  import { ConfigAPI, PluginItem, TransformOptions } from '@babel/core'
+declare module "shakapacker/package/babel/preset.js" {
+  import { ConfigAPI, PluginItem, TransformOptions } from "@babel/core"
 
   interface RequiredTransformOptions {
     plugins: PluginItem[]

@@ -1,4 +1,5 @@
 const { requireOrError } = require("../utils/requireOrError")
+const { error: logError } = require("../utils/debug")
 
 const rspack = requireOrError("@rspack/core")
 
@@ -11,10 +12,13 @@ const getOptimization = () => {
       new rspack.LightningCssMinimizerRspackPlugin()
     ]
   } catch (error) {
-    // eslint-disable-next-line no-console
-    console.warn(
-      "[SHAKAPACKER]: Warning: Could not configure Rspack minimizers:",
-      error.message
+    // Log full error with stack trace
+    logError(
+      `Failed to configure Rspack minimizers: ${error.message}\n${error.stack}`
+    )
+    // Re-throw the error to properly propagate it
+    throw new Error(
+      `Could not configure Rspack minimizers: ${error.message}. Please check that @rspack/core is properly installed.`
     )
   }
   return result
