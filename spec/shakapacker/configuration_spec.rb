@@ -421,4 +421,99 @@ describe "Shakapacker::Configuration" do
       end
     end
   end
+
+  describe "#javascript_transpiler" do
+    context "with javascript_transpiler set in config" do
+      let(:config) do
+        Shakapacker::Configuration.new(
+          root_path: ROOT_PATH,
+          config_path: Pathname.new(File.expand_path("./test_app/config/shakapacker.yml", __dir__)),
+          env: "production"
+        )
+      end
+
+      it "returns the configured javascript_transpiler" do
+        allow(config).to receive(:fetch).with(:javascript_transpiler).and_return("swc")
+        allow(config).to receive(:fetch).with(:webpack_loader).and_return(nil)
+        expect(config.javascript_transpiler).to eq "swc"
+      end
+    end
+
+    context "with webpack_loader set in config (fallback)" do
+      let(:config) do
+        Shakapacker::Configuration.new(
+          root_path: ROOT_PATH,
+          config_path: Pathname.new(File.expand_path("./test_app/config/shakapacker.yml", __dir__)),
+          env: "production"
+        )
+      end
+
+      it "falls back to webpack_loader when javascript_transpiler is not set" do
+        allow(config).to receive(:fetch).with(:javascript_transpiler).and_return(nil)
+        allow(config).to receive(:fetch).with(:webpack_loader).and_return("esbuild")
+        expect(config.javascript_transpiler).to eq "esbuild"
+      end
+    end
+
+    context "with neither javascript_transpiler nor webpack_loader set" do
+      let(:config) do
+        Shakapacker::Configuration.new(
+          root_path: ROOT_PATH,
+          config_path: Pathname.new(File.expand_path("./test_app/config/shakapacker.yml", __dir__)),
+          env: "production"
+        )
+      end
+
+      it "defaults to 'babel'" do
+        allow(config).to receive(:fetch).with(:javascript_transpiler).and_return(nil)
+        allow(config).to receive(:fetch).with(:webpack_loader).and_return(nil)
+        allow(config).to receive(:fetch).with(:assets_bundler).and_return(nil)
+        allow(config).to receive(:fetch).with(:bundler).and_return(nil)
+        expect(config.javascript_transpiler).to eq "babel"
+      end
+    end
+  end
+
+  describe "#webpack_loader (deprecated)" do
+    context "with both webpack_loader and javascript_transpiler set" do
+      let(:config) do
+        Shakapacker::Configuration.new(
+          root_path: ROOT_PATH,
+          config_path: Pathname.new(File.expand_path("./test_app/config/shakapacker.yml", __dir__)),
+          env: "production"
+        )
+      end
+
+      it "returns javascript_transpiler value without deprecation warning" do
+        data_mock = { webpack_loader: "swc", javascript_transpiler: "esbuild" }
+        allow(config).to receive(:data).and_return(data_mock)
+        allow(config).to receive(:javascript_transpiler).and_return("esbuild")
+
+        expect($stderr).not_to receive(:puts)
+        expect(config.webpack_loader).to eq "esbuild"
+      end
+    end
+
+    context "with only webpack_loader set" do
+      let(:config) do
+        Shakapacker::Configuration.new(
+          root_path: ROOT_PATH,
+          config_path: Pathname.new(File.expand_path("./test_app/config/shakapacker.yml", __dir__)),
+          env: "production"
+        )
+      end
+
+      it "shows deprecation warning and returns javascript_transpiler value" do
+        data_mock = { webpack_loader: "swc" }
+        allow(config).to receive(:data).and_return(data_mock)
+        allow(config).to receive(:fetch).with(:javascript_transpiler).and_return(nil)
+        allow(config).to receive(:fetch).with(:webpack_loader).and_return("swc")
+        allow(config).to receive(:fetch).with(:assets_bundler).and_return(nil)
+        allow(config).to receive(:fetch).with(:bundler).and_return(nil)
+
+        expect($stderr).to receive(:puts).with(/DEPRECATION WARNING.*webpack_loader.*deprecated.*javascript_transpiler/)
+        expect(config.javascript_transpiler).to eq "swc"
+      end
+    end
+  end
 end

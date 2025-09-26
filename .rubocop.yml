@@ -9,6 +9,7 @@ AllCops:
     - "vendor/**/*"
     - "node_modules/**/*"
     - "_actions/**/*"
+    - "spec/dummy-rspack/**/*"
 
 # Prefer &&/|| over and/or.
 Style/AndOr:

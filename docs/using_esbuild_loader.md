@@ -27,7 +27,7 @@ To use esbuild as your transpiler today. You need to do two things:
 npm install esbuild esbuild-loader
 ```
 
-2. Add or change `webpack_loader` value in your default `shakapacker.yml` config to `esbuild`
+2. Add or change `javascript_transpiler` value in your default `shakapacker.yml` config to `esbuild`
 The default configuration of babel is done by using `package.json` to use the file within the `shakapacker` package.
 
 ```yml
@@ -46,8 +46,8 @@ default: &default
   # Reload manifest.json on all requests so we reload latest compiled packs
   cache_manifest: false
 
-  # Select loader to use, available options are 'babel' (default), 'swc' or 'esbuild'
-  webpack_loader: 'esbuild'
+  # Select JavaScript transpiler to use, available options are 'babel' (default), 'swc' or 'esbuild'
+  javascript_transpiler: 'esbuild'
 ```
 
 ### (Optional) Replace minification with esbuild

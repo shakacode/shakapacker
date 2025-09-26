@@ -10,5 +10,5 @@ ENV["BUNDLE_GEMFILE"] ||= File.expand_path("../../Gemfile",
 require "bundler/setup"
 
 require "shakapacker"
-require "shakapacker/webpack_runner"
-Shakapacker::WebpackRunner.run(ARGV)
+require "shakapacker/runner"
+Shakapacker::Runner.run(ARGV)

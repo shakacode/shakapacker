@@ -4,9 +4,11 @@
 const webpackMerge = require("webpack-merge")
 const { resolve } = require("path")
 const { existsSync } = require("fs")
-const baseConfig = require("./environments/base")
-const rules = require("./rules")
 const config = require("./config")
+const baseConfig = require("./environments/base")
+
+const rulesPath = resolve(__dirname, "rules", `${config.assets_bundler}.js`)
+const rules = require(rulesPath)
 const devServer = require("./dev_server")
 const env = require("./env")
 const { moduleExists, canProcess } = require("./utils/helpers")

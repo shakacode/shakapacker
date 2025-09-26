@@ -2,9 +2,13 @@ install_template_path = File.expand_path("../../install/template.rb", __dir__).f
 bin_path = ENV["BUNDLE_BIN"] || Rails.root.join("bin")
 
 namespace :shakapacker do
-  desc "Install Shakapacker in this application"
-  task install: [:check_node] do |task|
+  desc "Install Shakapacker in this application (use ASSETS_BUNDLER=rspack for Rspack)"
+  task :install, [:bundler] => [:check_node] do |task, args|
     Shakapacker::Configuration.installing = true
+
+    if args[:bundler] == "rspack" || ENV["ASSETS_BUNDLER"] == "rspack"
+      ENV["SHAKAPACKER_ASSETS_BUNDLER"] = "rspack"
+    end
 
     prefix = task.name.split(/#|shakapacker:install/).first
 

@@ -14,7 +14,7 @@ declare module 'shakapacker' {
     shakapacker_precompile: boolean
     additional_paths: string[]
     cache_manifest: boolean
-    webpack_loader: string
+    javascript_transpiler: string
     ensure_consistent_versioning: boolean
     compiler_strategy: string
     useContentHash: boolean
@@ -75,6 +75,20 @@ declare module 'shakapacker' {
   export const baseConfig: Configuration
   export const env: Env
   export const rules: RuleSetRule[]
+  export function moduleExists(packageName: string): boolean
+  export function canProcess<T = unknown>(rule: string, fn: (modulePath: string) => T): T | null
+  export const inliningCss: boolean
+  export * from 'webpack-merge'
+}
+
+declare module 'shakapacker/rspack' {
+  import type { RspackOptions } from '@rspack/core'
+
+  export const config: import('shakapacker').Config
+  export function generateRspackConfig(extraConfig?: RspackOptions): RspackOptions
+  export const baseConfig: RspackOptions
+  export const env: import('shakapacker').Env
+  export const rules: NonNullable<RspackOptions['module']>['rules']
   export function moduleExists(packageName: string): boolean
   export function canProcess<T = unknown>(rule: string, fn: (modulePath: string) => T): T | null
   export const inliningCss: boolean

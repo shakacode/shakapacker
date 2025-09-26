@@ -108,15 +108,17 @@ class Shakapacker::Manifest
     end
 
     def missing_file_from_manifest_error(bundle_name)
+      bundler_name = config.assets_bundler
       <<-MSG
 Shakapacker can't find #{bundle_name} in #{config.manifest_path}. Possible causes:
 1. You forgot to install javascript packages or are running an incompatible javascript runtime version
 2. Your app has code with a non-standard extension (like a `.jsx` file) but the extension is not in the `extensions` config in `config/shakapacker.yml`
 3. You have set compile: false (see `config/shakapacker.yml`) for this environment
    (unless you are using the `bin/shakapacker -w` or the `bin/shakapacker-dev-server`, in which case maybe you aren't running the dev server in the background?)
-4. webpack has not yet FINISHED running to reflect updates.
+4. Your #{bundler_name} has not yet FINISHED running to reflect updates.
 5. You have misconfigured Shakapacker's `config/shakapacker.yml` file.
-6. Your webpack configuration is not creating a manifest.
+6. Your #{bundler_name} configuration is not creating a manifest with the expected structure.
+7. Ensure the 'assets_bundler' in config/shakapacker.yml is set correctly (currently: #{bundler_name}).
 
 Your manifest contains:
 #{JSON.pretty_generate(@data)}

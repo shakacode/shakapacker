@@ -8,7 +8,6 @@ require "package_json"
 force_option = ENV["FORCE"] ? { force: true } : {}
 
 copy_file "#{__dir__}/config/shakapacker.yml", "config/shakapacker.yml", force_option
-remove_file "#{__dir__}/package.json" if force_option[:force]
 
 say "Copying webpack core config"
 directory "#{__dir__}/config/webpack", "config/webpack", force_option
@@ -112,7 +111,15 @@ rescue PackageJson::Error
 end
 
 def fetch_peer_dependencies
-  PackageJson.read("#{__dir__}/../../").fetch("peerDependencies")
+  PackageJson.read("#{__dir__}").fetch(ENV["SHAKAPACKER_BUNDLER"] || "webpack")
+end
+
+def fetch_common_dependencies
+  ENV["SKIP_COMMON_LOADERS"] ? {} : PackageJson.read("#{__dir__}").fetch("common")
+end
+
+def fetch_babel_dependencies
+  ENV["USE_BABEL_PACKAGES"] ? PackageJson.read("#{__dir__}").fetch("babel") : {}
 end
 
 Dir.chdir(Rails.root) do
@@ -130,6 +137,9 @@ Dir.chdir(Rails.root) do
   end
 
   peers = fetch_peer_dependencies
+  peers = peers.merge(fetch_common_dependencies)
+  peers = peers.merge(fetch_babel_dependencies)
+
   dev_dependency_packages = ["webpack-dev-server"]
 
   dependencies_to_add = []

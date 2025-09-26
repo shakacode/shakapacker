@@ -1,4 +1,4 @@
-const { dirname } = require("path")
+const { dirname, sep, normalize } = require("path")
 const {
   additional_paths: additionalPaths,
   source_path: sourcePath
@@ -10,16 +10,22 @@ module.exports = {
   type: "asset/resource",
   generator: {
     filename: (pathData) => {
-      const path = dirname(pathData.filename)
-      const stripPaths = [...additionalPaths, sourcePath]
+      const path = normalize(dirname(pathData.filename))
+      const stripPaths = [...additionalPaths, sourcePath].map((p) =>
+        normalize(p)
+      )
 
       const selectedStripPath = stripPaths.find((includePath) =>
         path.startsWith(includePath)
       )
 
+      if (!selectedStripPath) {
+        return `static/[name]-[hash][ext][query]`
+      }
+
       const folders = path
-        .replace(`${selectedStripPath}`, "")
-        .split("/")
+        .replace(selectedStripPath, "")
+        .split(sep)
         .filter(Boolean)
 
       const foldersWithStatic = ["static", ...folders].join("/")

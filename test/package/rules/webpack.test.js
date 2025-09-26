@@ -1,4 +1,4 @@
-const rules = require("../../../package/rules/index")
+const rules = require("../../../package/rules/webpack")
 
 jest.mock("../../../package/utils/helpers", () => {
   const original = jest.requireActual("../../../package/utils/helpers")

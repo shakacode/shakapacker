@@ -1,16 +1,30 @@
 /* eslint global-require: 0 */
 /* eslint import/no-dynamic-require: 0 */
 
-const { existsSync, readdirSync } = require("fs")
 const { basename, dirname, join, relative, resolve } = require("path")
+const { existsSync, readdirSync } = require("fs")
 const extname = require("path-complete-extname")
-// TODO: Change to `const { WebpackAssetsManifest }` when dropping 'webpack-assets-manifest < 6.0.0' (Node >=20.10.0) support
-const WebpackAssetsManifest = require("webpack-assets-manifest")
-const webpack = require("webpack")
-const rules = require("../rules")
 const config = require("../config")
 const { isProduction } = require("../env")
-const { moduleExists } = require("../utils/helpers")
+
+const pluginsPath = resolve(
+  __dirname,
+  "..",
+  "plugins",
+  `${config.assets_bundler}.js`
+)
+const { getPlugins } = require(pluginsPath)
+const rulesPath = resolve(
+  __dirname,
+  "..",
+  "rules",
+  `${config.assets_bundler}.js`
+)
+const rules = require(rulesPath)
+
+// Don't use contentHash except for production for performance
+// https://webpack.js.org/guides/build-performance/#avoid-production-specific-tooling
+const hash = isProduction || config.useContentHash ? "-[contenthash]" : ""
 
 const getFilesInDirectory = (dir, includeNested) => {
   if (!existsSync(dir)) {
@@ -73,63 +87,6 @@ const getModulePaths = () => {
   return result
 }
 
-// TODO: Remove WebpackAssetsManifestConstructor workaround when dropping 'webpack-assets-manifest < 6.0.0' (Node >=20.10.0) support
-const WebpackAssetsManifestConstructor =
-  "WebpackAssetsManifest" in WebpackAssetsManifest
-    ? WebpackAssetsManifest.WebpackAssetsManifest
-    : WebpackAssetsManifest
-const getPlugins = () => {
-  const plugins = [
-    new webpack.EnvironmentPlugin(process.env),
-    new WebpackAssetsManifestConstructor({
-      entrypoints: true,
-      writeToDisk: true,
-      output: config.manifestPath,
-      entrypointsUseAssets: true,
-      publicPath: config.publicPathWithoutCDN,
-      integrity: config.integrity.enabled,
-      integrityHashes: config.integrity.hash_functions
-    })
-  ]
-
-  if (moduleExists("css-loader") && moduleExists("mini-css-extract-plugin")) {
-    const hash = isProduction || config.useContentHash ? "-[contenthash:8]" : ""
-    const MiniCssExtractPlugin = require("mini-css-extract-plugin")
-    plugins.push(
-      new MiniCssExtractPlugin({
-        filename: `css/[name]${hash}.css`,
-        chunkFilename: `css/[id]${hash}.css`,
-        // For projects where css ordering has been mitigated through consistent use of scoping or naming conventions,
-        // the css order warnings can be disabled by setting the ignoreOrder flag.
-        // Read: https://stackoverflow.com/questions/51971857/mini-css-extract-plugin-warning-in-chunk-chunkname-mini-css-extract-plugin-con
-        ignoreOrder: config.css_extract_ignore_order_warnings
-      })
-    )
-  }
-
-  if (
-    moduleExists("webpack-subresource-integrity") &&
-    config.integrity.enabled
-  ) {
-    const {
-      SubresourceIntegrityPlugin
-    } = require("webpack-subresource-integrity")
-
-    plugins.push(
-      new SubresourceIntegrityPlugin({
-        hashFuncNames: config.integrity.hash_functions,
-        enabled: isProduction
-      })
-    )
-  }
-
-  return plugins
-}
-
-// Don't use contentHash except for production for performance
-// https://webpack.js.org/guides/build-performance/#avoid-production-specific-tooling
-const hash = isProduction || config.useContentHash ? "-[contenthash]" : ""
-
 module.exports = {
   mode: "production",
   output: {
@@ -160,12 +117,10 @@ module.exports = {
 
   optimization: {
     splitChunks: { chunks: "all" },
-
     runtimeChunk: "single"
   },
 
   module: {
-    strictExportPresence: true,
     rules
   }
 }

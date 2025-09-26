@@ -24,6 +24,23 @@ namespace :run_spec do
         "bundle install",
         "yalc link shakapacker",
         "yarn install",
+        "NODE_ENV=test RAILS_ENV=test yarn run webpack --config config/webpack/webpack.config.js",
+        "bundle exec rspec"
+      ])
+    end
+  end
+
+  desc "Run specs in the dummy-rspack app"
+  task :dummy_rspack do
+    puts "Running dummy-rspack app specs"
+    spec_dummy_dir = Pathname.new(File.join("spec", "dummy-rspack")).realpath
+    Bundler.with_unbundled_env do
+      sh_in_dir(".", "yalc publish")
+      sh_in_dir(spec_dummy_dir, [
+        "bundle install",
+        "yalc link shakapacker",
+        "yarn install",
+        "NODE_ENV=test RAILS_ENV=test yarn run rspack build --config config/webpack/webpack.config.js",
         "bundle exec rspec"
       ])
     end
@@ -35,7 +52,7 @@ namespace :run_spec do
   end
 
   desc "Run all specs"
-  task all_specs: %i[gem dummy generator] do
+  task all_specs: %i[gem dummy dummy_rspack generator] do
     puts "Completed all RSpec tests"
   end
 end

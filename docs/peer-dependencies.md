@@ -1,0 +1,40 @@
+# Shakapacker's Peer Dependencies
+#### last updated for our 8.4.0 version
+#### see lib/install/peerDependencies.json
+
+To simplify peer dependencies while supporting both webpack & rspack, we decided to document the dependencies here instead of creating two separate npm packages.
+
+## Essential for Rspack
+```
+    "@rspack/cli": "^1.0.0",
+    "@rspack/core": "^1.0.0",
+    "rspack-manifest-plugin": "^5.0.0",
+```
+## Essential for Webpack
+```
+    "mini-css-extract-plugin": "^2.0.0",
+    "terser-webpack-plugin": "^5.3.1",
+    "webpack": "^5.76.0",
+    "webpack-assets-manifest": "^5.0.6 || ^6.0.0",
+    "webpack-cli": "^4.9.2 || ^5.0.0 || ^6.0.0",
+    "webpack-dev-server": "^4.15.2 || ^5.2.2",
+    "webpack-merge": "^5.8.0 || ^6.0.0",
+    "webpack-subresource-integrity": "^5.1.0"
+```
+
+## Highly recommended
+```
+    "compression-webpack-plugin": "^9.0.0 || ^10.0.0|| ^11.0.0",
+    "css-loader": "^6.0.0 || ^7.0.0",
+    "sass-loader": "^13.0.0 || ^14.0.0 || ^15.0.0 || ^16.0.0",
+    "style-loader": "^3.0.0 || ^4.0.0",
+```
+
+## Babel (avoid if at all possible)
+```
+    "@babel/core": "^7.17.9",
+    "@babel/plugin-transform-runtime": "^7.17.0",
+    "@babel/preset-env": "^7.16.11",
+    "@babel/runtime": "^7.17.9",
+    "babel-loader": "^8.2.4 || ^9.0.0 || ^10.0.0",
+```

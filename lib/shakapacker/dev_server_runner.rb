@@ -7,6 +7,10 @@ require_relative "runner"
 
 module Shakapacker
   class DevServerRunner < Shakapacker::Runner
+    def self.run(argv)
+      new(argv).run
+    end
+
     def run
       load_config
       detect_unsupported_switches!
@@ -75,12 +79,19 @@ module Shakapacker
           env["NODE_OPTIONS"] = "#{env["NODE_OPTIONS"]} --inspect-brk --trace-warnings"
         end
 
+        # Add config file
         cmd += ["--config", @webpack_config]
-        cmd += ["--progress", "--color"] if @pretty
 
-        # Default behavior of webpack-dev-server is @hot = true
-        cmd += ["--hot", "only"] if @hot == "only"
-        cmd += ["--no-hot"] if !@hot
+        # Add assets bundler-specific flags
+        if webpack?
+          cmd += ["--progress", "--color"] if @pretty
+          # Default behavior of webpack-dev-server is @hot = true
+          cmd += ["--hot", "only"] if @hot == "only"
+          cmd += ["--no-hot"] if !@hot
+        elsif rspack?
+          # Rspack supports --hot but not --no-hot or --progress/--color
+          cmd += ["--hot"] if @hot && @hot != false
+        end
 
         cmd += @argv
 
@@ -90,7 +101,16 @@ module Shakapacker
       end
 
       def build_cmd
-        package_json.manager.native_exec_command("webpack", ["serve"])
+        command = @config.rspack? ? "rspack" : "webpack"
+        package_json.manager.native_exec_command(command, ["serve"])
+      end
+
+      def webpack?
+        @config.webpack?
+      end
+
+      def rspack?
+        @config.rspack?
       end
   end
 end

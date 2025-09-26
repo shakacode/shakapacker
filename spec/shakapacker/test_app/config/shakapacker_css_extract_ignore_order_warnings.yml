@@ -8,7 +8,7 @@ default: &default
   public_output_path: packs
   cache_path: tmp/shakapacker
   webpack_compile_output: false
-  webpack_loader: babel
+  javascript_transpiler: babel
   css_extract_ignore_order_warnings: true
 
   # Location for manifest.json, defaults to {public_output_path}/manifest.json if unset
