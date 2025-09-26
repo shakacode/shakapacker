@@ -1,4 +1,9 @@
 # Shakapacker (v8)
+---
+
+_🚀 Shakapacker 9.0.0.beta.2 supports [Rspack](https://rspack.rs/)! 10x faster than webpack!_
+
+---
 
 _Official, actively maintained successor to [rails/webpacker](https://github.com/rails/webpacker). ShakaCode stands behind the long-term maintenance and development of this project for the Rails community._
 
