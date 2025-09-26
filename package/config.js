@@ -65,4 +65,9 @@ if (config.webpack_loader && !config.javascript_transpiler) {
 // Ensure webpack_loader is always available for backward compatibility
 config.webpack_loader = config.javascript_transpiler
 
+// Allow ENV variable to override assets_bundler
+if (process.env.SHAKAPACKER_ASSET_BUNDLER) {
+  config.assets_bundler = process.env.SHAKAPACKER_ASSET_BUNDLER
+}
+
 module.exports = config

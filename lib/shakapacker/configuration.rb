@@ -89,7 +89,7 @@ class Shakapacker::Configuration
   end
 
   def assets_bundler
-    fetch(:assets_bundler) || fetch(:bundler) || "webpack"
+    ENV["SHAKAPACKER_ASSET_BUNDLER"] || fetch(:assets_bundler) || fetch(:bundler) || "webpack"
   end
 
   # Deprecated: Use assets_bundler instead
