@@ -27,11 +27,11 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '20'
-          cache: 'yarn'
-          cache-dependency-path: spec/dummy/yarn.lock
+          cache: 'npm'
+          cache-dependency-path: spec/dummy/package-lock.json
 
       - name: Install dependencies
-        run: yarn install --frozen-lockfile
+        run: npm ci
 
       - name: Switch to Webpack
         run: bin/test-bundler webpack
@@ -64,11 +64,11 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '20'
-          cache: 'yarn'
-          cache-dependency-path: spec/dummy/yarn.lock
+          cache: 'npm'
+          cache-dependency-path: spec/dummy/package-lock.json
 
       - name: Install dependencies
-        run: yarn install --frozen-lockfile
+        run: npm ci
 
       - name: Switch to RSpack
         run: bin/test-bundler rspack
@@ -101,11 +101,11 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '20'
-          cache: 'yarn'
-          cache-dependency-path: spec/dummy/yarn.lock
+          cache: 'npm'
+          cache-dependency-path: spec/dummy/package-lock.json
 
       - name: Install dependencies
-        run: yarn install --frozen-lockfile
+        run: npm ci
 
       - name: Test switching between bundlers
         run: |
