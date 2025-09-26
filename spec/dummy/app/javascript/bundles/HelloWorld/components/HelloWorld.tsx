@@ -2,7 +2,7 @@ import * as React from 'react'
 import { useState, useEffect } from 'react'
 import type { FunctionComponent } from 'react'
 
-import * as style from './HelloWorld.module.css'
+import style from './HelloWorld.module.css'
 import logo from './logo.svg'
 
 export interface Props {
