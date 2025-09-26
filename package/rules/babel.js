@@ -1,9 +1,9 @@
 const { loaderMatches } = require("../utils/helpers")
-const { webpack_loader: webpackLoader } = require("../config")
+const { javascript_transpiler: javascriptTranspiler } = require("../config")
 const { isProduction } = require("../env")
 const jscommon = require("./jscommon")
 
-module.exports = loaderMatches(webpackLoader, "babel", () => ({
+module.exports = loaderMatches(javascriptTranspiler, "babel", () => ({
   test: /\.(js|jsx|mjs|ts|tsx|coffee)?(\.erb)?$/,
   ...jscommon,
   use: [

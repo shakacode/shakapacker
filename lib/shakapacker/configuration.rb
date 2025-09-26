@@ -108,6 +108,18 @@ class Shakapacker::Configuration
     assets_bundler == "webpack"
   end
 
+  def javascript_transpiler
+    fetch(:javascript_transpiler) || fetch(:webpack_loader) || "babel"
+  end
+
+  # Deprecated: Use javascript_transpiler instead
+  def webpack_loader
+    if data.has_key?(:webpack_loader) && !data.has_key?(:javascript_transpiler)
+      $stderr.puts "⚠️  DEPRECATION WARNING: The 'webpack_loader' configuration option is deprecated. Please use 'javascript_transpiler' instead as it better reflects its purpose of configuring JavaScript transpilation regardless of the bundler used."
+    end
+    javascript_transpiler
+  end
+
   def fetch(key)
     data.fetch(key, defaults[key])
   end

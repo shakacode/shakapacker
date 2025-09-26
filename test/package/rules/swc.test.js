@@ -11,7 +11,7 @@ jest.mock("../../../package/config", () => {
   const original = jest.requireActual("../../../package/config")
   return {
     ...original,
-    webpack_loader: "swc",
+    javascript_transpiler: "swc",
     additional_paths: [...original.additional_paths, "node_modules/included"]
   }
 })

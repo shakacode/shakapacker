@@ -14,7 +14,7 @@ declare module 'shakapacker' {
     shakapacker_precompile: boolean
     additional_paths: string[]
     cache_manifest: boolean
-    webpack_loader: string
+    javascript_transpiler: string
     ensure_consistent_versioning: boolean
     compiler_strategy: string
     useContentHash: boolean

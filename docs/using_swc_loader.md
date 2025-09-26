@@ -22,7 +22,7 @@ In order to use SWC as your compiler today. You need to do two things:
 npm install @swc/core swc-loader
 ```
 
-2. Add or change `webpack_loader` value in your default `shakapacker.yml` config to `swc`
+2. Add or change `javascript_transpiler` value in your default `shakapacker.yml` config to `swc`
 The default configuration of babel is done by using `package.json` to use the file within the `shakapacker` package.
 
 ```yml
@@ -41,8 +41,8 @@ default: &default
   # Reload manifest.json on all requests so we reload latest compiled packs
   cache_manifest: false
 
-  # Select loader to use, available options are 'babel' (default) or 'swc'
-  webpack_loader: 'swc'
+  # Select JavaScript transpiler to use, available options are 'babel' (default) or 'swc'
+  javascript_transpiler: 'swc'
 ```
 
 ## Usage
