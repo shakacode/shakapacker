@@ -59,11 +59,23 @@ Align with Next.js and modern tooling by using named exports:
 
 ## Related Issues from PR #597
 
-### React Component Props Not Rendering (spec/dummy)
-- The test expects "Hello, Stranger!" but component shows "Hello, World!"
-- Controller passes `{ name: "Stranger" }` as props
-- Likely SSR issue with React 19 and react_on_rails 16.1
-- Need to investigate server-side rendering compatibility
+### React Component Not Rendering (spec/dummy) - CRITICAL
+- **Issue**: React component not rendering at all with React 19 and react_on_rails 16.1
+- **Symptoms**:
+  - Component should render "Hello, Stranger!" but nothing appears
+  - Input field not rendered, making interactive test fail
+  - Only the static H1 "Hello, World!" is visible
+- **Temporary Fix**:
+  - Disabled prerendering (SSR)
+  - Skipped interactive component test
+- **Root Cause**: Likely compatibility issue between:
+  - React 19.1.1
+  - react_on_rails 16.1
+  - Rails 8.0.3
+- **Action Required**:
+  - Investigate react_on_rails 16.1 SSR with React 19
+  - May need to downgrade React or update react_on_rails configuration
+  - Check if server bundle is being executed properly
 
 ### Test Infrastructure
 - Successfully implemented dual bundler support (webpack/rspack)
