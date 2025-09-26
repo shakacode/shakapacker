@@ -101,16 +101,16 @@ module Shakapacker
       end
 
       def build_cmd
-        command = rspack? ? "rspack" : "webpack"
+        command = @config.rspack? ? "rspack" : "webpack"
         package_json.manager.native_exec_command(command, ["serve"])
       end
 
       def webpack?
-        get_assets_bundler_type == "webpack"
+        @config.webpack?
       end
 
       def rspack?
-        get_assets_bundler_type == "rspack"
+        @config.rspack?
       end
   end
 end

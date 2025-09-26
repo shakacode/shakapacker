@@ -53,13 +53,16 @@ if (config.manifest_path) {
 // Ensure no duplicate hash functions exist in the returned config object
 config.integrity.hash_functions = [...new Set(config.integrity.hash_functions)]
 
+// Define clear defaults
+const DEFAULT_JAVASCRIPT_TRANSPILER = config.assets_bundler === "rspack" ? "swc" : "babel"
+
 // Backward compatibility: Add webpack_loader property that maps to javascript_transpiler
 // Show deprecation warning if webpack_loader is used
 if (config.webpack_loader && !config.javascript_transpiler) {
   console.warn("⚠️  DEPRECATION WARNING: The 'webpack_loader' configuration option is deprecated. Please use 'javascript_transpiler' instead as it better reflects its purpose of configuring JavaScript transpilation regardless of the bundler used.")
   config.javascript_transpiler = config.webpack_loader
 } else if (!config.javascript_transpiler) {
-  config.javascript_transpiler = config.webpack_loader || "babel"
+  config.javascript_transpiler = config.webpack_loader || DEFAULT_JAVASCRIPT_TRANSPILER
 }
 
 // Ensure webpack_loader is always available for backward compatibility

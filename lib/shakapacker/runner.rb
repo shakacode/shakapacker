@@ -117,10 +117,6 @@ module Shakapacker
         end
       end
 
-      def get_assets_bundler_type
-        @config.assets_bundler
-      end
-
       def find_rspack_config_with_fallback
         # First try rspack-specific paths
         rspack_paths = %w[ts js].map do |ext|

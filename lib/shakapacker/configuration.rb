@@ -89,14 +89,15 @@ class Shakapacker::Configuration
   end
 
   def assets_bundler
+    # Show deprecation warning if using old 'bundler' key
+    if data.has_key?(:bundler) && !data.has_key?(:assets_bundler)
+      $stderr.puts "⚠️  DEPRECATION WARNING: The 'bundler' configuration option is deprecated. Please use 'assets_bundler' instead to avoid confusion with Ruby's Bundler gem manager."
+    end
     ENV["SHAKAPACKER_ASSET_BUNDLER"] || fetch(:assets_bundler) || fetch(:bundler) || "webpack"
   end
 
   # Deprecated: Use assets_bundler instead
   def bundler
-    if data.has_key?(:bundler) && !data.has_key?(:assets_bundler)
-      $stderr.puts "⚠️  DEPRECATION WARNING: The 'bundler' configuration option is deprecated. Please use 'assets_bundler' instead to avoid confusion with Ruby's Bundler gem manager."
-    end
     assets_bundler
   end
 
@@ -109,16 +110,28 @@ class Shakapacker::Configuration
   end
 
   def javascript_transpiler
-    fetch(:javascript_transpiler) || fetch(:webpack_loader) || "babel"
+    # Show deprecation warning if using old 'webpack_loader' key
+    if data.has_key?(:webpack_loader) && !data.has_key?(:javascript_transpiler)
+      $stderr.puts "⚠️  DEPRECATION WARNING: The 'webpack_loader' configuration option is deprecated. Please use 'javascript_transpiler' instead as it better reflects its purpose of configuring JavaScript transpilation regardless of the bundler used."
+    end
+
+    # Use explicit config if set, otherwise default based on bundler
+    fetch(:javascript_transpiler) || fetch(:webpack_loader) || default_javascript_transpiler
   end
 
   # Deprecated: Use javascript_transpiler instead
   def webpack_loader
-    if data.has_key?(:webpack_loader) && !data.has_key?(:javascript_transpiler)
-      $stderr.puts "⚠️  DEPRECATION WARNING: The 'webpack_loader' configuration option is deprecated. Please use 'javascript_transpiler' instead as it better reflects its purpose of configuring JavaScript transpilation regardless of the bundler used."
-    end
     javascript_transpiler
   end
+
+  private
+
+  def default_javascript_transpiler
+    # RSpack has built-in SWC support, use it by default
+    rspack? ? "swc" : "babel"
+  end
+
+  public
 
   def fetch(key)
     data.fetch(key, defaults[key])
