@@ -93,7 +93,7 @@ class Shakapacker::Configuration
     if data.has_key?(:bundler) && !data.has_key?(:assets_bundler)
       $stderr.puts "⚠️  DEPRECATION WARNING: The 'bundler' configuration option is deprecated. Please use 'assets_bundler' instead to avoid confusion with Ruby's Bundler gem manager."
     end
-    ENV["SHAKAPACKER_ASSET_BUNDLER"] || fetch(:assets_bundler) || fetch(:bundler) || "webpack"
+    ENV["SHAKAPACKER_ASSETS_BUNDLER"] || fetch(:assets_bundler) || fetch(:bundler) || "webpack"
   end
 
   # Deprecated: Use assets_bundler instead

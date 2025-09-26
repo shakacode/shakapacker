@@ -53,6 +53,11 @@ if (config.manifest_path) {
 // Ensure no duplicate hash functions exist in the returned config object
 config.integrity.hash_functions = [...new Set(config.integrity.hash_functions)]
 
+// Allow ENV variable to override assets_bundler
+if (process.env.SHAKAPACKER_ASSETS_BUNDLER) {
+  config.assets_bundler = process.env.SHAKAPACKER_ASSETS_BUNDLER
+}
+
 // Define clear defaults
 const DEFAULT_JAVASCRIPT_TRANSPILER =
   config.assets_bundler === "rspack" ? "swc" : "babel"
@@ -71,10 +76,5 @@ if (config.webpack_loader && !config.javascript_transpiler) {
 
 // Ensure webpack_loader is always available for backward compatibility
 config.webpack_loader = config.javascript_transpiler
-
-// Allow ENV variable to override assets_bundler
-if (process.env.SHAKAPACKER_ASSET_BUNDLER) {
-  config.assets_bundler = process.env.SHAKAPACKER_ASSET_BUNDLER
-}
 
 module.exports = config

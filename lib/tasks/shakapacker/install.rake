@@ -7,7 +7,7 @@ namespace :shakapacker do
     Shakapacker::Configuration.installing = true
 
     if args[:bundler] == "rspack" || ENV["ASSETS_BUNDLER"] == "rspack"
-      ENV["SHAKAPACKER_ASSET_BUNDLER"] = "rspack"
+      ENV["SHAKAPACKER_ASSETS_BUNDLER"] = "rspack"
     end
 
     prefix = task.name.split(/#|shakapacker:install/).first
