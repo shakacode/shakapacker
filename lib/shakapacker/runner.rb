@@ -7,6 +7,8 @@ require "pathname"
 
 module Shakapacker
   class Runner
+    attr_reader :config
+
     # Common commands that don't work with --config option
     BASE_COMMANDS = [
       "help",
@@ -26,14 +28,29 @@ module Shakapacker
 
       # Determine which runner to use based on configuration
       runner = new(argv)
-      config = runner.instance_variable_get(:@config)
 
-      if config.rspack?
+      if runner.config.rspack?
         require_relative "rspack_runner"
-        RspackRunner.new(argv).run
+        # Pass the already initialized runner to avoid double configuration loading
+        runner.extend(Module.new do
+          def build_cmd
+            package_json.manager.native_exec_command("rspack")
+          end
+
+          def assets_bundler_commands
+            BASE_COMMANDS + %w[build watch]
+          end
+        end)
+        runner.run
       else
         require_relative "webpack_runner"
-        WebpackRunner.new(argv).run
+        # Pass the already initialized runner to avoid double configuration loading
+        runner.extend(Module.new do
+          def build_cmd
+            package_json.manager.native_exec_command("webpack")
+          end
+        end)
+        runner.run
       end
     end
 

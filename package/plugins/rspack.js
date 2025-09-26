@@ -1,4 +1,3 @@
-const { existsSync, readFileSync } = require("fs")
 const { requireOrError } = require("../utils/requireOrError")
 
 const { RspackManifestPlugin } = requireOrError("rspack-manifest-plugin")
@@ -6,6 +5,7 @@ const rspack = requireOrError("@rspack/core")
 const config = require("../config")
 const { isProduction } = require("../env")
 const { moduleExists } = require("../utils/helpers")
+const { warn } = require("../utils/debug")
 
 const getPlugins = () => {
   const plugins = [
@@ -16,27 +16,7 @@ const getPlugins = () => {
       writeToFileEmit: true,
       // rspack-manifest-plugin uses different option names than webpack-assets-manifest
       generate: (seed, files, entrypoints) => {
-        let manifest = seed || {}
-
-        // Load existing manifest if it exists to handle concurrent builds
-        try {
-          if (existsSync(config.manifestPath)) {
-            const existingContent = readFileSync(config.manifestPath, "utf8")
-            const parsed = JSON.parse(existingContent)
-            if (parsed && typeof parsed === "object") {
-              manifest = {
-                ...manifest,
-                ...parsed
-              }
-            }
-          }
-        } catch (error) {
-          // eslint-disable-next-line no-console
-          console.warn(
-            "[SHAKAPACKER]: Warning: Could not read existing manifest.json:",
-            String(error)
-          )
-        }
+        const manifest = seed || {}
 
         // Add files mapping first
         files.forEach((file) => {
