@@ -1,0 +1,52 @@
+#!/usr/bin/env ruby
+# Script to test Shakapacker with different bundlers (webpack or rspack)
+
+require 'fileutils'
+require 'yaml'
+
+bundler = ARGV[0] || 'webpack'
+command = ARGV[1..-1].join(' ') if ARGV.length > 1
+
+unless ['webpack', 'rspack'].include?(bundler)
+  puts "Usage: bin/test-bundler [webpack|rspack] [command]"
+  puts "Example: bin/test-bundler rspack bin/shakapacker"
+  puts "Example: bin/test-bundler webpack bin/shakapacker-dev-server"
+  exit 1
+end
+
+config_dir = File.expand_path('../config', __dir__)
+shakapacker_config = File.join(config_dir, 'shakapacker.yml')
+webpack_config = File.join(config_dir, 'shakapacker-webpack.yml')
+rspack_config = File.join(config_dir, 'shakapacker-rspack.yml')
+
+# Create backup of original webpack config if it doesn't exist
+unless File.exist?(webpack_config)
+  puts "Creating backup of original webpack config..."
+  FileUtils.cp(shakapacker_config, webpack_config)
+end
+
+# Switch configuration based on bundler
+if bundler == 'rspack'
+  if File.exist?(rspack_config)
+    puts "Switching to RSpack configuration..."
+    FileUtils.cp(rspack_config, shakapacker_config)
+    ENV['SHAKAPACKER_ASSET_BUNDLER'] = 'rspack'
+  else
+    puts "Error: RSpack config not found at #{rspack_config}"
+    exit 1
+  end
+else
+  puts "Switching to Webpack configuration..."
+  FileUtils.cp(webpack_config, shakapacker_config)
+  ENV['SHAKAPACKER_ASSET_BUNDLER'] = 'webpack'
+end
+
+puts "Using #{bundler.upcase} as the asset bundler"
+
+# Run command if provided
+if command
+  puts "Running: #{command}"
+  exec(command)
+else
+  puts "Configuration switched to #{bundler}. You can now run Shakapacker commands."
+end
