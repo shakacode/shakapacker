@@ -126,10 +126,10 @@ class Shakapacker::Configuration
 
   private
 
-  def default_javascript_transpiler
-    # RSpack has built-in SWC support, use it by default
-    rspack? ? "swc" : "babel"
-  end
+    def default_javascript_transpiler
+      # RSpack has built-in SWC support, use it by default
+      rspack? ? "swc" : "babel"
+    end
 
   public
 
