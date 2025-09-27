@@ -4,42 +4,42 @@ require "json"
 
 describe "CSS Modules Configuration" do
   ROOT_PATH = Pathname.new(File.expand_path("./test_app", __dir__))
-  
-  let(:config) { 
+
+  let(:config) {
     Shakapacker::Configuration.new(
       root_path: ROOT_PATH,
       config_path: Pathname.new(File.expand_path("./test_app/config/shakapacker.yml", __dir__)),
       env: "test"
     )
   }
-  
+
   describe "v9 default behavior (named exports)" do
     it "configures css-loader with named exports by default" do
       # Test that getStyleRule returns the correct configuration
       # Note: This requires the actual module to be loaded
       skip "Integration test - requires full Node.js environment"
     end
-    
+
     it "generates named exports for CSS classes in JavaScript" do
       # This verifies that the actual css-loader output contains named exports
       css_content = <<~CSS
         .myButton { color: red; }
         .button-text { color: blue; }
       CSS
-      
+
       css_file = Tempfile.new(["test", ".module.css"])
       css_file.write(css_content)
       css_file.rewind
-      
+
       js_test = <<~JS
         // With v9 defaults, this should work:
         import { myButton, buttonText } from '#{css_file.path}';
-        
+
         // These exports should be available
         console.log(typeof myButton === 'string');
         console.log(typeof buttonText === 'string');
       JS
-      
+
       # Note: This is a conceptual test showing expected behavior
       # In practice, this would need a full webpack build to test
       expect(js_test).to include("import { myButton, buttonText }")
@@ -47,7 +47,7 @@ describe "CSS Modules Configuration" do
       css_file&.close
       css_file&.unlink
     end
-    
+
     it "converts kebab-case to camelCase with exportLocalsConvention" do
       # Verify the convention transforms class names correctly
       test_cases = {
@@ -56,26 +56,26 @@ describe "CSS Modules Configuration" do
         "btn" => "btn",
         "MyComponent" => "MyComponent"
       }
-      
+
       test_cases.each do |css_class, expected_export|
         # This demonstrates the expected transformation
         expect(css_class.gsub(/-([a-z])/) { $1.upcase }).to eq(expected_export)
       end
     end
   end
-  
+
   describe "v8 compatibility mode" do
     it "can be configured to use default export (v8 behavior)" do
       # Test that v8 configuration can be applied
       skip "Integration test - requires full Node.js environment"
     end
-    
+
     it "supports default export pattern when configured for v8 compatibility" do
       # With v8 config, this import pattern should work
       js_test = <<~JS
         // With namedExport: false (v8 mode)
         import styles from './styles.module.css';
-        
+
         // Access classes via object
         console.log(styles.myButton);
         console.log(styles['button-text']);
