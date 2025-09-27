@@ -4,27 +4,37 @@ This guide outlines breaking changes and migration steps for upgrading from Shak
 
 ## Breaking Changes
 
-### 1. CSS Modules Now Use Named Exports by Default
+### 1. CSS Modules Configuration Changed to Named Exports
 
-**What changed:** CSS Modules now use named exports with camelCase conversion by default, aligning with Next.js and modern tooling standards.
+**What changed:** CSS Modules are now configured with `namedExport: true` and `exportLocalsConvention: 'camelCase'` by default, aligning with Next.js and modern tooling standards.
 
-**Before (v8):**
+**JavaScript Projects:**
 ```js
+// Before (v8)
 import styles from './Component.module.css';
 <button className={styles.button} />
-```
 
-**After (v9):**
-```js
+// After (v9)
 import { button } from './Component.module.css';
 <button className={button} />
+```
+
+**TypeScript Projects:**
+```typescript
+// Before (v8)
+import styles from './Component.module.css';
+<button className={styles.button} />
+
+// After (v9) - namespace import due to TypeScript limitations
+import * as styles from './Component.module.css';
+<button className={styles.button} />
 ```
 
 **Migration Options:**
 
 1. **Update your code** (Recommended):
-   - Change imports from default to named exports
-   - Update className references to use imported names directly
+   - JavaScript: Change to named imports (`import { className }`)
+   - TypeScript: Change to namespace imports (`import * as styles`)
    - Kebab-case class names are automatically converted to camelCase
 
 2. **Keep v8 behavior** temporarily:

@@ -2,8 +2,9 @@ import * as React from 'react'
 import { useState, useEffect } from 'react'
 import type { FunctionComponent } from 'react'
 
-// Using namespace import for CSS modules (v9 with named exports)
-// This syntax works with TypeScript while still using named exports under the hood
+// v9: CSS modules are configured with namedExport: true
+// TypeScript requires namespace import syntax for compatibility
+// The webpack configuration uses named exports under the hood
 import * as styles from './HelloWorld.module.css'
 import logo from './logo.svg'
 

@@ -2,18 +2,33 @@
 
 ## Version 9.x (Current Default Behavior)
 
-Starting with Shakapacker v9, CSS Modules use **named exports** by default to align with Next.js and modern tooling standards:
+Starting with Shakapacker v9, CSS Modules are configured with **named exports** (`namedExport: true`) by default to align with Next.js and modern tooling standards.
+
+### JavaScript Usage
+
+In pure JavaScript projects, you can use true named imports:
 
 ```js
-// v9 default - named exports
+// v9 - named exports in JavaScript
 import { bright, container } from './Foo.module.css';
 <button className={bright} />
 ```
 
-This configuration:
-- Eliminates webpack/TypeScript warnings about missing exports
+### TypeScript Usage
+
+Due to TypeScript's type system limitations with CSS modules, you'll need to use namespace imports:
+
+```typescript
+// v9 - namespace import for TypeScript compatibility
+import * as styles from './Foo.module.css';
+<button className={styles.bright} />
+```
+
+**Note:** While TypeScript requires namespace import syntax, webpack is still configured with `namedExport: true` under the hood, providing the same benefits.
+
+### Benefits of v9 Configuration
+- Eliminates certain webpack warnings
 - Provides better tree-shaking potential
-- Makes imports more explicit about which CSS classes are being used
 - Aligns with modern JavaScript module standards
 - Automatically converts kebab-case to camelCase (`my-button` → `myButton`)
 
@@ -37,8 +52,7 @@ When upgrading to Shakapacker v9, you'll need to update your CSS Module imports 
 
 #### Option 1: Update Your Code (Recommended)
 
-Update your imports to use named exports:
-
+**For JavaScript projects:**
 ```js
 // Before (v8)
 import styles from './Component.module.css';
@@ -46,12 +60,29 @@ import styles from './Component.module.css';
   <button className={styles.button}>Click me</button>
 </div>
 
-// After (v9)
+// After (v9) - JavaScript
 import { container, button } from './Component.module.css';
 <div className={container}>
   <button className={button}>Click me</button>
 </div>
 ```
+
+**For TypeScript projects:**
+```typescript
+// Before (v8)
+import styles from './Component.module.css';
+<div className={styles.container}>
+  <button className={styles.button}>Click me</button>
+</div>
+
+// After (v9) - TypeScript
+import * as styles from './Component.module.css';
+<div className={styles.container}>
+  <button className={styles.button}>Click me</button>
+</div>
+```
+
+Note: TypeScript projects only need to change from default import to namespace import (`* as styles`), the property access remains the same.
 
 #### Option 2: Keep v8 Behavior
 
