@@ -1,9 +1,11 @@
 declare module "*.module.css" {
-  const classes: { [key: string]: string };
+  // Support for named exports (v9 default)
+  const classes: { readonly [key: string]: string };
   export = classes;
 }
 declare module "*.module.scss" {
-  const classes: { [key: string]: string };
+  // Support for named exports (v9 default)
+  const classes: { readonly [key: string]: string };
   export = classes;
 }
 declare module "*.svg";
