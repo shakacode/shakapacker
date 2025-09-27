@@ -1352,29 +1352,23 @@
   resolved "https://registry.npmjs.org/@types/range-parser/-/range-parser-1.2.7.tgz"
   integrity sha512-hKormJbkJqzQGhziax5PItDUTMAM9uE2XXQmM37dyd4hVM+5aVl7oVxMVUiVQn2oCQFN/LKCZdvSM0pFRqbSmQ==
 
-"@types/react-dom@^16.9.16":
-  version "16.9.25"
-  resolved "https://registry.npmjs.org/@types/react-dom/-/react-dom-16.9.25.tgz"
-  integrity sha512-ZK//eAPhwft9Ul2/Zj+6O11YR6L4JX0J2sVeBC9Ft7x7HFN7xk7yUV/zDxqV6rjvqgl6r8Dq7oQImxtyf/Mzcw==
+"@types/react-dom@^18.3.0":
+  version "18.3.7"
+  resolved "https://registry.npmjs.org/@types/react-dom/-/react-dom-18.3.7.tgz"
+  integrity sha512-MEe3UeoENYVFXzoXEWsvcpg6ZvlrFNlOQ7EOsvhI3CfAXwzPfO8Qwuxd40nepsYKqyyVQnTdEfv68q91yLcKrQ==
 
-"@types/react@^16.0.0", "@types/react@^16.14.26":
-  version "16.14.66"
-  resolved "https://registry.npmjs.org/@types/react/-/react-16.14.66.tgz"
-  integrity sha512-KPilYP4+25N2ki7vrB4adSR2ucAj95xJcGfKC09bsxcHT+QtB//K7i1FenPnbkLA0Xt9pRi1/RXC1wxFvL9Wtw==
+"@types/react@^18.0.0", "@types/react@^18.3.3":
+  version "18.3.24"
+  resolved "https://registry.npmjs.org/@types/react/-/react-18.3.24.tgz"
+  integrity sha512-0dLEBsA1kI3OezMBF8nSsb7Nk19ZnsyE1LLhB8r27KbgU5H4pvuqZLdtE+aUkJVoXgTVuA+iLIwmZ0TuK4tx6A==
   dependencies:
     "@types/prop-types" "*"
-    "@types/scheduler" "^0.16"
     csstype "^3.0.2"
 
 "@types/retry@0.12.2":
   version "0.12.2"
   resolved "https://registry.npmjs.org/@types/retry/-/retry-0.12.2.tgz"
   integrity sha512-XISRgDJ2Tc5q4TRqvgJtzsRkFYNJzZrhTdtMoGVBttwzzQJkPnS3WWTFc7kuDRoPtPakl+T+OfdEUjYJj7Jbow==
-
-"@types/scheduler@^0.16":
-  version "0.16.8"
-  resolved "https://registry.npmjs.org/@types/scheduler/-/scheduler-0.16.8.tgz"
-  integrity sha512-WZLiwShhwLRmeV6zH+GkbOFT6Z6VklCItrDioxUnv+u4Ll+8vKeFySoFyK/0ctcRpOmwAicELfmys1sDc/Rw+A==
 
 "@types/send@*":
   version "0.17.5"

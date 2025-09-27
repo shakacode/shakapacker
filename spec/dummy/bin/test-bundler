@@ -67,6 +67,24 @@ unless File.exist?(rspack_config)
   exit 1
 end
 
+# Validate source configuration before copying
+source_config_file = bundler == "rspack" ? rspack_config : webpack_config
+
+begin
+  # Validate YAML syntax
+  YAML.safe_load_file(
+    source_config_file,
+    aliases: true,
+    permitted_classes: [],
+    permitted_symbols: [],
+    symbolize_names: false
+  )
+rescue Psych::SyntaxError => e
+  puts "❌ Error: Invalid YAML in #{source_config_file}"
+  puts "   #{e.message}"
+  exit 1
+end
+
 # Switch configuration based on bundler
 if bundler == "rspack"
   puts "📦 Switching to RSpack configuration..."
@@ -96,7 +114,15 @@ puts ""
 if command && !command.empty?
   puts "▶️  Running: #{command}"
   puts "─" * 50
-  exec(command)
+
+  # Use system instead of exec for better error handling
+  success = system(command)
+
+  unless success
+    puts "─" * 50
+    puts "❌ Command failed with exit status: #{$?.exitstatus}"
+    exit($?.exitstatus || 1)
+  end
 else
   puts "💡 Configuration switched. You can now run Shakapacker commands."
   puts "   Example: bin/shakapacker"

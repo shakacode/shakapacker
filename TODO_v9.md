@@ -74,9 +74,10 @@ Align with Next.js and modern tooling by using named exports:
   - react-on-rails ^16.1.0
   - Rails ~8.0.3
 - **Action Required**:
+  - **URGENT**: Consider downgrading to React 18.x for stability until react_on_rails fully supports React 19
   - Investigate react_on_rails 16.1 SSR with React 19
-  - May need to downgrade React or update react_on_rails configuration
   - Check if server bundle is being executed properly
+  - Alternative: Wait for react_on_rails update with React 19 support
 
 ### Test Infrastructure
 - Successfully implemented dual bundler support (webpack/rspack)
