@@ -47,8 +47,8 @@ Align with Next.js and modern tooling by using named exports:
 ### Benefits
 - Eliminates webpack/TypeScript warnings
 - Better tree-shaking potential
-- Alignment with Next.js and other modern frameworks
 - More explicit about what CSS classes are being used
+- Easier interoperability with frameworks that support named exports
 
 ### Implementation Notes
 - This is a BREAKING CHANGE and appropriate for major version bump
@@ -66,12 +66,13 @@ Align with Next.js and modern tooling by using named exports:
   - Input field not rendered, making interactive test fail
   - Only the static H1 "Hello, World!" is visible
 - **Temporary Fix**:
-  - Disabled prerendering (SSR)
+  - Keeping prerender: true (SSR works but client hydration may be broken)
   - Skipped interactive component test
 - **Root Cause**: Likely compatibility issue between:
-  - React 19.1.1
-  - react_on_rails 16.1
-  - Rails 8.0.3
+  - React ^19.1.1
+  - react-dom ^19.1.1
+  - react-on-rails ^16.1.0
+  - Rails ~8.0.3
 - **Action Required**:
   - Investigate react_on_rails 16.1 SSR with React 19
   - May need to downgrade React or update react_on_rails configuration
