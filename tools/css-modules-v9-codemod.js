@@ -34,7 +34,6 @@ module.exports = function transformer(fileInfo, api) {
     })
     .forEach((path) => {
       const importDecl = path.node
-      const sourcePath = importDecl.source.value
 
       // Check if it's a default import (v8 style)
       const defaultSpecifier = importDecl.specifiers.find(
