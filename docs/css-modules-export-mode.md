@@ -1,26 +1,67 @@
 # CSS Modules Export Mode
 
-Most React guides and tutorials expect to import CSS Modules using a **default export object**:
+## Version 9.x (Current Default Behavior)
+
+Starting with Shakapacker v9, CSS Modules use **named exports** by default to align with Next.js and modern tooling standards:
 
 ```js
+// v9 default - named exports
+import { bright, container } from './Foo.module.css';
+<button className={bright} />
+```
+
+This configuration:
+- Eliminates webpack/TypeScript warnings about missing exports
+- Provides better tree-shaking potential
+- Makes imports more explicit about which CSS classes are being used
+- Aligns with modern JavaScript module standards
+- Automatically converts kebab-case to camelCase (`my-button` → `myButton`)
+
+## Version 8.x and Earlier Behavior
+
+In Shakapacker v8 and earlier, the default behavior was to use a **default export object**:
+
+```js
+// v8 and earlier default
 import styles from './Foo.module.css';
 <button className={styles.bright} />
 ```
 
-However, depending on configuration, `css-loader` may instead emit **named exports**:
+---
+
+## Migrating from v8 to v9
+
+When upgrading to Shakapacker v9, you'll need to update your CSS Module imports from default exports to named exports.
+
+### Migration Options
+
+#### Option 1: Update Your Code (Recommended)
+
+Update your imports to use named exports:
 
 ```js
-import { bright } from './Foo.module.css';
-<button className={bright} />
+// Before (v8)
+import styles from './Component.module.css';
+<div className={styles.container}>
+  <button className={styles.button}>Click me</button>
+</div>
+
+// After (v9)
+import { container, button } from './Component.module.css';
+<div className={container}>
+  <button className={button}>Click me</button>
+</div>
 ```
 
-By default, Shakapacker currently leaves `css-loader`'s `modules.namedExport` option unset, which leads to **named exports** being used in many cases. This can surprise developers expecting the `import styles ...` pattern.
+#### Option 2: Keep v8 Behavior
+
+If you prefer to keep the v8 default export behavior during migration, you can override the configuration (see below).
 
 ---
 
-## How to Configure Shakapacker for Default Exports
+## Reverting to Default Exports (v8 Behavior)
 
-To force the more familiar `import styles ...` behavior (i.e. `namedExport: false`), update your webpack configuration as follows.
+To use the v8-style default exports instead of v9's named exports:
 
 ### Option 1: Update `config/webpack/commonWebpackConfig.js` (Recommended)
 
@@ -32,7 +73,7 @@ const { generateWebpackConfig, merge } = require('shakapacker');
 
 const baseClientWebpackConfig = generateWebpackConfig();
 
-// Override CSS Modules configuration to use default exports instead of named exports
+// Override CSS Modules configuration to use v8-style default exports
 const overrideCssModulesConfig = (config) => {
   // Find the CSS rule in the module rules
   const cssRule = config.module.rules.find(rule =>
@@ -45,7 +86,7 @@ const overrideCssModulesConfig = (config) => {
     );
 
     if (cssLoaderUse && cssLoaderUse.options && cssLoaderUse.options.modules) {
-      // Set namedExport to false for default export behavior
+      // Override v9 default to use v8-style default exports
       cssLoaderUse.options.modules.namedExport = false;
       cssLoaderUse.options.modules.exportLocalsConvention = 'asIs';
     }
@@ -77,14 +118,14 @@ If you prefer using a separate environment file:
 const { environment } = require('@shakacode/shakapacker');
 const getStyleRule = require('@shakacode/shakapacker/package/utils/getStyleRule');
 
-// CSS Modules rule for *.module.css with default export enabled
+// CSS Modules rule for *.module.css with v8-style default export
 const cssModulesRule = getStyleRule(/\.module\.css$/i, [], {
   sourceMap: true,
   importLoaders: 2,
   modules: {
     auto: true,
-    namedExport: false,            // <-- key: enable default export object
-    exportLocalsConvention: 'asIs' // keep your class names as-is
+    namedExport: false,            // <-- override v9 default
+    exportLocalsConvention: 'asIs' // keep class names as-is instead of camelCase
   }
 });
 
@@ -140,11 +181,125 @@ const overrideCssModulesConfig = (config) => {
 
 ---
 
+## Detailed Migration Guide
+
+### Migrating from v8 (Default Exports) to v9 (Named Exports)
+
+#### 1. Update Import Statements
+
+```js
+// Old (v8 - default export)
+import styles from './Component.module.css';
+
+// New (v9 - named exports)
+import { bright, container, button } from './Component.module.css';
+```
+
+#### 2. Update Class References
+
+```js
+// Old (v8)
+<div className={styles.container}>
+  <button className={styles.button}>Click me</button>
+  <span className={styles.bright}>Highlighted text</span>
+</div>
+
+// New (v9)
+<div className={container}>
+  <button className={button}>Click me</button>
+  <span className={bright}>Highlighted text</span>
+</div>
+```
+
+#### 3. Handle Kebab-Case Class Names
+
+With v9's `exportLocalsConvention: 'camelCase'`, kebab-case class names are automatically converted:
+
+```css
+/* styles.module.css */
+.my-button { ... }
+.primary-color { ... }
+```
+
+```js
+// v9 imports (camelCase conversion)
+import { myButton, primaryColor } from './styles.module.css';
+
+// Use the camelCase versions in your components
+<button className={myButton} />
+```
+
+#### 4. Using a Codemod for Large Codebases
+
+For large codebases, you can create a codemod to automate the migration:
+
+```js
+// css-modules-v9-migration.js
+module.exports = function(fileInfo, api) {
+  const j = api.jscodeshift;
+  const root = j(fileInfo.source);
+  
+  // Find CSS module imports
+  root.find(j.ImportDeclaration, {
+    source: { value: value => value.endsWith('.module.css') }
+  }).forEach(path => {
+    const defaultSpecifier = path.node.specifiers.find(
+      spec => spec.type === 'ImportDefaultSpecifier'
+    );
+    
+    if (defaultSpecifier) {
+      // Convert default import to namespace import for analysis
+      // Then extract used properties and convert to named imports
+      // ... codemod implementation
+    }
+  });
+  
+  return root.toSource();
+};
+```
+
+Run with:
+```bash
+npx jscodeshift -t css-modules-v9-migration.js src/
+```
+
+---
+
+## Version Comparison
+
+| Feature | v8 (and earlier) | v9 | 
+|---------|-----------------|----| 
+| Default behavior | Default export object | Named exports |
+| Import syntax | `import styles from '...'` | `import { className } from '...'` |
+| Class reference | `styles.className` | `className` |
+| Export convention | `asIs` (no transformation) | `camelCase` |
+| TypeScript warnings | May show warnings | No warnings |
+| Tree-shaking | Limited | Optimized |
+
+---
+
+## Benefits of Named Exports (v9 Default)
+
+1. **No Build Warnings**: Eliminates webpack/TypeScript warnings about missing exports
+2. **Better Tree-Shaking**: Unused CSS class exports can be eliminated
+3. **Explicit Dependencies**: Clear about which CSS classes are being used
+4. **Modern Standards**: Aligns with ES modules and modern tooling
+5. **Type Safety**: TypeScript can validate individual class imports
+
+## Benefits of Default Exports (v8 Behavior)
+
+1. **Familiar Pattern**: Matches most existing React tutorials
+2. **Namespace Import**: All classes available under one import
+3. **Less Verbose**: Single import for all classes
+4. **Legacy Compatibility**: Works with existing codebases
+
+---
+
 ## Verifying the Configuration
 
 ### 1. Rebuild Your Packs
 
-After making the configuration changes, rebuild your webpack bundles:
+After making any configuration changes, rebuild your webpack bundles:
 
 ```bash
 # For development
@@ -156,13 +311,14 @@ bin/shakapacker-dev-server
 
 ### 2. Test in Your React Component
 
-Update your component to use default imports:
+Verify your imports work correctly:
 
 ```js
-// Before (named exports)
+// v9 default (named exports)
 import { bright } from './Foo.module.css';
+console.log(bright); // 'Foo_bright__hash'
 
-// After (default export)
+// Or if using v8 configuration (default export)
 import styles from './Foo.module.css';
 console.log(styles); // { bright: 'Foo_bright__hash' }
 ```
@@ -179,87 +335,30 @@ Then search for `css-loader` options in the generated JSON file.
 
 ---
 
-## Benefits of Default Export Approach
-
-1. **Better Developer Experience**: Matches most React tutorials and documentation
-2. **IDE Support**: Better autocomplete and IntelliSense for CSS class names
-3. **Type Safety**: Easier to add TypeScript definitions for CSS modules
-4. **Consistency**: Aligns with common React ecosystem practices
-
----
-
-## Migration Guide
-
-If you're migrating from named exports to default exports:
-
-### 1. Update Import Statements
-
-```js
-// Old (named exports)
-import { bright, container, button } from './Component.module.css';
-
-// New (default export)
-import styles from './Component.module.css';
-```
-
-### 2. Update Class References
-
-```js
-// Old
-<div className={container}>
-  <button className={button}>Click me</button>
-  <span className={bright}>Highlighted text</span>
-</div>
-
-// New
-<div className={styles.container}>
-  <button className={styles.button}>Click me</button>
-  <span className={styles.bright}>Highlighted text</span>
-</div>
-```
-
-### 3. Consider Using a Codemod
-
-For large codebases, consider writing a codemod to automate the migration:
-
-```bash
-# Example using jscodeshift (pseudocode)
-npx jscodeshift -t css-modules-migration.js src/
-```
-
----
-
-## Future Shakapacker Configuration
-
-In future versions of Shakapacker, this configuration may be exposed via `config/shakapacker.yml`:
-
-```yml
-# Future configuration (not yet implemented)
-css_modules:
-  # true  -> named exports (import { bright } ...)
-  # false -> default export (import styles ...)
-  named_export: false
-```
-
-- **Current behavior:** Uses named exports when unset
-- **Future behavior:** New app templates will default to `false`
-- **Next major release:** The default will change to `false` when unset
-
----
-
 ## Troubleshooting
 
 ### CSS Classes Not Applying
 
-If your CSS classes aren't applying after the change:
+If your CSS classes aren't applying after the upgrade:
 
-1. **Check import syntax**: Ensure you're using `import styles from ...`
-2. **Verify class names**: Use `console.log(styles)` to see available classes
-3. **Rebuild webpack**: Clear cache and rebuild: `rm -rf tmp/cache && bin/shakapacker`
+1. **Check import syntax**: Ensure you're using the correct import style for your configuration
+2. **Verify class names**: Use `console.log` to see available classes
+3. **Check camelCase conversion**: Kebab-case names are converted to camelCase in v9
+4. **Rebuild webpack**: Clear cache and rebuild: `rm -rf tmp/cache && bin/shakapacker`
 
 ### TypeScript Support
 
-For TypeScript projects, create type definitions for your CSS modules:
+#### For v9 (Named Exports)
+
+```typescript
+// src/types/css-modules.d.ts
+declare module '*.module.css' {
+  const classes: { [key: string]: string };
+  export = classes;
+}
+```
+
+#### For v8 Behavior (Default Export)
 
 ```typescript
 // src/types/css-modules.d.ts
@@ -281,8 +380,8 @@ The configuration changes should not impact build performance significantly. If 
 
 ## Summary
 
-- **Current default**: Named exports (`import { bright } ...`)
-- **Recommended for DX**: Default export (`import styles ...`)
-- **Implementation**: Override CSS loader configuration in `commonWebpackConfig.js`
-- **Migration**: Update imports and class references systematically
-- **Future**: Shakapacker will provide native configuration options
+- **v9 default**: Named exports with camelCase conversion
+- **v8 default**: Default export object with no conversion
+- **Migration path**: Update imports or override configuration
+- **Benefits of v9**: No warnings, better tree-shaking, explicit dependencies
+- **Keeping v8 behavior**: Override css-loader configuration as shown above

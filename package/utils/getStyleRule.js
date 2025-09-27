@@ -27,7 +27,9 @@ const getStyleRule = (test, preprocessors = []) => {
           sourceMap: true,
           importLoaders: 2,
           modules: {
-            auto: true
+            auto: true,
+            namedExport: true,
+            exportLocalsConvention: 'camelCase'
           }
         }
       },
