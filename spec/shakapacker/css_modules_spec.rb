@@ -80,49 +80,49 @@ describe "CSS Modules Configuration" do
         console.log(styles.myButton);
         console.log(styles['button-text']);
       JS
-      
+
       expect(js_test).to include("import styles from")
       expect(js_test).to include("styles.myButton")
     end
   end
-  
+
   describe "TypeScript support" do
     it "requires namespace imports due to TypeScript limitations" do
       ts_test = <<~TS
         // TypeScript cannot use individual named imports with CSS modules
         // because the exports are dynamically generated
         import * as styles from './styles.module.css';
-        
+
         // Access classes via namespace
         const buttonClass: string = styles.myButton;
         const textClass: string = styles.buttonText;
       TS
-      
+
       expect(ts_test).to include("import * as styles")
       expect(ts_test).not_to include("import { myButton }")
     end
-    
+
     it "uses appropriate TypeScript definitions" do
       definitions = File.read("spec/dummy/app/javascript/Globals.d.ts")
-      
+
       # Should use export = pattern for namespace imports
-      expect(definitions).to include('export = classes')
-      
+      expect(definitions).to include("export = classes")
+
       # Should have clear comments about v9 behavior
       expect(definitions).to include("v9: css-loader with namedExport: true")
       expect(definitions).to include("import * as styles from")
     end
   end
-  
+
   describe "bundler compatibility" do
     context "with webpack" do
       before { allow(config).to receive(:assets_bundler).and_return("webpack") }
-      
+
       it "applies CSS module rules for webpack" do
         expect(config.assets_bundler).to eq("webpack")
       end
     end
-    
+
     context "with rspack" do
       it "includes required type field for rspack" do
         # Test rspack-specific configuration
@@ -130,19 +130,19 @@ describe "CSS Modules Configuration" do
       end
     end
   end
-  
+
   describe "configuration validation" do
     it "warns about conflicting namedExport and esModule settings" do
       # Test validation logic
       skip "Integration test - requires Node.js environment to test validation"
     end
-    
+
     it "warns about kebab-case issues with namedExport and asIs convention" do
       # Test validation for kebab-case issues
       skip "Integration test - requires Node.js environment to test validation"
     end
   end
-  
+
   describe "migration scenarios" do
     it "handles projects upgrading from v8 to v9" do
       # Test that old code can be migrated
@@ -150,48 +150,48 @@ describe "CSS Modules Configuration" do
         import styles from './Button.module.css';
         const button = <button className={styles.button} />;
       JS
-      
+
       v9_code = <<~JS
         import { button } from './Button.module.css';
         const buttonEl = <button className={button} />;
       JS
-      
+
       # Verify the patterns are different
       expect(v8_code).to include("import styles from")
       expect(v9_code).to include("import { button }")
-      
+
       # Both should reference the same CSS class differently
       expect(v8_code).to include("styles.button")
       expect(v9_code).to include("className={button}")
     end
-    
+
     it "codemod correctly transforms JavaScript files" do
       # Test the codemod transformation logic
       expect(File.exist?("tools/css-modules-v9-codemod.js")).to eq(true)
-      
+
       # Verify codemod handles different patterns
       test_patterns = {
         "styles.button" => "button",
         "styles['button-text']" => "buttonText",
         "styles.myClass" => "myClass"
       }
-      
+
       test_patterns.each do |before, after|
         # The codemod should transform these patterns
         expect(before).not_to eq(after)
       end
     end
-    
+
     it "preserves functionality with both v8 and v9 configurations" do
       # Both modes should work, just with different syntax
       configs = [
         { namedExport: false, description: "v8 mode" },
         { namedExport: true, exportLocalsConvention: "camelCase", description: "v9 mode" }
       ]
-      
+
       configs.each do |config|
         expect(config[:description]).to match(/v\d mode/)
-        
+
         if config[:namedExport]
           expect(config[:exportLocalsConvention]).to eq("camelCase")
         else
