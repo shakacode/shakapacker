@@ -32,7 +32,9 @@ default: &default
   # Location for private output, defaults to tmp/shakapacker
   # This setting is for generating bundles that are only used in server-side rendering
   # and should not be served publicly (alternative to public_output_path)
-  # private_output_path: ssr-generated
+  # Output path for private server-side bundles (e.g., for SSR)
+  # Set to nil if not using server-side rendering
+  private_output_path: ssr-generated
 
   # Additional paths webpack should look up modules
   # ['app/assets', 'engine/foo/app/assets']
