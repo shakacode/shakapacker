@@ -59,26 +59,24 @@ Align with Next.js and modern tooling by using named exports:
 
 ## Related Issues from PR #597
 
-### React Component Not Rendering (spec/dummy) - CRITICAL
-- **Issue**: React component not rendering at all with react_on_rails 16.1
+### React Component Not Rendering (spec/dummy) - RESOLVED ✅
+- **Issue**: React component was not rendering due to CSS module import mismatch
 - **Symptoms**:
-  - Component should render "Hello, Stranger!" but nothing appears
+  - Component wasn't rendering "Hello, Stranger!"
   - Input field not rendered, making interactive test fail
-  - Only the static H1 "Hello, World!" is visible
-  - **ISSUE PERSISTS EVEN WITH REACT 18.3.1**
-- **Temporary Fix**:
-  - Downgraded to React 18.3.1 (from 19.1.1) but issue persists
-  - Keeping prerender: true (SSR enabled but not working)
-  - Skipped interactive component test
-- **Root Cause**: react_on_rails 16.1 configuration or integration issue
-  - Not a React version issue (happens with both v18 and v19)
-  - Likely missing configuration or initialization
-  - Server bundle builds but component doesn't render
-- **Action Required**:
-  - Investigate react_on_rails 16.1 setup requirements for Rails 8
-  - Check if additional configuration is needed for SSR
-  - Verify JavaScript pack is being loaded correctly
-  - Consider creating minimal reproduction case
+  - Only the static H1 "Hello, World!" was visible
+- **Resolution**:
+  - Fixed CSS module import syntax from `import style from` to `import * as style from`
+  - This matched webpack's named exports configuration for CSS modules
+  - Tests now pass with both React 18.3.1 and webpack/rspack configurations
+- **Root Cause**: CSS module import/export mismatch
+  - Webpack was configured to use named exports for CSS modules
+  - TypeScript code was using default import syntax
+  - This caused `style` to be undefined, breaking SSR and client rendering
+- **Status**: FIXED
+  - All tests re-enabled and passing
+  - Both SSR and client-side rendering working
+  - Interactive functionality restored
 
 ### Test Infrastructure
 - Successfully implemented dual bundler support (webpack/rspack)
