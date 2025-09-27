@@ -1,14 +1,18 @@
 declare module "*.module.css" {
-  // v9: TypeScript definition for CSS modules
-  // Uses CommonJS-style export for compatibility with webpack's namedExport: true
-  // This allows namespace imports: import * as styles from './styles.module.css'
+  // v9: css-loader with namedExport: true generates individual named exports
+  // TypeScript can't determine the exact export names at compile time,
+  // so we use this declaration to allow namespace imports.
+  // Usage: import * as styles from './styles.module.css'
+  // Note: Default imports (import styles from '...') will NOT work
   const classes: { readonly [key: string]: string };
   export = classes;
 }
 declare module "*.module.scss" {
-  // v9: TypeScript definition for CSS modules
-  // Uses CommonJS-style export for compatibility with webpack's namedExport: true
-  // This allows namespace imports: import * as styles from './styles.module.scss'
+  // v9: css-loader with namedExport: true generates individual named exports
+  // TypeScript can't determine the exact export names at compile time,
+  // so we use this declaration to allow namespace imports.
+  // Usage: import * as styles from './styles.module.scss'
+  // Note: Default imports (import styles from '...') will NOT work
   const classes: { readonly [key: string]: string };
   export = classes;
 }

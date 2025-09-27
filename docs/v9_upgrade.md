@@ -101,8 +101,13 @@ import { className1, className2 } from './styles.module.css';
 ```typescript
 // Update your CSS module type definitions
 declare module '*.module.css' {
-  const classes: { [key: string]: string };
-  export = classes;  // v9 named exports
+  // With namedExport: true, css-loader generates individual named exports
+  // TypeScript can't know the exact names at compile time, so we declare
+  // a module with any number of string exports
+  const classes: { readonly [key: string]: string };
+  export = classes;
+  // Note: This allows 'import * as styles' but not 'import styles from'
+  // because css-loader with namedExport: true doesn't generate a default export
 }
 ```
 
