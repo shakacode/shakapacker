@@ -29,7 +29,7 @@ const getStyleRule = (test, preprocessors = []) => {
           modules: {
             auto: true,
             namedExport: true,
-            exportLocalsConvention: 'camelCase'
+            exportLocalsConvention: "camelCase"
           }
         }
       },
