@@ -11,6 +11,7 @@ Changes since the last non-beta release.
 
 ### Added
 - Rspack support as an alternative assets bundler to webpack. Configure `assets_bundler: 'rspack'` in `shakapacker.yml` to use Rspack's faster Rust-based bundling with webpack-compatible APIs, built-in SWC loader, and CSS extraction. Automatic assets bundler detection in `bin/shakapacker` with fallback support for webpack configurations.
+- Add `private_output_path` configuration option for server-side rendering bundles. This allows specifying a separate output directory for private server bundles that shouldn't be served publicly. [PR 592](https://github.com/shakacode/shakapacker/pull/592) by [justin808](https://github.com/justin808).
 
 ### Changed
 - Configuration option renamed from `bundler` to `assets_bundler` to avoid confusion with Ruby's Bundler gem manager. The old `bundler` option is deprecated but still supported with a warning (not a breaking change).
@@ -21,7 +22,7 @@ Changes since the last non-beta release.
   - Note: Default imports (`import styles from '...'`) will no longer work as css-loader with `namedExport: true` doesn't generate a default export
   - See the [CSS Modules Export Mode documentation](./docs/css-modules-export-mode.md) for detailed migration instructions and override options
 
-## [v8.4.0] - September 8, 2025
+## [v9.0.0.beta.2] - September 25, 2025
 ### Added
 
 * Support for subresource integrity. [PR 570](https://github.com/shakacode/shakapacker/pull/570) by [panagiotisplytas](https://github.com/panagiotisplytas)
