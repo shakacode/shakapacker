@@ -14,17 +14,35 @@ namespace :run_spec do
     sh("bundle exec rspec spec/shakapacker/*_spec.rb")
   end
 
-  desc "Run specs in the dummy app"
+  desc "Run specs in the dummy app with webpack"
   task :dummy do
-    puts "Running dummy app specs"
+    puts "Running dummy app specs with webpack"
     spec_dummy_dir = Pathname.new(File.join("spec", "dummy")).realpath
     Bundler.with_unbundled_env do
       sh_in_dir(".", "yalc publish")
       sh_in_dir(spec_dummy_dir, [
         "bundle install",
         "yalc link shakapacker",
-        "yarn install",
-        "NODE_ENV=test RAILS_ENV=test yarn run webpack --config config/webpack/webpack.config.js",
+        "npm install",
+        "bin/test-bundler webpack",
+        "NODE_ENV=test RAILS_ENV=test bin/shakapacker",
+        "bundle exec rspec"
+      ])
+    end
+  end
+
+  desc "Run specs in the dummy app with rspack"
+  task :dummy_with_rspack do
+    puts "Running dummy app specs with rspack"
+    spec_dummy_dir = Pathname.new(File.join("spec", "dummy")).realpath
+    Bundler.with_unbundled_env do
+      sh_in_dir(".", "yalc publish")
+      sh_in_dir(spec_dummy_dir, [
+        "bundle install",
+        "yalc link shakapacker",
+        "npm install",
+        "bin/test-bundler rspack",
+        "NODE_ENV=test RAILS_ENV=test bin/shakapacker",
         "bundle exec rspec"
       ])
     end
@@ -39,8 +57,8 @@ namespace :run_spec do
       sh_in_dir(spec_dummy_dir, [
         "bundle install",
         "yalc link shakapacker",
-        "yarn install",
-        "NODE_ENV=test RAILS_ENV=test yarn run rspack build --config config/webpack/webpack.config.js",
+        "npm install",
+        "NODE_ENV=test RAILS_ENV=test npm exec --no -- rspack build --config config/rspack/rspack.config.js",
         "bundle exec rspec"
       ])
     end
@@ -52,7 +70,7 @@ namespace :run_spec do
   end
 
   desc "Run all specs"
-  task all_specs: %i[gem dummy dummy_rspack generator] do
+  task all_specs: %i[gem dummy dummy_with_rspack dummy_rspack generator] do
     puts "Completed all RSpec tests"
   end
 end

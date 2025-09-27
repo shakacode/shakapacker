@@ -1,0 +1,130 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+# Script to test Shakapacker with different bundlers (webpack or rspack)
+
+require "fileutils"
+require "yaml"
+
+bundler = ARGV[0]
+command = ARGV[1..-1].join(" ") if ARGV.length > 1
+
+# Handle status command
+if bundler == "status"
+  config_dir = File.expand_path("../config", __dir__)
+  shakapacker_config = File.join(config_dir, "shakapacker.yml")
+
+  if File.exist?(shakapacker_config)
+    config = YAML.safe_load_file(
+      shakapacker_config,
+      aliases: true,
+      permitted_classes: [],
+      permitted_symbols: [],
+      symbolize_names: false
+    )
+    bundler = config["default"]["assets_bundler"] || "webpack"
+    transpiler = config["default"]["javascript_transpiler"] || "babel"
+
+    puts "📦 Current bundler configuration:"
+    puts "   Bundler: #{bundler}"
+    puts "   Transpiler: #{transpiler}"
+    puts "   Config file: #{shakapacker_config}"
+  else
+    puts "⚠️  No configuration file found at #{shakapacker_config}"
+    puts "   Run 'bin/test-bundler webpack' or 'bin/test-bundler rspack' to set up."
+  end
+  exit 0
+end
+
+unless ["webpack", "rspack"].include?(bundler)
+  puts "Usage: bin/test-bundler [webpack|rspack|status] [command]"
+  puts ""
+  puts "Examples:"
+  puts "  bin/test-bundler status                 # Show current bundler"
+  puts "  bin/test-bundler webpack                # Switch to webpack"
+  puts "  bin/test-bundler rspack                 # Switch to rspack"
+  puts "  bin/test-bundler webpack bin/shakapacker  # Switch and run command"
+  puts "  bin/test-bundler rspack yarn build      # Switch and build with rspack"
+  puts ""
+  puts "This script switches between webpack and rspack configurations by"
+  puts "copying the appropriate config file to config/shakapacker.yml"
+  exit 1
+end
+
+config_dir = File.expand_path("../config", __dir__)
+shakapacker_config = File.join(config_dir, "shakapacker.yml")
+webpack_config = File.join(config_dir, "shakapacker-webpack.yml")
+rspack_config = File.join(config_dir, "shakapacker-rspack.yml")
+
+# Ensure config files exist
+unless File.exist?(webpack_config)
+  puts "Error: Webpack config not found at #{webpack_config}"
+  exit 1
+end
+
+unless File.exist?(rspack_config)
+  puts "Error: RSpack config not found at #{rspack_config}"
+  exit 1
+end
+
+# Validate source configuration before copying
+source_config_file = bundler == "rspack" ? rspack_config : webpack_config
+
+begin
+  # Validate YAML syntax
+  YAML.safe_load_file(
+    source_config_file,
+    aliases: true,
+    permitted_classes: [],
+    permitted_symbols: [],
+    symbolize_names: false
+  )
+rescue Psych::SyntaxError => e
+  puts "❌ Error: Invalid YAML in #{source_config_file}"
+  puts "   #{e.message}"
+  exit 1
+end
+
+# Switch configuration based on bundler
+if bundler == "rspack"
+  puts "📦 Switching to RSpack configuration..."
+  FileUtils.cp(rspack_config, shakapacker_config)
+  ENV["SHAKAPACKER_ASSET_BUNDLER"] = "rspack"
+  puts "✅ Now using RSpack as the asset bundler"
+else
+  puts "📦 Switching to Webpack configuration..."
+  FileUtils.cp(webpack_config, shakapacker_config)
+  ENV["SHAKAPACKER_ASSET_BUNDLER"] = "webpack"
+  puts "✅ Now using Webpack as the asset bundler"
+end
+
+# Show current configuration
+config = YAML.safe_load_file(
+  shakapacker_config,
+  aliases: true,
+  permitted_classes: [],
+  permitted_symbols: [],
+  symbolize_names: false
+)
+puts "   Transpiler: #{config['default']['javascript_transpiler'] || 'babel'}"
+puts "   Entry path: #{config['default']['source_entry_path']}"
+puts ""
+
+# Run command if provided
+if command && !command.empty?
+  puts "▶️  Running: #{command}"
+  puts "─" * 50
+
+  # Use system instead of exec for better error handling
+  success = system(command)
+
+  unless success
+    puts "─" * 50
+    puts "❌ Command failed with exit status: #{$?.exitstatus}"
+    exit($?.exitstatus || 1)
+  end
+else
+  puts "💡 Configuration switched. You can now run Shakapacker commands."
+  puts "   Example: bin/shakapacker"
+  puts "   Example: bin/shakapacker-dev-server"
+end

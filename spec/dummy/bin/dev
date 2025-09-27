@@ -1,30 +1,34 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
-def installed?(process)
-  IO.popen "#{process} -v"
-rescue Errno::ENOENT
-  false
-end
+# ReactOnRails Development Server
+#
+# This script provides a simple interface to the ReactOnRails development
+# server management. The core logic is implemented in ReactOnRails::Dev
+# classes for better maintainability and testing.
+#
+# Each command uses a specific Procfile for process management:
+# - bin/dev (default/hmr): Uses Procfile.dev
+# - bin/dev static: Uses Procfile.dev-static-assets
+# - bin/dev prod: Uses Procfile.dev-prod-assets
+#
+# To customize development environment:
+# 1. Edit the appropriate Procfile to modify which processes run
+# 2. Modify this script for project-specific command-line behavior
+# 3. Extend ReactOnRails::Dev classes in your Rails app for advanced customization
+# 4. Use classes directly: ReactOnRails::Dev::ServerManager.start(:development, "Custom.procfile")
 
-def run(process)
-  system "#{process} start -f Procfile.dev"
-rescue Errno::ENOENT
-  warn <<~MSG
-    ERROR:
-    Please ensure `Procfile.dev` exists in your project!
-  MSG
-  exit!
-end
+require "bundler/setup"
+require "react_on_rails/dev"
 
-if installed? "overmind"
-  run "overmind"
-elsif installed? "foreman"
-  run "foreman"
-else
-  warn <<~MSG
-    NOTICE:
-    For this script to run, you need either 'overmind' or 'foreman' installed on your machine. Please try this script after installing one of them.
-  MSG
-  exit!
-end
+# Default route configuration
+# This is set by the ReactOnRails installer to point to your generated component.
+# Change this to your preferred default route, or pass --route=<route> to override.
+DEFAULT_ROUTE = "hello_world"
+
+# Main execution
+# Add the default route to ARGV if no --route option is provided
+argv_with_defaults = ARGV.dup
+argv_with_defaults.push("--route", DEFAULT_ROUTE) unless argv_with_defaults.any? { |arg| arg.start_with?("--route") }
+
+ReactOnRails::Dev::ServerManager.run_from_command_line(argv_with_defaults)

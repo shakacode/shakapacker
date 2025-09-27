@@ -24,13 +24,13 @@ jobs:
           node-version: '20'
       - uses: ruby/setup-ruby@v1
         with:
-          ruby-version: '3.1.2'
+          ruby-version: '3.2'
           rubygems: latest
       - name: Install dependencies
         run: |
           bundle install
-          yarn install
-          sudo yarn global add yalc
+          npm install -g yalc
+          cd spec/dummy && npm install
 
       - name: Run tests
         run: bundle exec rake run_spec:dummy
