@@ -15,7 +15,11 @@ Changes since the last non-beta release.
 ### Changed
 - Configuration option renamed from `bundler` to `assets_bundler` to avoid confusion with Ruby's Bundler gem manager. The old `bundler` option is deprecated but still supported with a warning (not a breaking change).
 - BREAKING CHANGE: Configuration option renamed from `webpack_loader` to `javascript_transpiler` to better reflect its purpose of configuring JavaScript transpilation regardless of the bundler used. The old `webpack_loader` option is deprecated but still supported with a warning.
-- **BREAKING CHANGE**: CSS Modules are now configured with named exports (`namedExport: true` and `exportLocalsConvention: 'camelCase'`) to align with Next.js and modern tooling standards. For JavaScript projects, use named imports (`import { className } from './styles.module.css'`). For TypeScript projects, use namespace imports (`import * as styles from './styles.module.css'`). See the [CSS Modules Export Mode documentation](./docs/css-modules-export-mode.md) for migration instructions.
+- **BREAKING CHANGE**: CSS Modules are now configured with named exports (`namedExport: true` and `exportLocalsConvention: 'camelCase'`) to align with Next.js and modern tooling standards.
+  - **JavaScript**: Use named imports (`import { className } from './styles.module.css'`)
+  - **TypeScript**: Requires namespace imports (`import * as styles from './styles.module.css'`) due to TypeScript's inability to type dynamic named exports
+  - Note: Default imports (`import styles from '...'`) will no longer work as css-loader with `namedExport: true` doesn't generate a default export
+  - See the [CSS Modules Export Mode documentation](./docs/css-modules-export-mode.md) for detailed migration instructions and override options
 
 ## [v8.4.0] - September 8, 2025
 ### Added

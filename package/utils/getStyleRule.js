@@ -28,6 +28,7 @@ const getStyleRule = (test, preprocessors = []) => {
           importLoaders: 2,
           modules: {
             auto: true,
+            // v9 defaults: named exports with camelCase conversion
             namedExport: true,
             exportLocalsConvention: "camelCase"
           }
