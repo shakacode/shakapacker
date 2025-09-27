@@ -931,6 +931,15 @@ source_path: frontend # packs are the files in frontend/
 public_output_path: assets/packs # outputs to => public/assets/packs
 ```
 
+For server-side rendering (SSR) scenarios where you need to generate bundles that should not be served publicly, you can use the `private_output_path` configuration:
+
+```yml
+# config/shakapacker.yml
+private_output_path: ssr-generated # outputs to => ssr-generated/
+```
+
+This is particularly useful when working with libraries like React on Rails where server bundles need to be kept separate from client bundles.
+
 Similarly, you can also control and configure `webpack-dev-server` settings from `config/shakapacker.yml` file:
 
 ```yml
