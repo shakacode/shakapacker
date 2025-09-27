@@ -12,6 +12,8 @@ debug("Adding JavaScript rule with builtin:swc-loader")
 rules.push({
   test: /\.(js|jsx|mjs)$/,
   exclude: /node_modules/,
+  // The 'type' field is required for Rspack to properly handle JavaScript modules
+  // when using builtin loaders. It ensures correct module parsing and transformation.
   type: "javascript/auto",
   use: [
     {
@@ -38,6 +40,8 @@ debug("Adding TypeScript rule with builtin:swc-loader")
 rules.push({
   test: /\.(ts|tsx)$/,
   exclude: /node_modules/,
+  // The 'type' field is required for Rspack to properly handle TypeScript modules
+  // when using builtin loaders. It ensures correct module parsing and transformation.
   type: "javascript/auto",
   use: [
     {

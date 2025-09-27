@@ -1,4 +1,5 @@
 * For the changelog of versions prior to v6, see the [5.x stable branch of rails/webpacker](https://github.com/rails/webpacker/tree/5-x-stable).
+* **Please see the [v9 Upgrade Guide](./docs/v9_upgrade.md) for upgrading to version 9 and accounting for breaking changes.**
 * Please see the [v8 Upgrade Guide](./docs/v8_upgrade.md) for upgrading to version 8 and accounting for breaking changes.
 * Please see the [v7 Upgrade Guide](./docs/v7_upgrade.md) for upgrading to new spelling in version 7.
 * Please see the [v6 Upgrade Guide](./docs/v6_upgrade.md) to go from versions prior to v6.
@@ -14,6 +15,11 @@ Changes since the last non-beta release.
 ### Changed
 - Configuration option renamed from `bundler` to `assets_bundler` to avoid confusion with Ruby's Bundler gem manager. The old `bundler` option is deprecated but still supported with a warning (not a breaking change).
 - BREAKING CHANGE: Configuration option renamed from `webpack_loader` to `javascript_transpiler` to better reflect its purpose of configuring JavaScript transpilation regardless of the bundler used. The old `webpack_loader` option is deprecated but still supported with a warning.
+- **BREAKING CHANGE**: CSS Modules are now configured with named exports (`namedExport: true` and `exportLocalsConvention: 'camelCase'`) to align with Next.js and modern tooling standards.
+  - **JavaScript**: Use named imports (`import { className } from './styles.module.css'`)
+  - **TypeScript**: Requires namespace imports (`import * as styles from './styles.module.css'`) due to TypeScript's inability to type dynamic named exports
+  - Note: Default imports (`import styles from '...'`) will no longer work as css-loader with `namedExport: true` doesn't generate a default export
+  - See the [CSS Modules Export Mode documentation](./docs/css-modules-export-mode.md) for detailed migration instructions and override options
 
 ## [v8.4.0] - September 8, 2025
 ### Added

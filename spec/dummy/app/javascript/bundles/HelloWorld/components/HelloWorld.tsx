@@ -2,7 +2,10 @@ import * as React from 'react'
 import { useState, useEffect } from 'react'
 import type { FunctionComponent } from 'react'
 
-import * as style from './HelloWorld.module.css'
+// v9: CSS modules are configured with namedExport: true
+// TypeScript requires namespace import syntax for compatibility
+// The webpack configuration uses named exports under the hood
+import * as styles from './HelloWorld.module.css'
 import logo from './logo.svg'
 
 export interface Props {
@@ -26,11 +29,11 @@ const HelloWorld: FunctionComponent<Props> = (props: Props) => {
 
   return (
     <>
-      <img src={logo} className={style.logo} alt="logo" />
+      <img src={logo} className={styles.logo} alt="logo" />
       <h3>Hello, {name || 'World'}!</h3>
       <hr />
       <form>
-        <label className={style.bright} htmlFor="name">
+        <label className={styles.bright} htmlFor="name">
           Say hello to:{' '}
           <input
             id="name"
