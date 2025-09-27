@@ -88,7 +88,16 @@ Now, you can set `brotli_static on;` in your nginx site config, as per the confi
 
 ## CDN
 
-If you are using a CDN setup, Shakapacker does NOT use the `ASSET_HOST` environment variable to prefix URLs for assets during bundle compilation. You must use the `SHAKAPACKER_ASSET_HOST` environment variable instead (`WEBPACKER_ASSET_HOST` if you're using any version of Webpacker or Shakapacker before Shakapacker v7).
+Shakapacker supports serving JavaScript bundles and assets from a CDN. For a comprehensive guide on setting up CDN with Shakapacker, including CloudFlare configuration, troubleshooting, and advanced setups, see the [CDN Setup Guide](cdn_setup.md).
+
+**Quick Setup**: Set the `SHAKAPACKER_ASSET_HOST` environment variable before compiling assets:
+
+```bash
+export SHAKAPACKER_ASSET_HOST=https://cdn.example.com
+RAILS_ENV=production bundle exec rails assets:precompile
+```
+
+Note: Shakapacker does NOT use the `ASSET_HOST` environment variable. You must use `SHAKAPACKER_ASSET_HOST` instead (`WEBPACKER_ASSET_HOST` if using Shakapacker before v7).
 
 ## Capistrano
 

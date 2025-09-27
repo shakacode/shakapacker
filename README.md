@@ -1007,7 +1007,19 @@ pnpm install --frozen-lockfile
 bun install --frozen-lockfile
 ```
 
-If you are using a CDN setup, Shakapacker does NOT use the `ASSET_HOST` environment variable to prefix URLs for assets during bundle compilation. You must use the `SHAKAPACKER_ASSET_HOST` environment variable instead (`WEBPACKER_ASSET_HOST` if you're using any version of Webpacker or Shakapacker before Shakapacker v7).
+### CDN
+
+Shakapacker supports serving JavaScript bundles and assets from a CDN. The key configuration is setting the `SHAKAPACKER_ASSET_HOST` environment variable (NOT the Rails `ASSET_HOST` variable).
+
+For detailed CDN setup instructions, including CloudFlare configuration, troubleshooting, and advanced setups, see the [CDN Setup Guide](./docs/cdn_setup.md).
+
+**Quick example:**
+```bash
+export SHAKAPACKER_ASSET_HOST=https://cdn.example.com
+RAILS_ENV=production bundle exec rails assets:precompile
+```
+
+For more deployment documentation, see [Deployment](./docs/deployment.md).
 
 ## Example Apps
 * [React on Rails Tutorial With SSR, HMR fast refresh, and TypeScript](https://github.com/shakacode/react_on_rails_tutorial_with_ssr_and_hmr_fast_refresh)
