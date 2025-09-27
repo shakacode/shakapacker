@@ -89,4 +89,3 @@ const validateCssModulesConfig = (cssLoaderOptions) => {
 }
 
 module.exports = { validateCssModulesConfig }
-

@@ -57,10 +57,6 @@ module.exports = function transformer(fileInfo, api) {
         // Replace the import specifiers
         importDecl.specifiers = [namespaceSpecifier]
         hasChanges = true
-
-        console.log(
-          `✅ [TS] Updated ${fileInfo.path}: import * as ${defaultImportName} from '${sourcePath}'`
-        )
       } else {
         // For JavaScript: Convert to named imports
         // First, we need to find all usages of the imported object
@@ -109,9 +105,6 @@ module.exports = function transformer(fileInfo, api) {
 
               if (camelCaseName !== name) {
                 // If conversion happened, we need to alias it
-                console.log(
-                  `  ⚠️  Note: '${name}' will be imported as '${camelCaseName}' due to camelCase conversion`
-                )
                 return j.importSpecifier(
                   j.identifier(camelCaseName),
                   j.identifier(camelCaseName) // css-loader exports it as camelCase
@@ -159,16 +152,9 @@ module.exports = function transformer(fileInfo, api) {
             })
 
           hasChanges = true
-          console.log(
-            `✅ [JS] Updated ${fileInfo.path}: import { ${Array.from(usages).join(", ")} } from '${sourcePath}'`
-          )
         } else if (usages.size === 0) {
           // No usages found, might be passed as a whole object
           // In this case, convert to namespace import for safety
-          console.log(
-            `⚠️  [JS] No specific class usages found in ${fileInfo.path}, converting to namespace import`
-          )
-
           const namespaceSpecifier = j.importNamespaceSpecifier(
             j.identifier(defaultImportName)
           )
@@ -192,4 +178,3 @@ module.exports = function transformer(fileInfo, api) {
 
 // Export the parser to use
 module.exports.parser = "tsx"
-
