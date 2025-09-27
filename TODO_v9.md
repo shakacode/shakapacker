@@ -60,24 +60,25 @@ Align with Next.js and modern tooling by using named exports:
 ## Related Issues from PR #597
 
 ### React Component Not Rendering (spec/dummy) - CRITICAL
-- **Issue**: React component not rendering at all with React 19 and react_on_rails 16.1
+- **Issue**: React component not rendering at all with react_on_rails 16.1
 - **Symptoms**:
   - Component should render "Hello, Stranger!" but nothing appears
   - Input field not rendered, making interactive test fail
   - Only the static H1 "Hello, World!" is visible
+  - **ISSUE PERSISTS EVEN WITH REACT 18.3.1**
 - **Temporary Fix**:
-  - Keeping prerender: true (SSR works but client hydration may be broken)
+  - Downgraded to React 18.3.1 (from 19.1.1) but issue persists
+  - Keeping prerender: true (SSR enabled but not working)
   - Skipped interactive component test
-- **Root Cause**: Likely compatibility issue between:
-  - React ^19.1.1
-  - react-dom ^19.1.1
-  - react-on-rails ^16.1.0
-  - Rails ~8.0.3
+- **Root Cause**: react_on_rails 16.1 configuration or integration issue
+  - Not a React version issue (happens with both v18 and v19)
+  - Likely missing configuration or initialization
+  - Server bundle builds but component doesn't render
 - **Action Required**:
-  - **URGENT**: Consider downgrading to React 18.x for stability until react_on_rails fully supports React 19
-  - Investigate react_on_rails 16.1 SSR with React 19
-  - Check if server bundle is being executed properly
-  - Alternative: Wait for react_on_rails update with React 19 support
+  - Investigate react_on_rails 16.1 setup requirements for Rails 8
+  - Check if additional configuration is needed for SSR
+  - Verify JavaScript pack is being loaded correctly
+  - Consider creating minimal reproduction case
 
 ### Test Infrastructure
 - Successfully implemented dual bundler support (webpack/rspack)
