@@ -1,4 +1,5 @@
 require_relative "spec_helper_initializer"
+require "tempfile"
 
 describe "Shakapacker::Configuration" do
   ROOT_PATH = Pathname.new(File.expand_path("./test_app", __dir__))
@@ -58,6 +59,31 @@ describe "Shakapacker::Configuration" do
       private_output_path = File.expand_path File.join(File.dirname(__FILE__), "./test_app/ssr-generated").to_s
 
       expect(config.private_output_path.to_s).to eq private_output_path
+    end
+
+    it "validates private_output_path is different from public_output_path" do
+      # Create a test config file with same paths
+      test_config = Tempfile.new(["shakapacker", ".yml"])
+      test_config.write(<<~YAML)
+        test:
+          source_path: app/javascript
+          source_entry_path: entrypoints
+          public_root_path: public
+          public_output_path: packs
+          private_output_path: public/packs
+      YAML
+      test_config.rewind
+
+      expect {
+        Shakapacker::Configuration.new(
+          root_path: ROOT_PATH,
+          config_path: Pathname.new(test_config.path),
+          env: "test"
+        ).private_output_path
+      }.to raise_error(/private_output_path and public_output_path must be different/)
+
+      test_config.close
+      test_config.unlink
     end
 
     it "#additional_paths returns correct path" do

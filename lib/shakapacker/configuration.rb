@@ -71,7 +71,9 @@ class Shakapacker::Configuration
   def private_output_path
     private_path = fetch(:private_output_path)
     return nil unless private_path
-    root_path.join(private_path)
+    path = root_path.join(private_path)
+    validate_output_paths! if private_path
+    path
   end
 
   def public_output_path
@@ -155,6 +157,24 @@ class Shakapacker::Configuration
   end
 
   private
+    def validate_output_paths!
+      # Skip validation if already validated to avoid recursion
+      return if @validated_output_paths
+      @validated_output_paths = true
+
+      # Only validate when both paths are configured
+      return unless fetch(:private_output_path) && fetch(:public_output_path)
+
+      private_path_str = root_path.join(fetch(:private_output_path)).to_s
+      public_path_str = root_path.join(fetch(:public_root_path), fetch(:public_output_path)).to_s
+
+      if private_path_str == public_path_str
+        raise "Shakapacker configuration error: private_output_path and public_output_path must be different. " \
+              "Both paths resolve to '#{private_path_str}'. " \
+              "The private_output_path is for server-side bundles (e.g., SSR) that should not be served publicly."
+      end
+    end
+
     def data
       @data ||= load
     end
