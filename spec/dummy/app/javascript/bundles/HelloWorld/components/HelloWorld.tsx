@@ -2,7 +2,7 @@ import * as React from 'react'
 import { useState, useEffect } from 'react'
 import type { FunctionComponent } from 'react'
 
-import { bright, logo as logoStyle } from './HelloWorld.module.css'
+import * as styles from './HelloWorld.module.css'
 import logo from './logo.svg'
 
 export interface Props {
@@ -26,11 +26,11 @@ const HelloWorld: FunctionComponent<Props> = (props: Props) => {
 
   return (
     <>
-      <img src={logo} className={logoStyle} alt="logo" />
+      <img src={logo} className={styles.logo} alt="logo" />
       <h3>Hello, {name || 'World'}!</h3>
       <hr />
       <form>
-        <label className={bright} htmlFor="name">
+        <label className={styles.bright} htmlFor="name">
           Say hello to:{' '}
           <input
             id="name"
