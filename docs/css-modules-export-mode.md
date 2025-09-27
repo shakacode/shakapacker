@@ -16,15 +16,15 @@ import { bright, container } from './Foo.module.css';
 
 ### TypeScript Usage
 
-Due to TypeScript's type system limitations with CSS modules, you'll need to use namespace imports:
+TypeScript cannot statically analyze CSS files to determine the exact export names at compile time. When css-loader generates individual named exports dynamically from your CSS classes, TypeScript doesn't know what those exports will be. Therefore, you must use namespace imports:
 
 ```typescript
-// v9 - namespace import for TypeScript compatibility
+// v9 - namespace import required for TypeScript
 import * as styles from './Foo.module.css';
 <button className={styles.bright} />
 ```
 
-**Note:** While TypeScript requires namespace import syntax, webpack is still configured with `namedExport: true` under the hood, providing the same benefits.
+**Why namespace imports?** While webpack's css-loader generates true named exports at runtime (with `namedExport: true`), TypeScript's type system cannot determine these dynamic exports during compilation. The namespace import pattern allows TypeScript to treat the import as an object with string keys, bypassing the need for static export validation while still benefiting from the runtime optimizations of named exports.
 
 ### Benefits of v9 Configuration
 - Eliminates certain webpack warnings

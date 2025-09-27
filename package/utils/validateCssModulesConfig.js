@@ -6,6 +6,11 @@ const { warn } = require("./debug")
  * with v9 defaults or conflicting settings.
  */
 const validateCssModulesConfig = (cssLoaderOptions) => {
+  // Skip validation in production by default for performance
+  if (process.env.NODE_ENV === 'production' && process.env.SHAKAPACKER_VALIDATE_CSS_MODULES !== 'true') {
+    return
+  }
+
   if (!cssLoaderOptions || !cssLoaderOptions.modules) {
     return
   }

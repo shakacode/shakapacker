@@ -68,9 +68,19 @@ module.exports = function transformer(fileInfo, api) {
           name: defaultImportName
         }
       }).forEach(memberPath => {
-        const propertyName = memberPath.node.property.name || memberPath.node.property.value;
-        if (propertyName) {
-          usages.add(propertyName);
+        // Handle both dot notation (styles.className) and bracket notation (styles['class-name'])
+        if (memberPath.node.computed && memberPath.node.property.type === 'Literal') {
+          // Computed property access: styles['active-button']
+          const propertyValue = memberPath.node.property.value;
+          if (typeof propertyValue === 'string') {
+            usages.add(propertyValue);
+          }
+        } else if (!memberPath.node.computed && memberPath.node.property.type === 'Identifier') {
+          // Dot notation: styles.activeButton
+          const propertyName = memberPath.node.property.name;
+          if (propertyName) {
+            usages.add(propertyName);
+          }
         }
       });
 
@@ -102,8 +112,16 @@ module.exports = function transformer(fileInfo, api) {
             name: defaultImportName
           }
         }).forEach(memberPath => {
-          const propertyName = memberPath.node.property.name || memberPath.node.property.value;
-          if (propertyName) {
+          let propertyName;
+          
+          // Extract property name from both computed and dot notation
+          if (memberPath.node.computed && memberPath.node.property.type === 'Literal') {
+            propertyName = memberPath.node.property.value;
+          } else if (!memberPath.node.computed && memberPath.node.property.type === 'Identifier') {
+            propertyName = memberPath.node.property.name;
+          }
+          
+          if (propertyName && typeof propertyName === 'string') {
             // Convert kebab-case to camelCase
             const camelCaseName = propertyName.replace(/-([a-z])/g, (g) => g[1].toUpperCase());
             // Replace with direct identifier
