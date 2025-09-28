@@ -38,8 +38,7 @@
   },
   "dependencies": {
     "js-yaml": "^4.1.0",
-    "path-complete-extname": "^1.0.0",
-    "webpack-merge": "^5.10.0"
+    "path-complete-extname": "^1.0.0"
   },
   "devDependencies": {
     "@rspack/cli": "^1.4.11",
@@ -74,6 +73,7 @@
     "typescript": "^5.9.2",
     "webpack": "5.93.0",
     "webpack-assets-manifest": "^5.0.6",
+    "webpack-merge": "^5.8.0",
     "webpack-subresource-integrity": "^5.1.0"
   },
   "packageManager": "yarn@1.22.22",
