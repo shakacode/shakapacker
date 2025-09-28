@@ -62,4 +62,22 @@ task :create_release, %i[gem_version dry_run] do |_t, args|
   puts "ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ"
 
   Shakapacker::Utils::Misc.sh_in_dir(gem_root, "gem release") unless is_dry_run
+
+  # Update spec/dummy Gemfile.lock to use the new version
+  spec_dummy_dir = File.join(gem_root, "spec", "dummy")
+  puts "ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ"
+  puts "Updating spec/dummy dependencies"
+  puts "ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ"
+  Shakapacker::Utils::Misc.sh_in_dir(spec_dummy_dir, "bundle install") unless is_dry_run
+  # Note: spec/dummy uses npm (not yarn) as defined in its packageManager field
+  Shakapacker::Utils::Misc.sh_in_dir(spec_dummy_dir, "npm install") unless is_dry_run
+
+  # Check if there are changes to spec/dummy/Gemfile.lock
+  changes_output = `git status --porcelain spec/dummy/Gemfile.lock 2>&1`
+  if !changes_output.strip.empty? && !is_dry_run
+    puts "Committing and pushing spec/dummy/Gemfile.lock changes"
+    Shakapacker::Utils::Misc.sh_in_dir(gem_root, "git add spec/dummy/Gemfile.lock")
+    Shakapacker::Utils::Misc.sh_in_dir(gem_root, "git commit -m 'Update spec/dummy Gemfile.lock after release'")
+    Shakapacker::Utils::Misc.sh_in_dir(gem_root, "git push")
+  end
 end

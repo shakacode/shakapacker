@@ -9,55 +9,71 @@
 ## [Unreleased]
 Changes since the last non-beta release.
 
+## [v9.0.0-beta.4] - Unreleased
+
+### ⚠️ Breaking Changes
+
+1. **SWC is now the default JavaScript transpiler instead of Babel** ([PR 603](https://github.com/shakacode/shakapacker/pull/603) by [justin808](https://github.com/justin808))
+   - Babel dependencies are no longer included as peer dependencies
+   - Improves compilation speed by 20x
+   - **Migration for existing projects:**
+     - **Option 1 (Recommended):** Switch to SWC:
+       ```yaml
+       # config/shakapacker.yml
+       javascript_transpiler: 'swc'
+       ```
+       Then install: `npm install @swc/core swc-loader`
+     - **Option 2:** Keep using Babel:
+       ```yaml
+       # config/shakapacker.yml
+       javascript_transpiler: 'babel'
+       ```
+
+2. **CSS Modules now use named exports by default**
+   - Configured with `namedExport: true` and `exportLocalsConvention: 'camelCase'`
+   - **JavaScript:** Use named imports: `import { className } from './styles.module.css'`
+   - **TypeScript:** Use namespace imports: `import * as styles from './styles.module.css'`
+   - Default imports (`import styles from '...'`) no longer work
+   - See [CSS Modules Export Mode documentation](./docs/css-modules-export-mode.md) for migration details
+
+3. **Configuration option renamed from `webpack_loader` to `javascript_transpiler`**
+   - Better reflects its purpose of configuring JavaScript transpilation
+   - Old `webpack_loader` option deprecated but still supported with warning
+
 ### Added
-- Rspack support as an alternative assets bundler to webpack. Configure `assets_bundler: 'rspack'` in `shakapacker.yml` to use Rspack's faster Rust-based bundling with webpack-compatible APIs, built-in SWC loader, and CSS extraction. Automatic assets bundler detection in `bin/shakapacker` with fallback support for webpack configurations.
-- Add `private_output_path` configuration option for server-side rendering bundles. This allows specifying a separate output directory for private server bundles that shouldn't be served publicly. [PR 592](https://github.com/shakacode/shakapacker/pull/592) by [justin808](https://github.com/justin808).
-- Enhanced TypeScript type definitions for better IDE support and type safety. Improved Config and DevServerConfig interfaces with additional properties. [PR 602](https://github.com/shakacode/shakapacker/pull/602) by [justin808](https://github.com/justin808).
-- Add `rake shakapacker:doctor` diagnostic command to check for configuration issues and missing dependencies. Helps users identify missing loaders and dependencies that cause build errors, particularly useful when migrating to v9 where peer dependencies are removed. [PR 609](https://github.com/shakacode/shakapacker/pull/609) by [justin808](https://github.com/justin808).
+- **Rspack support** as an alternative assets bundler to webpack
+  - Configure `assets_bundler: 'rspack'` in `shakapacker.yml`
+  - Faster Rust-based bundling with webpack-compatible APIs
+  - Built-in SWC loader and CSS extraction
+  - Automatic bundler detection in `bin/shakapacker`
+- **Private output path** for server-side rendering bundles ([PR 592](https://github.com/shakacode/shakapacker/pull/592) by [justin808](https://github.com/justin808))
+  - Configure `private_output_path` for private server bundles
+- **Enhanced TypeScript definitions** ([PR 602](https://github.com/shakacode/shakapacker/pull/602) by [justin808](https://github.com/justin808))
+  - Better IDE support and type safety
+- **`rake shakapacker:doctor` diagnostic command** ([PR 609](https://github.com/shakacode/shakapacker/pull/609) by [justin808](https://github.com/justin808))
+  - Check for configuration issues and missing dependencies
+  - Identify missing loaders that cause build errors
+  - Particularly useful when migrating to v9 where peer dependencies are removed
+  - Detects transpiler-specific issues based on v9 changes
 
 ### Changed
-- Configuration option renamed from `bundler` to `assets_bundler` to avoid confusion with Ruby's Bundler gem manager. The old `bundler` option is deprecated but still supported with a warning (not a breaking change).
-- BREAKING CHANGE: Configuration option renamed from `webpack_loader` to `javascript_transpiler` to better reflect its purpose of configuring JavaScript transpilation regardless of the bundler used. The old `webpack_loader` option is deprecated but still supported with a warning.
-- **BREAKING CHANGE**: SWC is now the default JavaScript transpiler instead of Babel. Babel dependencies are no longer included as peer dependencies. They are installed automatically only when `javascript_transpiler` is set to 'babel'. This reduces node_modules size and improves compilation speed by 20x. [PR 603](https://github.com/shakacode/shakapacker/pull/603) by [justin808](https://github.com/justin808).
-  
-  **Migration for existing projects:**
-  - **Option 1 (Recommended):** Switch to SWC for 20x faster compilation:
-    ```yaml
-    # config/shakapacker.yml
-    javascript_transpiler: 'swc'
-    ```
-    Then install SWC: `npm install @swc/core swc-loader`
-    
-  - **Option 2:** Keep using Babel (no changes needed):
-    ```yaml
-    # config/shakapacker.yml
-    javascript_transpiler: 'babel'
-    ```
-    Your existing babel packages in package.json will continue to work.
-  
-  **For new projects:**
-  - SWC is installed by default (20x faster than Babel)
-  - To use Babel instead: Set `javascript_transpiler: 'babel'` before running `rails shakapacker:install`
-  - To use esbuild: Set `javascript_transpiler: 'esbuild'` and install with `npm install esbuild esbuild-loader`
-- **BREAKING CHANGE**: CSS Modules are now configured with named exports (`namedExport: true` and `exportLocalsConvention: 'camelCase'`) to align with Next.js and modern tooling standards.
-  - **JavaScript**: Use named imports (`import { className } from './styles.module.css'`)
-  - **TypeScript**: Requires namespace imports (`import * as styles from './styles.module.css'`) due to TypeScript's inability to type dynamic named exports
-  - Note: Default imports (`import styles from '...'`) will no longer work as css-loader with `namedExport: true` doesn't generate a default export
-  - See the [CSS Modules Export Mode documentation](./docs/css-modules-export-mode.md) for detailed migration instructions and override options
-
-## [v9.0.0.beta.2] - September 25, 2025
-### Added
-
-* Support for subresource integrity. [PR 570](https://github.com/shakacode/shakapacker/pull/570) by [panagiotisplytas](https://github.com/panagiotisplytas)
+- Configuration option renamed from `bundler` to `assets_bundler` (deprecated but supported)
+- **Babel dependencies are now optional** instead of peer dependencies ([PR 603](https://github.com/shakacode/shakapacker/pull/603) by [justin808](https://github.com/justin808))
+  - Installed automatically only when `javascript_transpiler` is set to 'babel'
 
 ### Fixed
+- Update webpack-dev-server to secure versions (^4.15.2 || ^5.2.2) ([PR 585](https://github.com/shakacode/shakapacker/pull/585) by [justin808](https://github.com/justin808))
 
+## [v8.4.0] - September 8, 2024
+
+### Added
+- Support for subresource integrity. [PR 570](https://github.com/shakacode/shakapacker/pull/570) by [panagiotisplytas](https://github.com/panagiotisplytas).
+
+### Fixed
 - Install the latest major version of peer dependencies [PR 576](https://github.com/shakacode/shakapacker/pull/576) by [G-Rath](https://github.com/g-rath).
-- Remove duplicate word in comment from generated `shakapacker.yml` config [PR 572](https://github.com/shakacode/shakapacker/pull/572) by [G-Rath](https://github.com/g-rath).
-- fix: update webpack-dev-server to secure versions (^4.15.2 || ^5.2.2) [PR 585](https://github.com/shakacode/shakapacker/pull/585) by [justin808](https://github.com/justin808)
 
 
-## [v8.3.0] - April 25, 2025
+## [v8.3.0] - April 28, 2024
 ### Added
 
 - Allow `webpack-assets-manifest` v6. [PR 562](https://github.com/shakacode/shakapacker/pull/562) by [tagliala](https://github.com/tagliala), [shoeyn](https://github.com/shoeyn).
@@ -468,7 +484,8 @@ Note: [Rubygem is 6.3.0.pre.rc.1](https://rubygems.org/gems/shakapacker/versions
 ## v5.4.3 and prior changes from rails/webpacker
 See [CHANGELOG.md in rails/webpacker (up to v5.4.3)](https://github.com/rails/webpacker/blob/master/CHANGELOG.md)
 
-[Unreleased]: https://github.com/shakacode/shakapacker/compare/v8.4.0...main
+[Unreleased]: https://github.com/shakacode/shakapacker/compare/v9.0.0-beta.4...main
+[v9.0.0-beta.4]: https://github.com/shakacode/shakapacker/compare/v8.4.0...v9.0.0-beta.4
 [v8.4.0]: https://github.com/shakacode/shakapacker/compare/v8.3.0...v8.4.0
 [v8.3.0]: https://github.com/shakacode/shakapacker/compare/v8.2.0...v8.3.0
 [v8.2.0]: https://github.com/shakacode/shakapacker/compare/v8.1.0...v8.2.0
