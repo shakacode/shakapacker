@@ -124,6 +124,7 @@ module.exports = {
   ensureTrailingSlash,
   canProcess,
   moduleExists,
+  validateBabelDependencies,
   loaderMatches,
   packageFullVersion,
   packageMajorVersion
