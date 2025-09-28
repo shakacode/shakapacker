@@ -69,13 +69,10 @@ class Shakapacker::Configuration
   end
 
   def private_output_path
-    @private_output_path ||= begin
-      private_path = fetch(:private_output_path)
-      if private_path
-        validate_output_paths!
-        root_path.join(private_path)
-      end
-    end
+    private_path = fetch(:private_output_path)
+    return nil unless private_path
+    validate_output_paths!
+    root_path.join(private_path)
   end
 
   def public_output_path

@@ -137,17 +137,16 @@ describe "Shakapacker::Configuration" do
       test_config.unlink
     end
 
-    it "memoizes private_output_path and validates only once" do
-      # Test that validation is called only once due to memoization
+    it "validates only once even with multiple calls" do
+      # Test that validation flag prevents redundant validations
       config = Shakapacker::Configuration.new(
         root_path: ROOT_PATH,
         config_path: Pathname.new(File.expand_path("./test_app/config/shakapacker.yml", __dir__)),
         env: "test"
       )
 
-      # First call should validate and memoize
+      # Multiple calls should return the same path
       path1 = config.private_output_path
-      # Second call should return memoized value without validation
       path2 = config.private_output_path
 
       expect(path1).to eq(path2)
