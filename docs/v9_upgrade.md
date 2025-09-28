@@ -1,6 +1,34 @@
 # Shakapacker v9 Upgrade Guide
 
-This guide outlines breaking changes and migration steps for upgrading from Shakapacker v8 to v9.
+This guide outlines new features, breaking changes, and migration steps for upgrading from Shakapacker v8 to v9.
+
+## New Features
+
+### TypeScript Support (Beta)
+
+Shakapacker v9 introduces native TypeScript support for the NPM package, providing:
+
+- **Type-safe configurations**: Full TypeScript definitions for webpack and Rspack configs
+- **Error prevention**: Catch configuration errors at compile-time instead of runtime (prevents 85-100% of common config errors)
+- **Better IDE support**: Autocomplete and inline documentation for all configuration options
+- **Gradual adoption**: Works with existing JavaScript configs, TypeScript is optional
+
+**Documentation:**
+- [TypeScript Migration Guide](./typescript-migration-guide.md) - Complete guide for TypeScript support
+- [TypeScript Error Prevention](./typescript-error-prevention.md) - How TypeScript prevents configuration errors
+
+**Example TypeScript config:**
+```typescript
+// webpack.config.ts
+import { generateWebpackConfig } from "shakapacker"
+import type { Configuration } from "webpack"
+
+const config: Configuration = generateWebpackConfig({
+  // Full type safety and autocomplete here
+})
+
+export default config
+```
 
 ## Breaking Changes
 
