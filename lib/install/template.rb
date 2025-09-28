@@ -14,11 +14,13 @@ force_option = ENV["FORCE"] ? { force: true } : {}
 @package_json ||= PackageJson.new
 install_dir = File.expand_path(File.dirname(__FILE__))
 
-# Simple installation strategy - install only what's needed
-# USE_BABEL_PACKAGES takes precedence for backward compatibility
+# Installation strategy:
+# - USE_BABEL_PACKAGES installs both babel AND swc for compatibility
+# - Otherwise install only the specified transpiler
 if ENV["USE_BABEL_PACKAGES"] == "true" || ENV["USE_BABEL_PACKAGES"] == "1"
   @transpiler_to_install = "babel"
   say "📦 Installing Babel packages (USE_BABEL_PACKAGES is set)", :yellow
+  say "✨ Also installing SWC packages for default config compatibility", :green
 elsif ENV["JAVASCRIPT_TRANSPILER"]
   @transpiler_to_install = ENV["JAVASCRIPT_TRANSPILER"]
   say "📦 Installing #{@transpiler_to_install} packages", :blue
@@ -151,15 +153,22 @@ Dir.chdir(Rails.root) do
   # Add transpiler-specific dependencies based on detected/configured transpiler
   # Inline the logic here since methods can't be called before they're defined in Rails templates
 
-  # Install transpiler-specific dependencies based on what we decided above
-  case @transpiler_to_install
-  when "babel"
+  # Install transpiler-specific dependencies
+  # When USE_BABEL_PACKAGES is set, install both babel AND swc
+  # This ensures backward compatibility while supporting the default config
+  if @transpiler_to_install == "babel"
+    # Install babel packages
     babel_deps = PackageJson.read(install_dir).fetch("babel")
     peers = peers.merge(babel_deps)
-  when "swc"
+    
+    # Also install SWC since that's what the default config uses
+    # This ensures the runtime works regardless of config
     swc_deps = { "@swc/core" => "^1.3.0", "swc-loader" => "^0.2.0" }
     peers = peers.merge(swc_deps)
-  when "esbuild"
+  elsif @transpiler_to_install == "swc"
+    swc_deps = { "@swc/core" => "^1.3.0", "swc-loader" => "^0.2.0" }
+    peers = peers.merge(swc_deps)
+  elsif @transpiler_to_install == "esbuild"
     esbuild_deps = { "esbuild" => "^0.24.0", "esbuild-loader" => "^4.0.0" }
     peers = peers.merge(esbuild_deps)
   end
