@@ -59,7 +59,7 @@ const getEntryObject = () => {
     const assetPath = resolve(path)
     // Allows for multiple filetypes per entry (https://webpack.js.org/guides/entry-advanced/)
     // Transforms the config object value to an array with all values under the same name
-    let previousPaths = entries[name]
+    const previousPaths = entries[name]
     if (previousPaths) {
       const pathArray = Array.isArray(previousPaths)
         ? previousPaths
