@@ -9,6 +9,7 @@ declare module "shakapacker" {
     css_extract_ignore_order_warnings: boolean
     public_root_path: string
     public_output_path: string
+    private_output_path?: string
     cache_path: string
     webpack_compile_output: boolean
     shakapacker_precompile: boolean
@@ -23,6 +24,14 @@ declare module "shakapacker" {
     publicPath: string
     publicPathWithoutCDN: string
     manifestPath: string
+    manifest_path?: string
+    assets_bundler?: string
+    dev_server?: DevServerConfig
+    integrity?: {
+      enabled: boolean
+      cross_origin: string
+      hash_functions?: string[]
+    }
   }
 
   export interface Env {
@@ -60,6 +69,8 @@ declare module "shakapacker" {
     ipc?: boolean | string
     magic_html?: boolean
     live_reload?: boolean
+    inline_css?: boolean
+    env_prefix?: string
     open?:
       | boolean
       | string
