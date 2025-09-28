@@ -9,7 +9,7 @@ const config = require("./config")
 const baseConfig = require("./environments/base")
 const devServer = require("./dev_server")
 const env = require("./env")
-import { moduleExists, canProcess } from "./utils/helpers"
+const { moduleExists, canProcess } = require("./utils/helpers")
 const inliningCss = require("./utils/inliningCss")
 
 const rulesPath = resolve(__dirname, "rules", `${config.assets_bundler}.js`)
@@ -18,7 +18,15 @@ const rules = require(rulesPath)
 const generateWebpackConfig = (extraConfig: Configuration = {}, ...extraArgs: any[]): Configuration => {
   if (extraArgs.length > 0) {
     throw new Error(
-      "Only one extra config may be passed here - use webpack-merge to merge configs before passing them to Shakapacker"
+      `Invalid usage: generateWebpackConfig() accepts only one configuration object.\n\n` +
+      `You passed ${extraArgs.length + 1} arguments. Only one extra config may be passed here - use webpack-merge to merge configs before passing them to Shakapacker.\n\n` +
+      `Example:\n` +
+      `  const { merge } = require('webpack-merge')\n` +
+      `  const mergedConfig = merge(config1, config2, config3)\n` +
+      `  const finalConfig = generateWebpackConfig(mergedConfig)\n\n` +
+      `Or if using ES6:\n` +
+      `  import { merge } from 'webpack-merge'\n` +
+      `  const finalConfig = generateWebpackConfig(merge(config1, config2))`
     )
   }
 

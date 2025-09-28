@@ -2,7 +2,7 @@ import { load } from "js-yaml"
 import { readFileSync } from "fs"
 const defaultConfigPath = require("./utils/defaultConfigPath")
 const configPath = require("./utils/configPath")
-import { isFileNotFoundError } from "./utils/errorHelpers"
+const { isFileNotFoundError } = require("./utils/errorHelpers")
 
 const NODE_ENVIRONMENTS = ["development", "production", "test"] as const
 const DEFAULT = "production"

@@ -1,5 +1,5 @@
 // These are the raw shakapacker dev server config settings from the YML file with ENV overrides applied.
-import { isBoolean } from "./utils/helpers"
+const { isBoolean } = require("./utils/helpers")
 const config = require("./config")
 import { DevServerConfig } from "./types"
 

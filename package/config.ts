@@ -2,13 +2,13 @@ import { resolve } from "path"
 import { load } from "js-yaml"
 import { existsSync, readFileSync } from "fs"
 import { merge } from "webpack-merge"
-import { ensureTrailingSlash } from "./utils/helpers"
+const { ensureTrailingSlash } = require("./utils/helpers")
 const { railsEnv } = require("./env")
 const configPath = require("./utils/configPath")
 const defaultConfigPath = require("./utils/defaultConfigPath")
 import { Config, YamlConfig, LegacyConfig } from "./types"
-import { isValidYamlConfig, createConfigValidationError, isPartialConfig, isValidConfig } from "./utils/typeGuards"
-import { isFileNotFoundError, createFileOperationError } from "./utils/errorHelpers"
+const { isValidYamlConfig, createConfigValidationError, isPartialConfig, isValidConfig } = require("./utils/typeGuards")
+const { isFileNotFoundError, createFileOperationError } = require("./utils/errorHelpers")
 
 const loadAndValidateYaml = (path: string): YamlConfig => {
   const fileContent = readFileSync(path, "utf8")
@@ -18,7 +18,7 @@ const loadAndValidateYaml = (path: string): YamlConfig => {
     throw createConfigValidationError(path, railsEnv, "Invalid YAML structure")
   }
   
-  return yamlContent
+  return yamlContent as YamlConfig
 }
 
 const getDefaultConfig = (): Partial<Config> => {
@@ -49,7 +49,13 @@ if (existsSync(configPath)) {
     if (!envAppConfig) {
       /* eslint no-console:0 */
       console.warn(
-        `Warning: ${railsEnv} key not found in the configuration file. Using production configuration as a fallback.`
+        `⚠️  Warning: '${railsEnv}' environment not found in ${configPath}\n` +
+        `Available environments: ${Object.keys(appYmlObject).join(', ')}\n` +
+        `Using 'production' configuration as fallback.\n\n` +
+        `To fix this, either:\n` +
+        `1. Add a '${railsEnv}' section to your shakapacker.yml\n` +
+        `2. Set RAILS_ENV to one of the available environments\n` +
+        `3. Copy settings from another environment as a starting point`
       )
     }
 
@@ -65,12 +71,11 @@ if (existsSync(configPath)) {
       )
     }
     
-    if (!isValidConfig(mergedConfig)) {
-      // If it's not a full config but is partial, we can safely cast
-      config = mergedConfig as Config
-    } else {
-      config = mergedConfig
+    // Merged config should be complete at this point
+    if (!isPartialConfig(mergedConfig)) {
+      throw createConfigValidationError(configPath, railsEnv, "Invalid merged configuration structure")
     }
+    config = mergedConfig as Config
   } catch (error) {
     if (isFileNotFoundError(error)) {
       // File not found is OK, use defaults
@@ -81,12 +86,8 @@ if (existsSync(configPath)) {
           `Invalid default configuration. This may indicate a corrupted Shakapacker installation. Try reinstalling with 'yarn add shakapacker --force'.`
         )
       }
-      if (!isValidConfig(defaults)) {
-        // Defaults might be partial, safe to cast with validation
-        config = defaults as Config
-      } else {
-        config = defaults
-      }
+      // Using defaults only, might be partial
+      config = defaults as Config
     } else {
       throw error
     }
@@ -100,12 +101,8 @@ if (existsSync(configPath)) {
       `Invalid default configuration. This may indicate a corrupted Shakapacker installation. Try reinstalling with 'yarn add shakapacker --force'.`
     )
   }
-  if (!isValidConfig(defaults)) {
-    // Defaults might be partial, safe to cast with validation
-    config = defaults as Config
-  } else {
-    config = defaults
-  }
+  // Using defaults only, might be partial
+  config = defaults as Config
 }
 
 config.outputPath = resolve(config.public_root_path, config.public_output_path)

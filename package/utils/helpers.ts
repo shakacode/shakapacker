@@ -1,4 +1,4 @@
-import { isModuleNotFoundError, getErrorMessage } from "./errorHelpers"
+const { isModuleNotFoundError, getErrorMessage } = require("./errorHelpers")
 
 const isBoolean = (str: string): boolean => /^true/.test(str) || /^false/.test(str)
 
