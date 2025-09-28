@@ -12,6 +12,7 @@ Changes since the last non-beta release.
 ### Added
 - Rspack support as an alternative assets bundler to webpack. Configure `assets_bundler: 'rspack'` in `shakapacker.yml` to use Rspack's faster Rust-based bundling with webpack-compatible APIs, built-in SWC loader, and CSS extraction. Automatic assets bundler detection in `bin/shakapacker` with fallback support for webpack configurations.
 - Add `private_output_path` configuration option for server-side rendering bundles. This allows specifying a separate output directory for private server bundles that shouldn't be served publicly. [PR 592](https://github.com/shakacode/shakapacker/pull/592) by [justin808](https://github.com/justin808).
+- Enhanced TypeScript type definitions for better IDE support and type safety. Improved Config and DevServerConfig interfaces with additional properties. [PR 602](https://github.com/shakacode/shakapacker/pull/602) by [justin808](https://github.com/justin808).
 
 ### Changed
 - Configuration option renamed from `bundler` to `assets_bundler` to avoid confusion with Ruby's Bundler gem manager. The old `bundler` option is deprecated but still supported with a warning (not a breaking change).
