@@ -23,21 +23,21 @@ This document provides performance benchmarks comparing different JavaScript tra
 ### Build Time Comparison
 
 #### Small Project (<100 files, ~50KB total)
-```
+```text
 SWC:      0.3s  (20x faster)
 esbuild:  0.4s  (15x faster)
 Babel:    6.0s  (baseline)
 ```
 
 #### Medium Project (500 files, ~2MB total)
-```
+```text
 SWC:      1.2s  (25x faster)
 esbuild:  1.8s  (17x faster)
 Babel:    30s   (baseline)
 ```
 
 #### Large Project (2000 files, ~10MB total)
-```
+```text
 SWC:      4.5s  (22x faster)
 esbuild:  6.2s  (16x faster)
 Babel:    100s  (baseline)
