@@ -23,7 +23,7 @@
     "strictBindCallApply": true,
     "strictPropertyInitialization": false,
     "noImplicitThis": true,
-    "alwaysStrict": true,
+    "alwaysStrict": false,
     "allowSyntheticDefaultImports": true,
     "preserveConstEnums": true,
     "isolatedModules": true,

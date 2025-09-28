@@ -1,4 +1,3 @@
-"use strict"
 /* eslint global-require: 0 */
 /* eslint import/no-dynamic-require: 0 */
 const { basename, dirname, join, relative, resolve } = require("path")
@@ -20,6 +19,7 @@ const rulesPath = resolve(
   `${config.assets_bundler}.js`
 )
 const rules = require(rulesPath)
+
 // Don't use contentHash except for production for performance
 // https://webpack.js.org/guides/build-performance/#avoid-production-specific-tooling
 const hash = isProduction || config.useContentHash ? "-[contenthash]" : ""
