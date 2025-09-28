@@ -38,18 +38,19 @@
     "type-check": "tsc --noEmit"
   },
   "dependencies": {
-    "js-yaml": "^4.1.0",
-    "path-complete-extname": "^1.0.0"
-  },
-  "devDependencies": {
-    "@rspack/cli": "^1.4.11",
-    "@rspack/core": "^1.4.11",
     "@types/js-yaml": "^4.0.9",
     "@types/node": "^24.5.2",
     "@types/path-complete-extname": "^1.0.3",
     "@types/webpack": "^5.28.5",
-    "@types/webpack-dev-server": "^4.7.2",
     "@types/webpack-merge": "^5.0.0",
+    "js-yaml": "^4.1.0",
+    "path-complete-extname": "^1.0.0",
+    "webpack-merge": "^5.10.0"
+  },
+  "devDependencies": {
+    "@rspack/cli": "^1.4.11",
+    "@rspack/core": "^1.4.11",
+    "@types/webpack-dev-server": "^4.7.2",
     "babel-loader": "^8.2.4",
     "compression-webpack-plugin": "^9.0.0",
     "css-loader": "^7.1.2",
@@ -74,7 +75,6 @@
     "typescript": "^5.9.2",
     "webpack": "5.93.0",
     "webpack-assets-manifest": "^5.0.6",
-    "webpack-merge": "^5.8.0",
     "webpack-subresource-integrity": "^5.1.0"
   },
   "packageManager": "yarn@1.22.22",
