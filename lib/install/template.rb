@@ -1,7 +1,6 @@
 require "shakapacker/utils/misc"
 require "shakapacker/utils/manager"
 require "shakapacker/utils/version_syntax_converter"
-require "shakapacker/configuration_helper"
 require "package_json"
 require "yaml"
 require "json"
@@ -19,10 +18,40 @@ install_dir = File.expand_path(File.dirname(__FILE__))
 # USE_BABEL_PACKAGES is for backward compatibility and only affects package installation
 @install_babel_packages = ENV["USE_BABEL_PACKAGES"] == "true" || ENV["USE_BABEL_PACKAGES"] == "1"
 
-# Detect if we should update the config file based on existing babel setup
+# Detect if we have existing babel configuration files
 # (but not based on USE_BABEL_PACKAGES which is just for package installation)
-@has_existing_babel = Shakapacker::ConfigurationHelper.babel_configured?(Rails.root)
-@existing_config = Shakapacker::ConfigurationHelper.read_existing_config(Rails.root)
+babel_config_exists = File.exist?(Rails.root.join(".babelrc")) ||
+                      File.exist?(Rails.root.join("babel.config.js")) ||
+                      File.exist?(Rails.root.join("babel.config.json")) ||
+                      File.exist?(Rails.root.join(".babelrc.js"))
+
+babel_in_package_json = false
+package_json_path = Rails.root.join("package.json")
+if File.exist?(package_json_path)
+  begin
+    pj_content = JSON.parse(File.read(package_json_path))
+    babel_in_package_json = pj_content.key?("babel") ||
+                           pj_content.dig("dependencies", "@babel/core") ||
+                           pj_content.dig("devDependencies", "@babel/core") ||
+                           pj_content.dig("dependencies", "babel-loader") ||
+                           pj_content.dig("devDependencies", "babel-loader")
+  rescue JSON::ParserError
+    # If package.json is malformed, assume no babel
+  end
+end
+
+@has_existing_babel = babel_config_exists || babel_in_package_json
+
+# Read existing config if it exists
+@existing_config = {}
+config_path = Rails.root.join("config/shakapacker.yml")
+if File.exist?(config_path)
+  begin
+    @existing_config = YAML.load_file(config_path) || {}
+  rescue Psych::SyntaxError
+    # Invalid YAML, use empty config
+  end
+end
 
 # Determine transpiler for installation
 if @install_babel_packages
