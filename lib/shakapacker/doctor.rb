@@ -1,5 +1,7 @@
 require "json"
 require "pathname"
+require "open3"
+require "semantic_range"
 
 module Shakapacker
   class Doctor
@@ -49,6 +51,9 @@ module Shakapacker
         # Platform and migration checks
         check_windows_platform
         check_legacy_webpacker_files
+        
+        # Build and compilation checks
+        check_assets_compilation if config_exists?
       end
 
       def check_config_file
@@ -241,6 +246,35 @@ module Shakapacker
         end
       end
 
+      def check_assets_compilation
+        manifest_path = config.manifest_path
+        
+        if manifest_path.exist?
+          # Check if manifest is recent (within last 24 hours)
+          manifest_age_hours = (Time.now - File.mtime(manifest_path)) / 3600
+          
+          if manifest_age_hours > 24
+            @info << "Assets were last compiled #{manifest_age_hours.round} hours ago. Consider recompiling if you've made changes."
+          end
+          
+          # Check if source files are newer than manifest
+          source_files = Dir.glob(File.join(config.source_path, "**/*.{js,jsx,ts,tsx,css,scss,sass}"))
+          if source_files.any?
+            newest_source = source_files.map { |f| File.mtime(f) }.max
+            if newest_source > File.mtime(manifest_path)
+              @warnings << "Source files have been modified after last asset compilation. Run 'rails assets:precompile'"
+            end
+          end
+        else
+          rails_env = defined?(Rails) ? Rails.env : ENV["RAILS_ENV"]
+          if rails_env == "production"
+            @issues << "No compiled assets found (manifest.json missing). Run 'rails assets:precompile'"
+          else
+            @info << "Assets not yet compiled. Run 'rails assets:precompile' or start the dev server"
+          end
+        end
+      end
+      
       def check_legacy_webpacker_files
         legacy_files = [
           "config/webpacker.yml",
@@ -258,10 +292,11 @@ module Shakapacker
       end
 
       def check_node_installation
-        node_version = `node --version`.strip
-
-        # Check minimum Node version (14.0.0 for modern tooling)
-        if node_version
+        stdout, stderr, status = Open3.capture3("node", "--version")
+        
+        if status.success?
+          node_version = stdout.strip
+          # Check minimum Node version (14.0.0 for modern tooling)
           version_match = node_version.match(/v(\d+)\.(\d+)\.(\d+)/)
           if version_match
             major = version_match[1].to_i
@@ -269,14 +304,20 @@ module Shakapacker
               @warnings << "Node.js version #{node_version} is outdated. Recommend upgrading to v14 or higher"
             end
           end
+        else
+          @issues << "Node.js command failed: #{stderr}"
         end
       rescue Errno::ENOENT
         @issues << "Node.js is not installed or not in PATH"
+      rescue Errno::EACCES
+        @issues << "Permission denied when checking Node.js version"
+      rescue StandardError => e
+        @warnings << "Unable to check Node.js version: #{e.message}"
       end
 
       def check_package_manager
         unless package_manager
-          @issues << "No package manager lock file found (package-lock.json, yarn.lock, or pnpm-lock.yaml)"
+          @issues << "No package manager lock file found (package-lock.json, yarn.lock, pnpm-lock.yaml, or bun.lockb)"
         end
       end
 
@@ -481,9 +522,11 @@ module Shakapacker
       end
 
       def read_package_json
-        JSON.parse(File.read(package_json_path))
-      rescue JSON::ParserError
-        {}
+        @package_json ||= begin
+          JSON.parse(File.read(package_json_path))
+        rescue JSON::ParserError
+          {}
+        end
       end
 
       def config_exists?
@@ -491,19 +534,20 @@ module Shakapacker
       end
 
       def typescript_files_exist?
-        Dir.glob(File.join(config.source_path, "**/*.{ts,tsx}")).any?
+        # Use .first for early exit optimization
+        !Dir.glob(File.join(config.source_path, "**/*.{ts,tsx}")).first.nil?
       end
 
       def sass_files_exist?
-        Dir.glob(File.join(config.source_path, "**/*.{sass,scss}")).any?
+        !Dir.glob(File.join(config.source_path, "**/*.{sass,scss}")).first.nil?
       end
 
       def less_files_exist?
-        Dir.glob(File.join(config.source_path, "**/*.less")).any?
+        !Dir.glob(File.join(config.source_path, "**/*.less")).first.nil?
       end
 
       def stylus_files_exist?
-        Dir.glob(File.join(config.source_path, "**/*.{styl,stylus}")).any?
+        !Dir.glob(File.join(config.source_path, "**/*.{styl,stylus}")).first.nil?
       end
 
       def postcss_config_exists?
@@ -515,6 +559,7 @@ module Shakapacker
       end
 
       def detect_package_manager
+        return "bun" if File.exist?(root_path.join("bun.lockb"))
         return "pnpm" if File.exist?(root_path.join("pnpm-lock.yaml"))
         return "yarn" if File.exist?(root_path.join("yarn.lock"))
         return "npm" if File.exist?(root_path.join("package-lock.json"))
@@ -522,10 +567,33 @@ module Shakapacker
       end
 
       def versions_compatible?(gem_version, npm_version)
-        # Simple check - could be enhanced
-        gem_major = gem_version.split(".").first
-        npm_major = npm_version.gsub(/[\^~]/, "").split(".").first
-        gem_major == npm_major
+        # Handle pre-release versions and ranges properly
+        npm_clean = npm_version.gsub(/[\^~]/, "")
+        
+        # Extract version without pre-release suffix
+        gem_base = gem_version.split("-").first
+        npm_base = npm_clean.split("-").first
+        
+        # Compare major versions
+        gem_major = gem_base.split(".").first
+        npm_major = npm_base.split(".").first
+        
+        if gem_major != npm_major
+          return false
+        end
+        
+        # For same major version, check if npm version satisfies gem version
+        begin
+          # Use semantic versioning if available
+          if defined?(SemanticRange)
+            SemanticRange.satisfies?(gem_version, npm_version)
+          else
+            gem_major == npm_major
+          end
+        rescue StandardError
+          # Fallback to simple major version comparison
+          gem_major == npm_major
+        end
       end
 
       def report_results
@@ -604,9 +672,11 @@ module Shakapacker
 
           def print_node_status
             begin
-              node_version = `node --version`.strip
-              puts "✓ Node.js #{node_version} found"
-            rescue Errno::ENOENT
+              stdout, stderr, status = Open3.capture3("node", "--version")
+              if status.success?
+                puts "✓ Node.js #{stdout.strip} found"
+              end
+            rescue Errno::ENOENT, Errno::EACCES, StandardError
               # Error already added to issues
             end
           end
@@ -670,6 +740,7 @@ module Shakapacker
 
           def package_manager_install_command(manager)
             case manager
+            when "bun" then "bun add -D [package-name]"
             when "pnpm" then "pnpm add -D [package-name]"
             when "yarn" then "yarn add -D [package-name]"
             when "npm" then "npm install --save-dev [package-name]"

@@ -443,7 +443,8 @@ describe Shakapacker::Doctor do
   describe "Node.js version checks" do
     context "with outdated Node.js version" do
       before do
-        allow(doctor).to receive(:`).with("node --version").and_return("v12.0.0\n")
+        allow(Open3).to receive(:capture3).with("node", "--version")
+          .and_return(["v12.0.0\n", "", double(success?: true)])
       end
 
       it "adds warning for outdated version" do
@@ -454,12 +455,91 @@ describe Shakapacker::Doctor do
 
     context "with current Node.js version" do
       before do
-        allow(doctor).to receive(:`).with("node --version").and_return("v18.0.0\n")
+        allow(Open3).to receive(:capture3).with("node", "--version")
+          .and_return(["v18.0.0\n", "", double(success?: true)])
       end
 
       it "does not add warnings" do
         doctor.send(:check_node_installation)
         expect(doctor.warnings).to be_empty
+      end
+    end
+
+    context "with permission error" do
+      before do
+        allow(Open3).to receive(:capture3).with("node", "--version")
+          .and_raise(Errno::EACCES)
+      end
+
+      it "adds permission error" do
+        doctor.send(:check_node_installation)
+        expect(doctor.issues).to include(match(/Permission denied/))
+      end
+    end
+  end
+
+  describe "assets compilation checks" do
+    before do
+      File.write(config_path, "test: config")
+    end
+
+    context "when manifest exists and is recent" do
+      before do
+        FileUtils.mkdir_p(manifest_path.dirname)
+        File.write(manifest_path, '{"application.js": "application-123.js"}')
+        FileUtils.touch(manifest_path)
+      end
+
+      it "does not add issues or warnings" do
+        doctor.send(:check_assets_compilation)
+        expect(doctor.issues).to be_empty
+        expect(doctor.warnings).to be_empty
+      end
+    end
+
+    context "when manifest is old" do
+      before do
+        FileUtils.mkdir_p(manifest_path.dirname)
+        File.write(manifest_path, '{"application.js": "application-123.js"}')
+        # Set mtime to 2 days ago
+        old_time = Time.now - (48 * 3600)
+        File.utime(old_time, old_time, manifest_path)
+      end
+
+      it "adds info about old compilation" do
+        doctor.send(:check_assets_compilation)
+        expect(doctor.info).to include(match(/Assets were last compiled.*hours ago/))
+      end
+    end
+
+    context "when source files are newer than manifest" do
+      before do
+        FileUtils.mkdir_p(manifest_path.dirname)
+        File.write(manifest_path, '{"application.js": "application-123.js"}')
+        
+        # Set manifest to 1 hour ago
+        old_time = Time.now - 3600
+        File.utime(old_time, old_time, manifest_path)
+        
+        # Create a newer source file
+        FileUtils.mkdir_p(source_path)
+        File.write(source_path.join("new.js"), "console.log('new');")
+      end
+
+      it "warns about outdated compilation" do
+        doctor.send(:check_assets_compilation)
+        expect(doctor.warnings).to include(match(/Source files have been modified after last asset compilation/))
+      end
+    end
+
+    context "in production without manifest" do
+      before do
+        stub_const("Rails", double(env: "production"))
+      end
+
+      it "adds critical issue" do
+        doctor.send(:check_assets_compilation)
+        expect(doctor.issues).to include(match(/No compiled assets found.*manifest.json missing/))
       end
     end
   end
@@ -489,6 +569,16 @@ describe Shakapacker::Doctor do
   end
 
   describe "package manager checks" do
+    context "when bun.lockb exists" do
+      before do
+        File.write(root_path.join("bun.lockb"), "")
+      end
+
+      it "detects bun" do
+        expect(doctor.send(:detect_package_manager)).to eq("bun")
+      end
+    end
+
     context "when yarn.lock exists" do
       before do
         File.write(root_path.join("yarn.lock"), "")
