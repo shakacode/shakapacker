@@ -1,6 +1,7 @@
 require "shakapacker/utils/misc"
 require "shakapacker/utils/manager"
 require "shakapacker/utils/version_syntax_converter"
+require "shakapacker/configuration_helper"
 require "package_json"
 require "yaml"
 require "json"
@@ -14,35 +15,26 @@ force_option = ENV["FORCE"] ? { force: true } : {}
 @package_json ||= PackageJson.new
 install_dir = File.expand_path(File.dirname(__FILE__))
 
-# First detect what transpiler to use
-@detected_transpiler = nil
+# Use centralized configuration helper to detect transpiler
+@detected_transpiler = Shakapacker::ConfigurationHelper.detect_transpiler(rails_root: Rails.root)
+@existing_config = Shakapacker::ConfigurationHelper.read_existing_config(Rails.root)
 
-# Check for existing babel configuration
-has_babel_config = File.exist?(Rails.root.join(".babelrc")) ||
-                   File.exist?(Rails.root.join("babel.config.js")) ||
-                   File.exist?(Rails.root.join("babel.config.json")) ||
-                   File.exist?(Rails.root.join(".babelrc.js"))
-
-has_babel_in_package_json = false
-package_json_path = Rails.root.join("package.json")
-if File.exist?(package_json_path)
-  begin
-    pj_content = JSON.parse(File.read(package_json_path))
-    has_babel_in_package_json = pj_content.key?("babel") ||
-                                pj_content.dig("dependencies", "@babel/core") ||
-                                pj_content.dig("devDependencies", "@babel/core") ||
-                                pj_content.dig("dependencies", "babel-loader") ||
-                                pj_content.dig("devDependencies", "babel-loader")
-  rescue JSON::ParserError
-    # If package.json is malformed, assume no babel
+# Provide appropriate feedback based on detection reason
+case
+when ENV["USE_BABEL_PACKAGES"]
+  say "📦 Using Babel transpiler (USE_BABEL_PACKAGES is set)", :yellow
+  # Warn about edge cases
+  if ENV["JAVASCRIPT_TRANSPILER"] && ENV["JAVASCRIPT_TRANSPILER"] != "babel"
+    say "⚠️  Warning: USE_BABEL_PACKAGES is set but JAVASCRIPT_TRANSPILER=#{ENV['JAVASCRIPT_TRANSPILER']}. Using Babel.", :yellow
   end
-end
-
-if has_babel_config || has_babel_in_package_json
-  @detected_transpiler = "babel"
+when ENV["JAVASCRIPT_TRANSPILER"]
+  say "📦 Using #{@detected_transpiler} transpiler (JAVASCRIPT_TRANSPILER env var)", :blue
+when Shakapacker::ConfigurationHelper.babel_configured?(Rails.root) && @detected_transpiler == "babel"
   say "🔍 Detected existing Babel configuration - will configure Shakapacker to use Babel", :yellow
+when @existing_config["javascript_transpiler"] == @detected_transpiler
+  say "📦 Using existing configured #{@detected_transpiler} transpiler", :blue
 else
-  @detected_transpiler = ENV["JAVASCRIPT_TRANSPILER"] || "swc"
+  say "✨ Using SWC transpiler (20x faster than Babel)", :green
 end
 
 # Copy config file
@@ -177,25 +169,25 @@ Dir.chdir(Rails.root) do
   # Add transpiler-specific dependencies based on detected/configured transpiler
   # Inline the logic here since methods can't be called before they're defined in Rails templates
 
-  # Babel dependencies
-  should_install_babel = ENV["USE_BABEL_PACKAGES"] || @detected_transpiler == "babel"
-  if should_install_babel
+  # Babel dependencies - only install if explicitly needed
+  # USE_BABEL_PACKAGES takes precedence over transpiler config
+  if ENV["USE_BABEL_PACKAGES"] || @detected_transpiler == "babel"
     say "📦 Installing Babel dependencies", :yellow
     babel_deps = PackageJson.read(install_dir).fetch("babel")
     peers = peers.merge(babel_deps)
   end
 
-  # SWC dependencies
-  if @detected_transpiler == "swc"
+  # SWC dependencies (pin to major version 1)
+  if @detected_transpiler == "swc" && !ENV["USE_BABEL_PACKAGES"]
     say "📦 Installing SWC dependencies (20x faster than Babel)", :green
-    swc_deps = { "@swc/core" => "latest", "swc-loader" => "latest" }
+    swc_deps = { "@swc/core" => "^1.3.0", "swc-loader" => "^0.2.0" }
     peers = peers.merge(swc_deps)
   end
 
-  # esbuild dependencies
-  if @detected_transpiler == "esbuild"
+  # esbuild dependencies (pin to major version 0)
+  if @detected_transpiler == "esbuild" && !ENV["USE_BABEL_PACKAGES"]
     say "📦 Installing esbuild dependencies", :blue
-    esbuild_deps = { "esbuild" => "latest", "esbuild-loader" => "latest" }
+    esbuild_deps = { "esbuild" => "^0.24.0", "esbuild-loader" => "^4.0.0" }
     peers = peers.merge(esbuild_deps)
   end
 

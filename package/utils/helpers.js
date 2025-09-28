@@ -25,12 +25,61 @@ const canProcess = (rule, fn) => {
   return null
 }
 
+const validateBabelDependencies = () => {
+  // Only validate core dependencies that are absolutely required
+  // Additional packages like presets are optional and project-specific
+  const coreRequiredPackages = ["@babel/core", "babel-loader"]
+
+  const missingCorePackages = []
+  for (const pkg of coreRequiredPackages) {
+    if (!moduleExists(pkg)) {
+      missingCorePackages.push(pkg)
+    }
+  }
+
+  if (missingCorePackages.length > 0) {
+    const installCommand =
+      "npm install --save-dev " + missingCorePackages.join(" ")
+
+    // Check for commonly needed packages and suggest them
+    const suggestedPackages = [
+      "@babel/preset-env",
+      "@babel/plugin-transform-runtime",
+      "@babel/runtime"
+    ]
+
+    const missingSuggested = suggestedPackages.filter(
+      (pkg) => !moduleExists(pkg)
+    )
+    let additionalHelp = ""
+
+    if (missingSuggested.length > 0) {
+      additionalHelp =
+        `\n\nYou may also need: ${missingSuggested.join(", ")}\n` +
+        `Install with: npm install --save-dev ${missingSuggested.join(" ")}`
+    }
+
+    throw new Error(
+      `Babel is configured but core packages are missing: ${missingCorePackages.join(", ")}\n\n` +
+        `To fix this, run:\n  ${installCommand}${additionalHelp}\n\n` +
+        `💡 Tip: Consider migrating to SWC for 20x faster compilation:\n` +
+        `   1. Set javascript_transpiler: 'swc' in config/shakapacker.yml\n` +
+        `   2. Run: npm install @swc/core swc-loader`
+    )
+  }
+}
+
 const loaderMatches = (configLoader, loaderToCheck, fn) => {
   if (configLoader !== loaderToCheck) {
     return null
   }
 
   const loaderName = `${configLoader}-loader`
+
+  // Special validation for babel to check all dependencies
+  if (configLoader === "babel") {
+    validateBabelDependencies()
+  }
 
   if (!moduleExists(loaderName)) {
     let installCommand = ""
