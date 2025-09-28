@@ -11,6 +11,7 @@ jest.mock("../../../package/config", () => {
   const original = jest.requireActual("../../../package/config")
   return {
     ...original,
+    javascript_transpiler: "babel", // Force babel for this test
     additional_paths: [...original.additional_paths, "node_modules/included"]
   }
 })

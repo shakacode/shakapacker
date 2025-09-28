@@ -41,9 +41,9 @@ default: &default
   cache_manifest: false
 
   # Select JavaScript transpiler to use
-  # Available options: 'babel' (default for webpack), 'swc' (recommended, 20x faster), or 'esbuild'
+  # Available options: 'swc' (default, 20x faster), 'babel', or 'esbuild'
   # Note: When using rspack, swc is used automatically regardless of this setting
-  javascript_transpiler: 'babel'
+  javascript_transpiler: 'swc'
 
   # Select assets bundler to use
   # Available options: 'webpack' (default) or 'rspack'

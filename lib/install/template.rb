@@ -50,25 +50,32 @@ end
 
 # setup the package manager with default values
 package_json.merge! do |pj|
-  babel = pj.fetch("babel", {})
-
-  babel["presets"] ||= []
-  babel["presets"].push("./node_modules/shakapacker/package/babel/preset.js")
-
   package_manager = pj.fetch("packageManager") do
     "#{Shakapacker::Utils::Manager.guess_binary}@#{Shakapacker::Utils::Manager.guess_version}"
   end
 
-  {
+  base_config = {
     "name" => "app",
     "private" => true,
     "version" => "0.1.0",
-    "babel" => babel,
     "browserslist" => [
       "defaults"
     ],
     "packageManager" => package_manager
-  }.merge(pj)
+  }
+  
+  # Only add babel configuration if using babel transpiler
+  shakapacker_config = YAML.load_file(Rails.root.join("config/shakapacker.yml"))
+  javascript_transpiler = shakapacker_config.dig("default", "javascript_transpiler") || "swc"
+  
+  if javascript_transpiler == "babel"
+    babel = pj.fetch("babel", {})
+    babel["presets"] ||= []
+    babel["presets"].push("./node_modules/shakapacker/package/babel/preset.js")
+    base_config["babel"] = babel
+  end
+  
+  base_config.merge(pj)
 end
 
 Shakapacker::Utils::Manager.error_unless_package_manager_is_obvious!
@@ -124,15 +131,45 @@ def fetch_babel_dependencies
   shakapacker_config = YAML.load_file(Rails.root.join("config/shakapacker.yml"))
   javascript_transpiler = shakapacker_config.dig("default", "javascript_transpiler") || 
                           shakapacker_config.dig("production", "javascript_transpiler") || 
-                          "babel"  # Default to babel for backward compatibility in v9
+                          "swc"  # Default to swc in v9
   
   should_install_babel = ENV["USE_BABEL_PACKAGES"] || javascript_transpiler == "babel"
   
   if should_install_babel
-    say "Installing babel dependencies (javascript_transpiler: #{javascript_transpiler})"
+    say "Installing babel dependencies (javascript_transpiler: babel)"
     PackageJson.read("#{__dir__}").fetch("babel")
   else
     say "Skipping babel dependencies (using #{javascript_transpiler} transpiler)"
+    {}
+  end
+end
+
+def fetch_swc_dependencies
+  # Check if swc is configured as the transpiler (now the default)
+  shakapacker_config = YAML.load_file(Rails.root.join("config/shakapacker.yml"))
+  javascript_transpiler = shakapacker_config.dig("default", "javascript_transpiler") || 
+                          shakapacker_config.dig("production", "javascript_transpiler") || 
+                          "swc"  # Default to swc in v9
+  
+  if javascript_transpiler == "swc"
+    say "Installing swc dependencies (javascript_transpiler: swc)"
+    { "@swc/core" => "latest", "swc-loader" => "latest" }
+  else
+    {}
+  end
+end
+
+def fetch_esbuild_dependencies
+  # Check if esbuild is configured as the transpiler
+  shakapacker_config = YAML.load_file(Rails.root.join("config/shakapacker.yml"))
+  javascript_transpiler = shakapacker_config.dig("default", "javascript_transpiler") || 
+                          shakapacker_config.dig("production", "javascript_transpiler") || 
+                          "swc"  # Default to swc in v9
+  
+  if javascript_transpiler == "esbuild"
+    say "Installing esbuild dependencies (javascript_transpiler: esbuild)"
+    { "esbuild" => "latest", "esbuild-loader" => "latest" }
+  else
     {}
   end
 end
@@ -154,6 +191,8 @@ Dir.chdir(Rails.root) do
   peers = fetch_peer_dependencies
   peers = peers.merge(fetch_common_dependencies)
   peers = peers.merge(fetch_babel_dependencies)
+  peers = peers.merge(fetch_swc_dependencies)
+  peers = peers.merge(fetch_esbuild_dependencies)
 
   dev_dependency_packages = ["webpack-dev-server"]
 
