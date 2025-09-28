@@ -289,11 +289,108 @@ module Shakapacker
 
       def check_javascript_transpiler_dependencies
         transpiler = config.javascript_transpiler
-        return if transpiler.nil? || transpiler == "none"
 
-        loader_name = "#{transpiler}-loader"
-        unless package_installed?(loader_name)
-          @issues << "Missing required dependency '#{loader_name}' for JavaScript transpiler '#{transpiler}'"
+        # Default to SWC for v9+ if not configured
+        if transpiler.nil?
+          @info << "No javascript_transpiler configured - defaulting to SWC (20x faster than Babel)"
+          transpiler = "swc"
+        end
+
+        return if transpiler == "none"
+
+        bundler = config.assets_bundler
+
+        case transpiler
+        when "babel"
+          check_babel_dependencies
+          check_babel_performance_suggestion
+        when "swc"
+          check_swc_dependencies(bundler)
+        when "esbuild"
+          check_esbuild_dependencies
+        else
+          # Generic check for other transpilers
+          loader_name = "#{transpiler}-loader"
+          unless package_installed?(loader_name)
+            @issues << "Missing required dependency '#{loader_name}' for JavaScript transpiler '#{transpiler}'"
+          end
+        end
+
+        check_transpiler_config_consistency
+      end
+
+      def check_babel_dependencies
+        unless package_installed?("babel-loader")
+          @issues << "Missing required dependency 'babel-loader' for JavaScript transpiler 'babel'"
+        end
+        unless package_installed?("@babel/core")
+          @issues << "Missing required dependency '@babel/core' for Babel transpiler"
+        end
+        unless package_installed?("@babel/preset-env")
+          @issues << "Missing required dependency '@babel/preset-env' for Babel transpiler"
+        end
+      end
+
+      def check_babel_performance_suggestion
+        @info << "Consider switching to SWC for 20x faster compilation. Set javascript_transpiler: 'swc' in shakapacker.yml"
+      end
+
+      def check_swc_dependencies(bundler)
+        if bundler == "webpack"
+          unless package_installed?("@swc/core")
+            @issues << "Missing required dependency '@swc/core' for SWC transpiler"
+          end
+          unless package_installed?("swc-loader")
+            @issues << "Missing required dependency 'swc-loader' for SWC with webpack"
+          end
+        elsif bundler == "rspack"
+          # Rspack has built-in SWC support
+          @info << "Rspack has built-in SWC support - no additional loaders needed"
+          if package_installed?("swc-loader")
+            @warnings << "swc-loader is not needed with Rspack (SWC is built-in) - consider removing it"
+          end
+        end
+      end
+
+      def check_esbuild_dependencies
+        unless package_installed?("esbuild")
+          @issues << "Missing required dependency 'esbuild' for esbuild transpiler"
+        end
+        unless package_installed?("esbuild-loader")
+          @issues << "Missing required dependency 'esbuild-loader' for esbuild transpiler"
+        end
+      end
+
+      def check_transpiler_config_consistency
+        babel_configs = [
+          root_path.join(".babelrc"),
+          root_path.join(".babelrc.js"),
+          root_path.join(".babelrc.json"),
+          root_path.join("babel.config.js"),
+          root_path.join("babel.config.json")
+        ]
+
+        babel_config_exists = babel_configs.any?(&:exist?)
+
+        # Check if package.json has babel config
+        if package_json_exists?
+          package_json = read_package_json
+          babel_config_exists ||= package_json.key?("babel")
+        end
+
+        transpiler = config.javascript_transpiler
+
+        if babel_config_exists && transpiler != "babel"
+          @warnings << "Babel configuration files found but javascript_transpiler is '#{transpiler}'. Consider removing Babel configs or setting javascript_transpiler: 'babel'"
+        end
+
+        # Check for redundant dependencies
+        if transpiler == "swc" && package_installed?("babel-loader")
+          @warnings << "Both SWC and Babel dependencies are installed. Consider removing Babel dependencies to reduce node_modules size"
+        end
+
+        if transpiler == "esbuild" && package_installed?("babel-loader")
+          @warnings << "Both esbuild and Babel dependencies are installed. Consider removing Babel dependencies to reduce node_modules size"
         end
       end
 

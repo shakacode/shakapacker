@@ -556,30 +556,164 @@ describe Shakapacker::Doctor do
       File.write(config_path, "test: config")
     end
 
-    context "when babel-loader is installed" do
+    context "with Babel transpiler" do
       before do
-        package_json = {
-          "devDependencies" => {
-            "babel-loader" => "^9.0.0"
-          }
-        }
-        File.write(package_json_path, JSON.generate(package_json))
+        allow(config).to receive(:javascript_transpiler).and_return("babel")
       end
 
-      it "does not add issues" do
-        doctor.send(:check_javascript_transpiler_dependencies)
-        expect(doctor.issues).to be_empty
+      context "when all Babel dependencies are installed" do
+        before do
+          package_json = {
+            "devDependencies" => {
+              "babel-loader" => "^9.0.0",
+              "@babel/core" => "^7.20.0",
+              "@babel/preset-env" => "^7.20.0"
+            }
+          }
+          File.write(package_json_path, JSON.generate(package_json))
+        end
+
+        it "does not add issues but suggests SWC" do
+          doctor.send(:check_javascript_transpiler_dependencies)
+          expect(doctor.issues).to be_empty
+          expect(doctor.info).to include(match(/Consider switching to SWC/))
+        end
+      end
+
+      context "when Babel dependencies are missing" do
+        before do
+          File.write(package_json_path, JSON.generate({}))
+        end
+
+        it "adds missing dependency issues" do
+          doctor.send(:check_javascript_transpiler_dependencies)
+          expect(doctor.issues).to include(match(/Missing required dependency 'babel-loader'/))
+          expect(doctor.issues).to include(match(/Missing required dependency '@babel\/core'/))
+          expect(doctor.issues).to include(match(/Missing required dependency '@babel\/preset-env'/))
+        end
       end
     end
 
-    context "when babel-loader is missing" do
+    context "with SWC transpiler" do
       before do
-        File.write(package_json_path, JSON.generate({}))
+        allow(config).to receive(:javascript_transpiler).and_return("swc")
       end
 
-      it "adds missing dependency issue" do
+      context "with webpack bundler" do
+        before do
+          allow(config).to receive(:assets_bundler).and_return("webpack")
+        end
+
+        context "when SWC dependencies are installed" do
+          before do
+            package_json = {
+              "devDependencies" => {
+                "@swc/core" => "^1.3.0",
+                "swc-loader" => "^0.2.0"
+              }
+            }
+            File.write(package_json_path, JSON.generate(package_json))
+          end
+
+          it "does not add issues" do
+            doctor.send(:check_javascript_transpiler_dependencies)
+            expect(doctor.issues).to be_empty
+          end
+        end
+
+        context "when SWC dependencies are missing" do
+          before do
+            File.write(package_json_path, JSON.generate({}))
+          end
+
+          it "adds missing dependency issues" do
+            doctor.send(:check_javascript_transpiler_dependencies)
+            expect(doctor.issues).to include(match(/Missing required dependency '@swc\/core'/))
+            expect(doctor.issues).to include(match(/Missing required dependency 'swc-loader'/))
+          end
+        end
+      end
+
+      context "with rspack bundler" do
+        before do
+          allow(config).to receive(:assets_bundler).and_return("rspack")
+        end
+
+        it "notes that rspack has built-in SWC" do
+          File.write(package_json_path, JSON.generate({}))
+          doctor.send(:check_javascript_transpiler_dependencies)
+          expect(doctor.info).to include(match(/Rspack has built-in SWC support/))
+        end
+
+        context "when swc-loader is unnecessarily installed" do
+          before do
+            package_json = {
+              "devDependencies" => {
+                "swc-loader" => "^0.2.0"
+              }
+            }
+            File.write(package_json_path, JSON.generate(package_json))
+          end
+
+          it "warns about redundant swc-loader" do
+            doctor.send(:check_javascript_transpiler_dependencies)
+            expect(doctor.warnings).to include(match(/swc-loader is not needed with Rspack/))
+          end
+        end
+      end
+    end
+
+    context "with esbuild transpiler" do
+      before do
+        allow(config).to receive(:javascript_transpiler).and_return("esbuild")
+      end
+
+      context "when esbuild dependencies are installed" do
+        before do
+          package_json = {
+            "devDependencies" => {
+              "esbuild" => "^0.19.0",
+              "esbuild-loader" => "^4.0.0"
+            }
+          }
+          File.write(package_json_path, JSON.generate(package_json))
+        end
+
+        it "does not add issues" do
+          doctor.send(:check_javascript_transpiler_dependencies)
+          expect(doctor.issues).to be_empty
+        end
+      end
+
+      context "when esbuild dependencies are missing" do
+        before do
+          File.write(package_json_path, JSON.generate({}))
+        end
+
+        it "adds missing dependency issues" do
+          doctor.send(:check_javascript_transpiler_dependencies)
+          expect(doctor.issues).to include(match(/Missing required dependency 'esbuild'/))
+          expect(doctor.issues).to include(match(/Missing required dependency 'esbuild-loader'/))
+        end
+      end
+    end
+
+    context "when transpiler is not configured" do
+      before do
+        allow(config).to receive(:javascript_transpiler).and_return(nil)
+      end
+
+      it "defaults to SWC and adds info message" do
+        package_json = {
+          "devDependencies" => {
+            "@swc/core" => "^1.3.0",
+            "swc-loader" => "^0.2.0"
+          }
+        }
+        File.write(package_json_path, JSON.generate(package_json))
+
         doctor.send(:check_javascript_transpiler_dependencies)
-        expect(doctor.issues).to include(match(/Missing required dependency 'babel-loader'/))
+        expect(doctor.info).to include(match(/No javascript_transpiler configured - defaulting to SWC/))
       end
     end
 
@@ -591,6 +725,43 @@ describe Shakapacker::Doctor do
       it "skips check" do
         doctor.send(:check_javascript_transpiler_dependencies)
         expect(doctor.issues).to be_empty
+      end
+    end
+
+    context "transpiler config consistency" do
+      before do
+        allow(config).to receive(:javascript_transpiler).and_return("swc")
+      end
+
+      context "with Babel config files present" do
+        before do
+          File.write(root_path.join(".babelrc"), '{"presets": ["@babel/preset-env"]}')
+          File.write(package_json_path, JSON.generate({}))
+        end
+
+        it "warns about inconsistent configuration" do
+          doctor.send(:check_javascript_transpiler_dependencies)
+          expect(doctor.warnings).to include(match(/Babel configuration files found but javascript_transpiler is 'swc'/))
+        end
+      end
+
+      context "with redundant Babel dependencies" do
+        before do
+          package_json = {
+            "devDependencies" => {
+              "@swc/core" => "^1.3.0",
+              "swc-loader" => "^0.2.0",
+              "babel-loader" => "^9.0.0",
+              "@babel/core" => "^7.20.0"
+            }
+          }
+          File.write(package_json_path, JSON.generate(package_json))
+        end
+
+        it "warns about redundant dependencies" do
+          doctor.send(:check_javascript_transpiler_dependencies)
+          expect(doctor.warnings).to include(match(/Both SWC and Babel dependencies are installed/))
+        end
       end
     end
   end
