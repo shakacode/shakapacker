@@ -3,12 +3,66 @@ require "shakapacker/utils/manager"
 require "shakapacker/utils/version_syntax_converter"
 require "package_json"
 require "yaml"
+require "json"
+
+# Helper methods
+
+# Detect if project already uses babel
+def detect_existing_babel_usage
+  # Check for babel config files
+  has_babel_config = File.exist?(Rails.root.join(".babelrc")) || 
+                     File.exist?(Rails.root.join("babel.config.js")) || 
+                     File.exist?(Rails.root.join("babel.config.json")) ||
+                     File.exist?(Rails.root.join(".babelrc.js"))
+  
+  # Check for babel in package.json
+  has_babel_in_package_json = false
+  package_json_path = Rails.root.join("package.json")
+  if File.exist?(package_json_path)
+    begin
+      pj_content = JSON.parse(File.read(package_json_path))
+      has_babel_in_package_json = pj_content.key?("babel") || 
+                                  pj_content.dig("dependencies", "@babel/core") ||
+                                  pj_content.dig("devDependencies", "@babel/core") ||
+                                  pj_content.dig("dependencies", "babel-loader") ||
+                                  pj_content.dig("devDependencies", "babel-loader")
+    rescue JSON::ParserError
+      # If package.json is malformed, assume no babel
+    end
+  end
+  
+  has_babel_config || has_babel_in_package_json
+end
 
 # Install Shakapacker
 
 force_option = ENV["FORCE"] ? { force: true } : {}
 
+# First detect what transpiler to use
+@detected_transpiler = nil
+if detect_existing_babel_usage
+  @detected_transpiler = "babel"
+  say "🔍 Detected existing Babel configuration - will configure Shakapacker to use Babel", :yellow
+else
+  @detected_transpiler = ENV["JAVASCRIPT_TRANSPILER"] || "swc"
+end
+
+# Copy config file
 copy_file "#{__dir__}/config/shakapacker.yml", "config/shakapacker.yml", force_option
+
+# Update the config file with the detected transpiler
+if File.exist?("config/shakapacker.yml")
+  config_content = File.read("config/shakapacker.yml")
+  # Replace the default transpiler setting with the detected one
+  if @detected_transpiler == "babel"
+    config_content.gsub!("javascript_transpiler: 'swc'", "javascript_transpiler: 'babel'")
+    File.write("config/shakapacker.yml", config_content)
+    say "   Configured javascript_transpiler: 'babel' in config/shakapacker.yml"
+  elsif @detected_transpiler == "swc"
+    # Already set to swc by default, no change needed
+    say "   Using SWC transpiler (20x faster than Babel)", :green
+  end
+end
 
 say "Copying webpack core config"
 directory "#{__dir__}/config/webpack", "config/webpack", force_option
@@ -54,7 +108,7 @@ package_json.merge! do |pj|
     "#{Shakapacker::Utils::Manager.guess_binary}@#{Shakapacker::Utils::Manager.guess_version}"
   end
 
-  base_config = {
+  {
     "name" => "app",
     "private" => true,
     "version" => "0.1.0",
@@ -62,20 +116,7 @@ package_json.merge! do |pj|
       "defaults"
     ],
     "packageManager" => package_manager
-  }
-  
-  # Only add babel configuration if using babel transpiler
-  shakapacker_config = YAML.load_file(Rails.root.join("config/shakapacker.yml"))
-  javascript_transpiler = shakapacker_config.dig("default", "javascript_transpiler") || "swc"
-  
-  if javascript_transpiler == "babel"
-    babel = pj.fetch("babel", {})
-    babel["presets"] ||= []
-    babel["presets"].push("./node_modules/shakapacker/package/babel/preset.js")
-    base_config["babel"] = babel
-  end
-  
-  base_config.merge(pj)
+  }.merge(pj)
 end
 
 Shakapacker::Utils::Manager.error_unless_package_manager_is_obvious!
@@ -126,33 +167,69 @@ def fetch_common_dependencies
   ENV["SKIP_COMMON_LOADERS"] ? {} : PackageJson.read("#{__dir__}").fetch("common")
 end
 
+# Determine which JavaScript transpiler to use (cached)
+def determine_javascript_transpiler
+  @javascript_transpiler ||= begin
+    # 1. Check explicit environment variable
+    if ENV["JAVASCRIPT_TRANSPILER"]
+      say "Using #{ENV["JAVASCRIPT_TRANSPILER"]} transpiler (from JAVASCRIPT_TRANSPILER env var)"
+      ENV["JAVASCRIPT_TRANSPILER"]
+    # 2. Check existing shakapacker.yml config
+    elsif File.exist?(Rails.root.join("config/shakapacker.yml"))
+      config = YAML.load_file(Rails.root.join("config/shakapacker.yml"))
+      transpiler = config.dig("default", "javascript_transpiler") || 
+                   config.dig("production", "javascript_transpiler")
+      if transpiler
+        say "Using #{transpiler} transpiler (from config/shakapacker.yml)"
+        transpiler
+      elsif detect_existing_babel_usage
+        # Config exists but no transpiler set, check for babel
+        say "🔍 Detected existing Babel configuration", :yellow
+        say "   Keeping Babel as your JavaScript transpiler for compatibility"
+        say "   💡 To migrate to SWC later (20x faster): Set javascript_transpiler: 'swc' in config/shakapacker.yml"
+        "babel"
+      else
+        # Config exists but no transpiler set, no babel detected
+        say "✨ Using SWC as JavaScript transpiler (20x faster than Babel)", :green
+        say "   • Zero configuration required"
+        say "   • Full TypeScript and JSX support"
+        "swc"
+      end
+    # 3. For new projects, detect babel usage
+    elsif detect_existing_babel_usage
+      say "🔍 Detected existing Babel configuration", :yellow
+      say "   Keeping Babel as your JavaScript transpiler for compatibility"
+      say "   💡 To migrate to SWC later (20x faster): Set javascript_transpiler: 'swc' in config/shakapacker.yml"
+      "babel"
+    # 4. Default to SWC for new projects
+    else
+      say "✨ Using SWC as JavaScript transpiler (20x faster than Babel)", :green
+      say "   • Zero configuration required"
+      say "   • Full TypeScript and JSX support"
+      "swc"
+    end
+  end
+end
+
 def fetch_babel_dependencies
-  # Check if babel is configured as the transpiler or if explicitly requested
-  shakapacker_config = YAML.load_file(Rails.root.join("config/shakapacker.yml"))
-  javascript_transpiler = shakapacker_config.dig("default", "javascript_transpiler") || 
-                          shakapacker_config.dig("production", "javascript_transpiler") || 
-                          "swc"  # Default to swc in v9
+  javascript_transpiler = determine_javascript_transpiler
   
+  # Support legacy USE_BABEL_PACKAGES env var for backward compatibility
   should_install_babel = ENV["USE_BABEL_PACKAGES"] || javascript_transpiler == "babel"
   
   if should_install_babel
-    say "Installing babel dependencies (javascript_transpiler: babel)"
+    say "📦 Installing Babel dependencies", :yellow
     PackageJson.read("#{__dir__}").fetch("babel")
   else
-    say "Skipping babel dependencies (using #{javascript_transpiler} transpiler)"
     {}
   end
 end
 
 def fetch_swc_dependencies
-  # Check if swc is configured as the transpiler (now the default)
-  shakapacker_config = YAML.load_file(Rails.root.join("config/shakapacker.yml"))
-  javascript_transpiler = shakapacker_config.dig("default", "javascript_transpiler") || 
-                          shakapacker_config.dig("production", "javascript_transpiler") || 
-                          "swc"  # Default to swc in v9
+  javascript_transpiler = determine_javascript_transpiler
   
   if javascript_transpiler == "swc"
-    say "Installing swc dependencies (javascript_transpiler: swc)"
+    say "📦 Installing SWC dependencies (20x faster than Babel)", :green
     { "@swc/core" => "latest", "swc-loader" => "latest" }
   else
     {}
@@ -160,14 +237,10 @@ def fetch_swc_dependencies
 end
 
 def fetch_esbuild_dependencies
-  # Check if esbuild is configured as the transpiler
-  shakapacker_config = YAML.load_file(Rails.root.join("config/shakapacker.yml"))
-  javascript_transpiler = shakapacker_config.dig("default", "javascript_transpiler") || 
-                          shakapacker_config.dig("production", "javascript_transpiler") || 
-                          "swc"  # Default to swc in v9
+  javascript_transpiler = determine_javascript_transpiler
   
   if javascript_transpiler == "esbuild"
-    say "Installing esbuild dependencies (javascript_transpiler: esbuild)"
+    say "📦 Installing esbuild dependencies", :blue
     { "esbuild" => "latest", "esbuild-loader" => "latest" }
   else
     {}
@@ -215,4 +288,16 @@ Dir.chdir(Rails.root) do
 
   say "Installing webpack-dev-server for live reloading as a development dependency"
   add_dependencies(dev_dependencies_to_add, :dev)
+  
+  # Configure babel preset in package.json if using babel
+  if determine_javascript_transpiler == "babel"
+    package_json.merge! do |pj|
+      babel = pj.fetch("babel", {})
+      babel["presets"] ||= []
+      unless babel["presets"].include?("./node_modules/shakapacker/package/babel/preset.js")
+        babel["presets"].push("./node_modules/shakapacker/package/babel/preset.js")
+      end
+      { "babel" => babel }
+    end
+  end
 end

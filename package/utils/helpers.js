@@ -33,8 +33,24 @@ const loaderMatches = (configLoader, loaderToCheck, fn) => {
   const loaderName = `${configLoader}-loader`
 
   if (!moduleExists(loaderName)) {
+    let installCommand = ""
+    let migrationHelp = ""
+    
+    if (configLoader === "babel") {
+      installCommand = "npm install --save-dev babel-loader @babel/core @babel/preset-env @babel/plugin-transform-runtime @babel/runtime"
+      migrationHelp = "\n\n💡 Tip: Consider migrating to SWC for 20x faster compilation:\n" +
+                     "   1. Set javascript_transpiler: 'swc' in config/shakapacker.yml\n" +
+                     "   2. Run: npm install @swc/core swc-loader"
+    } else if (configLoader === "swc") {
+      installCommand = "npm install --save-dev @swc/core swc-loader"
+      migrationHelp = "\n\n✨ SWC is 20x faster than Babel with zero configuration!"
+    } else if (configLoader === "esbuild") {
+      installCommand = "npm install --save-dev esbuild esbuild-loader"
+    }
+    
     throw new Error(
-      `Your Shakapacker config specified using ${configLoader}, but ${loaderName} package is not installed. Please install ${loaderName} first.`
+      `Your Shakapacker config specified using ${configLoader}, but ${loaderName} package is not installed.\n\n` +
+      `To fix this, run:\n  ${installCommand}${migrationHelp}`
     )
   }
 
