@@ -1,41 +1,38 @@
 "use strict";
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
 const path_1 = require("path");
 const js_yaml_1 = require("js-yaml");
 const fs_1 = require("fs");
 const webpack_merge_1 = require("webpack-merge");
 const { ensureTrailingSlash } = require("./utils/helpers");
 const { railsEnv } = require("./env");
-const configPath_1 = __importDefault(require("./utils/configPath"));
-const defaultConfigPath_1 = __importDefault(require("./utils/defaultConfigPath"));
+const configPath = require("./utils/configPath");
+const defaultConfigPath = require("./utils/defaultConfigPath");
 const { isValidYamlConfig, createConfigValidationError, isPartialConfig } = require("./utils/typeGuards");
 const { isFileNotFoundError, createFileOperationError } = require("./utils/errorHelpers");
 const getDefaultConfig = () => {
     try {
-        const fileContent = (0, fs_1.readFileSync)(defaultConfigPath_1.default, "utf8");
+        const fileContent = (0, fs_1.readFileSync)(defaultConfigPath, "utf8");
         const defaultConfig = (0, js_yaml_1.load)(fileContent);
         if (!isValidYamlConfig(defaultConfig)) {
-            throw createConfigValidationError(defaultConfigPath_1.default, railsEnv, "Invalid YAML structure");
+            throw createConfigValidationError(defaultConfigPath, railsEnv, "Invalid YAML structure");
         }
         return defaultConfig[railsEnv] || defaultConfig.production || {};
     }
     catch (error) {
         if (isFileNotFoundError(error)) {
-            throw createFileOperationError('read', defaultConfigPath_1.default, 'Default configuration not found');
+            throw createFileOperationError('read', defaultConfigPath, 'Default configuration not found');
         }
         throw error;
     }
 };
 const defaults = getDefaultConfig();
 let config;
-if ((0, fs_1.existsSync)(configPath_1.default)) {
+if ((0, fs_1.existsSync)(configPath)) {
     try {
-        const fileContent = (0, fs_1.readFileSync)(configPath_1.default, "utf8");
+        const fileContent = (0, fs_1.readFileSync)(configPath, "utf8");
         const appYmlObject = (0, js_yaml_1.load)(fileContent);
         if (!isValidYamlConfig(appYmlObject)) {
-            throw createConfigValidationError(configPath_1.default, railsEnv, "Invalid YAML structure");
+            throw createConfigValidationError(configPath, railsEnv, "Invalid YAML structure");
         }
         const envAppConfig = appYmlObject[railsEnv];
         if (!envAppConfig) {
@@ -46,7 +43,7 @@ if ((0, fs_1.existsSync)(configPath_1.default)) {
         const mergedConfig = (0, webpack_merge_1.merge)(defaults, envAppConfig || {});
         // Validate merged config before type assertion
         if (!isPartialConfig(mergedConfig)) {
-            throw createConfigValidationError(configPath_1.default, railsEnv, "Invalid merged configuration");
+            throw createConfigValidationError(configPath, railsEnv, "Invalid merged configuration");
         }
         config = mergedConfig;
     }
@@ -54,7 +51,7 @@ if ((0, fs_1.existsSync)(configPath_1.default)) {
         if (isFileNotFoundError(error)) {
             // File not found is OK, use defaults
             if (!isPartialConfig(defaults)) {
-                throw createConfigValidationError(defaultConfigPath_1.default, railsEnv, "Invalid default configuration");
+                throw createConfigValidationError(defaultConfigPath, railsEnv, "Invalid default configuration");
             }
             config = defaults;
         }
@@ -66,7 +63,7 @@ if ((0, fs_1.existsSync)(configPath_1.default)) {
 else {
     // No user config, use defaults
     if (!isPartialConfig(defaults)) {
-        throw createConfigValidationError(defaultConfigPath_1.default, railsEnv, "Invalid default configuration");
+        throw createConfigValidationError(defaultConfigPath, railsEnv, "Invalid default configuration");
     }
     config = defaults;
 }

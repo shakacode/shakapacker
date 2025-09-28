@@ -1,12 +1,12 @@
 "use strict";
 // These are the raw shakapacker dev server config settings from the YML file with ENV overrides applied.
-const { isBoolean } = require("./utils/helpers");
+const helpers = require("./utils/helpers");
 const config = require("./config");
 const envFetch = (key) => {
     const value = process.env[key];
     if (!value)
         return undefined;
-    return isBoolean(value) ? JSON.parse(value) : value;
+    return helpers.isBoolean(value) ? JSON.parse(value) : value;
 };
 const devServerConfig = config.dev_server;
 if (devServerConfig) {

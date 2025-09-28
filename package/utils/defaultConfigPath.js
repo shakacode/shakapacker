@@ -1,4 +1,4 @@
 "use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-const path = require.resolve("../../lib/install/config/shakapacker.yml");
-exports.default = path;
+const path_1 = require("path");
+const path = (0, path_1.resolve)(__dirname, "../../lib/install/config/shakapacker.yml");
+module.exports = path;

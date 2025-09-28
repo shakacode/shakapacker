@@ -1,5 +1,5 @@
 "use strict";
-const { isModuleNotFoundError, getErrorMessage } = require("./errorHelpers");
+const errorHelpers = require("./errorHelpers");
 const isBoolean = (str) => /^true/.test(str) || /^false/.test(str);
 const ensureTrailingSlash = (path) => (path.endsWith("/") ? path : `${path}/`);
 const resolvedPath = (packageName) => {
@@ -7,7 +7,7 @@ const resolvedPath = (packageName) => {
         return require.resolve(packageName);
     }
     catch (error) {
-        if (!isModuleNotFoundError(error)) {
+        if (!errorHelpers.isModuleNotFoundError(error)) {
             throw error;
         }
         return null;
@@ -112,7 +112,7 @@ const packageFullVersion = (packageName) => {
         return packageJson.version;
     }
     catch (error) {
-        console.warn(`Failed to get version for package ${packageName}: ${getErrorMessage(error)}`);
+        console.warn(`Failed to get version for package ${packageName}: ${errorHelpers.getErrorMessage(error)}`);
         return "0.0.0";
     }
 };

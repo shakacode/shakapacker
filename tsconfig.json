@@ -15,7 +15,6 @@
     "moduleResolution": "node",
     "allowJs": true,
     "checkJs": false,
-    "types": ["node"],
     "noImplicitAny": true,
     "strictNullChecks": true,
     "strictFunctionTypes": true,

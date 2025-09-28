@@ -1,12 +1,9 @@
 "use strict";
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
 const js_yaml_1 = require("js-yaml");
 const fs_1 = require("fs");
-const defaultConfigPath_1 = __importDefault(require("./utils/defaultConfigPath"));
-const configPath_1 = __importDefault(require("./utils/configPath"));
-const { isFileNotFoundError } = require("./utils/errorHelpers");
+const defaultConfigPath = require("./utils/defaultConfigPath");
+const configPath = require("./utils/configPath");
+const errorHelpers = require("./utils/errorHelpers");
 const NODE_ENVIRONMENTS = ["development", "production", "test"];
 const DEFAULT = "production";
 const initialRailsEnv = process.env.RAILS_ENV;
@@ -16,13 +13,13 @@ const isProduction = nodeEnv === "production";
 const isDevelopment = nodeEnv === "development";
 let config;
 try {
-    config = (0, js_yaml_1.load)((0, fs_1.readFileSync)(configPath_1.default, "utf8"));
+    config = (0, js_yaml_1.load)((0, fs_1.readFileSync)(configPath, "utf8"));
 }
 catch (error) {
-    if (isFileNotFoundError(error)) {
+    if (errorHelpers.isFileNotFoundError(error)) {
         // File not found, use default configuration
         try {
-            config = (0, js_yaml_1.load)((0, fs_1.readFileSync)(defaultConfigPath_1.default, "utf8"));
+            config = (0, js_yaml_1.load)((0, fs_1.readFileSync)(defaultConfigPath, "utf8"));
         }
         catch (defaultError) {
             throw new Error(`Failed to load configuration: neither user config nor default config found`);
