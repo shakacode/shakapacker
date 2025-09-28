@@ -14,3 +14,10 @@ gemfiles/*.lock
 
 .yalc
 yalc.lock
+
+# TypeScript generated files
+package/**/*.d.ts
+package/**/*.d.ts.map
+package/**/*.js.map
+# Keep the main type definitions
+!package/index.d.ts
