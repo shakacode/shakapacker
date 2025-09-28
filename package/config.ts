@@ -22,7 +22,11 @@ const getDefaultConfig = (): Partial<Config> => {
     return defaultConfig[railsEnv] || defaultConfig.production || {}
   } catch (error) {
     if (isFileNotFoundError(error)) {
-      throw createFileOperationError('read', defaultConfigPath, 'Default configuration not found')
+      throw createFileOperationError(
+        'read', 
+        defaultConfigPath, 
+        `Default configuration not found at ${defaultConfigPath}. Please ensure Shakapacker is properly installed. You may need to run 'yarn add shakapacker' or 'npm install shakapacker'.`
+      )
     }
     throw error
   }
@@ -54,7 +58,11 @@ if (existsSync(configPath)) {
     
     // Validate merged config before type assertion
     if (!isPartialConfig(mergedConfig)) {
-      throw createConfigValidationError(configPath, railsEnv, "Invalid merged configuration")
+      throw createConfigValidationError(
+        configPath, 
+        railsEnv, 
+        `Invalid configuration structure in ${configPath}. Please check your shakapacker.yml syntax and ensure all required fields are properly defined.`
+      )
     }
     
     config = mergedConfig as Config
@@ -62,7 +70,11 @@ if (existsSync(configPath)) {
     if (isFileNotFoundError(error)) {
       // File not found is OK, use defaults
       if (!isPartialConfig(defaults)) {
-        throw createConfigValidationError(defaultConfigPath, railsEnv, "Invalid default configuration")
+        throw createConfigValidationError(
+          defaultConfigPath, 
+          railsEnv, 
+          `Invalid default configuration. This may indicate a corrupted Shakapacker installation. Try reinstalling with 'yarn add shakapacker --force'.`
+        )
       }
       config = defaults as Config
     } else {
@@ -72,7 +84,11 @@ if (existsSync(configPath)) {
 } else {
   // No user config, use defaults
   if (!isPartialConfig(defaults)) {
-    throw createConfigValidationError(defaultConfigPath, railsEnv, "Invalid default configuration")
+    throw createConfigValidationError(
+      defaultConfigPath, 
+      railsEnv, 
+      `Invalid default configuration. This may indicate a corrupted Shakapacker installation. Try reinstalling with 'yarn add shakapacker --force'.`
+    )
   }
   config = defaults as Config
 }

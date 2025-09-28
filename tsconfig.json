@@ -21,7 +21,11 @@
     "strictBindCallApply": true,
     "strictPropertyInitialization": false,
     "noImplicitThis": true,
-    "alwaysStrict": true
+    "alwaysStrict": true,
+    "allowSyntheticDefaultImports": true,
+    "preserveConstEnums": true,
+    "isolatedModules": true,
+    "removeComments": false
   },
   "include": [
     "package/**/*.ts"
