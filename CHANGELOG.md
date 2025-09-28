@@ -59,7 +59,7 @@ Changes since the last non-beta release.
 ### Fixed
 - Update webpack-dev-server to secure versions (^4.15.2 || ^5.2.2) ([PR 585](https://github.com/shakacode/shakapacker/pull/585) by [justin808](https://github.com/justin808))
 
-## [v8.4.0] - September 8, 2025
+## [v8.4.0] - September 8, 2024
 
 ### Added
 - Support for subresource integrity. [PR 570](https://github.com/shakacode/shakapacker/pull/570) by [panagiotisplytas](https://github.com/panagiotisplytas).
