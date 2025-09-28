@@ -26,15 +26,16 @@ install_dir = File.expand_path(File.dirname(__FILE__))
 # Since we're copying the default config which has 'swc', that's our default
 @config_transpiler = ENV["JAVASCRIPT_TRANSPILER"] || "swc"
 
-if @install_babel_packages
+if @install_babel_packages && @config_transpiler == "swc"
   say "📦 Installing Babel packages (USE_BABEL_PACKAGES is set)", :yellow
-end
-
-if @config_transpiler == "swc" && !@install_babel_packages
+  say "✨ Also installing SWC packages (config default)", :green
+elsif @install_babel_packages && @config_transpiler == "babel"
+  say "📦 Installing Babel packages", :yellow
+elsif @config_transpiler == "swc"
   say "✨ Installing SWC packages (20x faster than Babel)", :green
 elsif @config_transpiler == "esbuild"
   say "📦 Installing esbuild packages", :blue
-elsif @config_transpiler == "babel" && !@install_babel_packages
+elsif @config_transpiler == "babel"
   say "📦 Installing Babel packages", :yellow
 end
 
