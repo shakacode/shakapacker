@@ -54,14 +54,17 @@ const packageFullVersion = (packageName: string): string => {
     // eslint-disable-next-line import/no-dynamic-require, global-require
     const packageJson = require(packageJsonPath) as { version: string }
     return packageJson.version
-  } catch (error) {
+  } catch (error: any) {
+    // Re-throw the error with proper code to maintain compatibility with babel preset
+    // The preset expects MODULE_NOT_FOUND errors to handle missing core-js gracefully
+    if (error.code === "MODULE_NOT_FOUND") {
+      throw error
+    }
+    // For other errors, warn and re-throw
     console.warn(
-      `[SHAKAPACKER WARNING] Failed to get version for package ${packageName}: ${getErrorMessage(error)}\n` +
-      `This may indicate the package is not properly installed. Try reinstalling with:\n` +
-      `  npm install ${packageName}\n` +
-      `  yarn add ${packageName}`
+      `[SHAKAPACKER WARNING] Failed to get version for package ${packageName}: ${getErrorMessage(error)}`
     )
-    return "0.0.0"
+    throw error
   }
 }
 
