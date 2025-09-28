@@ -53,7 +53,8 @@ const validatedRailsEnv = initialRailsEnv && initialRailsEnv.match(regex) ? init
 if (initialRailsEnv && validatedRailsEnv !== initialRailsEnv) {
   /* eslint no-console:0 */
   console.warn(
-    `Warning: '${initialRailsEnv}' environment not found in the configuration. Using '${DEFAULT}' configuration as a fallback.`
+    `[SHAKAPACKER WARNING] Environment '${initialRailsEnv}' not found in the configuration.\n` +
+    `Using '${DEFAULT}' configuration as a fallback.`
   )
 }
 

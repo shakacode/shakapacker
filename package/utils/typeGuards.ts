@@ -34,6 +34,10 @@ export function isValidConfig(obj: unknown): obj is Config {
   
   for (const field of requiredStringFields) {
     if (typeof config[field] !== 'string') {
+      // Cache negative result in production
+      if (!shouldValidate) {
+        validatedConfigs.set(obj as object, false)
+      }
       return false
     }
   }
@@ -52,17 +56,29 @@ export function isValidConfig(obj: unknown): obj is Config {
   
   for (const field of requiredBooleanFields) {
     if (typeof config[field] !== 'boolean') {
+      // Cache negative result in production
+      if (!shouldValidate) {
+        validatedConfigs.set(obj as object, false)
+      }
       return false
     }
   }
   
   // Check arrays
   if (!Array.isArray(config.additional_paths)) {
+    // Cache negative result in production
+    if (!shouldValidate) {
+      validatedConfigs.set(obj as object, false)
+    }
     return false
   }
   
   // Check optional fields
   if (config.dev_server !== undefined && !isValidDevServerConfig(config.dev_server)) {
+    // Cache negative result in production
+    if (!shouldValidate) {
+      validatedConfigs.set(obj as object, false)
+    }
     return false
   }
   
@@ -70,6 +86,10 @@ export function isValidConfig(obj: unknown): obj is Config {
     const integrity = config.integrity as Record<string, unknown>
     if (typeof integrity.enabled !== 'boolean' || 
         typeof integrity.cross_origin !== 'string') {
+      // Cache negative result in production
+      if (!shouldValidate) {
+        validatedConfigs.set(obj as object, false)
+      }
       return false
     }
   }
@@ -204,4 +224,5 @@ export function createConfigValidationError(
   const message = `Invalid configuration in ${configPath} for environment '${environment}'`
   return new Error(details ? `${message}: ${details}` : message)
 }
+
 

@@ -105,3 +105,4 @@ export interface DevServerConfig {
     | { type?: string | boolean | ServerType; options?: https.ServerOptions }
   [otherWebpackDevServerConfigKey: string]: unknown
 }
+

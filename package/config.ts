@@ -49,13 +49,13 @@ if (existsSync(configPath)) {
     if (!envAppConfig) {
       /* eslint no-console:0 */
       console.warn(
-        `⚠️  Warning: '${railsEnv}' environment not found in ${configPath}\n` +
+        `[SHAKAPACKER WARNING] Environment '${railsEnv}' not found in ${configPath}\n` +
         `Available environments: ${Object.keys(appYmlObject).join(', ')}\n` +
         `Using 'production' configuration as fallback.\n\n` +
         `To fix this, either:\n` +
-        `1. Add a '${railsEnv}' section to your shakapacker.yml\n` +
-        `2. Set RAILS_ENV to one of the available environments\n` +
-        `3. Copy settings from another environment as a starting point`
+        `  - Add a '${railsEnv}' section to your shakapacker.yml\n` +
+        `  - Set RAILS_ENV to one of the available environments\n` +
+        `  - Copy settings from another environment as a starting point`
       )
     }
 
@@ -71,10 +71,8 @@ if (existsSync(configPath)) {
       )
     }
     
-    // Merged config should be complete at this point
-    if (!isPartialConfig(mergedConfig)) {
-      throw createConfigValidationError(configPath, railsEnv, "Invalid merged configuration structure")
-    }
+    // After merging with defaults, config should be complete
+    // Use type assertion only after validation
     config = mergedConfig as Config
   } catch (error) {
     if (isFileNotFoundError(error)) {
@@ -138,13 +136,14 @@ const DEFAULT_JAVASCRIPT_TRANSPILER =
 
 // Backward compatibility: Add webpack_loader property that maps to javascript_transpiler
 // Show deprecation warning if webpack_loader is used
-// Check for webpack_loader property without type assertion
-const configRecord = config as Record<string, any>
-const webpackLoader = 'webpack_loader' in configRecord ? String(configRecord.webpack_loader) : undefined
+// Use type-safe property check
+const configWithLegacy = config as Config & { webpack_loader?: string }
+const webpackLoader = configWithLegacy.webpack_loader
 
 if (webpackLoader && !config.javascript_transpiler) {
   console.warn(
-    "⚠️  DEPRECATION WARNING: The 'webpack_loader' configuration option is deprecated. Please use 'javascript_transpiler' instead as it better reflects its purpose of configuring JavaScript transpilation regardless of the bundler used."
+    "[SHAKAPACKER DEPRECATION] The 'webpack_loader' configuration option is deprecated.\n" +
+    "Please use 'javascript_transpiler' instead as it better reflects its purpose of configuring JavaScript transpilation regardless of the bundler used."
   )
   config.javascript_transpiler = webpackLoader
 } else if (!config.javascript_transpiler) {

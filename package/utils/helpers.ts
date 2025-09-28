@@ -56,7 +56,7 @@ const packageFullVersion = (packageName: string): string => {
     return packageJson.version
   } catch (error) {
     console.warn(
-      `Failed to get version for package ${packageName}: ${getErrorMessage(error)}\n` +
+      `[SHAKAPACKER WARNING] Failed to get version for package ${packageName}: ${getErrorMessage(error)}\n` +
       `This may indicate the package is not properly installed. Try reinstalling with:\n` +
       `  npm install ${packageName}\n` +
       `  yarn add ${packageName}`

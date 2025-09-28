@@ -1,8 +1,9 @@
 /* eslint global-require: 0 */
 /* eslint import/no-dynamic-require: 0 */
 
-import { basename, dirname, join, relative, resolve } from "path"
-import { existsSync, readdirSync } from "fs"
+const { basename, dirname, join, relative, resolve } = require("path")
+const { existsSync, readdirSync } = require("fs")
+import { Dirent } from "fs"
 const extname = require("path-complete-extname")
 import { Configuration, Entry } from "webpack"
 const config = require("../config")
@@ -32,7 +33,7 @@ const getFilesInDirectory = (dir: string, includeNested: boolean): string[] => {
     return []
   }
 
-  return readdirSync(dir, { withFileTypes: true }).flatMap((dirent) => {
+  return readdirSync(dir, { withFileTypes: true }).flatMap((dirent: Dirent) => {
     const filePath = join(dir, dirent.name)
 
     if (dirent.isDirectory() && includeNested) {
@@ -64,20 +65,20 @@ const getEntryObject = (): Entry => {
   getFilesInDirectory(rootPath, config.nested_entries).forEach((path) => {
     const namespace = relative(join(rootPath), dirname(path))
     const name = join(namespace, basename(path, extname(path)))
-    let assetPaths: string | string[] = resolve(path)
+    const assetPath: string = resolve(path)
 
     // Allows for multiple filetypes per entry (https://webpack.js.org/guides/entry-advanced/)
     // Transforms the config object value to an array with all values under the same name
     let previousPaths = entries[name]
     if (previousPaths) {
-      previousPaths = Array.isArray(previousPaths)
-        ? previousPaths
+      const pathArray = Array.isArray(previousPaths)
+        ? previousPaths as string[]
         : [previousPaths as string]
-      previousPaths.push(assetPaths)
-      assetPaths = previousPaths
+      pathArray.push(assetPath)
+      entries[name] = pathArray
+    } else {
+      entries[name] = assetPath
     }
-
-    entries[name] = assetPaths
   })
 
   return entries
@@ -133,3 +134,4 @@ const baseConfig: Configuration = {
 }
 
 export = baseConfig
+
