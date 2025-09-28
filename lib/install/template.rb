@@ -157,9 +157,31 @@ Dir.chdir(Rails.root) do
 
   peers = fetch_peer_dependencies
   peers = peers.merge(fetch_common_dependencies)
-  peers = peers.merge(fetch_babel_dependencies)
-  peers = peers.merge(fetch_swc_dependencies)
-  peers = peers.merge(fetch_esbuild_dependencies)
+  
+  # Add transpiler-specific dependencies based on detected/configured transpiler
+  # Inline the logic here since methods can't be called before they're defined in Rails templates
+  
+  # Babel dependencies
+  should_install_babel = ENV["USE_BABEL_PACKAGES"] || @detected_transpiler == "babel"
+  if should_install_babel
+    say "📦 Installing Babel dependencies", :yellow
+    babel_deps = PackageJson.read("#{__dir__}").fetch("babel")
+    peers = peers.merge(babel_deps)
+  end
+  
+  # SWC dependencies
+  if @detected_transpiler == "swc"
+    say "📦 Installing SWC dependencies (20x faster than Babel)", :green
+    swc_deps = { "@swc/core" => "latest", "swc-loader" => "latest" }
+    peers = peers.merge(swc_deps)
+  end
+  
+  # esbuild dependencies
+  if @detected_transpiler == "esbuild"
+    say "📦 Installing esbuild dependencies", :blue
+    esbuild_deps = { "esbuild" => "latest", "esbuild-loader" => "latest" }
+    peers = peers.merge(esbuild_deps)
+  end
 
   dev_dependency_packages = ["webpack-dev-server"]
 
@@ -245,82 +267,6 @@ def detect_existing_babel_usage
   babel_config_exists || babel_in_package
 end
 
-# Determine which JavaScript transpiler to use (cached)
-def determine_javascript_transpiler
-  @javascript_transpiler ||= begin
-    # 1. Check explicit environment variable
-    if ENV["JAVASCRIPT_TRANSPILER"]
-      say "Using #{ENV["JAVASCRIPT_TRANSPILER"]} transpiler (from JAVASCRIPT_TRANSPILER env var)"
-      ENV["JAVASCRIPT_TRANSPILER"]
-    # 2. Check existing shakapacker.yml config
-    elsif File.exist?(Rails.root.join("config/shakapacker.yml"))
-      config = YAML.load_file(Rails.root.join("config/shakapacker.yml"))
-      transpiler = config.dig("default", "javascript_transpiler") || 
-                   config.dig("production", "javascript_transpiler")
-      if transpiler
-        say "Using #{transpiler} transpiler (from config/shakapacker.yml)"
-        transpiler
-      elsif detect_existing_babel_usage
-        # Config exists but no transpiler set, check for babel
-        say "🔍 Detected existing Babel configuration", :yellow
-        say "   Keeping Babel as your JavaScript transpiler for compatibility"
-        say "   💡 To migrate to SWC later (20x faster): Set javascript_transpiler: 'swc' in config/shakapacker.yml"
-        "babel"
-      else
-        # Config exists but no transpiler set, no babel detected
-        say "✨ Using SWC as JavaScript transpiler (20x faster than Babel)", :green
-        say "   • Zero configuration required"
-        say "   • Full TypeScript and JSX support"
-        "swc"
-      end
-    # 3. For new projects, detect babel usage
-    elsif detect_existing_babel_usage
-      say "🔍 Detected existing Babel configuration", :yellow
-      say "   Keeping Babel as your JavaScript transpiler for compatibility"
-      say "   💡 To migrate to SWC later (20x faster): Set javascript_transpiler: 'swc' in config/shakapacker.yml"
-      "babel"
-    # 4. Default to SWC for new projects
-    else
-      say "✨ Using SWC as JavaScript transpiler (20x faster than Babel)", :green
-      say "   • Zero configuration required"
-      say "   • Full TypeScript and JSX support"
-      "swc"
-    end
-  end
-end
-
-def fetch_babel_dependencies
-  javascript_transpiler = determine_javascript_transpiler
-  
-  # Support legacy USE_BABEL_PACKAGES env var for backward compatibility
-  should_install_babel = ENV["USE_BABEL_PACKAGES"] || javascript_transpiler == "babel"
-  
-  if should_install_babel
-    say "📦 Installing Babel dependencies", :yellow
-    PackageJson.read("#{__dir__}").fetch("babel")
-  else
-    {}
-  end
-end
-
-def fetch_swc_dependencies
-  javascript_transpiler = determine_javascript_transpiler
-  
-  if javascript_transpiler == "swc"
-    say "📦 Installing SWC dependencies (20x faster than Babel)", :green
-    { "@swc/core" => "latest", "swc-loader" => "latest" }
-  else
-    {}
-  end
-end
-
-def fetch_esbuild_dependencies
-  javascript_transpiler = determine_javascript_transpiler
-  
-  if javascript_transpiler == "esbuild"
-    say "📦 Installing esbuild dependencies", :blue
-    { "esbuild" => "latest", "esbuild-loader" => "latest" }
-  else
-    {}
-  end
-end
+# Note: The determine_javascript_transpiler and fetch_*_dependencies methods 
+# have been inlined above where they're used because Rails templates 
+# can't call methods before they're defined
