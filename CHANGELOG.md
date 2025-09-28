@@ -50,7 +50,6 @@ Changes since the last non-beta release.
   - Configure `private_output_path` for private server bundles
 - **Enhanced TypeScript definitions** ([PR 602](https://github.com/shakacode/shakapacker/pull/602) by [justin808](https://github.com/justin808))
   - Better IDE support and type safety
-- **Subresource integrity support** ([PR 570](https://github.com/shakacode/shakapacker/pull/570) by [panagiotisplytas](https://github.com/panagiotisplytas))
 
 ### Changed
 - Configuration option renamed from `bundler` to `assets_bundler` (deprecated but supported)
@@ -58,7 +57,6 @@ Changes since the last non-beta release.
   - Installed automatically only when `javascript_transpiler` is set to 'babel'
 
 ### Fixed
-- Install the latest major version of peer dependencies ([PR 576](https://github.com/shakacode/shakapacker/pull/576) by [G-Rath](https://github.com/g-rath))
 - Update webpack-dev-server to secure versions (^4.15.2 || ^5.2.2) ([PR 585](https://github.com/shakacode/shakapacker/pull/585) by [justin808](https://github.com/justin808))
 
 ## [v8.4.0] - September 8, 2024
@@ -68,8 +66,6 @@ Changes since the last non-beta release.
 
 ### Fixed
 - Install the latest major version of peer dependencies [PR 576](https://github.com/shakacode/shakapacker/pull/576) by [G-Rath](https://github.com/g-rath).
-- Remove duplicate word in comment from generated `shakapacker.yml` config [PR 572](https://github.com/shakacode/shakapacker/pull/572) by [G-Rath](https://github.com/g-rath).
-- Fix: update webpack-dev-server to secure versions (^4.15.2 || ^5.2.2) [PR 585](https://github.com/shakacode/shakapacker/pull/585) by [justin808](https://github.com/justin808)
 
 
 ## [v8.3.0] - April 25, 2025
