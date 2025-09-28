@@ -220,28 +220,28 @@ end
 # Detect if project already uses babel
 def detect_existing_babel_usage
   # Check for babel config files
-  has_babel_config = File.exist?(Rails.root.join(".babelrc")) || 
-                     File.exist?(Rails.root.join("babel.config.js")) || 
-                     File.exist?(Rails.root.join("babel.config.json")) ||
-                     File.exist?(Rails.root.join(".babelrc.js"))
+  babel_config_exists = File.exist?(Rails.root.join(".babelrc")) || 
+                        File.exist?(Rails.root.join("babel.config.js")) || 
+                        File.exist?(Rails.root.join("babel.config.json")) ||
+                        File.exist?(Rails.root.join(".babelrc.js"))
   
   # Check for babel in package.json
-  has_babel_in_package_json = false
+  babel_in_package = false
   package_json_path = Rails.root.join("package.json")
   if File.exist?(package_json_path)
     begin
       pj_content = JSON.parse(File.read(package_json_path))
-      has_babel_in_package_json = pj_content.key?("babel") || 
-                                  pj_content.dig("dependencies", "@babel/core") ||
-                                  pj_content.dig("devDependencies", "@babel/core") ||
-                                  pj_content.dig("dependencies", "babel-loader") ||
-                                  pj_content.dig("devDependencies", "babel-loader")
+      babel_in_package = pj_content.key?("babel") || 
+                        pj_content.dig("dependencies", "@babel/core") ||
+                        pj_content.dig("devDependencies", "@babel/core") ||
+                        pj_content.dig("dependencies", "babel-loader") ||
+                        pj_content.dig("devDependencies", "babel-loader")
     rescue JSON::ParserError
       # If package.json is malformed, assume no babel
     end
   end
   
-  has_babel_config || has_babel_in_package_json
+  babel_config_exists || babel_in_package
 end
 
 # Determine which JavaScript transpiler to use (cached)
