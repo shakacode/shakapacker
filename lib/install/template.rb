@@ -15,43 +15,45 @@ force_option = ENV["FORCE"] ? { force: true } : {}
 @package_json ||= PackageJson.new
 install_dir = File.expand_path(File.dirname(__FILE__))
 
-# Use centralized configuration helper to detect transpiler
-@detected_transpiler = Shakapacker::ConfigurationHelper.detect_transpiler(rails_root: Rails.root)
+# Detect what transpiler to use for package installation
+# USE_BABEL_PACKAGES is for backward compatibility and only affects package installation
+@install_babel_packages = ENV["USE_BABEL_PACKAGES"] == "true" || ENV["USE_BABEL_PACKAGES"] == "1"
+
+# Detect if we should update the config file based on existing babel setup
+# (but not based on USE_BABEL_PACKAGES which is just for package installation)
+@has_existing_babel = Shakapacker::ConfigurationHelper.babel_configured?(Rails.root)
 @existing_config = Shakapacker::ConfigurationHelper.read_existing_config(Rails.root)
 
-# Provide appropriate feedback based on detection reason
-case
-when ENV["USE_BABEL_PACKAGES"]
-  say "📦 Using Babel transpiler (USE_BABEL_PACKAGES is set)", :yellow
-  # Warn about edge cases
-  if ENV["JAVASCRIPT_TRANSPILER"] && ENV["JAVASCRIPT_TRANSPILER"] != "babel"
-    say "⚠️  Warning: USE_BABEL_PACKAGES is set but JAVASCRIPT_TRANSPILER=#{ENV['JAVASCRIPT_TRANSPILER']}. Using Babel.", :yellow
-  end
-when ENV["JAVASCRIPT_TRANSPILER"]
+# Determine transpiler for installation
+if @install_babel_packages
+  @detected_transpiler = "babel"
+  say "📦 Installing Babel packages (USE_BABEL_PACKAGES is set)", :yellow
+elsif ENV["JAVASCRIPT_TRANSPILER"]
+  @detected_transpiler = ENV["JAVASCRIPT_TRANSPILER"]
   say "📦 Using #{@detected_transpiler} transpiler (JAVASCRIPT_TRANSPILER env var)", :blue
-when Shakapacker::ConfigurationHelper.babel_configured?(Rails.root) && @detected_transpiler == "babel"
-  say "🔍 Detected existing Babel configuration - will configure Shakapacker to use Babel", :yellow
-when @existing_config["javascript_transpiler"] == @detected_transpiler
+elsif @has_existing_babel
+  @detected_transpiler = "babel"
+  say "🔍 Detected existing Babel configuration - will install Babel packages", :yellow
+elsif @existing_config["javascript_transpiler"]
+  @detected_transpiler = @existing_config["javascript_transpiler"]
   say "📦 Using existing configured #{@detected_transpiler} transpiler", :blue
 else
+  @detected_transpiler = "swc"
   say "✨ Using SWC transpiler (20x faster than Babel)", :green
 end
 
 # Copy config file
 copy_file "#{install_dir}/config/shakapacker.yml", "config/shakapacker.yml", force_option
 
-# Update the config file with the detected transpiler
-if File.exist?("config/shakapacker.yml")
-  config_content = File.read("config/shakapacker.yml")
-  # Replace the default transpiler setting with the detected one
-  if @detected_transpiler == "babel"
-    config_content.gsub!("javascript_transpiler: 'swc'", "javascript_transpiler: 'babel'")
-    File.write("config/shakapacker.yml", config_content)
-    say "   Configured javascript_transpiler: 'babel' in config/shakapacker.yml"
-  elsif @detected_transpiler == "swc"
-    # Already set to swc by default, no change needed
-    say "   Using SWC transpiler (20x faster than Babel)", :green
-  end
+# Note: We don't modify the config file - it has 'swc' as default.
+# Inform users if there's a mismatch between installed packages and config
+if @detected_transpiler == "babel" && !@has_existing_babel
+  # This happens when USE_BABEL_PACKAGES is set but no existing babel config is found
+  say "   📝 Note: Babel packages installed, but config defaults to 'swc'.", :yellow  
+  say "   To use Babel, update javascript_transpiler to 'babel' in config/shakapacker.yml", :yellow
+elsif @has_existing_babel && @detected_transpiler == "babel"
+  # When we detect existing babel setup, suggest updating the config
+  say "   📝 Babel detected. Update javascript_transpiler to 'babel' in config/shakapacker.yml", :yellow
 end
 
 say "Copying webpack core config"
@@ -170,22 +172,22 @@ Dir.chdir(Rails.root) do
   # Inline the logic here since methods can't be called before they're defined in Rails templates
 
   # Babel dependencies - only install if explicitly needed
-  # USE_BABEL_PACKAGES takes precedence over transpiler config
-  if ENV["USE_BABEL_PACKAGES"] || @detected_transpiler == "babel"
+  # @install_babel_packages is true when USE_BABEL_PACKAGES env var is set
+  if @detected_transpiler == "babel"
     say "📦 Installing Babel dependencies", :yellow
     babel_deps = PackageJson.read(install_dir).fetch("babel")
     peers = peers.merge(babel_deps)
   end
 
   # SWC dependencies (pin to major version 1)
-  if @detected_transpiler == "swc" && !ENV["USE_BABEL_PACKAGES"]
+  if @detected_transpiler == "swc"
     say "📦 Installing SWC dependencies (20x faster than Babel)", :green
     swc_deps = { "@swc/core" => "^1.3.0", "swc-loader" => "^0.2.0" }
     peers = peers.merge(swc_deps)
   end
 
   # esbuild dependencies (pin to major version 0)
-  if @detected_transpiler == "esbuild" && !ENV["USE_BABEL_PACKAGES"]
+  if @detected_transpiler == "esbuild"
     say "📦 Installing esbuild dependencies", :blue
     esbuild_deps = { "esbuild" => "^0.24.0", "esbuild-loader" => "^4.0.0" }
     peers = peers.merge(esbuild_deps)
