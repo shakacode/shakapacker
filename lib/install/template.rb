@@ -182,7 +182,7 @@ Dir.chdir(Rails.root) do
 
   peers.each do |(package, version)|
     # Handle versions like "^1.3.0" or ">= 4 || 5" 
-    if version.start_with?("^") || version.start_with?("~") || version.match?(/^\d+\.\d+/)
+    if version.start_with?("^", "~") || version.match?(/^\d+\.\d+/)
       # Already has proper version format, use as-is
       entry = "#{package}@#{version}"
     else
