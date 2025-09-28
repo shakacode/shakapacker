@@ -6,7 +6,7 @@ import configPath from "./utils/configPath"
 const NODE_ENVIRONMENTS = ["development", "production", "test"] as const
 const DEFAULT = "production"
 
-const railsEnv = process.env.RAILS_ENV
+const initialRailsEnv = process.env.RAILS_ENV
 const rawNodeEnv = process.env.NODE_ENV
 const nodeEnv =
   rawNodeEnv && NODE_ENVIRONMENTS.includes(rawNodeEnv as typeof NODE_ENVIRONMENTS[number]) ? rawNodeEnv : DEFAULT
@@ -34,15 +34,16 @@ const regex = new RegExp(`^(${availableEnvironments})$`, "g")
 
 const runningWebpackDevServer = process.env.WEBPACK_SERVE === "true"
 
-const validatedRailsEnv = railsEnv && railsEnv.match(regex) ? railsEnv : DEFAULT
+const validatedRailsEnv = initialRailsEnv && initialRailsEnv.match(regex) ? initialRailsEnv : DEFAULT
 
-if (railsEnv && validatedRailsEnv !== railsEnv) {
+if (initialRailsEnv && validatedRailsEnv !== initialRailsEnv) {
   /* eslint no-console:0 */
   console.warn(
-    `Warning: '${railsEnv}' environment not found in the configuration. Using '${DEFAULT}' configuration as a fallback.`
+    `Warning: '${initialRailsEnv}' environment not found in the configuration. Using '${DEFAULT}' configuration as a fallback.`
   )
 }
 
+// Export as CommonJS for backward compatibility
 export = {
   railsEnv: validatedRailsEnv,
   nodeEnv,

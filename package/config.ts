@@ -4,32 +4,64 @@ import { existsSync, readFileSync } from "fs"
 import { merge } from "webpack-merge"
 const { ensureTrailingSlash } = require("./utils/helpers")
 const { railsEnv } = require("./env")
-const configPath = require("./utils/configPath")
-const defaultConfigPath = require("./utils/defaultConfigPath")
+import configPath from "./utils/configPath"
+import defaultConfigPath from "./utils/defaultConfigPath"
 import { Config, YamlConfig, LegacyConfig } from "./types"
+const { isValidYamlConfig, createConfigValidationError } = require("./utils/typeGuards")
 
 const getDefaultConfig = (): Partial<Config> => {
-  const defaultConfig = load(readFileSync(defaultConfigPath, "utf8")) as YamlConfig
-  return defaultConfig[railsEnv] || defaultConfig.production || {}
+  try {
+    const fileContent = readFileSync(defaultConfigPath, "utf8")
+    const defaultConfig = load(fileContent) as YamlConfig
+    
+    if (!isValidYamlConfig(defaultConfig)) {
+      throw createConfigValidationError(defaultConfigPath, railsEnv, "Invalid YAML structure")
+    }
+    
+    return defaultConfig[railsEnv] || defaultConfig.production || {}
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code === "ENOENT") {
+      throw new Error(`Default configuration file not found: ${defaultConfigPath}`)
+    }
+    throw error
+  }
 }
 
 const defaults = getDefaultConfig()
 let config: Config
 
 if (existsSync(configPath)) {
-  const appYmlObject = load(readFileSync(configPath, "utf8")) as YamlConfig
-  const envAppConfig = appYmlObject[railsEnv]
+  try {
+    const fileContent = readFileSync(configPath, "utf8")
+    const appYmlObject = load(fileContent) as YamlConfig
+    
+    if (!isValidYamlConfig(appYmlObject)) {
+      throw createConfigValidationError(configPath, railsEnv, "Invalid YAML structure")
+    }
+    
+    const envAppConfig = appYmlObject[railsEnv]
 
-  if (!envAppConfig) {
-    /* eslint no-console:0 */
-    console.warn(
-      `Warning: ${railsEnv} key not found in the configuration file. Using production configuration as a fallback.`
-    )
+    if (!envAppConfig) {
+      /* eslint no-console:0 */
+      console.warn(
+        `Warning: ${railsEnv} key not found in the configuration file. Using production configuration as a fallback.`
+      )
+    }
+
+    // Merge returns the merged type
+    const mergedConfig = merge(defaults, envAppConfig || {})
+    config = mergedConfig as Config
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code === "ENOENT") {
+      // File not found is OK, use defaults
+      config = defaults as Config
+    } else {
+      throw error
+    }
   }
-
-  config = merge(defaults, envAppConfig || {}) as Config
 } else {
-  config = merge(defaults, {}) as Config
+  // No user config, use defaults
+  config = defaults as Config
 }
 
 config.outputPath = resolve(config.public_root_path, config.public_output_path)
@@ -77,6 +109,7 @@ if (webpackLoader && !config.javascript_transpiler) {
 }
 
 // Ensure webpack_loader is always available for backward compatibility
-;(config as LegacyConfig).webpack_loader = config.javascript_transpiler
+const legacyConfig = config as LegacyConfig
+legacyConfig.webpack_loader = config.javascript_transpiler
 
 export = config

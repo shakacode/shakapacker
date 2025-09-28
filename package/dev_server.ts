@@ -3,9 +3,10 @@ const { isBoolean } = require("./utils/helpers")
 const config = require("./config")
 import { DevServerConfig } from "./types"
 
-const envFetch = (key: string): any => {
+const envFetch = (key: string): string | boolean | undefined => {
   const value = process.env[key]
-  return value && isBoolean(value) ? JSON.parse(value) : value
+  if (!value) return undefined
+  return isBoolean(value) ? JSON.parse(value) : value
 }
 
 const devServerConfig: DevServerConfig | undefined = config.dev_server
@@ -16,7 +17,8 @@ if (devServerConfig) {
   Object.keys(devServerConfig).forEach((key) => {
     const envValue = envFetch(`${envPrefix}_${key.toUpperCase()}`)
     if (envValue !== undefined) {
-      ;(devServerConfig as any)[key] = envValue
+      // Use bracket notation to avoid ASI issues
+      (devServerConfig as Record<string, unknown>)[key] = envValue
     }
   })
 }

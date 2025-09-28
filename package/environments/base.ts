@@ -81,7 +81,7 @@ const getModulePaths = (): string[] => {
   const result = [resolve(config.source_path)]
 
   if (config.additional_paths) {
-    config.additional_paths.forEach((path) => result.push(resolve(path)))
+    config.additional_paths.forEach((path: string) => result.push(resolve(path)))
   }
   result.push("node_modules")
 

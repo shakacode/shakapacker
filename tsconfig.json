@@ -16,13 +16,13 @@
     "allowJs": true,
     "checkJs": false,
     "types": ["node"],
-    "noImplicitAny": false,
-    "strictNullChecks": false,
-    "strictFunctionTypes": false,
-    "strictBindCallApply": false,
+    "noImplicitAny": true,
+    "strictNullChecks": true,
+    "strictFunctionTypes": true,
+    "strictBindCallApply": true,
     "strictPropertyInitialization": false,
-    "noImplicitThis": false,
-    "alwaysStrict": false
+    "noImplicitThis": true,
+    "alwaysStrict": true
   },
   "include": [
     "package/**/*.ts"

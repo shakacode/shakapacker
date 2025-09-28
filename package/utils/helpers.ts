@@ -5,9 +5,10 @@ const ensureTrailingSlash = (path: string): string => (path.endsWith("/") ? path
 const resolvedPath = (packageName: string): string | null => {
   try {
     return require.resolve(packageName)
-  } catch (e: any) {
-    if (e.code !== "MODULE_NOT_FOUND") {
-      throw e
+  } catch (error: unknown) {
+    const err = error as NodeJS.ErrnoException
+    if (err.code !== "MODULE_NOT_FOUND") {
+      throw err
     }
     return null
   }
@@ -42,10 +43,16 @@ const loaderMatches = <T = unknown>(configLoader: string, loaderToCheck: string,
 }
 
 const packageFullVersion = (packageName: string): string => {
-  // eslint-disable-next-line import/no-dynamic-require
-  const packageJsonPath = require.resolve(`${packageName}/package.json`)
-  // eslint-disable-next-line import/no-dynamic-require, global-require
-  return require(packageJsonPath).version
+  try {
+    // eslint-disable-next-line import/no-dynamic-require
+    const packageJsonPath = require.resolve(`${packageName}/package.json`)
+    // eslint-disable-next-line import/no-dynamic-require, global-require
+    const packageJson = require(packageJsonPath) as { version: string }
+    return packageJson.version
+  } catch (error) {
+    console.warn(`Failed to get version for package ${packageName}:`, error)
+    return "0.0.0"
+  }
 }
 
 const packageMajorVersion = (packageName: string): string => {
@@ -53,6 +60,7 @@ const packageMajorVersion = (packageName: string): string => {
   return match ? match[0] : "0"
 }
 
+// Export as CommonJS for backward compatibility
 export = {
   isBoolean,
   ensureTrailingSlash,
@@ -60,5 +68,6 @@ export = {
   moduleExists,
   loaderMatches,
   packageFullVersion,
-  packageMajorVersion
+  packageMajorVersion,
+  resolvedPath
 }

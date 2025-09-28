@@ -29,8 +29,11 @@
     "lib/install/config/shakapacker.yml"
   ],
   "scripts": {
+    "build:types": "tsc",
     "lint": "eslint .",
-    "test": "jest"
+    "test": "jest",
+    "prepublishOnly": "yarn build:types && yarn test",
+    "type-check": "tsc --noEmit"
   },
   "dependencies": {
     "js-yaml": "^4.1.0",
