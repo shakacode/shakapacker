@@ -9,21 +9,39 @@ describe Shakapacker::Doctor do
   let(:config_path) { root_path.join("config/shakapacker.yml") }
   let(:package_json_path) { root_path.join("package.json") }
   let(:source_path) { root_path.join("app/javascript") }
+  let(:packs_path) { source_path.join("packs") }
+  let(:public_output_path) { root_path.join("public/packs") }
+  let(:manifest_path) { public_output_path.join("manifest.json") }
+  let(:cache_path) { root_path.join("tmp/shakapacker") }
+
+  let(:config_data) do
+    {
+      source_entry_path: "packs",
+      integrity: { enabled: false }
+    }
+  end
 
   let(:config) do
     double("config",
            config_path: config_path,
            source_path: source_path,
+           public_output_path: public_output_path,
+           manifest_path: manifest_path,
+           cache_path: cache_path,
            javascript_transpiler: "babel",
-           assets_bundler: "webpack")
+           assets_bundler: "webpack",
+           data: config_data,
+           nested_entries?: false,
+           ensure_consistent_versioning?: false)
   end
 
   let(:doctor) { described_class.new(config, root_path) }
 
   before do
-    stub_const("Rails", double(root: root_path)) if !defined?(Rails)
+    stub_const("Rails", double(root: root_path, env: "development")) if !defined?(Rails)
     FileUtils.mkdir_p(root_path.join("config"))
     FileUtils.mkdir_p(source_path)
+    FileUtils.mkdir_p(packs_path)
   end
 
   after do
@@ -31,9 +49,10 @@ describe Shakapacker::Doctor do
   end
 
   describe "#initialize" do
-    it "initializes with empty issues and warnings" do
+    it "initializes with empty issues, warnings, and info" do
       expect(doctor.issues).to be_empty
       expect(doctor.warnings).to be_empty
+      expect(doctor.info).to be_empty
     end
 
     it "uses provided config and root_path" do
@@ -44,7 +63,6 @@ describe Shakapacker::Doctor do
     context "when no arguments provided" do
       it "uses default Shakapacker config" do
         stub_const("Rails", double(root: root_path))
-        # Mock Shakapacker module with config method
         allow(Shakapacker).to receive_message_chain(:config).and_return(config)
         doctor_default = described_class.new
         expect(doctor_default.config).to eq(config)
@@ -102,6 +120,350 @@ describe Shakapacker::Doctor do
     end
   end
 
+  describe "entry point checks" do
+    before do
+      File.write(config_path, "test: config")
+    end
+
+    context "when source_entry_path does not exist" do
+      before do
+        FileUtils.rm_rf(packs_path)
+      end
+
+      it "adds issue for missing entry path" do
+        doctor.send(:check_entry_points)
+        expect(doctor.issues).to include(match(/Source entry path.*does not exist/))
+      end
+    end
+
+    context "when no entry files exist" do
+      it "adds warning for no entry files" do
+        doctor.send(:check_entry_points)
+        expect(doctor.warnings).to include(match(/No entry point files found/))
+      end
+    end
+
+    context "with invalid nested_entries configuration" do
+      before do
+        allow(config).to receive(:data).and_return({ source_entry_path: "/" })
+        allow(config).to receive(:nested_entries?).and_return(true)
+        allow(config).to receive(:source_path).and_return(source_path)
+      end
+
+      it "adds issue for invalid configuration" do
+        doctor.send(:check_entry_points)
+        expect(doctor.issues).to include(match(/Invalid configuration.*cannot use '\/'/))
+      end
+    end
+  end
+
+  describe "output path checks" do
+    before do
+      File.write(config_path, "test: config")
+      FileUtils.mkdir_p(public_output_path)
+    end
+
+    context "when output path is not writable" do
+      before do
+        FileUtils.chmod(0444, public_output_path)
+      end
+
+      after do
+        FileUtils.chmod(0755, public_output_path)
+      end
+
+      it "adds issue for non-writable path" do
+        doctor.send(:check_output_paths)
+        expect(doctor.issues).to include(match(/Public output path.*is not writable/))
+      end
+    end
+
+    context "with empty manifest.json" do
+      before do
+        File.write(manifest_path, "{}")
+      end
+
+      it "adds warning for empty manifest" do
+        doctor.send(:check_output_paths)
+        expect(doctor.warnings).to include(match(/Manifest file is empty/))
+      end
+    end
+
+    context "with invalid manifest.json" do
+      before do
+        File.write(manifest_path, "invalid json")
+      end
+
+      it "adds issue for invalid JSON" do
+        doctor.send(:check_output_paths)
+        expect(doctor.issues).to include(match(/Manifest file.*contains invalid JSON/))
+      end
+    end
+
+    context "when cache path is not writable" do
+      before do
+        FileUtils.mkdir_p(cache_path)
+        FileUtils.chmod(0444, cache_path)
+      end
+
+      after do
+        FileUtils.chmod(0755, cache_path)
+      end
+
+      it "adds issue for non-writable cache" do
+        doctor.send(:check_output_paths)
+        expect(doctor.issues).to include(match(/Cache path.*is not writable/))
+      end
+    end
+  end
+
+  describe "deprecated config checks" do
+    context "with deprecated webpack_loader config" do
+      before do
+        File.write(config_path, "webpack_loader: babel")
+      end
+
+      it "adds deprecation warning" do
+        doctor.send(:check_deprecated_config)
+        expect(doctor.warnings).to include(match(/webpack_loader.*should be renamed/))
+      end
+    end
+
+    context "with deprecated bundler config" do
+      before do
+        File.write(config_path, "bundler: webpack")
+      end
+
+      it "adds deprecation warning" do
+        doctor.send(:check_deprecated_config)
+        expect(doctor.warnings).to include(match(/bundler.*should be renamed/))
+      end
+    end
+  end
+
+  describe "version consistency checks" do
+    before do
+      stub_const("Shakapacker::VERSION", "9.0.0")
+    end
+
+    context "with matching versions" do
+      before do
+        package_json = {
+          "dependencies" => {
+            "shakapacker" => "^9.0.0"
+          }
+        }
+        File.write(package_json_path, JSON.generate(package_json))
+      end
+
+      it "does not add warnings" do
+        doctor.send(:check_version_consistency)
+        expect(doctor.warnings).to be_empty
+      end
+    end
+
+    context "with mismatched versions" do
+      before do
+        package_json = {
+          "dependencies" => {
+            "shakapacker" => "^8.0.0"
+          }
+        }
+        File.write(package_json_path, JSON.generate(package_json))
+      end
+
+      it "adds version mismatch warning" do
+        doctor.send(:check_version_consistency)
+        expect(doctor.warnings).to include(match(/Version mismatch/))
+      end
+    end
+  end
+
+  describe "environment consistency checks" do
+    context "when Rails.env and NODE_ENV mismatch" do
+      before do
+        stub_const("Rails", double(env: "development"))
+        ENV["NODE_ENV"] = "production"
+      end
+
+      after do
+        ENV.delete("NODE_ENV")
+      end
+
+      it "adds environment mismatch warning" do
+        doctor.send(:check_environment_consistency)
+        expect(doctor.warnings).to include(match(/Environment mismatch/))
+      end
+    end
+
+    context "in production without SHAKAPACKER_ASSET_HOST" do
+      before do
+        stub_const("Rails", double(env: "production"))
+        ENV.delete("SHAKAPACKER_ASSET_HOST")
+      end
+
+      it "adds info about asset host" do
+        doctor.send(:check_environment_consistency)
+        expect(doctor.info).to include(match(/SHAKAPACKER_ASSET_HOST not set/))
+      end
+    end
+  end
+
+  describe "SRI dependency checks" do
+    context "when SRI is enabled" do
+      before do
+        allow(config).to receive(:data).and_return({
+          integrity: {
+            enabled: true,
+            hash_functions: ["sha384"]
+          }
+        })
+      end
+
+      context "without webpack-subresource-integrity" do
+        before do
+          File.write(package_json_path, JSON.generate({}))
+        end
+
+        it "adds missing SRI dependency issue" do
+          doctor.send(:check_sri_dependencies)
+          expect(doctor.issues).to include(match(/SRI is enabled but.*not installed/))
+        end
+      end
+
+      context "with invalid hash functions" do
+        before do
+          allow(config).to receive(:data).and_return({
+            integrity: {
+              enabled: true,
+              hash_functions: ["md5", "sha384"]
+            }
+          })
+        end
+
+        it "adds invalid hash function issue" do
+          doctor.send(:check_sri_dependencies)
+          expect(doctor.issues).to include(match(/Invalid SRI hash functions.*md5/))
+        end
+      end
+    end
+  end
+
+  describe "peer dependency checks" do
+    context "with webpack bundler" do
+      context "missing essential webpack dependencies" do
+        before do
+          File.write(package_json_path, JSON.generate({}))
+        end
+
+        it "adds missing webpack dependency issues" do
+          doctor.send(:check_peer_dependencies)
+          expect(doctor.issues).to include(match(/Missing essential webpack dependency: webpack/))
+          expect(doctor.issues).to include(match(/Missing essential webpack dependency: webpack-cli/))
+        end
+      end
+    end
+
+    context "with rspack bundler" do
+      before do
+        allow(config).to receive(:assets_bundler).and_return("rspack")
+      end
+
+      context "missing essential rspack dependencies" do
+        before do
+          File.write(package_json_path, JSON.generate({}))
+        end
+
+        it "adds missing rspack dependency issues" do
+          doctor.send(:check_peer_dependencies)
+          expect(doctor.issues).to include(match(/Missing essential rspack dependency.*@rspack\/core/))
+          expect(doctor.issues).to include(match(/Missing essential rspack dependency.*@rspack\/cli/))
+        end
+      end
+    end
+
+    context "with both webpack and rspack installed" do
+      before do
+        package_json = {
+          "dependencies" => {
+            "webpack" => "^5.0.0",
+            "@rspack/core" => "^1.0.0"
+          }
+        }
+        File.write(package_json_path, JSON.generate(package_json))
+      end
+
+      it "adds warning about conflicting installations" do
+        doctor.send(:check_peer_dependencies)
+        expect(doctor.warnings).to include(match(/Both webpack and rspack are installed/))
+      end
+    end
+  end
+
+  describe "Windows platform checks" do
+    context "on Windows" do
+      before do
+        allow(Gem).to receive(:win_platform?).and_return(true)
+      end
+
+      it "adds Windows info message" do
+        doctor.send(:check_windows_platform)
+        expect(doctor.info).to include(match(/Windows detected/))
+      end
+
+      context "with case sensitivity issues" do
+        before do
+          FileUtils.mkdir_p(root_path.join("App"))
+        end
+
+        it "adds case sensitivity warning" do
+          doctor.send(:check_windows_platform)
+          expect(doctor.warnings).to include(match(/case sensitivity issue/))
+        end
+      end
+    end
+  end
+
+  describe "legacy webpacker file checks" do
+    context "with legacy webpacker files" do
+      before do
+        File.write(root_path.join("config/webpacker.yml"), "legacy: config")
+        FileUtils.mkdir_p(root_path.join("bin"))
+        File.write(root_path.join("bin/webpack"), "#!/usr/bin/env ruby")
+      end
+
+      it "adds warnings for legacy files" do
+        doctor.send(:check_legacy_webpacker_files)
+        expect(doctor.warnings).to include(match(/Legacy webpacker file.*webpacker.yml/))
+        expect(doctor.warnings).to include(match(/Legacy webpacker file.*bin\/webpack/))
+      end
+    end
+  end
+
+  describe "Node.js version checks" do
+    context "with outdated Node.js version" do
+      before do
+        allow(doctor).to receive(:`).with("node --version").and_return("v12.0.0\n")
+      end
+
+      it "adds warning for outdated version" do
+        doctor.send(:check_node_installation)
+        expect(doctor.warnings).to include(match(/Node.js version.*outdated/))
+      end
+    end
+
+    context "with current Node.js version" do
+      before do
+        allow(doctor).to receive(:`).with("node --version").and_return("v18.0.0\n")
+      end
+
+      it "does not add warnings" do
+        doctor.send(:check_node_installation)
+        expect(doctor.warnings).to be_empty
+      end
+    end
+  end
+
   describe "configuration checks" do
     context "when config file exists" do
       before do
@@ -122,30 +484,6 @@ describe Shakapacker::Doctor do
       it "adds config file missing issue" do
         doctor.send(:check_config_file)
         expect(doctor.issues).to include(match(/Configuration file not found/))
-      end
-    end
-  end
-
-  describe "Node.js checks" do
-    context "when Node.js is installed" do
-      before do
-        allow(doctor).to receive(:`).with("node --version").and_return("v20.0.0\n")
-      end
-
-      it "does not add issues" do
-        doctor.send(:check_node_installation)
-        expect(doctor.issues).to be_empty
-      end
-    end
-
-    context "when Node.js is not installed" do
-      before do
-        allow(doctor).to receive(:`).with("node --version").and_raise(Errno::ENOENT)
-      end
-
-      it "adds node missing issue" do
-        doctor.send(:check_node_installation)
-        expect(doctor.issues).to include(match(/Node.js is not installed/))
       end
     end
   end
@@ -287,78 +625,6 @@ describe Shakapacker::Doctor do
         expect(doctor.issues).to include(match(/Missing required dependency 'css-loader'/))
         expect(doctor.issues).to include(match(/Missing required dependency 'style-loader'/))
         expect(doctor.warnings).to include(match(/Optional dependency 'mini-css-extract-plugin'/))
-      end
-    end
-  end
-
-  describe "bundler dependency checks" do
-    before do
-      File.write(config_path, "test: config")
-    end
-
-    context "when using webpack" do
-      context "with webpack dependencies installed" do
-        before do
-          package_json = {
-            "devDependencies" => {
-              "webpack" => "^5.0.0",
-              "webpack-cli" => "^4.0.0"
-            }
-          }
-          File.write(package_json_path, JSON.generate(package_json))
-        end
-
-        it "does not add issues" do
-          doctor.send(:check_bundler_dependencies)
-          expect(doctor.issues).to be_empty
-        end
-      end
-
-      context "with webpack dependencies missing" do
-        before do
-          File.write(package_json_path, JSON.generate({}))
-        end
-
-        it "adds missing dependency issues" do
-          doctor.send(:check_bundler_dependencies)
-          expect(doctor.issues).to include(match(/Missing required dependency 'webpack'/))
-          expect(doctor.issues).to include(match(/Missing required dependency 'webpack-cli'/))
-        end
-      end
-    end
-
-    context "when using rspack" do
-      before do
-        allow(config).to receive(:assets_bundler).and_return("rspack")
-      end
-
-      context "with rspack dependencies installed" do
-        before do
-          package_json = {
-            "devDependencies" => {
-              "@rspack/core" => "^1.0.0",
-              "@rspack/cli" => "^1.0.0"
-            }
-          }
-          File.write(package_json_path, JSON.generate(package_json))
-        end
-
-        it "does not add issues" do
-          doctor.send(:check_bundler_dependencies)
-          expect(doctor.issues).to be_empty
-        end
-      end
-
-      context "with rspack dependencies missing" do
-        before do
-          File.write(package_json_path, JSON.generate({}))
-        end
-
-        it "adds missing dependency issues" do
-          doctor.send(:check_bundler_dependencies)
-          expect(doctor.issues).to include(match(/Missing required dependency '@rspack\/core'/))
-          expect(doctor.issues).to include(match(/Missing required dependency '@rspack\/cli'/))
-        end
       end
     end
   end

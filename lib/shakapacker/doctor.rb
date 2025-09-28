@@ -30,14 +30,14 @@ module Shakapacker
         check_entry_points if config_exists?
         check_output_paths if config_exists?
         check_deprecated_config if config_exists?
-        
+
         # Environment checks
         check_node_installation
         check_package_manager
         check_binstub
         check_version_consistency
         check_environment_consistency
-        
+
         # Dependency checks
         check_javascript_transpiler_dependencies if config_exists?
         check_css_dependencies
@@ -45,7 +45,7 @@ module Shakapacker
         check_file_type_dependencies if config_exists?
         check_sri_dependencies if config_exists?
         check_peer_dependencies
-        
+
         # Platform and migration checks
         check_windows_platform
         check_legacy_webpacker_files
@@ -58,18 +58,19 @@ module Shakapacker
       end
 
       def check_entry_points
+        # Check for invalid configuration first
+        if config.data[:source_entry_path] == "/" && config.nested_entries?
+          @issues << "Invalid configuration: cannot use '/' as source_entry_path with nested_entries: true"
+          return  # Don't try to check files when config is invalid
+        end
+
         source_entry_path = config.source_path.join(config.data[:source_entry_path] || "packs")
-        
+
         unless source_entry_path.exist?
           @issues << "Source entry path #{source_entry_path} does not exist"
           return
         end
-        
-        # Check for invalid configuration
-        if config.data[:source_entry_path] == "/" && config.nested_entries?
-          @issues << "Invalid configuration: cannot use '/' as source_entry_path with nested_entries: true"
-        end
-        
+
         # Check for at least one entry point
         entry_files = Dir.glob(File.join(source_entry_path, "**/*.{js,jsx,ts,tsx,coffee}"))
         if entry_files.empty?
@@ -79,7 +80,7 @@ module Shakapacker
 
       def check_output_paths
         public_output_path = config.public_output_path
-        
+
         # Check if output directory is writable
         if public_output_path.exist?
           unless File.writable?(public_output_path)
@@ -90,14 +91,14 @@ module Shakapacker
             @issues << "Cannot create public output path #{public_output_path} (parent directory not writable)"
           end
         end
-        
+
         # Check manifest.json
         manifest_path = config.manifest_path
         if manifest_path.exist?
           unless File.readable?(manifest_path)
             @issues << "Manifest file #{manifest_path} exists but is not readable"
           end
-          
+
           # Check if manifest is stale
           begin
             manifest_content = JSON.parse(File.read(manifest_path))
@@ -108,7 +109,7 @@ module Shakapacker
             @issues << "Manifest file #{manifest_path} contains invalid JSON"
           end
         end
-        
+
         # Check cache path
         cache_path = config.cache_path
         if cache_path.exist? && !File.writable?(cache_path)
@@ -118,11 +119,11 @@ module Shakapacker
 
       def check_deprecated_config
         config_file = File.read(config.config_path)
-        
+
         if config_file.include?("webpack_loader:")
           @warnings << "Deprecated config: 'webpack_loader' should be renamed to 'javascript_transpiler'"
         end
-        
+
         if config_file.include?("bundler:")
           @warnings << "Deprecated config: 'bundler' should be renamed to 'assets_bundler'"
         end
@@ -132,19 +133,19 @@ module Shakapacker
 
       def check_version_consistency
         return unless package_json_exists?
-        
+
         # Check if shakapacker npm package version matches gem version
         package_json = read_package_json
-        npm_version = package_json.dig("dependencies", "shakapacker") || 
+        npm_version = package_json.dig("dependencies", "shakapacker") ||
                      package_json.dig("devDependencies", "shakapacker")
-        
+
         if npm_version
           gem_version = Shakapacker::VERSION rescue nil
           if gem_version && !versions_compatible?(gem_version, npm_version)
             @warnings << "Version mismatch: shakapacker gem is #{gem_version} but npm package is #{npm_version}"
           end
         end
-        
+
         # Check if ensure_consistent_versioning is enabled and warn if versions might mismatch
         if config.ensure_consistent_versioning?
           @info << "Version consistency checking is enabled"
@@ -154,11 +155,11 @@ module Shakapacker
       def check_environment_consistency
         rails_env = defined?(Rails) ? Rails.env : ENV["RAILS_ENV"]
         node_env = ENV["NODE_ENV"]
-        
+
         if rails_env && node_env && rails_env != node_env
           @warnings << "Environment mismatch: Rails.env is '#{rails_env}' but NODE_ENV is '#{node_env}'"
         end
-        
+
         # Check SHAKAPACKER_ASSET_HOST for production
         if rails_env == "production" && ENV["SHAKAPACKER_ASSET_HOST"].nil?
           @info << "SHAKAPACKER_ASSET_HOST not set - assets will be served from the application host"
@@ -167,14 +168,14 @@ module Shakapacker
 
       def check_sri_dependencies
         return unless config.data.dig(:integrity, :enabled)
-        
+
         bundler = config.assets_bundler
         if bundler == "webpack"
           unless package_installed?("webpack-subresource-integrity")
             @issues << "SRI is enabled but 'webpack-subresource-integrity' is not installed"
           end
         end
-        
+
         # Validate hash functions
         hash_functions = config.data.dig(:integrity, :hash_functions) || ["sha384"]
         invalid_functions = hash_functions - ["sha256", "sha384", "sha512"]
@@ -185,17 +186,17 @@ module Shakapacker
 
       def check_peer_dependencies
         return unless package_json_exists?
-        
+
         bundler = config.assets_bundler
         package_json = read_package_json
         all_deps = (package_json["dependencies"] || {}).merge(package_json["devDependencies"] || {})
-        
+
         if bundler == "webpack"
           check_webpack_peer_deps(all_deps)
         elsif bundler == "rspack"
           check_rspack_peer_deps(all_deps)
         end
-        
+
         # Check for conflicting installations
         if package_installed?("webpack") && package_installed?("@rspack/core")
           @warnings << "Both webpack and rspack are installed - ensure assets_bundler is set correctly"
@@ -208,7 +209,7 @@ module Shakapacker
           "webpack-cli" => "^4.9.2 || ^5.0.0",
           "webpack-merge" => "^5.8.0 || ^6.0.0"
         }
-        
+
         essential_webpack.each do |package, version|
           unless deps[package]
             @issues << "Missing essential webpack dependency: #{package} (#{version})"
@@ -221,7 +222,7 @@ module Shakapacker
           "@rspack/cli" => "^1.0.0",
           "@rspack/core" => "^1.0.0"
         }
-        
+
         essential_rspack.each do |package, version|
           unless deps[package]
             @issues << "Missing essential rspack dependency: #{package} (#{version})"
@@ -232,7 +233,7 @@ module Shakapacker
       def check_windows_platform
         if Gem.win_platform?
           @info << "Windows detected: You may need to run shakapacker scripts with 'ruby bin/shakapacker'"
-          
+
           # Check for case sensitivity issues
           if File.exist?(root_path.join("App")) || File.exist?(root_path.join("APP"))
             @warnings << "Potential case sensitivity issue detected on Windows filesystem"
@@ -247,7 +248,7 @@ module Shakapacker
           "bin/webpack",
           "bin/webpack-dev-server"
         ]
-        
+
         legacy_files.each do |file|
           file_path = root_path.join(file)
           if file_path.exist?
@@ -258,7 +259,7 @@ module Shakapacker
 
       def check_node_installation
         node_version = `node --version`.strip
-        
+
         # Check minimum Node version (14.0.0 for modern tooling)
         if node_version
           version_match = node_version.match(/v(\d+)\.(\d+)\.(\d+)/)
@@ -529,7 +530,7 @@ module Shakapacker
 
           def print_info_messages
             return if doctor.info.empty?
-            
+
             puts "\nℹ️  Information:"
             doctor.info.each do |info|
               puts "  • #{info}"
