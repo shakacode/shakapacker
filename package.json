@@ -34,7 +34,6 @@
     "build:types": "tsc",
     "lint": "eslint .",
     "test": "jest",
-    "prepublishOnly": "yarn build && yarn test",
     "type-check": "tsc --noEmit"
   },
   "dependencies": {
