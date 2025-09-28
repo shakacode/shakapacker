@@ -1,59 +1,59 @@
 /* eslint-env jest */
-const { execSync } = require('child_process')
-const { existsSync, readFileSync } = require('fs')
-const { join } = require('path')
+const { execSync } = require("child_process")
+const { existsSync, readFileSync } = require("fs")
+const { join } = require("path")
 
-describe('TypeScript Build', () => {
-  const rootPath = join(__dirname, '..', '..')
-  
-  describe('TypeScript compilation', () => {
-    it('should compile TypeScript files without errors', () => {
+describe("TypeScript Build", () => {
+  const rootPath = join(__dirname, "..", "..")
+
+  describe("TypeScript compilation", () => {
+    it("should compile TypeScript files without errors", () => {
       expect(() => {
-        execSync('npx tsc --noEmit', { cwd: rootPath, stdio: 'pipe' })
+        execSync("npx tsc --noEmit", { cwd: rootPath, stdio: "pipe" })
       }).not.toThrow()
     })
-    
-    it('should generate JavaScript files from TypeScript', () => {
+
+    it("should generate JavaScript files from TypeScript", () => {
       // Check that key TypeScript files compile to JavaScript
-      const tsFiles = ['config', 'env', 'index', 'dev_server']
-      
-      tsFiles.forEach(file => {
-        const jsPath = join(rootPath, 'package', `${file}.js`)
-        const tsPath = join(rootPath, 'package', `${file}.ts`)
-        
+      const tsFiles = ["config", "env", "index", "dev_server"]
+
+      tsFiles.forEach((file) => {
+        const jsPath = join(rootPath, "package", `${file}.js`)
+        const tsPath = join(rootPath, "package", `${file}.ts`)
+
         expect(existsSync(tsPath)).toBe(true)
         expect(existsSync(jsPath)).toBe(true)
-        
+
         // Verify JS file is newer than TS file (has been compiled)
-        const jsContent = readFileSync(jsPath, 'utf8')
-        expect(jsContent).toContain('use strict')
+        const jsContent = readFileSync(jsPath, "utf8")
+        expect(jsContent).toContain("use strict")
       })
     })
-    
-    it('should generate type definition files', () => {
-      const dtsFiles = ['config', 'env', 'index', 'types', 'dev_server']
-      
-      dtsFiles.forEach(file => {
-        const dtsPath = join(rootPath, 'package', `${file}.d.ts`)
+
+    it("should generate type definition files", () => {
+      const dtsFiles = ["config", "env", "index", "types", "dev_server"]
+
+      dtsFiles.forEach((file) => {
+        const dtsPath = join(rootPath, "package", `${file}.d.ts`)
         expect(existsSync(dtsPath)).toBe(true)
       })
     })
   })
-  
-  describe('CommonJS compatibility', () => {
-    it('should export modules using CommonJS format', () => {
-      const config = require('../../package/config')
-      const env = require('../../package/env')
-      const helpers = require('../../package/utils/helpers')
-      
+
+  describe("CommonJS compatibility", () => {
+    it("should export modules using CommonJS format", () => {
+      const config = require("../../package/config")
+      const env = require("../../package/env")
+      const helpers = require("../../package/utils/helpers")
+
       expect(config).toBeDefined()
       expect(env.railsEnv).toBeDefined()
       expect(helpers.moduleExists).toBeDefined()
     })
-    
-    it('should maintain backward compatibility', () => {
-      const index = require('../../package/index')
-      
+
+    it("should maintain backward compatibility", () => {
+      const index = require("../../package/index")
+
       // Check all expected exports are present
       expect(index.config).toBeDefined()
       expect(index.env).toBeDefined()
@@ -62,52 +62,54 @@ describe('TypeScript Build', () => {
       expect(index.canProcess).toBeInstanceOf(Function)
     })
   })
-  
-  describe('Type guards', () => {
-    it('should have runtime type validation functions', () => {
-      const typeGuards = require('../../package/utils/typeGuards')
-      
+
+  describe("Type guards", () => {
+    it("should have runtime type validation functions", () => {
+      const typeGuards = require("../../package/utils/typeGuards")
+
       expect(typeGuards.isValidConfig).toBeInstanceOf(Function)
       expect(typeGuards.isValidDevServerConfig).toBeInstanceOf(Function)
       expect(typeGuards.isValidYamlConfig).toBeInstanceOf(Function)
       expect(typeGuards.isPartialConfig).toBeInstanceOf(Function)
     })
-    
-    it('should validate config objects correctly', () => {
-      const { isPartialConfig } = require('../../package/utils/typeGuards')
-      
+
+    it("should validate config objects correctly", () => {
+      const { isPartialConfig } = require("../../package/utils/typeGuards")
+
       const validPartial = {
-        source_path: 'app/javascript',
+        source_path: "app/javascript",
         nested_entries: true
       }
-      
+
       const invalidPartial = {
         source_path: 123, // Should be string
-        nested_entries: 'yes' // Should be boolean
+        nested_entries: "yes" // Should be boolean
       }
-      
+
       expect(isPartialConfig(validPartial)).toBe(true)
       expect(isPartialConfig(invalidPartial)).toBe(false)
     })
   })
-  
-  describe('Error helpers', () => {
-    it('should have error handling utilities', () => {
-      const errorHelpers = require('../../package/utils/errorHelpers')
-      
+
+  describe("Error helpers", () => {
+    it("should have error handling utilities", () => {
+      const errorHelpers = require("../../package/utils/errorHelpers")
+
       expect(errorHelpers.isFileNotFoundError).toBeInstanceOf(Function)
       expect(errorHelpers.isModuleNotFoundError).toBeInstanceOf(Function)
       expect(errorHelpers.getErrorMessage).toBeInstanceOf(Function)
     })
-    
-    it('should correctly identify ENOENT errors', () => {
-      const { isFileNotFoundError } = require('../../package/utils/errorHelpers')
-      
-      const enoentError = new Error('File not found')
-      enoentError.code = 'ENOENT'
-      
-      const otherError = new Error('Other error')
-      
+
+    it("should correctly identify ENOENT errors", () => {
+      const {
+        isFileNotFoundError
+      } = require("../../package/utils/errorHelpers")
+
+      const enoentError = new Error("File not found")
+      enoentError.code = "ENOENT"
+
+      const otherError = new Error("Other error")
+
       expect(isFileNotFoundError(enoentError)).toBe(true)
       expect(isFileNotFoundError(otherError)).toBe(false)
     })

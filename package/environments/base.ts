@@ -107,7 +107,7 @@ const baseConfig: Configuration = {
     publicPath: config.publicPath,
 
     // This is required for SRI to work.
-    crossOriginLoading: config.integrity?.enabled
+    crossOriginLoading: config.integrity && config.integrity.enabled
       ? (config.integrity.cross_origin as "anonymous" | "use-credentials" | false)
       : false
   },
