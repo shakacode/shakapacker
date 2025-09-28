@@ -940,6 +940,21 @@ private_output_path: ssr-generated # outputs to => ssr-generated/
 
 This is particularly useful when working with libraries like React on Rails where server bundles need to be kept separate from client bundles.
 
+#### Migration Guide for React on Rails Users
+
+If you're using React on Rails with separate client and server bundles, you can now leverage the `private_output_path` configuration instead of using custom webpack configurations:
+
+1. Update your `config/shakapacker.yml`:
+   ```yml
+   # Before: both client and server bundles in public/
+   # After: separate directories
+   public_output_path: packs        # Client bundles (publicly served)
+   private_output_path: ssr-bundles  # Server bundles (not publicly served)
+   ```
+
+2. Update your webpack configuration to use the appropriate output path based on the bundle type
+3. The validation ensures `private_output_path` and `public_output_path` are different to prevent configuration errors
+
 Similarly, you can also control and configure `webpack-dev-server` settings from `config/shakapacker.yml` file:
 
 ```yml

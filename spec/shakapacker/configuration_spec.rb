@@ -1,4 +1,5 @@
 require_relative "spec_helper_initializer"
+require "tempfile"
 
 describe "Shakapacker::Configuration" do
   ROOT_PATH = Pathname.new(File.expand_path("./test_app", __dir__))
@@ -58,6 +59,98 @@ describe "Shakapacker::Configuration" do
       private_output_path = File.expand_path File.join(File.dirname(__FILE__), "./test_app/ssr-generated").to_s
 
       expect(config.private_output_path.to_s).to eq private_output_path
+    end
+
+    it "validates private_output_path is different from public_output_path" do
+      # Create a test config file with same paths
+      test_config = Tempfile.new(["shakapacker", ".yml"])
+      test_config.write(<<~YAML)
+        test:
+          source_path: app/javascript
+          source_entry_path: entrypoints
+          public_root_path: public
+          public_output_path: packs
+          private_output_path: public/packs
+      YAML
+      test_config.rewind
+
+      expect {
+        Shakapacker::Configuration.new(
+          root_path: ROOT_PATH,
+          config_path: Pathname.new(test_config.path),
+          env: "test"
+        ).private_output_path
+      }.to raise_error(/private_output_path and public_output_path must be different/)
+
+      test_config.close
+      test_config.unlink
+    end
+
+    it "validates paths with relative .. correctly" do
+      # Test that paths with .. that resolve to the same location are caught
+      test_config = Tempfile.new(["shakapacker", ".yml"])
+      test_config.write(<<~YAML)
+        test:
+          source_path: app/javascript
+          source_entry_path: entrypoints
+          public_root_path: public
+          public_output_path: packs
+          private_output_path: public/../public/packs
+      YAML
+      test_config.rewind
+
+      expect {
+        Shakapacker::Configuration.new(
+          root_path: ROOT_PATH,
+          config_path: Pathname.new(test_config.path),
+          env: "test"
+        ).private_output_path
+      }.to raise_error(/private_output_path and public_output_path must be different/)
+
+      test_config.close
+      test_config.unlink
+    end
+
+    it "allows different paths correctly" do
+      # Test that different paths are allowed
+      test_config = Tempfile.new(["shakapacker", ".yml"])
+      test_config.write(<<~YAML)
+        test:
+          source_path: app/javascript
+          source_entry_path: entrypoints
+          public_root_path: public
+          public_output_path: packs
+          private_output_path: ssr-bundles
+      YAML
+      test_config.rewind
+
+      config = Shakapacker::Configuration.new(
+        root_path: ROOT_PATH,
+        config_path: Pathname.new(test_config.path),
+        env: "test"
+      )
+
+      expect { config.private_output_path }.not_to raise_error
+      expect(config.private_output_path.to_s).to end_with("ssr-bundles")
+
+      test_config.close
+      test_config.unlink
+    end
+
+    it "validates only once even with multiple calls" do
+      # Test that validation flag prevents redundant validations
+      config = Shakapacker::Configuration.new(
+        root_path: ROOT_PATH,
+        config_path: Pathname.new(File.expand_path("./test_app/config/shakapacker.yml", __dir__)),
+        env: "test"
+      )
+
+      # Multiple calls should return the same path
+      path1 = config.private_output_path
+      path2 = config.private_output_path
+
+      expect(path1).to eq(path2)
+      expect(path1.to_s).to end_with("ssr-generated")
     end
 
     it "#additional_paths returns correct path" do

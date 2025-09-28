@@ -71,6 +71,7 @@ class Shakapacker::Configuration
   def private_output_path
     private_path = fetch(:private_output_path)
     return nil unless private_path
+    validate_output_paths!
     root_path.join(private_path)
   end
 
@@ -155,6 +156,38 @@ class Shakapacker::Configuration
   end
 
   private
+    def validate_output_paths!
+      # Skip validation if already validated to avoid redundant checks
+      return if @validated_output_paths
+      @validated_output_paths = true
+
+      # Only validate when both paths are configured
+      return unless fetch(:private_output_path) && fetch(:public_output_path)
+
+      private_path_str, public_path_str = resolve_paths_for_comparison
+
+      if private_path_str == public_path_str
+        raise "Shakapacker configuration error: private_output_path and public_output_path must be different. " \
+              "Both paths resolve to '#{private_path_str}'. " \
+              "The private_output_path is for server-side bundles (e.g., SSR) that should not be served publicly."
+      end
+    end
+
+    def resolve_paths_for_comparison
+      private_full_path = root_path.join(fetch(:private_output_path))
+      public_full_path = root_path.join(fetch(:public_root_path), fetch(:public_output_path))
+
+      # Create directories if they don't exist (for testing)
+      private_full_path.mkpath unless private_full_path.exist?
+      public_full_path.mkpath unless public_full_path.exist?
+
+      # Use realpath to resolve symbolic links and relative paths
+      [private_full_path.realpath.to_s, public_full_path.realpath.to_s]
+    rescue Errno::ENOENT
+      # If paths don't exist yet, fall back to cleanpath for comparison
+      [private_full_path.cleanpath.to_s, public_full_path.cleanpath.to_s]
+    end
+
     def data
       @data ||= load
     end
