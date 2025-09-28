@@ -30,12 +30,14 @@ else
   say "✨ Installing SWC packages (20x faster than Babel)", :green
 end
 
-# Copy config file (always copies as-is, never modified)
+# Copy config file
 copy_file "#{install_dir}/config/shakapacker.yml", "config/shakapacker.yml", force_option
 
-# Inform if babel is installed but config defaults to swc
+# Update config if USE_BABEL_PACKAGES is set to ensure babel is used at runtime
 if @transpiler_to_install == "babel" && !ENV["JAVASCRIPT_TRANSPILER"]
-  say "   📝 Note: To use Babel at runtime, update javascript_transpiler to 'babel' in config/shakapacker.yml", :yellow
+  # When USE_BABEL_PACKAGES is set, update the config to use babel
+  gsub_file "config/shakapacker.yml", "javascript_transpiler: 'swc'", "javascript_transpiler: 'babel'"
+  say "   📝 Updated config/shakapacker.yml to use Babel transpiler", :green
 end
 
 say "Copying webpack core config"
@@ -163,13 +165,13 @@ Dir.chdir(Rails.root) do
     
     # Also install SWC since that's what the default config uses
     # This ensures the runtime works regardless of config
-    swc_deps = { "@swc/core" => "^1.3.0", "swc-loader" => "^0.2.0" }
+    swc_deps = PackageJson.read(install_dir).fetch("swc")
     peers = peers.merge(swc_deps)
   elsif @transpiler_to_install == "swc"
-    swc_deps = { "@swc/core" => "^1.3.0", "swc-loader" => "^0.2.0" }
+    swc_deps = PackageJson.read(install_dir).fetch("swc")
     peers = peers.merge(swc_deps)
   elsif @transpiler_to_install == "esbuild"
-    esbuild_deps = { "esbuild" => "^0.24.0", "esbuild-loader" => "^4.0.0" }
+    esbuild_deps = PackageJson.read(install_dir).fetch("esbuild")
     peers = peers.merge(esbuild_deps)
   end
 
