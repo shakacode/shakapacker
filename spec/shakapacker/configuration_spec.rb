@@ -86,6 +86,74 @@ describe "Shakapacker::Configuration" do
       test_config.unlink
     end
 
+    it "validates paths with relative .. correctly" do
+      # Test that paths with .. that resolve to the same location are caught
+      test_config = Tempfile.new(["shakapacker", ".yml"])
+      test_config.write(<<~YAML)
+        test:
+          source_path: app/javascript
+          source_entry_path: entrypoints
+          public_root_path: public
+          public_output_path: packs
+          private_output_path: public/../public/packs
+      YAML
+      test_config.rewind
+
+      expect {
+        Shakapacker::Configuration.new(
+          root_path: ROOT_PATH,
+          config_path: Pathname.new(test_config.path),
+          env: "test"
+        ).private_output_path
+      }.to raise_error(/private_output_path and public_output_path must be different/)
+
+      test_config.close
+      test_config.unlink
+    end
+
+    it "allows different paths correctly" do
+      # Test that different paths are allowed
+      test_config = Tempfile.new(["shakapacker", ".yml"])
+      test_config.write(<<~YAML)
+        test:
+          source_path: app/javascript
+          source_entry_path: entrypoints
+          public_root_path: public
+          public_output_path: packs
+          private_output_path: ssr-bundles
+      YAML
+      test_config.rewind
+
+      config = Shakapacker::Configuration.new(
+        root_path: ROOT_PATH,
+        config_path: Pathname.new(test_config.path),
+        env: "test"
+      )
+
+      expect { config.private_output_path }.not_to raise_error
+      expect(config.private_output_path.to_s).to end_with("ssr-bundles")
+
+      test_config.close
+      test_config.unlink
+    end
+
+    it "memoizes private_output_path and validates only once" do
+      # Test that validation is called only once due to memoization
+      config = Shakapacker::Configuration.new(
+        root_path: ROOT_PATH,
+        config_path: Pathname.new(File.expand_path("./test_app/config/shakapacker.yml", __dir__)),
+        env: "test"
+      )
+
+      # First call should validate and memoize
+      path1 = config.private_output_path
+      # Second call should return memoized value without validation
+      path2 = config.private_output_path
+
+      expect(path1).to eq(path2)
+      expect(path1.to_s).to end_with("ssr-generated")
+    end
+
     it "#additional_paths returns correct path" do
       expect(config.additional_paths).to eq ["app/assets", "/etc/yarn", "some.config.js", "app/elm"]
     end

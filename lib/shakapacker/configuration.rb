@@ -69,11 +69,13 @@ class Shakapacker::Configuration
   end
 
   def private_output_path
-    private_path = fetch(:private_output_path)
-    return nil unless private_path
-    path = root_path.join(private_path)
-    validate_output_paths! if private_path
-    path
+    @private_output_path ||= begin
+      private_path = fetch(:private_output_path)
+      if private_path
+        validate_output_paths!
+        root_path.join(private_path)
+      end
+    end
   end
 
   def public_output_path
@@ -158,15 +160,29 @@ class Shakapacker::Configuration
 
   private
     def validate_output_paths!
-      # Skip validation if already validated to avoid recursion
+      # Skip validation if already validated to avoid redundant checks
       return if @validated_output_paths
       @validated_output_paths = true
 
       # Only validate when both paths are configured
       return unless fetch(:private_output_path) && fetch(:public_output_path)
 
-      private_path_str = root_path.join(fetch(:private_output_path)).to_s
-      public_path_str = root_path.join(fetch(:public_root_path), fetch(:public_output_path)).to_s
+      begin
+        # Use File.realpath to resolve symbolic links and relative paths
+        private_full_path = root_path.join(fetch(:private_output_path))
+        public_full_path = root_path.join(fetch(:public_root_path), fetch(:public_output_path))
+
+        # Create directories if they don't exist (for testing)
+        private_full_path.mkpath unless private_full_path.exist?
+        public_full_path.mkpath unless public_full_path.exist?
+
+        private_path_str = private_full_path.realpath.to_s
+        public_path_str = public_full_path.realpath.to_s
+      rescue Errno::ENOENT
+        # If paths don't exist yet, fall back to string comparison
+        private_path_str = private_full_path.cleanpath.to_s
+        public_path_str = public_full_path.cleanpath.to_s
+      end
 
       if private_path_str == public_path_str
         raise "Shakapacker configuration error: private_output_path and public_output_path must be different. " \
