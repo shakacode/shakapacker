@@ -1,20 +1,19 @@
-const isBoolean = (str) => /^true/.test(str) || /^false/.test(str)
-
-const ensureTrailingSlash = (path) => (path.endsWith("/") ? path : `${path}/`)
-
+"use strict";
+const { isModuleNotFoundError, getErrorMessage } = require("./errorHelpers");
+const isBoolean = (str) => /^true/.test(str) || /^false/.test(str);
+const ensureTrailingSlash = (path) => (path.endsWith("/") ? path : `${path}/`);
 const resolvedPath = (packageName) => {
-  try {
-    return require.resolve(packageName)
-  } catch (e) {
-    if (e.code !== "MODULE_NOT_FOUND") {
-      throw e
+    try {
+        return require.resolve(packageName);
     }
-    return null
-  }
-}
-
-const moduleExists = (packageName) => !!resolvedPath(packageName)
-
+    catch (error) {
+        if (!isModuleNotFoundError(error)) {
+            throw error;
+        }
+        return null;
+    }
+};
+const moduleExists = (packageName) => !!resolvedPath(packageName);
 const canProcess = (rule, fn) => {
   const modulePath = resolvedPath(rule)
 
@@ -104,17 +103,23 @@ const loaderMatches = (configLoader, loaderToCheck, fn) => {
 
   return fn()
 }
-
 const packageFullVersion = (packageName) => {
-  // eslint-disable-next-line import/no-dynamic-require
-  const packageJsonPath = require.resolve(`${packageName}/package.json`)
-  // eslint-disable-next-line import/no-dynamic-require, global-require
-  return require(packageJsonPath).version
-}
-
-const packageMajorVersion = (packageName) =>
-  packageFullVersion(packageName).match(/^\d+/)[0]
-
+    try {
+        // eslint-disable-next-line import/no-dynamic-require
+        const packageJsonPath = require.resolve(`${packageName}/package.json`);
+        // eslint-disable-next-line import/no-dynamic-require, global-require
+        const packageJson = require(packageJsonPath);
+        return packageJson.version;
+    }
+    catch (error) {
+        console.warn(`Failed to get version for package ${packageName}: ${getErrorMessage(error)}`);
+        return "0.0.0";
+    }
+};
+const packageMajorVersion = (packageName) => {
+    const match = packageFullVersion(packageName).match(/^\d+/);
+    return match ? match[0] : "0";
+};
 module.exports = {
   isBoolean,
   ensureTrailingSlash,
@@ -123,5 +128,6 @@ module.exports = {
   validateBabelDependencies,
   loaderMatches,
   packageFullVersion,
-  packageMajorVersion
+  packageMajorVersion,
+  resolvedPath
 }
