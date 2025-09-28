@@ -657,10 +657,7 @@ See also [Customizing Babel Config](./docs/customizing_babel_config.md) for an e
 
 #### TypeScript
 
-**📚 TypeScript Documentation:**
-- **[TypeScript Migration Guide](./docs/typescript-migration-guide.md)** - Complete guide for TypeScript support and migration
-- **[TypeScript Migration Examples](./docs/typescript-migration-examples.md)** - Practical examples and IDE setup
-- **[TypeScript Error Prevention](./docs/typescript-error-prevention.md)** - How TypeScript prevents 85-100% of common webpack configuration errors
+**📚 TypeScript Support:** See the **[TypeScript Documentation](./docs/typescript.md)** for type-safe configuration.
 
 ```bash
 npm install typescript @babel/preset-typescript
