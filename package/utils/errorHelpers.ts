@@ -74,11 +74,3 @@ export function isNodeError(error: unknown): error is NodeJS.ErrnoException {
   )
 }
 
-// Export as CommonJS for compatibility
-module.exports = {
-  isFileNotFoundError,
-  isModuleNotFoundError,
-  createFileOperationError,
-  getErrorMessage,
-  isNodeError
-}

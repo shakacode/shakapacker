@@ -32,8 +32,14 @@ const getEntryObject = () => {
     const entries = {};
     const rootPath = (0, path_1.join)(config.source_path, config.source_entry_path);
     if (config.source_entry_path === "/" && config.nested_entries) {
-        throw new Error("Your shakapacker config specified using a source_entry_path of '/' with 'nested_entries' == " +
-            "'true'. Doing this would result in packs for every one of your source files");
+        throw new Error(`Invalid Shakapacker configuration detected!\n\n` +
+            `You have set source_entry_path to '/' with nested_entries enabled.\n` +
+            `This would create webpack entry points for EVERY file in your source directory,\n` +
+            `which would severely impact build performance.\n\n` +
+            `To fix this issue, either:\n` +
+            `1. Set 'nested_entries: false' in your shakapacker.yml\n` +
+            `2. Change 'source_entry_path' to a specific subdirectory (e.g., 'packs')\n` +
+            `3. Or use both options for better organization of your entry points`);
     }
     getFilesInDirectory(rootPath, config.nested_entries).forEach((path) => {
         const namespace = (0, path_1.relative)((0, path_1.join)(rootPath), (0, path_1.dirname)(path));

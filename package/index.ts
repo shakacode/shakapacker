@@ -9,7 +9,7 @@ const config = require("./config")
 const baseConfig = require("./environments/base")
 const devServer = require("./dev_server")
 const env = require("./env")
-const { moduleExists, canProcess } = require("./utils/helpers")
+import { moduleExists, canProcess } from "./utils/helpers"
 const inliningCss = require("./utils/inliningCss")
 
 const rulesPath = resolve(__dirname, "rules", `${config.assets_bundler}.js`)

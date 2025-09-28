@@ -2,7 +2,7 @@ import { load } from "js-yaml"
 import { readFileSync } from "fs"
 const defaultConfigPath = require("./utils/defaultConfigPath")
 const configPath = require("./utils/configPath")
-const errorHelpers = require("./utils/errorHelpers")
+import { isFileNotFoundError } from "./utils/errorHelpers"
 
 const NODE_ENVIRONMENTS = ["development", "production", "test"] as const
 const DEFAULT = "production"
@@ -22,12 +22,21 @@ let config: ConfigFile
 try {
   config = load(readFileSync(configPath, "utf8")) as ConfigFile
 } catch (error: unknown) {
-  if (errorHelpers.isFileNotFoundError(error)) {
+  if (isFileNotFoundError(error)) {
     // File not found, use default configuration
     try {
       config = load(readFileSync(defaultConfigPath, "utf8")) as ConfigFile
     } catch (defaultError) {
-      throw new Error(`Failed to load configuration: neither user config nor default config found`)
+      throw new Error(
+        `Failed to load Shakapacker configuration.\n` +
+        `Neither user config (${configPath}) nor default config (${defaultConfigPath}) could be loaded.\n\n` +
+        `To fix this issue:\n` +
+        `1. Create a config/shakapacker.yml file in your project\n` +
+        `2. Or set the SHAKAPACKER_CONFIG environment variable to point to your config file\n` +
+        `3. Or reinstall Shakapacker to restore the default configuration:\n` +
+        `   npm install shakapacker --force\n` +
+        `   yarn add shakapacker --force`
+      )
     }
   } else {
     throw error
@@ -48,7 +57,6 @@ if (initialRailsEnv && validatedRailsEnv !== initialRailsEnv) {
   )
 }
 
-// Export as CommonJS for backward compatibility
 export = {
   railsEnv: validatedRailsEnv,
   nodeEnv,

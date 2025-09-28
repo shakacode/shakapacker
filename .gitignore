@@ -23,6 +23,8 @@ package/**/*.js.map
 package/**/*.js
 # Keep specific files that are not TypeScript-generated
 !package/index.d.ts
+!package/loaders.d.ts
+!package/webpack-types.d.ts
 !package/babel/preset.js
 !package/babel/preset-react.js
 !package/environments/*.js

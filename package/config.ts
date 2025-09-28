@@ -2,23 +2,28 @@ import { resolve } from "path"
 import { load } from "js-yaml"
 import { existsSync, readFileSync } from "fs"
 import { merge } from "webpack-merge"
-const { ensureTrailingSlash } = require("./utils/helpers")
+import { ensureTrailingSlash } from "./utils/helpers"
 const { railsEnv } = require("./env")
 const configPath = require("./utils/configPath")
 const defaultConfigPath = require("./utils/defaultConfigPath")
 import { Config, YamlConfig, LegacyConfig } from "./types"
-const { isValidYamlConfig, createConfigValidationError, isPartialConfig } = require("./utils/typeGuards")
-const { isFileNotFoundError, createFileOperationError } = require("./utils/errorHelpers")
+import { isValidYamlConfig, createConfigValidationError, isPartialConfig, isValidConfig } from "./utils/typeGuards"
+import { isFileNotFoundError, createFileOperationError } from "./utils/errorHelpers"
+
+const loadAndValidateYaml = (path: string): YamlConfig => {
+  const fileContent = readFileSync(path, "utf8")
+  const yamlContent = load(fileContent)
+  
+  if (!isValidYamlConfig(yamlContent)) {
+    throw createConfigValidationError(path, railsEnv, "Invalid YAML structure")
+  }
+  
+  return yamlContent
+}
 
 const getDefaultConfig = (): Partial<Config> => {
   try {
-    const fileContent = readFileSync(defaultConfigPath, "utf8")
-    const defaultConfig = load(fileContent) as YamlConfig
-    
-    if (!isValidYamlConfig(defaultConfig)) {
-      throw createConfigValidationError(defaultConfigPath, railsEnv, "Invalid YAML structure")
-    }
-    
+    const defaultConfig = loadAndValidateYaml(defaultConfigPath)
     return defaultConfig[railsEnv] || defaultConfig.production || {}
   } catch (error) {
     if (isFileNotFoundError(error)) {
@@ -37,12 +42,7 @@ let config: Config
 
 if (existsSync(configPath)) {
   try {
-    const fileContent = readFileSync(configPath, "utf8")
-    const appYmlObject = load(fileContent) as YamlConfig
-    
-    if (!isValidYamlConfig(appYmlObject)) {
-      throw createConfigValidationError(configPath, railsEnv, "Invalid YAML structure")
-    }
+    const appYmlObject = loadAndValidateYaml(configPath)
     
     const envAppConfig = appYmlObject[railsEnv]
 
@@ -65,7 +65,12 @@ if (existsSync(configPath)) {
       )
     }
     
-    config = mergedConfig as Config
+    if (!isValidConfig(mergedConfig)) {
+      // If it's not a full config but is partial, we can safely cast
+      config = mergedConfig as Config
+    } else {
+      config = mergedConfig
+    }
   } catch (error) {
     if (isFileNotFoundError(error)) {
       // File not found is OK, use defaults
@@ -76,7 +81,12 @@ if (existsSync(configPath)) {
           `Invalid default configuration. This may indicate a corrupted Shakapacker installation. Try reinstalling with 'yarn add shakapacker --force'.`
         )
       }
-      config = defaults as Config
+      if (!isValidConfig(defaults)) {
+        // Defaults might be partial, safe to cast with validation
+        config = defaults as Config
+      } else {
+        config = defaults
+      }
     } else {
       throw error
     }
@@ -90,7 +100,12 @@ if (existsSync(configPath)) {
       `Invalid default configuration. This may indicate a corrupted Shakapacker installation. Try reinstalling with 'yarn add shakapacker --force'.`
     )
   }
-  config = defaults as Config
+  if (!isValidConfig(defaults)) {
+    // Defaults might be partial, safe to cast with validation
+    config = defaults as Config
+  } else {
+    config = defaults
+  }
 }
 
 config.outputPath = resolve(config.public_root_path, config.public_output_path)
@@ -126,19 +141,26 @@ const DEFAULT_JAVASCRIPT_TRANSPILER =
 
 // Backward compatibility: Add webpack_loader property that maps to javascript_transpiler
 // Show deprecation warning if webpack_loader is used
-const webpackLoader = (config as LegacyConfig).webpack_loader
+// Check for webpack_loader property without type assertion
+const configRecord = config as Record<string, any>
+const webpackLoader = 'webpack_loader' in configRecord ? String(configRecord.webpack_loader) : undefined
+
 if (webpackLoader && !config.javascript_transpiler) {
   console.warn(
     "⚠️  DEPRECATION WARNING: The 'webpack_loader' configuration option is deprecated. Please use 'javascript_transpiler' instead as it better reflects its purpose of configuring JavaScript transpilation regardless of the bundler used."
   )
   config.javascript_transpiler = webpackLoader
 } else if (!config.javascript_transpiler) {
-  config.javascript_transpiler =
-    webpackLoader || DEFAULT_JAVASCRIPT_TRANSPILER
+  config.javascript_transpiler = DEFAULT_JAVASCRIPT_TRANSPILER
 }
 
 // Ensure webpack_loader is always available for backward compatibility
-const legacyConfig = config as LegacyConfig
-legacyConfig.webpack_loader = config.javascript_transpiler
+// Use property assignment instead of type assertion
+Object.defineProperty(config, 'webpack_loader', {
+  value: config.javascript_transpiler,
+  writable: true,
+  enumerable: true,
+  configurable: true
+})
 
 export = config

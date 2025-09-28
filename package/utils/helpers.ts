@@ -1,4 +1,4 @@
-const errorHelpers = require("./errorHelpers")
+import { isModuleNotFoundError, getErrorMessage } from "./errorHelpers"
 
 const isBoolean = (str: string): boolean => /^true/.test(str) || /^false/.test(str)
 
@@ -8,7 +8,7 @@ const resolvedPath = (packageName: string): string | null => {
   try {
     return require.resolve(packageName)
   } catch (error: unknown) {
-    if (!errorHelpers.isModuleNotFoundError(error)) {
+    if (!isModuleNotFoundError(error)) {
       throw error
     }
     return null
@@ -36,7 +36,11 @@ const loaderMatches = <T = unknown>(configLoader: string, loaderToCheck: string,
 
   if (!moduleExists(loaderName)) {
     throw new Error(
-      `Your Shakapacker config specified using ${configLoader}, but ${loaderName} package is not installed. Please install ${loaderName} first.`
+      `Your Shakapacker config specified using ${configLoader}, but ${loaderName} package is not installed.\n` +
+      `\nTo fix this issue, run one of the following commands:\n` +
+      `  npm install --save-dev ${loaderName}\n` +
+      `  yarn add --dev ${loaderName}\n` +
+      `\nOr change your 'javascript_transpiler' setting in shakapacker.yml to use a different loader.`
     )
   }
 
@@ -51,7 +55,12 @@ const packageFullVersion = (packageName: string): string => {
     const packageJson = require(packageJsonPath) as { version: string }
     return packageJson.version
   } catch (error) {
-    console.warn(`Failed to get version for package ${packageName}: ${errorHelpers.getErrorMessage(error)}`)
+    console.warn(
+      `Failed to get version for package ${packageName}: ${getErrorMessage(error)}\n` +
+      `This may indicate the package is not properly installed. Try reinstalling with:\n` +
+      `  npm install ${packageName}\n` +
+      `  yarn add ${packageName}`
+    )
     return "0.0.0"
   }
 }
@@ -61,8 +70,7 @@ const packageMajorVersion = (packageName: string): string => {
   return match ? match[0] : "0"
 }
 
-// Export as CommonJS for backward compatibility
-export = {
+export {
   isBoolean,
   ensureTrailingSlash,
   canProcess,

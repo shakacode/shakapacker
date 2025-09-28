@@ -205,11 +205,3 @@ export function createConfigValidationError(
   return new Error(details ? `${message}: ${details}` : message)
 }
 
-// Also export as CommonJS for compatibility
-module.exports = {
-  isValidConfig,
-  isValidDevServerConfig,
-  isValidYamlConfig,
-  isPartialConfig,
-  createConfigValidationError
-}
