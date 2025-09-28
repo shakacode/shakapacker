@@ -5,35 +5,6 @@ require "package_json"
 require "yaml"
 require "json"
 
-# Helper methods
-
-# Detect if project already uses babel
-def detect_existing_babel_usage
-  # Check for babel config files
-  has_babel_config = File.exist?(Rails.root.join(".babelrc")) || 
-                     File.exist?(Rails.root.join("babel.config.js")) || 
-                     File.exist?(Rails.root.join("babel.config.json")) ||
-                     File.exist?(Rails.root.join(".babelrc.js"))
-  
-  # Check for babel in package.json
-  has_babel_in_package_json = false
-  package_json_path = Rails.root.join("package.json")
-  if File.exist?(package_json_path)
-    begin
-      pj_content = JSON.parse(File.read(package_json_path))
-      has_babel_in_package_json = pj_content.key?("babel") || 
-                                  pj_content.dig("dependencies", "@babel/core") ||
-                                  pj_content.dig("devDependencies", "@babel/core") ||
-                                  pj_content.dig("dependencies", "babel-loader") ||
-                                  pj_content.dig("devDependencies", "babel-loader")
-    rescue JSON::ParserError
-      # If package.json is malformed, assume no babel
-    end
-  end
-  
-  has_babel_config || has_babel_in_package_json
-end
-
 # Install Shakapacker
 
 force_option = ENV["FORCE"] ? { force: true } : {}
@@ -98,10 +69,6 @@ else
   say %(        Add <%= javascript_pack_tag "application" %> within the <head> tag in your custom layout.)
 end
 
-def package_json
-  @package_json ||= PackageJson.new
-end
-
 # setup the package manager with default values
 package_json.merge! do |pj|
   package_manager = pj.fetch("packageManager") do
@@ -152,6 +119,67 @@ if (setup_path = Rails.root.join("bin/setup")).exist?
   end
 end
 
+Dir.chdir(Rails.root) do
+  npm_version = Shakapacker::Utils::VersionSyntaxConverter.new.rubygem_to_npm(Shakapacker::VERSION)
+  say "Installing shakapacker@#{npm_version}"
+  add_dependencies(["shakapacker@#{npm_version}"], :production)
+
+  package_json.merge! do |pj|
+    {
+      "dependencies" => pj["dependencies"].merge({
+        # TODO: workaround for test suite - long-run need to actually account for diff pkg manager behaviour
+        "shakapacker" => pj["dependencies"]["shakapacker"].delete_prefix("^")
+      })
+    }
+  end
+
+  peers = fetch_peer_dependencies
+  peers = peers.merge(fetch_common_dependencies)
+  peers = peers.merge(fetch_babel_dependencies)
+  peers = peers.merge(fetch_swc_dependencies)
+  peers = peers.merge(fetch_esbuild_dependencies)
+
+  dev_dependency_packages = ["webpack-dev-server"]
+
+  dependencies_to_add = []
+  dev_dependencies_to_add = []
+
+  peers.each do |(package, version)|
+    major_version = version.split("||").last.match(/(\d+)/)[1]
+    entry = "#{package}@#{major_version}"
+
+    if dev_dependency_packages.include? package
+      dev_dependencies_to_add << entry
+    else
+      dependencies_to_add << entry
+    end
+  end
+
+  say "Adding shakapacker peerDependencies"
+  add_dependencies(dependencies_to_add, :production)
+
+  say "Installing webpack-dev-server for live reloading as a development dependency"
+  add_dependencies(dev_dependencies_to_add, :dev)
+  
+  # Configure babel preset in package.json if using babel
+  if determine_javascript_transpiler == "babel"
+    package_json.merge! do |pj|
+      babel = pj.fetch("babel", {})
+      babel["presets"] ||= []
+      unless babel["presets"].include?("./node_modules/shakapacker/package/babel/preset.js")
+        babel["presets"].push("./node_modules/shakapacker/package/babel/preset.js")
+      end
+      { "babel" => babel }
+    end
+  end
+end
+
+# Helper methods defined at the end (Rails template convention)
+
+def package_json
+  @package_json ||= PackageJson.new
+end
+
 def add_dependencies(dependencies, type)
   package_json.manager.add!(dependencies, type: type)
 rescue PackageJson::Error
@@ -165,6 +193,33 @@ end
 
 def fetch_common_dependencies
   ENV["SKIP_COMMON_LOADERS"] ? {} : PackageJson.read("#{__dir__}").fetch("common")
+end
+
+# Detect if project already uses babel
+def detect_existing_babel_usage
+  # Check for babel config files
+  has_babel_config = File.exist?(Rails.root.join(".babelrc")) || 
+                     File.exist?(Rails.root.join("babel.config.js")) || 
+                     File.exist?(Rails.root.join("babel.config.json")) ||
+                     File.exist?(Rails.root.join(".babelrc.js"))
+  
+  # Check for babel in package.json
+  has_babel_in_package_json = false
+  package_json_path = Rails.root.join("package.json")
+  if File.exist?(package_json_path)
+    begin
+      pj_content = JSON.parse(File.read(package_json_path))
+      has_babel_in_package_json = pj_content.key?("babel") || 
+                                  pj_content.dig("dependencies", "@babel/core") ||
+                                  pj_content.dig("devDependencies", "@babel/core") ||
+                                  pj_content.dig("dependencies", "babel-loader") ||
+                                  pj_content.dig("devDependencies", "babel-loader")
+    rescue JSON::ParserError
+      # If package.json is malformed, assume no babel
+    end
+  end
+  
+  has_babel_config || has_babel_in_package_json
 end
 
 # Determine which JavaScript transpiler to use (cached)
@@ -244,60 +299,5 @@ def fetch_esbuild_dependencies
     { "esbuild" => "latest", "esbuild-loader" => "latest" }
   else
     {}
-  end
-end
-
-Dir.chdir(Rails.root) do
-  npm_version = Shakapacker::Utils::VersionSyntaxConverter.new.rubygem_to_npm(Shakapacker::VERSION)
-  say "Installing shakapacker@#{npm_version}"
-  add_dependencies(["shakapacker@#{npm_version}"], :production)
-
-  package_json.merge! do |pj|
-    {
-      "dependencies" => pj["dependencies"].merge({
-        # TODO: workaround for test suite - long-run need to actually account for diff pkg manager behaviour
-        "shakapacker" => pj["dependencies"]["shakapacker"].delete_prefix("^")
-      })
-    }
-  end
-
-  peers = fetch_peer_dependencies
-  peers = peers.merge(fetch_common_dependencies)
-  peers = peers.merge(fetch_babel_dependencies)
-  peers = peers.merge(fetch_swc_dependencies)
-  peers = peers.merge(fetch_esbuild_dependencies)
-
-  dev_dependency_packages = ["webpack-dev-server"]
-
-  dependencies_to_add = []
-  dev_dependencies_to_add = []
-
-  peers.each do |(package, version)|
-    major_version = version.split("||").last.match(/(\d+)/)[1]
-    entry = "#{package}@#{major_version}"
-
-    if dev_dependency_packages.include? package
-      dev_dependencies_to_add << entry
-    else
-      dependencies_to_add << entry
-    end
-  end
-
-  say "Adding shakapacker peerDependencies"
-  add_dependencies(dependencies_to_add, :production)
-
-  say "Installing webpack-dev-server for live reloading as a development dependency"
-  add_dependencies(dev_dependencies_to_add, :dev)
-  
-  # Configure babel preset in package.json if using babel
-  if determine_javascript_transpiler == "babel"
-    package_json.merge! do |pj|
-      babel = pj.fetch("babel", {})
-      babel["presets"] ||= []
-      unless babel["presets"].include?("./node_modules/shakapacker/package/babel/preset.js")
-        babel["presets"].push("./node_modules/shakapacker/package/babel/preset.js")
-      end
-      { "babel" => babel }
-    end
   end
 end
