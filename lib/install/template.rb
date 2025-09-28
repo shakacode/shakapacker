@@ -14,75 +14,27 @@ force_option = ENV["FORCE"] ? { force: true } : {}
 @package_json ||= PackageJson.new
 install_dir = File.expand_path(File.dirname(__FILE__))
 
-# Detect what transpiler to use for package installation
-# USE_BABEL_PACKAGES is for backward compatibility and only affects package installation
-@install_babel_packages = ENV["USE_BABEL_PACKAGES"] == "true" || ENV["USE_BABEL_PACKAGES"] == "1"
-
-# Detect if we have existing babel configuration files
-# (but not based on USE_BABEL_PACKAGES which is just for package installation)
-babel_config_exists = File.exist?(Rails.root.join(".babelrc")) ||
-                      File.exist?(Rails.root.join("babel.config.js")) ||
-                      File.exist?(Rails.root.join("babel.config.json")) ||
-                      File.exist?(Rails.root.join(".babelrc.js"))
-
-babel_in_package_json = false
-package_json_path = Rails.root.join("package.json")
-if File.exist?(package_json_path)
-  begin
-    pj_content = JSON.parse(File.read(package_json_path))
-    babel_in_package_json = pj_content.key?("babel") ||
-                           pj_content.dig("dependencies", "@babel/core") ||
-                           pj_content.dig("devDependencies", "@babel/core") ||
-                           pj_content.dig("dependencies", "babel-loader") ||
-                           pj_content.dig("devDependencies", "babel-loader")
-  rescue JSON::ParserError
-    # If package.json is malformed, assume no babel
-  end
-end
-
-@has_existing_babel = babel_config_exists || babel_in_package_json
-
-# Read existing config if it exists
-@existing_config = {}
-config_path = Rails.root.join("config/shakapacker.yml")
-if File.exist?(config_path)
-  begin
-    @existing_config = YAML.load_file(config_path) || {}
-  rescue Psych::SyntaxError
-    # Invalid YAML, use empty config
-  end
-end
-
-# Determine transpiler for installation
-if @install_babel_packages
-  @detected_transpiler = "babel"
+# Simple approach: USE_BABEL_PACKAGES only controls package installation
+# We never modify the config file - it always defaults to swc
+# This maintains backward compatibility while keeping the logic simple
+@detected_transpiler = if ENV["USE_BABEL_PACKAGES"] == "true" || ENV["USE_BABEL_PACKAGES"] == "1"
   say "📦 Installing Babel packages (USE_BABEL_PACKAGES is set)", :yellow
+  "babel"
 elsif ENV["JAVASCRIPT_TRANSPILER"]
-  @detected_transpiler = ENV["JAVASCRIPT_TRANSPILER"]
-  say "📦 Using #{@detected_transpiler} transpiler (JAVASCRIPT_TRANSPILER env var)", :blue
-elsif @has_existing_babel
-  @detected_transpiler = "babel"
-  say "🔍 Detected existing Babel configuration - will install Babel packages", :yellow
-elsif @existing_config["javascript_transpiler"]
-  @detected_transpiler = @existing_config["javascript_transpiler"]
-  say "📦 Using existing configured #{@detected_transpiler} transpiler", :blue
+  say "📦 Installing #{ENV['JAVASCRIPT_TRANSPILER']} packages", :blue
+  ENV["JAVASCRIPT_TRANSPILER"]
 else
-  @detected_transpiler = "swc"
-  say "✨ Using SWC transpiler (20x faster than Babel)", :green
+  # Default to swc - the config file also defaults to swc
+  say "✨ Installing SWC packages (20x faster than Babel)", :green
+  "swc"
 end
 
-# Copy config file
+# Copy config file (always copies as-is, never modified)
 copy_file "#{install_dir}/config/shakapacker.yml", "config/shakapacker.yml", force_option
 
-# Note: We don't modify the config file - it has 'swc' as default.
-# Inform users if there's a mismatch between installed packages and config
-if @detected_transpiler == "babel" && !@has_existing_babel
-  # This happens when USE_BABEL_PACKAGES is set but no existing babel config is found
-  say "   📝 Note: Babel packages installed, but config defaults to 'swc'.", :yellow  
-  say "   To use Babel, update javascript_transpiler to 'babel' in config/shakapacker.yml", :yellow
-elsif @has_existing_babel && @detected_transpiler == "babel"
-  # When we detect existing babel setup, suggest updating the config
-  say "   📝 Babel detected. Update javascript_transpiler to 'babel' in config/shakapacker.yml", :yellow
+# Simple informational message if babel packages are installed
+if @detected_transpiler == "babel"
+  say "   📝 Note: To use Babel, set javascript_transpiler to 'babel' in config/shakapacker.yml", :yellow
 end
 
 say "Copying webpack core config"
@@ -273,49 +225,3 @@ end
 def package_json
   @package_json
 end
-
-def add_dependencies(dependencies, type)
-  @package_json.manager.add!(dependencies, type: type)
-rescue PackageJson::Error
-  say "Shakapacker installation failed 😭 See above for details.", :red
-  exit 1
-end
-
-def fetch_peer_dependencies
-  PackageJson.read("#{__dir__}").fetch(ENV["SHAKAPACKER_BUNDLER"] || "webpack")
-end
-
-def fetch_common_dependencies
-  ENV["SKIP_COMMON_LOADERS"] ? {} : PackageJson.read("#{__dir__}").fetch("common")
-end
-
-# Detect if project already uses babel
-def detect_existing_babel_usage
-  # Check for babel config files
-  babel_config_exists = File.exist?(Rails.root.join(".babelrc")) ||
-                        File.exist?(Rails.root.join("babel.config.js")) ||
-                        File.exist?(Rails.root.join("babel.config.json")) ||
-                        File.exist?(Rails.root.join(".babelrc.js"))
-
-  # Check for babel in package.json
-  babel_in_package = false
-  package_json_path = Rails.root.join("package.json")
-  if File.exist?(package_json_path)
-    begin
-      pj_content = JSON.parse(File.read(package_json_path))
-      babel_in_package = pj_content.key?("babel") ||
-                        pj_content.dig("dependencies", "@babel/core") ||
-                        pj_content.dig("devDependencies", "@babel/core") ||
-                        pj_content.dig("dependencies", "babel-loader") ||
-                        pj_content.dig("devDependencies", "babel-loader")
-    rescue JSON::ParserError
-      # If package.json is malformed, assume no babel
-    end
-  end
-
-  babel_config_exists || babel_in_package
-end
-
-# Note: The determine_javascript_transpiler and fetch_*_dependencies methods
-# have been inlined above where they're used because Rails templates
-# can't call methods before they're defined
