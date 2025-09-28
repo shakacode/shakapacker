@@ -101,9 +101,13 @@ _If you're on webpacker v5, follow [how to upgrade to webpacker v6.0.0.rc.6 from
 
 1. Update `webpack-dev-server` to the current version, greater than 4.2, updating `package.json`.
 
-   **Important:** Ensure version compatibility between webpack-cli and webpack-dev-server. If you encounter the error `[webpack-cli] Invalid options object. Dev Server has been initialized using an options object that does not match the API schema` with an unknown property `_assetEmittingPreviousFiles`, this typically indicates version incompatibility. webpack-cli v4 is not compatible with webpack-dev-server v5. Ensure you're using compatible versions, such as:
-   - webpack-cli 4.x with webpack-dev-server 4.x 
-   - webpack-cli 5.x with webpack-dev-server 5.x
+   **Important:** If you encounter the error `[webpack-cli] Invalid options object. Dev Server has been initialized using an options object that does not match the API schema` with an unknown property `_assetEmittingPreviousFiles`, this indicates your webpack-dev-server configuration contains deprecated options. 
+   
+   To resolve this issue:
+   - Ensure you're using webpack-cli >= 4.7.0 with webpack-dev-server 5.x (webpack-cli 4.7+ is compatible with webpack-dev-server v5)
+   - Check your current versions: `npm list webpack-cli webpack-dev-server`
+   - Remove any legacy options like `_assetEmittingPreviousFiles` from your dev-server configuration
+   - Review the [webpack-dev-server migration guide](https://github.com/webpack/webpack-dev-server/blob/master/migration-v5.md) for proper v4 to v5 migration steps
    
    See [issue #526](https://github.com/shakacode/shakapacker/issues/526) for more details.
 
