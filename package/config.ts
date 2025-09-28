@@ -6,18 +6,18 @@ const { ensureTrailingSlash } = require("./utils/helpers")
 const { railsEnv } = require("./env")
 const configPath = require("./utils/configPath")
 const defaultConfigPath = require("./utils/defaultConfigPath")
-import { Config } from "./types"
+import { Config, YamlConfig, LegacyConfig } from "./types"
 
-const getDefaultConfig = (): any => {
-  const defaultConfig = load(readFileSync(defaultConfigPath, "utf8")) as any
-  return defaultConfig[railsEnv] || defaultConfig.production
+const getDefaultConfig = (): Partial<Config> => {
+  const defaultConfig = load(readFileSync(defaultConfigPath, "utf8")) as YamlConfig
+  return defaultConfig[railsEnv] || defaultConfig.production || {}
 }
 
 const defaults = getDefaultConfig()
 let config: Config
 
 if (existsSync(configPath)) {
-  const appYmlObject = load(readFileSync(configPath, "utf8")) as any
+  const appYmlObject = load(readFileSync(configPath, "utf8")) as YamlConfig
   const envAppConfig = appYmlObject[railsEnv]
 
   if (!envAppConfig) {
@@ -65,7 +65,7 @@ const DEFAULT_JAVASCRIPT_TRANSPILER =
 
 // Backward compatibility: Add webpack_loader property that maps to javascript_transpiler
 // Show deprecation warning if webpack_loader is used
-const webpackLoader = (config as any).webpack_loader
+const webpackLoader = (config as LegacyConfig).webpack_loader
 if (webpackLoader && !config.javascript_transpiler) {
   console.warn(
     "⚠️  DEPRECATION WARNING: The 'webpack_loader' configuration option is deprecated. Please use 'javascript_transpiler' instead as it better reflects its purpose of configuring JavaScript transpilation regardless of the bundler used."
@@ -77,6 +77,6 @@ if (webpackLoader && !config.javascript_transpiler) {
 }
 
 // Ensure webpack_loader is always available for backward compatibility
-;(config as any).webpack_loader = config.javascript_transpiler
+;(config as LegacyConfig).webpack_loader = config.javascript_transpiler
 
 export = config

@@ -1,5 +1,15 @@
 import * as https from "node:https"
 
+// Type for the raw YAML config file
+export interface YamlConfig {
+  [environment: string]: Partial<Config>
+}
+
+// Type for backward compatibility
+export interface LegacyConfig extends Config {
+  webpack_loader?: string
+}
+
 export interface Config {
   source_path: string
   source_entry_path: string

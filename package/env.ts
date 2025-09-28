@@ -9,19 +9,19 @@ const DEFAULT = "production"
 const railsEnv = process.env.RAILS_ENV
 const rawNodeEnv = process.env.NODE_ENV
 const nodeEnv =
-  rawNodeEnv && NODE_ENVIRONMENTS.includes(rawNodeEnv as any) ? rawNodeEnv : DEFAULT
+  rawNodeEnv && NODE_ENVIRONMENTS.includes(rawNodeEnv as typeof NODE_ENVIRONMENTS[number]) ? rawNodeEnv : DEFAULT
 const isProduction = nodeEnv === "production"
 const isDevelopment = nodeEnv === "development"
 
 interface ConfigFile {
-  [key: string]: any
+  [environment: string]: Record<string, unknown>
 }
 
 let config: ConfigFile
 try {
   config = load(readFileSync(configPath, "utf8")) as ConfigFile
-} catch (error: any) {
-  if (error.code === "ENOENT") {
+} catch (error: unknown) {
+  if ((error as NodeJS.ErrnoException).code === "ENOENT") {
     // File not found, use default configuration
     config = load(readFileSync(defaultConfigPath, "utf8")) as ConfigFile
   } else {
