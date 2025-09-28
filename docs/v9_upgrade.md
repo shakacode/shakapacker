@@ -79,9 +79,9 @@ javascript_transpiler: 'babel'
 - New installations will use SWC by default
 - Babel dependencies won't be installed unless explicitly configured
 
-**Migration Options:**
+### Migration Options
 
-**Option 1 (Recommended): Switch to SWC**
+#### Option 1 (Recommended): Switch to SWC
 ```yml
 # config/shakapacker.yml
 javascript_transpiler: 'swc'
@@ -91,14 +91,14 @@ Then install SWC:
 npm install @swc/core swc-loader
 ```
 
-**Option 2: Keep using Babel**
+#### Option 2: Keep using Babel
 ```yml
 # config/shakapacker.yml
 javascript_transpiler: 'babel'
 ```
 No other changes needed - your existing babel packages will continue to work.
 
-**Option 3: Use esbuild**
+#### Option 3: Use esbuild
 ```yml
 # config/shakapacker.yml
 javascript_transpiler: 'esbuild'
