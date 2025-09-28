@@ -30,16 +30,12 @@ const validateBabelDependencies = () => {
   // Additional packages like presets are optional and project-specific
   const coreRequiredPackages = ["@babel/core", "babel-loader"]
 
-  const missingCorePackages = []
-  for (const pkg of coreRequiredPackages) {
-    if (!moduleExists(pkg)) {
-      missingCorePackages.push(pkg)
-    }
-  }
+  const missingCorePackages = coreRequiredPackages.filter(
+    (pkg) => !moduleExists(pkg)
+  )
 
   if (missingCorePackages.length > 0) {
-    const installCommand =
-      "npm install --save-dev " + missingCorePackages.join(" ")
+    const installCommand = `npm install --save-dev ${missingCorePackages.join(" ")}`
 
     // Check for commonly needed packages and suggest them
     const suggestedPackages = [
