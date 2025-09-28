@@ -68,7 +68,7 @@ Changes since the last non-beta release.
 - Install the latest major version of peer dependencies [PR 576](https://github.com/shakacode/shakapacker/pull/576) by [G-Rath](https://github.com/g-rath).
 
 
-## [v8.3.0] - April 28, 2025
+## [v8.3.0] - April 28, 2024
 ### Added
 
 - Allow `webpack-assets-manifest` v6. [PR 562](https://github.com/shakacode/shakapacker/pull/562) by [tagliala](https://github.com/tagliala), [shoeyn](https://github.com/shoeyn).
