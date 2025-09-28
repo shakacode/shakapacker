@@ -44,12 +44,14 @@ To simplify peer dependencies while supporting both webpack & rspack, we decided
 ```
 Note: These dependencies are only installed if you're using Babel as your JavaScript transpiler. Consider using SWC or esbuild for better performance.
 
-### SWC (recommended - 20x faster than Babel)
+### SWC (default - 20x faster than Babel)
 ```
     "@swc/core": "latest",
     "swc-loader": "latest"
 ```
-Install manually with: `npm install @swc/core swc-loader`
+- **For webpack**: Installed automatically when using default configuration
+- **For rspack**: Built-in, no additional installation needed (rspack includes SWC natively)
+- Manual install: `npm install @swc/core swc-loader`
 
 ### esbuild
 ```
