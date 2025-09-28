@@ -1,6 +1,5 @@
 # Shakapacker's Peer Dependencies
-#### last updated for our 9.0.0 version
-#### see lib/install/package.json
+## Last updated for our 9.0.0 version — see lib/install/package.json
 
 To simplify peer dependencies while supporting both webpack & rspack, we decided to document the dependencies here instead of creating two separate npm packages.
 
