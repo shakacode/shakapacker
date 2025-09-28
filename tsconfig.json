@@ -7,7 +7,7 @@
     "declarationMap": true,
     "outDir": "./package",
     "rootDir": "./package",
-    "strict": false,
+    "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,

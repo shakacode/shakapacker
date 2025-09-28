@@ -4,8 +4,8 @@ import { existsSync, readFileSync } from "fs"
 import { merge } from "webpack-merge"
 const { ensureTrailingSlash } = require("./utils/helpers")
 const { railsEnv } = require("./env")
-import configPath from "./utils/configPath"
-import defaultConfigPath from "./utils/defaultConfigPath"
+const configPath = require("./utils/configPath")
+const defaultConfigPath = require("./utils/defaultConfigPath")
 import { Config, YamlConfig, LegacyConfig } from "./types"
 const { isValidYamlConfig, createConfigValidationError, isPartialConfig } = require("./utils/typeGuards")
 const { isFileNotFoundError, createFileOperationError } = require("./utils/errorHelpers")

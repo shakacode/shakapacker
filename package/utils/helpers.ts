@@ -1,4 +1,4 @@
-const { isModuleNotFoundError, getErrorMessage } = require("./errorHelpers")
+const errorHelpers = require("./errorHelpers")
 
 const isBoolean = (str: string): boolean => /^true/.test(str) || /^false/.test(str)
 
@@ -8,7 +8,7 @@ const resolvedPath = (packageName: string): string | null => {
   try {
     return require.resolve(packageName)
   } catch (error: unknown) {
-    if (!isModuleNotFoundError(error)) {
+    if (!errorHelpers.isModuleNotFoundError(error)) {
       throw error
     }
     return null
@@ -51,7 +51,7 @@ const packageFullVersion = (packageName: string): string => {
     const packageJson = require(packageJsonPath) as { version: string }
     return packageJson.version
   } catch (error) {
-    console.warn(`Failed to get version for package ${packageName}: ${getErrorMessage(error)}`)
+    console.warn(`Failed to get version for package ${packageName}: ${errorHelpers.getErrorMessage(error)}`)
     return "0.0.0"
   }
 }

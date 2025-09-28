@@ -34,8 +34,14 @@ export function createFileOperationError(
   filePath: string,
   details?: string
 ): Error {
-  const baseMessage = `Failed to ${operation} file: ${filePath}`
-  return new Error(details ? `${baseMessage} - ${details}` : baseMessage)
+  const baseMessage = `Failed to ${operation} file at path '${filePath}'`
+  const errorDetails = details ? ` - ${details}` : ''
+  const suggestion = operation === 'read' 
+    ? ' (check if file exists and permissions are correct)'
+    : operation === 'write'
+    ? ' (check write permissions and disk space)'
+    : ' (check permissions)'
+  return new Error(`${baseMessage}${errorDetails}${suggestion}`)
 }
 
 /**
@@ -43,7 +49,9 @@ export function createFileOperationError(
  */
 export function getErrorMessage(error: unknown): string {
   if (error instanceof Error) {
-    return error.message
+    // Include stack trace for better debugging in development
+    const isDev = process.env.NODE_ENV === 'development'
+    return isDev && error.stack ? `${error.message}\n${error.stack}` : error.message
   }
   if (typeof error === 'string') {
     return error
@@ -51,7 +59,8 @@ export function getErrorMessage(error: unknown): string {
   if (error && typeof error === 'object' && 'message' in error) {
     return String((error as { message: unknown }).message)
   }
-  return 'Unknown error'
+  // Provide more context for truly unknown errors
+  return `Unknown error occurred (type: ${typeof error}, value: ${JSON.stringify(error)})`
 }
 
 /**
