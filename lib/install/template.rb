@@ -14,27 +14,37 @@ force_option = ENV["FORCE"] ? { force: true } : {}
 @package_json ||= PackageJson.new
 install_dir = File.expand_path(File.dirname(__FILE__))
 
-# Simple approach: USE_BABEL_PACKAGES only controls package installation
-# We never modify the config file - it always defaults to swc
-# This maintains backward compatibility while keeping the logic simple
-@detected_transpiler = if ENV["USE_BABEL_PACKAGES"] == "true" || ENV["USE_BABEL_PACKAGES"] == "1"
+# Package installation strategy:
+# 1. Always install packages for the transpiler in the config file (defaults to swc)
+# 2. Additionally install babel packages if USE_BABEL_PACKAGES is set (backward compatibility)
+# This ensures runtime can use the configured transpiler while maintaining compatibility
+
+# Check if USE_BABEL_PACKAGES is set for backward compatibility
+@install_babel_packages = ENV["USE_BABEL_PACKAGES"] == "true" || ENV["USE_BABEL_PACKAGES"] == "1"
+
+# Determine the configured transpiler (what the config file will use at runtime)
+# Since we're copying the default config which has 'swc', that's our default
+@config_transpiler = ENV["JAVASCRIPT_TRANSPILER"] || "swc"
+
+if @install_babel_packages
   say "📦 Installing Babel packages (USE_BABEL_PACKAGES is set)", :yellow
-  "babel"
-elsif ENV["JAVASCRIPT_TRANSPILER"]
-  say "📦 Installing #{ENV['JAVASCRIPT_TRANSPILER']} packages", :blue
-  ENV["JAVASCRIPT_TRANSPILER"]
-else
-  # Default to swc - the config file also defaults to swc
+end
+
+if @config_transpiler == "swc" && !@install_babel_packages
   say "✨ Installing SWC packages (20x faster than Babel)", :green
-  "swc"
+elsif @config_transpiler == "esbuild"
+  say "📦 Installing esbuild packages", :blue
+elsif @config_transpiler == "babel" && !@install_babel_packages
+  say "📦 Installing Babel packages", :yellow
 end
 
 # Copy config file (always copies as-is, never modified)
 copy_file "#{install_dir}/config/shakapacker.yml", "config/shakapacker.yml", force_option
 
-# Simple informational message if babel packages are installed
-if @detected_transpiler == "babel"
-  say "   📝 Note: To use Babel, set javascript_transpiler to 'babel' in config/shakapacker.yml", :yellow
+# Inform about config if there's a mismatch
+if @install_babel_packages && @config_transpiler == "swc"
+  say "   📝 Note: Babel packages installed for compatibility, but config uses SWC", :yellow
+  say "   To use Babel at runtime, set javascript_transpiler to 'babel' in config/shakapacker.yml", :yellow
 end
 
 say "Copying webpack core config"
@@ -152,24 +162,25 @@ Dir.chdir(Rails.root) do
   # Add transpiler-specific dependencies based on detected/configured transpiler
   # Inline the logic here since methods can't be called before they're defined in Rails templates
 
-  # Babel dependencies - only install if explicitly needed
-  # @install_babel_packages is true when USE_BABEL_PACKAGES env var is set
-  if @detected_transpiler == "babel"
-    say "📦 Installing Babel dependencies", :yellow
+  # Install babel dependencies if USE_BABEL_PACKAGES is set (backward compatibility)
+  if @install_babel_packages
     babel_deps = PackageJson.read(install_dir).fetch("babel")
     peers = peers.merge(babel_deps)
   end
 
-  # SWC dependencies (pin to major version 1)
-  if @detected_transpiler == "swc"
-    say "📦 Installing SWC dependencies (20x faster than Babel)", :green
+  # Always install the transpiler packages that match the config file
+  # This ensures the runtime can use the configured transpiler
+  case @config_transpiler
+  when "babel"
+    # Only install babel if not already installed via USE_BABEL_PACKAGES
+    if !@install_babel_packages
+      babel_deps = PackageJson.read(install_dir).fetch("babel")
+      peers = peers.merge(babel_deps)
+    end
+  when "swc"
     swc_deps = { "@swc/core" => "^1.3.0", "swc-loader" => "^0.2.0" }
     peers = peers.merge(swc_deps)
-  end
-
-  # esbuild dependencies (pin to major version 0)
-  if @detected_transpiler == "esbuild"
-    say "📦 Installing esbuild dependencies", :blue
+  when "esbuild"
     esbuild_deps = { "esbuild" => "^0.24.0", "esbuild-loader" => "^4.0.0" }
     peers = peers.merge(esbuild_deps)
   end
