@@ -225,9 +225,8 @@ Dir.chdir(Rails.root) do
     exit 1
   end
 
-  # Configure babel preset in package.json if using babel
-  # We check the @detected_transpiler variable set at the beginning
-  if @detected_transpiler == "babel"
+  # Configure babel preset in package.json if babel packages are installed
+  if @install_babel_packages || @config_transpiler == "babel"
     @package_json.merge! do |pj|
       babel = pj.fetch("babel", {})
       babel["presets"] ||= []
