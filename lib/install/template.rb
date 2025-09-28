@@ -2,25 +2,56 @@ require "shakapacker/utils/misc"
 require "shakapacker/utils/manager"
 require "shakapacker/utils/version_syntax_converter"
 require "package_json"
+require "yaml"
+require "json"
 
 # Install Shakapacker
 
 force_option = ENV["FORCE"] ? { force: true } : {}
 
-copy_file "#{__dir__}/config/shakapacker.yml", "config/shakapacker.yml", force_option
+# Initialize variables for use throughout the template
+# Using instance variable to avoid method definition issues in Rails templates
+@package_json ||= PackageJson.new
+install_dir = File.expand_path(File.dirname(__FILE__))
+
+# Installation strategy:
+# - USE_BABEL_PACKAGES installs both babel AND swc for compatibility
+# - Otherwise install only the specified transpiler
+if ENV["USE_BABEL_PACKAGES"] == "true" || ENV["USE_BABEL_PACKAGES"] == "1"
+  @transpiler_to_install = "babel"
+  say "📦 Installing Babel packages (USE_BABEL_PACKAGES is set)", :yellow
+  say "✨ Also installing SWC packages for default config compatibility", :green
+elsif ENV["JAVASCRIPT_TRANSPILER"]
+  @transpiler_to_install = ENV["JAVASCRIPT_TRANSPILER"]
+  say "📦 Installing #{@transpiler_to_install} packages", :blue
+else
+  # Default to swc (matches the default in shakapacker.yml)
+  @transpiler_to_install = "swc"
+  say "✨ Installing SWC packages (20x faster than Babel)", :green
+end
+
+# Copy config file
+copy_file "#{install_dir}/config/shakapacker.yml", "config/shakapacker.yml", force_option
+
+# Update config if USE_BABEL_PACKAGES is set to ensure babel is used at runtime
+if @transpiler_to_install == "babel" && !ENV["JAVASCRIPT_TRANSPILER"]
+  # When USE_BABEL_PACKAGES is set, update the config to use babel
+  gsub_file "config/shakapacker.yml", "javascript_transpiler: 'swc'", "javascript_transpiler: 'babel'"
+  say "   📝 Updated config/shakapacker.yml to use Babel transpiler", :green
+end
 
 say "Copying webpack core config"
-directory "#{__dir__}/config/webpack", "config/webpack", force_option
+directory "#{install_dir}/config/webpack", "config/webpack", force_option
 
 if Dir.exist?(Shakapacker.config.source_path)
   say "The packs app source directory already exists"
 else
   say "Creating packs app source directory"
   empty_directory "app/javascript/packs"
-  copy_file "#{__dir__}/application.js", "app/javascript/packs/application.js"
+  copy_file "#{install_dir}/application.js", "app/javascript/packs/application.js"
 end
 
-apply "#{__dir__}/binstubs.rb"
+apply "#{install_dir}/binstubs.rb"
 
 git_ignore_path = Rails.root.join(".gitignore")
 if File.exist?(git_ignore_path)
@@ -43,17 +74,8 @@ else
   say %(        Add <%= javascript_pack_tag "application" %> within the <head> tag in your custom layout.)
 end
 
-def package_json
-  @package_json ||= PackageJson.new
-end
-
 # setup the package manager with default values
-package_json.merge! do |pj|
-  babel = pj.fetch("babel", {})
-
-  babel["presets"] ||= []
-  babel["presets"].push("./node_modules/shakapacker/package/babel/preset.js")
-
+@package_json.merge! do |pj|
   package_manager = pj.fetch("packageManager") do
     "#{Shakapacker::Utils::Manager.guess_binary}@#{Shakapacker::Utils::Manager.guess_version}"
   end
@@ -62,7 +84,6 @@ package_json.merge! do |pj|
     "name" => "app",
     "private" => true,
     "version" => "0.1.0",
-    "babel" => babel,
     "browserslist" => [
       "defaults"
     ],
@@ -74,7 +95,7 @@ Shakapacker::Utils::Manager.error_unless_package_manager_is_obvious!
 
 # Ensure there is `system!("bin/yarn")` command in `./bin/setup` file
 if (setup_path = Rails.root.join("bin/setup")).exist?
-  native_install_command = package_json.manager.native_install_command.join(" ")
+  native_install_command = @package_json.manager.native_install_command.join(" ")
 
   say "Run #{native_install_command} during bin/setup"
 
@@ -103,42 +124,56 @@ if (setup_path = Rails.root.join("bin/setup")).exist?
   end
 end
 
-def add_dependencies(dependencies, type)
-  package_json.manager.add!(dependencies, type: type)
-rescue PackageJson::Error
-  say "Shakapacker installation failed 😭 See above for details.", :red
-  exit 1
-end
-
-def fetch_peer_dependencies
-  PackageJson.read("#{__dir__}").fetch(ENV["SHAKAPACKER_BUNDLER"] || "webpack")
-end
-
-def fetch_common_dependencies
-  ENV["SKIP_COMMON_LOADERS"] ? {} : PackageJson.read("#{__dir__}").fetch("common")
-end
-
-def fetch_babel_dependencies
-  ENV["USE_BABEL_PACKAGES"] ? PackageJson.read("#{__dir__}").fetch("babel") : {}
-end
-
 Dir.chdir(Rails.root) do
   npm_version = Shakapacker::Utils::VersionSyntaxConverter.new.rubygem_to_npm(Shakapacker::VERSION)
   say "Installing shakapacker@#{npm_version}"
-  add_dependencies(["shakapacker@#{npm_version}"], :production)
-
-  package_json.merge! do |pj|
-    {
-      "dependencies" => pj["dependencies"].merge({
-        # TODO: workaround for test suite - long-run need to actually account for diff pkg manager behaviour
-        "shakapacker" => pj["dependencies"]["shakapacker"].delete_prefix("^")
-      })
-    }
+  begin
+    @package_json.manager.add!(["shakapacker@#{npm_version}"], type: :production)
+  rescue PackageJson::Error
+    say "Shakapacker installation failed 😭 See above for details.", :red
+    exit 1
   end
 
-  peers = fetch_peer_dependencies
-  peers = peers.merge(fetch_common_dependencies)
-  peers = peers.merge(fetch_babel_dependencies)
+  @package_json.merge! do |pj|
+    if pj["dependencies"] && pj["dependencies"]["shakapacker"]
+      {
+        "dependencies" => pj["dependencies"].merge({
+          # TODO: workaround for test suite - long-run need to actually account for diff pkg manager behaviour
+          "shakapacker" => pj["dependencies"]["shakapacker"].delete_prefix("^")
+        })
+      }
+    else
+      pj
+    end
+  end
+
+  # Inline fetch_peer_dependencies and fetch_common_dependencies
+  peers = PackageJson.read(install_dir).fetch(ENV["SHAKAPACKER_BUNDLER"] || "webpack")
+  common_deps = ENV["SKIP_COMMON_LOADERS"] ? {} : PackageJson.read(install_dir).fetch("common")
+  peers = peers.merge(common_deps)
+
+  # Add transpiler-specific dependencies based on detected/configured transpiler
+  # Inline the logic here since methods can't be called before they're defined in Rails templates
+
+  # Install transpiler-specific dependencies
+  # When USE_BABEL_PACKAGES is set, install both babel AND swc
+  # This ensures backward compatibility while supporting the default config
+  if @transpiler_to_install == "babel"
+    # Install babel packages
+    babel_deps = PackageJson.read(install_dir).fetch("babel")
+    peers = peers.merge(babel_deps)
+
+    # Also install SWC since that's what the default config uses
+    # This ensures the runtime works regardless of config
+    swc_deps = PackageJson.read(install_dir).fetch("swc")
+    peers = peers.merge(swc_deps)
+  elsif @transpiler_to_install == "swc"
+    swc_deps = PackageJson.read(install_dir).fetch("swc")
+    peers = peers.merge(swc_deps)
+  elsif @transpiler_to_install == "esbuild"
+    esbuild_deps = PackageJson.read(install_dir).fetch("esbuild")
+    peers = peers.merge(esbuild_deps)
+  end
 
   dev_dependency_packages = ["webpack-dev-server"]
 
@@ -146,8 +181,15 @@ Dir.chdir(Rails.root) do
   dev_dependencies_to_add = []
 
   peers.each do |(package, version)|
-    major_version = version.split("||").last.match(/(\d+)/)[1]
-    entry = "#{package}@#{major_version}"
+    # Handle versions like "^1.3.0" or ">= 4 || 5"
+    if version.start_with?("^", "~") || version.match?(/^\d+\.\d+/)
+      # Already has proper version format, use as-is
+      entry = "#{package}@#{version}"
+    else
+      # Extract major version from complex version strings like ">= 4 || 5"
+      major_version = version.split("||").last.match(/(\d+)/)[1]
+      entry = "#{package}@#{major_version}"
+    end
 
     if dev_dependency_packages.include? package
       dev_dependencies_to_add << entry
@@ -157,8 +199,36 @@ Dir.chdir(Rails.root) do
   end
 
   say "Adding shakapacker peerDependencies"
-  add_dependencies(dependencies_to_add, :production)
+  begin
+    @package_json.manager.add!(dependencies_to_add, type: :production)
+  rescue PackageJson::Error
+    say "Shakapacker installation failed 😭 See above for details.", :red
+    exit 1
+  end
 
   say "Installing webpack-dev-server for live reloading as a development dependency"
-  add_dependencies(dev_dependencies_to_add, :dev)
+  begin
+    @package_json.manager.add!(dev_dependencies_to_add, type: :dev)
+  rescue PackageJson::Error
+    say "Shakapacker installation failed 😭 See above for details.", :red
+    exit 1
+  end
+
+  # Configure babel preset in package.json if babel is being used
+  if @transpiler_to_install == "babel"
+    @package_json.merge! do |pj|
+      babel = pj.fetch("babel", {})
+      babel["presets"] ||= []
+      unless babel["presets"].include?("./node_modules/shakapacker/package/babel/preset.js")
+        babel["presets"].push("./node_modules/shakapacker/package/babel/preset.js")
+      end
+      { "babel" => babel }
+    end
+  end
+end
+
+# Helper methods defined at the end (Rails template convention)
+
+def package_json
+  @package_json
 end

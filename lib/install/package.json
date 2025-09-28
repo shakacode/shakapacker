@@ -26,5 +26,13 @@
     "@babel/preset-env": "^7.16.11",
     "@babel/runtime": "^7.17.9",
     "babel-loader": "^8.2.4 || ^9.0.0 || ^10.0.0"
+  },
+  "swc": {
+    "@swc/core": "^1.3.0",
+    "swc-loader": "^0.2.0"
+  },
+  "esbuild": {
+    "esbuild": "^0.24.0",
+    "esbuild-loader": "^4.0.0"
   }
 }

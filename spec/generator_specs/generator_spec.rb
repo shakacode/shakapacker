@@ -66,12 +66,15 @@ describe "Generator" do
           FileUtils.rm_rf(TEMP_RAILS_APP_PATH)
         end
 
-        it "creates `config/shakapacker.yml`" do
+        it "creates `config/shakapacker.yml` with babel transpiler when USE_BABEL_PACKAGES is set" do
           config_file_relative_path = "config/shakapacker.yml"
           actual_content = read(path_in_the_app(config_file_relative_path))
           expected_content = read(path_in_the_gem(config_file_relative_path))
 
-          expect(actual_content).to eq expected_content
+          # When USE_BABEL_PACKAGES=true, the config should be updated to use babel
+          expected_content_with_babel = expected_content.gsub("javascript_transpiler: 'swc'", "javascript_transpiler: 'babel'")
+
+          expect(actual_content).to eq expected_content_with_babel
         end
 
         it "ensures the 'packageManager' field is set" do
@@ -139,12 +142,15 @@ describe "Generator" do
           package_json = PackageJson.read(path_in_the_app)
           actual_dependencies = package_json.fetch("dependencies", {}).keys
 
+          # When USE_BABEL_PACKAGES=true, we install both Babel AND SWC packages
           expected_dependencies = %w(
             @babel/core
             @babel/plugin-transform-runtime
             @babel/preset-env
             @babel/runtime
             babel-loader
+            @swc/core
+            swc-loader
             compression-webpack-plugin
             terser-webpack-plugin
             webpack

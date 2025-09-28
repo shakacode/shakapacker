@@ -65,7 +65,50 @@ javascript_transpiler: 'babel'
 
 **Note:** The old `webpack_loader` option is deprecated but still supported with a warning.
 
-### 3. Rspack Support Added
+### 3. SWC is Now the Default JavaScript Transpiler
+
+**What changed:** SWC replaces Babel as the default JavaScript transpiler. Babel is no longer included in peer dependencies.
+
+**Why:** SWC is 20x faster than Babel while maintaining compatibility with most JavaScript and TypeScript code.
+
+**Impact on existing projects:**
+- Your project will continue using Babel if you already have babel packages in package.json
+- To switch to SWC for better performance, see migration options below
+
+**Impact on new projects:**
+- New installations will use SWC by default
+- Babel dependencies won't be installed unless explicitly configured
+
+### Migration Options
+
+#### Option 1 (Recommended): Switch to SWC
+```yml
+# config/shakapacker.yml
+javascript_transpiler: 'swc'
+```
+Then install SWC:
+```bash
+npm install @swc/core swc-loader
+```
+
+#### Option 2: Keep using Babel
+```yml
+# config/shakapacker.yml
+javascript_transpiler: 'babel'
+```
+No other changes needed - your existing babel packages will continue to work.
+
+#### Option 3: Use esbuild
+```yml
+# config/shakapacker.yml
+javascript_transpiler: 'esbuild'
+```
+Then install esbuild:
+```bash
+npm install esbuild esbuild-loader
+```
+
+### 4. Rspack Support Added
 
 **New feature:** Shakapacker v9 adds support for Rspack as an alternative bundler to webpack.
 

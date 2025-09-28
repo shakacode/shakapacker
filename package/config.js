@@ -59,8 +59,8 @@ if (process.env.SHAKAPACKER_ASSETS_BUNDLER) {
 }
 
 // Define clear defaults
-const DEFAULT_JAVASCRIPT_TRANSPILER =
-  config.assets_bundler === "rspack" ? "swc" : "babel"
+// SWC is now the default transpiler for both webpack and rspack
+const DEFAULT_JAVASCRIPT_TRANSPILER = "swc"
 
 // Backward compatibility: Add webpack_loader property that maps to javascript_transpiler
 // Show deprecation warning if webpack_loader is used
