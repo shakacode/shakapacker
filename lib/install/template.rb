@@ -162,7 +162,7 @@ Dir.chdir(Rails.root) do
     # Install babel packages
     babel_deps = PackageJson.read(install_dir).fetch("babel")
     peers = peers.merge(babel_deps)
-    
+
     # Also install SWC since that's what the default config uses
     # This ensures the runtime works regardless of config
     swc_deps = PackageJson.read(install_dir).fetch("swc")
@@ -181,7 +181,7 @@ Dir.chdir(Rails.root) do
   dev_dependencies_to_add = []
 
   peers.each do |(package, version)|
-    # Handle versions like "^1.3.0" or ">= 4 || 5" 
+    # Handle versions like "^1.3.0" or ">= 4 || 5"
     if version.start_with?("^", "~") || version.match?(/^\d+\.\d+/)
       # Already has proper version format, use as-is
       entry = "#{package}@#{version}"

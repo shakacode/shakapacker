@@ -70,7 +70,7 @@ describe "Generator" do
           config_file_relative_path = "config/shakapacker.yml"
           actual_content = read(path_in_the_app(config_file_relative_path))
           expected_content = read(path_in_the_gem(config_file_relative_path))
-          
+
           # When USE_BABEL_PACKAGES=true, the config should be updated to use babel
           expected_content_with_babel = expected_content.gsub("javascript_transpiler: 'swc'", "javascript_transpiler: 'babel'")
 
