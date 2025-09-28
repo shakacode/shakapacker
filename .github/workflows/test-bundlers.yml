@@ -36,7 +36,7 @@ jobs:
       - name: Build TypeScript
         run: |
           cd ../..
-          yarn install --frozen-lockfile
+          yarn install --frozen-lockfile --production=false
           yarn build
 
       - name: Publish shakapacker to yalc
@@ -89,7 +89,7 @@ jobs:
       - name: Build TypeScript
         run: |
           cd ../..
-          yarn install --frozen-lockfile
+          yarn install --frozen-lockfile --production=false
           yarn build
 
       - name: Publish shakapacker to yalc
@@ -142,7 +142,7 @@ jobs:
       - name: Build TypeScript
         run: |
           cd ../..
-          yarn install --frozen-lockfile
+          yarn install --frozen-lockfile --production=false
           yarn build
 
       - name: Publish shakapacker to yalc
