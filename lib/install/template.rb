@@ -167,6 +167,11 @@ Dir.chdir(Rails.root) do
     # This ensures the runtime works regardless of config
     swc_deps = PackageJson.read(install_dir).fetch("swc")
     peers = peers.merge(swc_deps)
+
+    say "ℹ️  Installing both Babel and SWC packages for compatibility:", :blue
+    say "   - Babel packages are installed as requested via USE_BABEL_PACKAGES", :blue
+    say "   - SWC packages are also installed to ensure the default config works", :blue
+    say "   - Your actual transpiler will be determined by your shakapacker.yml configuration", :blue
   elsif @transpiler_to_install == "swc"
     swc_deps = PackageJson.read(install_dir).fetch("swc")
     peers = peers.merge(swc_deps)
@@ -187,7 +192,9 @@ Dir.chdir(Rails.root) do
       entry = "#{package}@#{version}"
     else
       # Extract major version from complex version strings like ">= 4 || 5"
-      major_version = version.split("||").last.match(/(\d+)/)[1]
+      # Fallback to "latest" if no version number found
+      version_match = version.split("||").last.match(/(\d+)/)
+      major_version = version_match ? version_match[1] : "latest"
       entry = "#{package}@#{major_version}"
     end
 
