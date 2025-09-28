@@ -33,6 +33,21 @@ const createWebpackConfig = (file, use) => ({
 })
 
 describe("babel", () => {
+  // Mock validateBabelDependencies to avoid actual dependency checking in tests
+  beforeAll(() => {
+    jest.mock("../../../package/utils/helpers", () => {
+      const original = jest.requireActual("../../../package/utils/helpers")
+      return {
+        ...original,
+        validateBabelDependencies: jest.fn() // Mock to do nothing
+      }
+    })
+  })
+
+  afterAll(() => {
+    jest.unmock("../../../package/utils/helpers")
+  })
+
   test("process source path", async () => {
     const normalPath = `${pathToAppJavascript}/a.js`
     const [tracked, loader] = createTrackLoader()
