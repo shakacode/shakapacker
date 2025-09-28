@@ -3,10 +3,10 @@ const { execSync } = require("child_process")
 const { existsSync, readFileSync } = require("fs")
 const { join } = require("path")
 
-describe("TypeScript Build", () => {
+describe("typescript build", () => {
   const rootPath = join(__dirname, "..", "..")
 
-  describe("TypeScript compilation", () => {
+  describe("typescript compilation", () => {
     it("should compile TypeScript files without errors", () => {
       expect(() => {
         execSync("npx tsc --noEmit", { cwd: rootPath, stdio: "pipe" })
@@ -40,7 +40,7 @@ describe("TypeScript Build", () => {
     })
   })
 
-  describe("CommonJS compatibility", () => {
+  describe("commonJS compatibility", () => {
     it("should export modules using CommonJS format", () => {
       const config = require("../../package/config")
       const env = require("../../package/env")
@@ -63,7 +63,7 @@ describe("TypeScript Build", () => {
     })
   })
 
-  describe("Type guards", () => {
+  describe("type guards", () => {
     it("should have runtime type validation functions", () => {
       const typeGuards = require("../../package/utils/typeGuards")
 
@@ -91,7 +91,7 @@ describe("TypeScript Build", () => {
     })
   })
 
-  describe("Error helpers", () => {
+  describe("error helpers", () => {
     it("should have error handling utilities", () => {
       const errorHelpers = require("../../package/utils/errorHelpers")
 
