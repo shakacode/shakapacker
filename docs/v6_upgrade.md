@@ -101,6 +101,16 @@ _If you're on webpacker v5, follow [how to upgrade to webpacker v6.0.0.rc.6 from
 
 1. Update `webpack-dev-server` to the current version, greater than 4.2, updating `package.json`.
 
+   **Important:** If you encounter the error `[webpack-cli] Invalid options object. Dev Server has been initialized using an options object that does not match the API schema` with an unknown property `_assetEmittingPreviousFiles`, this indicates your webpack-dev-server configuration contains deprecated options. 
+   
+   To resolve this issue:
+   - Ensure you're using webpack-cli >= 4.7.0 with webpack-dev-server 5.x (webpack-cli 4.7+ is compatible with webpack-dev-server v5)
+   - Check your current versions: `npm list webpack-cli webpack-dev-server`
+   - Remove any legacy options like `_assetEmittingPreviousFiles` from your dev-server configuration
+   - Review the [webpack-dev-server migration guide](https://github.com/webpack/webpack-dev-server/blob/master/migration-v5.md) for proper v4 to v5 migration steps
+   
+   See [issue #526](https://github.com/shakacode/shakapacker/issues/526) for more details.
+
 1. Update API usage of the view helpers by changing `javascript_packs_with_chunks_tag` and `stylesheet_packs_with_chunks_tag` to `javascript_pack_tag` and `stylesheet_pack_tag`. Ensure that your layouts and views will only have **at most one call** to `javascript_pack_tag` and **at most one call** to `stylesheet_pack_tag`. You can now pass multiple bundles to these view helper methods. If you fail to changes this, you may experience performance issues, and other bugs related to multiple copies of React, like [issue 2932](https://github.com/rails/webpacker/issues/2932).  If you expose jquery globally with `expose-loader` by using `import $ from "expose-loader?exposes=$,jQuery!jquery"` in your `app/javascript/application.js`, pass the option `defer: false` to your `javascript_pack_tag`.
 
 1. If you are using any integrations like `css`, `postcss`, `React` or `TypeScript`. Please see https://github.com/shakacode/shakapacker#integrations section on how they work in v6.
