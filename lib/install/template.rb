@@ -9,8 +9,10 @@ require "json"
 
 force_option = ENV["FORCE"] ? { force: true } : {}
 
-# Initialize package_json for use throughout the template
-@package_json = PackageJson.new
+# Initialize variables for use throughout the template
+# Using instance variable to avoid method definition issues in Rails templates
+@package_json ||= PackageJson.new
+install_dir = File.expand_path(File.dirname(__FILE__))
 
 # First detect what transpiler to use
 @detected_transpiler = nil
@@ -44,7 +46,7 @@ else
 end
 
 # Copy config file
-copy_file "#{__dir__}/config/shakapacker.yml", "config/shakapacker.yml", force_option
+copy_file "#{install_dir}/config/shakapacker.yml", "config/shakapacker.yml", force_option
 
 # Update the config file with the detected transpiler
 if File.exist?("config/shakapacker.yml")
@@ -61,17 +63,17 @@ if File.exist?("config/shakapacker.yml")
 end
 
 say "Copying webpack core config"
-directory "#{__dir__}/config/webpack", "config/webpack", force_option
+directory "#{install_dir}/config/webpack", "config/webpack", force_option
 
 if Dir.exist?(Shakapacker.config.source_path)
   say "The packs app source directory already exists"
 else
   say "Creating packs app source directory"
   empty_directory "app/javascript/packs"
-  copy_file "#{__dir__}/application.js", "app/javascript/packs/application.js"
+  copy_file "#{install_dir}/application.js", "app/javascript/packs/application.js"
 end
 
-apply "#{__dir__}/binstubs.rb"
+apply "#{install_dir}/binstubs.rb"
 
 git_ignore_path = Rails.root.join(".gitignore")
 if File.exist?(git_ignore_path)
@@ -168,8 +170,8 @@ Dir.chdir(Rails.root) do
   end
 
   # Inline fetch_peer_dependencies and fetch_common_dependencies
-  peers = PackageJson.read("#{__dir__}").fetch(ENV["SHAKAPACKER_BUNDLER"] || "webpack")
-  common_deps = ENV["SKIP_COMMON_LOADERS"] ? {} : PackageJson.read("#{__dir__}").fetch("common")
+  peers = PackageJson.read(install_dir).fetch(ENV["SHAKAPACKER_BUNDLER"] || "webpack")
+  common_deps = ENV["SKIP_COMMON_LOADERS"] ? {} : PackageJson.read(install_dir).fetch("common")
   peers = peers.merge(common_deps)
 
   # Add transpiler-specific dependencies based on detected/configured transpiler
@@ -179,7 +181,7 @@ Dir.chdir(Rails.root) do
   should_install_babel = ENV["USE_BABEL_PACKAGES"] || @detected_transpiler == "babel"
   if should_install_babel
     say "📦 Installing Babel dependencies", :yellow
-    babel_deps = PackageJson.read("#{__dir__}").fetch("babel")
+    babel_deps = PackageJson.read(install_dir).fetch("babel")
     peers = peers.merge(babel_deps)
   end
 
