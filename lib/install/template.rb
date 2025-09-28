@@ -14,38 +14,26 @@ force_option = ENV["FORCE"] ? { force: true } : {}
 @package_json ||= PackageJson.new
 install_dir = File.expand_path(File.dirname(__FILE__))
 
-# Package installation strategy:
-# 1. Always install packages for the transpiler in the config file (defaults to swc)
-# 2. Additionally install babel packages if USE_BABEL_PACKAGES is set (backward compatibility)
-# This ensures runtime can use the configured transpiler while maintaining compatibility
-
-# Check if USE_BABEL_PACKAGES is set for backward compatibility
-@install_babel_packages = ENV["USE_BABEL_PACKAGES"] == "true" || ENV["USE_BABEL_PACKAGES"] == "1"
-
-# Determine the configured transpiler (what the config file will use at runtime)
-# Since we're copying the default config which has 'swc', that's our default
-@config_transpiler = ENV["JAVASCRIPT_TRANSPILER"] || "swc"
-
-if @install_babel_packages && @config_transpiler == "swc"
+# Simple installation strategy - install only what's needed
+# USE_BABEL_PACKAGES takes precedence for backward compatibility
+if ENV["USE_BABEL_PACKAGES"] == "true" || ENV["USE_BABEL_PACKAGES"] == "1"
+  @transpiler_to_install = "babel"
   say "📦 Installing Babel packages (USE_BABEL_PACKAGES is set)", :yellow
-  say "✨ Also installing SWC packages (config default)", :green
-elsif @install_babel_packages && @config_transpiler == "babel"
-  say "📦 Installing Babel packages", :yellow
-elsif @config_transpiler == "swc"
+elsif ENV["JAVASCRIPT_TRANSPILER"]
+  @transpiler_to_install = ENV["JAVASCRIPT_TRANSPILER"]
+  say "📦 Installing #{@transpiler_to_install} packages", :blue
+else
+  # Default to swc (matches the default in shakapacker.yml)
+  @transpiler_to_install = "swc"
   say "✨ Installing SWC packages (20x faster than Babel)", :green
-elsif @config_transpiler == "esbuild"
-  say "📦 Installing esbuild packages", :blue
-elsif @config_transpiler == "babel"
-  say "📦 Installing Babel packages", :yellow
 end
 
 # Copy config file (always copies as-is, never modified)
 copy_file "#{install_dir}/config/shakapacker.yml", "config/shakapacker.yml", force_option
 
-# Inform about config if there's a mismatch
-if @install_babel_packages && @config_transpiler == "swc"
-  say "   📝 Note: Babel packages installed for compatibility, but config uses SWC", :yellow
-  say "   To use Babel at runtime, set javascript_transpiler to 'babel' in config/shakapacker.yml", :yellow
+# Inform if babel is installed but config defaults to swc
+if @transpiler_to_install == "babel" && !ENV["JAVASCRIPT_TRANSPILER"]
+  say "   📝 Note: To use Babel at runtime, update javascript_transpiler to 'babel' in config/shakapacker.yml", :yellow
 end
 
 say "Copying webpack core config"
@@ -163,21 +151,11 @@ Dir.chdir(Rails.root) do
   # Add transpiler-specific dependencies based on detected/configured transpiler
   # Inline the logic here since methods can't be called before they're defined in Rails templates
 
-  # Install babel dependencies if USE_BABEL_PACKAGES is set (backward compatibility)
-  if @install_babel_packages
+  # Install transpiler-specific dependencies based on what we decided above
+  case @transpiler_to_install
+  when "babel"
     babel_deps = PackageJson.read(install_dir).fetch("babel")
     peers = peers.merge(babel_deps)
-  end
-
-  # Always install the transpiler packages that match the config file
-  # This ensures the runtime can use the configured transpiler
-  case @config_transpiler
-  when "babel"
-    # Only install babel if not already installed via USE_BABEL_PACKAGES
-    if !@install_babel_packages
-      babel_deps = PackageJson.read(install_dir).fetch("babel")
-      peers = peers.merge(babel_deps)
-    end
   when "swc"
     swc_deps = { "@swc/core" => "^1.3.0", "swc-loader" => "^0.2.0" }
     peers = peers.merge(swc_deps)
@@ -225,8 +203,8 @@ Dir.chdir(Rails.root) do
     exit 1
   end
 
-  # Configure babel preset in package.json if babel packages are installed
-  if @install_babel_packages || @config_transpiler == "babel"
+  # Configure babel preset in package.json if babel is being used
+  if @transpiler_to_install == "babel"
     @package_json.merge! do |pj|
       babel = pj.fetch("babel", {})
       babel["presets"] ||= []
