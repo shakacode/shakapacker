@@ -184,7 +184,8 @@ Dir.chdir(Rails.root) do
   add_dependencies(dev_dependencies_to_add, :dev)
   
   # Configure babel preset in package.json if using babel
-  if determine_javascript_transpiler == "babel"
+  # We check the @detected_transpiler variable set at the beginning
+  if @detected_transpiler == "babel"
     package_json.merge! do |pj|
       babel = pj.fetch("babel", {})
       babel["presets"] ||= []
