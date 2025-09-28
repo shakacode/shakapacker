@@ -11,7 +11,29 @@ force_option = ENV["FORCE"] ? { force: true } : {}
 
 # First detect what transpiler to use
 @detected_transpiler = nil
-if detect_existing_babel_usage
+
+# Check for existing babel configuration
+has_babel_config = File.exist?(Rails.root.join(".babelrc")) || 
+                   File.exist?(Rails.root.join("babel.config.js")) || 
+                   File.exist?(Rails.root.join("babel.config.json")) ||
+                   File.exist?(Rails.root.join(".babelrc.js"))
+
+has_babel_in_package_json = false
+package_json_path = Rails.root.join("package.json")
+if File.exist?(package_json_path)
+  begin
+    pj_content = JSON.parse(File.read(package_json_path))
+    has_babel_in_package_json = pj_content.key?("babel") || 
+                                pj_content.dig("dependencies", "@babel/core") ||
+                                pj_content.dig("devDependencies", "@babel/core") ||
+                                pj_content.dig("dependencies", "babel-loader") ||
+                                pj_content.dig("devDependencies", "babel-loader")
+  rescue JSON::ParserError
+    # If package.json is malformed, assume no babel
+  end
+end
+
+if has_babel_config || has_babel_in_package_json
   @detected_transpiler = "babel"
   say "🔍 Detected existing Babel configuration - will configure Shakapacker to use Babel", :yellow
 else
