@@ -2,6 +2,7 @@ require "shakapacker/utils/misc"
 require "shakapacker/utils/manager"
 require "shakapacker/utils/version_syntax_converter"
 require "package_json"
+require "yaml"
 
 # Install Shakapacker
 
@@ -119,7 +120,21 @@ def fetch_common_dependencies
 end
 
 def fetch_babel_dependencies
-  ENV["USE_BABEL_PACKAGES"] ? PackageJson.read("#{__dir__}").fetch("babel") : {}
+  # Check if babel is configured as the transpiler or if explicitly requested
+  shakapacker_config = YAML.load_file(Rails.root.join("config/shakapacker.yml"))
+  javascript_transpiler = shakapacker_config.dig("default", "javascript_transpiler") || 
+                          shakapacker_config.dig("production", "javascript_transpiler") || 
+                          "babel"  # Default to babel for backward compatibility in v9
+  
+  should_install_babel = ENV["USE_BABEL_PACKAGES"] || javascript_transpiler == "babel"
+  
+  if should_install_babel
+    say "Installing babel dependencies (javascript_transpiler: #{javascript_transpiler})"
+    PackageJson.read("#{__dir__}").fetch("babel")
+  else
+    say "Skipping babel dependencies (using #{javascript_transpiler} transpiler)"
+    {}
+  end
 end
 
 Dir.chdir(Rails.root) do

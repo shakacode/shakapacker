@@ -1,8 +1,10 @@
 # Shakapacker's Peer Dependencies
-#### last updated for our 8.4.0 version
-#### see lib/install/peerDependencies.json
+#### last updated for our 9.0.0 version
+#### see lib/install/package.json
 
 To simplify peer dependencies while supporting both webpack & rspack, we decided to document the dependencies here instead of creating two separate npm packages.
+
+**Important Note**: Starting with v9, Babel dependencies are no longer included as peer dependencies. They will be installed automatically only if you're using Babel as your JavaScript transpiler.
 
 ## Essential for Rspack
 ```
@@ -30,7 +32,9 @@ To simplify peer dependencies while supporting both webpack & rspack, we decided
     "style-loader": "^3.0.0 || ^4.0.0",
 ```
 
-## Babel (avoid if at all possible)
+## Optional JavaScript Transpilers
+
+### Babel (installed automatically when `javascript_transpiler: 'babel'`)
 ```
     "@babel/core": "^7.17.9",
     "@babel/plugin-transform-runtime": "^7.17.0",
@@ -38,3 +42,18 @@ To simplify peer dependencies while supporting both webpack & rspack, we decided
     "@babel/runtime": "^7.17.9",
     "babel-loader": "^8.2.4 || ^9.0.0 || ^10.0.0",
 ```
+Note: These dependencies are only installed if you're using Babel as your JavaScript transpiler. Consider using SWC or esbuild for better performance.
+
+### SWC (recommended - 20x faster than Babel)
+```
+    "@swc/core": "latest",
+    "swc-loader": "latest"
+```
+Install manually with: `npm install @swc/core swc-loader`
+
+### esbuild
+```
+    "esbuild": "latest",
+    "esbuild-loader": "latest"
+```
+Install manually with: `npm install esbuild esbuild-loader`

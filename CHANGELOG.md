@@ -17,6 +17,7 @@ Changes since the last non-beta release.
 ### Changed
 - Configuration option renamed from `bundler` to `assets_bundler` to avoid confusion with Ruby's Bundler gem manager. The old `bundler` option is deprecated but still supported with a warning (not a breaking change).
 - BREAKING CHANGE: Configuration option renamed from `webpack_loader` to `javascript_transpiler` to better reflect its purpose of configuring JavaScript transpilation regardless of the bundler used. The old `webpack_loader` option is deprecated but still supported with a warning.
+- **BREAKING CHANGE**: Babel dependencies are no longer included as peer dependencies. They are now installed automatically only when `javascript_transpiler` is set to 'babel'. This reduces node_modules size for projects using swc or esbuild transpilers. Existing projects are unaffected as babel packages remain in their package.json. [PR xxx](https://github.com/shakacode/shakapacker/pull/xxx) by [justin808](https://github.com/justin808).
 - **BREAKING CHANGE**: CSS Modules are now configured with named exports (`namedExport: true` and `exportLocalsConvention: 'camelCase'`) to align with Next.js and modern tooling standards.
   - **JavaScript**: Use named imports (`import { className } from './styles.module.css'`)
   - **TypeScript**: Requires namespace imports (`import * as styles from './styles.module.css'`) due to TypeScript's inability to type dynamic named exports

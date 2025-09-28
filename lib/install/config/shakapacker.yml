@@ -40,7 +40,9 @@ default: &default
   # Reload manifest.json on all requests so we reload latest compiled packs
   cache_manifest: false
 
-  # Select JavaScript transpiler to use, available options are 'babel' (default), 'swc' or 'esbuild'
+  # Select JavaScript transpiler to use
+  # Available options: 'babel' (default for webpack), 'swc' (recommended, 20x faster), or 'esbuild'
+  # Note: When using rspack, swc is used automatically regardless of this setting
   javascript_transpiler: 'babel'
 
   # Select assets bundler to use

@@ -65,7 +65,25 @@ javascript_transpiler: 'babel'
 
 **Note:** The old `webpack_loader` option is deprecated but still supported with a warning.
 
-### 3. Rspack Support Added
+### 3. Babel Dependencies Now Optional
+
+**What changed:** Babel is no longer included in peer dependencies. It's installed automatically only when needed.
+
+**Impact:**
+- If you're using `javascript_transpiler: 'babel'` (default), babel dependencies will be installed automatically during `rails shakapacker:install`
+- If you're using `swc` or `esbuild`, babel won't be installed, reducing your node_modules size
+- Existing projects will continue to work as babel packages remain in your package.json
+
+**Migration:**
+- No action required for existing projects
+- New projects should consider using `swc` for better performance:
+  ```yml
+  # config/shakapacker.yml
+  javascript_transpiler: 'swc'
+  ```
+  Then install swc: `npm install @swc/core swc-loader`
+
+### 4. Rspack Support Added
 
 **New feature:** Shakapacker v9 adds support for Rspack as an alternative bundler to webpack.
 
