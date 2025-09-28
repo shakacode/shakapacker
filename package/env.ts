@@ -2,6 +2,7 @@ import { load } from "js-yaml"
 import { readFileSync } from "fs"
 import defaultConfigPath from "./utils/defaultConfigPath"
 import configPath from "./utils/configPath"
+const { isFileNotFoundError } = require("./utils/errorHelpers")
 
 const NODE_ENVIRONMENTS = ["development", "production", "test"] as const
 const DEFAULT = "production"
@@ -21,9 +22,13 @@ let config: ConfigFile
 try {
   config = load(readFileSync(configPath, "utf8")) as ConfigFile
 } catch (error: unknown) {
-  if ((error as NodeJS.ErrnoException).code === "ENOENT") {
+  if (isFileNotFoundError(error)) {
     // File not found, use default configuration
-    config = load(readFileSync(defaultConfigPath, "utf8")) as ConfigFile
+    try {
+      config = load(readFileSync(defaultConfigPath, "utf8")) as ConfigFile
+    } catch (defaultError) {
+      throw new Error(`Failed to load configuration: neither user config nor default config found`)
+    }
   } else {
     throw error
   }

@@ -114,13 +114,46 @@ export function isValidYamlConfig(obj: unknown): obj is YamlConfig {
 
 /**
  * Validates partial config used for merging
+ * Ensures that if fields are present, they have the correct types
  */
 export function isPartialConfig(obj: unknown): obj is Partial<Config> {
   if (typeof obj !== 'object' || obj === null) {
     return false
   }
   
-  return true // Since all fields are optional in Partial<Config>
+  const config = obj as Record<string, unknown>
+  
+  // Check string fields if present
+  const stringFields = [
+    'source_path', 'source_entry_path', 'public_root_path',
+    'public_output_path', 'cache_path', 'javascript_transpiler'
+  ]
+  
+  for (const field of stringFields) {
+    if (field in config && typeof config[field] !== 'string') {
+      return false
+    }
+  }
+  
+  // Check boolean fields if present
+  const booleanFields = [
+    'nested_entries', 'css_extract_ignore_order_warnings',
+    'webpack_compile_output', 'shakapacker_precompile',
+    'cache_manifest', 'ensure_consistent_versioning'
+  ]
+  
+  for (const field of booleanFields) {
+    if (field in config && typeof config[field] !== 'boolean') {
+      return false
+    }
+  }
+  
+  // Check arrays if present
+  if ('additional_paths' in config && !Array.isArray(config.additional_paths)) {
+    return false
+  }
+  
+  return true
 }
 
 /**

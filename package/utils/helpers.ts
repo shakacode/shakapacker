@@ -1,3 +1,5 @@
+const { isModuleNotFoundError, getErrorMessage } = require("./errorHelpers")
+
 const isBoolean = (str: string): boolean => /^true/.test(str) || /^false/.test(str)
 
 const ensureTrailingSlash = (path: string): string => (path.endsWith("/") ? path : `${path}/`)
@@ -6,9 +8,8 @@ const resolvedPath = (packageName: string): string | null => {
   try {
     return require.resolve(packageName)
   } catch (error: unknown) {
-    const err = error as NodeJS.ErrnoException
-    if (err.code !== "MODULE_NOT_FOUND") {
-      throw err
+    if (!isModuleNotFoundError(error)) {
+      throw error
     }
     return null
   }
@@ -50,7 +51,7 @@ const packageFullVersion = (packageName: string): string => {
     const packageJson = require(packageJsonPath) as { version: string }
     return packageJson.version
   } catch (error) {
-    console.warn(`Failed to get version for package ${packageName}:`, error)
+    console.warn(`Failed to get version for package ${packageName}: ${getErrorMessage(error)}`)
     return "0.0.0"
   }
 }

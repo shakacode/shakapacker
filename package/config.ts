@@ -7,7 +7,8 @@ const { railsEnv } = require("./env")
 import configPath from "./utils/configPath"
 import defaultConfigPath from "./utils/defaultConfigPath"
 import { Config, YamlConfig, LegacyConfig } from "./types"
-const { isValidYamlConfig, createConfigValidationError } = require("./utils/typeGuards")
+const { isValidYamlConfig, createConfigValidationError, isPartialConfig } = require("./utils/typeGuards")
+const { isFileNotFoundError, createFileOperationError } = require("./utils/errorHelpers")
 
 const getDefaultConfig = (): Partial<Config> => {
   try {
@@ -20,8 +21,8 @@ const getDefaultConfig = (): Partial<Config> => {
     
     return defaultConfig[railsEnv] || defaultConfig.production || {}
   } catch (error) {
-    if ((error as NodeJS.ErrnoException).code === "ENOENT") {
-      throw new Error(`Default configuration file not found: ${defaultConfigPath}`)
+    if (isFileNotFoundError(error)) {
+      throw createFileOperationError('read', defaultConfigPath, 'Default configuration not found')
     }
     throw error
   }
@@ -50,10 +51,19 @@ if (existsSync(configPath)) {
 
     // Merge returns the merged type
     const mergedConfig = merge(defaults, envAppConfig || {})
+    
+    // Validate merged config before type assertion
+    if (!isPartialConfig(mergedConfig)) {
+      throw createConfigValidationError(configPath, railsEnv, "Invalid merged configuration")
+    }
+    
     config = mergedConfig as Config
   } catch (error) {
-    if ((error as NodeJS.ErrnoException).code === "ENOENT") {
+    if (isFileNotFoundError(error)) {
       // File not found is OK, use defaults
+      if (!isPartialConfig(defaults)) {
+        throw createConfigValidationError(defaultConfigPath, railsEnv, "Invalid default configuration")
+      }
       config = defaults as Config
     } else {
       throw error
@@ -61,6 +71,9 @@ if (existsSync(configPath)) {
   }
 } else {
   // No user config, use defaults
+  if (!isPartialConfig(defaults)) {
+    throw createConfigValidationError(defaultConfigPath, railsEnv, "Invalid default configuration")
+  }
   config = defaults as Config
 }
 
