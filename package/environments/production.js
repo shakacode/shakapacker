@@ -58,4 +58,3 @@ Content hashes get added to the filenames regardless of setting useContentHash i
 `);
 }
 module.exports = merge(baseConfig, productionConfig);
-

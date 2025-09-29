@@ -37,4 +37,3 @@ const webpackTestConfig = () => ({
 });
 const bundlerConfig = config.assets_bundler === "rspack" ? rspackTestConfig() : webpackTestConfig();
 module.exports = merge(baseConfig, bundlerConfig);
-

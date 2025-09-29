@@ -98,7 +98,12 @@ export function sanitizeEnvValue(value: string | undefined): string | undefined 
   if (!value) return value
   
   // Remove control characters and null bytes
-  const sanitized = value.replace(/[\x00-\x1F\x7F]/g, '')
+  // Filter by character code to avoid control character regex (Biome compliance)
+  const sanitized = value.split('').filter(char => {
+    const code = char.charCodeAt(0)
+    // Keep chars with code > 31 (after control chars) and not 127 (DEL)
+    return code > 31 && code !== 127
+  }).join('')
   
   // Warn if sanitization changed the value
   if (sanitized !== value) {
