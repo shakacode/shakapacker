@@ -62,7 +62,7 @@ const rspackDevConfig = (): RspackConfigWithDevServer => {
     devServer: {
       ...devServerConfig,
       devMiddleware: {
-        ...devServerConfig.devMiddleware,
+        ...(devServerConfig.devMiddleware || {}),
         writeToDisk: (filePath: string) => !filePath.includes(".hot-update.")
       }
     }
