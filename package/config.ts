@@ -130,28 +130,31 @@ if (process.env.SHAKAPACKER_ASSETS_BUNDLER) {
   config.assets_bundler = process.env.SHAKAPACKER_ASSETS_BUNDLER
 }
 
-// Define clear defaults
-const DEFAULT_JAVASCRIPT_TRANSPILER =
-  config.assets_bundler === "rspack" ? "swc" : "babel"
+// Define clear defaults - SWC is now the default for both bundlers
+// This provides better performance and consistency across webpack and rspack
+const DEFAULT_JAVASCRIPT_TRANSPILER = "swc"
 
-// Backward compatibility: Add webpack_loader property that maps to javascript_transpiler
-// Show deprecation warning if webpack_loader is used
-// Use type-safe property check
-const configWithLegacy = config as Config & { webpack_loader?: string }
-const webpackLoader = configWithLegacy.webpack_loader
+// Backward compatibility: Check for webpack_loader using proper type guard
+function hasWebpackLoader(obj: unknown): obj is Config & { webpack_loader: string } {
+  return (
+    typeof obj === 'object' &&
+    obj !== null &&
+    'webpack_loader' in obj &&
+    typeof (obj as Record<string, unknown>).webpack_loader === 'string'
+  )
+}
 
-if (webpackLoader && !config.javascript_transpiler) {
+if (hasWebpackLoader(config) && !config.javascript_transpiler) {
   console.warn(
     "[SHAKAPACKER DEPRECATION] The 'webpack_loader' configuration option is deprecated.\n" +
     "Please use 'javascript_transpiler' instead as it better reflects its purpose of configuring JavaScript transpilation regardless of the bundler used."
   )
-  config.javascript_transpiler = webpackLoader
+  config.javascript_transpiler = config.webpack_loader
 } else if (!config.javascript_transpiler) {
   config.javascript_transpiler = DEFAULT_JAVASCRIPT_TRANSPILER
 }
 
 // Ensure webpack_loader is always available for backward compatibility
-// Use property assignment instead of type assertion
 Object.defineProperty(config, 'webpack_loader', {
   value: config.javascript_transpiler,
   writable: true,

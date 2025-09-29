@@ -1,7 +1,14 @@
 import { Config, DevServerConfig, YamlConfig } from "../types"
+import { isPathTraversalSafe, validatePort } from "./pathValidation"
 
-// Cache for validated configs in production
-const validatedConfigs = new WeakMap<object, boolean>()
+// Cache for validated configs with TTL
+interface CacheEntry {
+  result: boolean
+  timestamp: number
+}
+
+const validatedConfigs = new WeakMap<object, CacheEntry>()
+const CACHE_TTL = process.env.NODE_ENV === 'production' ? Infinity : 60000 // 1 minute in dev, infinite in prod
 
 // Only validate in development or when explicitly enabled
 const shouldValidate = process.env.NODE_ENV !== 'production' || process.env.SHAKAPACKER_STRICT_VALIDATION === 'true'
@@ -15,9 +22,10 @@ export function isValidConfig(obj: unknown): obj is Config {
     return false
   }
 
-  // Quick return for production with cached results
-  if (!shouldValidate && validatedConfigs.has(obj as object)) {
-    return validatedConfigs.get(obj as object) as boolean
+  // Check cache with TTL
+  const cached = validatedConfigs.get(obj as object)
+  if (cached && (Date.now() - cached.timestamp) < CACHE_TTL) {
+    return cached.result
   }
 
   const config = obj as Record<string, unknown>
@@ -34,10 +42,14 @@ export function isValidConfig(obj: unknown): obj is Config {
   
   for (const field of requiredStringFields) {
     if (typeof config[field] !== 'string') {
-      // Cache negative result in production
-      if (!shouldValidate) {
-        validatedConfigs.set(obj as object, false)
-      }
+      // Cache negative result
+      validatedConfigs.set(obj as object, { result: false, timestamp: Date.now() })
+      return false
+    }
+    // Validate paths for security
+    if (field.includes('path') && !isPathTraversalSafe(config[field] as string)) {
+      console.warn(`[SHAKAPACKER SECURITY] Invalid path in ${field}: ${config[field]}`)
+      validatedConfigs.set(obj as object, { result: false, timestamp: Date.now() })
       return false
     }
   }
@@ -56,29 +68,32 @@ export function isValidConfig(obj: unknown): obj is Config {
   
   for (const field of requiredBooleanFields) {
     if (typeof config[field] !== 'boolean') {
-      // Cache negative result in production
-      if (!shouldValidate) {
-        validatedConfigs.set(obj as object, false)
-      }
+      // Cache negative result
+      validatedConfigs.set(obj as object, { result: false, timestamp: Date.now() })
       return false
     }
   }
   
   // Check arrays
   if (!Array.isArray(config.additional_paths)) {
-    // Cache negative result in production
-    if (!shouldValidate) {
-      validatedConfigs.set(obj as object, false)
-    }
+    // Cache negative result
+    validatedConfigs.set(obj as object, { result: false, timestamp: Date.now() })
     return false
+  }
+  
+  // Validate additional_paths for security
+  for (const additionalPath of config.additional_paths as string[]) {
+    if (!isPathTraversalSafe(additionalPath)) {
+      console.warn(`[SHAKAPACKER SECURITY] Invalid additional_path: ${additionalPath}`)
+      validatedConfigs.set(obj as object, { result: false, timestamp: Date.now() })
+      return false
+    }
   }
   
   // Check optional fields
   if (config.dev_server !== undefined && !isValidDevServerConfig(config.dev_server)) {
-    // Cache negative result in production
-    if (!shouldValidate) {
-      validatedConfigs.set(obj as object, false)
-    }
+    // Cache negative result
+    validatedConfigs.set(obj as object, { result: false, timestamp: Date.now() })
     return false
   }
   
@@ -86,22 +101,16 @@ export function isValidConfig(obj: unknown): obj is Config {
     const integrity = config.integrity as Record<string, unknown>
     if (typeof integrity.enabled !== 'boolean' || 
         typeof integrity.cross_origin !== 'string') {
-      // Cache negative result in production
-      if (!shouldValidate) {
-        validatedConfigs.set(obj as object, false)
-      }
+      // Cache negative result
+      validatedConfigs.set(obj as object, { result: false, timestamp: Date.now() })
       return false
     }
   }
   
-  const result = true
+  // Cache positive result
+  validatedConfigs.set(obj as object, { result: true, timestamp: Date.now() })
   
-  // Cache result in production
-  if (!shouldValidate) {
-    validatedConfigs.set(obj as object, result)
-  }
-  
-  return result
+  return true
 }
 
 /**
@@ -127,10 +136,7 @@ export function isValidDevServerConfig(obj: unknown): obj is DevServerConfig {
     return false
   }
   
-  if (config.port !== undefined && 
-      typeof config.port !== 'number' && 
-      typeof config.port !== 'string' &&
-      config.port !== 'auto') {
+  if (config.port !== undefined && !validatePort(config.port)) {
     return false
   }
   

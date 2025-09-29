@@ -70,7 +70,7 @@ export function isNodeError(error: unknown): error is NodeJS.ErrnoException {
   return (
     error instanceof Error &&
     'code' in error &&
-    typeof (error as any).code === 'string'
+    typeof (error as NodeJS.ErrnoException).code === 'string'
   )
 }
 

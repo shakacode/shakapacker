@@ -3,14 +3,27 @@ import { readFileSync } from "fs"
 const defaultConfigPath = require("./utils/defaultConfigPath")
 const configPath = require("./utils/configPath")
 const { isFileNotFoundError } = require("./utils/errorHelpers")
+const { sanitizeEnvValue } = require("./utils/pathValidation")
 
 const NODE_ENVIRONMENTS = ["development", "production", "test"] as const
 const DEFAULT = "production"
 
-const initialRailsEnv = process.env.RAILS_ENV
-const rawNodeEnv = process.env.NODE_ENV
+// Sanitize environment variables to prevent injection
+const initialRailsEnv = sanitizeEnvValue(process.env.RAILS_ENV)
+const rawNodeEnv = sanitizeEnvValue(process.env.NODE_ENV)
+
+// Validate NODE_ENV strictly
 const nodeEnv =
   rawNodeEnv && NODE_ENVIRONMENTS.includes(rawNodeEnv as typeof NODE_ENVIRONMENTS[number]) ? rawNodeEnv : DEFAULT
+
+// Log warning if NODE_ENV was invalid
+if (rawNodeEnv && !NODE_ENVIRONMENTS.includes(rawNodeEnv as typeof NODE_ENVIRONMENTS[number])) {
+  console.warn(
+    `[SHAKAPACKER WARNING] Invalid NODE_ENV value: ${rawNodeEnv}. ` +
+    `Valid values are: ${NODE_ENVIRONMENTS.join(', ')}. Using default: ${DEFAULT}`
+  )
+}
+
 const isProduction = nodeEnv === "production"
 const isDevelopment = nodeEnv === "development"
 
