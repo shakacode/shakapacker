@@ -1,3 +1,8 @@
+/**
+ * Production environment configuration for webpack and rspack bundlers
+ * @module environments/production
+ */
+
 /* eslint global-require: 0 */
 /* eslint import/no-dynamic-require: 0 */
 
@@ -6,7 +11,7 @@ const { merge } = require("webpack-merge")
 const baseConfig = require("./base")
 const { moduleExists } = require("../utils/helpers")
 const config = require("../config")
-import type { Configuration as WebpackConfiguration } from "webpack"
+import type { Configuration as WebpackConfiguration, WebpackPluginInstance } from "webpack"
 
 const optimizationPath = resolve(
   __dirname,
@@ -16,14 +21,26 @@ const optimizationPath = resolve(
 )
 const { getOptimization } = require(optimizationPath)
 
-let CompressionPlugin: any = null
+interface CompressionPluginOptions {
+  filename: string
+  algorithm: string | "gzip" | "brotliCompress"
+  test: RegExp
+}
+
+type CompressionPluginConstructor = new (options: CompressionPluginOptions) => WebpackPluginInstance
+
+let CompressionPlugin: CompressionPluginConstructor | null = null
 if (moduleExists("compression-webpack-plugin")) {
   // eslint-disable-next-line global-require
   CompressionPlugin = require("compression-webpack-plugin")
 }
 
-const getPlugins = (): any[] => {
-  const plugins: any[] = []
+/**
+ * Generate production plugins including compression
+ * @returns Array of webpack plugins for production
+ */
+const getPlugins = (): WebpackPluginInstance[] => {
+  const plugins: WebpackPluginInstance[] = []
 
   if (CompressionPlugin) {
     plugins.push(
@@ -48,6 +65,9 @@ const getPlugins = (): any[] => {
   return plugins
 }
 
+/**
+ * Production configuration with optimizations and compression
+ */
 const productionConfig: Partial<WebpackConfiguration> = {
   devtool: "source-map",
   stats: "normal",

@@ -1,7 +1,11 @@
 "use strict";
+/**
+ * Production environment configuration for webpack and rspack bundlers
+ * @module environments/production
+ */
+Object.defineProperty(exports, "__esModule", { value: true });
 /* eslint global-require: 0 */
 /* eslint import/no-dynamic-require: 0 */
-Object.defineProperty(exports, "__esModule", { value: true });
 const { resolve } = require("path");
 const { merge } = require("webpack-merge");
 const baseConfig = require("./base");
@@ -14,6 +18,10 @@ if (moduleExists("compression-webpack-plugin")) {
     // eslint-disable-next-line global-require
     CompressionPlugin = require("compression-webpack-plugin");
 }
+/**
+ * Generate production plugins including compression
+ * @returns Array of webpack plugins for production
+ */
 const getPlugins = () => {
     const plugins = [];
     if (CompressionPlugin) {
@@ -32,6 +40,9 @@ const getPlugins = () => {
     }
     return plugins;
 };
+/**
+ * Production configuration with optimizations and compression
+ */
 const productionConfig = {
     devtool: "source-map",
     stats: "normal",

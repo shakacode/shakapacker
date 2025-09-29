@@ -1,4 +1,8 @@
 "use strict";
+/**
+ * Development environment configuration for webpack and rspack bundlers
+ * @module environments/development
+ */
 Object.defineProperty(exports, "__esModule", { value: true });
 const { merge } = require("webpack-merge");
 const config = require("../config");
@@ -6,10 +10,17 @@ const baseConfig = require("./base");
 const webpackDevServerConfig = require("../webpackDevServerConfig");
 const { runningWebpackDevServer } = require("../env");
 const { moduleExists } = require("../utils/helpers");
+/**
+ * Base development configuration shared between webpack and rspack
+ */
 const baseDevConfig = {
     mode: "development",
     devtool: "cheap-module-source-map"
 };
+/**
+ * Generate webpack-specific development configuration
+ * @returns Webpack configuration with dev server settings
+ */
 const webpackDevConfig = () => {
     const webpackConfig = {
         ...baseDevConfig,
@@ -28,6 +39,10 @@ const webpackDevConfig = () => {
     }
     return webpackConfig;
 };
+/**
+ * Generate rspack-specific development configuration
+ * @returns Rspack configuration with dev server settings
+ */
 const rspackDevConfig = () => {
     const devServerConfig = webpackDevServerConfig();
     const rspackConfig = {
