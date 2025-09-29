@@ -10,16 +10,37 @@ interface CacheEntry {
 
 const validatedConfigs = new WeakMap<object, CacheEntry>()
 
-// Adjust cache TTL based on environment
-// In watch mode, use shorter TTL to catch config changes
-const isWatchMode = process.argv.includes('--watch') || process.env.WEBPACK_WATCH === 'true'
-const CACHE_TTL = process.env.SHAKAPACKER_CACHE_TTL
-  ? parseInt(process.env.SHAKAPACKER_CACHE_TTL, 10)
-  : process.env.NODE_ENV === 'production' && !isWatchMode
-    ? Infinity
-    : isWatchMode
-      ? 5000  // 5 seconds in watch mode
-      : 60000 // 1 minute in dev
+// Cache computed values to avoid repeated checks
+let cachedIsWatchMode: boolean | null = null
+let cachedCacheTTL: number | null = null
+
+/**
+ * Detect if running in watch mode (cached)
+ */
+function isWatchMode(): boolean {
+  if (cachedIsWatchMode === null) {
+    cachedIsWatchMode = process.argv.includes('--watch') || process.env.WEBPACK_WATCH === 'true'
+  }
+  return cachedIsWatchMode
+}
+
+/**
+ * Get cache TTL based on environment (cached)
+ */
+function getCacheTTL(): number {
+  if (cachedCacheTTL === null) {
+    if (process.env.SHAKAPACKER_CACHE_TTL) {
+      cachedCacheTTL = parseInt(process.env.SHAKAPACKER_CACHE_TTL, 10)
+    } else if (process.env.NODE_ENV === 'production' && !isWatchMode()) {
+      cachedCacheTTL = Infinity
+    } else if (isWatchMode()) {
+      cachedCacheTTL = 5000  // 5 seconds in watch mode
+    } else {
+      cachedCacheTTL = 60000 // 1 minute in dev
+    }
+  }
+  return cachedCacheTTL
+}
 
 // Only validate in development or when explicitly enabled
 const shouldValidate = process.env.NODE_ENV !== 'production' || process.env.SHAKAPACKER_STRICT_VALIDATION === 'true'
@@ -50,7 +71,7 @@ export function isValidConfig(obj: unknown): obj is Config {
 
   // Check cache with TTL
   const cached = validatedConfigs.get(obj as object)
-  if (cached && (Date.now() - cached.timestamp) < CACHE_TTL) {
+  if (cached && (Date.now() - cached.timestamp) < getCacheTTL()) {
     if (debugCache) {
       console.log(`[SHAKAPACKER DEBUG] Config validation cache hit (result: ${cached.result})`)
     }
