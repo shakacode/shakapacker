@@ -9,6 +9,7 @@ const baseConfig = require("./base")
 const webpackDevServerConfig = require("../webpackDevServerConfig")
 const { runningWebpackDevServer } = require("../env")
 const { moduleExists } = require("../utils/helpers")
+
 /**
  * Base development configuration shared between webpack and rspack
  */

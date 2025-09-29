@@ -10,6 +10,7 @@ const { merge } = require("webpack-merge")
 const baseConfig = require("./base")
 const { moduleExists } = require("../utils/helpers")
 const config = require("../config")
+
 const optimizationPath = resolve(
   __dirname,
   "..",

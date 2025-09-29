@@ -1,7 +1,7 @@
 // Type-specific tests for environment modules
 // Test imports to ensure TypeScript modules compile correctly
 const developmentConfig = require("../../package/environments/development")
-const productionConfig = require("../../package/environments/production")  
+const productionConfig = require("../../package/environments/production")
 const testConfig = require("../../package/environments/test")
 
 describe("TypeScript Environment Modules", () => {
@@ -69,11 +69,11 @@ describe("TypeScript Environment Modules", () => {
     })
   })
 
-  describe("Type Safety", () => {
+  describe("type safety", () => {
     it("ensures all environment configs have consistent base structure", () => {
       const configs = [developmentConfig, productionConfig, testConfig]
-      
-      configs.forEach(config => {
+
+      configs.forEach((config) => {
         expect(config).toHaveProperty("module")
         expect(config).toHaveProperty("entry")
         expect(config).toHaveProperty("output")
@@ -84,19 +84,20 @@ describe("TypeScript Environment Modules", () => {
     it("validates dev server configuration when present", () => {
       // Development config may or may not have devServer depending on environment
       // When present, it should be properly configured
-      const devServer = developmentConfig.devServer
+      const { devServer } = developmentConfig
+
+      // DevServer should be defined in development config
+      expect(devServer).toBeDefined()
+
+      // If devServer exists, validate port property
+      const validPort =
+        !devServer ||
+        devServer.port === undefined ||
+        typeof devServer.port === "number" ||
+        typeof devServer.port === "string" ||
+        devServer.port === "auto"
       
-      if (devServer !== undefined) {
-        expect(devServer).toBeDefined()
-        
-        // Port should be undefined or one of the allowed types (no conditional)
-        expect(
-          devServer.port === undefined ||
-          typeof devServer.port === "number" || 
-          typeof devServer.port === "string" || 
-          devServer.port === "auto"
-        ).toBe(true)
-      }
+      expect(validPort).toBe(true)
     })
   })
 })
