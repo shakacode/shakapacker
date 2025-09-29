@@ -126,8 +126,13 @@ export function validatePort(port: unknown): boolean {
   }
   
   if (typeof port === 'string') {
+    // First check if the string contains only digits
+    if (!/^\d+$/.test(port)) {
+      return false
+    }
+    // Only then parse and validate range
     const num = parseInt(port, 10)
-    return !isNaN(num) && num > 0 && num <= 65535
+    return num > 0 && num <= 65535
   }
   
   return false

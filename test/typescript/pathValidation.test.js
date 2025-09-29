@@ -128,6 +128,12 @@ describe("Path Validation Security", () => {
       expect(validatePort(-1)).toBe(false)
       expect(validatePort(3000.5)).toBe(false)
       expect(validatePort("invalid")).toBe(false)
+      expect(validatePort("3000abc")).toBe(false)  // Should reject strings with non-digits
+      expect(validatePort("abc3000")).toBe(false)  // Should reject strings with non-digits
+      expect(validatePort("30.00")).toBe(false)    // Should reject decimal strings
+      expect(validatePort("3000 ")).toBe(false)    // Should reject strings with spaces
+      expect(validatePort(" 3000")).toBe(false)    // Should reject strings with spaces
+      expect(validatePort("0x1234")).toBe(false)   // Should reject hex notation
       expect(validatePort(null)).toBe(false)
       expect(validatePort(undefined)).toBe(false)
     })
