@@ -27,9 +27,7 @@ Rakefile
 .rubocop.yml
 .ruby-version
 
-# Exclude TypeScript source files and config (only include compiled JS)
-*.ts
-!*.d.ts
+# Exclude TypeScript config
 tsconfig.json
 
 # Exclude source maps (optional - remove these lines to include source maps)
@@ -51,13 +49,7 @@ appveyor.yml
 # Exclude documentation source files (keep compiled docs if any)
 docs/
 
-# Include compiled JavaScript files explicitly
-# (This ensures they're included even though .gitignore excludes them)
-!package/**/*.js
-!package/**/*.d.ts
-
-# Include important root files
-!package.json
-!README.md
-!LICENSE
-!CHANGELOG.md
+# CRITICAL: Exclude TypeScript source files (must be at the end)
+# Only include compiled .js and .d.ts files
+*.ts
+!*.d.ts
