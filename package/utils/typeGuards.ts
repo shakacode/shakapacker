@@ -8,7 +8,7 @@ interface CacheEntry {
   configHash?: string
 }
 
-const validatedConfigs = new WeakMap<object, CacheEntry>()
+let validatedConfigs = new WeakMap<object, CacheEntry>()
 
 // Cache computed values to avoid repeated checks
 let cachedIsWatchMode: boolean | null = null
@@ -53,8 +53,8 @@ const debugCache = process.env.SHAKAPACKER_DEBUG_CACHE === 'true'
  * Useful for testing or when config files change
  */
 export function clearValidationCache(): void {
-  // WeakMap doesn't have a clear method, but we can create a new one
-  // This is handled by garbage collection
+  // Reassign to a new WeakMap to clear all entries
+  validatedConfigs = new WeakMap<object, CacheEntry>()
   if (debugCache) {
     console.log('[SHAKAPACKER DEBUG] Validation cache cleared')
   }
