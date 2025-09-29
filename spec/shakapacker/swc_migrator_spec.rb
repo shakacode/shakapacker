@@ -52,7 +52,7 @@ describe Shakapacker::SwcMigrator do
       end
 
       it "updates shakapacker.yml to use swc" do
-        migrator.migrate_to_swc
+        migrator.migrate_to_swc(run_installer: false)
 
         config = begin
           YAML.load_file(root_path.join("config/shakapacker.yml"), aliases: true)
@@ -68,7 +68,7 @@ describe Shakapacker::SwcMigrator do
       end
 
       it "installs SWC packages" do
-        migrator.migrate_to_swc
+        migrator.migrate_to_swc(run_installer: false)
 
         package_json = JSON.parse(File.read(root_path.join("package.json")))
         expect(package_json["devDependencies"]["@swc/core"]).to eq("^1.7.39")
@@ -76,7 +76,7 @@ describe Shakapacker::SwcMigrator do
       end
 
       it "creates .swcrc file" do
-        migrator.migrate_to_swc
+        migrator.migrate_to_swc(run_installer: false)
 
         expect(root_path.join(".swcrc")).to exist
         swcrc = JSON.parse(File.read(root_path.join(".swcrc")))
@@ -86,12 +86,28 @@ describe Shakapacker::SwcMigrator do
       end
 
       it "returns results hash" do
-        results = migrator.migrate_to_swc
+        results = migrator.migrate_to_swc(run_installer: false)
 
         expect(results[:config_updated]).to eq(true)
         expect(results[:packages_installed]).to include("@swc/core" => "^1.7.39")
         expect(results[:swcrc_created]).to eq(true)
         expect(results[:babel_packages_found]).to include("@babel/runtime", "@babel/core", "babel-loader")
+      end
+
+      it "logs cleanup recommendations when babel packages found" do
+        migrator.migrate_to_swc(run_installer: false)
+
+        expect(logger).to have_received(:info).with(/Cleanup Recommendations/)
+        expect(logger).to have_received(:info).with(/Found the following Babel packages/)
+        expect(logger).to have_received(:info).with(/rails shakapacker:clean_babel_packages/)
+      end
+
+      it "runs package manager install when packages are added" do
+        allow(migrator).to receive(:system).and_return(true)
+
+        migrator.migrate_to_swc(run_installer: true)
+
+        expect(migrator).to have_received(:system).with("npm install")
       end
     end
 
@@ -105,12 +121,12 @@ describe Shakapacker::SwcMigrator do
 
       it "does not overwrite existing .swcrc" do
         existing_content = File.read(root_path.join(".swcrc"))
-        migrator.migrate_to_swc
+        migrator.migrate_to_swc(run_installer: false)
         expect(File.read(root_path.join(".swcrc"))).to eq(existing_content)
       end
 
       it "returns swcrc_created as false" do
-        results = migrator.migrate_to_swc
+        results = migrator.migrate_to_swc(run_installer: false)
         expect(results[:swcrc_created]).to eq(false)
       end
     end
@@ -128,14 +144,14 @@ describe Shakapacker::SwcMigrator do
       end
 
       it "does not reinstall packages" do
-        migrator.migrate_to_swc
+        migrator.migrate_to_swc(run_installer: false)
         package_json = JSON.parse(File.read(root_path.join("package.json")))
         expect(package_json["devDependencies"]["@swc/core"]).to eq("^1.5.0")
         expect(package_json["devDependencies"]["swc-loader"]).to eq("^0.2.0")
       end
 
       it "returns empty packages_installed" do
-        results = migrator.migrate_to_swc
+        results = migrator.migrate_to_swc(run_installer: false)
         expect(results[:packages_installed]).to eq({})
       end
     end
@@ -143,14 +159,14 @@ describe Shakapacker::SwcMigrator do
     context "with missing files" do
       it "handles missing shakapacker.yml" do
         File.write(root_path.join("package.json"), "{}")
-        results = migrator.migrate_to_swc
+        results = migrator.migrate_to_swc(run_installer: false)
         expect(results[:config_updated]).to eq(false)
       end
 
       it "handles missing package.json" do
         FileUtils.mkdir_p(root_path.join("config"))
         File.write(root_path.join("config/shakapacker.yml"), "default: {}")
-        results = migrator.migrate_to_swc
+        results = migrator.migrate_to_swc(run_installer: false)
         expect(results[:packages_installed]).to eq({})
       end
     end
@@ -161,7 +177,7 @@ describe Shakapacker::SwcMigrator do
         File.write(root_path.join("config/shakapacker.yml"), "invalid: yaml: content:")
         File.write(root_path.join("package.json"), "{}")
 
-        expect { migrator.migrate_to_swc }.not_to raise_error
+        expect { migrator.migrate_to_swc(run_installer: false) }.not_to raise_error
         expect(logger).to have_received(:error).with(/Failed to update config/)
       end
 
@@ -170,7 +186,7 @@ describe Shakapacker::SwcMigrator do
         File.write(root_path.join("config/shakapacker.yml"), "default: {}")
         File.write(root_path.join("package.json"), "invalid json")
 
-        expect { migrator.migrate_to_swc }.not_to raise_error
+        expect { migrator.migrate_to_swc(run_installer: false) }.not_to raise_error
         expect(logger).to have_received(:error).with(/Failed to install packages/)
       end
     end
@@ -200,7 +216,7 @@ describe Shakapacker::SwcMigrator do
       end
 
       it "removes babel packages from dependencies" do
-        result = migrator.clean_babel_packages
+        result = migrator.clean_babel_packages(run_installer: false)
 
         package_json = JSON.parse(File.read(root_path.join("package.json")))
         expect(package_json["dependencies"]["@babel/runtime"]).to be_nil
@@ -208,7 +224,7 @@ describe Shakapacker::SwcMigrator do
       end
 
       it "removes babel packages from devDependencies" do
-        result = migrator.clean_babel_packages
+        result = migrator.clean_babel_packages(run_installer: false)
 
         package_json = JSON.parse(File.read(root_path.join("package.json")))
         expect(package_json["devDependencies"]["@babel/core"]).to be_nil
@@ -217,14 +233,14 @@ describe Shakapacker::SwcMigrator do
       end
 
       it "deletes babel config files" do
-        result = migrator.clean_babel_packages
+        result = migrator.clean_babel_packages(run_installer: false)
 
         expect(root_path.join(".babelrc")).not_to exist
         expect(root_path.join("babel.config.js")).not_to exist
       end
 
       it "returns removed packages and deleted files" do
-        result = migrator.clean_babel_packages
+        result = migrator.clean_babel_packages(run_installer: false)
 
         expect(result[:removed_packages]).to include(
           "@babel/runtime",
@@ -249,21 +265,21 @@ describe Shakapacker::SwcMigrator do
       end
 
       it "returns empty arrays" do
-        result = migrator.clean_babel_packages
+        result = migrator.clean_babel_packages(run_installer: false)
         expect(result[:removed_packages]).to eq([])
         expect(result[:config_files_deleted]).to eq([])
       end
 
       it "does not modify package.json" do
         original_content = File.read(root_path.join("package.json"))
-        migrator.clean_babel_packages
+        migrator.clean_babel_packages(run_installer: false)
         expect(File.read(root_path.join("package.json"))).to eq(original_content)
       end
     end
 
     context "without package.json" do
       it "returns empty result and logs error" do
-        result = migrator.clean_babel_packages
+        result = migrator.clean_babel_packages(run_installer: false)
         expect(result[:removed_packages]).to eq([])
         expect(result[:config_files_deleted]).to eq([])
         expect(logger).to have_received(:error).with("❌ No package.json found")
@@ -282,7 +298,7 @@ describe Shakapacker::SwcMigrator do
       end
 
       it "deletes all babel config files" do
-        migrator.clean_babel_packages
+        migrator.clean_babel_packages(run_installer: false)
 
         expect(root_path.join(".babelrc")).not_to exist
         expect(root_path.join(".babelrc.js")).not_to exist
@@ -361,13 +377,29 @@ describe Shakapacker::SwcMigrator do
     end
   end
 
+  describe "#package_manager" do
+    it "detects yarn when yarn.lock exists" do
+      File.write(root_path.join("yarn.lock"), "")
+      expect(migrator.send(:package_manager)).to eq("yarn")
+    end
+
+    it "detects pnpm when pnpm-lock.yaml exists" do
+      File.write(root_path.join("pnpm-lock.yaml"), "")
+      expect(migrator.send(:package_manager)).to eq("pnpm")
+    end
+
+    it "defaults to npm when no lock file exists" do
+      expect(migrator.send(:package_manager)).to eq("npm")
+    end
+  end
+
   describe "error handling" do
     it "continues migration even if one step fails" do
       FileUtils.mkdir_p(root_path.join("config"))
       File.write(root_path.join("config/shakapacker.yml"), "invalid: yaml: content:")
       File.write(root_path.join("package.json"), "{}")
 
-      results = migrator.migrate_to_swc
+      results = migrator.migrate_to_swc(run_installer: false)
       expect(results[:config_updated]).to eq(false)
       expect(results[:swcrc_created]).to eq(true)
     end
@@ -381,7 +413,7 @@ describe Shakapacker::SwcMigrator do
       allow(File).to receive(:write).and_call_original
       allow(File).to receive(:write).with(root_path.join(".swcrc"), anything).and_raise(Errno::EACCES)
 
-      expect { migrator.migrate_to_swc }.not_to raise_error
+      expect { migrator.migrate_to_swc(run_installer: false) }.not_to raise_error
       expect(logger).to have_received(:error).at_least(:once)
     end
   end

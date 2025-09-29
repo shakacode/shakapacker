@@ -53,7 +53,7 @@ module Shakapacker
       @logger = logger || Logger.new($stdout)
     end
 
-    def migrate_to_swc
+    def migrate_to_swc(run_installer: true)
       logger.info "🔄 Starting migration from Babel to SWC..."
 
       results = {
@@ -67,10 +67,26 @@ module Shakapacker
       logger.info "   Note: SWC is approximately 20x faster than Babel for transpilation."
       logger.info "   Please test your application thoroughly after migration."
 
+      # Show cleanup recommendations if babel packages found
+      if results[:babel_packages_found].any?
+        logger.info "\n🧹 Cleanup Recommendations:"
+        logger.info "   Found the following Babel packages in your package.json:"
+        results[:babel_packages_found].each do |package|
+          logger.info "   - #{package}"
+        end
+        logger.info "\n   To remove them, run:"
+        logger.info "   rails shakapacker:clean_babel_packages"
+      end
+
+      # Run package manager install if packages were added
+      if run_installer && results[:packages_installed].any?
+        run_package_manager_install
+      end
+
       results
     end
 
-    def clean_babel_packages
+    def clean_babel_packages(run_installer: true)
       logger.info "🧹 Removing Babel packages..."
 
       package_json_path = root_path.join("package.json")
@@ -84,7 +100,7 @@ module Shakapacker
 
       if removed_packages.any?
         logger.info "✅ Babel packages removed successfully!"
-        logger.info "🔧 Run npm/yarn install to update lock file"
+        run_package_manager_install if run_installer
       else
         logger.info "ℹ️  No Babel packages found to remove"
       end
@@ -239,6 +255,34 @@ module Shakapacker
       rescue StandardError => e
         logger.error "Failed to delete config files: #{e.message}"
         []
+      end
+
+      def run_package_manager_install
+        logger.info "\n🔧 Running npm/yarn install..."
+
+        yarn_lock = root_path.join("yarn.lock")
+        pnpm_lock = root_path.join("pnpm-lock.yaml")
+
+        if yarn_lock.exist?
+          system("yarn install")
+        elsif pnpm_lock.exist?
+          system("pnpm install")
+        else
+          system("npm install")
+        end
+      end
+
+      def package_manager
+        yarn_lock = root_path.join("yarn.lock")
+        pnpm_lock = root_path.join("pnpm-lock.yaml")
+
+        if yarn_lock.exist?
+          "yarn"
+        elsif pnpm_lock.exist?
+          "pnpm"
+        else
+          "npm"
+        end
       end
   end
 end
