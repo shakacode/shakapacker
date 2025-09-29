@@ -16,6 +16,7 @@
   "types": "package/index.d.ts",
   "exports": {
     ".": "./package/index.js",
+    "./types": "./package/types/index.js",
     "./webpack": "./package/webpack/index.js",
     "./rspack": "./package/rspack/index.js",
     "./swc": "./package/swc/index.js",
