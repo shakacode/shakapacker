@@ -96,7 +96,7 @@ describe("TypeScript Environment Modules", () => {
         typeof devServer.port === "number" ||
         typeof devServer.port === "string" ||
         devServer.port === "auto"
-      
+
       expect(validPort).toBe(true)
     })
   })

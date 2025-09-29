@@ -17,17 +17,17 @@ describe("Path Validation Security", () => {
         "/etc/passwd",
         "~/ssh/keys",
         "C:\\Windows\\System32",
-        "C:/Windows/System32",   // Windows with forward slash
-        "D:\\Program Files",      // Different drive letter
+        "C:/Windows/System32", // Windows with forward slash
+        "D:\\Program Files", // Different drive letter
         "\\\\server\\share\\file", // Windows UNC path
         "\\\\192.168.1.1\\share", // UNC with IP
         "%2e%2e%2fsecrets",
-        "%2E%2E%2Fsecrets",      // URL encoded uppercase
-        "path\x00with\x00null"    // Null bytes
+        "%2E%2E%2Fsecrets", // URL encoded uppercase
+        "path\x00with\x00null" // Null bytes
       ]
 
-      unsafePaths.forEach(path => {
-        expect(isPathTraversalSafe(path)).toBe(false)
+      unsafePaths.forEach((unsafePath) => {
+        expect(isPathTraversalSafe(unsafePath)).toBe(false)
       })
     })
 
@@ -39,7 +39,7 @@ describe("Path Validation Security", () => {
         path.join("dist", "bundle.js")
       ]
 
-      safePaths.forEach(safePath => {
+      safePaths.forEach((safePath) => {
         expect(isPathTraversalSafe(safePath)).toBe(true)
       })
     })
@@ -50,7 +50,7 @@ describe("Path Validation Security", () => {
       const basePath = path.join(path.sep, "app")
       const userPath = path.join("src", "index.js")
       const result = safeResolvePath(basePath, userPath)
-      
+
       expect(result).toContain(basePath)
       expect(result).toContain(userPath.replace(/\\/g, path.sep))
     })
@@ -58,7 +58,7 @@ describe("Path Validation Security", () => {
     it("throws on traversal attempts", () => {
       const basePath = path.join(path.sep, "app")
       const maliciousPath = path.join("..", "etc", "passwd")
-      
+
       expect(() => {
         safeResolvePath(basePath, maliciousPath)
       }).toThrow("Path traversal attempt detected")
@@ -68,20 +68,20 @@ describe("Path Validation Security", () => {
   describe("validatePaths", () => {
     it("filters out unsafe paths with warnings", () => {
       const consoleSpy = jest.spyOn(console, "warn").mockImplementation()
-      
+
       const paths = [
         path.join("src", "index.js"),
         path.join("..", "etc", "passwd"),
         path.join("components", "App.tsx")
       ]
-      
+
       const result = validatePaths(paths, path.join(path.sep, "app"))
-      
+
       expect(result).toHaveLength(2)
       expect(consoleSpy).toHaveBeenCalledWith(
         expect.stringContaining("potentially unsafe path")
       )
-      
+
       consoleSpy.mockRestore()
     })
   })
@@ -90,19 +90,19 @@ describe("Path Validation Security", () => {
     it("removes control characters", () => {
       const dirty = "normal\x00text\x1Fwith\x7Fcontrol"
       const clean = sanitizeEnvValue(dirty)
-      
+
       expect(clean).toBe("normaltextwithcontrol")
     })
 
     it("warns when sanitization occurs", () => {
       const consoleSpy = jest.spyOn(console, "warn").mockImplementation()
-      
+
       sanitizeEnvValue("text\x00with\x00nulls")
-      
+
       expect(consoleSpy).toHaveBeenCalledWith(
         expect.stringContaining("control characters")
       )
-      
+
       consoleSpy.mockRestore()
     })
 
@@ -129,12 +129,12 @@ describe("Path Validation Security", () => {
       expect(validatePort(-1)).toBe(false)
       expect(validatePort(3000.5)).toBe(false)
       expect(validatePort("invalid")).toBe(false)
-      expect(validatePort("3000abc")).toBe(false)  // Should reject strings with non-digits
-      expect(validatePort("abc3000")).toBe(false)  // Should reject strings with non-digits
-      expect(validatePort("30.00")).toBe(false)    // Should reject decimal strings
-      expect(validatePort("3000 ")).toBe(false)    // Should reject strings with spaces
-      expect(validatePort(" 3000")).toBe(false)    // Should reject strings with spaces
-      expect(validatePort("0x1234")).toBe(false)   // Should reject hex notation
+      expect(validatePort("3000abc")).toBe(false) // Should reject strings with non-digits
+      expect(validatePort("abc3000")).toBe(false) // Should reject strings with non-digits
+      expect(validatePort("30.00")).toBe(false) // Should reject decimal strings
+      expect(validatePort("3000 ")).toBe(false) // Should reject strings with spaces
+      expect(validatePort(" 3000")).toBe(false) // Should reject strings with spaces
+      expect(validatePort("0x1234")).toBe(false) // Should reject hex notation
       expect(validatePort(null)).toBe(false)
       expect(validatePort(undefined)).toBe(false)
     })
