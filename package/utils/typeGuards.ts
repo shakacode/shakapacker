@@ -13,11 +13,13 @@ const validatedConfigs = new WeakMap<object, CacheEntry>()
 // Adjust cache TTL based on environment
 // In watch mode, use shorter TTL to catch config changes
 const isWatchMode = process.argv.includes('--watch') || process.env.WEBPACK_WATCH === 'true'
-const CACHE_TTL = process.env.NODE_ENV === 'production' && !isWatchMode 
-  ? Infinity 
-  : isWatchMode 
-    ? 5000  // 5 seconds in watch mode
-    : 60000 // 1 minute in dev
+const CACHE_TTL = process.env.SHAKAPACKER_CACHE_TTL
+  ? parseInt(process.env.SHAKAPACKER_CACHE_TTL, 10)
+  : process.env.NODE_ENV === 'production' && !isWatchMode
+    ? Infinity
+    : isWatchMode
+      ? 5000  // 5 seconds in watch mode
+      : 60000 // 1 minute in dev
 
 // Only validate in development or when explicitly enabled
 const shouldValidate = process.env.NODE_ENV !== 'production' || process.env.SHAKAPACKER_STRICT_VALIDATION === 'true'

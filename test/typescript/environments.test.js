@@ -83,21 +83,25 @@ describe("TypeScript Environment Modules", () => {
 
     it("validates dev server configuration when present", () => {
       // Development config may or may not have devServer depending on environment
-      // When present, it should be properly configured
       const { devServer } = developmentConfig
 
-      // DevServer should be defined in development config
+      // Skip validation if devServer is not present
+      if (!devServer) {
+        expect(devServer).toBeUndefined()
+        return
+      }
+
+      // When present, validate the devServer configuration
       expect(devServer).toBeDefined()
 
-      // If devServer exists, validate port property
-      const validPort =
-        !devServer ||
-        devServer.port === undefined ||
-        typeof devServer.port === "number" ||
-        typeof devServer.port === "string" ||
-        devServer.port === "auto"
-
-      expect(validPort).toBe(true)
+      // Validate port property unconditionally
+      const port = devServer.port
+      expect(
+        typeof port === "number" ||
+          typeof port === "string" ||
+          port === undefined ||
+          port === "auto"
+      ).toBe(true)
     })
   })
 })
