@@ -33,6 +33,12 @@ jobs:
       - name: Install yalc
         run: npm install -g yalc
 
+      - name: Build TypeScript
+        run: |
+          cd ../..
+          yarn install --frozen-lockfile --production=false
+          yarn build
+
       - name: Publish shakapacker to yalc
         run: |
           cd ../..
@@ -80,6 +86,12 @@ jobs:
       - name: Install yalc
         run: npm install -g yalc
 
+      - name: Build TypeScript
+        run: |
+          cd ../..
+          yarn install --frozen-lockfile --production=false
+          yarn build
+
       - name: Publish shakapacker to yalc
         run: |
           cd ../..
@@ -126,6 +138,12 @@ jobs:
 
       - name: Install yalc
         run: npm install -g yalc
+
+      - name: Build TypeScript
+        run: |
+          cd ../..
+          yarn install --frozen-lockfile --production=false
+          yarn build
 
       - name: Publish shakapacker to yalc
         run: |

@@ -3,12 +3,17 @@ const { canProcess, moduleExists } = require("./helpers")
 const { requireOrError } = require("./requireOrError")
 const config = require("../config")
 const inliningCss = require("./inliningCss")
-const { validateCssModulesConfig } = require("./validateCssModulesConfig")
 
-const getStyleRule = (test, preprocessors = []) => {
+interface StyleRule {
+  test: RegExp
+  use: any[]
+  type?: string
+}
+
+const getStyleRule = (test: RegExp, preprocessors: any[] = []): StyleRule | null => {
   if (moduleExists("css-loader")) {
     const tryPostcss = () =>
-      canProcess("postcss-loader", (loaderPath) => ({
+      canProcess("postcss-loader", (loaderPath: string) => ({
         loader: loaderPath,
         options: { sourceMap: true }
       }))
@@ -20,31 +25,23 @@ const getStyleRule = (test, preprocessors = []) => {
         ? requireOrError("@rspack/core").CssExtractRspackPlugin.loader
         : requireOrError("mini-css-extract-plugin").loader
 
-    const cssLoaderOptions = {
-      sourceMap: true,
-      importLoaders: 2,
-      modules: {
-        auto: true,
-        // v9 defaults: named exports with camelCase conversion
-        namedExport: true,
-        exportLocalsConvention: "camelCase"
-      }
-    }
-
-    // Validate CSS modules configuration
-    validateCssModulesConfig(cssLoaderOptions)
-
     const use = [
       inliningCss ? "style-loader" : extractionPlugin,
       {
         loader: require.resolve("css-loader"),
-        options: cssLoaderOptions
+        options: {
+          sourceMap: true,
+          importLoaders: 2,
+          modules: {
+            auto: true
+          }
+        }
       },
       tryPostcss(),
       ...preprocessors
     ].filter(Boolean)
 
-    const result = {
+    const result: StyleRule = {
       test,
       use
     }
@@ -59,4 +56,4 @@ const getStyleRule = (test, preprocessors = []) => {
   return null
 }
 
-module.exports = { getStyleRule }
+export = { getStyleRule }

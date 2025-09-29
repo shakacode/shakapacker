@@ -1,6 +1,19 @@
 # Shakapacker v9 Upgrade Guide
 
-This guide outlines breaking changes and migration steps for upgrading from Shakapacker v8 to v9.
+This guide outlines new features, breaking changes, and migration steps for upgrading from Shakapacker v8 to v9.
+
+## New Features
+
+### TypeScript Support
+
+Shakapacker v9 includes TypeScript definitions for better IDE support and type safety.
+
+- **No breaking changes** - JavaScript configs continue to work
+- **Optional** - Use TypeScript only if you want it  
+- **Type safety** - Catch configuration errors at compile-time
+- **IDE support** - Full autocomplete for all options
+
+See the [TypeScript Documentation](./typescript.md) for usage examples.
 
 ## Breaking Changes
 

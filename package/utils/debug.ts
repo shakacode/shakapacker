@@ -3,7 +3,7 @@
  * Provides conditional logging based on environment variables
  */
 
-const isDebugMode = () => {
+const isDebugMode = (): boolean => {
   // Explicitly check for debug mode being disabled
   if (process.env.SHAKAPACKER_DEBUG === "false") {
     return false
@@ -16,31 +16,31 @@ const isDebugMode = () => {
   )
 }
 
-const debug = (message, ...args) => {
+const debug = (message: string, ...args: any[]): void => {
   if (isDebugMode()) {
     // eslint-disable-next-line no-console
     console.log(`[Shakapacker] ${message}`, ...args)
   }
 }
 
-const warn = (message, ...args) => {
+const warn = (message: string, ...args: any[]): void => {
   // eslint-disable-next-line no-console
   console.warn(`[Shakapacker] WARNING: ${message}`, ...args)
 }
 
-const error = (message, ...args) => {
+const error = (message: string, ...args: any[]): void => {
   // eslint-disable-next-line no-console
   console.error(`[Shakapacker] ERROR: ${message}`, ...args)
 }
 
-const info = (message, ...args) => {
+const info = (message: string, ...args: any[]): void => {
   if (isDebugMode()) {
     // eslint-disable-next-line no-console
     console.info(`[Shakapacker] INFO: ${message}`, ...args)
   }
 }
 
-module.exports = {
+export = {
   debug,
   warn,
   error,

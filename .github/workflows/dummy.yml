@@ -29,8 +29,12 @@ jobs:
       - name: Install dependencies
         run: |
           bundle install
+          yarn install --frozen-lockfile --production=false
           npm install -g yalc
           cd spec/dummy && npm install
+      
+      - name: Build TypeScript
+        run: yarn build
 
       - name: Run tests
         run: bundle exec rake run_spec:dummy

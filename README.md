@@ -657,11 +657,13 @@ See also [Customizing Babel Config](./docs/customizing_babel_config.md) for an e
 
 #### TypeScript
 
+**📚 TypeScript Support:** See the **[TypeScript Documentation](./docs/typescript.md)** for type-safe configuration.
+
 ```bash
 npm install typescript @babel/preset-typescript
 ```
 
-Babel won’t perform any type-checking on TypeScript code. To optionally use type-checking run:
+Babel won't perform any type-checking on TypeScript code. To optionally use type-checking run:
 
 ```bash
 npm install fork-ts-checker-webpack-plugin

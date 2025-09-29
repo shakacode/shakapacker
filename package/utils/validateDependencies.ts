@@ -5,7 +5,7 @@
 const { moduleExists } = require("./helpers")
 const { error } = require("./debug")
 
-const validateRspackDependencies = () => {
+const validateRspackDependencies = (): void => {
   const requiredDependencies = ["@rspack/core", "rspack-manifest-plugin"]
 
   const missingDependencies = requiredDependencies.filter(
@@ -28,7 +28,7 @@ const validateRspackDependencies = () => {
   }
 }
 
-const validateWebpackDependencies = () => {
+const validateWebpackDependencies = (): void => {
   const requiredDependencies = [
     "webpack",
     "webpack-cli",
@@ -55,7 +55,7 @@ const validateWebpackDependencies = () => {
   }
 }
 
-module.exports = {
+export = {
   validateRspackDependencies,
   validateWebpackDependencies
 }

@@ -57,4 +57,11 @@ jobs:
         with:
           node-version: 20.x
           cache: yarn
+      
+      - name: Install Node dependencies
+        run: yarn install --frozen-lockfile --production=false
+
+      - name: Build TypeScript
+        run: yarn build
+
       - run: bundle exec rake run_spec:generator
