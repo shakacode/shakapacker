@@ -194,6 +194,49 @@ export function isValidDevServerConfig(obj: unknown): obj is DevServerConfig {
 }
 
 /**
+ * Type guard to validate Rspack plugin instance
+ * Checks if an object looks like a valid Rspack plugin
+ */
+export function isValidRspackPlugin(obj: unknown): boolean {
+  if (typeof obj !== 'object' || obj === null) {
+    return false
+  }
+
+  const plugin = obj as Record<string, unknown>
+
+  // Check for common plugin patterns
+  // Most rspack plugins should have an apply method
+  if (typeof plugin.apply === 'function') {
+    return true
+  }
+
+  // Check for constructor name pattern (e.g., HtmlRspackPlugin)
+  const constructorName = plugin.constructor?.name || ''
+  if (constructorName.includes('Plugin') || constructorName.includes('Rspack')) {
+    return true
+  }
+
+  // Check for common plugin properties
+  if ('name' in plugin && typeof plugin.name === 'string') {
+    return true
+  }
+
+  return false
+}
+
+/**
+ * Type guard to validate array of Rspack plugins
+ * Ensures all items in the array are valid plugin instances
+ */
+export function isValidRspackPluginArray(arr: unknown): boolean {
+  if (!Array.isArray(arr)) {
+    return false
+  }
+
+  return arr.every(item => isValidRspackPlugin(item))
+}
+
+/**
  * Type guard to validate YamlConfig structure
  * In production, performs minimal validation for performance
  */
