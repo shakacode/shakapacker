@@ -50,6 +50,11 @@ Changes since the last non-beta release.
   - Configure `private_output_path` for private server bundles
 - **Enhanced TypeScript definitions** ([PR 602](https://github.com/shakacode/shakapacker/pull/602) by [justin808](https://github.com/justin808))
   - Better IDE support and type safety
+- **`rake shakapacker:doctor` diagnostic command** ([PR 609](https://github.com/shakacode/shakapacker/pull/609) by [justin808](https://github.com/justin808))
+  - Check for configuration issues and missing dependencies
+  - Identify missing loaders that cause build errors
+  - Particularly useful when migrating to v9 where peer dependencies are removed
+  - Detects transpiler-specific issues based on v9 changes
 
 ### Changed
 - Configuration option renamed from `bundler` to `assets_bundler` (deprecated but supported)

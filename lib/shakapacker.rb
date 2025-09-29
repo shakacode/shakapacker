@@ -44,6 +44,7 @@ require_relative "shakapacker/manifest"
 require_relative "shakapacker/compiler"
 require_relative "shakapacker/commands"
 require_relative "shakapacker/dev_server"
+require_relative "shakapacker/doctor"
 require_relative "shakapacker/deprecation_helper"
 
 require_relative "shakapacker/railtie" if defined?(Rails)
