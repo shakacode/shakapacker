@@ -16,8 +16,13 @@ describe("Path Validation Security", () => {
         "/etc/passwd",
         "~/ssh/keys",
         "C:\\Windows\\System32",
+        "C:/Windows/System32",   // Windows with forward slash
+        "D:\\Program Files",      // Different drive letter
+        "\\\\server\\share\\file", // Windows UNC path
+        "\\\\192.168.1.1\\share", // UNC with IP
         "%2e%2e%2fsecrets",
-        "path\x00with\x00null"
+        "%2E%2E%2Fsecrets",      // URL encoded uppercase
+        "path\x00with\x00null"    // Null bytes
       ]
 
       unsafePaths.forEach(path => {

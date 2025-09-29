@@ -10,13 +10,16 @@ import * as fs from "fs"
  */
 export function isPathTraversalSafe(inputPath: string): boolean {
   // Check for common traversal patterns
+  // Null byte short-circuit (avoid regex with control chars)
+  if (inputPath.includes("\0")) return false
+  
   const dangerousPatterns = [
-    /\.\.[\/\\]/,  // ../ or ..\
-    /^\//,         // Absolute paths starting with /
-    /^[A-Za-z]:\\/,  // Windows absolute paths
-    /~[\/\\]/,     // Home directory expansion
-    /%2e%2e/i,     // URL encoded traversal
-    /\x00/,        // Null bytes
+    /\.\.[\/\\]/,            // ../ or ..\
+    /^\//,                   // POSIX absolute
+    /^[A-Za-z]:[\/\\]/,      // Windows absolute (C:\ or C:/)
+    /^\\\\/,                 // Windows UNC (\\server\share)
+    /~[\/\\]/,               // Home directory expansion
+    /%2e%2e/i,               // URL encoded traversal
   ]
 
   return !dangerousPatterns.some(pattern => pattern.test(inputPath))
