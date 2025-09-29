@@ -516,11 +516,11 @@ describe Shakapacker::Doctor do
       before do
         FileUtils.mkdir_p(manifest_path.dirname)
         File.write(manifest_path, '{"application.js": "application-123.js"}')
-        
+
         # Set manifest to 1 hour ago
         old_time = Time.now - 3600
         File.utime(old_time, old_time, manifest_path)
-        
+
         # Create a newer source file
         FileUtils.mkdir_p(source_path)
         File.write(source_path.join("new.js"), "console.log('new');")

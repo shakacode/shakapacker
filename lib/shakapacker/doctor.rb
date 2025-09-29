@@ -51,7 +51,7 @@ module Shakapacker
         # Platform and migration checks
         check_windows_platform
         check_legacy_webpacker_files
-        
+
         # Build and compilation checks
         check_assets_compilation if config_exists?
       end
@@ -248,15 +248,15 @@ module Shakapacker
 
       def check_assets_compilation
         manifest_path = config.manifest_path
-        
+
         if manifest_path.exist?
           # Check if manifest is recent (within last 24 hours)
           manifest_age_hours = (Time.now - File.mtime(manifest_path)) / 3600
-          
+
           if manifest_age_hours > 24
             @info << "Assets were last compiled #{manifest_age_hours.round} hours ago. Consider recompiling if you've made changes."
           end
-          
+
           # Check if source files are newer than manifest
           source_files = Dir.glob(File.join(config.source_path, "**/*.{js,jsx,ts,tsx,css,scss,sass}"))
           if source_files.any?
@@ -274,7 +274,7 @@ module Shakapacker
           end
         end
       end
-      
+
       def check_legacy_webpacker_files
         legacy_files = [
           "config/webpacker.yml",
@@ -293,7 +293,7 @@ module Shakapacker
 
       def check_node_installation
         stdout, stderr, status = Open3.capture3("node", "--version")
-        
+
         if status.success?
           node_version = stdout.strip
           # Check minimum Node version (14.0.0 for modern tooling)
@@ -569,19 +569,19 @@ module Shakapacker
       def versions_compatible?(gem_version, npm_version)
         # Handle pre-release versions and ranges properly
         npm_clean = npm_version.gsub(/[\^~]/, "")
-        
+
         # Extract version without pre-release suffix
         gem_base = gem_version.split("-").first
         npm_base = npm_clean.split("-").first
-        
+
         # Compare major versions
         gem_major = gem_base.split(".").first
         npm_major = npm_base.split(".").first
-        
+
         if gem_major != npm_major
           return false
         end
-        
+
         # For same major version, check if npm version satisfies gem version
         begin
           # Use semantic versioning if available
