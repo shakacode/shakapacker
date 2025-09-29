@@ -71,5 +71,8 @@ jobs:
       - name: Install dependencies
         run: yarn --frozen-lockfile --non-interactive --prefer-offline
 
+      - name: Build TypeScript
+        run: yarn build
+
       - name: Jest Specs
         run: yarn test
