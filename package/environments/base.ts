@@ -5,6 +5,7 @@ const { basename, dirname, join, relative, resolve } = require("path")
 const { existsSync, readdirSync } = require("fs")
 import { Dirent } from "fs"
 const extname = require("path-complete-extname")
+// @ts-ignore - webpack is an optional peer dependency
 import { Configuration, Entry } from "webpack"
 const config = require("../config")
 const { isProduction } = require("../env")

@@ -76,6 +76,114 @@
     "webpack-merge": "^5.8.0",
     "webpack-subresource-integrity": "^5.1.0"
   },
+  "peerDependencies": {
+    "@babel/core": "^7.17.9",
+    "@babel/plugin-transform-runtime": "^7.17.0",
+    "@babel/preset-env": "^7.16.11",
+    "@babel/runtime": "^7.17.9",
+    "@rspack/core": "^1.0.0",
+    "@rspack/cli": "^1.0.0",
+    "@rspack/plugin-react-refresh": "^1.0.0",
+    "@types/babel__core": "^7.0.0",
+    "@types/webpack": "^5.0.0",
+    "babel-loader": "^8.2.4 || ^9.0.0 || ^10.0.0",
+    "compression-webpack-plugin": "^9.0.0 || ^10.0.0 || ^11.0.0",
+    "css-loader": "^6.8.1 || ^7.0.0",
+    "esbuild": "^0.14.0 || ^0.15.0 || ^0.16.0 || ^0.17.0 || ^0.18.0 || ^0.19.0 || ^0.20.0 || ^0.21.0 || ^0.22.0 || ^0.23.0 || ^0.24.0",
+    "esbuild-loader": "^2.0.0 || ^3.0.0 || ^4.0.0",
+    "mini-css-extract-plugin": "^2.0.0",
+    "rspack-manifest-plugin": "^5.0.0",
+    "sass": "^1.0.0",
+    "sass-loader": "^13.0.0 || ^14.0.0 || ^15.0.0 || ^16.0.0",
+    "swc-loader": "^0.1.15 || ^0.2.0",
+    "terser-webpack-plugin": "^5.3.1",
+    "webpack": "^5.76.0",
+    "webpack-assets-manifest": "^5.0.6 || ^6.0.0",
+    "webpack-cli": "^4.9.2 || ^5.0.0 || ^6.0.0",
+    "webpack-dev-server": "^4.15.2 || ^5.2.2",
+    "webpack-merge": "^5.8.0 || ^6.0.0",
+    "webpack-subresource-integrity": "^5.1.0"
+  },
+  "peerDependenciesMeta": {
+    "@babel/core": {
+      "optional": true
+    },
+    "@babel/plugin-transform-runtime": {
+      "optional": true
+    },
+    "@babel/preset-env": {
+      "optional": true
+    },
+    "@babel/runtime": {
+      "optional": true
+    },
+    "@rspack/core": {
+      "optional": true
+    },
+    "@rspack/cli": {
+      "optional": true
+    },
+    "@rspack/plugin-react-refresh": {
+      "optional": true
+    },
+    "@types/babel__core": {
+      "optional": true
+    },
+    "@types/webpack": {
+      "optional": true
+    },
+    "babel-loader": {
+      "optional": true
+    },
+    "compression-webpack-plugin": {
+      "optional": true
+    },
+    "css-loader": {
+      "optional": true
+    },
+    "esbuild": {
+      "optional": true
+    },
+    "esbuild-loader": {
+      "optional": true
+    },
+    "mini-css-extract-plugin": {
+      "optional": true
+    },
+    "rspack-manifest-plugin": {
+      "optional": true
+    },
+    "sass": {
+      "optional": true
+    },
+    "sass-loader": {
+      "optional": true
+    },
+    "swc-loader": {
+      "optional": true
+    },
+    "terser-webpack-plugin": {
+      "optional": true
+    },
+    "webpack": {
+      "optional": true
+    },
+    "webpack-assets-manifest": {
+      "optional": true
+    },
+    "webpack-cli": {
+      "optional": true
+    },
+    "webpack-dev-server": {
+      "optional": true
+    },
+    "webpack-merge": {
+      "optional": true
+    },
+    "webpack-subresource-integrity": {
+      "optional": true
+    }
+  },
   "packageManager": "yarn@1.22.22",
   "engines": {
     "node": ">= 14",

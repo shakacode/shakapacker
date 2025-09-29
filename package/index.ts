@@ -4,6 +4,7 @@
 const webpackMerge = require("webpack-merge")
 import { resolve } from "path"
 import { existsSync } from "fs"
+// @ts-ignore - webpack is an optional peer dependency
 import { Configuration } from "webpack"
 const config = require("./config")
 const baseConfig = require("./environments/base")

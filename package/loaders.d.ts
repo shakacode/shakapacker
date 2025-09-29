@@ -1,3 +1,4 @@
+// @ts-ignore - webpack is an optional peer dependency
 import type { LoaderDefinitionFunction } from 'webpack'
 
 export interface ShakapackerLoaderOptions {
