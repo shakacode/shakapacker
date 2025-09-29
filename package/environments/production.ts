@@ -12,6 +12,7 @@ const baseConfig = require("./base")
 const { moduleExists } = require("../utils/helpers")
 const config = require("../config")
 import type { Configuration as WebpackConfiguration, WebpackPluginInstance } from "webpack"
+import type { CompressionPluginConstructor } from "./types"
 
 const optimizationPath = resolve(
   __dirname,
@@ -20,14 +21,6 @@ const optimizationPath = resolve(
   `${config.assets_bundler}.js`
 )
 const { getOptimization } = require(optimizationPath)
-
-interface CompressionPluginOptions {
-  filename: string
-  algorithm: string | "gzip" | "brotliCompress"
-  test: RegExp
-}
-
-type CompressionPluginConstructor = new (options: CompressionPluginOptions) => WebpackPluginInstance
 
 let CompressionPlugin: CompressionPluginConstructor | null = null
 if (moduleExists("compression-webpack-plugin")) {

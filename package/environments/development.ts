@@ -9,28 +9,12 @@ const baseConfig = require("./base")
 const webpackDevServerConfig = require("../webpackDevServerConfig")
 const { runningWebpackDevServer } = require("../env")
 const { moduleExists } = require("../utils/helpers")
-import type { Configuration as WebpackConfiguration, WebpackPluginInstance } from "webpack"
-import type { Configuration as DevServerConfiguration } from "webpack-dev-server"
-
-interface WebpackConfigWithDevServer extends WebpackConfiguration {
-  devServer?: DevServerConfiguration
-  plugins?: WebpackPluginInstance[]
-}
-
-interface RspackDevServerConfig {
-  [key: string]: unknown
-  devMiddleware?: {
-    writeToDisk?: boolean | ((filePath: string) => boolean)
-    [key: string]: unknown
-  }
-}
-
-interface RspackConfigWithDevServer {
-  mode?: "development" | "production" | "none"
-  devtool?: string | false
-  devServer?: RspackDevServerConfig
-  plugins?: Array<{ new(...args: any[]): any }>
-}
+import type { 
+  WebpackConfigWithDevServer,
+  RspackConfigWithDevServer,
+  ReactRefreshWebpackPlugin,
+  ReactRefreshRspackPlugin
+} from "./types"
 
 /**
  * Base development configuration shared between webpack and rspack

@@ -125,14 +125,21 @@ if (config.integrity?.hash_functions) {
   config.integrity.hash_functions = [...new Set(config.integrity.hash_functions)]
 }
 
-// Allow ENV variable to override assets_bundler
+// Ensure assets_bundler has a default value
+if (!config.assets_bundler) {
+  config.assets_bundler = "webpack"
+}
+
+// Allow ENV variable to override assets_bundler  
 if (process.env.SHAKAPACKER_ASSETS_BUNDLER) {
   config.assets_bundler = process.env.SHAKAPACKER_ASSETS_BUNDLER
 }
 
-// Define clear defaults - SWC is now the default for both bundlers
-// This provides better performance and consistency across webpack and rspack
-const DEFAULT_JAVASCRIPT_TRANSPILER = "swc"
+// Define clear defaults
+// Keep Babel as default for webpack to maintain backward compatibility
+// Use SWC for rspack as it's a newer bundler where we can set modern defaults
+const DEFAULT_JAVASCRIPT_TRANSPILER = 
+  config.assets_bundler === "rspack" ? "swc" : "babel"
 
 // Backward compatibility: Check for webpack_loader using proper type guard
 function hasWebpackLoader(obj: unknown): obj is Config & { webpack_loader: string } {
@@ -144,7 +151,10 @@ function hasWebpackLoader(obj: unknown): obj is Config & { webpack_loader: strin
   )
 }
 
-if (hasWebpackLoader(config) && !config.javascript_transpiler) {
+// Allow environment variable to override javascript_transpiler
+if (process.env.SHAKAPACKER_JAVASCRIPT_TRANSPILER) {
+  config.javascript_transpiler = process.env.SHAKAPACKER_JAVASCRIPT_TRANSPILER
+} else if (hasWebpackLoader(config) && !config.javascript_transpiler) {
   console.warn(
     "[SHAKAPACKER DEPRECATION] The 'webpack_loader' configuration option is deprecated.\n" +
     "Please use 'javascript_transpiler' instead as it better reflects its purpose of configuring JavaScript transpilation regardless of the bundler used."

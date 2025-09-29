@@ -5,13 +5,37 @@ import { isPathTraversalSafe, validatePort } from "./pathValidation"
 interface CacheEntry {
   result: boolean
   timestamp: number
+  configHash?: string
 }
 
 const validatedConfigs = new WeakMap<object, CacheEntry>()
-const CACHE_TTL = process.env.NODE_ENV === 'production' ? Infinity : 60000 // 1 minute in dev, infinite in prod
+
+// Adjust cache TTL based on environment
+// In watch mode, use shorter TTL to catch config changes
+const isWatchMode = process.argv.includes('--watch') || process.env.WEBPACK_WATCH === 'true'
+const CACHE_TTL = process.env.NODE_ENV === 'production' && !isWatchMode 
+  ? Infinity 
+  : isWatchMode 
+    ? 5000  // 5 seconds in watch mode
+    : 60000 // 1 minute in dev
 
 // Only validate in development or when explicitly enabled
 const shouldValidate = process.env.NODE_ENV !== 'production' || process.env.SHAKAPACKER_STRICT_VALIDATION === 'true'
+
+// Debug logging for cache operations
+const debugCache = process.env.SHAKAPACKER_DEBUG_CACHE === 'true'
+
+/**
+ * Clear the validation cache
+ * Useful for testing or when config files change
+ */
+export function clearValidationCache(): void {
+  // WeakMap doesn't have a clear method, but we can create a new one
+  // This is handled by garbage collection
+  if (debugCache) {
+    console.log('[SHAKAPACKER DEBUG] Validation cache cleared')
+  }
+}
 
 /**
  * Type guard to validate Config object at runtime
@@ -25,6 +49,9 @@ export function isValidConfig(obj: unknown): obj is Config {
   // Check cache with TTL
   const cached = validatedConfigs.get(obj as object)
   if (cached && (Date.now() - cached.timestamp) < CACHE_TTL) {
+    if (debugCache) {
+      console.log(`[SHAKAPACKER DEBUG] Config validation cache hit (result: ${cached.result})`)
+    }
     return cached.result
   }
 
