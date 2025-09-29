@@ -78,6 +78,9 @@ module Shakapacker
         logger.info "   rails shakapacker:clean_babel_packages"
       end
 
+      # Suggest running doctor to verify configuration
+      logger.info "\n🩺 Run 'rails shakapacker:doctor' to verify your configuration"
+
       # Run package manager install if packages were added
       if run_installer && results[:packages_installed].any?
         run_package_manager_install
