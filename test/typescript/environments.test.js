@@ -89,14 +89,13 @@ describe("TypeScript Environment Modules", () => {
       if (devServer !== undefined) {
         expect(devServer).toBeDefined()
         
-        // If port is defined, validate its type
-        if (devServer.port !== undefined) {
-          expect(
-            typeof devServer.port === "number" || 
-            typeof devServer.port === "string" || 
-            devServer.port === "auto"
-          ).toBe(true)
-        }
+        // Port should be undefined or one of the allowed types (no conditional)
+        expect(
+          devServer.port === undefined ||
+          typeof devServer.port === "number" || 
+          typeof devServer.port === "string" || 
+          devServer.port === "auto"
+        ).toBe(true)
       }
     })
   })
