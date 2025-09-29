@@ -1,4 +1,5 @@
 require "yaml"
+require "json"
 require "active_support/core_ext/hash/keys"
 require "active_support/core_ext/hash/indifferent_access"
 
@@ -123,7 +124,12 @@ class Shakapacker::Configuration
     end
 
     # Use explicit config if set, otherwise default based on bundler
-    fetch(:javascript_transpiler) || fetch(:webpack_loader) || default_javascript_transpiler
+    transpiler = fetch(:javascript_transpiler) || fetch(:webpack_loader) || default_javascript_transpiler
+
+    # Validate transpiler configuration
+    validate_transpiler_configuration(transpiler) unless self.class.installing
+
+    transpiler
   end
 
   # Deprecated: Use javascript_transpiler instead
@@ -136,6 +142,57 @@ class Shakapacker::Configuration
     def default_javascript_transpiler
       # RSpack has built-in SWC support, use it by default
       rspack? ? "swc" : "babel"
+    end
+
+    def validate_transpiler_configuration(transpiler)
+      return unless ENV["NODE_ENV"] != "test" # Skip validation in test environment
+
+      # Check if package.json exists
+      package_json_path = root_path.join("package.json")
+      return unless package_json_path.exist?
+
+      begin
+        package_json = JSON.parse(File.read(package_json_path))
+        all_deps = (package_json["dependencies"] || {}).merge(package_json["devDependencies"] || {})
+
+        # Check for transpiler mismatch
+        has_babel = all_deps.keys.any? { |pkg| pkg.start_with?("@babel/", "babel-") }
+        has_swc = all_deps.keys.any? { |pkg| pkg.include?("swc") }
+        has_esbuild = all_deps.keys.any? { |pkg| pkg.include?("esbuild") }
+
+        case transpiler
+        when "babel"
+          if !has_babel && has_swc
+            warn_transpiler_mismatch("Babel", "SWC packages found but Babel is configured")
+          end
+        when "swc"
+          if !has_swc && has_babel
+            warn_transpiler_mismatch("SWC", "Babel packages found but SWC is configured")
+          end
+        when "esbuild"
+          if !has_esbuild && (has_babel || has_swc)
+            other = has_babel ? "Babel" : "SWC"
+            warn_transpiler_mismatch("esbuild", "#{other} packages found but esbuild is configured")
+          end
+        end
+      rescue JSON::ParserError
+        # Ignore if package.json is malformed
+      end
+    end
+
+    def warn_transpiler_mismatch(configured, message)
+      $stderr.puts <<~WARNING
+        ⚠️  Transpiler Configuration Mismatch Detected:
+           #{message}
+           Configured transpiler: #{configured}
+        #{'   '}
+           This might cause unexpected behavior or build failures.
+        #{'   '}
+           To fix this:
+           1. Run 'rails shakapacker:migrate_to_swc' to migrate to SWC (recommended for 20x faster builds)
+           2. Or install the correct packages for #{configured}
+           3. Or update your shakapacker.yml to match your installed packages
+      WARNING
     end
 
   public
