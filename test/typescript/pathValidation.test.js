@@ -1,4 +1,5 @@
 // Tests for path validation and security utilities
+const path = require("path")
 const {
   isPathTraversalSafe,
   safeResolvePath,
@@ -32,31 +33,31 @@ describe("Path Validation Security", () => {
 
     it("allows safe relative paths", () => {
       const safePaths = [
-        "src/index.js",
-        "./components/App.tsx",
-        "node_modules/package/index.js",
-        "dist/bundle.js"
+        path.join("src", "index.js"),
+        path.join(".", "components", "App.tsx"),
+        path.join("node_modules", "package", "index.js"),
+        path.join("dist", "bundle.js")
       ]
 
-      safePaths.forEach(path => {
-        expect(isPathTraversalSafe(path)).toBe(true)
+      safePaths.forEach(safePath => {
+        expect(isPathTraversalSafe(safePath)).toBe(true)
       })
     })
   })
 
   describe("safeResolvePath", () => {
     it("resolves paths within base directory", () => {
-      const basePath = "/app"
-      const userPath = "src/index.js"
+      const basePath = path.join(path.sep, "app")
+      const userPath = path.join("src", "index.js")
       const result = safeResolvePath(basePath, userPath)
       
-      expect(result).toContain("/app")
-      expect(result).toContain("src/index.js")
+      expect(result).toContain(basePath)
+      expect(result).toContain(userPath.replace(/\\/g, path.sep))
     })
 
     it("throws on traversal attempts", () => {
-      const basePath = "/app"
-      const maliciousPath = "../etc/passwd"
+      const basePath = path.join(path.sep, "app")
+      const maliciousPath = path.join("..", "etc", "passwd")
       
       expect(() => {
         safeResolvePath(basePath, maliciousPath)
@@ -69,12 +70,12 @@ describe("Path Validation Security", () => {
       const consoleSpy = jest.spyOn(console, "warn").mockImplementation()
       
       const paths = [
-        "src/index.js",
-        "../etc/passwd",
-        "components/App.tsx"
+        path.join("src", "index.js"),
+        path.join("..", "etc", "passwd"),
+        path.join("components", "App.tsx")
       ]
       
-      const result = validatePaths(paths, "/app")
+      const result = validatePaths(paths, path.join(path.sep, "app"))
       
       expect(result).toHaveLength(2)
       expect(consoleSpy).toHaveBeenCalledWith(
