@@ -2,6 +2,7 @@ require "yaml"
 require "json"
 require "fileutils"
 require "logger"
+require "pathname"
 
 module Shakapacker
   class SwcMigrator
