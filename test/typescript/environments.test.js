@@ -57,10 +57,9 @@ describe("TypeScript Environment Modules", () => {
     })
 
     it("includes proper mode configuration", () => {
-      // Test environment uses different configs for webpack vs rspack
-      if (testConfig.mode) {
-        expect(["development", "production", "test"]).toContain(testConfig.mode)
-      }
+      // Test environment should always have a mode defined
+      expect(testConfig.mode).toBeDefined()
+      expect(["development", "production", "test"]).toContain(testConfig.mode)
     })
 
     it("can be used as webpack configuration", () => {
@@ -83,11 +82,15 @@ describe("TypeScript Environment Modules", () => {
     })
 
     it("validates dev server configuration when present", () => {
-      if (developmentConfig.devServer) {
-        const devServer = developmentConfig.devServer
+      // Development config may or may not have devServer depending on environment
+      // When present, it should be properly configured
+      const devServer = developmentConfig.devServer
+      
+      if (devServer !== undefined) {
         expect(devServer).toBeDefined()
         
-        if (devServer.port) {
+        // If port is defined, validate its type
+        if (devServer.port !== undefined) {
           expect(
             typeof devServer.port === "number" || 
             typeof devServer.port === "string" || 
