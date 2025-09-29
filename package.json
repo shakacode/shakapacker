@@ -30,7 +30,7 @@
   ],
   "scripts": {
     "clean:ts": "find package -name '*.ts' -not -name '*.d.ts' | sed 's/\\.ts$//' | xargs -I {} rm -f {}.js {}.d.ts {}.d.ts.map {}.js.map",
-    "build": "tsc",
+    "build": "tsc && node scripts/remove-use-strict.js && yarn prettier --write 'package/**/*.js'",
     "build:types": "tsc",
     "lint": "eslint .",
     "test": "jest",
