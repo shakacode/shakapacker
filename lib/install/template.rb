@@ -126,14 +126,26 @@ end
 
 Dir.chdir(Rails.root) do
   # In CI, use the pre-packed tarball if available
-  if ENV["SHAKAPACKER_NPM_PACKAGE"] && File.exist?(ENV["SHAKAPACKER_NPM_PACKAGE"])
+  if ENV["SHAKAPACKER_NPM_PACKAGE"]
     package_path = ENV["SHAKAPACKER_NPM_PACKAGE"]
-    say "Installing shakapacker from local package: #{package_path}"
-    begin
-      @package_json.manager.add!([package_path], type: :production)
-    rescue PackageJson::Error
-      say "Shakapacker installation failed 😭 See above for details.", :red
-      exit 1
+    if File.exist?(package_path)
+      say "📦 Installing shakapacker from local package: #{package_path}", :cyan
+      begin
+        @package_json.manager.add!([package_path], type: :production)
+      rescue PackageJson::Error
+        say "Shakapacker installation failed 😭 See above for details.", :red
+        exit 1
+      end
+    else
+      say "⚠️  SHAKAPACKER_NPM_PACKAGE set but file not found: #{package_path}", :yellow
+      say "Falling back to npm registry...", :yellow
+      npm_version = Shakapacker::Utils::VersionSyntaxConverter.new.rubygem_to_npm(Shakapacker::VERSION)
+      begin
+        @package_json.manager.add!(["shakapacker@#{npm_version}"], type: :production)
+      rescue PackageJson::Error
+        say "Shakapacker installation failed 😭 See above for details.", :red
+        exit 1
+      end
     end
   else
     npm_version = Shakapacker::Utils::VersionSyntaxConverter.new.rubygem_to_npm(Shakapacker::VERSION)
