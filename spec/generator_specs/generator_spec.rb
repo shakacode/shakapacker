@@ -58,8 +58,14 @@ describe "Generator" do
 
           Bundler.with_unbundled_env do
             # Preserve SHAKAPACKER_NPM_PACKAGE if set (for CI testing with local tarball)
-            npm_package_env = ENV['SHAKAPACKER_NPM_PACKAGE'] ? "SHAKAPACKER_NPM_PACKAGE='#{ENV['SHAKAPACKER_NPM_PACKAGE']}' " : ""
-            sh_in_dir(sh_opts, TEMP_RAILS_APP_PATH, "#{npm_package_env}SHAKAPACKER_ASSETS_BUNDLER=webpack USE_BABEL_PACKAGES=true FORCE=true bundle exec rails shakapacker:install")
+            npm_package_env = if ENV['SHAKAPACKER_NPM_PACKAGE']
+                                "SHAKAPACKER_NPM_PACKAGE='#{ENV['SHAKAPACKER_NPM_PACKAGE']}' "
+                              else
+                                ""
+                              end
+            install_cmd = "#{npm_package_env}SHAKAPACKER_ASSETS_BUNDLER=webpack " \
+                          "USE_BABEL_PACKAGES=true FORCE=true bundle exec rails shakapacker:install"
+            sh_in_dir(sh_opts, TEMP_RAILS_APP_PATH, install_cmd)
 
             # Update package.json to use local shakapacker package
             # This ensures webpack can find the shakapacker/package.json file
@@ -175,8 +181,11 @@ describe "Generator" do
             npm_version = Shakapacker::Utils::VersionSyntaxConverter.new.rubygem_to_npm(Shakapacker::VERSION)
             expect(actual_version).to eq(npm_version)
           elsif ENV["SHAKAPACKER_NPM_PACKAGE"]
-            # In CI with SHAKAPACKER_NPM_PACKAGE, version will be a file path (tarball)
-            expect(actual_version).to match(/^file:/)
+            # In CI with SHAKAPACKER_NPM_PACKAGE, version will be a file path
+            # Different package managers format it differently:
+            # - npm/pnpm: "file:/path/to/package.tgz"
+            # - yarn: "/path/to/package.tgz"
+            expect(actual_version).to match(/shakapacker.*\.tgz/)
           else
             expect(actual_version).to eq("file:#{GEM_ROOT}")
           end
