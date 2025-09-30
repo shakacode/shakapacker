@@ -50,6 +50,34 @@ We welcome pull requests that fix bugs, add new features, or improve existing on
    yarn install
    ```
 
+## Understanding Optional Peer Dependencies
+
+Shakapacker uses optional peer dependencies (via `peerDependenciesMeta`) for maximum flexibility:
+
+- **All peer dependencies are optional** - Users only install what they need
+- **No installation warnings** - Package managers won't warn about missing optional dependencies
+- **Version constraints still apply** - When a package is installed, version compatibility is enforced
+
+### When modifying dependencies:
+1. Add new peer dependencies to both `peerDependencies` and `peerDependenciesMeta` (marking as optional)
+2. Keep version ranges synchronized between `devDependencies` and `peerDependencies`
+3. Test with multiple package managers: `npm`, `yarn`, and `pnpm`
+
+### Testing peer dependency changes:
+```bash
+# Test with npm (no warnings expected)
+cd /tmp && mkdir test-npm && cd test-npm
+npm init -y && npm install /path/to/shakapacker
+
+# Test with yarn (no warnings expected)
+cd /tmp && mkdir test-yarn && cd test-yarn
+yarn init -y && yarn add /path/to/shakapacker
+
+# Test with pnpm (no warnings expected)
+cd /tmp && mkdir test-pnpm && cd test-pnpm
+pnpm init && pnpm add /path/to/shakapacker
+```
+
 ## Making sure your changes pass all tests
 
 There are several specs, covering different aspects of Shakapacker gem. You may run them locally or rely on GitHub CI actions configured to test the gem functionality if different Ruby, Rails, and Node environment.
