@@ -43,7 +43,9 @@ function getCacheTTL(): number {
 }
 
 // Only validate in development or when explicitly enabled
-const shouldValidate = process.env.NODE_ENV !== 'production' || process.env.SHAKAPACKER_STRICT_VALIDATION === 'true'
+function shouldValidate(): boolean {
+  return process.env.NODE_ENV !== 'production' || process.env.SHAKAPACKER_STRICT_VALIDATION === 'true'
+}
 
 // Debug logging for cache operations
 const debugCache = process.env.SHAKAPACKER_DEBUG_CACHE === 'true'
@@ -63,6 +65,9 @@ export function clearValidationCache(): void {
 /**
  * Type guard to validate Config object at runtime
  * In production, caches results for performance unless SHAKAPACKER_STRICT_VALIDATION is set
+ *
+ * IMPORTANT: Path traversal security checks ALWAYS run regardless of environment or validation mode.
+ * This ensures application security is never compromised for performance.
  */
 export function isValidConfig(obj: unknown): obj is Config {
   if (typeof obj !== 'object' || obj === null) {
@@ -79,24 +84,25 @@ export function isValidConfig(obj: unknown): obj is Config {
   }
 
   const config = obj as Record<string, unknown>
-  
+
   // Check required string fields
   const requiredStringFields = [
     'source_path',
-    'source_entry_path', 
+    'source_entry_path',
     'public_root_path',
     'public_output_path',
     'cache_path',
     'javascript_transpiler'
   ]
-  
+
   for (const field of requiredStringFields) {
     if (typeof config[field] !== 'string') {
       // Cache negative result
       validatedConfigs.set(obj as object, { result: false, timestamp: Date.now() })
       return false
     }
-    // Validate paths for security
+    // SECURITY: Path traversal validation ALWAYS runs (not subject to shouldValidate)
+    // This ensures paths are safe regardless of environment or validation mode
     if (field.includes('path') && !isPathTraversalSafe(config[field] as string)) {
       console.warn(`[SHAKAPACKER SECURITY] Invalid path in ${field}: ${config[field]}`)
       validatedConfigs.set(obj as object, { result: false, timestamp: Date.now() })
@@ -130,8 +136,9 @@ export function isValidConfig(obj: unknown): obj is Config {
     validatedConfigs.set(obj as object, { result: false, timestamp: Date.now() })
     return false
   }
-  
-  // Validate additional_paths for security
+
+  // SECURITY: Path traversal validation for additional_paths ALWAYS runs (not subject to shouldValidate)
+  // This critical security check ensures user-provided paths cannot escape the project directory
   for (const additionalPath of config.additional_paths as string[]) {
     if (!isPathTraversalSafe(additionalPath)) {
       console.warn(`[SHAKAPACKER SECURITY] Invalid additional_path: ${additionalPath}`)
@@ -139,17 +146,25 @@ export function isValidConfig(obj: unknown): obj is Config {
       return false
     }
   }
-  
-  // Check optional fields
+
+  // In production, skip deep validation of optional fields unless explicitly enabled
+  // Security checks above still run regardless of this flag
+  if (!shouldValidate()) {
+    // Cache positive result - basic structure and security validated
+    validatedConfigs.set(obj as object, { result: true, timestamp: Date.now() })
+    return true
+  }
+
+  // Deep validation of optional fields (only in development or with SHAKAPACKER_STRICT_VALIDATION=true)
   if (config.dev_server !== undefined && !isValidDevServerConfig(config.dev_server)) {
     // Cache negative result
     validatedConfigs.set(obj as object, { result: false, timestamp: Date.now() })
     return false
   }
-  
+
   if (config.integrity !== undefined) {
     const integrity = config.integrity as Record<string, unknown>
-    if (typeof integrity.enabled !== 'boolean' || 
+    if (typeof integrity.enabled !== 'boolean' ||
         typeof integrity.cross_origin !== 'string') {
       // Cache negative result
       validatedConfigs.set(obj as object, { result: false, timestamp: Date.now() })
@@ -173,7 +188,7 @@ export function isValidDevServerConfig(obj: unknown): obj is DevServerConfig {
   }
   
   // In production, skip deep validation unless explicitly enabled
-  if (!shouldValidate) {
+  if (!shouldValidate()) {
     return true
   }
   
@@ -246,7 +261,7 @@ export function isValidYamlConfig(obj: unknown): obj is YamlConfig {
   }
   
   // In production, skip deep validation unless explicitly enabled
-  if (!shouldValidate) {
+  if (!shouldValidate()) {
     return true
   }
   
@@ -273,7 +288,7 @@ export function isPartialConfig(obj: unknown): obj is Partial<Config> {
   }
   
   // In production, skip deep validation unless explicitly enabled
-  if (!shouldValidate) {
+  if (!shouldValidate()) {
     return true
   }
   
