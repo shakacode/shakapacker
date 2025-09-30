@@ -58,6 +58,31 @@ describe "Generator" do
 
           Bundler.with_unbundled_env do
             sh_in_dir(sh_opts, TEMP_RAILS_APP_PATH, "SHAKAPACKER_ASSETS_BUNDLER=webpack USE_BABEL_PACKAGES=true FORCE=true bundle exec rails shakapacker:install")
+
+            # Update package.json to use local shakapacker package
+            # This ensures webpack can find the shakapacker/package.json file
+            package_json_path = File.join(TEMP_RAILS_APP_PATH, "package.json")
+            package_json = JSON.parse(File.read(package_json_path))
+
+            # Update the shakapacker dependency to use the local path
+            package_json["dependencies"]["shakapacker"] = "file:#{GEM_ROOT}"
+
+            # Write the updated package.json
+            File.write(package_json_path, JSON.pretty_generate(package_json))
+
+            # Reinstall dependencies to pick up the local path
+            package_manager = fallback_manager.split("_")[0]
+
+            case package_manager
+            when "yarn"
+              sh_in_dir(sh_opts, TEMP_RAILS_APP_PATH, "yarn install")
+            when "npm"
+              sh_in_dir(sh_opts, TEMP_RAILS_APP_PATH, "npm install")
+            when "pnpm"
+              sh_in_dir(sh_opts, TEMP_RAILS_APP_PATH, "pnpm install")
+            when "bun"
+              sh_in_dir(sh_opts, TEMP_RAILS_APP_PATH, "bun install")
+            end
           end
         end
 
