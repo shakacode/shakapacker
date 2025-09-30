@@ -1,7 +1,6 @@
 import { resolve } from "path"
 import { load } from "js-yaml"
 import { existsSync, readFileSync } from "fs"
-// @ts-ignore - webpack-merge is an optional peer dependency
 import { merge } from "webpack-merge"
 const { ensureTrailingSlash } = require("./utils/helpers")
 const { railsEnv } = require("./env")
