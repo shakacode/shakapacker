@@ -89,7 +89,7 @@ describe("TypeScript Environment Modules", () => {
       expect(["undefined", "object"]).toContain(typeof devServer)
 
       // When devServer exists, validate port
-      const port = devServer?.port
+      const port = devServer && devServer.port
       expect(["undefined", "auto", "number", "string"]).toContain(
         port === "auto" ? "auto" : typeof port
       )

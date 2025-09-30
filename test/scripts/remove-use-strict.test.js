@@ -24,9 +24,15 @@ describe("remove-use-strict script", () => {
 
   function runScript(directory) {
     // Run the script with a custom directory
-    const scriptContent = fs.readFileSync("scripts/remove-use-strict.js", "utf8")
+    const scriptContent = fs.readFileSync(
+      "scripts/remove-use-strict.js",
+      "utf8"
+    )
     // Replace 'package' with our test directory
-    const modifiedScript = scriptContent.replace('findJsFiles("package")', `findJsFiles("${directory}")`)
+    const modifiedScript = scriptContent.replace(
+      'findJsFiles("package")',
+      `findJsFiles("${directory}")`
+    )
     const tempScript = path.join(tempDir, "test-script.js")
     fs.writeFileSync(tempScript, modifiedScript, "utf8")
     execSync(`node "${tempScript}"`, { stdio: "pipe" })
@@ -47,21 +53,30 @@ describe("remove-use-strict script", () => {
   })
 
   it("removes use strict with leading whitespace", () => {
-    const filePath = createTestFile("test3.js", '  \t"use strict";\nconst x = 1;')
+    const filePath = createTestFile(
+      "test3.js",
+      '  \t"use strict";\nconst x = 1;'
+    )
     runScript(tempDir)
     const result = fs.readFileSync(filePath, "utf8")
     expect(result).toBe("const x = 1;\n")
   })
 
   it("removes use strict with trailing whitespace and multiple newlines", () => {
-    const filePath = createTestFile("test4.js", '"use strict";  \n\n\nconst x = 1;')
+    const filePath = createTestFile(
+      "test4.js",
+      '"use strict";  \n\n\nconst x = 1;'
+    )
     runScript(tempDir)
     const result = fs.readFileSync(filePath, "utf8")
     expect(result).toBe("const x = 1;\n")
   })
 
   it("removes use strict with unicode quotes", () => {
-    const filePath = createTestFile("test5.js", '\u201Cuse strict\u201D;\nconst x = 1;')
+    const filePath = createTestFile(
+      "test5.js",
+      "\u201Cuse strict\u201D;\nconst x = 1;"
+    )
     runScript(tempDir)
     const result = fs.readFileSync(filePath, "utf8")
     expect(result).toBe("const x = 1;\n")
@@ -76,7 +91,10 @@ describe("remove-use-strict script", () => {
   })
 
   it("preserves content that doesn't start with use strict", () => {
-    const filePath = createTestFile("test7.js", 'const y = 2;\n"use strict";\nconst x = 1;')
+    const filePath = createTestFile(
+      "test7.js",
+      'const y = 2;\n"use strict";\nconst x = 1;'
+    )
     runScript(tempDir)
     const result = fs.readFileSync(filePath, "utf8")
     expect(result).toBe('const y = 2;\n"use strict";\nconst x = 1;\n')
@@ -88,7 +106,7 @@ describe("remove-use-strict script", () => {
     const result = fs.readFileSync(filePath, "utf8")
     expect(result).toBe("const x = 1;\n")
     // Should have exactly one trailing newline, not double
-    expect(result.match(/\n$/g).length).toBe(1)
+    expect(result.match(/\n$/g)).toHaveLength(1)
   })
 
   it("handles Windows-style line endings", () => {

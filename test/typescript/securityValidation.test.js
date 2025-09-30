@@ -1,6 +1,9 @@
-const { isValidConfig, clearValidationCache } = require("../../package/utils/typeGuards")
+const {
+  isValidConfig,
+  clearValidationCache
+} = require("../../package/utils/typeGuards")
 
-describe("Security validation", () => {
+describe("security validation", () => {
   const originalNodeEnv = process.env.NODE_ENV
   const originalStrictValidation = process.env.SHAKAPACKER_STRICT_VALIDATION
 
@@ -10,7 +13,7 @@ describe("Security validation", () => {
     clearValidationCache()
   })
 
-  describe("Path traversal security checks", () => {
+  describe("path traversal security checks", () => {
     const baseConfig = {
       source_path: "./app/javascript",
       source_entry_path: "./packs",
@@ -99,7 +102,7 @@ describe("Security validation", () => {
     })
   })
 
-  describe("Optional field validation", () => {
+  describe("optional field validation", () => {
     const validConfig = {
       source_path: "./app/javascript",
       source_entry_path: "./packs",

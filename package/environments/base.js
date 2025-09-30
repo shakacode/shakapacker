@@ -5,6 +5,7 @@ const { existsSync, readdirSync } = require("fs")
 const extname = require("path-complete-extname")
 const config = require("../config")
 const { isProduction } = require("../env")
+
 const pluginsPath = resolve(
   __dirname,
   "..",
