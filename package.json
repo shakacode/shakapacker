@@ -93,7 +93,7 @@
     "esbuild-loader": "^2.0.0 || ^3.0.0 || ^4.0.0",
     "mini-css-extract-plugin": "^2.0.0",
     "rspack-manifest-plugin": "^5.0.0",
-    "sass": "^1.0.0",
+    "sass": "^1.50.0",
     "sass-loader": "^13.0.0 || ^14.0.0 || ^15.0.0 || ^16.0.0",
     "swc-loader": "^0.1.15 || ^0.2.0",
     "terser-webpack-plugin": "^5.3.1",

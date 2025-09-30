@@ -199,6 +199,16 @@ Note, in v6+, most JS packages are peer dependencies. Thus, the installer will a
 Previously, these "webpack" and "babel" packages were direct dependencies for `shakapacker`. By
 making these peer dependencies, you have control over the versions used in your webpack and babel configs.
 
+### Optional Peer Dependencies
+
+All peer dependencies in Shakapacker are marked as optional via `peerDependenciesMeta`. This design decision ensures:
+- **No warnings during package installation** when dependencies are not needed
+- **Clear visibility of supported package versions** for upgrades
+- **Flexibility to choose only the tools you need** (webpack vs rspack, babel vs swc vs esbuild)
+
+The optional peer dependencies approach means you only install what you actually use, while still maintaining
+version compatibility constraints when you do install those packages.
+
 ## Concepts
 
 At its core, Shakapacker's essential function is to:
