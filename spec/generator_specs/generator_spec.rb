@@ -172,6 +172,9 @@ describe "Generator" do
             # For bun, the package.json is not modified, so check for the original semver version
             npm_version = Shakapacker::Utils::VersionSyntaxConverter.new.rubygem_to_npm(Shakapacker::VERSION)
             expect(actual_version).to eq(npm_version)
+          elsif ENV["SHAKAPACKER_NPM_PACKAGE"]
+            # In CI with SHAKAPACKER_NPM_PACKAGE, version will be a file path (tarball)
+            expect(actual_version).to match(/^file:/)
           else
             expect(actual_version).to eq("file:#{GEM_ROOT}")
           end
