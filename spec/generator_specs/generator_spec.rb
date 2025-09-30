@@ -65,14 +65,20 @@ describe "Generator" do
             package_json = JSON.parse(File.read(package_json_path))
 
             # Update the shakapacker dependency to use the local path
-            package_json["dependencies"]["shakapacker"] = "file:#{GEM_ROOT}"
+            # Use link: for pnpm compatibility
+            package_manager = fallback_manager.split("_")[0]
+
+            case package_manager
+            when "pnpm"
+              package_json["dependencies"]["shakapacker"] = "link:#{GEM_ROOT}"
+            else
+              package_json["dependencies"]["shakapacker"] = "file:#{GEM_ROOT}"
+            end
 
             # Write the updated package.json
             File.write(package_json_path, JSON.pretty_generate(package_json))
 
             # Reinstall dependencies to pick up the local path
-            package_manager = fallback_manager.split("_")[0]
-
             case package_manager
             when "yarn"
               sh_in_dir(sh_opts, TEMP_RAILS_APP_PATH, "yarn install")
@@ -159,8 +165,9 @@ describe "Generator" do
           actual_version = package_json.fetch("dependencies", {})["shakapacker"]
 
           # After we update the package.json to use the local package for testing,
-          # the version will be a file path instead of a semver version
-          expect(actual_version).to eq("file:#{GEM_ROOT}")
+          # the version will be a file/link path instead of a semver version
+          # pnpm uses link: while others use file:
+          expect(actual_version).to match(/^(file|link):#{Regexp.escape(GEM_ROOT)}$/)
         end
 
         it "adds Shakapacker peer dependencies to package.json" do
