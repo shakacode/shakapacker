@@ -57,7 +57,9 @@ describe "Generator" do
           sh_in_dir(sh_opts, SPEC_PATH, "cp -r '#{BASE_RAILS_APP_PATH}' '#{TEMP_RAILS_APP_PATH}'")
 
           Bundler.with_unbundled_env do
-            sh_in_dir(sh_opts, TEMP_RAILS_APP_PATH, "SHAKAPACKER_ASSETS_BUNDLER=webpack USE_BABEL_PACKAGES=true FORCE=true bundle exec rails shakapacker:install")
+            # Preserve SHAKAPACKER_NPM_PACKAGE if set (for CI testing with local tarball)
+            npm_package_env = ENV['SHAKAPACKER_NPM_PACKAGE'] ? "SHAKAPACKER_NPM_PACKAGE='#{ENV['SHAKAPACKER_NPM_PACKAGE']}' " : ""
+            sh_in_dir(sh_opts, TEMP_RAILS_APP_PATH, "#{npm_package_env}SHAKAPACKER_ASSETS_BUNDLER=webpack USE_BABEL_PACKAGES=true FORCE=true bundle exec rails shakapacker:install")
 
             # Update package.json to use local shakapacker package
             # This ensures webpack can find the shakapacker/package.json file
