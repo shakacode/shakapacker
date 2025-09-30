@@ -155,12 +155,12 @@ describe "Generator" do
         end
 
         it "adds relevant shakapacker version in package.json depending on gem version" do
-          npm_version = Shakapacker::Utils::VersionSyntaxConverter.new.rubygem_to_npm(Shakapacker::VERSION)
-
           package_json = PackageJson.read(path_in_the_app)
           actual_version = package_json.fetch("dependencies", {})["shakapacker"]
 
-          expect(actual_version).to eq(npm_version)
+          # After we update the package.json to use the local package for testing,
+          # the version will be a file path instead of a semver version
+          expect(actual_version).to eq("file:#{GEM_ROOT}")
         end
 
         it "adds Shakapacker peer dependencies to package.json" do
