@@ -25,8 +25,18 @@ const files = findJsFiles("package")
 files.forEach((file) => {
   let content = fs.readFileSync(file, "utf8")
 
-  // Remove "use strict"; or "use strict" from the beginning of the file
-  content = content.replace(/^["']use strict["'];?\s*\n?/, "")
+  // Remove "use strict" directive with various quote styles and formatting
+  // Handles: optional whitespace, single/double/unicode quotes, optional semicolon,
+  // and any trailing whitespace/newline sequences
+  content = content.replace(
+    /^\s*["'\u2018\u2019\u201C\u201D]use\s+strict["'\u2018\u2019\u201C\u201D]\s*;?\s*[\r\n]*/,
+    ""
+  )
+
+  // Ensure file ends with exactly one newline
+  if (!content.endsWith("\n")) {
+    content += "\n"
+  }
 
   fs.writeFileSync(file, content, "utf8")
 })
