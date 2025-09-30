@@ -125,13 +125,25 @@ if (setup_path = Rails.root.join("bin/setup")).exist?
 end
 
 Dir.chdir(Rails.root) do
-  npm_version = Shakapacker::Utils::VersionSyntaxConverter.new.rubygem_to_npm(Shakapacker::VERSION)
-  say "Installing shakapacker@#{npm_version}"
-  begin
-    @package_json.manager.add!(["shakapacker@#{npm_version}"], type: :production)
-  rescue PackageJson::Error
-    say "Shakapacker installation failed 😭 See above for details.", :red
-    exit 1
+  # In CI, use the pre-packed tarball if available
+  if ENV["SHAKAPACKER_NPM_PACKAGE"] && File.exist?(ENV["SHAKAPACKER_NPM_PACKAGE"])
+    package_path = ENV["SHAKAPACKER_NPM_PACKAGE"]
+    say "Installing shakapacker from local package: #{package_path}"
+    begin
+      @package_json.manager.add!([package_path], type: :production)
+    rescue PackageJson::Error
+      say "Shakapacker installation failed 😭 See above for details.", :red
+      exit 1
+    end
+  else
+    npm_version = Shakapacker::Utils::VersionSyntaxConverter.new.rubygem_to_npm(Shakapacker::VERSION)
+    say "Installing shakapacker@#{npm_version}"
+    begin
+      @package_json.manager.add!(["shakapacker@#{npm_version}"], type: :production)
+    rescue PackageJson::Error
+      say "Shakapacker installation failed 😭 See above for details.", :red
+      exit 1
+    end
   end
 
   @package_json.merge! do |pj|
