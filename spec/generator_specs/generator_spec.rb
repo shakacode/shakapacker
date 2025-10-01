@@ -177,16 +177,17 @@ describe "Generator" do
           # the version will be a file path instead of a semver version
           # Note: bun uses `bun link` instead of file: references, so it won't modify package.json
           if fallback_manager.include?("bun")
-            # For bun, the package.json is not modified, so check for the original semver version
-            npm_version = Shakapacker::Utils::VersionSyntaxConverter.new.rubygem_to_npm(Shakapacker::VERSION)
-            expect(actual_version).to eq(npm_version)
-          elsif ENV["SHAKAPACKER_NPM_PACKAGE"]
-            # In CI with SHAKAPACKER_NPM_PACKAGE, version will be a file path
-            # Different package managers format it differently:
-            # - npm/pnpm: "file:/path/to/package.tgz"
-            # - yarn: "/path/to/package.tgz"
-            expect(actual_version).to match(/shakapacker.*\.tgz/)
+            # For bun, the package.json is not modified, so it has the original install value
+            if ENV["SHAKAPACKER_NPM_PACKAGE"]
+              # Bun installed from tarball, package.json has tarball path
+              expect(actual_version).to match(/shakapacker.*\.tgz/)
+            else
+              # Bun installed normal version, package.json has semver
+              npm_version = Shakapacker::Utils::VersionSyntaxConverter.new.rubygem_to_npm(Shakapacker::VERSION)
+              expect(actual_version).to eq(npm_version)
+            end
           else
+            # For non-bun, package.json was overwritten to file:#{GEM_ROOT}
             expect(actual_version).to eq("file:#{GEM_ROOT}")
           end
         end
