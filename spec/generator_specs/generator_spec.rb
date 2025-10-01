@@ -82,7 +82,8 @@ describe "Generator" do
               # pnpm needs --no-frozen-lockfile to allow changes
               sh_in_dir(sh_opts, TEMP_RAILS_APP_PATH, "pnpm install --no-frozen-lockfile")
             when "bun"
-              sh_in_dir(sh_opts, TEMP_RAILS_APP_PATH, "bun install")
+              # bun needs --force to reinstall file: references
+              sh_in_dir(sh_opts, TEMP_RAILS_APP_PATH, "bun install --force")
             end
           end
         end
