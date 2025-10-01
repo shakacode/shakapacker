@@ -3,7 +3,7 @@ const { javascript_transpiler: javascriptTranspiler } = require("../config")
 const { isProduction } = require("../env")
 const jscommon = require("./jscommon")
 
-module.exports = loaderMatches(javascriptTranspiler, "babel", () => ({
+export = loaderMatches(javascriptTranspiler, "babel", () => ({
   test: /\.(js|jsx|mjs|ts|tsx|coffee)?(\.erb)?$/,
   ...jscommon,
   use: [

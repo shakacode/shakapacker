@@ -2,7 +2,7 @@ const { canProcess } = require("../utils/helpers")
 
 const runner = /^win/.test(process.platform) ? "ruby " : ""
 
-module.exports = canProcess("rails-erb-loader", (resolvedPath) => ({
+export = canProcess("rails-erb-loader", (resolvedPath: string) => ({
   test: /\.erb$/,
   enforce: "pre",
   exclude: /node_modules/,

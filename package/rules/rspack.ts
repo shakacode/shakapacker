@@ -163,4 +163,4 @@ if (raw) {
 }
 
 debug(`Rspack rules configuration complete. Total rules: ${rules.length}`)
-module.exports = rules
+export = rules

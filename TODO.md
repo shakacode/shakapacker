@@ -22,10 +22,10 @@
 - [ ] Convert dev_server.js
 - [ ] Convert webpackDevServerConfig.js
 
-### Phase 4: Rules & Loaders
-- [ ] Convert all files in `package/rules/`
-- [ ] Convert all files in `package/plugins/`
-- [ ] Convert all files in `package/optimization/`
+### Phase 4: Rules & Loaders (PR #620) ✅
+- [x] Convert all files in `package/rules/`
+- [x] Convert all files in `package/plugins/`
+- [x] Convert all files in `package/optimization/`
 
 ### Phase 5: Framework-Specific Modules
 - [ ] Convert rspack support files

@@ -1,4 +1,4 @@
-const path = require("path")
+import { resolve } from "path"
 const { canProcess } = require("../utils/helpers")
 const { getStyleRule } = require("../utils/getStyleRule")
 
@@ -7,14 +7,14 @@ const {
   source_path: sourcePath
 } = require("../config")
 
-module.exports = canProcess("stylus-loader", (resolvedPath) =>
+export = canProcess("stylus-loader", (resolvedPath: string) =>
   getStyleRule(/\.(styl(us)?)(\.erb)?$/i, [
     {
       loader: resolvedPath,
       options: {
         stylusOptions: {
           include: [
-            path.resolve(__dirname, "node_modules"),
+            resolve(__dirname, "node_modules"),
             sourcePath,
             ...paths
           ]

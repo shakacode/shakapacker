@@ -1,6 +1,6 @@
 const { canProcess } = require("../utils/helpers")
 
-module.exports = canProcess("coffee-loader", (resolvedPath) => ({
+export = canProcess("coffee-loader", (resolvedPath: string) => ({
   test: /\.coffee(\.erb)?$/,
   use: [{ loader: resolvedPath }]
 }))

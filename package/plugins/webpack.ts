@@ -6,7 +6,7 @@ const config = require("../config")
 const { isProduction } = require("../env")
 const { moduleExists } = require("../utils/helpers")
 
-const getPlugins = () => {
+const getPlugins = (): unknown[] => {
   // TODO: Remove WebpackAssetsManifestConstructor workaround when dropping 'webpack-assets-manifest < 6.0.0' (Node >=20.10.0) support
   const WebpackAssetsManifestConstructor =
     "WebpackAssetsManifest" in WebpackAssetsManifest
@@ -57,6 +57,6 @@ const getPlugins = () => {
   return plugins
 }
 
-module.exports = {
+export = {
   getPlugins
 }

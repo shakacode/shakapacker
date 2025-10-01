@@ -6,7 +6,22 @@ const config = require("../config")
 const { isProduction } = require("../env")
 const { moduleExists } = require("../utils/helpers")
 
-const getPlugins = () => {
+interface ManifestFile {
+  name: string
+  path: string
+}
+
+interface EntrypointAssets {
+  js: string[]
+  css: string[]
+}
+
+interface Manifest {
+  entrypoints?: Record<string, { assets: EntrypointAssets }>
+  [key: string]: string | { assets: EntrypointAssets } | Record<string, { assets: EntrypointAssets }> | undefined
+}
+
+const getPlugins = (): unknown[] => {
   const plugins = [
     new rspack.EnvironmentPlugin(process.env),
     new RspackManifestPlugin({
@@ -14,8 +29,8 @@ const getPlugins = () => {
       publicPath: config.publicPathWithoutCDN,
       writeToFileEmit: true,
       // rspack-manifest-plugin uses different option names than webpack-assets-manifest
-      generate: (seed, files, entrypoints) => {
-        const manifest = seed || {}
+      generate: (seed: Manifest | null, files: ManifestFile[], entrypoints: Record<string, string[]>) => {
+        const manifest: Manifest = seed || {}
 
         // Add files mapping first
         files.forEach((file) => {
@@ -23,7 +38,7 @@ const getPlugins = () => {
         })
 
         // Add entrypoints information compatible with Shakapacker expectations
-        const entrypointsManifest = {}
+        const entrypointsManifest: Record<string, { assets: EntrypointAssets }> = {}
         Object.entries(entrypoints).forEach(
           ([entrypointName, entrypointFiles]) => {
             const jsFiles = entrypointFiles
@@ -83,6 +98,6 @@ const getPlugins = () => {
   return plugins
 }
 
-module.exports = {
+export = {
   getPlugins
 }

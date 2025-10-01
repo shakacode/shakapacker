@@ -3,7 +3,7 @@ const { requireOrError } = require("../utils/requireOrError")
 const TerserPlugin = requireOrError("terser-webpack-plugin")
 const { moduleExists } = require("../utils/helpers")
 
-const tryCssMinimizer = () => {
+const tryCssMinimizer = (): unknown | null => {
   if (
     moduleExists("css-loader") &&
     moduleExists("css-minimizer-webpack-plugin")
@@ -15,12 +15,20 @@ const tryCssMinimizer = () => {
   return null
 }
 
-const getOptimization = () => {
+interface OptimizationConfig {
+  minimizer: unknown[]
+}
+
+const getOptimization = (): OptimizationConfig => {
   return {
     minimizer: [
       tryCssMinimizer(),
       new TerserPlugin({
-        parallel: Number.parseInt(process.env.SHAKAPACKER_PARALLEL, 10) || true,
+        // SHAKAPACKER_PARALLEL env var: number of parallel workers, or true for auto (os.cpus().length - 1)
+        // If not set or invalid, defaults to true (automatic parallelization)
+        parallel: process.env.SHAKAPACKER_PARALLEL
+          ? Number.parseInt(process.env.SHAKAPACKER_PARALLEL, 10) || true
+          : true,
         terserOptions: {
           parse: {
             // Let terser parse ecma 8 code but always output
@@ -44,6 +52,6 @@ const getOptimization = () => {
   }
 }
 
-module.exports = {
+export = {
   getOptimization
 }
