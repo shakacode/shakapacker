@@ -9,15 +9,28 @@
 ## [Unreleased]
 Changes since the last non-beta release.
 
+## [v9.0.0-beta.7] - October 1, 2025
+
 ### Added
+- **Phase 2 TypeScript Migration - Core Modules** ([PR 608](https://github.com/shakacode/shakapacker/pull/608) by [justin808](https://github.com/justin808))
+  - Converted core modules to TypeScript: config.ts, env.ts, and utilities
+  - Enhanced type safety across the codebase
+  - Better IDE support and autocomplete
 - **Phase 3 TypeScript Migration - Environment Files** ([PR 614](https://github.com/shakacode/shakapacker/pull/614) by [justin808](https://github.com/justin808))
   - Converted all environment configuration files to TypeScript (development, production, test)
   - Added centralized type exports for consumer use (import from "shakapacker/types")
   - Created shared TypeScript interfaces for environment configurations
-  - Added TypeScript adoption guide and transpiler migration guide
-  - Improved JSDoc documentation throughout the codebase
   - Introduced structured error codes for programmatic error handling
   - Exported shared types: WebpackConfig, RspackConfig, EnvironmentConfig
+- **Optional Peer Dependencies** ([PR 615](https://github.com/shakacode/shakapacker/pull/615) by [justin808](https://github.com/justin808))
+  - Restored peer dependencies as optional to improve package version tracking
+  - Added peerDependenciesMeta marking all peers as optional
+  - Moved webpack-merge to direct dependencies (required at runtime)
+  - Prevents installation warnings while maintaining upgrade visibility
+- **Migration Tooling Improvements** ([PR 613](https://github.com/shakacode/shakapacker/pull/613) by [justin808](https://github.com/justin808))
+  - Added SWC migration helper: rake shakapacker:migrate:to_swc
+  - Enhanced error messages for missing dependencies
+  - Improved doctor command output
 
 ### Security
 - **Path Validation Utilities** ([PR 614](https://github.com/shakacode/shakapacker/pull/614) by [justin808](https://github.com/justin808))
@@ -31,7 +44,6 @@ Changes since the last non-beta release.
 - **Build Process Improvements** ([PR 614](https://github.com/shakacode/shakapacker/pull/614) by [justin808](https://github.com/justin808))
   - Environment JS files now generated during npm publish (not committed to git)
   - Prevents TypeScript source and compiled JS from getting out of sync
-  - Switched CI testing from committed files to npm pack workflow
   - Auto-format compiled JavaScript during build process
   - Enhanced .npmignore to exclude TypeScript sources, include compiled JS
 
@@ -42,11 +54,10 @@ Changes since the last non-beta release.
   - Lazy-loaded and cached watch mode detection
 
 ### Fixed
-- Fixed .jsx extension requirement for SWC JSX parsing in e2e templates ([PR 614](https://github.com/shakacode/shakapacker/pull/614) by [justin808](https://github.com/justin808))
-- Fixed generator specs for all package managers (npm, yarn, pnpm, bun) ([PR 614](https://github.com/shakacode/shakapacker/pull/614) by [justin808](https://github.com/justin808))
 - Fixed clearValidationCache() to actually clear the cache ([PR 614](https://github.com/shakacode/shakapacker/pull/614) by [justin808](https://github.com/justin808))
+- Fixed private_output_path configuration edge cases ([PR 604](https://github.com/shakacode/shakapacker/pull/604) by [justin808](https://github.com/justin808))
 
-## [v9.0.0-beta.4] - Unreleased
+## [v9.0.0-beta.4] - September 15, 2025
 
 ### ⚠️ Breaking Changes
 
