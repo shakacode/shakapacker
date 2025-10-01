@@ -2,6 +2,8 @@
  * Error handling utilities for consistent error management
  */
 
+import { ErrorCode, ShakapackerError } from './errorCodes'
+
 /**
  * Checks if an error is a file not found error (ENOENT)
  */
@@ -33,10 +35,31 @@ export function createFileOperationError(
   operation: 'read' | 'write' | 'delete',
   filePath: string,
   details?: string
+): ShakapackerError {
+  const errorCode = operation === 'read'
+    ? ErrorCode.FILE_READ_ERROR
+    : operation === 'write'
+    ? ErrorCode.FILE_WRITE_ERROR
+    : ErrorCode.FILE_NOT_FOUND
+
+  return new ShakapackerError(errorCode, {
+    path: filePath,
+    operation,
+    details
+  })
+}
+
+/**
+ * Creates a consistent error message for file operations (backward compatibility)
+ */
+export function createFileOperationErrorLegacy(
+  operation: 'read' | 'write' | 'delete',
+  filePath: string,
+  details?: string
 ): Error {
   const baseMessage = `Failed to ${operation} file at path '${filePath}'`
   const errorDetails = details ? ` - ${details}` : ''
-  const suggestion = operation === 'read' 
+  const suggestion = operation === 'read'
     ? ' (check if file exists and permissions are correct)'
     : operation === 'write'
     ? ' (check write permissions and disk space)'
@@ -70,8 +93,51 @@ export function isNodeError(error: unknown): error is NodeJS.ErrnoException {
   return (
     error instanceof Error &&
     'code' in error &&
-    typeof (error as any).code === 'string'
+    typeof (error as NodeJS.ErrnoException).code === 'string'
   )
+}
+
+/**
+ * Creates a configuration validation error
+ */
+export function createConfigValidationErrorWithCode(
+  configPath: string,
+  environment: string,
+  reason: string
+): ShakapackerError {
+  return new ShakapackerError(ErrorCode.CONFIG_VALIDATION_FAILED, {
+    path: configPath,
+    environment,
+    reason
+  })
+}
+
+/**
+ * Creates a module not found error
+ */
+export function createModuleNotFoundError(moduleName: string, details?: string): ShakapackerError {
+  return new ShakapackerError(ErrorCode.MODULE_NOT_FOUND, {
+    module: moduleName,
+    details
+  })
+}
+
+/**
+ * Creates a path traversal security error
+ */
+export function createPathTraversalError(path: string): ShakapackerError {
+  return new ShakapackerError(ErrorCode.SECURITY_PATH_TRAVERSAL, {
+    path
+  })
+}
+
+/**
+ * Creates a port validation error
+ */
+export function createPortValidationError(port: unknown): ShakapackerError {
+  return new ShakapackerError(ErrorCode.DEVSERVER_PORT_INVALID, {
+    port: String(port)
+  })
 }
 
 

@@ -1,17 +1,35 @@
+/**
+ * Development environment configuration for webpack and rspack bundlers
+ * @module environments/development
+ */
+
 const { merge } = require("webpack-merge")
 const config = require("../config")
 const baseConfig = require("./base")
 const webpackDevServerConfig = require("../webpackDevServerConfig")
 const { runningWebpackDevServer } = require("../env")
 const { moduleExists } = require("../utils/helpers")
+import type { 
+  WebpackConfigWithDevServer,
+  RspackConfigWithDevServer,
+  ReactRefreshWebpackPlugin,
+  ReactRefreshRspackPlugin
+} from "./types"
 
+/**
+ * Base development configuration shared between webpack and rspack
+ */
 const baseDevConfig = {
-  mode: "development",
-  devtool: "cheap-module-source-map"
+  mode: "development" as const,
+  devtool: "cheap-module-source-map" as const
 }
 
-const webpackDevConfig = () => {
-  const webpackConfig = {
+/**
+ * Generate webpack-specific development configuration
+ * @returns Webpack configuration with dev server settings
+ */
+const webpackDevConfig = (): WebpackConfigWithDevServer => {
+  const webpackConfig: WebpackConfigWithDevServer = {
     ...baseDevConfig,
     ...(runningWebpackDevServer && { devServer: webpackDevServerConfig() })
   }
@@ -33,15 +51,19 @@ const webpackDevConfig = () => {
   return webpackConfig
 }
 
-const rspackDevConfig = () => {
+/**
+ * Generate rspack-specific development configuration
+ * @returns Rspack configuration with dev server settings
+ */
+const rspackDevConfig = (): RspackConfigWithDevServer => {
   const devServerConfig = webpackDevServerConfig()
-  const rspackConfig = {
+  const rspackConfig: RspackConfigWithDevServer = {
     ...baseDevConfig,
     devServer: {
       ...devServerConfig,
       devMiddleware: {
-        ...devServerConfig.devMiddleware,
-        writeToDisk: (filePath) => !filePath.includes(".hot-update.")
+        ...(devServerConfig.devMiddleware || {}),
+        writeToDisk: (filePath: string) => !filePath.includes(".hot-update.")
       }
     }
   }

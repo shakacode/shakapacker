@@ -24,9 +24,10 @@ describe("typescript build", () => {
         expect(existsSync(tsPath)).toBe(true)
         expect(existsSync(jsPath)).toBe(true)
 
-        // Verify JS file is newer than TS file (has been compiled)
+        // Verify JS file contains CommonJS exports (has been compiled)
         const jsContent = readFileSync(jsPath, "utf8")
-        expect(jsContent).toContain("use strict")
+        expect(jsContent).toContain("require(")
+        expect(jsContent).toContain("module.exports")
       })
     })
 

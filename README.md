@@ -722,6 +722,10 @@ You can try out experimental integration with the esbuild-loader. You can read m
 
 Please note that if you want opt-in to use esbuild-loader, you can skip [React](#react) integration instructions as it is supported out of the box.
 
+### Switching between transpilers
+
+To switch between Babel, SWC, or esbuild, or to configure environment-specific transpiler settings, see the [Transpiler Migration Guide](./docs/transpiler-migration.md).
+
 ### Integrations
 
 Shakapacker out of the box supports JS and static assets (fonts, images etc.) compilation. To enable support for CoffeeScript or TypeScript install relevant packages:

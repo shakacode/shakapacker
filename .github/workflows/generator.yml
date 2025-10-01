@@ -64,4 +64,10 @@ jobs:
       - name: Build TypeScript
         run: yarn build
 
+      - name: Pack npm package for testing
+        run: |
+          TARBALL=$(npm pack)
+          echo "SHAKAPACKER_NPM_PACKAGE=$(pwd)/$TARBALL" >> $GITHUB_ENV
+          echo "Created package: $TARBALL"
+
       - run: bundle exec rake run_spec:generator

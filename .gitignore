@@ -27,7 +27,6 @@ package/**/*.js
 !package/webpack-types.d.ts
 !package/babel/preset.js
 !package/babel/preset-react.js
-!package/environments/*.js
 !package/rules/*.js
 !package/loaders/*.js
 !package/plugins/*.js

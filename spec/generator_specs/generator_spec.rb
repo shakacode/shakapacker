@@ -57,7 +57,15 @@ describe "Generator" do
           sh_in_dir(sh_opts, SPEC_PATH, "cp -r '#{BASE_RAILS_APP_PATH}' '#{TEMP_RAILS_APP_PATH}'")
 
           Bundler.with_unbundled_env do
-            sh_in_dir(sh_opts, TEMP_RAILS_APP_PATH, "SHAKAPACKER_ASSETS_BUNDLER=webpack USE_BABEL_PACKAGES=true FORCE=true bundle exec rails shakapacker:install")
+            # Preserve SHAKAPACKER_NPM_PACKAGE if set (for CI testing with local tarball)
+            npm_package_env = if ENV["SHAKAPACKER_NPM_PACKAGE"]
+              "SHAKAPACKER_NPM_PACKAGE='#{ENV["SHAKAPACKER_NPM_PACKAGE"]}' "
+            else
+              ""
+            end
+            install_cmd = "#{npm_package_env}SHAKAPACKER_ASSETS_BUNDLER=webpack " \
+                          "USE_BABEL_PACKAGES=true FORCE=true bundle exec rails shakapacker:install"
+            sh_in_dir(sh_opts, TEMP_RAILS_APP_PATH, install_cmd)
 
             # Update package.json to use local shakapacker package
             # This ensures webpack can find the shakapacker/package.json file
@@ -169,10 +177,17 @@ describe "Generator" do
           # the version will be a file path instead of a semver version
           # Note: bun uses `bun link` instead of file: references, so it won't modify package.json
           if fallback_manager.include?("bun")
-            # For bun, the package.json is not modified, so check for the original semver version
-            npm_version = Shakapacker::Utils::VersionSyntaxConverter.new.rubygem_to_npm(Shakapacker::VERSION)
-            expect(actual_version).to eq(npm_version)
+            # For bun, the package.json is not modified, so it has the original install value
+            if ENV["SHAKAPACKER_NPM_PACKAGE"]
+              # Bun installed from tarball, package.json has tarball path
+              expect(actual_version).to match(/shakapacker.*\.tgz/)
+            else
+              # Bun installed normal version, package.json has semver
+              npm_version = Shakapacker::Utils::VersionSyntaxConverter.new.rubygem_to_npm(Shakapacker::VERSION)
+              expect(actual_version).to eq(npm_version)
+            end
           else
+            # For non-bun, package.json was overwritten to file:#{GEM_ROOT}
             expect(actual_version).to eq("file:#{GEM_ROOT}")
           end
         end

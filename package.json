@@ -16,6 +16,7 @@
   "types": "package/index.d.ts",
   "exports": {
     ".": "./package/index.js",
+    "./types": "./package/types/index.js",
     "./webpack": "./package/webpack/index.js",
     "./rspack": "./package/rspack/index.js",
     "./swc": "./package/swc/index.js",
@@ -30,11 +31,12 @@
   ],
   "scripts": {
     "clean:ts": "find package -name '*.ts' -not -name '*.d.ts' | sed 's/\\.ts$//' | xargs -I {} rm -f {}.js {}.d.ts {}.d.ts.map {}.js.map",
-    "build": "tsc",
+    "build": "tsc && node scripts/remove-use-strict.js && yarn prettier --write 'package/**/*.js'",
     "build:types": "tsc",
     "lint": "eslint .",
     "test": "jest",
-    "type-check": "tsc --noEmit"
+    "type-check": "tsc --noEmit",
+    "prepublishOnly": "yarn build && yarn type-check"
   },
   "dependencies": {
     "js-yaml": "^4.1.0",
