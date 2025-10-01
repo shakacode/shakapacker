@@ -153,3 +153,38 @@ To ensure that your installer works as expected, either you can run `bundle exec
 3. Run `bundle exec rails shakapacker:install` to confirm that you got the right changes.
 
  **Note:** Ensure that you use bundle exec otherwise the installed shakapacker gem will run and not the one you are working on.
+
+## CI Workflows
+
+Shakapacker uses GitHub Actions for continuous integration. The CI workflows use **Yarn** as the package manager for consistency and reliability.
+
+### Package Manager Choice
+
+The project uses Yarn in CI workflows for the following reasons:
+- Deterministic dependency resolution with `yarn.lock`
+- Faster installation with offline mirror support
+- Better workspace support for monorepo-style testing
+- Consistent behavior across different Node.js versions
+
+### Key CI Workflow Files
+
+- `.github/workflows/test-bundlers.yml` - Tests webpack, rspack, and bundler switching
+- `.github/workflows/tests.yml` - Main test suite across Ruby/Rails/Node versions
+- `.github/workflows/lint.yml` - Linting and code quality checks
+
+All workflows use:
+```yaml
+- uses: actions/setup-node@v4
+  with:
+    cache: 'yarn'
+    cache-dependency-path: spec/dummy/yarn.lock
+```
+
+And install dependencies with:
+```bash
+yarn install
+```
+
+### Testing with Other Package Managers
+
+While CI uses Yarn, the gem supports all major package managers (npm, yarn, pnpm, bun). Generator specs test against all package managers to ensure compatibility.
