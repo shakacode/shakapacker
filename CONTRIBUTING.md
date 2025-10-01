@@ -169,8 +169,9 @@ The project uses Yarn in CI workflows for the following reasons:
 ### Key CI Workflow Files
 
 - `.github/workflows/test-bundlers.yml` - Tests webpack, rspack, and bundler switching
-- `.github/workflows/tests.yml` - Main test suite across Ruby/Rails/Node versions
-- `.github/workflows/lint.yml` - Linting and code quality checks
+- `.github/workflows/ruby.yml` - Ruby test suite across Ruby/Rails versions
+- `.github/workflows/node.yml` - Node.js test suite across Node versions
+- `.github/workflows/generator.yml` - Generator installation tests
 
 All workflows use:
 ```yaml
