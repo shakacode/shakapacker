@@ -211,8 +211,7 @@ module Shakapacker
       def check_webpack_peer_deps(deps)
         essential_webpack = {
           "webpack" => "^5.76.0",
-          "webpack-cli" => "^4.9.2 || ^5.0.0",
-          "webpack-merge" => "^5.8.0 || ^6.0.0"
+          "webpack-cli" => "^4.9.2 || ^5.0.0"
         }
 
         essential_webpack.each do |package, version|

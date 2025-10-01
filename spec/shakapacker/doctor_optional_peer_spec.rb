@@ -228,15 +228,6 @@ describe "Shakapacker::Doctor with optional peer dependencies" do
         # webpack-merge is now a direct dependency of shakapacker,
         # not a peer dependency, so doctor should not check for it
 
-        # Note: The doctor might still report webpack-merge as missing
-        # if it's checking the old peer dependencies list.
-        # This is expected behavior until the doctor is updated
-        # to recognize webpack-merge as a direct dependency.
-
-        # For now, we'll skip this check since the doctor still
-        # treats webpack-merge as a peer dependency
-        skip "Doctor needs updating to recognize webpack-merge as direct dependency"
-
         doctor.send(:check_peer_dependencies)
         merge_issues = doctor.issues.select { |i| i.include?("webpack-merge") }
         expect(merge_issues).to be_empty

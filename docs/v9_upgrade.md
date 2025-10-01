@@ -253,6 +253,41 @@ Update your global type definitions as shown in Step 2.
 
 If you see warnings about CSS module exports, ensure you've updated all imports to use named exports or have properly configured the override.
 
+### Unexpected Peer Dependency Warnings After Upgrade
+
+If you experience unexpected peer dependency warnings after upgrading to v9, you may need to clear your package manager's cache and reinstall dependencies. This ensures the new optional peer dependency configuration takes effect properly.
+
+**For npm:**
+```bash
+rm -rf node_modules package-lock.json
+npm install
+```
+
+**For Yarn:**
+```bash
+rm -rf node_modules yarn.lock
+yarn install
+```
+
+**For pnpm:**
+```bash
+rm -rf node_modules pnpm-lock.yaml
+pnpm install
+```
+
+**For Bun:**
+```bash
+rm -rf node_modules bun.lockb
+bun install
+```
+
+**When is this necessary?**
+- If you see peer dependency warnings for packages you don't use (e.g., warnings about Babel when using SWC)
+- If your package manager cached the old dependency resolution from v8
+- After switching transpilers or bundlers (e.g., from Babel to SWC, or webpack to rspack)
+
+**Note:** This is typically only needed once after the v8 → v9 upgrade. Subsequent installs will use the correct dependency resolution.
+
 ## Need Help?
 
 - See [CSS Modules Export Mode documentation](./css-modules-export-mode.md) for detailed configuration options
