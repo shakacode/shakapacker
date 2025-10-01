@@ -59,10 +59,10 @@ describe "Generator" do
           Bundler.with_unbundled_env do
             # Preserve SHAKAPACKER_NPM_PACKAGE if set (for CI testing with local tarball)
             npm_package_env = if ENV["SHAKAPACKER_NPM_PACKAGE"]
-                                "SHAKAPACKER_NPM_PACKAGE='#{ENV["SHAKAPACKER_NPM_PACKAGE"]}' "
-                              else
-                                ""
-                              end
+              "SHAKAPACKER_NPM_PACKAGE='#{ENV["SHAKAPACKER_NPM_PACKAGE"]}' "
+            else
+              ""
+            end
             install_cmd = "#{npm_package_env}SHAKAPACKER_ASSETS_BUNDLER=webpack " \
                           "USE_BABEL_PACKAGES=true FORCE=true bundle exec rails shakapacker:install"
             sh_in_dir(sh_opts, TEMP_RAILS_APP_PATH, install_cmd)
