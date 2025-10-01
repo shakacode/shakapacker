@@ -20,6 +20,8 @@ const getOptimization = () => {
     minimizer: [
       tryCssMinimizer(),
       new TerserPlugin({
+        // Parse SHAKAPACKER_PARALLEL env var to number, fallback to true for parallel execution
+        // Empty string ensures parseInt returns NaN when env var is undefined, then || true applies
         parallel: Number.parseInt(process.env.SHAKAPACKER_PARALLEL || "", 10) || true,
         terserOptions: {
           parse: {
