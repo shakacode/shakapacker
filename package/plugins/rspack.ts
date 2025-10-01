@@ -21,7 +21,7 @@ interface Manifest {
   [key: string]: string | { assets: EntrypointAssets } | Record<string, { assets: EntrypointAssets }> | undefined
 }
 
-const getPlugins = () => {
+const getPlugins = (): unknown[] => {
   const plugins = [
     new rspack.EnvironmentPlugin(process.env),
     new RspackManifestPlugin({
