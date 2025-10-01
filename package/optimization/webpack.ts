@@ -27,9 +27,7 @@ const getOptimization = (): OptimizationConfig => {
         // SHAKAPACKER_PARALLEL env var: number of parallel workers, or true for auto (os.cpus().length - 1)
         // If not set or invalid, defaults to true (automatic parallelization)
         parallel: process.env.SHAKAPACKER_PARALLEL
-          ? (Number.isNaN(Number.parseInt(process.env.SHAKAPACKER_PARALLEL, 10))
-              ? true
-              : Number.parseInt(process.env.SHAKAPACKER_PARALLEL, 10))
+          ? Number.parseInt(process.env.SHAKAPACKER_PARALLEL, 10) || true
           : true,
         terserOptions: {
           parse: {

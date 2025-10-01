@@ -18,7 +18,7 @@ interface EntrypointAssets {
 
 interface Manifest {
   entrypoints?: Record<string, { assets: EntrypointAssets }>
-  [key: string]: string | { assets: EntrypointAssets } | undefined
+  [key: string]: string | { assets: EntrypointAssets } | Record<string, { assets: EntrypointAssets }> | undefined
 }
 
 const getPlugins = (): unknown[] => {
