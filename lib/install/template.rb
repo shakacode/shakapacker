@@ -128,24 +128,47 @@ Dir.chdir(Rails.root) do
   # In CI, use the pre-packed tarball if available
   if ENV["SHAKAPACKER_NPM_PACKAGE"]
     package_path = ENV["SHAKAPACKER_NPM_PACKAGE"]
-    if File.exist?(package_path)
-      say "📦 Installing shakapacker from local package: #{package_path}", :cyan
-      begin
-        @package_json.manager.add!([package_path], type: :production)
-      rescue PackageJson::Error
-        say "Shakapacker installation failed 😭 See above for details.", :red
+
+    # Validate package path to prevent directory traversal and invalid file types
+    begin
+      # Resolve to absolute path
+      absolute_path = File.expand_path(package_path)
+
+      # Reject paths containing directory traversal
+      if package_path.include?("..") || absolute_path.include?("..")
+        say "❌ Security Error: Package path contains directory traversal: #{package_path}", :red
         exit 1
       end
-    else
-      say "⚠️  SHAKAPACKER_NPM_PACKAGE set but file not found: #{package_path}", :yellow
-      say "Falling back to npm registry...", :yellow
-      npm_version = Shakapacker::Utils::VersionSyntaxConverter.new.rubygem_to_npm(Shakapacker::VERSION)
-      begin
-        @package_json.manager.add!(["shakapacker@#{npm_version}"], type: :production)
-      rescue PackageJson::Error
-        say "Shakapacker installation failed 😭 See above for details.", :red
+
+      # Ensure filename ends with .tgz or .tar.gz
+      unless absolute_path.end_with?(".tgz", ".tar.gz")
+        say "❌ Security Error: Package must be a .tgz or .tar.gz file: #{package_path}", :red
         exit 1
       end
+
+      # Check existence only after validation
+      if File.exist?(absolute_path)
+        say "📦 Installing shakapacker from local package: #{absolute_path}", :cyan
+        begin
+          @package_json.manager.add!([absolute_path], type: :production)
+        rescue PackageJson::Error
+          say "Shakapacker installation failed 😭 See above for details.", :red
+          exit 1
+        end
+      else
+        say "⚠️  SHAKAPACKER_NPM_PACKAGE set but file not found: #{absolute_path}", :yellow
+        say "Falling back to npm registry...", :yellow
+        npm_version = Shakapacker::Utils::VersionSyntaxConverter.new.rubygem_to_npm(Shakapacker::VERSION)
+        begin
+          @package_json.manager.add!(["shakapacker@#{npm_version}"], type: :production)
+        rescue PackageJson::Error
+          say "Shakapacker installation failed 😭 See above for details.", :red
+          exit 1
+        end
+      end
+    rescue => e
+      say "❌ Error validating package path: #{e.message}", :red
+      exit 1
     end
   else
     npm_version = Shakapacker::Utils::VersionSyntaxConverter.new.rubygem_to_npm(Shakapacker::VERSION)
