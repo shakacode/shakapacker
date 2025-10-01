@@ -24,14 +24,11 @@ const getOptimization = (): OptimizationConfig => {
     minimizer: [
       tryCssMinimizer(),
       new TerserPlugin({
-        // Parse SHAKAPACKER_PARALLEL env var to number, fallback to true for parallel execution
-        // If env var is set and is a valid number, use it; otherwise default to true (parallel enabled)
-        parallel: (() => {
-          const parallelEnv = process.env.SHAKAPACKER_PARALLEL
-          if (!parallelEnv) return true
-          const parsed = Number.parseInt(parallelEnv, 10)
-          return Number.isNaN(parsed) ? true : parsed
-        })(),
+        // SHAKAPACKER_PARALLEL env var: number of parallel workers, or true for auto (os.cpus().length - 1)
+        // If not set or invalid, defaults to true (automatic parallelization)
+        parallel: process.env.SHAKAPACKER_PARALLEL
+          ? Number.parseInt(process.env.SHAKAPACKER_PARALLEL, 10) || true
+          : true,
         terserOptions: {
           parse: {
             // Let terser parse ecma 8 code but always output
