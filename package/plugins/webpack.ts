@@ -57,6 +57,6 @@ const getPlugins = () => {
   return plugins
 }
 
-module.exports = {
+export = {
   getPlugins
 }

@@ -14,8 +14,8 @@ const getPlugins = () => {
       publicPath: config.publicPathWithoutCDN,
       writeToFileEmit: true,
       // rspack-manifest-plugin uses different option names than webpack-assets-manifest
-      generate: (seed, files, entrypoints) => {
-        const manifest = seed || {}
+      generate: (seed: any, files: any[], entrypoints: Record<string, string[]>) => {
+        const manifest: Record<string, any> = seed || {}
 
         // Add files mapping first
         files.forEach((file) => {
@@ -23,7 +23,7 @@ const getPlugins = () => {
         })
 
         // Add entrypoints information compatible with Shakapacker expectations
-        const entrypointsManifest = {}
+        const entrypointsManifest: Record<string, any> = {}
         Object.entries(entrypoints).forEach(
           ([entrypointName, entrypointFiles]) => {
             const jsFiles = entrypointFiles
@@ -83,6 +83,6 @@ const getPlugins = () => {
   return plugins
 }
 
-module.exports = {
+export = {
   getPlugins
 }

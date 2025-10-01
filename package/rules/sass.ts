@@ -4,7 +4,7 @@ const { getStyleRule } = require("../utils/getStyleRule")
 const { canProcess, packageMajorVersion } = require("../utils/helpers")
 const { additional_paths: extraPaths } = require("../config")
 
-module.exports = canProcess("sass-loader", (resolvedPath) => {
+export = canProcess("sass-loader", (resolvedPath: string) => {
   const optionKey =
     packageMajorVersion("sass-loader") > 15 ? "loadPaths" : "includePaths"
   return getStyleRule(/\.(scss|sass)(\.erb)?$/i, [

@@ -1,4 +1,4 @@
-const path = require("path")
+import { resolve } from "path"
 const { canProcess } = require("../utils/helpers")
 const { getStyleRule } = require("../utils/getStyleRule")
 
@@ -7,13 +7,13 @@ const {
   source_path: sourcePath
 } = require("../config")
 
-module.exports = canProcess("less-loader", (resolvedPath) =>
+export = canProcess("less-loader", (resolvedPath: string) =>
   getStyleRule(/\.(less)(\.erb)?$/i, [
     {
       loader: resolvedPath,
       options: {
         lessOptions: {
-          paths: [path.resolve(__dirname, "node_modules"), sourcePath, ...paths]
+          paths: [resolve(__dirname, "node_modules"), sourcePath, ...paths]
         },
         sourceMap: true
       }

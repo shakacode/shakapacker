@@ -1,11 +1,11 @@
-const { resolve } = require("path")
-const { realpathSync } = require("fs")
+import { resolve } from "path"
+import { realpathSync } from "fs"
 const {
   source_path: sourcePath,
   additional_paths: additionalPaths
 } = require("../config")
 
-const inclusions = [sourcePath, ...additionalPaths].map((p) => {
+const inclusions = [sourcePath, ...additionalPaths].map((p: string) => {
   try {
     return realpathSync(p)
   } catch (e) {
@@ -13,7 +13,7 @@ const inclusions = [sourcePath, ...additionalPaths].map((p) => {
   }
 })
 
-module.exports = {
+export = {
   include: inclusions,
   exclude: [
     {

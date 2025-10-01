@@ -1,21 +1,21 @@
-const { dirname, sep, normalize } = require("path")
+import { dirname, sep, normalize } from "path"
 const {
   additional_paths: additionalPaths,
   source_path: sourcePath
 } = require("../config")
 
-module.exports = {
+export = {
   test: /\.(bmp|gif|jpe?g|png|tiff|ico|avif|webp|eot|otf|ttf|woff|woff2|svg)$/,
   exclude: /\.(js|mjs|jsx|ts|tsx)$/,
   type: "asset/resource",
   generator: {
-    filename: (pathData) => {
+    filename: (pathData: { filename: string }) => {
       const path = normalize(dirname(pathData.filename))
-      const stripPaths = [...additionalPaths, sourcePath].map((p) =>
+      const stripPaths = [...additionalPaths, sourcePath].map((p: string) =>
         normalize(p)
       )
 
-      const selectedStripPath = stripPaths.find((includePath) =>
+      const selectedStripPath = stripPaths.find((includePath: string) =>
         path.startsWith(includePath)
       )
 

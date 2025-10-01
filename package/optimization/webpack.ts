@@ -44,6 +44,6 @@ const getOptimization = () => {
   }
 }
 
-module.exports = {
+export = {
   getOptimization
 }
