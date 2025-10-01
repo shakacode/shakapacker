@@ -88,11 +88,12 @@ describe("TypeScript Environment Modules", () => {
       // Validate devServer type
       expect(["undefined", "object"]).toContain(typeof devServer)
 
-      // When devServer exists, validate port
-      const port = devServer && devServer.port
-      expect(["undefined", "auto", "number", "string"]).toContain(
-        port === "auto" ? "auto" : typeof port
-      )
+      // When devServer exists, validate port type
+      if (devServer) {
+        const port = devServer.port
+        const portType = port === "auto" ? "auto" : typeof port
+        expect(["undefined", "auto", "number", "string"]).toContain(portType)
+      }
     })
   })
 })

@@ -58,8 +58,8 @@ describe "Generator" do
 
           Bundler.with_unbundled_env do
             # Preserve SHAKAPACKER_NPM_PACKAGE if set (for CI testing with local tarball)
-            npm_package_env = if ENV['SHAKAPACKER_NPM_PACKAGE']
-                                "SHAKAPACKER_NPM_PACKAGE='#{ENV['SHAKAPACKER_NPM_PACKAGE']}' "
+            npm_package_env = if ENV["SHAKAPACKER_NPM_PACKAGE"]
+                                "SHAKAPACKER_NPM_PACKAGE='#{ENV["SHAKAPACKER_NPM_PACKAGE"]}' "
                               else
                                 ""
                               end
