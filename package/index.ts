@@ -4,7 +4,8 @@
 const webpackMerge = require("webpack-merge")
 import { resolve } from "path"
 import { existsSync } from "fs"
-import { Configuration } from "webpack"
+// @ts-ignore: webpack is an optional peer dependency (using type-only import)
+import type { Configuration } from "webpack"
 const config = require("./config")
 const baseConfig = require("./environments/base")
 const devServer = require("./dev_server")

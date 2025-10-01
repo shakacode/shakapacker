@@ -58,6 +58,38 @@ describe "Generator" do
 
           Bundler.with_unbundled_env do
             sh_in_dir(sh_opts, TEMP_RAILS_APP_PATH, "SHAKAPACKER_ASSETS_BUNDLER=webpack USE_BABEL_PACKAGES=true FORCE=true bundle exec rails shakapacker:install")
+
+            # Update package.json to use local shakapacker package
+            # This ensures webpack can find the shakapacker/package.json file
+            package_json_path = File.join(TEMP_RAILS_APP_PATH, "package.json")
+            package_json = JSON.parse(File.read(package_json_path))
+
+            package_manager = fallback_manager.split("_")[0]
+
+            # Bun has issues with file: references, so use bun link instead
+            if package_manager == "bun"
+              # First link the package globally from the gem root
+              sh_in_dir(sh_opts, GEM_ROOT, "bun link")
+              # Then link it in the temp app
+              sh_in_dir(sh_opts, TEMP_RAILS_APP_PATH, "bun link shakapacker")
+            else
+              # Update the shakapacker dependency to use the local path
+              package_json["dependencies"]["shakapacker"] = "file:#{GEM_ROOT}"
+
+              # Write the updated package.json
+              File.write(package_json_path, JSON.pretty_generate(package_json))
+
+              # Reinstall dependencies to pick up the local path
+              case package_manager
+              when "yarn"
+                sh_in_dir(sh_opts, TEMP_RAILS_APP_PATH, "yarn install")
+              when "npm"
+                sh_in_dir(sh_opts, TEMP_RAILS_APP_PATH, "npm install")
+              when "pnpm"
+                # pnpm needs --no-frozen-lockfile to allow changes
+                sh_in_dir(sh_opts, TEMP_RAILS_APP_PATH, "pnpm install --no-frozen-lockfile")
+              end
+            end
           end
         end
 
@@ -130,12 +162,19 @@ describe "Generator" do
         end
 
         it "adds relevant shakapacker version in package.json depending on gem version" do
-          npm_version = Shakapacker::Utils::VersionSyntaxConverter.new.rubygem_to_npm(Shakapacker::VERSION)
-
           package_json = PackageJson.read(path_in_the_app)
           actual_version = package_json.fetch("dependencies", {})["shakapacker"]
 
-          expect(actual_version).to eq(npm_version)
+          # After we update the package.json to use the local package for testing,
+          # the version will be a file path instead of a semver version
+          # Note: bun uses `bun link` instead of file: references, so it won't modify package.json
+          if fallback_manager.include?("bun")
+            # For bun, the package.json is not modified, so check for the original semver version
+            npm_version = Shakapacker::Utils::VersionSyntaxConverter.new.rubygem_to_npm(Shakapacker::VERSION)
+            expect(actual_version).to eq(npm_version)
+          else
+            expect(actual_version).to eq("file:#{GEM_ROOT}")
+          end
         end
 
         it "adds Shakapacker peer dependencies to package.json" do

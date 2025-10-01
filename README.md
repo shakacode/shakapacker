@@ -199,6 +199,83 @@ Note, in v6+, most JS packages are peer dependencies. Thus, the installer will a
 Previously, these "webpack" and "babel" packages were direct dependencies for `shakapacker`. By
 making these peer dependencies, you have control over the versions used in your webpack and babel configs.
 
+### Optional Peer Dependencies
+
+All peer dependencies in Shakapacker are marked as optional via `peerDependenciesMeta`. This design decision ensures:
+- **No warnings during package installation** when dependencies are not needed
+- **Clear visibility of supported package versions** for upgrades
+- **Flexibility to choose only the tools you need** (webpack vs rspack, babel vs swc vs esbuild)
+
+The optional peer dependencies approach means you only install what you actually use, while still maintaining
+version compatibility constraints when you do install those packages.
+
+#### Required Dependencies by Configuration
+
+Depending on your setup, you'll need different subsets of the optional peer dependencies:
+
+**For Webpack + Babel (traditional setup):**
+```json
+{
+  "dependencies": {
+    "shakapacker": "^9.0.0",
+    "@babel/core": "^7.17.9",
+    "@babel/plugin-transform-runtime": "^7.17.0",
+    "@babel/preset-env": "^7.16.11",
+    "@babel/runtime": "^7.17.9",
+    "babel-loader": "^8.2.4",
+    "compression-webpack-plugin": "^9.0.0",
+    "terser-webpack-plugin": "^5.3.1",
+    "webpack": "^5.76.0",
+    "webpack-assets-manifest": "^5.0.6",
+    "webpack-cli": "^5.0.0",
+    "webpack-dev-server": "^5.0.0"
+  }
+}
+```
+
+**For Webpack + SWC (faster alternative):**
+```json
+{
+  "dependencies": {
+    "shakapacker": "^9.0.0",
+    "@swc/core": "^1.3.0",
+    "swc-loader": "^0.2.0",
+    "compression-webpack-plugin": "^9.0.0",
+    "terser-webpack-plugin": "^5.3.1",
+    "webpack": "^5.76.0",
+    "webpack-assets-manifest": "^5.0.6",
+    "webpack-cli": "^5.0.0",
+    "webpack-dev-server": "^5.0.0"
+  }
+}
+```
+
+**For Rspack + SWC (10x faster bundling):**
+```json
+{
+  "dependencies": {
+    "shakapacker": "^9.0.0",
+    "@rspack/core": "^1.0.0",
+    "@rspack/cli": "^1.0.0",
+    "@swc/core": "^1.3.0",
+    "swc-loader": "^0.2.0",
+    "rspack-manifest-plugin": "^5.0.0"
+  }
+}
+```
+
+**For CSS/Sass processing (add to any config above):**
+```json
+{
+  "dependencies": {
+    "css-loader": "^6.8.1",
+    "mini-css-extract-plugin": "^2.0.0",
+    "sass": "^1.50.0",
+    "sass-loader": "^13.0.0"
+  }
+}
+```
+
 ## Concepts
 
 At its core, Shakapacker's essential function is to:

@@ -130,6 +130,35 @@ npm install esbuild esbuild-loader
 assets_bundler: 'rspack'  # or 'webpack' (default)
 ```
 
+### 5. All Peer Dependencies Now Optional
+
+**What changed:** All peer dependencies are now marked as optional via `peerDependenciesMeta`.
+
+**Benefits:**
+- **No installation warnings** - You won't see peer dependency warnings for packages you don't use
+- **Install only what you need** - Using webpack? Don't install rspack. Using SWC? Don't install Babel.
+- **Clear version constraints** - When you do install a package, version compatibility is still enforced
+
+**What this means for you:**
+- **Existing projects:** No changes needed. Your existing dependencies will continue to work.
+- **New projects:** The installer only adds the packages you actually need based on your configuration.
+- **Package manager behavior:** npm, yarn, and pnpm will no longer warn about missing peer dependencies.
+
+**Example:** If you're using SWC with webpack, you only need:
+```json
+{
+  "dependencies": {
+    "shakapacker": "^9.0.0",
+    "@swc/core": "^1.3.0",
+    "swc-loader": "^0.2.0",
+    "webpack": "^5.76.0",
+    "webpack-cli": "^5.0.0",
+    "webpack-dev-server": "^5.0.0"
+  }
+}
+```
+You won't get warnings about missing Babel, Rspack, or esbuild packages.
+
 ## Migration Steps
 
 ### Step 1: Update Dependencies
