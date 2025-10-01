@@ -9,6 +9,43 @@
 ## [Unreleased]
 Changes since the last non-beta release.
 
+### Added
+- **Phase 3 TypeScript Migration - Environment Files** ([PR 614](https://github.com/shakacode/shakapacker/pull/614) by [justin808](https://github.com/justin808))
+  - Converted all environment configuration files to TypeScript (development, production, test)
+  - Added centralized type exports for consumer use (import from "shakapacker/types")
+  - Created shared TypeScript interfaces for environment configurations
+  - Added TypeScript adoption guide and transpiler migration guide
+  - Improved JSDoc documentation throughout the codebase
+  - Introduced structured error codes for programmatic error handling
+  - Exported shared types: WebpackConfig, RspackConfig, EnvironmentConfig
+
+### Security
+- **Path Validation Utilities** ([PR 614](https://github.com/shakacode/shakapacker/pull/614) by [justin808](https://github.com/justin808))
+  - Added validation to prevent directory traversal attacks
+  - Implemented environment variable sanitization to prevent injection
+  - Enforced strict port validation (reject strings with non-digits)
+  - Added SHAKAPACKER_NPM_PACKAGE path validation (only .tgz/.tar.gz allowed)
+  - Path traversal security checks now run regardless of validation mode
+
+### Changed
+- **Build Process Improvements** ([PR 614](https://github.com/shakacode/shakapacker/pull/614) by [justin808](https://github.com/justin808))
+  - Environment JS files now generated during npm publish (not committed to git)
+  - Prevents TypeScript source and compiled JS from getting out of sync
+  - Switched CI testing from committed files to npm pack workflow
+  - Auto-format compiled JavaScript during build process
+  - Enhanced .npmignore to exclude TypeScript sources, include compiled JS
+
+### Performance
+- **Validation Caching** ([PR 614](https://github.com/shakacode/shakapacker/pull/614) by [justin808](https://github.com/justin808))
+  - Implemented TTL-based validation caching (5s watch, 1min dev, infinite prod)
+  - Made cache TTL configurable via SHAKAPACKER_CACHE_TTL environment variable
+  - Lazy-loaded and cached watch mode detection
+
+### Fixed
+- Fixed .jsx extension requirement for SWC JSX parsing in e2e templates ([PR 614](https://github.com/shakacode/shakapacker/pull/614) by [justin808](https://github.com/justin808))
+- Fixed generator specs for all package managers (npm, yarn, pnpm, bun) ([PR 614](https://github.com/shakacode/shakapacker/pull/614) by [justin808](https://github.com/justin808))
+- Fixed clearValidationCache() to actually clear the cache ([PR 614](https://github.com/shakacode/shakapacker/pull/614) by [justin808](https://github.com/justin808))
+
 ## [v9.0.0-beta.4] - Unreleased
 
 ### ⚠️ Breaking Changes
