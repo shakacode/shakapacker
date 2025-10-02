@@ -8,6 +8,8 @@ module.exports = {
   },
   settings: {
     react: {
+      // Suppress "react package not installed" warning
+      // This project doesn't use React but airbnb config requires react-plugin
       version: "999.999.999"
     }
   },

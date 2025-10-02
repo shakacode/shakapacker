@@ -149,7 +149,7 @@ if (!file) {
   throw new Error(
     "CRITICAL: file rule configuration returned null. " +
       "Asset handling is required for proper bundling. " +
-      "Please ensure file.js exports a valid rule configuration."
+      "Please ensure file.ts exports a valid rule configuration."
   )
 }
 
@@ -165,7 +165,7 @@ if (!raw) {
   throw new Error(
     "CRITICAL: raw rule configuration returned null. " +
       "Raw file loading is required for proper bundling. " +
-      "Please ensure raw.js exports a valid rule configuration."
+      "Please ensure raw.ts exports a valid rule configuration."
   )
 }
 
