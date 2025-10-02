@@ -23,9 +23,10 @@ describe("index", () => {
     rulesWithOneOf.forEach((rule) => {
       expect(Array.isArray(rule.oneOf)).toBe(true)
       rule.oneOf.forEach((subRule) => {
-        // Each subRule must have either a test or resourceQuery property
-        const hasValidMatcher =
-          subRule.test instanceof RegExp || subRule.resourceQuery instanceof RegExp
+        // Each subRule must have either a test or resourceQuery property (RegExp)
+        const hasTestRegex = subRule.test instanceof RegExp
+        const hasResourceQueryRegex = subRule.resourceQuery instanceof RegExp
+        const hasValidMatcher = hasTestRegex || hasResourceQueryRegex
         expect(hasValidMatcher).toBe(true)
       })
     })
