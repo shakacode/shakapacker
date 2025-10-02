@@ -24,11 +24,11 @@ describe("index", () => {
       expect(Array.isArray(rule.oneOf)).toBe(true)
       rule.oneOf.forEach((subRule) => {
         // Each subRule must have either a test or resourceQuery property (RegExp)
-        const hasTestRegex = subRule.test instanceof RegExp
-        const hasResourceQueryRegex = subRule.resourceQuery instanceof RegExp
-        const hasValidMatcher = hasTestRegex || hasResourceQueryRegex
-        expect(hasValidMatcher).toBe(true)
+        expect(
+          subRule.test instanceof RegExp || subRule.resourceQuery instanceof RegExp
+        ).toBe(true)
       })
     })
   })
 })
+// test comment
