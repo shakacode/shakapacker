@@ -48,6 +48,7 @@ We welcome pull requests that fix bugs, add new features, or improve existing on
    ```
    bundle install
    yarn install
+   yarn prepare:husky  # Set up pre-commit hooks for linting
    ```
 
 ## Understanding Optional Peer Dependencies
