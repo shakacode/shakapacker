@@ -198,7 +198,7 @@
     "*.{ts,tsx}": [
       "eslint --fix",
       "prettier --write",
-      "bash -c 'tsc --noEmit'"
+      "tsc --noEmit"
     ],
     "*.{json,yml,yaml,md}": [
       "prettier --write"
