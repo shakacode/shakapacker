@@ -198,7 +198,7 @@
     "*.{ts,tsx}": [
       "eslint --fix",
       "prettier --write",
-      "tsc --noEmit"
+      "node scripts/type-check-no-emit.js"
     ],
     "*.{json,yml,yaml,md}": [
       "prettier --write"
