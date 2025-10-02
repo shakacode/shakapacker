@@ -6,7 +6,7 @@ const CORE_JS_VERSION_REGEX = /^\d+\.\d+/
 const coreJsVersion = (): string => {
   try {
     const version = packageFullVersion("core-js").match(CORE_JS_VERSION_REGEX)
-    return version ? version[0] : "3.8"
+    return version?.[0] ?? "3.8"
   } catch (e) {
     const error = e as NodeJS.ErrnoException
     if (error.code !== "MODULE_NOT_FOUND") {

@@ -6,7 +6,7 @@ import { existsSync } from "fs"
 import { merge } from "webpack-merge"
 import type { RuleSetRule } from "webpack"
 
-const LOADER_EXT_REGEX = /\.([jt]sx?)?(\.erb)?$/
+const LOADER_EXT_REGEX = /\.([jt]sx?)(\.erb)?$/
 
 const getLoaderExtension = (filename: string): string => {
   const matchData = filename.match(LOADER_EXT_REGEX)
@@ -15,7 +15,7 @@ const getLoaderExtension = (filename: string): string => {
     return "js"
   }
 
-  return matchData[1] || "js"
+  return matchData[1] ?? "js"
 }
 
 const getCustomConfig = (): Partial<RuleSetRule> => {

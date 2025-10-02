@@ -6,8 +6,8 @@ import { existsSync } from "fs"
 import { merge } from "webpack-merge"
 import type { RuleSetRule } from "webpack"
 
-const JSX_FILE_REGEX = /\.(jsx|tsx)?(\.erb)?$/
-const TYPESCRIPT_FILE_REGEX = /\.(ts|tsx)?(\.erb)?$/
+const JSX_FILE_REGEX = /\.(jsx|tsx)(\.erb)?$/
+const TYPESCRIPT_FILE_REGEX = /\.(ts|tsx)(\.erb)?$/
 
 const isJsxFile = (filename: string): boolean => !!filename.match(JSX_FILE_REGEX)
 
