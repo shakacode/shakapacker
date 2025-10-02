@@ -37,7 +37,7 @@
     "test": "jest",
     "type-check": "tsc --noEmit",
     "prepublishOnly": "yarn build && yarn type-check",
-    "prepare": "[ -d .git ] && husky || true"
+    "prepare": "husky 2>/dev/null || true"
   },
   "dependencies": {
     "js-yaml": "^4.1.0",
