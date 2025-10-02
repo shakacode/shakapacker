@@ -48,6 +48,9 @@ const generateRspackConfig = (extraConfig: RspackConfigWithDevServer = {}, ...ex
   return webpackMerge.merge({}, rspackConfig, extraConfig)
 }
 
+// Re-export webpack-merge utilities for backward compatibility
+export { merge, mergeWithCustomize, mergeWithRules, unique } from "webpack-merge"
+
 export {
   config, // shakapacker.yml
   devServer,
@@ -59,5 +62,3 @@ export {
   canProcess,
   inliningCss
 }
-
-export * from "webpack-merge"

@@ -6,9 +6,9 @@ import { existsSync } from "fs"
 import { merge } from "webpack-merge"
 import type { RuleSetRule } from "webpack"
 
-const isJsxFile = (filename: string): boolean => !!filename.match(/\.(jsx|tsx)(\.erb)?$/)
+const isJsxFile = (filename: string): boolean => !!filename.match(/\.(jsx|tsx)?(\.erb)?$/)
 
-const isTypescriptFile = (filename: string): boolean => !!filename.match(/\.(ts|tsx)(\.erb)?$/)
+const isTypescriptFile = (filename: string): boolean => !!filename.match(/\.(ts|tsx)?(\.erb)?$/)
 
 const getCustomConfig = (): Partial<RuleSetRule> => {
   const path = resolve("config", "swc.config.js")
