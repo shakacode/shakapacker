@@ -14,6 +14,7 @@ export = canProcess("stylus-loader", (resolvedPath: string) =>
       options: {
         stylusOptions: {
           include: [
+            // Resolve to project root node_modules from compiled location (package/rules/)
             resolve(__dirname, "..", "..", "node_modules"),
             sourcePath,
             ...paths
