@@ -14,7 +14,7 @@ export = canProcess("stylus-loader", (resolvedPath: string) =>
       options: {
         stylusOptions: {
           include: [
-            resolve(__dirname, "node_modules"),
+            resolve(__dirname, "..", "..", "node_modules"),
             sourcePath,
             ...paths
           ]

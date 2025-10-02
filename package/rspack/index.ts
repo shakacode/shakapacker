@@ -1,14 +1,15 @@
 /* eslint global-require: 0 */
 /* eslint import/no-dynamic-require: 0 */
 
+// Mixed require/import syntax:
+// - Using require() for compiled JS modules that may not have proper ES module exports
+// - Using import for type-only imports and Node.js built-in modules
 const webpackMerge = require("webpack-merge")
-const { resolve } = require("path")
-const { existsSync } = require("fs")
+import { resolve } from "path"
+import { existsSync } from "fs"
+import type { RspackConfigWithDevServer } from "../environments/types"
 const config = require("../config")
 const baseConfig = require("../environments/base")
-
-const rulesPath = resolve(__dirname, "../rules", "rspack.js")
-const rules = require(rulesPath)
 const devServer = require("../dev_server")
 const env = require("../env")
 const { moduleExists, canProcess } = require("../utils/helpers")
@@ -17,7 +18,10 @@ const { getPlugins } = require("../plugins/rspack")
 const { getOptimization } = require("../optimization/rspack")
 const { validateRspackDependencies } = require("../utils/validateDependencies")
 
-const generateRspackConfig = (extraConfig = {}, ...extraArgs) => {
+const rulesPath = resolve(__dirname, "../rules", "rspack.js")
+const rules = require(rulesPath)
+
+const generateRspackConfig = (extraConfig: RspackConfigWithDevServer = {}, ...extraArgs: unknown[]): RspackConfigWithDevServer => {
   // Validate required dependencies first
   validateRspackDependencies()
   if (extraArgs.length > 0) {
@@ -28,10 +32,11 @@ const generateRspackConfig = (extraConfig = {}, ...extraArgs) => {
 
   const { nodeEnv } = env
   const path = resolve(__dirname, "../environments", `${nodeEnv}.js`)
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
   const environmentConfig = existsSync(path) ? require(path) : baseConfig
 
   // Create base rspack config
-  const rspackConfig = {
+  const rspackConfig: RspackConfigWithDevServer = {
     ...environmentConfig,
     module: {
       rules
@@ -43,7 +48,7 @@ const generateRspackConfig = (extraConfig = {}, ...extraArgs) => {
   return webpackMerge.merge({}, rspackConfig, extraConfig)
 }
 
-module.exports = {
+export {
   config, // shakapacker.yml
   devServer,
   generateRspackConfig,
@@ -52,6 +57,7 @@ module.exports = {
   rules,
   moduleExists,
   canProcess,
-  inliningCss,
-  ...webpackMerge
+  inliningCss
 }
+
+export * from "webpack-merge"

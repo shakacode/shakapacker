@@ -46,6 +46,7 @@
   "devDependencies": {
     "@rspack/cli": "^1.4.11",
     "@rspack/core": "^1.4.11",
+    "@types/babel__core": "^7.20.5",
     "@types/js-yaml": "^4.0.9",
     "@types/node": "^24.5.2",
     "@types/path-complete-extname": "^1.0.3",
@@ -83,8 +84,8 @@
     "@babel/plugin-transform-runtime": "^7.17.0",
     "@babel/preset-env": "^7.16.11",
     "@babel/runtime": "^7.17.9",
-    "@rspack/core": "^1.0.0",
     "@rspack/cli": "^1.0.0",
+    "@rspack/core": "^1.0.0",
     "@rspack/plugin-react-refresh": "^1.0.0",
     "@types/babel__core": "^7.0.0",
     "@types/webpack": "^5.0.0",

@@ -13,7 +13,11 @@ export = canProcess("less-loader", (resolvedPath: string) =>
       loader: resolvedPath,
       options: {
         lessOptions: {
-          paths: [resolve(__dirname, "node_modules"), sourcePath, ...paths]
+          paths: [
+            resolve(__dirname, "..", "..", "node_modules"),
+            sourcePath,
+            ...paths
+          ]
         },
         sourceMap: true
       }

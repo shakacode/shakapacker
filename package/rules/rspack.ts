@@ -141,26 +141,36 @@ if (erb) {
 }
 
 // File/asset handling using Rspack's built-in asset modules
+// This is a critical rule required for proper asset handling
 debug("Adding file/asset handling rule...")
 const file = require("./file")
 
-if (file) {
-  debug("Successfully added file/asset rule")
-  rules.push(file)
-} else {
-  warn("file rule configuration returned null")
+if (!file) {
+  throw new Error(
+    "CRITICAL: file rule configuration returned null. " +
+      "Asset handling is required for proper bundling. " +
+      "Please ensure file.js exports a valid rule configuration."
+  )
 }
 
+debug("Successfully added file/asset rule")
+rules.push(file)
+
 // Raw file loading
+// This is a critical rule required for raw file imports
 debug("Adding raw file loading rule...")
 const raw = require("./raw")
 
-if (raw) {
-  debug("Successfully added raw file rule")
-  rules.push(raw)
-} else {
-  warn("raw rule configuration returned null")
+if (!raw) {
+  throw new Error(
+    "CRITICAL: raw rule configuration returned null. " +
+      "Raw file loading is required for proper bundling. " +
+      "Please ensure raw.js exports a valid rule configuration."
+  )
 }
+
+debug("Successfully added raw file rule")
+rules.push(raw)
 
 debug(`Rspack rules configuration complete. Total rules: ${rules.length}`)
 export = rules
