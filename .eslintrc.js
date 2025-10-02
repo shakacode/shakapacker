@@ -56,18 +56,14 @@ module.exports = {
         "import/no-unresolved": "off",
         "import/no-extraneous-dependencies": "off",
         "import/extensions": "off",
-        indent: "off",
-        "@typescript-eslint/indent": ["error", 2],
+        "no-use-before-define": "off",
+        "@typescript-eslint/no-use-before-define": ["error"],
         "@typescript-eslint/no-unused-vars": [
           "error",
           { argsIgnorePattern: "^_" }
         ],
-        "@typescript-eslint/no-explicit-any": "warn",
-        "@typescript-eslint/explicit-module-boundary-types": "off",
-        "@typescript-eslint/no-var-requires": "off",
-        "@typescript-eslint/ban-ts-comment": "off",
-        "no-use-before-define": "off",
-        "@typescript-eslint/no-use-before-define": ["error"]
+        "@typescript-eslint/no-explicit-any": "error",
+        "@typescript-eslint/explicit-module-boundary-types": "off"
       }
     }
   ]
