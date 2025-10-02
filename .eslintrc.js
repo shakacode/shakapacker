@@ -6,6 +6,11 @@ module.exports = {
     "import/extensions": "off",
     indent: ["error", 2]
   },
+  settings: {
+    react: {
+      version: "999.999.999"
+    }
+  },
   env: {
     browser: true,
     node: true
