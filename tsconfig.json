@@ -3,13 +3,19 @@
     "target": "ES2020",
     "module": "commonjs",
     "lib": ["ES2020"],
-    "typeRoots": ["./node_modules/@types", "node_modules/@types", "../node_modules/@types"],
+    "importHelpers": false,
+    "typeRoots": [
+      "./node_modules/@types",
+      "node_modules/@types",
+      "../node_modules/@types"
+    ],
     "declaration": true,
     "declarationMap": true,
     "outDir": "./package",
     "rootDir": "./package",
     "strict": true,
     "esModuleInterop": true,
+    "preserveValueImports": false,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
     "resolveJsonModule": true,
@@ -22,18 +28,12 @@
     "strictBindCallApply": true,
     "strictPropertyInitialization": false,
     "noImplicitThis": true,
-    "alwaysStrict": false,
+    "alwaysStrict": true,
     "allowSyntheticDefaultImports": true,
     "preserveConstEnums": true,
     "isolatedModules": true,
     "removeComments": false
   },
-  "include": [
-    "package/**/*.ts"
-  ],
-  "exclude": [
-    "node_modules",
-    "package/**/*.test.ts",
-    "package/**/*.spec.ts"
-  ]
+  "include": ["package/**/*.ts"],
+  "exclude": ["node_modules", "package/**/*.test.ts", "package/**/*.spec.ts"]
 }

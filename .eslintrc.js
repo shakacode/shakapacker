@@ -47,6 +47,9 @@ module.exports = {
       files: ["**/*.ts"],
       parser: "@typescript-eslint/parser",
       parserOptions: {
+        // Enables type-aware linting for better type safety
+        // Note: This can slow down linting on large codebases
+        // Consider using --cache flag with ESLint if performance degrades
         project: "./tsconfig.json"
       },
       extends: [
