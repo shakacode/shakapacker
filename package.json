@@ -37,7 +37,8 @@
     "test": "jest",
     "type-check": "tsc --noEmit",
     "prepublishOnly": "yarn build && yarn type-check",
-    "prepare:husky": "husky"
+    "prepare:husky": "husky",
+    "prepare": "husky"
   },
   "dependencies": {
     "js-yaml": "^4.1.0",
@@ -190,8 +191,16 @@
   },
   "packageManager": "yarn@1.22.22",
   "lint-staged": {
-    "*.{js,ts}": [
+    "*.{js,jsx}": [
       "eslint --fix",
+      "prettier --write"
+    ],
+    "*.{ts,tsx}": [
+      "eslint --fix",
+      "prettier --write",
+      "bash -c 'tsc --noEmit'"
+    ],
+    "*.{json,yml,yaml,md}": [
       "prettier --write"
     ]
   },
