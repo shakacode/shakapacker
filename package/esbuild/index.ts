@@ -6,8 +6,10 @@ import { existsSync } from "fs"
 import { merge } from "webpack-merge"
 import type { RuleSetRule } from "webpack"
 
+const LOADER_EXT_REGEX = /\.([jt]sx?)?(\.erb)?$/
+
 const getLoaderExtension = (filename: string): string => {
-  const matchData = filename.match(/\.([jt]sx?)?(\.erb)?$/)
+  const matchData = filename.match(LOADER_EXT_REGEX)
 
   if (!matchData) {
     return "js"
