@@ -25,11 +25,8 @@ package/**/*.js
 !package/index.d.ts
 !package/loaders.d.ts
 !package/webpack-types.d.ts
-!package/babel/preset.js
 !package/babel/preset-react.js
-!package/rules/*.js
 !package/loaders/*.js
-!package/plugins/*.js
 !package/__mocks__/*.js
 !package/utils/get_style_rule.js
 !package/utils/node_modules.js

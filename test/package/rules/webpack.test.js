@@ -10,7 +10,26 @@ jest.mock("../../../package/utils/helpers", () => {
 })
 
 describe("index", () => {
-  test("rule tests are regexes", () => {
-    rules.forEach((rule) => expect(rule.test instanceof RegExp).toBe(true))
+  test("rule tests are regexes or oneOf arrays", () => {
+    const rulesWithTest = rules.filter((rule) => !rule.oneOf)
+    const rulesWithOneOf = rules.filter((rule) => rule.oneOf)
+
+    // Verify all non-oneOf rules have test property
+    rulesWithTest.forEach((rule) => {
+      expect(rule.test).toBeInstanceOf(RegExp)
+    })
+
+    // Verify all oneOf rules are properly structured
+    rulesWithOneOf.forEach((rule) => {
+      expect(Array.isArray(rule.oneOf)).toBe(true)
+      rule.oneOf.forEach((subRule) => {
+        // Each subRule must have either a test or resourceQuery property (RegExp)
+        const matchers = [
+          subRule.test instanceof RegExp,
+          subRule.resourceQuery instanceof RegExp
+        ]
+        expect(matchers.some(Boolean)).toBe(true)
+      })
+    })
   })
 })

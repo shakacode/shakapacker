@@ -6,9 +6,19 @@ const rspackRawConfig = () => ({
 })
 
 const webpackRawConfig = () => ({
-  test: /\.html$/,
-  exclude: /\.(js|mjs|jsx|ts|tsx)$/,
-  type: "asset/source"
+  oneOf: [
+    {
+      // Match any file with ?raw query parameter
+      resourceQuery: /raw/,
+      type: "asset/source"
+    },
+    {
+      // Fallback: match .html files without query
+      test: /\.html$/,
+      exclude: /\.(js|mjs|jsx|ts|tsx)$/,
+      type: "asset/source"
+    }
+  ]
 })
 
 export =

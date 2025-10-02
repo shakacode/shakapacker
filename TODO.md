@@ -27,11 +27,11 @@
 - [x] Convert all files in `package/plugins/`
 - [x] Convert all files in `package/optimization/`
 
-### Phase 5: Framework-Specific Modules
-- [ ] Convert rspack support files
-- [ ] Convert swc support files
-- [ ] Convert esbuild support files
-- [ ] Convert babel preset
+### Phase 5: Framework-Specific Modules ✅
+- [x] Convert rspack support files
+- [x] Convert swc support files
+- [x] Convert esbuild support files
+- [x] Convert babel preset
 
 ### Phase 6: Final Cleanup
 - [ ] Convert remaining utilities

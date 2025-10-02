@@ -10,6 +10,7 @@
 /gemfiles
 /.github
 /.circleci
+/.husky
 /.byebug_history
 .DS_Store
 yarn-debug.log*

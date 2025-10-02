@@ -9,6 +9,16 @@
 ## [Unreleased]
 Changes since the last non-beta release.
 
+### Added
+- **Phase 5 TypeScript Migration - Framework-Specific Modules** by [justin808](https://github.com/justin808)
+  - Converted framework-specific modules to TypeScript
+  - Migrated package/rspack/index.js to TypeScript
+  - Migrated package/swc/index.js to TypeScript
+  - Migrated package/esbuild/index.js to TypeScript
+  - Migrated package/babel/preset.js to TypeScript
+  - Added @types/babel__core for enhanced type safety
+  - All 130 tests passing
+
 ## [v9.0.0-beta.7] - October 1, 2025
 
 ### Added
