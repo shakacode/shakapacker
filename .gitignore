@@ -25,6 +25,7 @@ package/**/*.js
 !package/index.d.ts
 !package/loaders.d.ts
 !package/webpack-types.d.ts
+!package/babel/preset.js
 !package/babel/preset-react.js
 !package/loaders/*.js
 !package/__mocks__/*.js
