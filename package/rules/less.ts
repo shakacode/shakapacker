@@ -1,4 +1,3 @@
-import { resolve } from "path"
 const { canProcess } = require("../utils/helpers")
 const { getStyleRule } = require("../utils/getStyleRule")
 
@@ -13,12 +12,8 @@ export = canProcess("less-loader", (resolvedPath: string) =>
       loader: resolvedPath,
       options: {
         lessOptions: {
-          paths: [
-            // Resolve to project root node_modules from compiled location (package/rules/)
-            resolve(__dirname, "..", "..", "node_modules"),
-            sourcePath,
-            ...paths
-          ]
+          // Additional paths for Less imports (node_modules is resolved automatically)
+          paths: [sourcePath, ...paths]
         },
         sourceMap: true
       }

@@ -1,4 +1,3 @@
-import { resolve } from "path"
 const { canProcess } = require("../utils/helpers")
 const { getStyleRule } = require("../utils/getStyleRule")
 
@@ -13,12 +12,8 @@ export = canProcess("stylus-loader", (resolvedPath: string) =>
       loader: resolvedPath,
       options: {
         stylusOptions: {
-          include: [
-            // Resolve to project root node_modules from compiled location (package/rules/)
-            resolve(__dirname, "..", "..", "node_modules"),
-            sourcePath,
-            ...paths
-          ]
+          // Additional paths for Stylus imports (node_modules is resolved automatically)
+          include: [sourcePath, ...paths]
         },
         sourceMap: true
       }
