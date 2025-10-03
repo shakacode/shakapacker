@@ -32,6 +32,37 @@ import * as styles from './Foo.module.css';
 - Aligns with modern JavaScript module standards
 - Automatically converts kebab-case to camelCase (`my-button` → `myButton`)
 
+### Important: exportLocalsConvention with namedExport
+
+When `namedExport: true` is enabled (v9 default), css-loader requires `exportLocalsConvention` to be either `'camelCaseOnly'` or `'dashesOnly'`.
+
+**The following will cause a build error:**
+```js
+modules: {
+  namedExport: true,
+  exportLocalsConvention: 'camelCase'  // ❌ ERROR: incompatible with namedExport: true
+}
+```
+
+**Error message:**
+```
+"exportLocalsConvention" with "camelCase" value is incompatible with "namedExport: true" option
+```
+
+**Correct v9 configuration:**
+```js
+modules: {
+  namedExport: true,
+  exportLocalsConvention: 'camelCaseOnly'  // ✅ Correct - only camelCase exported
+}
+```
+
+**Difference between 'camelCase' and 'camelCaseOnly':**
+- `'camelCase'`: Exports both original class name AND camelCase version (e.g., both `my-button` and `myButton`)
+- `'camelCaseOnly'`: Exports ONLY the camelCase version (e.g., only `myButton`)
+
+The `'camelCase'` option is only compatible with `namedExport: false` (v8 default export behavior).
+
 ## Version 8.x and Earlier Behavior
 
 In Shakapacker v8 and earlier, the default behavior was to use a **default export object**:
@@ -244,7 +275,7 @@ import { bright, container, button } from './Component.module.css';
 
 #### 3. Handle Kebab-Case Class Names
 
-With v9's `exportLocalsConvention: 'camelCase'`, kebab-case class names are automatically converted:
+With v9's `exportLocalsConvention: 'camelCaseOnly'`, kebab-case class names are automatically converted to camelCase:
 
 ```css
 /* styles.module.css */
@@ -259,6 +290,8 @@ import { myButton, primaryColor } from './styles.module.css';
 // Use the camelCase versions in your components
 <button className={myButton} />
 ```
+
+**Note:** With `'camelCaseOnly'`, only the camelCase version is exported. The original kebab-case name (e.g., `my-button`) is NOT available as an export.
 
 #### 4. Using a Codemod for Large Codebases
 
@@ -298,12 +331,12 @@ npx jscodeshift -t css-modules-v9-migration.js src/
 
 ## Version Comparison
 
-| Feature | v8 (and earlier) | v9 | 
-|---------|-----------------|----| 
+| Feature | v8 (and earlier) | v9 |
+|---------|-----------------|----|
 | Default behavior | Default export object | Named exports |
 | Import syntax | `import styles from '...'` | `import { className } from '...'` |
 | Class reference | `styles.className` | `className` |
-| Export convention | `asIs` (no transformation) | `camelCase` |
+| Export convention | `asIs` (no transformation) | `camelCaseOnly` |
 | TypeScript warnings | May show warnings | No warnings |
 | Tree-shaking | Limited | Optimized |
 
@@ -368,13 +401,34 @@ Then search for `css-loader` options in the generated JSON file.
 
 ## Troubleshooting
 
+### Build Error: exportLocalsConvention Incompatible with namedExport
+
+If you see this error during build:
+```
+"exportLocalsConvention" with "camelCase" value is incompatible with "namedExport: true" option
+```
+
+**Cause:** Your webpack configuration has `namedExport: true` with `exportLocalsConvention: 'camelCase'`.
+
+**Solution:** Change `exportLocalsConvention` to `'camelCaseOnly'` or `'dashesOnly'`:
+
+```js
+// config/webpack/commonWebpackConfig.js or similar
+modules: {
+  namedExport: true,
+  exportLocalsConvention: 'camelCaseOnly'  // or 'dashesOnly'
+}
+```
+
+Alternatively, if you need the `'camelCase'` option (both original and camelCase exports), you must revert to v8 behavior by setting `namedExport: false` as shown in the "Reverting to Default Exports" section above.
+
 ### CSS Classes Not Applying
 
 If your CSS classes aren't applying after the upgrade:
 
 1. **Check import syntax**: Ensure you're using the correct import style for your configuration
 2. **Verify class names**: Use `console.log` to see available classes
-3. **Check camelCase conversion**: Kebab-case names are converted to camelCase in v9
+3. **Check camelCase conversion**: Kebab-case names are converted to camelCase in v9 with `'camelCaseOnly'`
 4. **Rebuild webpack**: Clear cache and rebuild: `rm -rf tmp/cache && bin/shakapacker`
 
 ### TypeScript Support
