@@ -93,10 +93,11 @@ Changes since the last non-beta release.
        ```
 
 2. **CSS Modules now use named exports by default**
-   - Configured with `namedExport: true` and `exportLocalsConvention: 'camelCase'`
+   - Configured with `namedExport: true` and `exportLocalsConvention: 'camelCaseOnly'`
    - **JavaScript:** Use named imports: `import { className } from './styles.module.css'`
    - **TypeScript:** Use namespace imports: `import * as styles from './styles.module.css'`
    - Default imports (`import styles from '...'`) no longer work
+   - **Note:** css-loader requires `'camelCaseOnly'` or `'dashesOnly'` when `namedExport: true`. Using `'camelCase'` causes a build error.
    - See [CSS Modules Export Mode documentation](./docs/css-modules-export-mode.md) for migration details
 
 3. **Configuration option renamed from `webpack_loader` to `javascript_transpiler`**

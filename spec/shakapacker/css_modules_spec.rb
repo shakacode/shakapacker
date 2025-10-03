@@ -186,14 +186,14 @@ describe "CSS Modules Configuration" do
       # Both modes should work, just with different syntax
       configs = [
         { namedExport: false, description: "v8 mode" },
-        { namedExport: true, exportLocalsConvention: "camelCase", description: "v9 mode" }
+        { namedExport: true, exportLocalsConvention: "camelCaseOnly", description: "v9 mode" }
       ]
 
       configs.each do |config|
         expect(config[:description]).to match(/v\d mode/)
 
         if config[:namedExport]
-          expect(config[:exportLocalsConvention]).to eq("camelCase")
+          expect(config[:exportLocalsConvention]).to eq("camelCaseOnly")
         else
           expect(config[:exportLocalsConvention]).to be_nil
         end

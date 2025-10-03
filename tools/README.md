@@ -104,7 +104,7 @@ const Button: React.FC = () => {
 
 ### Notes
 
-1. **Kebab-case conversion**: CSS classes with kebab-case (e.g., `my-button`) are automatically converted to camelCase (`myButton`) for JavaScript files, matching css-loader's `exportLocalsConvention: 'camelCase'` setting.
+1. **Kebab-case conversion**: CSS classes with kebab-case (e.g., `my-button`) are automatically converted to camelCase (`myButton`) for JavaScript files, matching css-loader's `exportLocalsConvention: 'camelCaseOnly'` setting.
 
 2. **Unused imports**: The codemod only imports CSS classes that are actually used in JavaScript files. If you pass the entire styles object to a component, it will convert to namespace import for safety.
 

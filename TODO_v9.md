@@ -20,11 +20,14 @@ Align with Next.js and modern tooling by using named exports:
   options: {
     modules: {
       namedExport: true,
-      exportLocalsConvention: 'camelCase'
+      exportLocalsConvention: 'camelCaseOnly'  // Must be 'camelCaseOnly' or 'dashesOnly' with namedExport: true
     }
   }
 }
 ```
+
+**Note:** Using `exportLocalsConvention: 'camelCase'` with `namedExport: true` will cause a build error.
+css-loader only allows `'camelCaseOnly'` or `'dashesOnly'` when named exports are enabled.
 
 2. **Update TypeScript types:**
 - Ensure proper typing for CSS modules with named exports
