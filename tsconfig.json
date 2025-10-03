@@ -15,7 +15,6 @@
     "rootDir": "./package",
     "strict": true,
     "esModuleInterop": true,
-    "preserveValueImports": false,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
     "resolveJsonModule": true,

@@ -34,6 +34,7 @@
     "build": "tsc && node scripts/remove-use-strict.js && yarn prettier --write 'package/**/*.js'",
     "build:types": "tsc",
     "lint": "eslint .",
+    "lint:fast": "eslint . --ext .js,.jsx,.ts,.tsx --config .eslintrc.fast.js",
     "test": "jest",
     "type-check": "tsc --noEmit",
     "prepublishOnly": "yarn build && yarn type-check"

@@ -11,6 +11,7 @@ yarn-error.log*
 /log
 gemfiles/*.lock
 .DS_Store
+.eslintcache
 
 .yalc
 yalc.lock
