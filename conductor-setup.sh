@@ -41,6 +41,7 @@ npx husky
 if [ ! -f .husky/pre-commit ]; then
     echo "Creating pre-commit hook..."
     cat > .husky/pre-commit << 'EOF'
+#!/usr/bin/env sh
 npx lint-staged
 EOF
     chmod +x .husky/pre-commit
