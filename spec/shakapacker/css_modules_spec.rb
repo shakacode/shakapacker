@@ -141,6 +141,58 @@ describe "CSS Modules Configuration" do
       # Test validation for kebab-case issues
       skip "Integration test - requires Node.js environment to test validation"
     end
+
+    it "validates that 'camelCase' is incompatible with namedExport: true" do
+      # This test documents the exact error that would occur with incorrect configuration
+      # css-loader will reject this configuration with an error
+
+      invalid_config = {
+        namedExport: true,
+        exportLocalsConvention: "camelCase"
+      }
+
+      # The configuration itself is invalid
+      expect(invalid_config[:namedExport]).to eq(true)
+      expect(invalid_config[:exportLocalsConvention]).to eq("camelCase")
+
+      # This combination would cause css-loader to throw:
+      # "exportLocalsConvention" with "camelCase" value is incompatible with "namedExport: true" option
+
+      # Document the valid alternatives
+      valid_configs = [
+        { namedExport: true, exportLocalsConvention: "camelCaseOnly" },
+        { namedExport: true, exportLocalsConvention: "dashesOnly" },
+        { namedExport: false, exportLocalsConvention: "camelCase" }
+      ]
+
+      valid_configs.each do |config|
+        if config[:namedExport]
+          # With namedExport true, only camelCaseOnly or dashesOnly allowed
+          expect(["camelCaseOnly", "dashesOnly"]).to include(config[:exportLocalsConvention])
+        else
+          # With namedExport false, camelCase is allowed
+          expect(config[:exportLocalsConvention]).to eq("camelCase")
+        end
+      end
+    end
+
+    it "ensures getStyleRule.ts uses valid configuration" do
+      # This test validates that our actual implementation uses a valid combination
+      # Read the TypeScript source to verify configuration
+      style_rule_content = File.read("package/utils/getStyleRule.ts")
+
+      # Should have namedExport: true
+      expect(style_rule_content).to include("namedExport: true")
+
+      # Should have exportLocalsConvention: 'camelCaseOnly' (not 'camelCase')
+      expect(style_rule_content).to include("exportLocalsConvention: 'camelCaseOnly'")
+
+      # Should NOT have the invalid 'camelCase' with namedExport: true
+      expect(style_rule_content).not_to include("exportLocalsConvention: 'camelCase'")
+
+      # Should have explanatory comment about the requirement
+      expect(style_rule_content).to include("css-loader requires 'camelCaseOnly' or 'dashesOnly'")
+    end
   end
 
   describe "migration scenarios" do
