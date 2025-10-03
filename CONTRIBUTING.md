@@ -3,6 +3,7 @@
 Thank you for your interest in contributing to Shakapacker! We welcome all contributions that align with our project goals and values. To ensure a smooth and productive collaboration, please follow these guidelines.
 
 ## Contents
+
 - [Reporting Issues](#reporting-issues)
 - [Submitting Pull Requests](#submitting-pull-requests)
 - [Setting Up a Development Environment](#setting-up-a-development-environment)
@@ -10,40 +11,84 @@ Thank you for your interest in contributing to Shakapacker! We welcome all contr
 - [Testing the generator](#testing-the-generator)
 
 ## Reporting Issues
+
 If you encounter any issues with the project, please first check the existing issues (including closed ones). If the issues is not reported before, please opening an issue on our GitHub repository. Please provide a clear and detailed description of the issue, including steps to reproduce it. Creating a demo repository to demonstrate the issue would be ideal (and in some cases necessary).
 
 If looking to contribute to the project by fixing existing issues, we recommend looking at issues, particularly with the "[help wanted](https://github.com/shakacode/shakapacker/issues?q=is%3Aissue+label%3A%22help+wanted%22)" label.
 
 ## Submitting Pull Requests
+
 We welcome pull requests that fix bugs, add new features, or improve existing ones. Before submitting a pull request, please make sure to:
 
-  - Open an issue about what you want to propose before start working on.
-  - Fork the repository and create a new branch for your changes.
-  - Write clear and concise commit messages.
-  - Follow our code style guidelines.
-  - Write tests for your changes and [make sure all tests pass](#making-sure-your-changes-pass-all-tests).
-  - Update the documentation as needed.
-  - Update CHANGELOG.md if the changes affect public behavior of the project.
+- Open an issue about what you want to propose before start working on.
+- Fork the repository and create a new branch for your changes.
+- Write clear and concise commit messages.
+- Follow our code style guidelines.
+- Write tests for your changes and [make sure all tests pass](#making-sure-your-changes-pass-all-tests).
+- Update the documentation as needed.
+- Update CHANGELOG.md if the changes affect public behavior of the project.
 
 ---
+
+## Git Hooks (Optional)
+
+This project includes configuration for git hooks via `husky` and `lint-staged`, but they are **opt-in for contributors**.
+
+**Why are hooks optional?** As a library project, we don't enforce git hooks because:
+
+- Different contributors may have different workflows
+- Forcing hooks can interfere with contributor tooling
+- CI/CD handles the final validation
+
+To enable pre-commit hooks locally:
+
+```bash
+npx husky install
+npx husky add .husky/pre-commit "npx lint-staged"
+```
+
+---
+
+## Linting and Code Quality
+
+### Running Linters
+
+```bash
+# Full linting with type checking (slower but thorough)
+yarn lint
+
+# Fast linting without type checking (for quick feedback)
+yarn lint:fast
+
+# With caching for better performance
+yarn lint --cache
+```
+
+**Performance Note:** TypeScript ESLint uses type-aware linting for better type safety, which can be slower on large codebases. Use `yarn lint:fast` during development for quick feedback.
+
+---
+
 ## Setting Up a Development Environment
 
 1. Install [Yarn](https://classic.yarnpkg.com/)
 2. To test your changes on a Rails test project do the following steps:
-   - For Ruby gem, update `Gemfile` and point the `shakapacker` to the locally developing Shakapacker project:
-      ```ruby
-      gem 'shakapacker', path: "relative_or_absolute_path_to_local_shakapacker"
-      ```
-   - For npm package, use `yalc` with following steps:
-      ```bash
-      # In Shakapacker root directory
-      yalc publish
-      # In Rails app for testing
-      yalc link shakapacker
 
-      # After every change in shakapacker, run the following in Shakapacker directory
-      yalc push # or yalc publish --push
-      ```
+   - For Ruby gem, update `Gemfile` and point the `shakapacker` to the locally developing Shakapacker project:
+     ```ruby
+     gem 'shakapacker', path: "relative_or_absolute_path_to_local_shakapacker"
+     ```
+   - For npm package, use `yalc` with following steps:
+
+     ```bash
+     # In Shakapacker root directory
+     yalc publish
+     # In Rails app for testing
+     yalc link shakapacker
+
+     # After every change in shakapacker, run the following in Shakapacker directory
+     yalc push # or yalc publish --push
+     ```
+
 3. Run the following commands to set up the development environment.
    ```
    bundle install
@@ -60,11 +105,13 @@ Shakapacker uses optional peer dependencies (via `peerDependenciesMeta`) for max
 - **Version constraints still apply** - When a package is installed, version compatibility is enforced
 
 ### When modifying dependencies:
+
 1. Add new peer dependencies to both `peerDependencies` and `peerDependenciesMeta` (marking as optional)
 2. Keep version ranges synchronized between `devDependencies` and `peerDependencies`
 3. Test with multiple package managers: `npm`, `yarn`, and `pnpm`
 
 ### Testing peer dependency changes:
+
 ```bash
 # Test with npm (no warnings expected)
 cd /tmp && mkdir test-npm && cd test-npm
@@ -130,6 +177,7 @@ bundle exec rake run_spec:gem
 ```
 
 #### 4.4 Run only Shakapacker gem specs for backward compatibility
+
 These specs are to check Shakapacker v7 backward compatibility with v6.x
 
 ```
@@ -137,6 +185,7 @@ bundle exec rake run_spec:gem_bc
 ```
 
 #### 4.5 Run dummy app test
+
 For this, you need `yalc` to be installed on your local machine
 
 ```
@@ -144,6 +193,7 @@ bundle exec rake run_spec:dummy
 ```
 
 #### 4.6 Testing the installer
+
 To ensure that your installer works as expected, either you can run `bundle exec rake run_spec:install`, or take the following manual testing steps:
 
 1. Update the `Gemfile` so that gem `shakapacker` has a line like this, pointing to your developing Shakapacker:
@@ -153,7 +203,7 @@ To ensure that your installer works as expected, either you can run `bundle exec
 2. Run `bundle install` to install the updated gem.
 3. Run `bundle exec rails shakapacker:install` to confirm that you got the right changes.
 
- **Note:** Ensure that you use bundle exec otherwise the installed shakapacker gem will run and not the one you are working on.
+**Note:** Ensure that you use bundle exec otherwise the installed shakapacker gem will run and not the one you are working on.
 
 ## CI Workflows
 
@@ -162,6 +212,7 @@ Shakapacker uses GitHub Actions for continuous integration. The CI workflows use
 ### Package Manager Choice
 
 The project uses Yarn in CI workflows for the following reasons:
+
 - Deterministic dependency resolution with `yarn.lock`
 - Faster installation with offline mirror support
 - Better workspace support for monorepo-style testing
@@ -175,14 +226,16 @@ The project uses Yarn in CI workflows for the following reasons:
 - `.github/workflows/generator.yml` - Generator installation tests
 
 All workflows use:
+
 ```yaml
 - uses: actions/setup-node@v4
   with:
-    cache: 'yarn'
+    cache: "yarn"
     cache-dependency-path: spec/dummy/yarn.lock
 ```
 
 And install dependencies with:
+
 ```bash
 yarn install
 ```

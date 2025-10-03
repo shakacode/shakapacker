@@ -34,10 +34,10 @@
     "build": "tsc && node scripts/remove-use-strict.js && yarn prettier --write 'package/**/*.js'",
     "build:types": "tsc",
     "lint": "eslint .",
+    "lint:fast": "eslint . --ext .js,.jsx,.ts,.tsx --config .eslintrc.fast.js",
     "test": "jest",
     "type-check": "tsc --noEmit",
-    "prepublishOnly": "yarn build && yarn type-check",
-    "prepare:husky": "husky"
+    "prepublishOnly": "yarn build && yarn type-check"
   },
   "dependencies": {
     "js-yaml": "^4.1.0",
@@ -54,6 +54,8 @@
     "@types/webpack": "^5.28.5",
     "@types/webpack-dev-server": "^4.7.2",
     "@types/webpack-merge": "^5.0.0",
+    "@typescript-eslint/eslint-plugin": "^8.45.0",
+    "@typescript-eslint/parser": "^8.45.0",
     "babel-loader": "^8.2.4",
     "compression-webpack-plugin": "^9.0.0",
     "css-loader": "^7.1.2",
@@ -188,8 +190,16 @@
   },
   "packageManager": "yarn@1.22.22",
   "lint-staged": {
-    "*.{js,ts}": [
+    "*.{js,jsx}": [
       "eslint --fix",
+      "prettier --write"
+    ],
+    "*.{ts,tsx}": [
+      "eslint --fix",
+      "prettier --write",
+      "node scripts/type-check-no-emit.js"
+    ],
+    "*.{json,yml,yaml,md}": [
       "prettier --write"
     ]
   },

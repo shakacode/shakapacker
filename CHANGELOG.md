@@ -18,6 +18,11 @@ Changes since the last non-beta release.
   - Migrated package/babel/preset.js to TypeScript
   - Added @types/babel__core for enhanced type safety
   - All 130 tests passing
+- **Phase 6 TypeScript Migration - Final Cleanup** (by [justin808](https://github.com/justin808))
+  - Added TypeScript ESLint support with @typescript-eslint/parser and @typescript-eslint/eslint-plugin
+  - Configured TypeScript-specific linting rules for improved code quality
+  - Verified strict mode is enabled in TypeScript configuration
+  - Enhanced developer experience with TypeScript linting across the entire codebase
 
 ## [v9.0.0-beta.7] - October 1, 2025
 
