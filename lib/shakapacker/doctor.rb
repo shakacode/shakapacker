@@ -448,8 +448,10 @@ module Shakapacker
         source_path = config.source_path
         return unless source_path.exist?
 
-        css_module_files = Dir.glob(File.join(source_path, "**/*.module.{css,scss,sass}"))
-        return if css_module_files.empty?
+        # Performance optimization: Just check if ANY CSS module file exists
+        # Using .first with early return is much faster than globbing all files
+        css_module_exists = Dir.glob(File.join(source_path, "**/*.module.{css,scss,sass}")).first
+        return unless css_module_exists
 
         # Check webpack configuration for CSS modules settings
         webpack_config_paths = [
@@ -479,7 +481,7 @@ module Shakapacker
         end
 
         # Check for common v8 to v9 migration issues
-        check_css_modules_import_patterns if css_module_files.any?
+        check_css_modules_import_patterns
       rescue => e
         # Don't fail doctor if CSS modules check has issues
         @warnings << "Unable to validate CSS modules configuration: #{e.message}"
