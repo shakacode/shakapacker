@@ -32,6 +32,55 @@ import * as styles from './Foo.module.css';
 - Aligns with modern JavaScript module standards
 - Automatically converts kebab-case to camelCase (`my-button` → `myButton`)
 
+### Important: exportLocalsConvention with namedExport
+
+When `namedExport: true` is enabled (v9 default), css-loader requires `exportLocalsConvention` to be either `'camelCaseOnly'` or `'dashesOnly'`.
+
+**The following will cause a build error:**
+```js
+modules: {
+  namedExport: true,
+  exportLocalsConvention: 'camelCase'  // ❌ ERROR: incompatible with namedExport: true
+}
+```
+
+**Error message:**
+```
+"exportLocalsConvention" with "camelCase" value is incompatible with "namedExport: true" option
+```
+
+**Correct v9 configuration:**
+```js
+modules: {
+  namedExport: true,
+  exportLocalsConvention: 'camelCaseOnly'  // ✅ Correct - only camelCase exported
+}
+```
+
+**exportLocalsConvention options with namedExport:**
+
+When `namedExport: true`, you can use:
+- `'camelCaseOnly'` (v9 default): Exports ONLY the camelCase version (e.g., only `myButton`)
+- `'dashesOnly'`: Exports ONLY the original kebab-case version (e.g., only `my-button`)
+
+**Not compatible with namedExport: true:**
+- `'camelCase'`: Exports both versions (both `my-button` and `myButton`) - only works with `namedExport: false` (v8 behavior)
+
+**Configuration Quick Reference:**
+
+| namedExport | exportLocalsConvention | `.my-button` exports | Use Case | Compatible? |
+|-------------|------------------------|---------------------|----------|-------------|
+| `true` | `'camelCaseOnly'` | `myButton` | JavaScript conventions | ✅ Valid |
+| `true` | `'dashesOnly'` | `'my-button'` | Preserve CSS naming | ✅ Valid |
+| `false` | `'camelCase'` | Both `myButton` AND `'my-button'` | v8 compatibility | ✅ Valid |
+| `false` | `'asIs'` | `'my-button'` | No transformation | ✅ Valid |
+| `true` | `'camelCase'` | - | - | ❌ Build Error |
+
+**When to use each option:**
+- Use `'camelCaseOnly'` if you prefer standard JavaScript naming conventions
+- Use `'dashesOnly'` if you want to preserve your CSS class names exactly as written
+- Use `'camelCase'` (with `namedExport: false`) only if you need both versions available
+
 ## Version 8.x and Earlier Behavior
 
 In Shakapacker v8 and earlier, the default behavior was to use a **default export object**:
@@ -244,7 +293,9 @@ import { bright, container, button } from './Component.module.css';
 
 #### 3. Handle Kebab-Case Class Names
 
-With v9's `exportLocalsConvention: 'camelCase'`, kebab-case class names are automatically converted:
+**Option A: Use camelCase (v9 default)**
+
+With `exportLocalsConvention: 'camelCaseOnly'`, kebab-case class names are automatically converted:
 
 ```css
 /* styles.module.css */
@@ -253,12 +304,34 @@ With v9's `exportLocalsConvention: 'camelCase'`, kebab-case class names are auto
 ```
 
 ```js
-// v9 imports (camelCase conversion)
+// v9 default - camelCase conversion
 import { myButton, primaryColor } from './styles.module.css';
-
-// Use the camelCase versions in your components
 <button className={myButton} />
 ```
+
+**Option B: Keep kebab-case with 'dashesOnly'**
+
+If you prefer to preserve the original kebab-case names, configure your webpack to use `'dashesOnly'`:
+
+```js
+// config/webpack/commonWebpackConfig.js
+modules: {
+  namedExport: true,
+  exportLocalsConvention: 'dashesOnly'
+}
+```
+
+```js
+// With dashesOnly - preserve kebab-case
+import * as styles from './styles.module.css';
+<button className={styles['my-button']} />
+
+// Or with aliasing:
+import { 'my-button': myButton } from './styles.module.css';
+<button className={myButton} />
+```
+
+**Note:** With both `'camelCaseOnly'` and `'dashesOnly'`, only one version of each class name is exported. The original kebab-case name is NOT available with `'camelCaseOnly'`, and the camelCase version is NOT available with `'dashesOnly'`.
 
 #### 4. Using a Codemod for Large Codebases
 
@@ -298,12 +371,12 @@ npx jscodeshift -t css-modules-v9-migration.js src/
 
 ## Version Comparison
 
-| Feature | v8 (and earlier) | v9 | 
-|---------|-----------------|----| 
+| Feature | v8 (and earlier) | v9 |
+|---------|-----------------|----|
 | Default behavior | Default export object | Named exports |
 | Import syntax | `import styles from '...'` | `import { className } from '...'` |
 | Class reference | `styles.className` | `className` |
-| Export convention | `asIs` (no transformation) | `camelCase` |
+| Export convention | `asIs` (no transformation) | `camelCaseOnly` |
 | TypeScript warnings | May show warnings | No warnings |
 | Tree-shaking | Limited | Optimized |
 
@@ -368,13 +441,34 @@ Then search for `css-loader` options in the generated JSON file.
 
 ## Troubleshooting
 
+### Build Error: exportLocalsConvention Incompatible with namedExport
+
+If you see this error during build:
+```
+"exportLocalsConvention" with "camelCase" value is incompatible with "namedExport: true" option
+```
+
+**Cause:** Your webpack configuration has `namedExport: true` with `exportLocalsConvention: 'camelCase'`.
+
+**Solution:** Change `exportLocalsConvention` to `'camelCaseOnly'` or `'dashesOnly'`:
+
+```js
+// config/webpack/commonWebpackConfig.js or similar
+modules: {
+  namedExport: true,
+  exportLocalsConvention: 'camelCaseOnly'  // or 'dashesOnly'
+}
+```
+
+Alternatively, if you need the `'camelCase'` option (both original and camelCase exports), you must revert to v8 behavior by setting `namedExport: false` as shown in the "Reverting to Default Exports" section above.
+
 ### CSS Classes Not Applying
 
 If your CSS classes aren't applying after the upgrade:
 
 1. **Check import syntax**: Ensure you're using the correct import style for your configuration
 2. **Verify class names**: Use `console.log` to see available classes
-3. **Check camelCase conversion**: Kebab-case names are converted to camelCase in v9
+3. **Check camelCase conversion**: Kebab-case names are converted to camelCase in v9 with `'camelCaseOnly'`
 4. **Rebuild webpack**: Clear cache and rebuild: `rm -rf tmp/cache && bin/shakapacker`
 
 ### TypeScript Support

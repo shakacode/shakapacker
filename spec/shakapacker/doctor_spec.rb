@@ -991,4 +991,141 @@ describe Shakapacker::Doctor do
       end
     end
   end
+
+  describe "CSS modules configuration checks" do
+    let(:webpack_config_path) { root_path.join("config/webpack/webpack.config.js") }
+
+    before do
+      File.write(config_path, "test: config")
+      FileUtils.mkdir_p(source_path)
+    end
+
+    context "when no CSS module files exist" do
+      it "skips the check" do
+        doctor.send(:check_css_modules_configuration)
+        expect(doctor.issues).to be_empty
+        expect(doctor.warnings).to be_empty
+      end
+    end
+
+    context "when CSS module files exist" do
+      before do
+        File.write(source_path.join("styles.module.css"), ".button { color: red; }")
+      end
+
+      context "with invalid configuration (namedExport: true + camelCase)" do
+        before do
+          FileUtils.mkdir_p(webpack_config_path.dirname)
+          webpack_config = <<~JS
+            module.exports = {
+              modules: {
+                namedExport: true,
+                exportLocalsConvention: 'camelCase'
+              }
+            };
+          JS
+          File.write(webpack_config_path, webpack_config)
+        end
+
+        it "adds critical issue about invalid configuration" do
+          doctor.send(:check_css_modules_configuration)
+          expect(doctor.issues).to include(match(/CSS Modules: Invalid configuration detected/))
+          expect(doctor.issues).to include(match(/exportLocalsConvention: 'camelCase' with namedExport: true/))
+          expect(doctor.issues).to include(match(/Change to 'camelCaseOnly' or 'dashesOnly'/))
+        end
+      end
+
+      context "with valid configuration (namedExport: true + camelCaseOnly)" do
+        before do
+          FileUtils.mkdir_p(webpack_config_path.dirname)
+          webpack_config = <<~JS
+            module.exports = {
+              modules: {
+                namedExport: true,
+                exportLocalsConvention: 'camelCaseOnly'
+              }
+            };
+          JS
+          File.write(webpack_config_path, webpack_config)
+        end
+
+        it "does not add issues" do
+          doctor.send(:check_css_modules_configuration)
+          expect(doctor.issues).to be_empty
+        end
+      end
+
+      context "with valid configuration (namedExport: true + dashesOnly)" do
+        before do
+          FileUtils.mkdir_p(webpack_config_path.dirname)
+          webpack_config = <<~JS
+            module.exports = {
+              modules: {
+                namedExport: true,
+                exportLocalsConvention: 'dashesOnly'
+              }
+            };
+          JS
+          File.write(webpack_config_path, webpack_config)
+        end
+
+        it "does not add issues" do
+          doctor.send(:check_css_modules_configuration)
+          expect(doctor.issues).to be_empty
+        end
+      end
+
+      context "without explicit CSS modules configuration" do
+        before do
+          FileUtils.mkdir_p(webpack_config_path.dirname)
+          webpack_config = <<~JS
+            module.exports = {
+              entry: './app.js'
+            };
+          JS
+          File.write(webpack_config_path, webpack_config)
+        end
+
+        it "adds info about default v9 configuration" do
+          doctor.send(:check_css_modules_configuration)
+          expect(doctor.info).to include(match(/CSS module files found but no explicit CSS modules configuration/))
+          expect(doctor.info).to include(match(/v9 defaults: namedExport: true, exportLocalsConvention: 'camelCaseOnly'/))
+        end
+      end
+
+      context "with v8-style import patterns" do
+        before do
+          js_file = source_path.join("component.jsx")
+          js_content = <<~JS
+            import styles from './styles.module.css';
+            export const Button = () => <button className={styles.button}>Click</button>;
+          JS
+          File.write(js_file, js_content)
+        end
+
+        it "warns about v8-style imports" do
+          doctor.send(:check_css_modules_configuration)
+          expect(doctor.warnings).to include(match(/Potential v8-style CSS module imports detected/))
+          expect(doctor.warnings).to include(match(/v9 uses named exports/))
+          expect(doctor.warnings).to include(match(/See docs\/v9_upgrade.md for migration guide/))
+        end
+      end
+
+      context "with v9-style import patterns" do
+        before do
+          js_file = source_path.join("component.jsx")
+          js_content = <<~JS
+            import { button } from './styles.module.css';
+            export const Button = () => <button className={button}>Click</button>;
+          JS
+          File.write(js_file, js_content)
+        end
+
+        it "does not warn about imports" do
+          doctor.send(:check_css_modules_configuration)
+          expect(doctor.warnings).not_to include(match(/v8-style CSS module imports/))
+        end
+      end
+    end
+  end
 end

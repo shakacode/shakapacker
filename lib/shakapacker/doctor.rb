@@ -43,6 +43,7 @@ module Shakapacker
         # Dependency checks
         check_javascript_transpiler_dependencies if config_exists?
         check_css_dependencies
+        check_css_modules_configuration
         check_bundler_dependencies if config_exists?
         check_file_type_dependencies if config_exists?
         check_sri_dependencies if config_exists?
@@ -438,6 +439,77 @@ module Shakapacker
         check_dependency("css-loader", @issues, "CSS")
         check_dependency("style-loader", @issues, "CSS (style-loader)")
         check_optional_dependency("mini-css-extract-plugin", @warnings, "CSS extraction")
+      end
+
+      def check_css_modules_configuration
+        # Check for CSS module files in the project
+        return unless config_exists?
+
+        source_path = config.source_path
+        return unless source_path.exist?
+
+        # Performance optimization: Just check if ANY CSS module file exists
+        # Using .first with early return is much faster than globbing all files
+        css_module_exists = Dir.glob(File.join(source_path, "**/*.module.{css,scss,sass}")).first
+        return unless css_module_exists
+
+        # Check webpack configuration for CSS modules settings
+        webpack_config_paths = [
+          root_path.join("config/webpack/webpack.config.js"),
+          root_path.join("config/webpack/webpack.config.ts"),
+          root_path.join("config/webpack/commonWebpackConfig.js"),
+          root_path.join("config/webpack/commonWebpackConfig.ts")
+        ]
+
+        webpack_config_paths.each do |config_path|
+          next unless config_path.exist?
+
+          config_content = File.read(config_path)
+
+          # Check for the invalid configuration: namedExport: true with exportLocalsConvention: 'camelCase'
+          if config_content.match(/namedExport\s*:\s*true/) && config_content.match(/exportLocalsConvention\s*:\s*['"]camelCase['"]/)
+            @issues << "CSS Modules: Invalid configuration detected in #{config_path.relative_path_from(root_path)}"
+            @issues << "  Using exportLocalsConvention: 'camelCase' with namedExport: true will cause build errors"
+            @issues << "  Change to 'camelCaseOnly' or 'dashesOnly'. See docs/v9_upgrade.md for details"
+          end
+
+          # Warn if CSS modules are used but no configuration is found
+          if !config_content.match(/namedExport/) && !config_content.match(/exportLocalsConvention/)
+            @info << "CSS module files found but no explicit CSS modules configuration detected"
+            @info << "  v9 defaults: namedExport: true, exportLocalsConvention: 'camelCaseOnly'"
+          end
+        end
+
+        # Check for common v8 to v9 migration issues
+        check_css_modules_import_patterns
+      rescue => e
+        # Don't fail doctor if CSS modules check has issues
+        @warnings << "Unable to validate CSS modules configuration: #{e.message}"
+      end
+
+      def check_css_modules_import_patterns
+        # Look for JavaScript/TypeScript files that might have v8-style imports
+        source_path = config.source_path
+
+        # Use lazy evaluation with Enumerator to avoid loading all file paths into memory
+        # Stop after checking 50 files or finding a match
+        v8_pattern = /import\s+\w+\s+from\s+['"][^'"]*\.module\.(css|scss|sass)['"]/
+
+        Dir.glob(File.join(source_path, "**/*.{js,jsx,ts,tsx}")).lazy.take(50).each do |file|
+          # Read file and check for v8 pattern
+          content = File.read(file)
+
+          # Check for v8 default import pattern with .module.css
+          if v8_pattern.match?(content)
+            @warnings << "Potential v8-style CSS module imports detected (using default import)"
+            @warnings << "  v9 uses named exports. Update to: import { className } from './styles.module.css'"
+            @warnings << "  Or use: import * as styles from './styles.module.css' (TypeScript)"
+            @warnings << "  See docs/v9_upgrade.md for migration guide"
+            break  # Stop after finding first occurrence
+          end
+        end
+      rescue => e
+        # Don't fail doctor if import pattern check has issues
       end
 
       def check_bundler_dependencies

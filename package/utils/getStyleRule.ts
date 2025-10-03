@@ -33,7 +33,12 @@ const getStyleRule = (test: RegExp, preprocessors: any[] = []): StyleRule | null
           sourceMap: true,
           importLoaders: 2,
           modules: {
-            auto: true
+            auto: true,
+            // v9 defaults: Use named exports with camelCase conversion
+            // Note: css-loader requires 'camelCaseOnly' or 'dashesOnly' when namedExport is true
+            // Using 'camelCase' with namedExport: true causes a build error
+            namedExport: true,
+            exportLocalsConvention: 'camelCaseOnly'
           }
         }
       },

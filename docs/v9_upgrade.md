@@ -19,7 +19,18 @@ See the [TypeScript Documentation](./typescript.md) for usage examples.
 
 ### 1. CSS Modules Configuration Changed to Named Exports
 
-**What changed:** CSS Modules are now configured with `namedExport: true` and `exportLocalsConvention: 'camelCase'` by default, aligning with Next.js and modern tooling standards.
+**What changed:** CSS Modules are now configured with `namedExport: true` and `exportLocalsConvention: 'camelCaseOnly'` by default, aligning with Next.js and modern tooling standards.
+
+> **Important:** When `namedExport: true` is enabled, css-loader requires `exportLocalsConvention` to be either `'camelCaseOnly'` or `'dashesOnly'`. Using `'camelCase'` will cause a build error: `"exportLocalsConvention" with "camelCase" value is incompatible with "namedExport: true" option`.
+
+**Quick Reference: Configuration Options**
+
+| Configuration | namedExport | exportLocalsConvention | CSS: `.my-button` | Export Available | Works With |
+|---------------|-------------|------------------------|-------------------|------------------|------------|
+| **v9 Default** | `true` | `'camelCaseOnly'` | `.my-button` | `myButton` only | ✅ Named exports |
+| **Alternative** | `true` | `'dashesOnly'` | `.my-button` | `'my-button'` only | ✅ Named exports |
+| **v8 Style** | `false` | `'camelCase'` | `.my-button` | Both `myButton` AND `'my-button'` | ✅ Default export |
+| **❌ Invalid** | `true` | `'camelCase'` | - | - | ❌ Build Error |
 
 **JavaScript Projects:**
 ```js
@@ -198,7 +209,7 @@ declare module '*.module.css' {
 
 ### Step 3: Handle Kebab-Case Class Names
 
-v9 automatically converts kebab-case to camelCase:
+v9 automatically converts kebab-case to camelCase with `exportLocalsConvention: 'camelCaseOnly'`:
 
 ```css
 /* styles.module.css */
@@ -207,9 +218,33 @@ v9 automatically converts kebab-case to camelCase:
 ```
 
 ```js
-// v9 imports
+// v9 default - camelCase conversion
 import { myButton, primaryColor } from './styles.module.css';
 ```
+
+**Alternative: Keep kebab-case names with 'dashesOnly'**
+
+If you prefer to keep kebab-case names in JavaScript, you can override the configuration to use `'dashesOnly'`:
+
+```js
+// config/webpack/commonWebpackConfig.js
+modules: {
+  namedExport: true,
+  exportLocalsConvention: 'dashesOnly'  // Keep original kebab-case names
+}
+```
+
+Then use the original kebab-case names in your imports:
+
+```js
+// With dashesOnly configuration
+import { 'my-button': myButton, 'primary-color': primaryColor } from './styles.module.css';
+// or access as properties
+import * as styles from './styles.module.css';
+const buttonClass = styles['my-button'];
+```
+
+**Note:** With `'camelCaseOnly'` (default) or `'dashesOnly'`, only one version is exported. If you need both the original and camelCase versions, you would need to use `'camelCase'` instead, but this requires `namedExport: false` (v8 behavior). See the [CSS Modules Export Mode documentation](./css-modules-export-mode.md) for details on reverting to v8 behavior.
 
 ### Step 4: Update Configuration Files
 
@@ -252,6 +287,25 @@ Update your global type definitions as shown in Step 2.
 ### Build Warnings
 
 If you see warnings about CSS module exports, ensure you've updated all imports to use named exports or have properly configured the override.
+
+### Build Error: exportLocalsConvention Incompatible with namedExport
+
+If you see this error:
+```
+"exportLocalsConvention" with "camelCase" value is incompatible with "namedExport: true" option
+```
+
+This means your webpack configuration has `namedExport: true` with `exportLocalsConvention: 'camelCase'`. The fix is to change to `'camelCaseOnly'` or `'dashesOnly'`:
+
+```js
+// config/webpack/commonWebpackConfig.js or wherever you configure css-loader
+modules: {
+  namedExport: true,
+  exportLocalsConvention: 'camelCaseOnly'  // or 'dashesOnly'
+}
+```
+
+If you want to use `'camelCase'` (which exports both original and camelCase versions), you must set `namedExport: false` and revert to v8 behavior. See the [CSS Modules Export Mode documentation](./css-modules-export-mode.md) for details.
 
 ### Unexpected Peer Dependency Warnings After Upgrade
 
