@@ -57,11 +57,19 @@ modules: {
 }
 ```
 
-**Difference between 'camelCase' and 'camelCaseOnly':**
-- `'camelCase'`: Exports both original class name AND camelCase version (e.g., both `my-button` and `myButton`)
-- `'camelCaseOnly'`: Exports ONLY the camelCase version (e.g., only `myButton`)
+**exportLocalsConvention options with namedExport:**
 
-The `'camelCase'` option is only compatible with `namedExport: false` (v8 default export behavior).
+When `namedExport: true`, you can use:
+- `'camelCaseOnly'` (v9 default): Exports ONLY the camelCase version (e.g., only `myButton`)
+- `'dashesOnly'`: Exports ONLY the original kebab-case version (e.g., only `my-button`)
+
+**Not compatible with namedExport: true:**
+- `'camelCase'`: Exports both versions (both `my-button` and `myButton`) - only works with `namedExport: false` (v8 behavior)
+
+**When to use each option:**
+- Use `'camelCaseOnly'` if you prefer standard JavaScript naming conventions
+- Use `'dashesOnly'` if you want to preserve your CSS class names exactly as written
+- Use `'camelCase'` (with `namedExport: false`) only if you need both versions available
 
 ## Version 8.x and Earlier Behavior
 
@@ -275,7 +283,9 @@ import { bright, container, button } from './Component.module.css';
 
 #### 3. Handle Kebab-Case Class Names
 
-With v9's `exportLocalsConvention: 'camelCaseOnly'`, kebab-case class names are automatically converted to camelCase:
+**Option A: Use camelCase (v9 default)**
+
+With `exportLocalsConvention: 'camelCaseOnly'`, kebab-case class names are automatically converted:
 
 ```css
 /* styles.module.css */
@@ -284,14 +294,34 @@ With v9's `exportLocalsConvention: 'camelCaseOnly'`, kebab-case class names are 
 ```
 
 ```js
-// v9 imports (camelCase conversion)
+// v9 default - camelCase conversion
 import { myButton, primaryColor } from './styles.module.css';
-
-// Use the camelCase versions in your components
 <button className={myButton} />
 ```
 
-**Note:** With `'camelCaseOnly'`, only the camelCase version is exported. The original kebab-case name (e.g., `my-button`) is NOT available as an export.
+**Option B: Keep kebab-case with 'dashesOnly'**
+
+If you prefer to preserve the original kebab-case names, configure your webpack to use `'dashesOnly'`:
+
+```js
+// config/webpack/commonWebpackConfig.js
+modules: {
+  namedExport: true,
+  exportLocalsConvention: 'dashesOnly'
+}
+```
+
+```js
+// With dashesOnly - preserve kebab-case
+import * as styles from './styles.module.css';
+<button className={styles['my-button']} />
+
+// Or with aliasing:
+import { 'my-button': myButton } from './styles.module.css';
+<button className={myButton} />
+```
+
+**Note:** With both `'camelCaseOnly'` and `'dashesOnly'`, only one version of each class name is exported. The original kebab-case name is NOT available with `'camelCaseOnly'`, and the camelCase version is NOT available with `'dashesOnly'`.
 
 #### 4. Using a Codemod for Large Codebases
 

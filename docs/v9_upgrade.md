@@ -209,11 +209,33 @@ v9 automatically converts kebab-case to camelCase with `exportLocalsConvention: 
 ```
 
 ```js
-// v9 imports - note the camelCase conversion
+// v9 default - camelCase conversion
 import { myButton, primaryColor } from './styles.module.css';
 ```
 
-**Important:** With `'camelCaseOnly'`, only the camelCase version is exported. If you need both the original and camelCase versions, you would need to use `'camelCase'` instead, but this requires `namedExport: false` (v8 behavior). See the [CSS Modules Export Mode documentation](./css-modules-export-mode.md) for details on reverting to v8 behavior.
+**Alternative: Keep kebab-case names with 'dashesOnly'**
+
+If you prefer to keep kebab-case names in JavaScript, you can override the configuration to use `'dashesOnly'`:
+
+```js
+// config/webpack/commonWebpackConfig.js
+modules: {
+  namedExport: true,
+  exportLocalsConvention: 'dashesOnly'  // Keep original kebab-case names
+}
+```
+
+Then use the original kebab-case names in your imports:
+
+```js
+// With dashesOnly configuration
+import { 'my-button': myButton, 'primary-color': primaryColor } from './styles.module.css';
+// or access as properties
+import * as styles from './styles.module.css';
+const buttonClass = styles['my-button'];
+```
+
+**Note:** With `'camelCaseOnly'` (default) or `'dashesOnly'`, only one version is exported. If you need both the original and camelCase versions, you would need to use `'camelCase'` instead, but this requires `namedExport: false` (v8 behavior). See the [CSS Modules Export Mode documentation](./css-modules-export-mode.md) for details on reverting to v8 behavior.
 
 ### Step 4: Update Configuration Files
 
