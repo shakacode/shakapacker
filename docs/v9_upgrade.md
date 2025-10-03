@@ -23,6 +23,15 @@ See the [TypeScript Documentation](./typescript.md) for usage examples.
 
 > **Important:** When `namedExport: true` is enabled, css-loader requires `exportLocalsConvention` to be either `'camelCaseOnly'` or `'dashesOnly'`. Using `'camelCase'` will cause a build error: `"exportLocalsConvention" with "camelCase" value is incompatible with "namedExport: true" option`.
 
+**Quick Reference: Configuration Options**
+
+| Configuration | namedExport | exportLocalsConvention | CSS: `.my-button` | Export Available | Works With |
+|---------------|-------------|------------------------|-------------------|------------------|------------|
+| **v9 Default** | `true` | `'camelCaseOnly'` | `.my-button` | `myButton` only | ✅ Named exports |
+| **Alternative** | `true` | `'dashesOnly'` | `.my-button` | `'my-button'` only | ✅ Named exports |
+| **v8 Style** | `false` | `'camelCase'` | `.my-button` | Both `myButton` AND `'my-button'` | ✅ Default export |
+| **❌ Invalid** | `true` | `'camelCase'` | - | - | ❌ Build Error |
+
 **JavaScript Projects:**
 ```js
 // Before (v8)

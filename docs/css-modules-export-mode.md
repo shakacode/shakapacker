@@ -66,6 +66,16 @@ When `namedExport: true`, you can use:
 **Not compatible with namedExport: true:**
 - `'camelCase'`: Exports both versions (both `my-button` and `myButton`) - only works with `namedExport: false` (v8 behavior)
 
+**Configuration Quick Reference:**
+
+| namedExport | exportLocalsConvention | `.my-button` exports | Use Case | Compatible? |
+|-------------|------------------------|---------------------|----------|-------------|
+| `true` | `'camelCaseOnly'` | `myButton` | JavaScript conventions | ✅ Valid |
+| `true` | `'dashesOnly'` | `'my-button'` | Preserve CSS naming | ✅ Valid |
+| `false` | `'camelCase'` | Both `myButton` AND `'my-button'` | v8 compatibility | ✅ Valid |
+| `false` | `'asIs'` | `'my-button'` | No transformation | ✅ Valid |
+| `true` | `'camelCase'` | - | - | ❌ Build Error |
+
 **When to use each option:**
 - Use `'camelCaseOnly'` if you prefer standard JavaScript naming conventions
 - Use `'dashesOnly'` if you want to preserve your CSS class names exactly as written

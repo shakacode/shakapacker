@@ -490,22 +490,22 @@ module Shakapacker
       def check_css_modules_import_patterns
         # Look for JavaScript/TypeScript files that might have v8-style imports
         source_path = config.source_path
-        js_files = Dir.glob(File.join(source_path, "**/*.{js,jsx,ts,tsx}"))
 
-        v8_pattern_found = false
-        js_files.first(50).each do |file|  # Check first 50 files to avoid performance issues
+        # Use lazy evaluation with Enumerator to avoid loading all file paths into memory
+        # Stop after checking 50 files or finding a match
+        v8_pattern = /import\s+\w+\s+from\s+['"][^'"]*\.module\.(css|scss|sass)['"]/
+
+        Dir.glob(File.join(source_path, "**/*.{js,jsx,ts,tsx}")).lazy.take(50).each do |file|
+          # Read file and check for v8 pattern
           content = File.read(file)
 
           # Check for v8 default import pattern with .module.css
-          if /import\s+\w+\s+from\s+['"][^'"]*\.module\.(css|scss|sass)['"]/.match?(content)
-            unless v8_pattern_found
-              @warnings << "Potential v8-style CSS module imports detected (using default import)"
-              @warnings << "  v9 uses named exports. Update to: import { className } from './styles.module.css'"
-              @warnings << "  Or use: import * as styles from './styles.module.css' (TypeScript)"
-              @warnings << "  See docs/v9_upgrade.md for migration guide"
-              v8_pattern_found = true
-            end
-            break
+          if v8_pattern.match?(content)
+            @warnings << "Potential v8-style CSS module imports detected (using default import)"
+            @warnings << "  v9 uses named exports. Update to: import { className } from './styles.module.css'"
+            @warnings << "  Or use: import * as styles from './styles.module.css' (TypeScript)"
+            @warnings << "  See docs/v9_upgrade.md for migration guide"
+            break  # Stop after finding first occurrence
           end
         end
       rescue => e
