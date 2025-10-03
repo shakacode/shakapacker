@@ -35,6 +35,18 @@ $BUNDLE_CMD install
 echo "📦 Installing JavaScript dependencies..."
 yarn install
 
+# Set up Husky git hooks
+echo "🪝 Setting up Husky git hooks..."
+npx husky
+if [ ! -f .husky/pre-commit ]; then
+    echo "Creating pre-commit hook..."
+    cat > .husky/pre-commit << 'EOF'
+#!/usr/bin/env sh
+npx lint-staged
+EOF
+    chmod +x .husky/pre-commit
+fi
+
 # Copy environment files if they exist in root
 if [ -n "${CONDUCTOR_ROOT_PATH:-}" ]; then
     if [ -f "$CONDUCTOR_ROOT_PATH/.env" ]; then
