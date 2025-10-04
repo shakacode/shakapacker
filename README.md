@@ -1,7 +1,7 @@
-# Shakapacker (v8)
+# Shakapacker (v9)
 ---
 
-_🚀 Shakapacker 9.0.0.beta.2 supports [Rspack](https://rspack.rs/)! 10x faster than webpack!_
+_🚀 Shakapacker 9.0.0-beta.7 supports [Rspack](https://rspack.rs/)! 10x faster than webpack!_
 
 ---
 
