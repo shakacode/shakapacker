@@ -9,21 +9,6 @@
 ## [Unreleased]
 Changes since the last non-beta release.
 
-### Added
-- **Phase 5 TypeScript Migration - Framework-Specific Modules** by [justin808](https://github.com/justin808)
-  - Converted framework-specific modules to TypeScript
-  - Migrated package/rspack/index.js to TypeScript
-  - Migrated package/swc/index.js to TypeScript
-  - Migrated package/esbuild/index.js to TypeScript
-  - Migrated package/babel/preset.js to TypeScript
-  - Added @types/babel__core for enhanced type safety
-  - All 130 tests passing
-- **Phase 6 TypeScript Migration - Final Cleanup** (by [justin808](https://github.com/justin808))
-  - Added TypeScript ESLint support with @typescript-eslint/parser and @typescript-eslint/eslint-plugin
-  - Configured TypeScript-specific linting rules for improved code quality
-  - Verified strict mode is enabled in TypeScript configuration
-  - Enhanced developer experience with TypeScript linting across the entire codebase
-
 ## [v9.0.0-beta.8] - October 3, 2025
 
 See the [v9 Upgrade Guide](https://github.com/shakacode/shakapacker/blob/main/docs/v9_upgrade.md) for detailed migration instructions.
@@ -77,9 +62,6 @@ See the [v9 Upgrade Guide](https://github.com/shakacode/shakapacker/blob/main/do
   - Enforced strict port validation (reject strings with non-digits)
   - Added SHAKAPACKER_NPM_PACKAGE path validation (only .tgz/.tar.gz allowed)
   - Path traversal security checks now run regardless of validation mode
-
-### Changed
-- Configuration option renamed from `bundler` to `assets_bundler` (old option deprecated but still supported)
 
 ### Fixed
 - Fixed private_output_path configuration edge cases ([PR 604](https://github.com/shakacode/shakapacker/pull/604))
