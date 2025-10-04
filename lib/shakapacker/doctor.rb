@@ -433,6 +433,28 @@ module Shakapacker
         if transpiler == "esbuild" && package_installed?("babel-loader")
           @warnings << "Both esbuild and Babel dependencies are installed. Consider removing Babel dependencies to reduce node_modules size"
         end
+
+        # Check for SWC configuration conflicts
+        if transpiler == "swc"
+          check_swc_config_conflicts
+        end
+      end
+
+      def check_swc_config_conflicts
+        swcrc_path = root_path.join(".swcrc")
+        return unless swcrc_path.exist?
+
+        begin
+          swcrc = JSON.parse(File.read(swcrc_path))
+          # Check for conflicting jsc.target and env settings
+          if swcrc.dig("jsc", "target") && swcrc["env"]
+            @issues << "SWC configuration conflict: .swcrc contains both 'jsc.target' and 'env' settings, which are mutually exclusive. Remove 'jsc.target' from .swcrc"
+          elsif swcrc.dig("jsc", "target")
+            @warnings << "SWC configuration: .swcrc contains 'jsc.target' which may conflict with the loader's 'env' setting. Consider removing 'jsc.target' from .swcrc to avoid build errors"
+          end
+        rescue JSON::ParserError
+          @warnings << "SWC configuration: .swcrc exists but contains invalid JSON"
+        end
       end
 
       def check_css_dependencies

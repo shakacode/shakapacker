@@ -30,6 +30,15 @@ module Shakapacker
       "swc-loader" => "^0.2.6"
     }.freeze
 
+    ESLINT_CONFIG_FILES = %w[
+      .eslintrc
+      .eslintrc.js
+      .eslintrc.cjs
+      .eslintrc.yaml
+      .eslintrc.yml
+      .eslintrc.json
+    ].freeze
+
     DEFAULT_SWCRC_CONFIG = {
       "jsc" => {
         "parser" => {
@@ -41,8 +50,7 @@ module Shakapacker
           "react" => {
             "runtime" => "automatic"
           }
-        },
-        "target" => "es2015"
+        }
       },
       "module" => {
         "type" => "es6"
@@ -67,6 +75,10 @@ module Shakapacker
       logger.info "🎉 Migration to SWC complete!"
       logger.info "   Note: SWC is approximately 20x faster than Babel for transpilation."
       logger.info "   Please test your application thoroughly after migration."
+      logger.info "\n📝 Configuration Info:"
+      logger.info "   - .swcrc provides base configuration for all environments"
+      logger.info "   - The SWC loader adds automatic environment targeting (via 'env' setting)"
+      logger.info "   - You can customize .swcrc, but avoid setting 'jsc.target' as it conflicts with 'env'"
 
       # Show cleanup recommendations if babel packages found
       if results[:babel_packages_found].any?
@@ -97,6 +109,16 @@ module Shakapacker
       unless package_json_path.exist?
         logger.error "❌ No package.json found"
         return { removed_packages: [], config_files_deleted: [] }
+      end
+
+      # Check if ESLint uses Babel parser
+      if eslint_uses_babel?
+        logger.info "\n⚠️  WARNING: ESLint configuration detected that may use Babel"
+        logger.info "   If you use @babel/eslint-parser or babel-eslint, you may need to:"
+        logger.info "   1. Keep @babel/core and related Babel packages for ESLint"
+        logger.info "   2. Or switch to @typescript-eslint/parser for TypeScript files"
+        logger.info "   3. Or use espree (ESLint's default parser) for JavaScript files"
+        logger.info "\n   Proceeding with Babel package removal. Check your ESLint config after."
       end
 
       removed_packages = remove_babel_from_package_json(package_json_path)
@@ -131,6 +153,42 @@ module Shakapacker
     end
 
     private
+
+      def eslint_uses_babel?
+        # Check for ESLint config files
+        # Note: This is a heuristic check that may have false positives (e.g., in comments),
+        # but false positives only result in an extra warning, which is safer than silently
+        # breaking ESLint configurations.
+        ESLINT_CONFIG_FILES.each do |config_file|
+          config_path = root_path.join(config_file)
+          next unless config_path.exist?
+
+          content = File.read(config_path)
+          # Check for Babel parser references
+          return true if content.match?(/@babel\/eslint-parser|babel-eslint/)
+        end
+
+        # Check package.json for eslintConfig
+        package_json_path = root_path.join("package.json")
+        if package_json_path.exist?
+          begin
+            package_json = JSON.parse(File.read(package_json_path))
+            if package_json["eslintConfig"]
+              return true if package_json["eslintConfig"].to_json.match?(/@babel\/eslint-parser|babel-eslint/)
+            end
+
+            # Check if Babel ESLint packages are installed
+            dependencies = package_json["dependencies"] || {}
+            dev_dependencies = package_json["devDependencies"] || {}
+            all_deps = dependencies.merge(dev_dependencies)
+            return true if all_deps.key?("@babel/eslint-parser") || all_deps.key?("babel-eslint")
+          rescue JSON::ParserError => e
+            logger.debug "Could not parse package.json for ESLint detection: #{e.message}"
+          end
+        end
+
+        false
+      end
 
       def update_shakapacker_config
         config_path = root_path.join("config/shakapacker.yml")

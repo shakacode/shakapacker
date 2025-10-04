@@ -853,6 +853,56 @@ describe Shakapacker::Doctor do
           expect(doctor.warnings).to include(match(/Both SWC and Babel dependencies are installed/))
         end
       end
+
+      context "with SWC config containing jsc.target" do
+        before do
+          package_json = {
+            "devDependencies" => {
+              "@swc/core" => "^1.3.0",
+              "swc-loader" => "^0.2.0"
+            }
+          }
+          File.write(package_json_path, JSON.generate(package_json))
+          File.write(root_path.join(".swcrc"), JSON.generate({
+            "jsc" => {
+              "target" => "es2015",
+              "parser" => {
+                "syntax" => "ecmascript"
+              }
+            }
+          }))
+        end
+
+        it "warns about potential config conflict" do
+          doctor.send(:check_javascript_transpiler_dependencies)
+          expect(doctor.warnings).to include(match(/SWC configuration.*jsc\.target.*may conflict/))
+        end
+      end
+
+      context "with SWC config containing both jsc.target and env" do
+        before do
+          package_json = {
+            "devDependencies" => {
+              "@swc/core" => "^1.3.0",
+              "swc-loader" => "^0.2.0"
+            }
+          }
+          File.write(package_json_path, JSON.generate(package_json))
+          File.write(root_path.join(".swcrc"), JSON.generate({
+            "jsc" => {
+              "target" => "es2015"
+            },
+            "env" => {
+              "targets" => "defaults"
+            }
+          }))
+        end
+
+        it "reports a configuration error" do
+          doctor.send(:check_javascript_transpiler_dependencies)
+          expect(doctor.issues).to include(match(/SWC configuration conflict.*both 'jsc\.target' and 'env'/))
+        end
+      end
     end
   end
 
