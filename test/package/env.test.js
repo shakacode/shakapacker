@@ -31,6 +31,18 @@ describe("Env", () => {
     })
   })
 
+  test("with undefined NODE_ENV and RAILS_ENV set to production", () => {
+    process.env.RAILS_ENV = "production"
+    delete process.env.NODE_ENV
+    expect(require("../../package/env")).toStrictEqual({
+      railsEnv: "production",
+      nodeEnv: "production",
+      isProduction: true,
+      isDevelopment: false,
+      runningWebpackDevServer: false
+    })
+  })
+
   test("with undefined NODE_ENV and RAILS_ENV", () => {
     delete process.env.NODE_ENV
     delete process.env.RAILS_ENV
