@@ -19,7 +19,7 @@ describe("Custom environment", () => {
   describe("generateWebpackConfig", () => {
     beforeEach(() => jest.resetModules())
 
-    test("should use staging config and default production environment", () => {
+    test("should use staging config and default development environment", () => {
       process.env.RAILS_ENV = "staging"
       delete process.env.NODE_ENV
 
@@ -31,9 +31,10 @@ describe("Custom environment", () => {
         resolve("public", "packs-staging")
       )
       expect(webpackConfig.output.publicPath).toBe("/packs-staging/")
+      // With the NODE_ENV fix, staging now defaults to development environment
+      // instead of production, providing better DX for staging environments
       expect(webpackConfig).toMatchObject({
-        devtool: "source-map",
-        stats: "normal"
+        devtool: "cheap-module-source-map"
       })
     })
   })
