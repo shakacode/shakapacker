@@ -6,7 +6,7 @@ require "active_support/tagged_logging"
 module Shakapacker
   extend self
 
-  DEFAULT_ENV = "production".freeze
+  DEFAULT_ENV = "development".freeze
 
   def instance=(instance)
     @instance = instance

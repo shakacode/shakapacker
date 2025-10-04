@@ -7,6 +7,10 @@ const { chdirTestApp, resetEnv } = require("../../helpers")
 const rootPath = process.cwd()
 chdirTestApp()
 
+// Set NODE_ENV before requiring modules to ensure contenthash is enabled
+// Base config tests expect production-like behavior with contenthash
+process.env.NODE_ENV = "production"
+
 const baseConfig = require("../../../package/environments/base")
 const config = require("../../../package/config")
 
