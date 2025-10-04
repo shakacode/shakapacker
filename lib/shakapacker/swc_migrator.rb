@@ -171,7 +171,7 @@ module Shakapacker
           begin
             package_json = JSON.parse(File.read(package_json_path))
             if package_json["eslintConfig"]
-              return true if package_json["eslintConfig"].to_s.match?(/@babel\/eslint-parser|babel-eslint/)
+              return true if package_json["eslintConfig"].to_json.match?(/@babel\/eslint-parser|babel-eslint/)
             end
 
             # Check if Babel ESLint packages are installed

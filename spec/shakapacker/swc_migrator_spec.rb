@@ -193,7 +193,7 @@ describe Shakapacker::SwcMigrator do
   end
 
   describe "#clean_babel_packages" do
-    context "with ESLint using Babel parser" do
+    context "with ESLint using Babel parser in .eslintrc" do
       before do
         File.write(root_path.join("package.json"), JSON.pretty_generate({
           "name": "test-app",
@@ -207,6 +207,29 @@ describe Shakapacker::SwcMigrator do
       end
 
       it "warns about ESLint using Babel" do
+        migrator.clean_babel_packages(run_installer: false)
+
+        expect(logger).to have_received(:info).with(/WARNING: ESLint configuration detected/)
+        expect(logger).to have_received(:info).with(/switch to @typescript-eslint\/parser/)
+      end
+    end
+
+    context "with ESLint using Babel parser in package.json" do
+      before do
+        File.write(root_path.join("package.json"), JSON.pretty_generate({
+          "name": "test-app",
+          "devDependencies": {
+            "@babel/core": "^7.20.0",
+            "babel-loader": "^9.1.0"
+          },
+          "eslintConfig": {
+            "parser": "@babel/eslint-parser",
+            "extends": ["eslint:recommended"]
+          }
+        }))
+      end
+
+      it "warns about ESLint using Babel in package.json" do
         migrator.clean_babel_packages(run_installer: false)
 
         expect(logger).to have_received(:info).with(/WARNING: ESLint configuration detected/)
