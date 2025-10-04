@@ -24,7 +24,7 @@ Changes since the last non-beta release.
   - Verified strict mode is enabled in TypeScript configuration
   - Enhanced developer experience with TypeScript linting across the entire codebase
 
-## [v9.0.0-beta.7] - October 1, 2025
+## [v9.0.0-beta.8] - October 3, 2025
 
 See the [v9 Upgrade Guide](https://github.com/shakacode/shakapacker/blob/main/docs/v9_upgrade.md) for detailed migration instructions.
 
@@ -88,9 +88,24 @@ See the [v9 Upgrade Guide](https://github.com/shakacode/shakapacker/blob/main/do
 - Fixed private_output_path configuration edge cases ([PR 604](https://github.com/shakacode/shakapacker/pull/604))
 - Updated webpack-dev-server to secure versions (^4.15.2 || ^5.2.2) ([PR 585](https://github.com/shakacode/shakapacker/pull/585))
 
+## [v9.0.0-beta.7] - October 1, 2025
+
+**Note:** See [v9.0.0-beta.8](#v900-beta8---october-3-2025) for the latest beta with additional improvements.
+
+### Added
+- TypeScript type definitions for improved IDE support
+- Optional peer dependencies to prevent installation warnings
+- Migration tooling improvements
+
+### Security
+- Path validation utilities
+
+### Performance
+- Validation caching improvements
+
 ## [v9.0.0-beta.4] - September 15, 2025
 
-**Note:** This beta release introduced breaking changes and major features. See [v9.0.0-beta.7](#v900-beta7---october-1-2025) for the complete, consolidated changelog.
+**Note:** This beta release introduced breaking changes and major features. See [v9.0.0-beta.8](#v900-beta8---october-3-2025) for the complete, consolidated changelog.
 
 ### Added
 - Rspack support as an alternative assets bundler to webpack
@@ -518,7 +533,9 @@ Note: [Rubygem is 6.3.0.pre.rc.1](https://rubygems.org/gems/shakapacker/versions
 ## v5.4.3 and prior changes from rails/webpacker
 See [CHANGELOG.md in rails/webpacker (up to v5.4.3)](https://github.com/rails/webpacker/blob/master/CHANGELOG.md)
 
-[Unreleased]: https://github.com/shakacode/shakapacker/compare/v9.0.0-beta.4...main
+[Unreleased]: https://github.com/shakacode/shakapacker/compare/v9.0.0-beta.8...main
+[v9.0.0-beta.8]: https://github.com/shakacode/shakapacker/compare/v9.0.0-beta.7...v9.0.0-beta.8
+[v9.0.0-beta.7]: https://github.com/shakacode/shakapacker/compare/v9.0.0-beta.4...v9.0.0-beta.7
 [v9.0.0-beta.4]: https://github.com/shakacode/shakapacker/compare/v8.4.0...v9.0.0-beta.4
 [v8.4.0]: https://github.com/shakacode/shakapacker/compare/v8.3.0...v8.4.0
 [v8.3.0]: https://github.com/shakacode/shakapacker/compare/v8.2.0...v8.3.0
