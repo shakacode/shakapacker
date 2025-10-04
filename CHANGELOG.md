@@ -30,8 +30,6 @@ See the [v9 Upgrade Guide](https://github.com/shakacode/shakapacker/blob/main/do
 
 ### ⚠️ Breaking Changes
 
-**Note:** These breaking changes were introduced in beta.4 and remain in effect.
-
 1. **SWC is now the default JavaScript transpiler instead of Babel** ([PR 603](https://github.com/shakacode/shakapacker/pull/603) by [justin808](https://github.com/justin808))
    - Babel dependencies are no longer included as peer dependencies
    - Improves compilation speed by 20x
@@ -90,8 +88,6 @@ See the [v9 Upgrade Guide](https://github.com/shakacode/shakapacker/blob/main/do
 
 ## [v9.0.0-beta.7] - October 1, 2025
 
-**Note:** See [v9.0.0-beta.8](#v900-beta8---october-3-2025) for the latest beta with additional improvements.
-
 ### Added
 - TypeScript type definitions for improved IDE support
 - Optional peer dependencies to prevent installation warnings
@@ -104,8 +100,6 @@ See the [v9 Upgrade Guide](https://github.com/shakacode/shakapacker/blob/main/do
 - Validation caching improvements
 
 ## [v9.0.0-beta.4] - September 15, 2025
-
-**Note:** This beta release introduced breaking changes and major features. See [v9.0.0-beta.8](#v900-beta8---october-3-2025) for the complete, consolidated changelog.
 
 ### Added
 - Rspack support as an alternative assets bundler to webpack
