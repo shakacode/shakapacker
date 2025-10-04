@@ -34,7 +34,7 @@ See the [v9 Upgrade Guide](https://github.com/shakacode/shakapacker/blob/main/do
    - Babel dependencies are no longer included as peer dependencies
    - Improves compilation speed by 20x
    - **Migration for existing projects:**
-     - **Option 1 (Recommended):** Switch to SWC:
+     - **Option 1 (Recommended):** Switch to SWC - Run `rake shakapacker:migrate:to_swc` or manually:
        ```yaml
        # config/shakapacker.yml
        javascript_transpiler: 'swc'
