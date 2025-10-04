@@ -71,6 +71,7 @@ describe("Config", () => {
   })
 
   test("should allow enabling integrity", () => {
+    process.env.RAILS_ENV = "production"
     process.env.SHAKAPACKER_CONFIG = "config/shakapacker_integrity.yml"
     const config = require("../../package/config")
 
@@ -78,6 +79,7 @@ describe("Config", () => {
   })
 
   test("should allow configuring hash functions", () => {
+    process.env.RAILS_ENV = "production"
     process.env.SHAKAPACKER_CONFIG = "config/shakapacker_integrity.yml"
     const config = require("../../package/config")
 
@@ -89,6 +91,7 @@ describe("Config", () => {
   })
 
   test("should allow configuring crossorigin", () => {
+    process.env.RAILS_ENV = "production"
     process.env.SHAKAPACKER_CONFIG = "config/shakapacker_integrity.yml"
     const config = require("../../package/config")
 
