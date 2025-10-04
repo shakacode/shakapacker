@@ -32,7 +32,14 @@ See the [TypeScript Documentation](./typescript.md) for usage examples.
 - **Fixes port issues** - Dev server uses the configured port (e.g., 3035) instead of defaulting to 8080
 - **Fixes 404 errors** - Assets load correctly without requiring manual NODE_ENV configuration
 
-**No action required** - This change improves the default behavior and requires no migration. If you were previously working around this by setting `NODE_ENV=development` manually, you can remove that workaround.
+**No action required** - This change improves the default behavior and requires no migration.
+
+**If you previously worked around this bug**, you can now remove these workarounds:
+
+- Remove `NODE_ENV=development` from your `.env`, `.env.development`, or `.env.local` files
+- Remove `NODE_ENV=development` from your `docker-compose.yml` or Dockerfile
+- Remove custom scripts that set NODE_ENV before running the dev server
+- Remove `NODE_ENV=development` from your `bin/dev` or Procfile.dev
 
 ## Breaking Changes
 
