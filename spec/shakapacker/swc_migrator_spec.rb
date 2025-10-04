@@ -193,6 +193,27 @@ describe Shakapacker::SwcMigrator do
   end
 
   describe "#clean_babel_packages" do
+    context "with ESLint using Babel parser" do
+      before do
+        File.write(root_path.join("package.json"), JSON.pretty_generate({
+          "name": "test-app",
+          "devDependencies": {
+            "@babel/core": "^7.20.0",
+            "@babel/eslint-parser": "^7.20.0",
+            "babel-loader": "^9.1.0"
+          }
+        }))
+        File.write(root_path.join(".eslintrc.js"), 'module.exports = { parser: "@babel/eslint-parser" }')
+      end
+
+      it "warns about ESLint using Babel" do
+        migrator.clean_babel_packages(run_installer: false)
+
+        expect(logger).to have_received(:info).with(/WARNING: ESLint configuration detected/)
+        expect(logger).to have_received(:info).with(/switch to @typescript-eslint\/parser/)
+      end
+    end
+
     context "with babel packages installed" do
       before do
         File.write(root_path.join("package.json"), JSON.pretty_generate({
@@ -372,7 +393,7 @@ describe Shakapacker::SwcMigrator do
     it "defines default SWC configuration" do
       config = described_class::DEFAULT_SWCRC_CONFIG
       expect(config["jsc"]["parser"]["jsx"]).to eq(true)
-      expect(config["jsc"]["target"]).to eq("es2015")
+      expect(config["jsc"]["target"]).to be_nil
       expect(config["module"]["type"]).to eq("es6")
     end
   end
