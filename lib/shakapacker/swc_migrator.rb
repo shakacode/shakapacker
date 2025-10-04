@@ -30,6 +30,15 @@ module Shakapacker
       "swc-loader" => "^0.2.6"
     }.freeze
 
+    ESLINT_CONFIG_FILES = %w[
+      .eslintrc
+      .eslintrc.js
+      .eslintrc.cjs
+      .eslintrc.yaml
+      .eslintrc.yml
+      .eslintrc.json
+    ].freeze
+
     DEFAULT_SWCRC_CONFIG = {
       "jsc" => {
         "parser" => {
@@ -147,16 +156,10 @@ module Shakapacker
 
       def eslint_uses_babel?
         # Check for ESLint config files
-        eslint_configs = [
-          ".eslintrc",
-          ".eslintrc.js",
-          ".eslintrc.cjs",
-          ".eslintrc.yaml",
-          ".eslintrc.yml",
-          ".eslintrc.json"
-        ]
-
-        eslint_configs.each do |config_file|
+        # Note: This is a heuristic check that may have false positives (e.g., in comments),
+        # but false positives only result in an extra warning, which is safer than silently
+        # breaking ESLint configurations.
+        ESLINT_CONFIG_FILES.each do |config_file|
           config_path = root_path.join(config_file)
           next unless config_path.exist?
 
@@ -179,8 +182,8 @@ module Shakapacker
             dev_dependencies = package_json["devDependencies"] || {}
             all_deps = dependencies.merge(dev_dependencies)
             return true if all_deps.key?("@babel/eslint-parser") || all_deps.key?("babel-eslint")
-          rescue JSON::ParserError
-            # Ignore parse errors
+          rescue JSON::ParserError => e
+            logger.debug "Could not parse package.json for ESLint detection: #{e.message}"
           end
         end
 
