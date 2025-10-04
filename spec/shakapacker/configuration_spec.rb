@@ -429,8 +429,8 @@ describe "Shakapacker::Configuration" do
       )
     end
 
-    it "#cache_manifest? fall back to 'production' config from bundled file" do
-      expect(config.cache_manifest?).to be true
+    it "#cache_manifest? fall back to 'development' config from bundled file" do
+      expect(config.cache_manifest?).to be false
     end
 
     it "#shakapacker_precompile? use 'staging' config from custom file" do

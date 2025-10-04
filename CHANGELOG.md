@@ -13,10 +13,7 @@ Changes since the last non-beta release.
 
 ### Fixed
 
-- Fixed NODE_ENV defaulting to production breaking dev server ([Issue 631](https://github.com/shakacode/shakapacker/issues/631))
-  - NODE_ENV now defaults to development unless RAILS_ENV is explicitly set to production
-  - Ensures dev server works out of the box without requiring NODE_ENV to be set
-  - Fixes incorrect port (8080 instead of configured port) and 404 asset errors
+- Fixed NODE_ENV defaulting to production breaking dev server ([Issue 631](https://github.com/shakacode/shakapacker/issues/631)). NODE_ENV now defaults to development unless RAILS_ENV is explicitly set to production. This ensures the dev server works out of the box without requiring NODE_ENV to be set, and fixes incorrect port and 404 asset errors.
 
 ## [v9.0.0-beta.8] - October 3, 2025
 
