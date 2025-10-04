@@ -1,13 +1,14 @@
-# Shakapacker (v8)
+# Shakapacker (v9)
 ---
 
-_🚀 Shakapacker 9.0.0.beta.2 supports [Rspack](https://rspack.rs/)! 10x faster than webpack!_
+_🚀 Shakapacker 9 supports [Rspack](https://rspack.rs/)! 10x faster than webpack!_
 
 ---
 
 _Official, actively maintained successor to [rails/webpacker](https://github.com/rails/webpacker). ShakaCode stands behind the long-term maintenance and development of this project for the Rails community._
 
 * ⚠️ See the [6-stable](https://github.com/shakacode/shakapacker/tree/6-stable) branch for Shakapacker v6.x code and documentation. :warning:
+* **See [V9 Upgrade](./docs/v9_upgrade.md) for upgrading from the v8 release.**
 * See [V8 Upgrade](./docs/v8_upgrade.md) for upgrading from the v7 release.
 * See [V7 Upgrade](./docs/v7_upgrade.md) for upgrading from the v6 release.
 * See [V6 Upgrade](./docs/v6_upgrade.md) for upgrading from v5 or prior v6 releases.

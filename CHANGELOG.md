@@ -9,70 +9,9 @@
 ## [Unreleased]
 Changes since the last non-beta release.
 
-### Added
-- **Phase 5 TypeScript Migration - Framework-Specific Modules** by [justin808](https://github.com/justin808)
-  - Converted framework-specific modules to TypeScript
-  - Migrated package/rspack/index.js to TypeScript
-  - Migrated package/swc/index.js to TypeScript
-  - Migrated package/esbuild/index.js to TypeScript
-  - Migrated package/babel/preset.js to TypeScript
-  - Added @types/babel__core for enhanced type safety
-  - All 130 tests passing
-- **Phase 6 TypeScript Migration - Final Cleanup** (by [justin808](https://github.com/justin808))
-  - Added TypeScript ESLint support with @typescript-eslint/parser and @typescript-eslint/eslint-plugin
-  - Configured TypeScript-specific linting rules for improved code quality
-  - Verified strict mode is enabled in TypeScript configuration
-  - Enhanced developer experience with TypeScript linting across the entire codebase
+## [v9.0.0-beta.8] - October 3, 2025
 
-## [v9.0.0-beta.7] - October 1, 2025
-
-### Added
-- **Phase 2 TypeScript Migration - Core Modules** ([PR 608](https://github.com/shakacode/shakapacker/pull/608) by [justin808](https://github.com/justin808))
-  - Converted core modules to TypeScript: config.ts, env.ts, and utilities
-  - Enhanced type safety across the codebase
-  - Better IDE support and autocomplete
-- **Phase 3 TypeScript Migration - Environment Files** ([PR 614](https://github.com/shakacode/shakapacker/pull/614) by [justin808](https://github.com/justin808))
-  - Converted all environment configuration files to TypeScript (development, production, test)
-  - Added centralized type exports for consumer use (import from "shakapacker/types")
-  - Created shared TypeScript interfaces for environment configurations
-  - Introduced structured error codes for programmatic error handling
-  - Exported shared types: WebpackConfig, RspackConfig, EnvironmentConfig
-- **Optional Peer Dependencies** ([PR 615](https://github.com/shakacode/shakapacker/pull/615) by [justin808](https://github.com/justin808))
-  - Restored peer dependencies as optional to improve package version tracking
-  - Added peerDependenciesMeta marking all peers as optional
-  - Moved webpack-merge to direct dependencies (required at runtime)
-  - Prevents installation warnings while maintaining upgrade visibility
-- **Migration Tooling Improvements** ([PR 613](https://github.com/shakacode/shakapacker/pull/613) by [justin808](https://github.com/justin808))
-  - Added SWC migration helper: rake shakapacker:migrate:to_swc
-  - Enhanced error messages for missing dependencies
-  - Improved doctor command output
-
-### Security
-- **Path Validation Utilities** ([PR 614](https://github.com/shakacode/shakapacker/pull/614) by [justin808](https://github.com/justin808))
-  - Added validation to prevent directory traversal attacks
-  - Implemented environment variable sanitization to prevent injection
-  - Enforced strict port validation (reject strings with non-digits)
-  - Added SHAKAPACKER_NPM_PACKAGE path validation (only .tgz/.tar.gz allowed)
-  - Path traversal security checks now run regardless of validation mode
-
-### Changed
-- **Build Process Improvements** ([PR 614](https://github.com/shakacode/shakapacker/pull/614) by [justin808](https://github.com/justin808))
-  - Environment JS files now generated during npm publish (not committed to git)
-  - Prevents TypeScript source and compiled JS from getting out of sync
-  - Auto-format compiled JavaScript during build process
-  - Enhanced .npmignore to exclude TypeScript sources, include compiled JS
-
-### Performance
-- **Validation Caching** ([PR 614](https://github.com/shakacode/shakapacker/pull/614) by [justin808](https://github.com/justin808))
-  - Implemented TTL-based validation caching (5s watch, 1min dev, infinite prod)
-  - Made cache TTL configurable via SHAKAPACKER_CACHE_TTL environment variable
-  - Lazy-loaded and cached watch mode detection
-
-### Fixed
-- Fixed clearValidationCache() to actually clear the cache ([PR 614](https://github.com/shakacode/shakapacker/pull/614) by [justin808](https://github.com/justin808))
-- Fixed private_output_path configuration edge cases ([PR 604](https://github.com/shakacode/shakapacker/pull/604) by [justin808](https://github.com/justin808))
-
-## [v9.0.0-beta.4] - September 15, 2025
+See the [v9 Upgrade Guide](https://github.com/shakacode/shakapacker/blob/main/docs/v9_upgrade.md) for detailed migration instructions.
 
 ### ⚠️ Breaking Changes
 
@@ -80,7 +19,7 @@ Changes since the last non-beta release.
    - Babel dependencies are no longer included as peer dependencies
    - Improves compilation speed by 20x
    - **Migration for existing projects:**
-     - **Option 1 (Recommended):** Switch to SWC:
+     - **Option 1 (Recommended):** Switch to SWC - Run `rake shakapacker:migrate:to_swc` or manually:
        ```yaml
        # config/shakapacker.yml
        javascript_transpiler: 'swc'
@@ -93,12 +32,9 @@ Changes since the last non-beta release.
        ```
 
 2. **CSS Modules now use named exports by default**
-   - Configured with `namedExport: true` and `exportLocalsConvention: 'camelCaseOnly'`
    - **JavaScript:** Use named imports: `import { className } from './styles.module.css'`
    - **TypeScript:** Use namespace imports: `import * as styles from './styles.module.css'`
-   - Default imports (`import styles from '...'`) no longer work
-   - **Note:** css-loader requires `'camelCaseOnly'` or `'dashesOnly'` when `namedExport: true`. Using `'camelCase'` causes a build error.
-   - See [CSS Modules Export Mode documentation](./docs/css-modules-export-mode.md) for migration details
+   - To keep the old behavior with default imports, see [CSS Modules Export Mode documentation](./docs/css-modules-export-mode.md) for configuration instructions
 
 3. **Configuration option renamed from `webpack_loader` to `javascript_transpiler`**
    - Better reflects its purpose of configuring JavaScript transpilation
@@ -110,23 +46,26 @@ Changes since the last non-beta release.
   - Faster Rust-based bundling with webpack-compatible APIs
   - Built-in SWC loader and CSS extraction
   - Automatic bundler detection in `bin/shakapacker`
-- **Private output path** for server-side rendering bundles ([PR 592](https://github.com/shakacode/shakapacker/pull/592) by [justin808](https://github.com/justin808))
-  - Configure `private_output_path` for private server bundles
-- **Enhanced TypeScript definitions** ([PR 602](https://github.com/shakacode/shakapacker/pull/602) by [justin808](https://github.com/justin808))
-  - Better IDE support and type safety
-- **`rake shakapacker:doctor` diagnostic command** ([PR 609](https://github.com/shakacode/shakapacker/pull/609) by [justin808](https://github.com/justin808))
-  - Check for configuration issues and missing dependencies
-  - Identify missing loaders that cause build errors
-  - Particularly useful when migrating to v9 where peer dependencies are removed
-  - Detects transpiler-specific issues based on v9 changes
+- **TypeScript type definitions** for improved IDE support and autocomplete
+  - Types available via `import type { WebpackConfig, RspackConfig, EnvironmentConfig } from "shakapacker/types"`
+  - See [TypeScript Documentation](./docs/typescript.md) for migration and usage instructions
+- **Optional peer dependencies** - All peer dependencies now marked as optional, preventing installation warnings while maintaining version compatibility tracking
+- **Private output path** for server-side rendering bundles ([PR 592](https://github.com/shakacode/shakapacker/pull/592))
+  - Configure `private_output_path` for private server bundles separate from public assets
+- **`rake shakapacker:doctor` diagnostic command** to check for configuration issues and missing dependencies
+- **`rake shakapacker:migrate:to_swc`** migration helper to assist with switching from Babel to SWC
 
-### Changed
-- Configuration option renamed from `bundler` to `assets_bundler` (deprecated but supported)
-- **Babel dependencies are now optional** instead of peer dependencies ([PR 603](https://github.com/shakacode/shakapacker/pull/603) by [justin808](https://github.com/justin808))
-  - Installed automatically only when `javascript_transpiler` is set to 'babel'
+### Security
+- **Path Validation Utilities** ([PR 614](https://github.com/shakacode/shakapacker/pull/614) by [justin808](https://github.com/justin808))
+  - Added validation to prevent directory traversal attacks
+  - Implemented environment variable sanitization to prevent injection
+  - Enforced strict port validation (reject strings with non-digits)
+  - Added SHAKAPACKER_NPM_PACKAGE path validation (only .tgz/.tar.gz allowed)
+  - Path traversal security checks now run regardless of validation mode
 
 ### Fixed
-- Update webpack-dev-server to secure versions (^4.15.2 || ^5.2.2) ([PR 585](https://github.com/shakacode/shakapacker/pull/585) by [justin808](https://github.com/justin808))
+- Fixed private_output_path configuration edge cases ([PR 604](https://github.com/shakacode/shakapacker/pull/604))
+- Updated webpack-dev-server to secure versions (^4.15.2 || ^5.2.2) ([PR 585](https://github.com/shakacode/shakapacker/pull/585))
 
 ## [v8.4.0] - September 8, 2024
 
@@ -548,8 +487,8 @@ Note: [Rubygem is 6.3.0.pre.rc.1](https://rubygems.org/gems/shakapacker/versions
 ## v5.4.3 and prior changes from rails/webpacker
 See [CHANGELOG.md in rails/webpacker (up to v5.4.3)](https://github.com/rails/webpacker/blob/master/CHANGELOG.md)
 
-[Unreleased]: https://github.com/shakacode/shakapacker/compare/v9.0.0-beta.4...main
-[v9.0.0-beta.4]: https://github.com/shakacode/shakapacker/compare/v8.4.0...v9.0.0-beta.4
+[Unreleased]: https://github.com/shakacode/shakapacker/compare/v9.0.0-beta.8...main
+[v9.0.0-beta.8]: https://github.com/shakacode/shakapacker/compare/v8.4.0...v9.0.0-beta.8
 [v8.4.0]: https://github.com/shakacode/shakapacker/compare/v8.3.0...v8.4.0
 [v8.3.0]: https://github.com/shakacode/shakapacker/compare/v8.2.0...v8.3.0
 [v8.2.0]: https://github.com/shakacode/shakapacker/compare/v8.1.0...v8.2.0
