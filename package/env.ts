@@ -11,8 +11,10 @@ const NODE_ENVIRONMENTS = ["development", "production", "test"] as const
 const initialRailsEnv = sanitizeEnvValue(process.env.RAILS_ENV)
 const rawNodeEnv = sanitizeEnvValue(process.env.NODE_ENV)
 
-// Default to development unless RAILS_ENV is explicitly production
-// This ensures the dev server works out of the box without requiring NODE_ENV to be set
+// Default NODE_ENV based on RAILS_ENV to match bin/shakapacker behavior (see lib/shakapacker/runner.rb:27)
+// - RAILS_ENV=production → DEFAULT="production" (safe for production builds)
+// - RAILS_ENV=development, test, staging, or unset → DEFAULT="development" (good DX for dev server)
+// This ensures the dev server works out of the box without requiring NODE_ENV to be set explicitly
 const DEFAULT = initialRailsEnv === "production" ? "production" : "development"
 
 // Validate NODE_ENV strictly
