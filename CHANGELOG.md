@@ -47,12 +47,9 @@ See the [v9 Upgrade Guide](https://github.com/shakacode/shakapacker/blob/main/do
        ```
 
 2. **CSS Modules now use named exports by default**
-   - Configured with `namedExport: true` and `exportLocalsConvention: 'camelCaseOnly'`
    - **JavaScript:** Use named imports: `import { className } from './styles.module.css'`
    - **TypeScript:** Use namespace imports: `import * as styles from './styles.module.css'`
-   - Default imports (`import styles from '...'`) no longer work
-   - **Note:** css-loader requires `'camelCaseOnly'` or `'dashesOnly'` when `namedExport: true`. Using `'camelCase'` causes a build error.
-   - See [CSS Modules Export Mode documentation](./docs/css-modules-export-mode.md) for migration details
+   - To keep the old behavior with default imports, see [CSS Modules Export Mode documentation](./docs/css-modules-export-mode.md) for configuration instructions
 
 3. **Configuration option renamed from `webpack_loader` to `javascript_transpiler`**
    - Better reflects its purpose of configuring JavaScript transpilation
@@ -64,7 +61,9 @@ See the [v9 Upgrade Guide](https://github.com/shakacode/shakapacker/blob/main/do
   - Faster Rust-based bundling with webpack-compatible APIs
   - Built-in SWC loader and CSS extraction
   - Automatic bundler detection in `bin/shakapacker`
-- **TypeScript type definitions** for improved IDE support and autocomplete. Types available via `import type { WebpackConfig, RspackConfig, EnvironmentConfig } from "shakapacker/types"`
+- **TypeScript type definitions** for improved IDE support and autocomplete
+  - Types available via `import type { WebpackConfig, RspackConfig, EnvironmentConfig } from "shakapacker/types"`
+  - See [TypeScript Documentation](./docs/typescript.md) for migration and usage instructions
 - **Optional peer dependencies** - All peer dependencies now marked as optional, preventing installation warnings while maintaining version compatibility tracking
 - **Private output path** for server-side rendering bundles ([PR 592](https://github.com/shakacode/shakapacker/pull/592))
   - Configure `private_output_path` for private server bundles separate from public assets
@@ -85,27 +84,6 @@ See the [v9 Upgrade Guide](https://github.com/shakacode/shakapacker/blob/main/do
 ### Fixed
 - Fixed private_output_path configuration edge cases ([PR 604](https://github.com/shakacode/shakapacker/pull/604))
 - Updated webpack-dev-server to secure versions (^4.15.2 || ^5.2.2) ([PR 585](https://github.com/shakacode/shakapacker/pull/585))
-
-## [v9.0.0-beta.7] - October 1, 2025
-
-### Added
-- TypeScript type definitions for improved IDE support
-- Optional peer dependencies to prevent installation warnings
-- Migration tooling improvements
-
-### Security
-- Path validation utilities
-
-### Performance
-- Validation caching improvements
-
-## [v9.0.0-beta.4] - September 15, 2025
-
-### Added
-- Rspack support as an alternative assets bundler to webpack
-- Private output path for server-side rendering bundles ([PR 592](https://github.com/shakacode/shakapacker/pull/592))
-- Enhanced TypeScript definitions ([PR 602](https://github.com/shakacode/shakapacker/pull/602))
-- `rake shakapacker:doctor` diagnostic command ([PR 609](https://github.com/shakacode/shakapacker/pull/609))
 
 ## [v8.4.0] - September 8, 2024
 
@@ -528,9 +506,7 @@ Note: [Rubygem is 6.3.0.pre.rc.1](https://rubygems.org/gems/shakapacker/versions
 See [CHANGELOG.md in rails/webpacker (up to v5.4.3)](https://github.com/rails/webpacker/blob/master/CHANGELOG.md)
 
 [Unreleased]: https://github.com/shakacode/shakapacker/compare/v9.0.0-beta.8...main
-[v9.0.0-beta.8]: https://github.com/shakacode/shakapacker/compare/v9.0.0-beta.7...v9.0.0-beta.8
-[v9.0.0-beta.7]: https://github.com/shakacode/shakapacker/compare/v9.0.0-beta.4...v9.0.0-beta.7
-[v9.0.0-beta.4]: https://github.com/shakacode/shakapacker/compare/v8.4.0...v9.0.0-beta.4
+[v9.0.0-beta.8]: https://github.com/shakacode/shakapacker/compare/v8.4.0...v9.0.0-beta.8
 [v8.4.0]: https://github.com/shakacode/shakapacker/compare/v8.3.0...v8.4.0
 [v8.3.0]: https://github.com/shakacode/shakapacker/compare/v8.2.0...v8.3.0
 [v8.2.0]: https://github.com/shakacode/shakapacker/compare/v8.1.0...v8.2.0
