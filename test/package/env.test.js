@@ -24,9 +24,9 @@ describe("Env", () => {
     delete process.env.NODE_ENV
     expect(require("../../package/env")).toStrictEqual({
       railsEnv: "development",
-      nodeEnv: "production",
-      isProduction: true,
-      isDevelopment: false,
+      nodeEnv: "development",
+      isProduction: false,
+      isDevelopment: true,
       runningWebpackDevServer: false
     })
   })
@@ -35,10 +35,10 @@ describe("Env", () => {
     delete process.env.NODE_ENV
     delete process.env.RAILS_ENV
     expect(require("../../package/env")).toStrictEqual({
-      railsEnv: "production",
-      nodeEnv: "production",
-      isProduction: true,
-      isDevelopment: false,
+      railsEnv: "development",
+      nodeEnv: "development",
+      isProduction: false,
+      isDevelopment: true,
       runningWebpackDevServer: false
     })
   })
@@ -48,9 +48,9 @@ describe("Env", () => {
     process.env.NODE_ENV = "staging"
     expect(require("../../package/env")).toStrictEqual({
       railsEnv: "staging",
-      nodeEnv: "production",
-      isProduction: true,
-      isDevelopment: false,
+      nodeEnv: "development",
+      isProduction: false,
+      isDevelopment: true,
       runningWebpackDevServer: false
     })
   })

@@ -6,21 +6,30 @@ const { isFileNotFoundError } = require("./utils/errorHelpers")
 const { sanitizeEnvValue } = require("./utils/pathValidation")
 
 const NODE_ENVIRONMENTS = ["development", "production", "test"] as const
-const DEFAULT = "production"
 
 // Sanitize environment variables to prevent injection
 const initialRailsEnv = sanitizeEnvValue(process.env.RAILS_ENV)
 const rawNodeEnv = sanitizeEnvValue(process.env.NODE_ENV)
 
+// Default to development unless RAILS_ENV is explicitly production
+// This ensures the dev server works out of the box without requiring NODE_ENV to be set
+const DEFAULT = initialRailsEnv === "production" ? "production" : "development"
+
 // Validate NODE_ENV strictly
 const nodeEnv =
-  rawNodeEnv && NODE_ENVIRONMENTS.includes(rawNodeEnv as typeof NODE_ENVIRONMENTS[number]) ? rawNodeEnv : DEFAULT
+  rawNodeEnv &&
+  NODE_ENVIRONMENTS.includes(rawNodeEnv as (typeof NODE_ENVIRONMENTS)[number])
+    ? rawNodeEnv
+    : DEFAULT
 
 // Log warning if NODE_ENV was invalid
-if (rawNodeEnv && !NODE_ENVIRONMENTS.includes(rawNodeEnv as typeof NODE_ENVIRONMENTS[number])) {
+if (
+  rawNodeEnv &&
+  !NODE_ENVIRONMENTS.includes(rawNodeEnv as (typeof NODE_ENVIRONMENTS)[number])
+) {
   console.warn(
     `[SHAKAPACKER WARNING] Invalid NODE_ENV value: ${rawNodeEnv}. ` +
-    `Valid values are: ${NODE_ENVIRONMENTS.join(', ')}. Using default: ${DEFAULT}`
+      `Valid values are: ${NODE_ENVIRONMENTS.join(", ")}. Using default: ${DEFAULT}`
   )
 }
 
@@ -42,13 +51,13 @@ try {
     } catch (defaultError) {
       throw new Error(
         `Failed to load Shakapacker configuration.\n` +
-        `Neither user config (${configPath}) nor default config (${defaultConfigPath}) could be loaded.\n\n` +
-        `To fix this issue:\n` +
-        `1. Create a config/shakapacker.yml file in your project\n` +
-        `2. Or set the SHAKAPACKER_CONFIG environment variable to point to your config file\n` +
-        `3. Or reinstall Shakapacker to restore the default configuration:\n` +
-        `   npm install shakapacker --force\n` +
-        `   yarn add shakapacker --force`
+          `Neither user config (${configPath}) nor default config (${defaultConfigPath}) could be loaded.\n\n` +
+          `To fix this issue:\n` +
+          `1. Create a config/shakapacker.yml file in your project\n` +
+          `2. Or set the SHAKAPACKER_CONFIG environment variable to point to your config file\n` +
+          `3. Or reinstall Shakapacker to restore the default configuration:\n` +
+          `   npm install shakapacker --force\n` +
+          `   yarn add shakapacker --force`
       )
     }
   } else {
@@ -61,13 +70,14 @@ const regex = new RegExp(`^(${availableEnvironments})$`, "g")
 
 const runningWebpackDevServer = process.env.WEBPACK_SERVE === "true"
 
-const validatedRailsEnv = initialRailsEnv && initialRailsEnv.match(regex) ? initialRailsEnv : DEFAULT
+const validatedRailsEnv =
+  initialRailsEnv && initialRailsEnv.match(regex) ? initialRailsEnv : DEFAULT
 
 if (initialRailsEnv && validatedRailsEnv !== initialRailsEnv) {
   /* eslint no-console:0 */
   console.warn(
     `[SHAKAPACKER WARNING] Environment '${initialRailsEnv}' not found in the configuration.\n` +
-    `Using '${DEFAULT}' configuration as a fallback.`
+      `Using '${DEFAULT}' configuration as a fallback.`
   )
 }
 

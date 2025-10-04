@@ -9,11 +9,30 @@ This guide outlines new features, breaking changes, and migration steps for upgr
 Shakapacker v9 includes TypeScript definitions for better IDE support and type safety.
 
 - **No breaking changes** - JavaScript configs continue to work
-- **Optional** - Use TypeScript only if you want it  
+- **Optional** - Use TypeScript only if you want it
 - **Type safety** - Catch configuration errors at compile-time
 - **IDE support** - Full autocomplete for all options
 
 See the [TypeScript Documentation](./typescript.md) for usage examples.
+
+### NODE_ENV Default Behavior Fixed
+
+**What changed:** NODE_ENV now intelligently defaults based on RAILS_ENV instead of always defaulting to "production".
+
+**New behavior:**
+
+- When `RAILS_ENV=production` → `NODE_ENV` defaults to `"production"`
+- When `RAILS_ENV=development` or unset → `NODE_ENV` defaults to `"development"`
+- When `RAILS_ENV` is any other value (test, staging, etc.) → `NODE_ENV` defaults to `"development"`
+
+**Benefits:**
+
+- **Dev server "just works"** - No need to explicitly set NODE_ENV when running the development server
+- **Correct configuration loaded** - Development server now properly loads the development configuration from shakapacker.yml
+- **Fixes port issues** - Dev server uses the configured port (e.g., 3035) instead of defaulting to 8080
+- **Fixes 404 errors** - Assets load correctly without requiring manual NODE_ENV configuration
+
+**No action required** - This change improves the default behavior and requires no migration. If you were previously working around this by setting `NODE_ENV=development` manually, you can remove that workaround.
 
 ## Breaking Changes
 
@@ -25,25 +44,27 @@ See the [TypeScript Documentation](./typescript.md) for usage examples.
 
 **Quick Reference: Configuration Options**
 
-| Configuration | namedExport | exportLocalsConvention | CSS: `.my-button` | Export Available | Works With |
-|---------------|-------------|------------------------|-------------------|------------------|------------|
-| **v9 Default** | `true` | `'camelCaseOnly'` | `.my-button` | `myButton` only | ✅ Named exports |
-| **Alternative** | `true` | `'dashesOnly'` | `.my-button` | `'my-button'` only | ✅ Named exports |
-| **v8 Style** | `false` | `'camelCase'` | `.my-button` | Both `myButton` AND `'my-button'` | ✅ Default export |
-| **❌ Invalid** | `true` | `'camelCase'` | - | - | ❌ Build Error |
+| Configuration   | namedExport | exportLocalsConvention | CSS: `.my-button` | Export Available                  | Works With        |
+| --------------- | ----------- | ---------------------- | ----------------- | --------------------------------- | ----------------- |
+| **v9 Default**  | `true`      | `'camelCaseOnly'`      | `.my-button`      | `myButton` only                   | ✅ Named exports  |
+| **Alternative** | `true`      | `'dashesOnly'`         | `.my-button`      | `'my-button'` only                | ✅ Named exports  |
+| **v8 Style**    | `false`     | `'camelCase'`          | `.my-button`      | Both `myButton` AND `'my-button'` | ✅ Default export |
+| **❌ Invalid**  | `true`      | `'camelCase'`          | -                 | -                                 | ❌ Build Error    |
 
 **JavaScript Projects:**
+
 ```js
 // Before (v8)
-import styles from './Component.module.css';
-<button className={styles.button} />
+import styles from "./Component.module.css"
+;<button className={styles.button} />
 
 // After (v9)
-import { button } from './Component.module.css';
-<button className={button} />
+import { button } from "./Component.module.css"
+;<button className={button} />
 ```
 
 **TypeScript Projects:**
+
 ```typescript
 // Before (v8)
 import styles from './Component.module.css';
@@ -57,6 +78,7 @@ import * as styles from './Component.module.css';
 **Migration Options:**
 
 1. **Update your code** (Recommended):
+
    - JavaScript: Change to named imports (`import { className }`)
    - TypeScript: Change to namespace imports (`import * as styles`)
    - Kebab-case class names are automatically converted to camelCase
@@ -66,6 +88,7 @@ import * as styles from './Component.module.css';
    - This gives you time to migrate gradually
 
 **Benefits of the change:**
+
 - Eliminates webpack/TypeScript warnings
 - Better tree-shaking of unused CSS classes
 - More explicit about which classes are used
@@ -76,15 +99,17 @@ import * as styles from './Component.module.css';
 **What changed:** The configuration option has been renamed to better reflect its purpose.
 
 **Before (v8):**
+
 ```yml
 # config/shakapacker.yml
-webpack_loader: 'babel'
+webpack_loader: "babel"
 ```
 
 **After (v9):**
+
 ```yml
 # config/shakapacker.yml
-javascript_transpiler: 'babel'
+javascript_transpiler: "babel"
 ```
 
 **Note:** The old `webpack_loader` option is deprecated but still supported with a warning.
@@ -96,38 +121,48 @@ javascript_transpiler: 'babel'
 **Why:** SWC is 20x faster than Babel while maintaining compatibility with most JavaScript and TypeScript code.
 
 **Impact on existing projects:**
+
 - Your project will continue using Babel if you already have babel packages in package.json
 - To switch to SWC for better performance, see migration options below
 
 **Impact on new projects:**
+
 - New installations will use SWC by default
 - Babel dependencies won't be installed unless explicitly configured
 
 ### Migration Options
 
 #### Option 1 (Recommended): Switch to SWC
+
 ```yml
 # config/shakapacker.yml
-javascript_transpiler: 'swc'
+javascript_transpiler: "swc"
 ```
+
 Then install SWC:
+
 ```bash
 npm install @swc/core swc-loader
 ```
 
 #### Option 2: Keep using Babel
+
 ```yml
 # config/shakapacker.yml
-javascript_transpiler: 'babel'
+javascript_transpiler: "babel"
 ```
+
 No other changes needed - your existing babel packages will continue to work.
 
 #### Option 3: Use esbuild
+
 ```yml
 # config/shakapacker.yml
-javascript_transpiler: 'esbuild'
+javascript_transpiler: "esbuild"
 ```
+
 Then install esbuild:
+
 ```bash
 npm install esbuild esbuild-loader
 ```
@@ -138,7 +173,7 @@ npm install esbuild esbuild-loader
 
 ```yml
 # config/shakapacker.yml
-assets_bundler: 'rspack'  # or 'webpack' (default)
+assets_bundler: "rspack" # or 'webpack' (default)
 ```
 
 ### 5. All Peer Dependencies Now Optional
@@ -146,16 +181,19 @@ assets_bundler: 'rspack'  # or 'webpack' (default)
 **What changed:** All peer dependencies are now marked as optional via `peerDependenciesMeta`.
 
 **Benefits:**
+
 - **No installation warnings** - You won't see peer dependency warnings for packages you don't use
 - **Install only what you need** - Using webpack? Don't install rspack. Using SWC? Don't install Babel.
 - **Clear version constraints** - When you do install a package, version compatibility is still enforced
 
 **What this means for you:**
+
 - **Existing projects:** No changes needed. Your existing dependencies will continue to work.
 - **New projects:** The installer only adds the packages you actually need based on your configuration.
 - **Package manager behavior:** npm, yarn, and pnpm will no longer warn about missing peer dependencies.
 
 **Example:** If you're using SWC with webpack, you only need:
+
 ```json
 {
   "dependencies": {
@@ -168,6 +206,7 @@ assets_bundler: 'rspack'  # or 'webpack' (default)
   }
 }
 ```
+
 You won't get warnings about missing Babel, Rspack, or esbuild packages.
 
 ## Migration Steps
@@ -186,22 +225,22 @@ yarn upgrade shakapacker@^9.0.0
 
 ```js
 // Find imports like this:
-import styles from './styles.module.css';
+import styles from "./styles.module.css"
 
 // Replace with named imports:
-import { className1, className2 } from './styles.module.css';
+import { className1, className2 } from "./styles.module.css"
 ```
 
 #### Update TypeScript definitions:
 
 ```typescript
 // Update your CSS module type definitions
-declare module '*.module.css' {
+declare module "*.module.css" {
   // With namedExport: true, css-loader generates individual named exports
   // TypeScript can't know the exact names at compile time, so we declare
   // a module with any number of string exports
-  const classes: { readonly [key: string]: string };
-  export = classes;
+  const classes: { readonly [key: string]: string }
+  export = classes
   // Note: This allows 'import * as styles' but not 'import styles from'
   // because css-loader with namedExport: true doesn't generate a default export
 }
@@ -213,13 +252,15 @@ v9 automatically converts kebab-case to camelCase with `exportLocalsConvention: 
 
 ```css
 /* styles.module.css */
-.my-button { }
-.primary-color { }
+.my-button {
+}
+.primary-color {
+}
 ```
 
 ```js
 // v9 default - camelCase conversion
-import { myButton, primaryColor } from './styles.module.css';
+import { myButton, primaryColor } from "./styles.module.css"
 ```
 
 **Alternative: Keep kebab-case names with 'dashesOnly'**
@@ -256,7 +297,7 @@ If you have `webpack_loader` in your configuration:
 # webpack_loader: 'babel'
 
 # NEW:
-javascript_transpiler: 'babel'
+javascript_transpiler: "babel"
 ```
 
 ### Step 5: Run Tests
@@ -291,6 +332,7 @@ If you see warnings about CSS module exports, ensure you've updated all imports 
 ### Build Error: exportLocalsConvention Incompatible with namedExport
 
 If you see this error:
+
 ```
 "exportLocalsConvention" with "camelCase" value is incompatible with "namedExport: true" option
 ```
@@ -312,30 +354,35 @@ If you want to use `'camelCase'` (which exports both original and camelCase vers
 If you experience unexpected peer dependency warnings after upgrading to v9, you may need to clear your package manager's cache and reinstall dependencies. This ensures the new optional peer dependency configuration takes effect properly.
 
 **For npm:**
+
 ```bash
 rm -rf node_modules package-lock.json
 npm install
 ```
 
 **For Yarn:**
+
 ```bash
 rm -rf node_modules yarn.lock
 yarn install
 ```
 
 **For pnpm:**
+
 ```bash
 rm -rf node_modules pnpm-lock.yaml
 pnpm install
 ```
 
 **For Bun:**
+
 ```bash
 rm -rf node_modules bun.lockb
 bun install
 ```
 
 **When is this necessary?**
+
 - If you see peer dependency warnings for packages you don't use (e.g., warnings about Babel when using SWC)
 - If your package manager cached the old dependency resolution from v8
 - After switching transpilers or bundlers (e.g., from Babel to SWC, or webpack to rspack)
