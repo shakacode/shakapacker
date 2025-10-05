@@ -215,7 +215,7 @@ Dir.chdir(Rails.root) do
   end
 
   # Inline fetch_peer_dependencies and fetch_common_dependencies
-  peers = PackageJson.read(install_dir).fetch(ENV["SHAKAPACKER_BUNDLER"] || "webpack")
+  peers = PackageJson.read(install_dir).fetch(ENV["SHAKAPACKER_ASSETS_BUNDLER"] || "webpack")
   common_deps = ENV["SKIP_COMMON_LOADERS"] ? {} : PackageJson.read(install_dir).fetch("common")
   peers = peers.merge(common_deps)
 
