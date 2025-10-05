@@ -40,8 +40,31 @@ if @transpiler_to_install == "babel" && !ENV["JAVASCRIPT_TRANSPILER"]
   say "   📝 Updated config/shakapacker.yml to use Babel transpiler", :green
 end
 
-say "Copying webpack core config"
-directory "#{install_dir}/config/webpack", "config/webpack", force_option
+# Detect TypeScript usage
+# Check for tsconfig.json or SHAKAPACKER_USE_TYPESCRIPT env var
+@use_typescript = File.exist?(Rails.root.join("tsconfig.json")) ||
+                  ENV["SHAKAPACKER_USE_TYPESCRIPT"] == "true" ||
+                  ENV["SHAKAPACKER_USE_TYPESCRIPT"] == "1"
+
+bundler = ENV["SHAKAPACKER_BUNDLER"] || "webpack"
+config_extension = @use_typescript ? "ts" : "js"
+
+say "Copying #{bundler} core config (#{config_extension.upcase})"
+config_file = "#{bundler}.config.#{config_extension}"
+source_config = "#{install_dir}/config/#{bundler}/#{config_file}"
+dest_config = "config/#{bundler}/#{config_file}"
+
+if File.exist?(source_config)
+  empty_directory "config/#{bundler}"
+  copy_file source_config, dest_config, force_option
+
+  if @use_typescript
+    say "   ✨ Using TypeScript config for enhanced type safety", :green
+  end
+else
+  say "Warning: #{config_file} template not found, falling back to JavaScript", :yellow
+  copy_file "#{install_dir}/config/#{bundler}/#{bundler}.config.js", "config/#{bundler}/#{bundler}.config.js", force_option
+end
 
 if Dir.exist?(Shakapacker.config.source_path)
   say "The packs app source directory already exists"

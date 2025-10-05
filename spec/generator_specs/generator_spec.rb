@@ -125,7 +125,7 @@ describe "Generator" do
           expect(package_json.fetch("packageManager", "")).to match(/#{manager_name}@\d+\.\d+\.\d+/)
         end
 
-        it "creates webpack config directory and its files" do
+        it "creates webpack config directory and its files (JS by default)" do
           expected_files = [
             "webpack.config.js"
           ]
@@ -238,6 +238,52 @@ describe "Generator" do
               expect(sh_in_dir(sh_opts, TEMP_RAILS_APP_PATH, "bundle exec rspec")).to be_truthy
             end
           end
+        end
+      end
+
+      context "when using TypeScript config (SHAKAPACKER_USE_TYPESCRIPT=true)" do
+        before :all do
+          sh_opts = { fallback_manager: "npm_latest" }
+
+          sh_in_dir(sh_opts, SPEC_PATH, "cp -r '#{BASE_RAILS_APP_PATH}' '#{TEMP_RAILS_APP_PATH}-ts'")
+
+          Bundler.with_unbundled_env do
+            npm_package_env = ENV["SHAKAPACKER_NPM_PACKAGE"] ? "SHAKAPACKER_NPM_PACKAGE='#{ENV["SHAKAPACKER_NPM_PACKAGE"]}' " : ""
+            install_cmd = "#{npm_package_env}SHAKAPACKER_USE_TYPESCRIPT=true SHAKAPACKER_ASSETS_BUNDLER=webpack " \
+                          "USE_BABEL_PACKAGES=true FORCE=true bundle exec rails shakapacker:install"
+            sh_in_dir(sh_opts, TEMP_RAILS_APP_PATH.to_s + "-ts", install_cmd)
+
+            package_json_path = File.join(TEMP_RAILS_APP_PATH.to_s + "-ts", "package.json")
+            package_json = JSON.parse(File.read(package_json_path))
+            package_json["dependencies"]["shakapacker"] = "file:#{GEM_ROOT}"
+            File.write(package_json_path, JSON.pretty_generate(package_json))
+            sh_in_dir(sh_opts, TEMP_RAILS_APP_PATH.to_s + "-ts", "npm install")
+          end
+        end
+
+        after :all do
+          Dir.chdir(SPEC_PATH)
+          FileUtils.rm_rf(TEMP_RAILS_APP_PATH.to_s + "-ts")
+        end
+
+        it "creates TypeScript webpack config when SHAKAPACKER_USE_TYPESCRIPT is set" do
+          expected_files = [
+            "webpack.config.ts"
+          ]
+
+          Dir.chdir(Pathname.new(File.join(TEMP_RAILS_APP_PATH.to_s + "-ts", "config/webpack"))) do
+            existing_files_in_config_webpack_dir = Dir.glob("*")
+            expect(existing_files_in_config_webpack_dir).to eq expected_files
+          end
+        end
+
+        it "TypeScript config has correct content" do
+          config_path = Pathname.new(File.join(TEMP_RAILS_APP_PATH.to_s + "-ts", "config/webpack/webpack.config.ts"))
+          content = File.read(config_path)
+
+          expect(content).to include("import { generateWebpackConfig } from 'shakapacker'")
+          expect(content).to include("import type { Configuration } from 'webpack'")
+          expect(content).to include("export default webpackConfig")
         end
       end
     end
