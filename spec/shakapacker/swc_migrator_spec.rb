@@ -75,14 +75,13 @@ describe Shakapacker::SwcMigrator do
         expect(package_json["devDependencies"]["swc-loader"]).to eq("^0.2.6")
       end
 
-      it "creates .swcrc file" do
+      it "creates config/swc.config.js file" do
         migrator.migrate_to_swc(run_installer: false)
 
-        expect(root_path.join(".swcrc")).to exist
-        swcrc = JSON.parse(File.read(root_path.join(".swcrc")))
-        expect(swcrc["jsc"]["parser"]["jsx"]).to eq(true)
-        expect(swcrc["jsc"]["transform"]["react"]["runtime"]).to eq("automatic")
-        expect(swcrc["module"]["type"]).to eq("es6")
+        expect(root_path.join("config/swc.config.js")).to exist
+        config_content = File.read(root_path.join("config/swc.config.js"))
+        expect(config_content).to include("module.exports")
+        expect(config_content).to include('runtime: "automatic"')
       end
 
       it "returns results hash" do
@@ -90,7 +89,7 @@ describe Shakapacker::SwcMigrator do
 
         expect(results[:config_updated]).to eq(true)
         expect(results[:packages_installed]).to include("@swc/core" => "^1.7.39")
-        expect(results[:swcrc_created]).to eq(true)
+        expect(results[:swc_config_created]).to eq(true)
         expect(results[:babel_packages_found]).to include("@babel/runtime", "@babel/core", "babel-loader")
       end
 
@@ -111,23 +110,23 @@ describe Shakapacker::SwcMigrator do
       end
     end
 
-    context "when .swcrc already exists" do
+    context "when config/swc.config.js already exists" do
       before do
         FileUtils.mkdir_p(root_path.join("config"))
-        File.write(root_path.join(".swcrc"), "{}")
+        File.write(root_path.join("config/swc.config.js"), "module.exports = {}")
         File.write(root_path.join("package.json"), "{}")
         File.write(root_path.join("config/shakapacker.yml"), "default: {}")
       end
 
-      it "does not overwrite existing .swcrc" do
-        existing_content = File.read(root_path.join(".swcrc"))
+      it "does not overwrite existing config/swc.config.js" do
+        existing_content = File.read(root_path.join("config/swc.config.js"))
         migrator.migrate_to_swc(run_installer: false)
-        expect(File.read(root_path.join(".swcrc"))).to eq(existing_content)
+        expect(File.read(root_path.join("config/swc.config.js"))).to eq(existing_content)
       end
 
-      it "returns swcrc_created as false" do
+      it "returns swc_config_created as false" do
         results = migrator.migrate_to_swc(run_installer: false)
-        expect(results[:swcrc_created]).to eq(false)
+        expect(results[:swc_config_created]).to eq(false)
       end
     end
 
@@ -206,11 +205,21 @@ describe Shakapacker::SwcMigrator do
         File.write(root_path.join(".eslintrc.js"), 'module.exports = { parser: "@babel/eslint-parser" }')
       end
 
-      it "warns about ESLint using Babel" do
+      it "warns about ESLint using Babel and preserves packages" do
+        result = migrator.clean_babel_packages(run_installer: false)
+
+        expect(logger).to have_received(:info).with(/ESLint configuration detected that uses Babel parser/)
+        expect(logger).to have_received(:info).with(/Preserving @babel\/core and @babel\/eslint-parser/)
+        expect(result[:preserved_packages]).to include("@babel/core", "@babel/eslint-parser")
+      end
+
+      it "preserves @babel/core and @babel/eslint-parser" do
         migrator.clean_babel_packages(run_installer: false)
 
-        expect(logger).to have_received(:info).with(/WARNING: ESLint configuration detected/)
-        expect(logger).to have_received(:info).with(/switch to @typescript-eslint\/parser/)
+        package_json = JSON.parse(File.read(root_path.join("package.json")))
+        expect(package_json["devDependencies"]["@babel/core"]).to eq("^7.20.0")
+        expect(package_json["devDependencies"]["@babel/eslint-parser"]).to eq("^7.20.0")
+        expect(package_json["devDependencies"]["babel-loader"]).to be_nil
       end
     end
 
@@ -229,11 +238,12 @@ describe Shakapacker::SwcMigrator do
         }))
       end
 
-      it "warns about ESLint using Babel in package.json" do
-        migrator.clean_babel_packages(run_installer: false)
+      it "warns about ESLint using Babel in package.json and preserves packages" do
+        result = migrator.clean_babel_packages(run_installer: false)
 
-        expect(logger).to have_received(:info).with(/WARNING: ESLint configuration detected/)
-        expect(logger).to have_received(:info).with(/switch to @typescript-eslint\/parser/)
+        expect(logger).to have_received(:info).with(/ESLint configuration detected that uses Babel parser/)
+        expect(logger).to have_received(:info).with(/Preserving @babel\/core and @babel\/eslint-parser/)
+        expect(result[:preserved_packages]).to include("@babel/core", "@babel/eslint-parser")
       end
     end
 
@@ -267,11 +277,11 @@ describe Shakapacker::SwcMigrator do
         expect(package_json["dependencies"]["other-package"]).to eq("^1.0.0")
       end
 
-      it "removes babel packages from devDependencies" do
+      it "removes babel packages from devDependencies (but not @babel/core or @babel/eslint-parser)" do
         result = migrator.clean_babel_packages(run_installer: false)
 
         package_json = JSON.parse(File.read(root_path.join("package.json")))
-        expect(package_json["devDependencies"]["@babel/core"]).to be_nil
+        # @babel/core is NOT in BABEL_PACKAGES anymore, so it won't be removed unless ESLint doesn't use it
         expect(package_json["devDependencies"]["babel-loader"]).to be_nil
         expect(package_json["devDependencies"]["webpack"]).to eq("^5.0.0")
       end
@@ -288,11 +298,12 @@ describe Shakapacker::SwcMigrator do
 
         expect(result[:removed_packages]).to include(
           "@babel/runtime",
-          "@babel/core",
           "@babel/preset-env",
           "@babel/preset-react",
           "babel-loader"
         )
+        # @babel/core is no longer in BABEL_PACKAGES, so it won't be in removed_packages
+        expect(result[:removed_packages]).not_to include("@babel/core")
         expect(result[:config_files_deleted]).to include(".babelrc", "babel.config.js")
       end
     end
@@ -399,10 +410,18 @@ describe Shakapacker::SwcMigrator do
   describe "constants" do
     it "includes common babel packages" do
       expect(described_class::BABEL_PACKAGES).to include(
-        "@babel/core",
         "@babel/preset-env",
         "@babel/preset-react",
         "babel-loader"
+      )
+      # @babel/core is now in ESLINT_BABEL_PACKAGES
+      expect(described_class::BABEL_PACKAGES).not_to include("@babel/core")
+    end
+
+    it "defines ESLint-related Babel packages separately" do
+      expect(described_class::ESLINT_BABEL_PACKAGES).to include(
+        "@babel/core",
+        "@babel/eslint-parser"
       )
     end
 
@@ -414,10 +433,10 @@ describe Shakapacker::SwcMigrator do
     end
 
     it "defines default SWC configuration" do
-      config = described_class::DEFAULT_SWCRC_CONFIG
-      expect(config["jsc"]["parser"]["jsx"]).to eq(true)
-      expect(config["jsc"]["target"]).to be_nil
-      expect(config["module"]["type"]).to eq("es6")
+      config = described_class::DEFAULT_SWC_CONFIG
+      expect(config).to include("module.exports")
+      expect(config).to include('runtime: "automatic"')
+      expect(config).not_to include("jsc.target")
     end
   end
 
@@ -445,7 +464,7 @@ describe Shakapacker::SwcMigrator do
 
       results = migrator.migrate_to_swc(run_installer: false)
       expect(results[:config_updated]).to eq(false)
-      expect(results[:swcrc_created]).to eq(true)
+      expect(results[:swc_config_created]).to eq(true)
     end
 
     it "logs errors but doesn't raise exceptions" do
@@ -455,7 +474,7 @@ describe Shakapacker::SwcMigrator do
 
       # Stub only the specific write operation
       allow(File).to receive(:write).and_call_original
-      allow(File).to receive(:write).with(root_path.join(".swcrc"), anything).and_raise(Errno::EACCES)
+      allow(File).to receive(:write).with(root_path.join("config/swc.config.js"), anything).and_raise(Errno::EACCES)
 
       expect { migrator.migrate_to_swc(run_installer: false) }.not_to raise_error
       expect(logger).to have_received(:error).at_least(:once)

@@ -442,18 +442,17 @@ module Shakapacker
 
       def check_swc_config_conflicts
         swcrc_path = root_path.join(".swcrc")
-        return unless swcrc_path.exist?
+        swc_config_path = root_path.join("config/swc.config.js")
 
-        begin
-          swcrc = JSON.parse(File.read(swcrc_path))
-          # Check for conflicting jsc.target and env settings
-          if swcrc.dig("jsc", "target") && swcrc["env"]
-            @issues << "SWC configuration conflict: .swcrc contains both 'jsc.target' and 'env' settings, which are mutually exclusive. Remove 'jsc.target' from .swcrc"
-          elsif swcrc.dig("jsc", "target")
-            @warnings << "SWC configuration: .swcrc contains 'jsc.target' which may conflict with the loader's 'env' setting. Consider removing 'jsc.target' from .swcrc to avoid build errors"
-          end
-        rescue JSON::ParserError
-          @warnings << "SWC configuration: .swcrc exists but contains invalid JSON"
+        if swcrc_path.exist?
+          @warnings << "SWC configuration: .swcrc file detected. This file completely overrides Shakapacker's default SWC settings and may cause build failures. " \
+                      "Please migrate to config/swc.config.js which properly merges with Shakapacker defaults. " \
+                      "To migrate: Move your custom settings from .swcrc to config/swc.config.js (see docs for format). " \
+                      "See: https://github.com/shakacode/shakapacker/blob/main/docs/using_swc_loader.md"
+        end
+
+        if swc_config_path.exist?
+          @info << "SWC configuration: Using config/swc.config.js (recommended). This config is merged with Shakapacker's defaults."
         end
       end
 

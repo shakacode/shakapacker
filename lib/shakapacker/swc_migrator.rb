@@ -8,8 +8,9 @@ module Shakapacker
   class SwcMigrator
     attr_reader :root_path, :logger
 
+    # Babel packages safe to remove when migrating to SWC
+    # Note: @babel/core and @babel/eslint-parser are excluded as they may be needed for ESLint
     BABEL_PACKAGES = [
-      "@babel/core",
       "@babel/plugin-proposal-class-properties",
       "@babel/plugin-proposal-object-rest-spread",
       "@babel/plugin-syntax-dynamic-import",
@@ -23,6 +24,12 @@ module Shakapacker
       "babel-loader",
       "babel-plugin-macros",
       "babel-plugin-transform-react-remove-prop-types"
+    ].freeze
+
+    # Babel packages that may be needed for ESLint - only remove if user explicitly confirms
+    ESLINT_BABEL_PACKAGES = [
+      "@babel/core",
+      "@babel/eslint-parser"
     ].freeze
 
     SWC_PACKAGES = {
@@ -39,23 +46,21 @@ module Shakapacker
       .eslintrc.json
     ].freeze
 
-    DEFAULT_SWCRC_CONFIG = {
-      "jsc" => {
-        "parser" => {
-          "syntax" => "ecmascript",
-          "jsx" => true,
-          "dynamicImport" => true
-        },
-        "transform" => {
-          "react" => {
-            "runtime" => "automatic"
+    DEFAULT_SWC_CONFIG = <<~JS.freeze
+      // config/swc.config.js
+      // This file is merged with Shakapacker's default SWC configuration
+      // See: https://swc.rs/docs/configuration/compilation
+
+      module.exports = {
+        jsc: {
+          transform: {
+            react: {
+              runtime: "automatic"
+            }
           }
         }
-      },
-      "module" => {
-        "type" => "es6"
       }
-    }.freeze
+    JS
 
     def initialize(root_path, logger: nil)
       @root_path = Pathname.new(root_path)
@@ -68,7 +73,7 @@ module Shakapacker
       results = {
         config_updated: update_shakapacker_config,
         packages_installed: install_swc_packages,
-        swcrc_created: create_swcrc,
+        swc_config_created: create_swc_config,
         babel_packages_found: find_babel_packages
       }
 
@@ -76,9 +81,9 @@ module Shakapacker
       logger.info "   Note: SWC is approximately 20x faster than Babel for transpilation."
       logger.info "   Please test your application thoroughly after migration."
       logger.info "\n📝 Configuration Info:"
-      logger.info "   - .swcrc provides base configuration for all environments"
-      logger.info "   - The SWC loader adds automatic environment targeting (via 'env' setting)"
-      logger.info "   - You can customize .swcrc, but avoid setting 'jsc.target' as it conflicts with 'env'"
+      logger.info "   - config/swc.config.js is merged with Shakapacker's default SWC configuration"
+      logger.info "   - You can customize config/swc.config.js to add additional options"
+      logger.info "   - Avoid using .swcrc as it overrides Shakapacker defaults completely"
 
       # Show cleanup recommendations if babel packages found
       if results[:babel_packages_found].any?
@@ -108,20 +113,21 @@ module Shakapacker
       package_json_path = root_path.join("package.json")
       unless package_json_path.exist?
         logger.error "❌ No package.json found"
-        return { removed_packages: [], config_files_deleted: [] }
+        return { removed_packages: [], config_files_deleted: [], preserved_packages: [] }
       end
 
       # Check if ESLint uses Babel parser
+      preserved_for_eslint = []
       if eslint_uses_babel?
-        logger.info "\n⚠️  WARNING: ESLint configuration detected that may use Babel"
-        logger.info "   If you use @babel/eslint-parser or babel-eslint, you may need to:"
-        logger.info "   1. Keep @babel/core and related Babel packages for ESLint"
-        logger.info "   2. Or switch to @typescript-eslint/parser for TypeScript files"
-        logger.info "   3. Or use espree (ESLint's default parser) for JavaScript files"
-        logger.info "\n   Proceeding with Babel package removal. Check your ESLint config after."
+        logger.info "\n⚠️  ESLint configuration detected that uses Babel parser"
+        logger.info "   Preserving @babel/core and @babel/eslint-parser for ESLint compatibility"
+        logger.info "   To switch ESLint parser:"
+        logger.info "   1. For TypeScript: use @typescript-eslint/parser"
+        logger.info "   2. For JavaScript: use espree (ESLint's default parser)"
+        preserved_for_eslint = ESLINT_BABEL_PACKAGES
       end
 
-      removed_packages = remove_babel_from_package_json(package_json_path)
+      removed_packages = remove_babel_from_package_json(package_json_path, preserve: preserved_for_eslint)
       deleted_files = delete_babel_config_files
 
       if removed_packages.any?
@@ -131,7 +137,7 @@ module Shakapacker
         logger.info "ℹ️  No Babel packages found to remove"
       end
 
-      { removed_packages: removed_packages, config_files_deleted: deleted_files }
+      { removed_packages: removed_packages, config_files_deleted: deleted_files, preserved_packages: preserved_for_eslint }
     end
 
     def find_babel_packages
@@ -144,7 +150,9 @@ module Shakapacker
         dev_dependencies = package_json["devDependencies"] || {}
         all_deps = dependencies.merge(dev_dependencies)
 
-        found_packages = BABEL_PACKAGES.select { |pkg| all_deps.key?(pkg) }
+        # Find all babel packages (including ESLint-related ones for display)
+        all_babel_packages = BABEL_PACKAGES + ESLINT_BABEL_PACKAGES
+        found_packages = all_babel_packages.select { |pkg| all_deps.key?(pkg) }
         found_packages
       rescue JSON::ParserError => e
         logger.error "Failed to parse package.json: #{e.message}"
@@ -174,6 +182,11 @@ module Shakapacker
           begin
             package_json = JSON.parse(File.read(package_json_path))
             if package_json["eslintConfig"]
+              # Check parser field explicitly
+              parser = package_json["eslintConfig"]["parser"]
+              return true if parser && parser.match?(/@babel\/eslint-parser|babel-eslint/)
+
+              # Also check entire config for babel parser references (catches nested configs)
               return true if package_json["eslintConfig"].to_json.match?(/@babel\/eslint-parser|babel-eslint/)
             end
 
@@ -254,29 +267,35 @@ module Shakapacker
         {}
       end
 
-      def create_swcrc
-        swcrc_path = root_path.join(".swcrc")
-        if swcrc_path.exist?
-          logger.info "ℹ️  .swcrc already exists"
+      def create_swc_config
+        config_dir = root_path.join("config")
+        swc_config_path = config_dir.join("swc.config.js")
+
+        if swc_config_path.exist?
+          logger.info "ℹ️  config/swc.config.js already exists"
           return false
         end
 
-        logger.info "📄 Creating .swcrc configuration..."
-        File.write(swcrc_path, JSON.pretty_generate(DEFAULT_SWCRC_CONFIG) + "\n")
-        logger.info "✅ .swcrc created"
+        FileUtils.mkdir_p(config_dir) unless config_dir.exist?
+
+        logger.info "📄 Creating config/swc.config.js..."
+        File.write(swc_config_path, DEFAULT_SWC_CONFIG)
+        logger.info "✅ config/swc.config.js created"
         true
       rescue StandardError => e
-        logger.error "Failed to create .swcrc: #{e.message}"
+        logger.error "Failed to create config/swc.config.js: #{e.message}"
         false
       end
 
-      def remove_babel_from_package_json(package_json_path)
+      def remove_babel_from_package_json(package_json_path, preserve: [])
         package_json = JSON.parse(File.read(package_json_path))
         dependencies = package_json["dependencies"] || {}
         dev_dependencies = package_json["devDependencies"] || {}
         removed_packages = []
 
         BABEL_PACKAGES.each do |package|
+          next if preserve.include?(package)
+
           if dependencies.delete(package)
             removed_packages << package
             logger.info "  - Removed #{package} from dependencies"
@@ -284,6 +303,13 @@ module Shakapacker
           if dev_dependencies.delete(package)
             removed_packages << package
             logger.info "  - Removed #{package} from devDependencies"
+          end
+        end
+
+        # Log preserved packages
+        preserve.each do |package|
+          if dependencies[package] || dev_dependencies[package]
+            logger.info "  - Preserved #{package} (needed for ESLint)"
           end
         end
 
