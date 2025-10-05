@@ -447,6 +447,7 @@ module Shakapacker
         if swcrc_path.exist?
           @warnings << "SWC configuration: .swcrc file detected. This file completely overrides Shakapacker's default SWC settings and may cause build failures. " \
                       "Please migrate to config/swc.config.js which properly merges with Shakapacker defaults. " \
+                      "To migrate: Move your custom settings from .swcrc to config/swc.config.js (see docs for format). " \
                       "See: https://github.com/shakacode/shakapacker/blob/main/docs/using_swc_loader.md"
         end
 

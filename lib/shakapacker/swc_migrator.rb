@@ -182,6 +182,11 @@ module Shakapacker
           begin
             package_json = JSON.parse(File.read(package_json_path))
             if package_json["eslintConfig"]
+              # Check parser field explicitly
+              parser = package_json["eslintConfig"]["parser"]
+              return true if parser && parser.match?(/@babel\/eslint-parser|babel-eslint/)
+
+              # Also check entire config for babel parser references (catches nested configs)
               return true if package_json["eslintConfig"].to_json.match?(/@babel\/eslint-parser|babel-eslint/)
             end
 
