@@ -22,10 +22,10 @@ Set the transpiler in your `config/shakapacker.yml`:
 default: &default
   # For webpack users (babel is default, no change needed)
   javascript_transpiler: babel
-  
+
   # To opt-in to SWC for better performance
   javascript_transpiler: swc
-  
+
   # For rspack users (swc is default, no change needed)
   assets_bundler: rspack
   javascript_transpiler: swc
@@ -53,29 +53,25 @@ default: &default
 
 #### 3. Create SWC configuration (optional)
 
-If you need custom transpilation settings, create `.swcrc`:
+If you need custom transpilation settings, create `config/swc.config.js`:
 
-```json
-{
-  "$schema": "https://json.schemastore.org/swcrc",
-  "jsc": {
-    "parser": {
-      "syntax": "ecmascript",
-      "jsx": true,
-      "dynamicImport": true
-    },
-    "transform": {
-      "react": {
-        "runtime": "automatic"
+```javascript
+// config/swc.config.js
+// This file is merged with Shakapacker's default SWC configuration
+// See: https://swc.rs/docs/configuration/compilation
+
+module.exports = {
+  jsc: {
+    transform: {
+      react: {
+        runtime: "automatic"
       }
-    },
-    "target": "es2015"
-  },
-  "module": {
-    "type": "es6"
+    }
   }
 }
 ```
+
+**Important:** Use `config/swc.config.js` instead of `.swcrc`. The `.swcrc` file completely overrides Shakapacker's default SWC settings and can cause build failures. `config/swc.config.js` properly merges with Shakapacker's defaults.
 
 #### 4. Update React configuration (if using React)
 
@@ -93,11 +89,11 @@ yarn add --dev @rspack/plugin-react-refresh
 
 Typical build time improvements when migrating from Babel to SWC:
 
-| Project Size | Babel | SWC | Improvement |
-|-------------|-------|-----|-------------|
-| Small (<100 files) | 5s | 1s | 5x faster |
-| Medium (100-500 files) | 20s | 3s | 6.7x faster |
-| Large (500+ files) | 60s | 8s | 7.5x faster |
+| Project Size           | Babel | SWC | Improvement |
+| ---------------------- | ----- | --- | ----------- |
+| Small (<100 files)     | 5s    | 1s  | 5x faster   |
+| Medium (100-500 files) | 20s   | 3s  | 6.7x faster |
+| Large (500+ files)     | 60s   | 8s  | 7.5x faster |
 
 ### Compatibility Notes
 
@@ -125,7 +121,7 @@ If you encounter issues, rolling back is simple:
 ```yaml
 # config/shakapacker.yml
 default: &default
-  javascript_transpiler: babel  # Revert to babel
+  javascript_transpiler: babel # Revert to babel
 ```
 
 Then rebuild your application:
@@ -165,20 +161,21 @@ yarn add --dev @swc/core swc-loader
 # Webpack
 yarn add --dev @pmmmwh/react-refresh-webpack-plugin
 
-# Rspack  
+# Rspack
 yarn add --dev @rspack/plugin-react-refresh
 ```
 
 ### Issue: Decorators not working
 
-**Solution**: Enable decorator support in `.swcrc`:
+**Solution**: Enable decorator support in `config/swc.config.js`:
 
-```json
-{
-  "jsc": {
-    "parser": {
-      "decorators": true,
-      "decoratorsBeforeExport": true
+```javascript
+// config/swc.config.js
+module.exports = {
+  jsc: {
+    parser: {
+      decorators: true,
+      decoratorsBeforeExport: true
     }
   }
 }

@@ -854,7 +854,7 @@ describe Shakapacker::Doctor do
         end
       end
 
-      context "with SWC config containing jsc.target" do
+      context "with .swcrc file (deprecated)" do
         before do
           package_json = {
             "devDependencies" => {
@@ -873,13 +873,13 @@ describe Shakapacker::Doctor do
           }))
         end
 
-        it "warns about potential config conflict" do
+        it "warns about .swcrc anti-pattern" do
           doctor.send(:check_javascript_transpiler_dependencies)
-          expect(doctor.warnings).to include(match(/SWC configuration.*jsc\.target.*may conflict/))
+          expect(doctor.warnings).to include(match(/\.swcrc file detected.*overrides Shakapacker's default.*migrate to config\/swc\.config\.js/))
         end
       end
 
-      context "with SWC config containing both jsc.target and env" do
+      context "with config/swc.config.js file (recommended)" do
         before do
           package_json = {
             "devDependencies" => {
@@ -888,19 +888,13 @@ describe Shakapacker::Doctor do
             }
           }
           File.write(package_json_path, JSON.generate(package_json))
-          File.write(root_path.join(".swcrc"), JSON.generate({
-            "jsc" => {
-              "target" => "es2015"
-            },
-            "env" => {
-              "targets" => "defaults"
-            }
-          }))
+          FileUtils.mkdir_p(root_path.join("config"))
+          File.write(root_path.join("config/swc.config.js"), "module.exports = {}")
         end
 
-        it "reports a configuration error" do
+        it "shows info about using recommended config" do
           doctor.send(:check_javascript_transpiler_dependencies)
-          expect(doctor.issues).to include(match(/SWC configuration conflict.*both 'jsc\.target' and 'env'/))
+          expect(doctor.info).to include(match(/Using config\/swc\.config\.js \(recommended\)/))
         end
       end
     end
