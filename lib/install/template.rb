@@ -40,8 +40,24 @@ if @transpiler_to_install == "babel" && !ENV["JAVASCRIPT_TRANSPILER"]
   say "   📝 Updated config/shakapacker.yml to use Babel transpiler", :green
 end
 
-say "Copying webpack core config"
-directory "#{install_dir}/config/webpack", "config/webpack", force_option
+# Detect TypeScript usage
+# Auto-detect from tsconfig.json or explicit via SHAKAPACKER_USE_TYPESCRIPT env var
+@use_typescript = File.exist?(Rails.root.join("tsconfig.json")) ||
+  ENV["SHAKAPACKER_USE_TYPESCRIPT"] == "true"
+assets_bundler = ENV["SHAKAPACKER_ASSETS_BUNDLER"] || "webpack"
+config_extension = @use_typescript ? "ts" : "js"
+
+say "Copying #{assets_bundler} core config (#{config_extension.upcase})"
+config_file = "#{assets_bundler}.config.#{config_extension}"
+source_config = "#{install_dir}/config/#{assets_bundler}/#{config_file}"
+dest_config = "config/#{assets_bundler}/#{config_file}"
+
+empty_directory "config/#{assets_bundler}"
+copy_file source_config, dest_config, force_option
+
+if @use_typescript
+  say "   ✨ Using TypeScript config for enhanced type safety", :green
+end
 
 if Dir.exist?(Shakapacker.config.source_path)
   say "The packs app source directory already exists"
@@ -195,7 +211,7 @@ Dir.chdir(Rails.root) do
   end
 
   # Inline fetch_peer_dependencies and fetch_common_dependencies
-  peers = PackageJson.read(install_dir).fetch(ENV["SHAKAPACKER_BUNDLER"] || "webpack")
+  peers = PackageJson.read(install_dir).fetch(ENV["SHAKAPACKER_ASSETS_BUNDLER"] || "webpack")
   common_deps = ENV["SKIP_COMMON_LOADERS"] ? {} : PackageJson.read(install_dir).fetch("common")
   peers = peers.merge(common_deps)
 

@@ -125,7 +125,7 @@ describe "Generator" do
           expect(package_json.fetch("packageManager", "")).to match(/#{manager_name}@\d+\.\d+\.\d+/)
         end
 
-        it "creates webpack config directory and its files" do
+        it "creates webpack config directory and files (defaults to JS)" do
           expected_files = [
             "webpack.config.js"
           ]
@@ -237,6 +237,148 @@ describe "Generator" do
               sh_in_dir(sh_opts, TEMP_RAILS_APP_PATH, "APP_ROOT=#{TEMP_RAILS_APP_PATH} NODE_ENV=test RAILS_ENV=test bin/shakapacker")
               expect(sh_in_dir(sh_opts, TEMP_RAILS_APP_PATH, "bundle exec rspec")).to be_truthy
             end
+          end
+        end
+      end
+
+      context "when using TypeScript config (typescript argument)" do
+        before :all do
+          sh_opts = { fallback_manager: "npm" }
+
+          sh_in_dir(sh_opts, SPEC_PATH, "cp -r '#{BASE_RAILS_APP_PATH}' '#{TEMP_RAILS_APP_PATH}-ts'")
+
+          Bundler.with_unbundled_env do
+            npm_package_env = ENV["SHAKAPACKER_NPM_PACKAGE"] ? "SHAKAPACKER_NPM_PACKAGE='#{ENV["SHAKAPACKER_NPM_PACKAGE"]}' " : ""
+            install_cmd = "#{npm_package_env}USE_BABEL_PACKAGES=true FORCE=true " \
+                          "bundle exec rails shakapacker:install[webpack,typescript]"
+            sh_in_dir(sh_opts, TEMP_RAILS_APP_PATH.to_s + "-ts", install_cmd)
+
+            package_json_path = File.join(TEMP_RAILS_APP_PATH.to_s + "-ts", "package.json")
+            package_json = JSON.parse(File.read(package_json_path))
+            package_json["dependencies"]["shakapacker"] = "file:#{GEM_ROOT}"
+            File.write(package_json_path, JSON.pretty_generate(package_json))
+            sh_in_dir(sh_opts, TEMP_RAILS_APP_PATH.to_s + "-ts", "npm install")
+          end
+        end
+
+        after :all do
+          Dir.chdir(SPEC_PATH)
+          FileUtils.rm_rf(TEMP_RAILS_APP_PATH.to_s + "-ts")
+        end
+
+        it "creates TypeScript webpack config when typescript argument is passed" do
+          expected_files = [
+            "webpack.config.ts"
+          ]
+
+          Dir.chdir(Pathname.new(File.join(TEMP_RAILS_APP_PATH.to_s + "-ts", "config/webpack"))) do
+            existing_files_in_config_webpack_dir = Dir.glob("*")
+            expect(existing_files_in_config_webpack_dir).to eq expected_files
+          end
+        end
+
+        it "TypeScript config has correct content" do
+          config_path = Pathname.new(File.join(TEMP_RAILS_APP_PATH.to_s + "-ts", "config/webpack/webpack.config.ts"))
+          content = File.read(config_path)
+
+          expect(content).to include("import { generateWebpackConfig } from 'shakapacker'")
+          expect(content).to include("import type { Configuration } from 'webpack'")
+          expect(content).to include("export default webpackConfig")
+        end
+
+        it "TypeScript config ends with newline" do
+          config_path = Pathname.new(File.join(TEMP_RAILS_APP_PATH.to_s + "-ts", "config/webpack/webpack.config.ts"))
+          content = File.read(config_path)
+
+          expect(content).to end_with("\n")
+        end
+      end
+
+      context "when using TypeScript with rspack" do
+        before :all do
+          sh_opts = { fallback_manager: "npm" }
+
+          sh_in_dir(sh_opts, SPEC_PATH, "cp -r '#{BASE_RAILS_APP_PATH}' '#{TEMP_RAILS_APP_PATH}-rspack-ts'")
+
+          Bundler.with_unbundled_env do
+            npm_package_env = ENV["SHAKAPACKER_NPM_PACKAGE"] ? "SHAKAPACKER_NPM_PACKAGE='#{ENV["SHAKAPACKER_NPM_PACKAGE"]}' " : ""
+            install_cmd = "#{npm_package_env}USE_BABEL_PACKAGES=true FORCE=true " \
+                          "bundle exec rails shakapacker:install[rspack,typescript]"
+            sh_in_dir(sh_opts, TEMP_RAILS_APP_PATH.to_s + "-rspack-ts", install_cmd)
+
+            package_json_path = File.join(TEMP_RAILS_APP_PATH.to_s + "-rspack-ts", "package.json")
+            package_json = JSON.parse(File.read(package_json_path))
+            package_json["dependencies"]["shakapacker"] = "file:#{GEM_ROOT}"
+            File.write(package_json_path, JSON.pretty_generate(package_json))
+            sh_in_dir(sh_opts, TEMP_RAILS_APP_PATH.to_s + "-rspack-ts", "npm install")
+          end
+        end
+
+        after :all do
+          Dir.chdir(SPEC_PATH)
+          FileUtils.rm_rf(TEMP_RAILS_APP_PATH.to_s + "-rspack-ts")
+        end
+
+        it "creates TypeScript rspack config" do
+          expected_files = [
+            "rspack.config.ts"
+          ]
+
+          Dir.chdir(Pathname.new(File.join(TEMP_RAILS_APP_PATH.to_s + "-rspack-ts", "config/rspack"))) do
+            existing_files = Dir.glob("*")
+            expect(existing_files).to eq expected_files
+          end
+        end
+
+        it "TypeScript rspack config has correct content" do
+          config_path = Pathname.new(File.join(TEMP_RAILS_APP_PATH.to_s + "-rspack-ts", "config/rspack/rspack.config.ts"))
+          content = File.read(config_path)
+
+          expect(content).to include("import { generateRspackConfig } from 'shakapacker/rspack'")
+          expect(content).to include("import type { RspackOptions } from '@rspack/core'")
+          expect(content).to include("export default rspackConfig")
+          expect(content).to end_with("\n")
+        end
+      end
+
+      context "when tsconfig.json exists (auto-detection)" do
+        before :all do
+          sh_opts = { fallback_manager: "npm" }
+
+          sh_in_dir(sh_opts, SPEC_PATH, "cp -r '#{BASE_RAILS_APP_PATH}' '#{TEMP_RAILS_APP_PATH}-tsconfig'")
+
+          # Create tsconfig.json to trigger auto-detection
+          tsconfig_path = File.join(TEMP_RAILS_APP_PATH.to_s + "-tsconfig", "tsconfig.json")
+          File.write(tsconfig_path, JSON.pretty_generate({ "compilerOptions" => { "target" => "es2015" } }))
+
+          Bundler.with_unbundled_env do
+            npm_package_env = ENV["SHAKAPACKER_NPM_PACKAGE"] ? "SHAKAPACKER_NPM_PACKAGE='#{ENV["SHAKAPACKER_NPM_PACKAGE"]}' " : ""
+            # Note: No typescript argument, should auto-detect from tsconfig.json
+            install_cmd = "#{npm_package_env}USE_BABEL_PACKAGES=true FORCE=true " \
+                          "bundle exec rails shakapacker:install"
+            sh_in_dir(sh_opts, TEMP_RAILS_APP_PATH.to_s + "-tsconfig", install_cmd)
+
+            package_json_path = File.join(TEMP_RAILS_APP_PATH.to_s + "-tsconfig", "package.json")
+            package_json = JSON.parse(File.read(package_json_path))
+            package_json["dependencies"]["shakapacker"] = "file:#{GEM_ROOT}"
+            File.write(package_json_path, JSON.pretty_generate(package_json))
+            sh_in_dir(sh_opts, TEMP_RAILS_APP_PATH.to_s + "-tsconfig", "npm install")
+          end
+        end
+
+        after :all do
+          Dir.chdir(SPEC_PATH)
+          FileUtils.rm_rf(TEMP_RAILS_APP_PATH.to_s + "-tsconfig")
+        end
+
+        it "auto-detects TypeScript and creates .ts config" do
+          expected_files = [
+            "webpack.config.ts"
+          ]
+
+          Dir.chdir(Pathname.new(File.join(TEMP_RAILS_APP_PATH.to_s + "-tsconfig", "config/webpack"))) do
+            existing_files = Dir.glob("*")
+            expect(existing_files).to eq expected_files
           end
         end
       end
