@@ -5,3 +5,4 @@ import type { Configuration } from 'webpack'
 const webpackConfig: Configuration = generateWebpackConfig()
 
 export default webpackConfig
+
