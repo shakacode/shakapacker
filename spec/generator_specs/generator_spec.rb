@@ -243,7 +243,7 @@ describe "Generator" do
 
       context "when using TypeScript config (typescript argument)" do
         before :all do
-          sh_opts = { fallback_manager: "npm_latest" }
+          sh_opts = { fallback_manager: "npm" }
 
           sh_in_dir(sh_opts, SPEC_PATH, "cp -r '#{BASE_RAILS_APP_PATH}' '#{TEMP_RAILS_APP_PATH}-ts'")
 
@@ -296,7 +296,7 @@ describe "Generator" do
 
       context "when using TypeScript with rspack" do
         before :all do
-          sh_opts = { fallback_manager: "npm_latest" }
+          sh_opts = { fallback_manager: "npm" }
 
           sh_in_dir(sh_opts, SPEC_PATH, "cp -r '#{BASE_RAILS_APP_PATH}' '#{TEMP_RAILS_APP_PATH}-rspack-ts'")
 
@@ -343,7 +343,7 @@ describe "Generator" do
 
       context "when tsconfig.json exists (auto-detection)" do
         before :all do
-          sh_opts = { fallback_manager: "npm_latest" }
+          sh_opts = { fallback_manager: "npm" }
 
           sh_in_dir(sh_opts, SPEC_PATH, "cp -r '#{BASE_RAILS_APP_PATH}' '#{TEMP_RAILS_APP_PATH}-tsconfig'")
 
