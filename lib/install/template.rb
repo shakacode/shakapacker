@@ -40,14 +40,10 @@ if @transpiler_to_install == "babel" && !ENV["JAVASCRIPT_TRANSPILER"]
   say "   📝 Updated config/shakapacker.yml to use Babel transpiler", :green
 end
 
-# Helper method to detect TypeScript usage
-def use_typescript?
-  # Auto-detect from tsconfig.json or explicit via rake task argument
-  File.exist?(Rails.root.join("tsconfig.json")) ||
-    ENV["SHAKAPACKER_USE_TYPESCRIPT"] == "true"
-end
-
-@use_typescript = use_typescript?
+# Detect TypeScript usage
+# Auto-detect from tsconfig.json or explicit via SHAKAPACKER_USE_TYPESCRIPT env var
+@use_typescript = File.exist?(Rails.root.join("tsconfig.json")) ||
+  ENV["SHAKAPACKER_USE_TYPESCRIPT"] == "true"
 bundler = ENV["SHAKAPACKER_ASSETS_BUNDLER"] || "webpack"
 config_extension = @use_typescript ? "ts" : "js"
 

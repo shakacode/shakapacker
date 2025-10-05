@@ -11,7 +11,8 @@ namespace :shakapacker do
     end
 
     # Set typescript flag if passed as argument
-    if args[:typescript] == "typescript"
+    # Accepts: typescript, true, or any truthy value
+    if args[:typescript] && args[:typescript] != "false"
       ENV["SHAKAPACKER_USE_TYPESCRIPT"] = "true"
     end
 
