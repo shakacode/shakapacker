@@ -5,4 +5,3 @@ import type { RspackOptions } from '@rspack/core'
 const rspackConfig: RspackOptions = generateRspackConfig()
 
 export default rspackConfig
-

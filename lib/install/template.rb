@@ -48,7 +48,7 @@ def use_typescript?
 end
 
 @use_typescript = use_typescript?
-bundler = ENV["SHAKAPACKER_BUNDLER"] || "webpack"
+bundler = ENV["SHAKAPACKER_ASSETS_BUNDLER"] || "webpack"
 config_extension = @use_typescript ? "ts" : "js"
 
 say "Copying #{bundler} core config (#{config_extension.upcase})"
@@ -56,16 +56,11 @@ config_file = "#{bundler}.config.#{config_extension}"
 source_config = "#{install_dir}/config/#{bundler}/#{config_file}"
 dest_config = "config/#{bundler}/#{config_file}"
 
-if File.exist?(source_config)
-  empty_directory "config/#{bundler}"
-  copy_file source_config, dest_config, force_option
+empty_directory "config/#{bundler}"
+copy_file source_config, dest_config, force_option
 
-  if @use_typescript
-    say "   ✨ Using TypeScript config for enhanced type safety", :green
-  end
-else
-  say "Warning: #{config_file} template not found, falling back to JavaScript", :yellow
-  copy_file "#{install_dir}/config/#{bundler}/#{bundler}.config.js", "config/#{bundler}/#{bundler}.config.js", force_option
+if @use_typescript
+  say "   ✨ Using TypeScript config for enhanced type safety", :green
 end
 
 if Dir.exist?(Shakapacker.config.source_path)

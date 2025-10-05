@@ -125,7 +125,7 @@ describe "Generator" do
           expect(package_json.fetch("packageManager", "")).to match(/#{manager_name}@\d+\.\d+\.\d+/)
         end
 
-        it "creates webpack config directory and its files (JS by default)" do
+        it "creates webpack config directory and files (defaults to JS)" do
           expected_files = [
             "webpack.config.js"
           ]
@@ -249,8 +249,8 @@ describe "Generator" do
 
           Bundler.with_unbundled_env do
             npm_package_env = ENV["SHAKAPACKER_NPM_PACKAGE"] ? "SHAKAPACKER_NPM_PACKAGE='#{ENV["SHAKAPACKER_NPM_PACKAGE"]}' " : ""
-            install_cmd = "#{npm_package_env}SHAKAPACKER_ASSETS_BUNDLER=webpack " \
-                          "USE_BABEL_PACKAGES=true FORCE=true bundle exec rails shakapacker:install[webpack,typescript]"
+            install_cmd = "#{npm_package_env}USE_BABEL_PACKAGES=true FORCE=true " \
+                          "bundle exec rails shakapacker:install[webpack,typescript]"
             sh_in_dir(sh_opts, TEMP_RAILS_APP_PATH.to_s + "-ts", install_cmd)
 
             package_json_path = File.join(TEMP_RAILS_APP_PATH.to_s + "-ts", "package.json")
@@ -302,8 +302,8 @@ describe "Generator" do
 
           Bundler.with_unbundled_env do
             npm_package_env = ENV["SHAKAPACKER_NPM_PACKAGE"] ? "SHAKAPACKER_NPM_PACKAGE='#{ENV["SHAKAPACKER_NPM_PACKAGE"]}' " : ""
-            install_cmd = "#{npm_package_env}SHAKAPACKER_ASSETS_BUNDLER=rspack " \
-                          "USE_BABEL_PACKAGES=true FORCE=true bundle exec rails shakapacker:install[rspack,typescript]"
+            install_cmd = "#{npm_package_env}USE_BABEL_PACKAGES=true FORCE=true " \
+                          "bundle exec rails shakapacker:install[rspack,typescript]"
             sh_in_dir(sh_opts, TEMP_RAILS_APP_PATH.to_s + "-rspack-ts", install_cmd)
 
             package_json_path = File.join(TEMP_RAILS_APP_PATH.to_s + "-rspack-ts", "package.json")
@@ -354,8 +354,8 @@ describe "Generator" do
           Bundler.with_unbundled_env do
             npm_package_env = ENV["SHAKAPACKER_NPM_PACKAGE"] ? "SHAKAPACKER_NPM_PACKAGE='#{ENV["SHAKAPACKER_NPM_PACKAGE"]}' " : ""
             # Note: No typescript argument, should auto-detect from tsconfig.json
-            install_cmd = "#{npm_package_env}SHAKAPACKER_ASSETS_BUNDLER=webpack " \
-                          "USE_BABEL_PACKAGES=true FORCE=true bundle exec rails shakapacker:install"
+            install_cmd = "#{npm_package_env}USE_BABEL_PACKAGES=true FORCE=true " \
+                          "bundle exec rails shakapacker:install"
             sh_in_dir(sh_opts, TEMP_RAILS_APP_PATH.to_s + "-tsconfig", install_cmd)
 
             package_json_path = File.join(TEMP_RAILS_APP_PATH.to_s + "-tsconfig", "package.json")
