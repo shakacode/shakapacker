@@ -241,7 +241,7 @@ describe "Generator" do
         end
       end
 
-      context "when using TypeScript config (SHAKAPACKER_USE_TYPESCRIPT=true)" do
+      context "when using TypeScript config (typescript argument)" do
         before :all do
           sh_opts = { fallback_manager: "npm_latest" }
 
@@ -249,8 +249,8 @@ describe "Generator" do
 
           Bundler.with_unbundled_env do
             npm_package_env = ENV["SHAKAPACKER_NPM_PACKAGE"] ? "SHAKAPACKER_NPM_PACKAGE='#{ENV["SHAKAPACKER_NPM_PACKAGE"]}' " : ""
-            install_cmd = "#{npm_package_env}SHAKAPACKER_USE_TYPESCRIPT=true SHAKAPACKER_ASSETS_BUNDLER=webpack " \
-                          "USE_BABEL_PACKAGES=true FORCE=true bundle exec rails shakapacker:install"
+            install_cmd = "#{npm_package_env}SHAKAPACKER_ASSETS_BUNDLER=webpack " \
+                          "USE_BABEL_PACKAGES=true FORCE=true bundle exec rails shakapacker:install[webpack,typescript]"
             sh_in_dir(sh_opts, TEMP_RAILS_APP_PATH.to_s + "-ts", install_cmd)
 
             package_json_path = File.join(TEMP_RAILS_APP_PATH.to_s + "-ts", "package.json")
@@ -266,7 +266,7 @@ describe "Generator" do
           FileUtils.rm_rf(TEMP_RAILS_APP_PATH.to_s + "-ts")
         end
 
-        it "creates TypeScript webpack config when SHAKAPACKER_USE_TYPESCRIPT is set" do
+        it "creates TypeScript webpack config when typescript argument is passed" do
           expected_files = [
             "webpack.config.ts"
           ]
