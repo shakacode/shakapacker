@@ -10,8 +10,8 @@ namespace :shakapacker do
       ENV["SHAKAPACKER_ASSETS_BUNDLER"] = "rspack"
     end
 
-    # Set typescript flag if passed as argument or via environment variable
-    if args[:typescript] == "typescript" || ENV["TYPESCRIPT"] == "true"
+    # Set typescript flag if passed as argument
+    if args[:typescript] == "typescript"
       ENV["SHAKAPACKER_USE_TYPESCRIPT"] = "true"
     end
 
