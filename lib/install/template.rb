@@ -44,15 +44,15 @@ end
 # Auto-detect from tsconfig.json or explicit via SHAKAPACKER_USE_TYPESCRIPT env var
 @use_typescript = File.exist?(Rails.root.join("tsconfig.json")) ||
   ENV["SHAKAPACKER_USE_TYPESCRIPT"] == "true"
-bundler = ENV["SHAKAPACKER_ASSETS_BUNDLER"] || "webpack"
+assets_bundler = ENV["SHAKAPACKER_ASSETS_BUNDLER"] || "webpack"
 config_extension = @use_typescript ? "ts" : "js"
 
-say "Copying #{bundler} core config (#{config_extension.upcase})"
-config_file = "#{bundler}.config.#{config_extension}"
-source_config = "#{install_dir}/config/#{bundler}/#{config_file}"
-dest_config = "config/#{bundler}/#{config_file}"
+say "Copying #{assets_bundler} core config (#{config_extension.upcase})"
+config_file = "#{assets_bundler}.config.#{config_extension}"
+source_config = "#{install_dir}/config/#{assets_bundler}/#{config_file}"
+dest_config = "config/#{assets_bundler}/#{config_file}"
 
-empty_directory "config/#{bundler}"
+empty_directory "config/#{assets_bundler}"
 copy_file source_config, dest_config, force_option
 
 if @use_typescript
