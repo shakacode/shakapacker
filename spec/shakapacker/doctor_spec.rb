@@ -32,7 +32,10 @@ describe Shakapacker::Doctor do
            assets_bundler: "webpack",
            data: config_data,
            nested_entries?: false,
-           ensure_consistent_versioning?: false)
+           ensure_consistent_versioning?: false,
+           integrity: config_data[:integrity]).tap do |c|
+      allow(c).to receive(:fetch) { |key| config_data[key] }
+    end
   end
 
   let(:doctor) { described_class.new(config, root_path) }
@@ -145,7 +148,7 @@ describe Shakapacker::Doctor do
 
     context "with invalid nested_entries configuration" do
       before do
-        allow(config).to receive(:data).and_return({ source_entry_path: "/" })
+        allow(config).to receive(:fetch).with(:source_entry_path).and_return("/")
         allow(config).to receive(:nested_entries?).and_return(true)
         allow(config).to receive(:source_path).and_return(source_path)
       end
@@ -312,11 +315,9 @@ describe Shakapacker::Doctor do
   describe "SRI dependency checks" do
     context "when SRI is enabled" do
       before do
-        allow(config).to receive(:data).and_return({
-          integrity: {
-            enabled: true,
-            hash_functions: ["sha384"]
-          }
+        allow(config).to receive(:integrity).and_return({
+          enabled: true,
+          hash_functions: ["sha384"]
         })
       end
 
@@ -333,11 +334,9 @@ describe Shakapacker::Doctor do
 
       context "with invalid hash functions" do
         before do
-          allow(config).to receive(:data).and_return({
-            integrity: {
-              enabled: true,
-              hash_functions: ["md5", "sha384"]
-            }
+          allow(config).to receive(:integrity).and_return({
+            enabled: true,
+            hash_functions: ["md5", "sha384"]
           })
         end
 
