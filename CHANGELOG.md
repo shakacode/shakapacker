@@ -11,11 +11,7 @@
 
 Changes since the last non-beta release.
 
-### Fixed
-
-- Fixed NODE_ENV defaulting to production breaking dev server ([Issue 631](https://github.com/shakacode/shakapacker/issues/631)). NODE_ENV now defaults to development unless RAILS_ENV is explicitly set to production. This ensures the dev server works out of the box without requiring NODE_ENV to be set, and fixes incorrect port and 404 asset errors.
-
-## [v9.0.0-beta.8] - October 3, 2025
+## [v9.0.0] - October 5, 2025
 
 See the [v9 Upgrade Guide](https://github.com/shakacode/shakapacker/blob/main/docs/v9_upgrade.md) for detailed migration instructions.
 
@@ -38,7 +34,7 @@ See the [v9 Upgrade Guide](https://github.com/shakacode/shakapacker/blob/main/do
        javascript_transpiler: "babel"
        ```
 
-2. **CSS Modules now use named exports by default**
+2. **CSS Modules now use named exports by default** ([PR 599](https://github.com/shakacode/shakapacker/pull/599))
 
    - **JavaScript:** Use named imports: `import { className } from './styles.module.css'`
    - **TypeScript:** Use namespace imports: `import * as styles from './styles.module.css'`
@@ -50,19 +46,20 @@ See the [v9 Upgrade Guide](https://github.com/shakacode/shakapacker/blob/main/do
 
 ### Added
 
-- **Rspack support** as an alternative assets bundler to webpack
+- **Rspack support** as an alternative assets bundler to webpack ([PR 589](https://github.com/shakacode/shakapacker/pull/589), [PR 590](https://github.com/shakacode/shakapacker/pull/590))
   - Configure `assets_bundler: 'rspack'` in `shakapacker.yml`
   - Faster Rust-based bundling with webpack-compatible APIs
   - Built-in SWC loader and CSS extraction
   - Automatic bundler detection in `bin/shakapacker`
-- **TypeScript type definitions** for improved IDE support and autocomplete
+- **TypeScript type definitions** for improved IDE support and autocomplete ([PR 602](https://github.com/shakacode/shakapacker/pull/602))
   - Types available via `import type { WebpackConfig, RspackConfig, EnvironmentConfig } from "shakapacker/types"`
+  - Installer automatically creates TypeScript config files when `tsconfig.json` is detected ([PR 633](https://github.com/shakacode/shakapacker/pull/633))
   - See [TypeScript Documentation](./docs/typescript.md) for migration and usage instructions
-- **Optional peer dependencies** - All peer dependencies now marked as optional, preventing installation warnings while maintaining version compatibility tracking
+- **Optional peer dependencies** - All peer dependencies now marked as optional, preventing installation warnings while maintaining version compatibility tracking ([PR 603](https://github.com/shakacode/shakapacker/pull/603))
 - **Private output path** for server-side rendering bundles ([PR 592](https://github.com/shakacode/shakapacker/pull/592))
   - Configure `private_output_path` for private server bundles separate from public assets
-- **`rake shakapacker:doctor` diagnostic command** to check for configuration issues and missing dependencies
-- **`rake shakapacker:migrate:to_swc`** migration helper to assist with switching from Babel to SWC
+- **`rake shakapacker:doctor` diagnostic command** to check for configuration issues and missing dependencies ([PR 609](https://github.com/shakacode/shakapacker/pull/609))
+- **`rake shakapacker:migrate:to_swc`** migration helper to assist with switching from Babel to SWC ([PR 613](https://github.com/shakacode/shakapacker/pull/613), [PR 635](https://github.com/shakacode/shakapacker/pull/635))
 
 ### Security
 
@@ -75,6 +72,8 @@ See the [v9 Upgrade Guide](https://github.com/shakacode/shakapacker/blob/main/do
 
 ### Fixed
 
+- Fixed NODE_ENV defaulting to production breaking dev server ([PR 632](https://github.com/shakacode/shakapacker/pull/632)). NODE_ENV now defaults to development unless RAILS_ENV is explicitly set to production. This ensures the dev server works out of the box without requiring NODE_ENV to be set.
+- Fixed SWC migration to use `config/swc.config.js` instead of `.swcrc` ([PR 635](https://github.com/shakacode/shakapacker/pull/635)). The `.swcrc` file bypasses webpack-merge and overrides Shakapacker's defaults, while `config/swc.config.js` properly merges with defaults.
 - Fixed private_output_path configuration edge cases ([PR 604](https://github.com/shakacode/shakapacker/pull/604))
 - Updated webpack-dev-server to secure versions (^4.15.2 || ^5.2.2) ([PR 585](https://github.com/shakacode/shakapacker/pull/585))
 
@@ -569,8 +568,8 @@ Note: [Rubygem is 6.3.0.pre.rc.1](https://rubygems.org/gems/shakapacker/versions
 
 See [CHANGELOG.md in rails/webpacker (up to v5.4.3)](https://github.com/rails/webpacker/blob/master/CHANGELOG.md)
 
-[Unreleased]: https://github.com/shakacode/shakapacker/compare/v9.0.0-beta.8...main
-[v9.0.0-beta.8]: https://github.com/shakacode/shakapacker/compare/v8.4.0...v9.0.0-beta.8
+[Unreleased]: https://github.com/shakacode/shakapacker/compare/v9.0.0...main
+[v9.0.0]: https://github.com/shakacode/shakapacker/compare/v8.4.0...v9.0.0
 [v8.4.0]: https://github.com/shakacode/shakapacker/compare/v8.3.0...v8.4.0
 [v8.3.0]: https://github.com/shakacode/shakapacker/compare/v8.2.0...v8.3.0
 [v8.2.0]: https://github.com/shakacode/shakapacker/compare/v8.1.0...v8.2.0
