@@ -1,0 +1,374 @@
+#!/usr/bin/env node
+/* eslint-disable no-console, global-require, import/no-dynamic-require, prefer-destructuring, no-shadow, prefer-template, no-restricted-syntax, indent, no-underscore-dangle */
+
+/**
+ * Shakapacker Config Exporter
+ *
+ * Exports webpack or rspack configuration in a verbose, human-readable format
+ * for comparison and analysis.
+ *
+ * Usage:
+ *   bin/export-config [options]
+ *
+ * Options:
+ *   --bundler=webpack|rspack    Specify bundler (auto-detected if not provided)
+ *   --env=development|production|test    Node environment (default: development)
+ *   --bundle-type=client|server|both     Bundle type (default: both)
+ *   --output=<filename>         Output file (default: stdout)
+ *   --depth=<number>           Inspection depth (default: null for unlimited)
+ *   --format=json|inspect      Output format (default: inspect)
+ *   --help                     Show this help message
+ *
+ * Examples:
+ *   # Export client config in HMR mode (WEBPACK_SERVE=true)
+ *   bin/export-config --bundle-type=client
+ *
+ *   # Export server config only
+ *   bin/export-config --bundle-type=server
+ *
+ *   # Export production config to file
+ *   bin/export-config --env=production --output=config.json --format=json
+ *
+ *   # Export rspack config
+ *   bin/export-config --bundler=rspack
+ */
+
+const { inspect } = require("util")
+const { writeFileSync, existsSync } = require("fs")
+const { resolve, dirname } = require("path")
+
+// Determine app root (similar to bin/shakapacker)
+const findAppRoot = () => {
+  let currentDir = process.cwd()
+
+  // Look for package.json or config/shakapacker.yml
+  while (currentDir !== "/") {
+    if (
+      existsSync(resolve(currentDir, "package.json")) ||
+      existsSync(resolve(currentDir, "config/shakapacker.yml"))
+    ) {
+      return currentDir
+    }
+    currentDir = dirname(currentDir)
+  }
+
+  // Default to current directory if not found
+  return process.cwd()
+}
+
+const appRoot = findAppRoot()
+process.chdir(appRoot)
+
+// Set up NODE_PATH to include node_modules from current and parent directories
+// This is important when running from within the shakapacker gem development
+const nodePaths = [
+  resolve(appRoot, "node_modules"),
+  resolve(appRoot, "..", "..", "node_modules"),
+  resolve(appRoot, "..", "..", "package"),
+  // Also check if we're in a nested directory (like spec/dummy)
+  ...(appRoot.includes("/spec/dummy")
+    ? [resolve(appRoot, "../../node_modules")]
+    : [])
+].filter((p) => existsSync(p))
+
+if (nodePaths.length > 0) {
+  const existingNodePath = process.env.NODE_PATH || ""
+  process.env.NODE_PATH = existingNodePath
+    ? `${nodePaths.join(":")}:${existingNodePath}`
+    : nodePaths.join(":")
+
+  // Update require paths
+  require("module").Module._initPaths()
+}
+
+// Parse command line arguments
+const args = process.argv.slice(2)
+const options = {
+  bundler: null,
+  env: "development",
+  bundleType: "both",
+  output: null,
+  depth: null,
+  format: "inspect",
+  help: false
+}
+
+for (const arg of args) {
+  if (arg === "--help" || arg === "-h") {
+    options.help = true
+  } else if (arg.startsWith("--bundler=")) {
+    options.bundler = arg.split("=")[1]
+  } else if (arg.startsWith("--env=")) {
+    options.env = arg.split("=")[1]
+  } else if (arg.startsWith("--bundle-type=")) {
+    options.bundleType = arg.split("=")[1]
+  } else if (arg.startsWith("--output=")) {
+    options.output = arg.split("=")[1]
+  } else if (arg.startsWith("--depth=")) {
+    const depth = arg.split("=")[1]
+    options.depth = depth === "null" ? null : parseInt(depth, 10)
+  } else if (arg.startsWith("--format=")) {
+    options.format = arg.split("=")[1]
+  }
+}
+
+// Show help and exit
+if (options.help) {
+  console.log(`
+Shakapacker Config Exporter
+
+Exports webpack or rspack configuration in a verbose, human-readable format
+for comparison and analysis.
+
+Usage:
+  bin/export-config [options]
+
+Options:
+  --bundler=webpack|rspack    Specify bundler (auto-detected if not provided)
+  --env=development|production|test    Node environment (default: development)
+  --bundle-type=client|server|both     Bundle type (default: both)
+  --output=<filename>         Output file (default: stdout)
+  --depth=<number>           Inspection depth (default: null for unlimited)
+  --format=json|inspect      Output format (default: inspect)
+  --help, -h                 Show this help message
+
+Examples:
+  # Export client config in HMR mode (WEBPACK_SERVE=true)
+  bin/export-config --bundle-type=client
+
+  # Export server config only
+  bin/export-config --bundle-type=server
+
+  # Export production config to file
+  bin/export-config --env=production --output=config.json --format=json
+
+  # Export rspack config
+  bin/export-config --bundler=rspack
+`)
+  process.exit(0)
+}
+
+// Validate options
+if (options.bundler && !["webpack", "rspack"].includes(options.bundler)) {
+  console.error(
+    `Error: Invalid bundler '${options.bundler}'. Must be 'webpack' or 'rspack'.`
+  )
+  process.exit(1)
+}
+
+if (!["development", "production", "test"].includes(options.env)) {
+  console.error(
+    `Error: Invalid environment '${options.env}'. Must be 'development', 'production', or 'test'.`
+  )
+  process.exit(1)
+}
+
+if (!["client", "server", "both"].includes(options.bundleType)) {
+  console.error(
+    `Error: Invalid bundle type '${options.bundleType}'. Must be 'client', 'server', or 'both'.`
+  )
+  process.exit(1)
+}
+
+if (!["json", "inspect"].includes(options.format)) {
+  console.error(
+    `Error: Invalid format '${options.format}'. Must be 'json' or 'inspect'.`
+  )
+  process.exit(1)
+}
+
+// Set up environment variables
+process.env.NODE_ENV = options.env
+process.env.RAILS_ENV = options.env
+
+// Set bundle type environment variables
+switch (options.bundleType) {
+  case "client":
+    process.env.WEBPACK_SERVE = "true"
+    break
+  case "server":
+    process.env.SERVER_BUNDLE_ONLY = "yes"
+    break
+  case "both":
+  default:
+    // No special env vars needed
+    break
+}
+
+// Auto-detect bundler if not specified
+let bundler = options.bundler
+if (!bundler) {
+  try {
+    const { load } = require("js-yaml")
+    const { readFileSync, existsSync } = require("fs")
+
+    const configPath =
+      process.env.SHAKAPACKER_CONFIG ||
+      resolve(process.cwd(), "config/shakapacker.yml")
+
+    if (existsSync(configPath)) {
+      const config = load(readFileSync(configPath, "utf8"))
+      const envConfig = config[options.env] || config.default || {}
+      bundler = envConfig.assets_bundler || "webpack"
+      console.log(`[Config Exporter] Auto-detected bundler: ${bundler}`)
+    } else {
+      bundler = "webpack"
+      console.log(
+        `[Config Exporter] Config file not found, defaulting to: ${bundler}`
+      )
+    }
+  } catch (error) {
+    bundler = "webpack"
+    console.warn(
+      `[Config Exporter] Error detecting bundler, defaulting to: ${bundler}`
+    )
+    console.warn(error.message)
+  }
+}
+
+// Find config file
+let configFile
+if (bundler === "rspack") {
+  const rspackPaths = ["ts", "js"].map((ext) =>
+    resolve(process.cwd(), `config/rspack/rspack.config.${ext}`)
+  )
+  configFile = rspackPaths.find((path) => {
+    try {
+      require.resolve(path)
+      return true
+    } catch (e) {
+      return false
+    }
+  })
+
+  if (!configFile) {
+    // Fallback to webpack config
+    const webpackPaths = ["ts", "js"].map((ext) =>
+      resolve(process.cwd(), `config/webpack/webpack.config.${ext}`)
+    )
+    configFile = webpackPaths.find((path) => {
+      try {
+        require.resolve(path)
+        return true
+      } catch (e) {
+        return false
+      }
+    })
+
+    if (configFile) {
+      console.warn(
+        `[Config Exporter] Warning: Using webpack config for rspack bundler: ${configFile}`
+      )
+    }
+  }
+} else {
+  const webpackPaths = ["ts", "js"].map((ext) =>
+    resolve(process.cwd(), `config/webpack/webpack.config.${ext}`)
+  )
+  configFile = webpackPaths.find((path) => {
+    try {
+      require.resolve(path)
+      return true
+    } catch (e) {
+      return false
+    }
+  })
+}
+
+if (!configFile) {
+  console.error(
+    `[Config Exporter] Error: Could not find ${bundler} config file.`
+  )
+  console.error(`Expected locations:`)
+  if (bundler === "rspack") {
+    console.error("  - config/rspack/rspack.config.js")
+    console.error("  - config/rspack/rspack.config.ts")
+  } else {
+    console.error("  - config/webpack/webpack.config.js")
+    console.error("  - config/webpack/webpack.config.ts")
+  }
+  process.exit(1)
+}
+
+console.log(`[Config Exporter] Loading config: ${configFile}`)
+console.log(`[Config Exporter] Environment: ${options.env}`)
+console.log(`[Config Exporter] Bundle type: ${options.bundleType}`)
+console.log(`[Config Exporter] Bundler: ${bundler}`)
+
+// Load the config
+let config
+try {
+  config = require(configFile)
+  console.log(`[Config Exporter] Config loaded successfully`)
+} catch (error) {
+  console.error(`[Config Exporter] Error loading config:`, error)
+  process.exit(1)
+}
+
+// Prepare output
+const metadata = {
+  exportedAt: new Date().toISOString(),
+  bundler,
+  environment: options.env,
+  bundleType: options.bundleType,
+  configFile,
+  environmentVariables: {
+    NODE_ENV: process.env.NODE_ENV,
+    RAILS_ENV: process.env.RAILS_ENV,
+    WEBPACK_SERVE: process.env.WEBPACK_SERVE,
+    SERVER_BUNDLE_ONLY: process.env.SERVER_BUNDLE_ONLY,
+    CLIENT_BUNDLE_ONLY: process.env.CLIENT_BUNDLE_ONLY
+  }
+}
+
+let output
+if (options.format === "json") {
+  // Custom JSON serializer to handle functions and other non-JSON values
+  const jsonReplacer = (key, value) => {
+    if (typeof value === "function") {
+      return `[Function: ${value.name || "anonymous"}]`
+    }
+    if (value instanceof RegExp) {
+      return `[RegExp: ${value.toString()}]`
+    }
+    if (
+      value &&
+      typeof value === "object" &&
+      value.constructor &&
+      value.constructor.name !== "Object" &&
+      value.constructor.name !== "Array"
+    ) {
+      return `[${value.constructor.name}]`
+    }
+    return value
+  }
+
+  output = JSON.stringify({ metadata, config }, jsonReplacer, 2)
+} else {
+  // Use util.inspect for more detailed output
+  const inspectOptions = {
+    depth: options.depth,
+    colors: !options.output, // Only use colors for stdout
+    maxArrayLength: null,
+    maxStringLength: null,
+    breakLength: 120,
+    compact: false
+  }
+
+  output = "=== METADATA ===\n\n" + inspect(metadata, inspectOptions) + "\n\n"
+  output += "=== CONFIG ===\n\n" + inspect(config, inspectOptions) + "\n"
+}
+
+// Write output
+if (options.output) {
+  try {
+    writeFileSync(options.output, output, "utf8")
+    console.log(`[Config Exporter] Config exported to: ${options.output}`)
+  } catch (error) {
+    console.error(`[Config Exporter] Error writing output file:`, error)
+    process.exit(1)
+  }
+} else {
+  console.log("\n" + "=".repeat(80) + "\n")
+  console.log(output)
+}
