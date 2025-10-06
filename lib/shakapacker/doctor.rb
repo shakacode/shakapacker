@@ -174,7 +174,7 @@ module Shakapacker
 
       def check_sri_dependencies
         integrity_config = config.integrity
-        return unless integrity_config && integrity_config[:enabled]
+        return unless integrity_config&.dig(:enabled)
 
         bundler = config.assets_bundler
         if bundler == "webpack"
@@ -184,7 +184,7 @@ module Shakapacker
         end
 
         # Validate hash functions
-        hash_functions = integrity_config[:hash_functions] || ["sha384"]
+        hash_functions = integrity_config.dig(:hash_functions) || ["sha384"]
         invalid_functions = hash_functions - ["sha256", "sha384", "sha512"]
         unless invalid_functions.empty?
           @issues << "Invalid SRI hash functions: #{invalid_functions.join(', ')}"
