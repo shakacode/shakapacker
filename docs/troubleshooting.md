@@ -17,10 +17,43 @@
 
 4. You can also pass additional options to the command to run the webpack-dev-server and start the webpack-dev-server with the option `--debug-shakapacker`
 
-5. ChatGPT and other AI tools can consume this output file. Change the NODE_ENV per your needs. Then upload the file to your favorite AI tool.
+5. **Export your full webpack/rspack configuration for analysis**: Use the `bin/export-config` utility to export your complete resolved configuration. This is especially helpful for:
+
+   - **Migrations**: Comparing configurations before and after migrating between webpack and rspack, or between different Shakapacker versions
+   - **Debugging**: Inspecting the exact configuration webpack/rspack is using, including all merged settings
+   - **AI Analysis**: Uploading the exported config to ChatGPT or other AI tools for troubleshooting
+
+   ```bash
+   # Export production config for analysis
+   bin/export-config --env=production --output=config-prod.txt
+
+   # Export client bundle config (HMR mode)
+   bin/export-config --bundle-type=client --output=config-client.txt
+
+   # Export server bundle config (SSR)
+   bin/export-config --bundle-type=server --output=config-server.txt
+
+   # Export in JSON format for programmatic analysis
+   bin/export-config --format=json --output=config.json
+
+   # Export rspack config
+   bin/export-config --bundler=rspack --output=config-rspack.txt
+
+   # Compare webpack vs rspack configs
+   bin/export-config --bundler=webpack --output=webpack.txt
+   bin/export-config --bundler=rspack --output=rspack.txt
+   diff webpack.txt rspack.txt
+   ```
+
+   See `bin/export-config --help` for all available options.
+
+6. Generate webpack stats for build analysis (useful for bundle size optimization):
+
    ```
    NODE_ENV=development bin/shakapacker --profile --json > /tmp/webpack-stats.json
    ```
+
+   ChatGPT and other AI tools can consume this output file. Change the NODE_ENV per your needs.
 
 ## Incorrect peer dependencies
 

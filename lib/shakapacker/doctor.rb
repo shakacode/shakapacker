@@ -873,6 +873,10 @@ module Shakapacker
             package_manager = doctor.send(:package_manager)
             puts "To fix missing dependencies, run:"
             puts "  #{package_manager_install_command(package_manager)}"
+            puts ""
+            puts "For debugging configuration issues, export your webpack/rspack config:"
+            puts "  bin/export-config --env=#{doctor.config.env} --output=config.txt"
+            puts "  See 'bin/export-config --help' for more options"
           end
 
           def package_manager_install_command(manager)
