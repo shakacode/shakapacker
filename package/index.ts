@@ -16,18 +16,21 @@ const inliningCss = require("./utils/inliningCss")
 const rulesPath = resolve(__dirname, "rules", `${config.assets_bundler}.js`)
 const rules = require(rulesPath)
 
-const generateWebpackConfig = (extraConfig: Configuration = {}, ...extraArgs: any[]): Configuration => {
+const generateWebpackConfig = (
+  extraConfig: Configuration = {},
+  ...extraArgs: unknown[]
+): Configuration => {
   if (extraArgs.length > 0) {
     throw new Error(
       `Invalid usage: generateWebpackConfig() accepts only one configuration object.\n\n` +
-      `You passed ${extraArgs.length + 1} arguments. Only one extra config may be passed here - use webpack-merge to merge configs before passing them to Shakapacker.\n\n` +
-      `Example:\n` +
-      `  const { merge } = require('webpack-merge')\n` +
-      `  const mergedConfig = merge(config1, config2, config3)\n` +
-      `  const finalConfig = generateWebpackConfig(mergedConfig)\n\n` +
-      `Or if using ES6:\n` +
-      `  import { merge } from 'webpack-merge'\n` +
-      `  const finalConfig = generateWebpackConfig(merge(config1, config2))`
+        `You passed ${extraArgs.length + 1} arguments. Only one extra config may be passed here - use webpack-merge to merge configs before passing them to Shakapacker.\n\n` +
+        `Example:\n` +
+        `  const { merge } = require('webpack-merge')\n` +
+        `  const mergedConfig = merge(config1, config2, config3)\n` +
+        `  const finalConfig = generateWebpackConfig(mergedConfig)\n\n` +
+        `Or if using ES6:\n` +
+        `  import { merge } from 'webpack-merge'\n` +
+        `  const finalConfig = generateWebpackConfig(merge(config1, config2))`
     )
   }
 
