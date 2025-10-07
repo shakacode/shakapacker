@@ -33,7 +33,10 @@ describe "Shakapacker::Doctor with optional peer dependencies" do
            assets_bundler: assets_bundler,
            data: config_data,
            nested_entries?: false,
-           ensure_consistent_versioning?: false)
+           ensure_consistent_versioning?: false,
+           integrity: config_data[:integrity]).tap do |c|
+      allow(c).to receive(:fetch) { |key| config_data[key] }
+    end
   end
 
   let(:javascript_transpiler) { "babel" }

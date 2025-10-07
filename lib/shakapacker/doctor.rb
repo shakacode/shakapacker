@@ -65,12 +65,12 @@ module Shakapacker
 
       def check_entry_points
         # Check for invalid configuration first
-        if config.data[:source_entry_path] == "/" && config.nested_entries?
+        if config.fetch(:source_entry_path) == "/" && config.nested_entries?
           @issues << "Invalid configuration: cannot use '/' as source_entry_path with nested_entries: true"
           return  # Don't try to check files when config is invalid
         end
 
-        source_entry_path = config.source_path.join(config.data[:source_entry_path] || "packs")
+        source_entry_path = config.source_path.join(config.fetch(:source_entry_path) || "packs")
 
         unless source_entry_path.exist?
           @issues << "Source entry path #{source_entry_path} does not exist"
@@ -173,7 +173,8 @@ module Shakapacker
       end
 
       def check_sri_dependencies
-        return unless config.data.dig(:integrity, :enabled)
+        integrity_config = config.integrity
+        return unless integrity_config&.dig(:enabled)
 
         bundler = config.assets_bundler
         if bundler == "webpack"
@@ -183,7 +184,7 @@ module Shakapacker
         end
 
         # Validate hash functions
-        hash_functions = config.data.dig(:integrity, :hash_functions) || ["sha384"]
+        hash_functions = integrity_config.dig(:hash_functions) || ["sha384"]
         invalid_functions = hash_functions - ["sha256", "sha384", "sha512"]
         unless invalid_functions.empty?
           @issues << "Invalid SRI hash functions: #{invalid_functions.join(', ')}"
