@@ -1,7 +1,7 @@
-const { loaderMatches } = require("../utils/helpers")
-const { getSwcLoaderConfig } = require("../swc")
-const { javascript_transpiler: javascriptTranspiler } = require("../config")
-const jscommon = require("./jscommon")
+import { loaderMatches } from "../utils/helpers"
+import { getSwcLoaderConfig } from "../swc"
+import { javascript_transpiler: javascriptTranspiler } from "../config"
+import jscommon from "./jscommon"
 
 export = loaderMatches(javascriptTranspiler, "swc", () => ({
   test: /\.(ts|tsx|js|jsx|mjs|coffee)?(\.erb)?$/,

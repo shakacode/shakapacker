@@ -1,8 +1,10 @@
-const { isModuleNotFoundError, getErrorMessage } = require("./errorHelpers")
+import { isModuleNotFoundError, getErrorMessage } from "./errorHelpers"
 
-const isBoolean = (str: string): boolean => /^true/.test(str) || /^false/.test(str)
+const isBoolean = (str: string): boolean =>
+  /^true/.test(str) || /^false/.test(str)
 
-const ensureTrailingSlash = (path: string): string => (path.endsWith("/") ? path : `${path}/`)
+const ensureTrailingSlash = (path: string): string =>
+  path.endsWith("/") ? path : `${path}/`
 
 const resolvedPath = (packageName: string): string | null => {
   try {
@@ -15,9 +17,13 @@ const resolvedPath = (packageName: string): string | null => {
   }
 }
 
-const moduleExists = (packageName: string): boolean => !!resolvedPath(packageName)
+const moduleExists = (packageName: string): boolean =>
+  !!resolvedPath(packageName)
 
-const canProcess = <T = unknown>(rule: string, fn: (modulePath: string) => T): T | null => {
+const canProcess = <T = unknown>(
+  rule: string,
+  fn: (modulePath: string) => T
+): T | null => {
   const modulePath = resolvedPath(rule)
 
   if (modulePath) {
@@ -27,7 +33,11 @@ const canProcess = <T = unknown>(rule: string, fn: (modulePath: string) => T): T
   return null
 }
 
-const loaderMatches = <T = unknown>(configLoader: string, loaderToCheck: string, fn: () => T): T | null => {
+const loaderMatches = <T = unknown>(
+  configLoader: string,
+  loaderToCheck: string,
+  fn: () => T
+): T | null => {
   if (configLoader !== loaderToCheck) {
     return null
   }
@@ -37,10 +47,10 @@ const loaderMatches = <T = unknown>(configLoader: string, loaderToCheck: string,
   if (!moduleExists(loaderName)) {
     throw new Error(
       `Your Shakapacker config specified using ${configLoader}, but ${loaderName} package is not installed.\n` +
-      `\nTo fix this issue, run one of the following commands:\n` +
-      `  npm install --save-dev ${loaderName}\n` +
-      `  yarn add --dev ${loaderName}\n` +
-      `\nOr change your 'javascript_transpiler' setting in shakapacker.yml to use a different loader.`
+        `\nTo fix this issue, run one of the following commands:\n` +
+        `  npm install --save-dev ${loaderName}\n` +
+        `  yarn add --dev ${loaderName}\n` +
+        `\nOr change your 'javascript_transpiler' setting in shakapacker.yml to use a different loader.`
     )
   }
 
@@ -54,13 +64,14 @@ const packageFullVersion = (packageName: string): string => {
     // eslint-disable-next-line import/no-dynamic-require, global-require
     const packageJson = require(packageJsonPath) as { version: string }
     return packageJson.version
-  } catch (error: any) {
+  } catch (error: unknown) {
     // Re-throw the error with proper code to maintain compatibility with babel preset
     // The preset expects MODULE_NOT_FOUND errors to handle missing core-js gracefully
-    if (error.code === "MODULE_NOT_FOUND") {
+    if (isModuleNotFoundError(error)) {
       throw error
     }
     // For other errors, warn and re-throw
+    // eslint-disable-next-line no-console
     console.warn(
       `[SHAKAPACKER WARNING] Failed to get version for package ${packageName}: ${getErrorMessage(error)}`
     )

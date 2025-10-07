@@ -1,5 +1,5 @@
-const { requireOrError } = require("../utils/requireOrError")
-const { error: logError } = require("../utils/debug")
+import { requireOrError } from "../utils/requireOrError"
+import { error: logError } from "../utils/debug"
 
 const rspack = requireOrError("@rspack/core")
 
@@ -17,8 +17,8 @@ const getOptimization = (): OptimizationConfig => {
       new rspack.LightningCssMinimizerRspackPlugin()
     ]
   } catch (error: unknown) {
-    const errorMessage = error instanceof Error ? error.message : String(error)
-    const errorStack = error instanceof Error ? error.stack : ''
+    const errorMessage = error instanceof Error ? error.message : String(_error)
+    const errorStack = error instanceof Error ? error.stack : ""
     // Log full error with stack trace
     logError(
       `Failed to configure Rspack minimizers: ${errorMessage}\n${errorStack}`
@@ -31,6 +31,6 @@ const getOptimization = (): OptimizationConfig => {
   return result
 }
 
-export = {
+export default {
   getOptimization
 }

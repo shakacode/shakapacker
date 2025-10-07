@@ -17,7 +17,7 @@ export type {
   LegacyConfig,
   Env,
   DevServerConfig
-} from '../types'
+} from "../types"
 
 // Loader types
 export type {
@@ -25,7 +25,7 @@ export type {
   ShakapackerLoaderOptions,
   LoaderResolver,
   LoaderConfig
-} from '../loaders'
+} from "../loaders"
 
 // Webpack-specific types
 export type {
@@ -35,7 +35,7 @@ export type {
   ShakapackerLoader as WebpackLoader,
   LoaderType,
   LoaderUtils
-} from '../webpack-types'
+} from "../webpack-types"
 
 // Environment configuration types
 export type {
@@ -45,9 +45,9 @@ export type {
   RspackConfigWithDevServer,
   CompressionPluginOptions,
   CompressionPluginConstructor,
-  ReactRefreshWebpackPlugin,
-  ReactRefreshRspackPlugin
-} from '../environments/types'
+  _ReactRefreshWebpackPlugin,
+  _ReactRefreshRspackPlugin
+} from "../environments/types"
 
 // Node.js error type (re-exported for convenience)
 export type NodeJSError = NodeJS.ErrnoException
@@ -57,4 +57,4 @@ export type {
   Configuration as WebpackConfiguration,
   WebpackPluginInstance,
   RuleSetRule
-} from 'webpack'
+} from "webpack"

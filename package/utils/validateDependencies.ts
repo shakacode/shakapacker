@@ -2,8 +2,8 @@
  * Validates that required dependencies are installed for the selected bundler
  */
 
-const { moduleExists } = require("./helpers")
-const { error } = require("./debug")
+import { moduleExists } from "./helpers"
+import { error } from "./debug"
 
 const validateRspackDependencies = (): void => {
   const requiredDependencies = ["@rspack/core", "rspack-manifest-plugin"]
@@ -55,7 +55,7 @@ const validateWebpackDependencies = (): void => {
   }
 }
 
-export = {
+export default {
   validateRspackDependencies,
   validateWebpackDependencies
 }

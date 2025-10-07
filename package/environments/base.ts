@@ -1,14 +1,14 @@
 /* eslint global-require: 0 */
 /* eslint import/no-dynamic-require: 0 */
 
-const { basename, dirname, join, relative, resolve } = require("path")
-const { existsSync, readdirSync } = require("fs")
-import { Dirent } from "fs"
-const extname = require("path-complete-extname")
-// @ts-ignore: webpack is an optional peer dependency (using type-only import)
+import { Dirent, existsSync, readdirSync } from "fs"
+// @ts-expect-error: webpack is an optional peer dependency (using type-only import)
 import type { Configuration, Entry } from "webpack"
-const config = require("../config")
-const { isProduction } = require("../env")
+
+import { basename, dirname, join, relative, resolve } from "path"
+import extname from "path-complete-extname"
+import config from "../config"
+import { isProduction } from "../env"
 
 const pluginsPath = resolve(
   __dirname,
@@ -16,14 +16,16 @@ const pluginsPath = resolve(
   "plugins",
   `${config.assets_bundler}.js`
 )
-const { getPlugins } = require(pluginsPath)
+// eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires, import/no-dynamic-require
+const { getPlugins } = require(pluginsPath) as { getPlugins: () => unknown[] }
 const rulesPath = resolve(
   __dirname,
   "..",
   "rules",
   `${config.assets_bundler}.js`
 )
-const rules = require(rulesPath)
+// eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires, import/no-dynamic-require
+const rules = require(rulesPath) as unknown
 
 // Don't use contentHash except for production for performance
 // https://webpack.js.org/guides/build-performance/#avoid-production-specific-tooling
@@ -53,13 +55,13 @@ const getEntryObject = (): Entry => {
   if (config.source_entry_path === "/" && config.nested_entries) {
     throw new Error(
       `Invalid Shakapacker configuration detected!\n\n` +
-      `You have set source_entry_path to '/' with nested_entries enabled.\n` +
-      `This would create webpack entry points for EVERY file in your source directory,\n` +
-      `which would severely impact build performance.\n\n` +
-      `To fix this issue, either:\n` +
-      `1. Set 'nested_entries: false' in your shakapacker.yml\n` +
-      `2. Change 'source_entry_path' to a specific subdirectory (e.g., 'packs')\n` +
-      `3. Or use both options for better organization of your entry points`
+        `You have set source_entry_path to '/' with nested_entries enabled.\n` +
+        `This would create webpack entry points for EVERY file in your source directory,\n` +
+        `which would severely impact build performance.\n\n` +
+        `To fix this issue, either:\n` +
+        `1. Set 'nested_entries: false' in your shakapacker.yml\n` +
+        `2. Change 'source_entry_path' to a specific subdirectory (e.g., 'packs')\n` +
+        `3. Or use both options for better organization of your entry points`
     )
   }
 
@@ -73,7 +75,7 @@ const getEntryObject = (): Entry => {
     const previousPaths = entries[name]
     if (previousPaths) {
       const pathArray = Array.isArray(previousPaths)
-        ? previousPaths as string[]
+        ? previousPaths
         : [previousPaths as string]
       pathArray.push(assetPath)
       entries[name] = pathArray
@@ -89,7 +91,9 @@ const getModulePaths = (): string[] => {
   const result = [resolve(config.source_path)]
 
   if (config.additional_paths) {
-    config.additional_paths.forEach((path: string) => result.push(resolve(path)))
+    config.additional_paths.forEach((path: string) =>
+      result.push(resolve(path))
+    )
   }
   result.push("node_modules")
 
@@ -108,9 +112,13 @@ const baseConfig: Configuration = {
     publicPath: config.publicPath,
 
     // This is required for SRI to work.
-    crossOriginLoading: config.integrity && config.integrity.enabled
-      ? (config.integrity.cross_origin as "anonymous" | "use-credentials" | false)
-      : false
+    crossOriginLoading:
+      config.integrity && config.integrity.enabled
+        ? (config.integrity.cross_origin as
+            | "anonymous"
+            | "use-credentials"
+            | false)
+        : false
   },
   entry: getEntryObject(),
   resolve: {
@@ -134,5 +142,4 @@ const baseConfig: Configuration = {
   }
 }
 
-export = baseConfig
-
+export default baseConfig

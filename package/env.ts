@@ -1,9 +1,10 @@
 import { load } from "js-yaml"
 import { readFileSync } from "fs"
-const defaultConfigPath = require("./utils/defaultConfigPath")
-const configPath = require("./utils/configPath")
-const { isFileNotFoundError } = require("./utils/errorHelpers")
-const { sanitizeEnvValue } = require("./utils/pathValidation")
+
+import defaultConfigPath from "./utils/defaultConfigPath"
+import configPath from "./utils/configPath"
+import { isFileNotFoundError } from "./utils/errorHelpers"
+import { sanitizeEnvValue } from "./utils/pathValidation"
 
 const NODE_ENVIRONMENTS = ["development", "production", "test"] as const
 
@@ -29,6 +30,7 @@ if (
   rawNodeEnv &&
   !NODE_ENVIRONMENTS.includes(rawNodeEnv as (typeof NODE_ENVIRONMENTS)[number])
 ) {
+  // eslint-disable-next-line no-console
   console.warn(
     `[SHAKAPACKER WARNING] Invalid NODE_ENV value: ${rawNodeEnv}. ` +
       `Valid values are: ${NODE_ENVIRONMENTS.join(", ")}. Using default: ${DEFAULT}`
@@ -50,7 +52,7 @@ try {
     // File not found, use default configuration
     try {
       config = load(readFileSync(defaultConfigPath, "utf8")) as ConfigFile
-    } catch (defaultError) {
+    } catch (_defaultError) {
       throw new Error(
         `Failed to load Shakapacker configuration.\n` +
           `Neither user config (${configPath}) nor default config (${defaultConfigPath}) could be loaded.\n\n` +
@@ -77,13 +79,14 @@ const validatedRailsEnv =
 
 if (initialRailsEnv && validatedRailsEnv !== initialRailsEnv) {
   /* eslint no-console:0 */
+  // eslint-disable-next-line no-console
   console.warn(
     `[SHAKAPACKER WARNING] Environment '${initialRailsEnv}' not found in the configuration.\n` +
       `Using '${DEFAULT}' configuration as a fallback.`
   )
 }
 
-export = {
+export default {
   railsEnv: validatedRailsEnv,
   nodeEnv,
   isProduction,

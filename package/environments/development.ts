@@ -3,18 +3,20 @@
  * @module environments/development
  */
 
-const { merge } = require("webpack-merge")
+import { merge } from "webpack-merge"
+import type {
+  WebpackConfigWithDevServer,
+  RspackConfigWithDevServer,
+  _ReactRefreshWebpackPlugin,
+  _ReactRefreshRspackPlugin
+} from "./types"
+
+import { runningWebpackDevServer } from "../env"
+import { moduleExists } from "../utils/helpers"
+
 const config = require("../config")
 const baseConfig = require("./base")
 const webpackDevServerConfig = require("../webpackDevServerConfig")
-const { runningWebpackDevServer } = require("../env")
-const { moduleExists } = require("../utils/helpers")
-import type { 
-  WebpackConfigWithDevServer,
-  RspackConfigWithDevServer,
-  ReactRefreshWebpackPlugin,
-  ReactRefreshRspackPlugin
-} from "./types"
 
 /**
  * Base development configuration shared between webpack and rspack
@@ -41,10 +43,11 @@ const webpackDevConfig = (): WebpackConfigWithDevServer => {
     moduleExists("@pmmmwh/react-refresh-webpack-plugin")
   ) {
     // eslint-disable-next-line global-require
-    const ReactRefreshWebpackPlugin = require("@pmmmwh/react-refresh-webpack-plugin")
+    import _ReactRefreshWebpackPlugin from "@pmmmwh/react-refresh-webpack-plugin"
+
     webpackConfig.plugins = [
       ...(webpackConfig.plugins || []),
-      new ReactRefreshWebpackPlugin()
+      new _ReactRefreshWebpackPlugin()
     ]
   }
 
@@ -74,7 +77,8 @@ const rspackDevConfig = (): RspackConfigWithDevServer => {
     moduleExists("@rspack/plugin-react-refresh")
   ) {
     // eslint-disable-next-line global-require
-    const ReactRefreshPlugin = require("@rspack/plugin-react-refresh")
+    import ReactRefreshPlugin from "@rspack/plugin-react-refresh"
+
     rspackConfig.plugins = [
       ...(rspackConfig.plugins || []),
       new ReactRefreshPlugin()

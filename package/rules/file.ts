@@ -1,10 +1,9 @@
 import { dirname, sep, normalize } from "path"
-const {
-  additional_paths: additionalPaths,
-  source_path: sourcePath
-} = require("../config")
 
-export = {
+import { additional_paths: additionalPaths,
+  source_path: sourcePath } from "../config"
+
+export default {
   test: /\.(bmp|gif|jpe?g|png|tiff|ico|avif|webp|eot|otf|ttf|woff|woff2|svg)$/,
   exclude: /\.(js|mjs|jsx|ts|tsx)$/,
   type: "asset/resource",
@@ -30,7 +29,7 @@ export = {
       // Split on both forward and backward slashes for cross-platform compatibility
       const folders = path
         .replace(selectedStripPath, "")
-        .split(/[\\/]/)
+        .split(/[\/]/)
         .filter(Boolean)
 
       const foldersWithStatic = ["static", ...folders].join("/")
