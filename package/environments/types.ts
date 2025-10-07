@@ -19,18 +19,17 @@ export interface WebpackConfigWithDevServer extends WebpackConfiguration {
 }
 
 /**
- * Rspack plugin interface
+ * Rspack plugin instance interface
  * Uses the RspackPluginInstance type from @rspack/core
  */
 export type RspackPluginInstance = ImportedRspackPluginInstance
 
 /**
- * Rspack plugin constructor interface
- * Rspack plugins follow a similar pattern to webpack but may have different internals
+ * Rspack plugin type alias
+ * @deprecated Use RspackPluginInstance instead
+ * Retained for backward compatibility with existing code
  */
-export interface RspackPlugin {
-  new (...args: unknown[]): RspackPluginInstance
-}
+export type RspackPlugin = RspackPluginInstance
 
 /**
  * Rspack dev server configuration
