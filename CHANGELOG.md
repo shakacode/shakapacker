@@ -22,7 +22,7 @@ See the [v9 Upgrade Guide](https://github.com/shakacode/shakapacker/blob/main/do
    - Babel dependencies are no longer included as peer dependencies
    - Improves compilation speed by 20x
    - **Migration for existing projects:**
-     - **Option 1 (Recommended):** Switch to SWC - Run `rake shakapacker:migrate:to_swc` or manually:
+     - **Option 1 (Recommended):** Switch to SWC - Run `rake shakapacker:migrate_to_swc` or manually:
        ```yaml
        # config/shakapacker.yml
        javascript_transpiler: "swc"
@@ -59,7 +59,7 @@ See the [v9 Upgrade Guide](https://github.com/shakacode/shakapacker/blob/main/do
 - **Private output path** for server-side rendering bundles ([PR 592](https://github.com/shakacode/shakapacker/pull/592))
   - Configure `private_output_path` for private server bundles separate from public assets
 - **`rake shakapacker:doctor` diagnostic command** to check for configuration issues and missing dependencies ([PR 609](https://github.com/shakacode/shakapacker/pull/609))
-- **`rake shakapacker:migrate:to_swc`** migration helper to assist with switching from Babel to SWC ([PR 613](https://github.com/shakacode/shakapacker/pull/613), [PR 635](https://github.com/shakacode/shakapacker/pull/635))
+- **`rake shakapacker:migrate_to_swc`** migration helper to assist with switching from Babel to SWC ([PR 613](https://github.com/shakacode/shakapacker/pull/613), [PR 635](https://github.com/shakacode/shakapacker/pull/635))
 
 ### Security
 
