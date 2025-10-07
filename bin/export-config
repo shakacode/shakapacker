@@ -15,7 +15,7 @@
  *   --env=development|production|test    Node environment (default: development)
  *   --bundle-type=client|server|both     Bundle type (default: both)
  *   --output=<filename>         Output file (default: stdout)
- *   --depth=<number>           Inspection depth (default: null for unlimited)
+ *   --depth=<number>           Inspection depth (default: 10, use 'null' for unlimited)
  *   --format=json|inspect      Output format (default: inspect)
  *   --help                     Show this help message
  *
@@ -35,14 +35,15 @@
 
 const { inspect } = require("util")
 const { writeFileSync, existsSync } = require("fs")
-const { resolve, dirname } = require("path")
+const { resolve, dirname, delimiter, sep } = require("path")
 
 // Determine app root (similar to bin/shakapacker)
 const findAppRoot = () => {
   let currentDir = process.cwd()
+  const root = dirname(currentDir).split(sep)[0] + sep
 
   // Look for package.json or config/shakapacker.yml
-  while (currentDir !== "/") {
+  while (currentDir !== root && currentDir !== dirname(currentDir)) {
     if (
       existsSync(resolve(currentDir, "package.json")) ||
       existsSync(resolve(currentDir, "config/shakapacker.yml"))
@@ -74,10 +75,11 @@ const nodePaths = [
 if (nodePaths.length > 0) {
   const existingNodePath = process.env.NODE_PATH || ""
   process.env.NODE_PATH = existingNodePath
-    ? `${nodePaths.join(":")}:${existingNodePath}`
-    : nodePaths.join(":")
+    ? `${nodePaths.join(delimiter)}${delimiter}${existingNodePath}`
+    : nodePaths.join(delimiter)
 
-  // Update require paths
+  // Update require paths (internal API, but necessary for dynamic NODE_PATH)
+  // Supported in Node.js 10+ which matches our minimum requirements
   require("module").Module._initPaths()
 }
 
@@ -88,27 +90,37 @@ const options = {
   env: "development",
   bundleType: "both",
   output: null,
-  depth: null,
+  depth: 10, // Default depth to prevent stack overflow with circular refs
   format: "inspect",
   help: false
+}
+
+// Helper to parse --key=value arguments
+const parseArgValue = (arg, prefix) => {
+  const value = arg.substring(prefix.length)
+  if (value.length === 0) {
+    console.error(`Error: ${prefix} requires a value`)
+    process.exit(1)
+  }
+  return value
 }
 
 for (const arg of args) {
   if (arg === "--help" || arg === "-h") {
     options.help = true
   } else if (arg.startsWith("--bundler=")) {
-    options.bundler = arg.split("=")[1]
+    options.bundler = parseArgValue(arg, "--bundler=")
   } else if (arg.startsWith("--env=")) {
-    options.env = arg.split("=")[1]
+    options.env = parseArgValue(arg, "--env=")
   } else if (arg.startsWith("--bundle-type=")) {
-    options.bundleType = arg.split("=")[1]
+    options.bundleType = parseArgValue(arg, "--bundle-type=")
   } else if (arg.startsWith("--output=")) {
-    options.output = arg.split("=")[1]
+    options.output = parseArgValue(arg, "--output=")
   } else if (arg.startsWith("--depth=")) {
-    const depth = arg.split("=")[1]
+    const depth = parseArgValue(arg, "--depth=")
     options.depth = depth === "null" ? null : parseInt(depth, 10)
   } else if (arg.startsWith("--format=")) {
-    options.format = arg.split("=")[1]
+    options.format = parseArgValue(arg, "--format=")
   }
 }
 
@@ -128,7 +140,7 @@ Options:
   --env=development|production|test    Node environment (default: development)
   --bundle-type=client|server|both     Bundle type (default: both)
   --output=<filename>         Output file (default: stdout)
-  --depth=<number>           Inspection depth (default: null for unlimited)
+  --depth=<number>           Inspection depth (default: 10, use 'null' for unlimited)
   --format=json|inspect      Output format (default: inspect)
   --help, -h                 Show this help message
 
@@ -361,9 +373,20 @@ if (options.format === "json") {
 
 // Write output
 if (options.output) {
+  // Validate output path - ensure it's not attempting path traversal to sensitive locations
+  const outputPath = resolve(options.output)
+  const cwd = process.cwd()
+
+  // Warn if writing outside current directory tree
+  if (!outputPath.startsWith(cwd) && !outputPath.startsWith("/tmp")) {
+    console.warn(
+      `[Config Exporter] Warning: Writing to ${outputPath} which is outside current directory`
+    )
+  }
+
   try {
-    writeFileSync(options.output, output, "utf8")
-    console.log(`[Config Exporter] Config exported to: ${options.output}`)
+    writeFileSync(outputPath, output, "utf8")
+    console.log(`[Config Exporter] Config exported to: ${outputPath}`)
   } catch (error) {
     console.error(`[Config Exporter] Error writing output file:`, error)
     process.exit(1)
