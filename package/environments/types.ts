@@ -3,8 +3,12 @@
  * These types are exported for consumer use
  */
 
-import type { Configuration as WebpackConfiguration, WebpackPluginInstance } from "webpack"
+import type {
+  Configuration as WebpackConfiguration,
+  WebpackPluginInstance
+} from "webpack"
 import type { Configuration as DevServerConfiguration } from "webpack-dev-server"
+import type { RspackPluginInstance as ImportedRspackPluginInstance } from "@rspack/core"
 
 /**
  * Webpack configuration extended with dev server support
@@ -16,13 +20,16 @@ export interface WebpackConfigWithDevServer extends WebpackConfiguration {
 
 /**
  * Rspack plugin interface
+ * Uses the RspackPluginInstance type from @rspack/core
+ */
+export type RspackPluginInstance = ImportedRspackPluginInstance
+
+/**
+ * Rspack plugin constructor interface
  * Rspack plugins follow a similar pattern to webpack but may have different internals
  */
 export interface RspackPlugin {
-  new(...args: any[]): {
-    apply(compiler: any): void
-    [key: string]: any
-  }
+  new (...args: unknown[]): RspackPluginInstance
 }
 
 /**
@@ -52,7 +59,7 @@ export interface RspackConfigWithDevServer {
   mode?: "development" | "production" | "none"
   devtool?: string | false
   devServer?: RspackDevServerConfig
-  plugins?: RspackPlugin[]
+  plugins?: RspackPluginInstance[]
   module?: WebpackConfiguration["module"]
   resolve?: WebpackConfiguration["resolve"]
   entry?: WebpackConfiguration["entry"]
@@ -76,15 +83,17 @@ export interface CompressionPluginOptions {
 /**
  * Compression plugin constructor type
  */
-export type CompressionPluginConstructor = new (options: CompressionPluginOptions) => WebpackPluginInstance
+export type CompressionPluginConstructor = new (
+  options: CompressionPluginOptions
+) => WebpackPluginInstance
 
 /**
  * React Refresh plugin types
  */
 export interface ReactRefreshWebpackPlugin {
-  new(options?: Record<string, unknown>): WebpackPluginInstance
+  new (options?: Record<string, unknown>): WebpackPluginInstance
 }
 
 export interface ReactRefreshRspackPlugin {
-  new(options?: Record<string, unknown>): RspackPlugin
+  new (options?: Record<string, unknown>): RspackPluginInstance
 }
