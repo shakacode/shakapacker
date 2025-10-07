@@ -318,7 +318,7 @@ console.log(`[Config Exporter] Bundle type: ${options.bundleType}`)
 console.log(`[Config Exporter] Bundler: ${bundler}`)
 
 // Helper function to clean up config for more readable output
-function cleanConfig(obj, rootPath, showFunctions) {
+function cleanConfig(obj, rootPath) {
   const makePathRelative = (str) => {
     if (typeof str === "string" && str.startsWith(rootPath)) {
       return "./" + str.substring(rootPath.length + 1)
@@ -326,48 +326,28 @@ function cleanConfig(obj, rootPath, showFunctions) {
     return str
   }
 
-  const shouldFilterEnvKey = (key) => {
-    // Keep only webpack/shakapacker related env vars
-    const keepEnvVars = [
-      "NODE_ENV",
-      "RAILS_ENV",
-      "WEBPACK_SERVE",
-      "SERVER_BUNDLE_ONLY",
-      "CLIENT_BUNDLE_ONLY",
-      "SHAKAPACKER_ASSET_HOST",
-      "SHAKAPACKER_CONFIG"
-    ]
-    return !keepEnvVars.includes(key)
-  }
-
   function clean(value, key, parent) {
-    // Handle EnvironmentPlugin specifically
+    // Handle EnvironmentPlugin specifically - remove keys and defaultValues entirely
     if (
       parent &&
       parent.constructor &&
       parent.constructor.name === "EnvironmentPlugin"
     ) {
-      if (key === "keys" && Array.isArray(value)) {
-        return value.filter((k) => !shouldFilterEnvKey(k))
-      }
-      if (key === "defaultValues" && typeof value === "object") {
-        const filtered = {}
-        for (const k in value) {
-          if (!shouldFilterEnvKey(k)) {
-            filtered[k] = value[k]
-          }
-        }
-        return filtered
+      if (key === "keys" || key === "defaultValues") {
+        return undefined // Remove these fields entirely
       }
     }
 
     if (typeof value === "function") {
-      if (showFunctions) {
-        // Try to get function source
-        const source = value.toString()
-        return `[Function: ${value.name || "anonymous"}]\n${source}`
-      }
-      return `[Function: ${value.name || "anonymous"}]`
+      // Always show function source in compact mode
+      const source = value.toString()
+      // Make source more compact by removing extra whitespace
+      const compactSource = source
+        .split("\n")
+        .map((line) => line.trim())
+        .filter((line) => line.length > 0)
+        .join(" ")
+      return compactSource
     }
 
     if (typeof value === "string") {
@@ -382,7 +362,11 @@ function cleanConfig(obj, rootPath, showFunctions) {
       const cleaned = {}
       for (const k in value) {
         if (Object.prototype.hasOwnProperty.call(value, k)) {
-          cleaned[k] = clean(value[k], k, value)
+          const cleanedValue = clean(value[k], k, value)
+          // Skip undefined values (filtered out fields)
+          if (cleanedValue !== undefined) {
+            cleaned[k] = cleanedValue
+          }
         }
       }
       return cleaned
@@ -406,7 +390,7 @@ try {
 
 // Clean up config if compact mode is enabled
 if (options.compact) {
-  config = cleanConfig(config, appRoot, options.showFunctions)
+  config = cleanConfig(config, appRoot)
 }
 
 // Prepare output
