@@ -8,10 +8,7 @@ import type {
   WebpackPluginInstance
 } from "webpack"
 import type { Configuration as DevServerConfiguration } from "webpack-dev-server"
-import type {
-  RspackPluginInstance as ImportedRspackPluginInstance,
-  Compiler
-} from "@rspack/core"
+import type { RspackPluginInstance as ImportedRspackPluginInstance } from "@rspack/core"
 
 /**
  * Webpack configuration extended with dev server support
@@ -98,5 +95,5 @@ export interface ReactRefreshWebpackPlugin {
 }
 
 export interface ReactRefreshRspackPlugin {
-  new (options?: Record<string, unknown>): RspackPlugin
+  new (options?: Record<string, unknown>): RspackPluginInstance
 }
