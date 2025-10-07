@@ -17,6 +17,8 @@
  *   --output=<filename>         Output file (default: stdout)
  *   --depth=<number>           Inspection depth (default: 10, use 'null' for unlimited)
  *   --format=json|inspect      Output format (default: inspect)
+ *   --compact                  Remove noise (env vars, long paths) for cleaner output
+ *   --show-functions           Include function source code (verbose)
  *   --help                     Show this help message
  *
  * Examples:
@@ -92,7 +94,9 @@ const options = {
   output: null,
   depth: 10, // Default depth to prevent stack overflow with circular refs
   format: "inspect",
-  help: false
+  help: false,
+  compact: false, // Compact mode removes noise
+  showFunctions: false // Show function source code
 }
 
 // Helper to parse --key=value arguments
@@ -121,6 +125,10 @@ for (const arg of args) {
     options.depth = depth === "null" ? null : parseInt(depth, 10)
   } else if (arg.startsWith("--format=")) {
     options.format = parseArgValue(arg, "--format=")
+  } else if (arg === "--compact") {
+    options.compact = true
+  } else if (arg === "--show-functions") {
+    options.showFunctions = true
   }
 }
 
@@ -142,6 +150,8 @@ Options:
   --output=<filename>         Output file (default: stdout)
   --depth=<number>           Inspection depth (default: 10, use 'null' for unlimited)
   --format=json|inspect      Output format (default: inspect)
+  --compact                  Remove noise (env vars, long paths) for cleaner output
+  --show-functions           Include function source code (verbose)
   --help, -h                 Show this help message
 
 Examples:
@@ -307,6 +317,83 @@ console.log(`[Config Exporter] Environment: ${options.env}`)
 console.log(`[Config Exporter] Bundle type: ${options.bundleType}`)
 console.log(`[Config Exporter] Bundler: ${bundler}`)
 
+// Helper function to clean up config for more readable output
+function cleanConfig(obj, rootPath, showFunctions) {
+  const makePathRelative = (str) => {
+    if (typeof str === "string" && str.startsWith(rootPath)) {
+      return "./" + str.substring(rootPath.length + 1)
+    }
+    return str
+  }
+
+  const shouldFilterEnvKey = (key) => {
+    // Keep only webpack/shakapacker related env vars
+    const keepEnvVars = [
+      "NODE_ENV",
+      "RAILS_ENV",
+      "WEBPACK_SERVE",
+      "SERVER_BUNDLE_ONLY",
+      "CLIENT_BUNDLE_ONLY",
+      "SHAKAPACKER_ASSET_HOST",
+      "SHAKAPACKER_CONFIG"
+    ]
+    return !keepEnvVars.includes(key)
+  }
+
+  function clean(value, key, parent) {
+    // Handle EnvironmentPlugin specifically
+    if (
+      parent &&
+      parent.constructor &&
+      parent.constructor.name === "EnvironmentPlugin"
+    ) {
+      if (key === "keys" && Array.isArray(value)) {
+        return value.filter((k) => !shouldFilterEnvKey(k))
+      }
+      if (key === "defaultValues" && typeof value === "object") {
+        const filtered = {}
+        for (const k in value) {
+          if (!shouldFilterEnvKey(k)) {
+            filtered[k] = value[k]
+          }
+        }
+        return filtered
+      }
+    }
+
+    if (typeof value === "function") {
+      if (showFunctions) {
+        // Try to get function source
+        const source = value.toString()
+        return `[Function: ${value.name || "anonymous"}]\n${source}`
+      }
+      return `[Function: ${value.name || "anonymous"}]`
+    }
+
+    if (typeof value === "string") {
+      return makePathRelative(value)
+    }
+
+    if (Array.isArray(value)) {
+      return value.map((item, i) => clean(item, i, value))
+    }
+
+    if (value && typeof value === "object") {
+      const cleaned = {}
+      for (const k in value) {
+        if (Object.prototype.hasOwnProperty.call(value, k)) {
+          cleaned[k] = clean(value[k], k, value)
+        }
+      }
+      return cleaned
+    }
+
+    return value
+  }
+
+  return clean(obj, null, null)
+}
+
 // Load the config
 let config
 try {
@@ -315,6 +402,11 @@ try {
 } catch (error) {
   console.error(`[Config Exporter] Error loading config:`, error)
   process.exit(1)
+}
+
+// Clean up config if compact mode is enabled
+if (options.compact) {
+  config = cleanConfig(config, appRoot, options.showFunctions)
 }
 
 // Prepare output
