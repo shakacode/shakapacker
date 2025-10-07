@@ -1,9 +1,7 @@
 namespace :shakapacker do
   desc "Export webpack or rspack configuration for analysis"
   task :export_config do
-    require "shakapacker/env"
-
-    bin_path = Shakapacker::Env.current_dir.join("bin/export-config")
+    bin_path = Rails.root.join("bin/export-config")
 
     unless File.exist?(bin_path)
       $stderr.puts "Error: bin/export-config not found"
@@ -14,7 +12,7 @@ namespace :shakapacker do
     # Pass through command-line arguments after the task name
     # Use exec to replace the rake process with the export script
     # This ensures proper exit codes and signal handling
-    Dir.chdir(Shakapacker::Env.current_dir) do
+    Dir.chdir(Rails.root) do
       exec(bin_path.to_s, *ARGV[1..])
     end
   end
