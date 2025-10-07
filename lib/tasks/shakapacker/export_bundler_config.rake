@@ -1,14 +1,14 @@
 namespace :shakapacker do
-  desc "Export webpack or rspack configuration for analysis"
-  task :export_config do
+  desc "Export webpack or rspack bundler configuration for analysis"
+  task :export_bundler_config do
     # Try to use the binstub if it exists, otherwise use the gem's version
-    bin_path = Rails.root.join("bin/export-config")
+    bin_path = Rails.root.join("bin/export-bundler-config")
 
     unless File.exist?(bin_path)
       # Binstub not installed, use the gem's version directly
-      gem_bin_path = File.expand_path("../../install/bin/export-config", __dir__)
+      gem_bin_path = File.expand_path("../../install/bin/export-bundler-config", __dir__)
 
-      $stderr.puts "Note: bin/export-config binstub not found."
+      $stderr.puts "Note: bin/export-bundler-config binstub not found."
       $stderr.puts "Using gem version directly. To install the binstub, run: rake shakapacker:binstubs"
       $stderr.puts ""
 

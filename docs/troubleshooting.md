@@ -17,35 +17,35 @@
 
 4. You can also pass additional options to the command to run the webpack-dev-server and start the webpack-dev-server with the option `--debug-shakapacker`
 
-5. **Export your full webpack/rspack configuration for analysis**: Use the `bin/export-config` utility to export your complete resolved configuration. This is especially helpful for:
+5. **Export your full webpack/rspack configuration for analysis**: Use the `bin/export-bundler-config` utility to export your complete resolved configuration. This is especially helpful for:
 
    - **Migrations**: Comparing configurations before and after migrating between webpack and rspack, or between different Shakapacker versions
    - **Debugging**: Inspecting the exact configuration webpack/rspack is using, including all merged settings
    - **AI Analysis**: Uploading the exported config to ChatGPT or other AI tools for troubleshooting
 
    ```bash
-   # Export production config for analysis
-   bin/export-config --env=production --output=config-prod.txt
+   # Export production config for analysis (--compact recommended)
+   bin/export-bundler-config --env=production --compact --output=config-prod.txt
 
    # Export client bundle config (HMR mode)
-   bin/export-config --bundle-type=client --output=config-client.txt
+   bin/export-bundler-config --bundle-type=client --compact --output=config-client.txt
 
    # Export server bundle config (SSR)
-   bin/export-config --bundle-type=server --output=config-server.txt
+   bin/export-bundler-config --bundle-type=server --compact --output=config-server.txt
 
    # Export in JSON format for programmatic analysis
-   bin/export-config --format=json --output=config.json
+   bin/export-bundler-config --format=json --output=config.json
 
    # Export rspack config
-   bin/export-config --bundler=rspack --output=config-rspack.txt
+   bin/export-bundler-config --bundler=rspack --compact --output=config-rspack.txt
 
    # Compare webpack vs rspack configs
-   bin/export-config --bundler=webpack --output=webpack.txt
-   bin/export-config --bundler=rspack --output=rspack.txt
+   bin/export-bundler-config --bundler=webpack --compact --output=webpack.txt
+   bin/export-bundler-config --bundler=rspack --compact --output=rspack.txt
    diff webpack.txt rspack.txt
    ```
 
-   See `bin/export-config --help` for all available options.
+   See `bin/export-bundler-config --help` for all available options.
 
 6. Generate webpack stats for build analysis (useful for bundle size optimization):
 

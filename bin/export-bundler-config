@@ -8,7 +8,7 @@
  * for comparison and analysis.
  *
  * Usage:
- *   bin/export-config [options]
+ *   bin/export-bundler-config [options]
  *
  * Options:
  *   --bundler=webpack|rspack    Specify bundler (auto-detected if not provided)
@@ -23,16 +23,16 @@
  *
  * Examples:
  *   # Export client config in HMR mode (WEBPACK_SERVE=true)
- *   bin/export-config --bundle-type=client
+ *   bin/export-bundler-config --bundle-type=client --compact
  *
  *   # Export server config only
- *   bin/export-config --bundle-type=server
+ *   bin/export-bundler-config --bundle-type=server --compact
  *
  *   # Export production config to file
- *   bin/export-config --env=production --output=config.json --format=json
+ *   bin/export-bundler-config --env=production --compact --output=config.json
  *
  *   # Export rspack config
- *   bin/export-config --bundler=rspack
+ *   bin/export-bundler-config --bundler=rspack --compact
  */
 
 const { inspect } = require("util")
@@ -141,7 +141,7 @@ Exports webpack or rspack configuration in a verbose, human-readable format
 for comparison and analysis.
 
 Usage:
-  bin/export-config [options]
+  bin/export-bundler-config [options]
 
 Options:
   --bundler=webpack|rspack    Specify bundler (auto-detected if not provided)
@@ -156,16 +156,16 @@ Options:
 
 Examples:
   # Export client config in HMR mode (WEBPACK_SERVE=true)
-  bin/export-config --bundle-type=client
+  bin/export-bundler-config --bundle-type=client --compact
 
   # Export server config only
-  bin/export-config --bundle-type=server
+  bin/export-bundler-config --bundle-type=server --compact
 
   # Export production config to file
-  bin/export-config --env=production --output=config.json --format=json
+  bin/export-bundler-config --env=production --compact --output=config.json
 
   # Export rspack config
-  bin/export-config --bundler=rspack
+  bin/export-bundler-config --bundler=rspack --compact
 `)
   process.exit(0)
 }
