@@ -41,7 +41,8 @@ import type {
 ### Webpack/Rspack Types
 - `WebpackConfigWithDevServer` - Webpack config with dev server
 - `RspackConfigWithDevServer` - Rspack config with dev server
-- `RspackPlugin` - Rspack plugin interface
+- `RspackPluginInstance` - Rspack plugin instance type
+- `RspackPlugin` - **⚠️ Deprecated:** Use `RspackPluginInstance` instead
 - `RspackDevServerConfig` - Rspack dev server configuration
 - `CompressionPluginOptions` - Options for compression plugin
 - `CompressionPluginConstructor` - Constructor type for compression plugin
