@@ -2,4 +2,3 @@ lib/*
 node_modules/*
 vendor/*
 spec/*
-package/*

@@ -1,3 +1,3 @@
-declare const _default: any;
-export = _default;
+declare const _default: unknown
+export = _default
 //# sourceMappingURL=index.d.ts.map

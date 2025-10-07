@@ -3,7 +3,10 @@
  * These types are exported for consumer use
  */
 
-import type { Configuration as WebpackConfiguration, WebpackPluginInstance } from "webpack"
+import type {
+  Configuration as WebpackConfiguration,
+  WebpackPluginInstance
+} from "webpack"
 import type { Configuration as DevServerConfiguration } from "webpack-dev-server"
 
 /**
@@ -19,9 +22,9 @@ export interface WebpackConfigWithDevServer extends WebpackConfiguration {
  * Rspack plugins follow a similar pattern to webpack but may have different internals
  */
 export interface RspackPlugin {
-  new(...args: any[]): {
-    apply(compiler: any): void
-    [key: string]: any
+  new (...args: unknown[]): {
+    apply(compiler: unknown): void
+    [key: string]: unknown
   }
 }
 
@@ -76,15 +79,17 @@ export interface CompressionPluginOptions {
 /**
  * Compression plugin constructor type
  */
-export type CompressionPluginConstructor = new (options: CompressionPluginOptions) => WebpackPluginInstance
+export type CompressionPluginConstructor = new (
+  options: CompressionPluginOptions
+) => WebpackPluginInstance
 
 /**
  * React Refresh plugin types
  */
-export interface ReactRefreshWebpackPlugin {
-  new(options?: Record<string, unknown>): WebpackPluginInstance
+export interface _ReactRefreshWebpackPlugin {
+  new (options?: Record<string, unknown>): WebpackPluginInstance
 }
 
-export interface ReactRefreshRspackPlugin {
-  new(options?: Record<string, unknown>): RspackPlugin
+export interface _ReactRefreshRspackPlugin {
+  new (options?: Record<string, unknown>): RspackPlugin
 }

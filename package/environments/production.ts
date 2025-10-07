@@ -6,13 +6,19 @@
 /* eslint global-require: 0 */
 /* eslint import/no-dynamic-require: 0 */
 
-const { resolve } = require("path")
-const { merge } = require("webpack-merge")
-const baseConfig = require("./base")
-const { moduleExists } = require("../utils/helpers")
-const config = require("../config")
-import type { Configuration as WebpackConfiguration, WebpackPluginInstance } from "webpack"
+import type {
+  Configuration as WebpackConfiguration,
+  WebpackPluginInstance
+} from "webpack"
+
+import { resolve } from "path"
+import { merge } from "webpack-merge"
 import type { CompressionPluginConstructor } from "./types"
+import { moduleExists } from "../utils/helpers"
+
+const baseConfig = require("./base")
+
+const config = require("../config")
 
 const optimizationPath = resolve(
   __dirname,
@@ -70,6 +76,7 @@ const productionConfig: Partial<WebpackConfiguration> = {
 }
 
 if (config.useContentHash === false) {
+  // eslint-disable-next-line no-console
   // eslint-disable-next-line no-console
   console.warn(`⚠️ WARNING
 Setting 'useContentHash' to 'false' in the production environment (specified by NODE_ENV environment variable) is not allowed!

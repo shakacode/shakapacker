@@ -1,11 +1,10 @@
 import { DevServerConfig } from "./types"
-const snakeToCamelCase = require("./utils/snakeToCamelCase")
 
-const shakapackerDevServerYamlConfig = require("./dev_server") as DevServerConfig
-const { outputPath: contentBase, publicPath } = require("./config") as {
-  outputPath: string
-  publicPath: string
-}
+import snakeToCamelCase from "./utils/snakeToCamelCase"
+import shakapackerDevServerYamlConfig from "./dev_server"
+import config from "./config"
+
+const { outputPath: contentBase, publicPath } = config
 
 interface WebpackDevServerConfig {
   devMiddleware?: {
@@ -13,9 +12,11 @@ interface WebpackDevServerConfig {
   }
   hot?: boolean | string
   liveReload?: boolean
-  historyApiFallback?: boolean | {
-    disableDotRule?: boolean
-  }
+  historyApiFallback?:
+    | boolean
+    | {
+        disableDotRule?: boolean
+      }
   static?: {
     publicPath?: string
     [key: string]: unknown
@@ -32,7 +33,12 @@ interface WebpackDevServerConfig {
   magicHtml?: boolean
   onAfterSetupMiddleware?: (devServer: unknown) => void
   onBeforeSetupMiddleware?: (devServer: unknown) => void
-  open?: boolean | string | string[] | Record<string, unknown> | Record<string, unknown>[]
+  open?:
+    | boolean
+    | string
+    | string[]
+    | Record<string, unknown>
+    | Record<string, unknown>[]
   port?: "auto" | string | number
   proxy?: unknown
   server?: string | boolean | Record<string, unknown>
@@ -69,14 +75,16 @@ const webpackDevServerMappedKeys = new Set([
 ])
 
 function createDevServerConfig(): WebpackDevServerConfig {
-  const devServerYamlConfig = { ...shakapackerDevServerYamlConfig } as DevServerConfig & Record<string, unknown>
+  const devServerYamlConfig = {
+    ...shakapackerDevServerYamlConfig
+  } as DevServerConfig & Record<string, unknown>
   const liveReload =
     devServerYamlConfig.live_reload !== undefined
       ? devServerYamlConfig.live_reload
       : !devServerYamlConfig.hmr
   delete devServerYamlConfig.live_reload
 
-  const config: WebpackDevServerConfig = {
+  const webpackConfig: WebpackDevServerConfig = {
     devMiddleware: {
       publicPath
     },
@@ -92,26 +100,28 @@ function createDevServerConfig(): WebpackDevServerConfig {
   delete devServerYamlConfig.hmr
 
   if (devServerYamlConfig.static) {
-    config.static = { 
-      ...config.static, 
-      ...(typeof devServerYamlConfig.static === 'object' ? devServerYamlConfig.static as Record<string, unknown> : {})
+    webpackConfig.static = {
+      ...webpackConfig.static,
+      ...(typeof devServerYamlConfig.static === "object"
+        ? (devServerYamlConfig.static as Record<string, unknown>)
+        : {})
     }
     delete devServerYamlConfig.static
   }
 
   if (devServerYamlConfig.client) {
-    config.client = devServerYamlConfig.client
+    webpackConfig.client = devServerYamlConfig.client
     delete devServerYamlConfig.client
   }
 
   Object.keys(devServerYamlConfig).forEach((yamlKey) => {
     const camelYamlKey = snakeToCamelCase(yamlKey)
     if (webpackDevServerMappedKeys.has(camelYamlKey)) {
-      config[camelYamlKey] = devServerYamlConfig[yamlKey]
+      webpackConfig[camelYamlKey] = devServerYamlConfig[yamlKey]
     }
   })
 
-  return config
+  return webpackConfig
 }
 
-export = createDevServerConfig
+export default createDevServerConfig
