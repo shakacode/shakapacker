@@ -230,8 +230,8 @@ module Shakapacker
             settings.delete("babel")
           end
 
-          settings["swc"] = true
-          logger.info "  - Enabled SWC for #{env} environment"
+          settings["javascript_transpiler"] = "swc"
+          logger.info "  - Set javascript_transpiler to 'swc' for #{env} environment"
         end
 
         File.write(config_path, config.to_yaml)

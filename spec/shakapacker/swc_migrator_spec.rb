@@ -59,12 +59,12 @@ describe Shakapacker::SwcMigrator do
         rescue ArgumentError
           YAML.load_file(root_path.join("config/shakapacker.yml"))
         end
-        expect(config["default"]["swc"]).to eq(true)
+        expect(config["default"]["javascript_transpiler"]).to eq("swc")
         expect(config["default"]["babel"]).to be_nil
         expect(config["development"]["babel"]).to be_nil
-        expect(config["development"]["swc"]).to eq(true)
+        expect(config["development"]["javascript_transpiler"]).to eq("swc")
         expect(config["production"]["babel"]).to be_nil
-        expect(config["production"]["swc"]).to eq(true)
+        expect(config["production"]["javascript_transpiler"]).to eq("swc")
       end
 
       it "installs SWC packages" do
