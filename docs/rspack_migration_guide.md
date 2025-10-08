@@ -155,6 +155,10 @@ rails shakapacker:switch_bundler rspack --install-deps
 # or with rake (note the -- separator)
 rake shakapacker:switch_bundler rspack -- --install-deps
 
+# Fast switching without uninstalling old bundler (keeps both)
+rails shakapacker:switch_bundler webpack --install-deps --no-uninstall
+rake shakapacker:switch_bundler rspack -- --install-deps --no-uninstall
+
 # Switch to rspack manually (you manage dependencies yourself)
 rails shakapacker:switch_bundler rspack
 rake shakapacker:switch_bundler rspack
@@ -174,6 +178,7 @@ The task will:
 
 - Update `config/shakapacker.yml` to switch the bundler
 - Optionally install/uninstall npm dependencies with `--install-deps`
+- Use `--no-uninstall` to skip uninstalling the old bundler's packages (faster switching, keeps both bundlers installed)
 - Update `javascript_transpiler` to `swc` when switching to rspack (recommended)
 - Preserve your config file comments and structure
 

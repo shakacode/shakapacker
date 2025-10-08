@@ -13,6 +13,7 @@ namespace :shakapacker do
 
     Options:
       --install-deps    Automatically install/uninstall bundler dependencies
+      --no-uninstall    Skip uninstalling old bundler packages (faster, keeps both bundlers)
       --init-config     Create custom dependencies configuration file
       --help, -h        Show detailed help message
 
@@ -20,6 +21,10 @@ namespace :shakapacker do
       # Switch to rspack with automatic dependency management
       rails shakapacker:switch_bundler rspack --install-deps
       rake shakapacker:switch_bundler rspack -- --install-deps
+
+      # Fast switching without uninstalling (keeps both bundlers)
+      rails shakapacker:switch_bundler webpack --install-deps --no-uninstall
+      rake shakapacker:switch_bundler rspack -- --install-deps --no-uninstall
 
       # Switch to rspack (manual dependency management)
       rails shakapacker:switch_bundler rspack
@@ -62,11 +67,12 @@ namespace :shakapacker do
     else
       bundler = ARGV[1]
       install_deps = ARGV.include?("--install-deps")
+      no_uninstall = ARGV.include?("--no-uninstall")
 
       if bundler.nil? || bundler.start_with?("-")
         switcher.show_usage
       else
-        switcher.switch_to(bundler, install_deps: install_deps)
+        switcher.switch_to(bundler, install_deps: install_deps, no_uninstall: no_uninstall)
       end
     end
 

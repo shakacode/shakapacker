@@ -31,7 +31,7 @@ module Shakapacker
       config.dig("default", "assets_bundler") || "webpack"
     end
 
-    def switch_to(bundler, install_deps: false)
+    def switch_to(bundler, install_deps: false, no_uninstall: false)
       unless %w[webpack rspack].include?(bundler)
         raise ArgumentError, "Invalid bundler: #{bundler}. Must be 'webpack' or 'rspack'"
       end
@@ -44,7 +44,7 @@ module Shakapacker
 
       if current == bundler && install_deps
         puts "✅ Already using #{bundler} - reinstalling dependencies as requested"
-        manage_dependencies(bundler, install_deps, switching: false)
+        manage_dependencies(bundler, install_deps, switching: false, no_uninstall: no_uninstall)
         return
       end
 
@@ -54,7 +54,7 @@ module Shakapacker
       puts ""
       puts "📝 Configuration updated in #{SHAKAPACKER_CONFIG}"
 
-      manage_dependencies(bundler, install_deps)
+      manage_dependencies(bundler, install_deps, no_uninstall: no_uninstall)
 
       puts ""
       puts "🎯 Next steps:"
@@ -63,6 +63,7 @@ module Shakapacker
       puts ""
       puts "💡 Tip: Both webpack and rspack can coexist in package.json during migration"
       puts "        Use --install-deps to automatically manage dependencies, or manage manually"
+      puts "        Use --no-uninstall to skip removing old bundler packages (faster switching)"
     end
 
     def init_config
@@ -99,18 +100,19 @@ module Shakapacker
       puts ""
       puts "Options:"
       puts "  --install-deps    Automatically install/uninstall dependencies"
+      puts "  --no-uninstall    Skip uninstalling old bundler packages (faster, keeps both bundlers)"
       puts "  --init-config     Create #{CUSTOM_DEPS_CONFIG} with default dependencies"
       puts "  --help, -h        Show this help message"
       puts ""
       puts "Examples:"
       puts "  # Using rails command"
       puts "  rails shakapacker:switch_bundler rspack --install-deps"
-      puts "  rails shakapacker:switch_bundler webpack --install-deps"
+      puts "  rails shakapacker:switch_bundler webpack --install-deps --no-uninstall"
       puts "  rails shakapacker:switch_bundler --init-config"
       puts ""
       puts "  # Using rake command (note the -- separator)"
       puts "  rake shakapacker:switch_bundler rspack -- --install-deps"
-      puts "  rake shakapacker:switch_bundler webpack -- --install-deps"
+      puts "  rake shakapacker:switch_bundler webpack -- --install-deps --no-uninstall"
       puts "  rake shakapacker:switch_bundler -- --init-config"
     end
 
@@ -164,7 +166,7 @@ module Shakapacker
         File.write(config_path, content)
       end
 
-      def manage_dependencies(bundler, install_deps, switching: true)
+      def manage_dependencies(bundler, install_deps, switching: true, no_uninstall: false)
         rspack_deps, webpack_deps = load_dependencies
         deps_to_install = bundler == "rspack" ? rspack_deps : webpack_deps
         deps_to_remove = bundler == "rspack" ? webpack_deps : rspack_deps
@@ -174,11 +176,14 @@ module Shakapacker
           puts "📦 Managing dependencies..."
           puts ""
 
-          # Show what will be removed (only when switching)
-          if switching && (!deps_to_remove[:dev].empty? || !deps_to_remove[:prod].empty?)
+          # Show what will be removed (only when switching and not no_uninstall)
+          if switching && !no_uninstall && (!deps_to_remove[:dev].empty? || !deps_to_remove[:prod].empty?)
             puts "   🗑️  Removing:"
             deps_to_remove[:dev].each { |dep| puts "      - #{dep} (dev)" }
             deps_to_remove[:prod].each { |dep| puts "      - #{dep} (prod)" }
+            puts ""
+          elsif switching && no_uninstall
+            puts "   ⏭️  Skipping uninstall (--no-uninstall)"
             puts ""
           end
 
@@ -190,8 +195,8 @@ module Shakapacker
             puts ""
           end
 
-          # Remove old bundler dependencies (only when switching)
-          if switching
+          # Remove old bundler dependencies (only when switching and not no_uninstall)
+          if switching && !no_uninstall
             remove_dependencies(deps_to_remove)
           end
 
