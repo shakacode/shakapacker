@@ -84,6 +84,28 @@ describe Shakapacker::SwcMigrator do
         expect(config_content).to include('runtime: "automatic"')
       end
 
+      it "creates config/swc.config.js with Stimulus compatibility and React Fast Refresh" do
+        migrator.migrate_to_swc(run_installer: false)
+
+        config_content = File.read(root_path.join("config/swc.config.js"))
+
+        # Verify Stimulus compatibility
+        expect(config_content).to include("keepClassNames: true")
+        expect(config_content).to include("CRITICAL for Stimulus compatibility")
+
+        # Verify proper nesting with options wrapper
+        expect(config_content).to include("module.exports = {")
+        expect(config_content).to include("options: {")
+        expect(config_content).to include("jsc: {")
+
+        # Verify shakapacker env helper usage
+        expect(config_content).to include("const { env } = require('shakapacker')")
+        expect(config_content).to include("env.isDevelopment && env.runningWebpackDevServer")
+
+        # Verify React Fast Refresh
+        expect(config_content).to include("refresh:")
+      end
+
       it "returns results hash" do
         results = migrator.migrate_to_swc(run_installer: false)
 

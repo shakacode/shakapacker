@@ -454,7 +454,51 @@ module Shakapacker
 
         if swc_config_path.exist?
           @info << "SWC configuration: Using config/swc.config.js (recommended). This config is merged with Shakapacker's defaults."
+          check_swc_config_settings(swc_config_path)
         end
+      end
+
+      def check_swc_config_settings(config_path)
+        config_content = File.read(config_path, encoding: "UTF-8")
+
+        # Check for loose: true (deprecated default)
+        if config_content.match?(/loose\s*:\s*true/)
+          @warnings << "SWC configuration: 'loose: true' detected in config/swc.config.js. " \
+                      "This can cause silent failures with Stimulus controllers and incorrect spread operator behavior. " \
+                      "Consider removing this setting to use Shakapacker's default 'loose: false' (spec-compliant). " \
+                      "See: https://github.com/shakacode/shakapacker/blob/main/docs/using_swc_loader.md#using-swc-with-stimulus"
+        end
+
+        # Check for missing keepClassNames with Stimulus
+        if stimulus_likely_used? && !config_content.match?(/keepClassNames\s*:\s*true/)
+          @warnings << "SWC configuration: Stimulus appears to be in use, but 'keepClassNames: true' is not set in config/swc.config.js. " \
+                      "Without this setting, Stimulus controllers will fail silently. " \
+                      "Add 'keepClassNames: true' to jsc config. " \
+                      "See: https://github.com/shakacode/shakapacker/blob/main/docs/using_swc_loader.md#using-swc-with-stimulus"
+        elsif config_content.match?(/keepClassNames\s*:\s*true/)
+          @info << "SWC configuration: 'keepClassNames: true' is set (good for Stimulus compatibility)"
+        end
+
+        # Check for jsc.target and env conflict
+        # Use word boundary to avoid false positives with transform.target or other nested properties
+        if config_content.match?(/jsc\s*:\s*\{[^}]*\btarget\s*:/) && config_content.match?(/env\s*:\s*\{/)
+          @issues << "SWC configuration: Both 'jsc.target' and 'env' are configured. These cannot be used together. " \
+                     "Remove 'jsc.target' and use only 'env' (Shakapacker sets this automatically). " \
+                     "See: https://github.com/shakacode/shakapacker/blob/main/docs/using_swc_loader.md#using-swc-with-stimulus"
+        end
+      rescue => e
+        # Don't fail doctor if SWC config check has issues
+        @warnings << "Unable to validate SWC configuration: #{e.message}"
+      end
+
+      def stimulus_likely_used?
+        return false unless package_json_exists?
+
+        package_json = read_package_json
+        dependencies = (package_json["dependencies"] || {}).merge(package_json["devDependencies"] || {})
+
+        # Check for @hotwired/stimulus or stimulus package
+        dependencies.key?("@hotwired/stimulus") || dependencies.key?("stimulus")
       end
 
       def check_css_dependencies

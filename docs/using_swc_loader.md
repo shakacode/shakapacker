@@ -25,7 +25,7 @@ npm install @swc/core swc-loader
 ```
 
 2. Add or change `javascript_transpiler` value in your default `shakapacker.yml` config to `swc`
-The default configuration of babel is done by using `package.json` to use the file within the `shakapacker` package.
+   The default configuration of babel is done by using `package.json` to use the file within the `shakapacker` package.
 
 ```yml
 default: &default
@@ -44,7 +44,7 @@ default: &default
   cache_manifest: false
 
   # Select JavaScript transpiler to use, available options are 'babel' (default) or 'swc'
-  javascript_transpiler: 'swc'
+  javascript_transpiler: "swc"
 ```
 
 ## Usage
@@ -73,7 +73,6 @@ See some examples below of potential `config/swc.config.js`.
 
 ### Example: Enabling top level await and decorators
 
-
 ```js
 const customConfig = {
   options: {
@@ -92,7 +91,7 @@ module.exports = customConfig
 ### Example: Matching existing `@babel/present-env` config
 
 ```js
-const { env } = require('shakapacker')
+const { env } = require("shakapacker")
 
 const customConfig = {
   options: {
@@ -114,9 +113,8 @@ module.exports = customConfig
 
 :warning: Remember that you still need to add [@pmmmwh/react-refresh-webpack-plugin](https://github.com/pmmmwh/react-refresh-webpack-plugin) to your webpack config. The setting below just replaces equivalent `react-refresh/babel` Babel plugin.
 
-
 ```js
-const { env } = require('shakapacker')
+const { env } = require("shakapacker")
 
 const customConfig = {
   options: {
@@ -136,11 +134,10 @@ module.exports = customConfig
 ### Example: Adding browserslist config
 
 ```js
-
 const customConfig = {
   options: {
     env: {
-      targets: '> 0.25%, not dead'
+      targets: "> 0.25%, not dead"
     }
   }
 }
@@ -148,6 +145,109 @@ const customConfig = {
 module.exports = customConfig
 ```
 
+## Using SWC with Stimulus
+
+⚠️ **Important:** If you're using [Stimulus](https://stimulus.hotwired.dev/), you need to configure SWC to preserve class names.
+
+### Required Configuration
+
+SWC mangles (minifies) class names by default for optimization. Since Stimulus relies on class names to discover and instantiate controllers, you must preserve class names in your `config/swc.config.js`:
+
+```js
+// config/swc.config.js
+const { env } = require("shakapacker")
+
+module.exports = {
+  options: {
+    jsc: {
+      // CRITICAL for Stimulus: Prevents SWC from mangling class names
+      keepClassNames: true,
+      transform: {
+        react: {
+          runtime: "automatic",
+          refresh: env.isDevelopment && env.runningWebpackDevServer
+        }
+      }
+    }
+  }
+}
+```
+
+**Note:** Starting with Shakapacker v9.1.0, the default `swc.config.js` created by `rake shakapacker:migrate_to_swc` includes `keepClassNames: true` automatically.
+
+### Why This Matters
+
+Without `keepClassNames: true`, your Stimulus controllers will:
+
+- Load without errors in the browser console
+- Fail silently at runtime
+- Not respond to events
+- Not update the DOM as expected
+
+This makes debugging very difficult since there are no visible JavaScript errors.
+
+### Symptoms of Missing Configuration
+
+If your Stimulus controllers aren't working after migrating to SWC, you'll typically see test failures like:
+
+```
+Failure/Error: expect(page).to have_text("Author: can't be blank")
+  expected to be truthy, got false
+
+Failure/Error: expect(page).to have_css("h2", text: comment.author)
+  expected to be truthy, got false
+```
+
+Your controllers appear to load but don't function correctly:
+
+- Form submissions don't work
+- Validation error messages don't appear
+- Dynamic content doesn't get added to the page
+- No JavaScript errors appear in the console
+
+### Common Configuration Error
+
+❌ **Error:** `` `env` and `jsc.target` cannot be used together``
+
+If you see this error:
+
+```
+ERROR in ./client/app/packs/stimulus-bundle.js
+Module build failed (from ./node_modules/swc-loader/src/index.js):
+Error:
+
+Caused by:
+    `env` and `jsc.target` cannot be used together
+```
+
+**Solution:** Do NOT add `jsc.target` to your configuration. Shakapacker already sets `env` for browser targeting. Use `env` OR `jsc.target`, never both.
+
+❌ **Incorrect:**
+
+```js
+jsc: {
+  target: 'es2015',  // Don't add this!
+  keepClassNames: true,
+}
+```
+
+✅ **Correct:**
+
+```js
+jsc: {
+  keepClassNames: true,  // No target specified
+}
+```
+
+### Troubleshooting Checklist
+
+If your Stimulus controllers aren't working after migrating to SWC:
+
+1. ✅ Verify `keepClassNames: true` is set in `config/swc.config.js`
+2. ✅ Ensure your controllers have explicit class names (not anonymous classes)
+3. ✅ Test with `console.log()` in your controller's `connect()` method to verify it's being instantiated
+4. ✅ Check that you haven't added `jsc.target` (which conflicts with Shakapacker's `env` setting)
+5. ✅ Rebuild your assets: `bin/shakapacker clobber && bin/shakapacker compile`
 
 ## Known limitations
 

@@ -11,6 +11,43 @@
 
 Changes since the last non-beta release.
 
+### ⚠️ Breaking Changes
+
+- **SWC default configuration now uses `loose: false` for spec-compliant transforms** ([#657](https://github.com/shakacode/shakapacker/issues/657))
+  - Previously, Shakapacker set `loose: true` by default in SWC configuration, which caused:
+    - Silent failures with Stimulus controllers
+    - Incorrect behavior with spread operators on iterables (e.g., `[...new Set()]`)
+    - Deviation from both SWC and Babel upstream defaults
+  - Now defaults to `loose: false`, matching SWC's default and fixing compatibility with Stimulus
+  - This aligns with the previous fix to Babel configuration in [PR #107](https://github.com/shakacode/shakapacker/pull/107)
+  - **Migration:** If you need the old behavior for performance reasons, add to `config/swc.config.js`:
+    ```javascript
+    module.exports = {
+      options: {
+        jsc: {
+          loose: true // Restore old behavior (not recommended)
+        }
+      }
+    }
+    ```
+
+### Added
+
+- **Stimulus compatibility built into SWC migration** ([#657](https://github.com/shakacode/shakapacker/issues/657))
+  - `rake shakapacker:migrate_to_swc` now creates `config/swc.config.js` with `keepClassNames: true`
+  - Prevents SWC from mangling class names, which breaks Stimulus controller discovery
+  - Includes React Fast Refresh configuration by default
+- **Comprehensive Stimulus documentation** for SWC users ([#657](https://github.com/shakacode/shakapacker/issues/657))
+  - Added "Using SWC with Stimulus" section to `docs/using_swc_loader.md`
+  - Documents symptoms of missing configuration (silent failures)
+  - Explains common errors like `env` and `jsc.target` conflicts
+  - Added Stimulus compatibility checklist to migration guide
+- **Enhanced `rake shakapacker:doctor` for SWC configuration validation** ([#657](https://github.com/shakacode/shakapacker/issues/657))
+  - Detects `loose: true` in config and warns about potential issues
+  - Detects missing `keepClassNames: true` when Stimulus is installed
+  - Detects conflicting `jsc.target` and `env` configuration
+  - Provides actionable warnings with links to documentation
+
 ### Fixed
 
 - Restore `RspackPlugin` type as an alias to `RspackPluginInstance` for backward compatibility. The type is now deprecated in favor of `RspackPluginInstance`. [#650](https://github.com/shakacode/shakapacker/issues/650)

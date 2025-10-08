@@ -896,6 +896,136 @@ describe Shakapacker::Doctor do
           expect(doctor.info).to include(match(/Using config\/swc\.config\.js \(recommended\)/))
         end
       end
+
+      context "SWC config content validation" do
+        before do
+          package_json = {
+            "devDependencies" => {
+              "@swc/core" => "^1.3.0",
+              "swc-loader" => "^0.2.0"
+            }
+          }
+          File.write(package_json_path, JSON.generate(package_json))
+          FileUtils.mkdir_p(root_path.join("config"))
+        end
+
+        context "when loose: true is set" do
+          before do
+            File.write(root_path.join("config/swc.config.js"), <<~JS)
+              module.exports = {
+                options: {
+                  jsc: {
+                    loose: true
+                  }
+                }
+              }
+            JS
+          end
+
+          it "warns about loose: true causing issues" do
+            doctor.send(:check_javascript_transpiler_dependencies)
+            expect(doctor.warnings).to include(match(/'loose: true' detected.*silent failures with Stimulus/))
+          end
+        end
+
+        context "when keepClassNames is set" do
+          before do
+            File.write(root_path.join("config/swc.config.js"), <<~JS)
+              module.exports = {
+                options: {
+                  jsc: {
+                    keepClassNames: true
+                  }
+                }
+              }
+            JS
+          end
+
+          it "shows info about keepClassNames being set" do
+            doctor.send(:check_javascript_transpiler_dependencies)
+            expect(doctor.info).to include(match(/'keepClassNames: true' is set.*good for Stimulus/))
+          end
+        end
+
+        context "when Stimulus is used but keepClassNames is missing" do
+          before do
+            package_json = {
+              "devDependencies" => {
+                "@swc/core" => "^1.3.0",
+                "swc-loader" => "^0.2.0",
+                "@hotwired/stimulus" => "^3.0.0"
+              }
+            }
+            File.write(package_json_path, JSON.generate(package_json))
+            File.write(root_path.join("config/swc.config.js"), <<~JS)
+              module.exports = {
+                options: {
+                  jsc: {
+                    transform: {
+                      react: {
+                        runtime: "automatic"
+                      }
+                    }
+                  }
+                }
+              }
+            JS
+          end
+
+          it "warns about missing keepClassNames" do
+            doctor.send(:check_javascript_transpiler_dependencies)
+            expect(doctor.warnings).to include(match(/Stimulus appears to be in use.*'keepClassNames: true' is not set/))
+          end
+        end
+
+        context "when both jsc.target and env are configured" do
+          before do
+            File.write(root_path.join("config/swc.config.js"), <<~JS)
+              module.exports = {
+                options: {
+                  jsc: {
+                    target: "es2015"
+                  },
+                  env: {
+                    targets: "> 0.25%"
+                  }
+                }
+              }
+            JS
+          end
+
+          it "adds an issue about conflicting settings" do
+            doctor.send(:check_javascript_transpiler_dependencies)
+            expect(doctor.issues).to include(match(/Both 'jsc\.target' and 'env' are configured.*cannot be used together/))
+          end
+        end
+
+        context "when transform.target is used (not jsc.target) with env" do
+          before do
+            File.write(root_path.join("config/swc.config.js"), <<~JS)
+              module.exports = {
+                options: {
+                  jsc: {
+                    transform: {
+                      react: {
+                        runtime: "automatic"
+                      }
+                    }
+                  },
+                  env: {
+                    targets: "> 0.25%"
+                  }
+                }
+              }
+            JS
+          end
+
+          it "does not flag as conflicting (no jsc.target, only transform config)" do
+            doctor.send(:check_javascript_transpiler_dependencies)
+            expect(doctor.issues).not_to include(match(/Both 'jsc\.target' and 'env'/))
+          end
+        end
+      end
     end
   end
 
