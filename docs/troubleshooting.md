@@ -23,25 +23,33 @@
    - **Debugging**: Inspecting the exact configuration webpack/rspack is using, including all merged settings
    - **AI Analysis**: Uploading the exported config to ChatGPT or other AI tools for troubleshooting
 
+   **Installation**: The utility is installed when you run `rake shakapacker:binstubs` or can be used directly via `rake shakapacker:export_bundler_config`.
+
    ```bash
-   # Export production config for analysis (--compact recommended)
-   bin/export-bundler-config --env=production --compact --output=config-prod.txt
+   # Install the binstub (recommended for direct CLI usage)
+   rake shakapacker:binstubs
 
-   # Export client bundle config (HMR mode)
-   bin/export-bundler-config --bundle-type=client --compact --output=config-client.txt
+   # Export both client and server configs (default, compact mode)
+   bin/export-bundler-config --env=production --output=config-prod.txt
 
-   # Export server bundle config (SSR)
-   bin/export-bundler-config --bundle-type=server --compact --output=config-server.txt
+   # Export only client config
+   bin/export-bundler-config --client-only --output=config-client.txt
+
+   # Export only server config (for SSR)
+   bin/export-bundler-config --server-only --output=config-server.txt
+
+   # Export with full verbose output including function definitions
+   bin/export-bundler-config --verbose --output=config-verbose.txt
 
    # Export in JSON format for programmatic analysis
    bin/export-bundler-config --format=json --output=config.json
 
    # Export rspack config
-   bin/export-bundler-config --bundler=rspack --compact --output=config-rspack.txt
+   bin/export-bundler-config --bundler=rspack --output=config-rspack.txt
 
    # Compare webpack vs rspack configs
-   bin/export-bundler-config --bundler=webpack --compact --output=webpack.txt
-   bin/export-bundler-config --bundler=rspack --compact --output=rspack.txt
+   bin/export-bundler-config --bundler=webpack --output=webpack.txt
+   bin/export-bundler-config --bundler=rspack --output=rspack.txt
    diff webpack.txt rspack.txt
    ```
 

@@ -13,26 +13,32 @@
  * Options:
  *   --bundler=webpack|rspack    Specify bundler (auto-detected if not provided)
  *   --env=development|production|test    Node environment (default: development)
- *   --bundle-type=client|server|both     Bundle type (default: both)
+ *   --client-only              Generate only client config (sets CLIENT_BUNDLE_ONLY=yes)
+ *   --server-only              Generate only server config (sets SERVER_BUNDLE_ONLY=yes)
  *   --output=<filename>         Output file (default: stdout)
  *   --depth=<number>           Inspection depth (default: 10, use 'null' for unlimited)
  *   --format=json|inspect      Output format (default: inspect)
- *   --compact                  Remove noise (env vars, long paths) for cleaner output
- *   --show-functions           Include function source code (verbose)
+ *   --verbose                  Show full output with function definitions (default: compact mode)
  *   --help                     Show this help message
  *
- * Examples:
- *   # Export client config in HMR mode (WEBPACK_SERVE=true)
- *   bin/export-bundler-config --bundle-type=client --compact
+ * Note: --client-only and --server-only are mutually exclusive.
+ *       If neither is specified, both client and server configs are generated.
  *
- *   # Export server config only
- *   bin/export-bundler-config --bundle-type=server --compact
+ * Examples:
+ *   # Export both client and server configs (default)
+ *   bin/export-bundler-config
+ *
+ *   # Export only client config
+ *   bin/export-bundler-config --client-only
+ *
+ *   # Export only server config
+ *   bin/export-bundler-config --server-only
  *
  *   # Export production config to file
- *   bin/export-bundler-config --env=production --compact --output=config.json
+ *   bin/export-bundler-config --env=production --output=config.json
  *
- *   # Export rspack config
- *   bin/export-bundler-config --bundler=rspack --compact
+ *   # Export rspack config with full verbose output
+ *   bin/export-bundler-config --bundler=rspack --verbose
  */
 
 const { inspect } = require("util")
@@ -90,13 +96,13 @@ const args = process.argv.slice(2)
 const options = {
   bundler: null,
   env: "development",
-  bundleType: "both",
+  clientOnly: false,
+  serverOnly: false,
   output: null,
   depth: 10, // Default depth to prevent stack overflow with circular refs
   format: "inspect",
   help: false,
-  compact: false, // Compact mode removes noise
-  showFunctions: false // Show function source code
+  verbose: false // Verbose mode shows full output with function definitions
 }
 
 // Helper to parse --key=value arguments
@@ -116,8 +122,10 @@ for (const arg of args) {
     options.bundler = parseArgValue(arg, "--bundler=")
   } else if (arg.startsWith("--env=")) {
     options.env = parseArgValue(arg, "--env=")
-  } else if (arg.startsWith("--bundle-type=")) {
-    options.bundleType = parseArgValue(arg, "--bundle-type=")
+  } else if (arg === "--client-only") {
+    options.clientOnly = true
+  } else if (arg === "--server-only") {
+    options.serverOnly = true
   } else if (arg.startsWith("--output=")) {
     options.output = parseArgValue(arg, "--output=")
   } else if (arg.startsWith("--depth=")) {
@@ -125,10 +133,8 @@ for (const arg of args) {
     options.depth = depth === "null" ? null : parseInt(depth, 10)
   } else if (arg.startsWith("--format=")) {
     options.format = parseArgValue(arg, "--format=")
-  } else if (arg === "--compact") {
-    options.compact = true
-  } else if (arg === "--show-functions") {
-    options.showFunctions = true
+  } else if (arg === "--verbose") {
+    options.verbose = true
   }
 }
 
@@ -146,28 +152,42 @@ Usage:
 Options:
   --bundler=webpack|rspack    Specify bundler (auto-detected if not provided)
   --env=development|production|test    Node environment (default: development)
-  --bundle-type=client|server|both     Bundle type (default: both)
+  --client-only              Generate only client config (sets CLIENT_BUNDLE_ONLY=yes)
+  --server-only              Generate only server config (sets SERVER_BUNDLE_ONLY=yes)
   --output=<filename>         Output file (default: stdout)
   --depth=<number>           Inspection depth (default: 10, use 'null' for unlimited)
   --format=json|inspect      Output format (default: inspect)
-  --compact                  Remove noise (env vars, long paths) for cleaner output
-  --show-functions           Include function source code (verbose)
+  --verbose                  Show full output with function definitions (default: compact mode)
   --help, -h                 Show this help message
 
-Examples:
-  # Export client config in HMR mode (WEBPACK_SERVE=true)
-  bin/export-bundler-config --bundle-type=client --compact
+Note: --client-only and --server-only are mutually exclusive.
+      If neither is specified, both client and server configs are generated.
 
-  # Export server config only
-  bin/export-bundler-config --bundle-type=server --compact
+Examples:
+  # Export both client and server configs (default)
+  bin/export-bundler-config
+
+  # Export only client config
+  bin/export-bundler-config --client-only
+
+  # Export only server config
+  bin/export-bundler-config --server-only
 
   # Export production config to file
-  bin/export-bundler-config --env=production --compact --output=config.json
+  bin/export-bundler-config --env=production --output=config.json
 
-  # Export rspack config
-  bin/export-bundler-config --bundler=rspack --compact
+  # Export rspack config with full verbose output
+  bin/export-bundler-config --bundler=rspack --verbose
 `)
   process.exit(0)
+}
+
+// Validate mutually exclusive flags
+if (options.clientOnly && options.serverOnly) {
+  console.error(
+    "Error: --client-only and --server-only are mutually exclusive. Please specify only one."
+  )
+  process.exit(1)
 }
 
 // Validate options
@@ -185,13 +205,6 @@ if (!["development", "production", "test"].includes(options.env)) {
   process.exit(1)
 }
 
-if (!["client", "server", "both"].includes(options.bundleType)) {
-  console.error(
-    `Error: Invalid bundle type '${options.bundleType}'. Must be 'client', 'server', or 'both'.`
-  )
-  process.exit(1)
-}
-
 if (!["json", "inspect"].includes(options.format)) {
   console.error(
     `Error: Invalid format '${options.format}'. Must be 'json' or 'inspect'.`
@@ -204,18 +217,12 @@ process.env.NODE_ENV = options.env
 process.env.RAILS_ENV = options.env
 
 // Set bundle type environment variables
-switch (options.bundleType) {
-  case "client":
-    process.env.WEBPACK_SERVE = "true"
-    break
-  case "server":
-    process.env.SERVER_BUNDLE_ONLY = "yes"
-    break
-  case "both":
-  default:
-    // No special env vars needed
-    break
+if (options.clientOnly) {
+  process.env.CLIENT_BUNDLE_ONLY = "yes"
+} else if (options.serverOnly) {
+  process.env.SERVER_BUNDLE_ONLY = "yes"
 }
+// If neither flag is set, no special env vars needed (both configs will be generated)
 
 // Auto-detect bundler if not specified
 let bundler = options.bundler
@@ -314,7 +321,13 @@ if (!configFile) {
 
 console.log(`[Config Exporter] Loading config: ${configFile}`)
 console.log(`[Config Exporter] Environment: ${options.env}`)
-console.log(`[Config Exporter] Bundle type: ${options.bundleType}`)
+if (options.clientOnly) {
+  console.log(`[Config Exporter] Mode: Client only (CLIENT_BUNDLE_ONLY=yes)`)
+} else if (options.serverOnly) {
+  console.log(`[Config Exporter] Mode: Server only (SERVER_BUNDLE_ONLY=yes)`)
+} else {
+  console.log(`[Config Exporter] Mode: Both client and server configs`)
+}
 console.log(`[Config Exporter] Bundler: ${bundler}`)
 
 // Helper function to clean up config for more readable output
@@ -339,7 +352,7 @@ function cleanConfig(obj, rootPath) {
     }
 
     if (typeof value === "function") {
-      // Always show function source in compact mode
+      // Always show function source
       const source = value.toString()
       // Make source more compact by removing extra whitespace
       const compactSource = source
@@ -388,9 +401,15 @@ try {
   process.exit(1)
 }
 
-// Clean up config if compact mode is enabled
-if (options.compact) {
-  config = cleanConfig(config, appRoot)
+// Always clean up config (compact mode is default, shows function source and relative paths)
+// Verbose mode shows raw config without any cleaning
+if (!options.verbose) {
+  // Clean config - handle both single config and array of configs
+  if (Array.isArray(config)) {
+    config = config.map((cfg) => cleanConfig(cfg, appRoot))
+  } else {
+    config = cleanConfig(config, appRoot)
+  }
 }
 
 // Prepare output
@@ -398,14 +417,13 @@ const metadata = {
   exportedAt: new Date().toISOString(),
   bundler,
   environment: options.env,
-  bundleType: options.bundleType,
   configFile,
+  configCount: Array.isArray(config) ? config.length : 1,
   environmentVariables: {
     NODE_ENV: process.env.NODE_ENV,
     RAILS_ENV: process.env.RAILS_ENV,
-    WEBPACK_SERVE: process.env.WEBPACK_SERVE,
-    SERVER_BUNDLE_ONLY: process.env.SERVER_BUNDLE_ONLY,
-    CLIENT_BUNDLE_ONLY: process.env.CLIENT_BUNDLE_ONLY
+    CLIENT_BUNDLE_ONLY: process.env.CLIENT_BUNDLE_ONLY,
+    SERVER_BUNDLE_ONLY: process.env.SERVER_BUNDLE_ONLY
   }
 }
 
@@ -444,7 +462,18 @@ if (options.format === "json") {
   }
 
   output = "=== METADATA ===\n\n" + inspect(metadata, inspectOptions) + "\n\n"
-  output += "=== CONFIG ===\n\n" + inspect(config, inspectOptions) + "\n"
+  output += "=== CONFIG ===\n\n"
+
+  // Handle array of configs
+  if (Array.isArray(config)) {
+    output += `Total configs: ${config.length}\n\n`
+    config.forEach((cfg, index) => {
+      output += `--- Config [${index}] ---\n\n`
+      output += inspect(cfg, inspectOptions) + "\n\n"
+    })
+  } else {
+    output += inspect(config, inspectOptions) + "\n"
+  }
 }
 
 // Write output

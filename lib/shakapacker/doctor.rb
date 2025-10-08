@@ -875,7 +875,7 @@ module Shakapacker
             puts "  #{package_manager_install_command(package_manager)}"
             puts ""
             puts "For debugging configuration issues, export your webpack/rspack config:"
-            puts "  bin/export-bundler-config --env=#{doctor.config.env} --compact --output=config.txt"
+            puts "  bin/export-bundler-config --env=#{doctor.config.env} --output=config.txt"
             puts "  See 'bin/export-bundler-config --help' for more options"
           end
 
