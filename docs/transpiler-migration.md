@@ -1,5 +1,7 @@
 # JavaScript Transpiler Configuration
 
+> 💡 **Quick Start**: For a concise guide to migrating from Babel to SWC, see [Common Upgrades Guide - Babel to SWC](./common-upgrades.md#migrating-from-babel-to-swc).
+
 ## Default Transpilers
 
 Shakapacker uses different default JavaScript transpilers based on the bundler:
