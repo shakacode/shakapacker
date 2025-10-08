@@ -108,11 +108,30 @@ Typical build time improvements when migrating from Babel to SWC:
 - [ ] Back up your current configuration
 - [ ] Install SWC dependencies
 - [ ] Update `shakapacker.yml`
+- [ ] If using Stimulus, ensure `keepClassNames: true` is set in `config/swc.config.js` (automatically included in v9.1.0+)
 - [ ] Test your build locally
 - [ ] Run your test suite
 - [ ] Check browser compatibility
 - [ ] Deploy to staging environment
 - [ ] Monitor for any runtime issues
+
+#### Stimulus Compatibility
+
+If you're using [Stimulus](https://stimulus.hotwired.dev/), you must configure SWC to preserve class names. See the [Using SWC with Stimulus](using_swc_loader.md#using-swc-with-stimulus) section for detailed instructions.
+
+**Quick summary:** Add `keepClassNames: true` to your `config/swc.config.js`:
+
+```javascript
+module.exports = {
+  options: {
+    jsc: {
+      keepClassNames: true // Required for Stimulus
+    }
+  }
+}
+```
+
+Starting with Shakapacker v9.1.0, running `rake shakapacker:migrate_to_swc` automatically creates a configuration with this setting.
 
 ### Rollback Plan
 
