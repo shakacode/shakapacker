@@ -1,17 +1,21 @@
 # Rspack Migration Guide for Shakapacker
 
 ## Overview
+
 This guide documents the differences between webpack and Rspack configurations in Shakapacker, and provides migration guidance for users switching to Rspack.
 
 ## Key Differences from Webpack
 
 ### 1. Built-in Loaders
+
 Rspack provides built-in loaders for better performance:
 
 **JavaScript/TypeScript:**
+
 - Use `builtin:swc-loader` instead of `babel-loader` or `ts-loader`
 - 20x faster than Babel on single thread, 70x on multiple cores
 - Configuration example:
+
 ```javascript
 {
   test: /\.(js|jsx|ts|tsx)$/,
@@ -36,28 +40,34 @@ Rspack provides built-in loaders for better performance:
 ### 2. Plugin Replacements
 
 #### Built-in Rspack Alternatives
-| Webpack Plugin | Rspack Alternative | Status |
-|---------------|-------------------|---------|
-| `copy-webpack-plugin` | `rspack.CopyRspackPlugin` | ✅ Built-in |
-| `mini-css-extract-plugin` | `rspack.CssExtractRspackPlugin` | ✅ Built-in |
-| `terser-webpack-plugin` | `rspack.SwcJsMinimizerRspackPlugin` | ✅ Built-in |
+
+| Webpack Plugin                 | Rspack Alternative                         | Status      |
+| ------------------------------ | ------------------------------------------ | ----------- |
+| `copy-webpack-plugin`          | `rspack.CopyRspackPlugin`                  | ✅ Built-in |
+| `mini-css-extract-plugin`      | `rspack.CssExtractRspackPlugin`            | ✅ Built-in |
+| `terser-webpack-plugin`        | `rspack.SwcJsMinimizerRspackPlugin`        | ✅ Built-in |
 | `css-minimizer-webpack-plugin` | `rspack.LightningCssMinimizerRspackPlugin` | ✅ Built-in |
 
 #### Community Alternatives
-| Webpack Plugin | Rspack Alternative | Package |
-|---------------|-------------------|----------|
-| `fork-ts-checker-webpack-plugin` | `ts-checker-rspack-plugin` | `npm i -D ts-checker-rspack-plugin` |
+
+| Webpack Plugin                         | Rspack Alternative             | Package                                 |
+| -------------------------------------- | ------------------------------ | --------------------------------------- |
+| `fork-ts-checker-webpack-plugin`       | `ts-checker-rspack-plugin`     | `npm i -D ts-checker-rspack-plugin`     |
 | `@pmmmwh/react-refresh-webpack-plugin` | `@rspack/plugin-react-refresh` | `npm i -D @rspack/plugin-react-refresh` |
-| `eslint-webpack-plugin` | `eslint-rspack-plugin` | `npm i -D eslint-rspack-plugin` |
+| `eslint-webpack-plugin`                | `eslint-rspack-plugin`         | `npm i -D eslint-rspack-plugin`         |
 
 #### Incompatible Plugins
+
 The following webpack plugins are NOT compatible with Rspack:
+
 - `webpack.optimize.LimitChunkCountPlugin` - Use `optimization.splitChunks` configuration instead
 - `webpack-manifest-plugin` - Use `rspack-manifest-plugin` instead
 - Git revision plugins - Use alternative approaches
 
 ### 3. Asset Module Types
+
 Replace file loaders with asset modules:
+
 - `file-loader` → `type: 'asset/resource'`
 - `url-loader` → `type: 'asset/inline'`
 - `raw-loader` → `type: 'asset/source'`
@@ -65,7 +75,9 @@ Replace file loaders with asset modules:
 ### 4. Configuration Differences
 
 #### TypeScript Configuration
+
 **Required:** Add `isolatedModules: true` to your `tsconfig.json`:
+
 ```json
 {
   "compilerOptions": {
@@ -75,22 +87,22 @@ Replace file loaders with asset modules:
 ```
 
 #### React Fast Refresh
+
 ```javascript
 // Development configuration
-const ReactRefreshPlugin = require('@rspack/plugin-react-refresh');
+const ReactRefreshPlugin = require("@rspack/plugin-react-refresh")
 
 module.exports = {
-  plugins: [
-    new ReactRefreshPlugin(),
-    new rspack.HotModuleReplacementPlugin()
-  ]
-};
+  plugins: [new ReactRefreshPlugin(), new rspack.HotModuleReplacementPlugin()]
+}
 ```
 
 ### 5. Optimization Differences
 
 #### Code Splitting
+
 Rspack's `splitChunks` configuration is similar to webpack but with some differences:
+
 ```javascript
 optimization: {
   splitChunks: {
@@ -107,6 +119,7 @@ optimization: {
 ```
 
 #### Minimization
+
 ```javascript
 optimization: {
   minimize: true,
@@ -118,7 +131,9 @@ optimization: {
 ```
 
 ### 6. Development Server
+
 Rspack uses its own dev server with some configuration differences:
+
 ```javascript
 devServer: {
   // Rspack-specific: Force writing assets to disk
@@ -130,7 +145,43 @@ devServer: {
 
 ## Migration Checklist
 
+### Quick Start: Using the Switch Bundler Task
+
+Shakapacker provides a convenient rake task to switch between webpack and rspack:
+
+```bash
+# Switch to rspack with automatic dependency management
+rails shakapacker:switch_bundler rspack --install-deps
+
+# Switch to rspack manually (you manage dependencies yourself)
+rails shakapacker:switch_bundler rspack
+
+# Switch back to webpack if needed
+rails shakapacker:switch_bundler webpack --install-deps
+
+# Show help
+rails shakapacker:switch_bundler --help
+```
+
+The task will:
+
+- Update `config/shakapacker.yml` to switch the bundler
+- Optionally install/uninstall npm dependencies with `--install-deps`
+- Update `javascript_transpiler` to `swc` when switching to rspack (recommended)
+- Preserve your config file comments and structure
+
+**Custom Dependencies:** You can customize which dependencies are installed by creating a `.shakapacker-switch-bundler-dependencies.yml` file:
+
+```bash
+rails shakapacker:switch_bundler --init-config
+```
+
+### Manual Migration Steps
+
+If you prefer to migrate manually or need more control:
+
 ### Step 1: Update Dependencies
+
 ```bash
 # Remove webpack dependencies
 npm uninstall webpack webpack-cli webpack-dev-server
@@ -140,27 +191,33 @@ npm install --save-dev @rspack/core @rspack/cli
 ```
 
 ### Step 2: Update Configuration Files
+
 1. Create `config/rspack/rspack.config.js` based on your webpack config
 2. Update `config/shakapacker.yml`:
+
 ```yaml
-assets_bundler: 'rspack'
+assets_bundler: "rspack"
 ```
 
 ### Step 3: Replace Loaders
+
 - Replace `babel-loader` with `builtin:swc-loader`
 - Remove `file-loader`, `url-loader`, `raw-loader` - use asset modules
 - Update CSS loaders to use Rspack's built-in support
 
 ### Step 4: Update Plugins
+
 - Replace plugins with Rspack alternatives (see table above)
 - Remove incompatible plugins
 - Add Rspack-specific plugins as needed
 
 ### Step 5: TypeScript Setup
+
 1. Add `isolatedModules: true` to `tsconfig.json`
 2. Optional: Add `ts-checker-rspack-plugin` for type checking
 
 ### Step 6: Test Your Build
+
 ```bash
 # Development build
 bin/shakapacker
@@ -172,18 +229,22 @@ bin/shakapacker --mode production
 ## Common Issues and Solutions
 
 ### Issue: LimitChunkCountPlugin Error
+
 **Error:** `Cannot read properties of undefined (reading 'tap')`
 **Solution:** Remove `webpack.optimize.LimitChunkCountPlugin` and use `splitChunks` configuration instead.
 
 ### Issue: Missing Loaders
+
 **Error:** Module parse errors
 **Solution:** Check console logs for skipped loaders and install missing dependencies.
 
 ### Issue: CSS Extraction
+
 **Error:** CSS not being extracted properly
 **Solution:** Use `rspack.CssExtractRspackPlugin` instead of `mini-css-extract-plugin`.
 
 ### Issue: TypeScript Errors
+
 **Error:** TypeScript compilation errors
 **Solution:** Ensure `isolatedModules: true` is set in `tsconfig.json`.
 
