@@ -25,33 +25,51 @@
 
    **Installation**: The utility is installed when you run `rake shakapacker:binstubs` or can be used directly via `rake shakapacker:export_bundler_config`.
 
+   **RECOMMENDED - Quick troubleshooting:**
+
    ```bash
-   # Install the binstub (recommended for direct CLI usage)
+   # Install the binstub (one-time setup)
    rake shakapacker:binstubs
 
-   # Export both client and server configs (default, compact mode)
-   bin/export-bundler-config --env=production --output=config-prod.txt
+   # Export EVERYTHING for troubleshooting (dev + prod, annotated YAML)
+   bin/export-bundler-config --doctor
+   # Creates: webpack-development-client.yaml, webpack-development-server.yaml,
+   #          webpack-production-client.yaml, webpack-production-server.yaml
+   ```
 
-   # Export only client config
-   bin/export-bundler-config --client-only --output=config-client.txt
+   **Other usage examples:**
 
-   # Export only server config (for SSR)
-   bin/export-bundler-config --server-only --output=config-server.txt
+   ```bash
+   # Save current environment configs with auto-generated names
+   bin/export-bundler-config --save
+   # Creates: webpack-development-client.yaml, webpack-development-server.yaml
 
-   # Export with full verbose output including function definitions
-   bin/export-bundler-config --verbose --output=config-verbose.txt
+   # Save to specific directory
+   bin/export-bundler-config --save --save-dir=./debug-configs
+
+   # Export only client config for production
+   bin/export-bundler-config --save --env=production --client-only
+   # Creates: webpack-production-client.yaml
+
+   # Compare development vs production configs
+   bin/export-bundler-config --save --save-dir=./configs
+   diff configs/webpack-development-client.yaml configs/webpack-production-client.yaml
+
+   # View config in terminal (no files created)
+   bin/export-bundler-config
+
+   # Export without inline documentation annotations
+   bin/export-bundler-config --save --no-annotate
 
    # Export in JSON format for programmatic analysis
-   bin/export-bundler-config --format=json --output=config.json
-
-   # Export rspack config
-   bin/export-bundler-config --bundler=rspack --output=config-rspack.txt
-
-   # Compare webpack vs rspack configs
-   bin/export-bundler-config --bundler=webpack --output=webpack.txt
-   bin/export-bundler-config --bundler=rspack --output=rspack.txt
-   diff webpack.txt rspack.txt
+   bin/export-bundler-config --save --format=json
    ```
+
+   **Config files are automatically named:** `{bundler}-{env}-{type}.{ext}`
+
+   - Examples: `webpack-development-client.yaml`, `rspack-production-server.yaml`
+   - YAML format includes inline documentation explaining each config key
+   - Separate files for client and server bundles (cleaner than combined)
 
    See `bin/export-bundler-config --help` for all available options.
 
