@@ -615,4 +615,22 @@ describe "Shakapacker::Configuration" do
       end
     end
   end
+
+  context "with missing environment in config file" do
+    let(:config) do
+      Shakapacker::Configuration.new(
+        root_path: ROOT_PATH,
+        config_path: Pathname.new(File.expand_path("./test_app/config/shakapacker_no_precompile.yml", __dir__)),
+        env: "staging"
+      )
+    end
+
+    it "falls back to development environment without raising error" do
+      expect { config.compile? }.not_to raise_error
+    end
+
+    it "does not raise NoMethodError for deep_symbolize_keys on missing environment" do
+      expect { config.fetch(:source_path) }.not_to raise_error
+    end
+  end
 end

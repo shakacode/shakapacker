@@ -255,7 +255,8 @@ class Shakapacker::Configuration
       rescue ArgumentError
         YAML.load_file(config_path.to_s)
       end
-      symbolized_config = config[env].deep_symbolize_keys
+      env_config = config[env] || config[Shakapacker::DEFAULT_ENV] || config["default"]
+      symbolized_config = env_config&.deep_symbolize_keys || {}
 
       return symbolized_config
     rescue Errno::ENOENT => e
