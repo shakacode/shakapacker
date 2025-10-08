@@ -1,5 +1,7 @@
 # Rspack Migration Guide for Shakapacker
 
+> 💡 **Quick Start**: For a step-by-step migration guide from Webpack to Rspack, see [Common Upgrades Guide - Webpack to Rspack](./common-upgrades.md#migrating-from-webpack-to-rspack).
+
 ## Overview
 
 This guide documents the differences between webpack and Rspack configurations in Shakapacker, and provides migration guidance for users switching to Rspack.

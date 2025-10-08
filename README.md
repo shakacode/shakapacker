@@ -1046,6 +1046,14 @@ npm install shakapacker@next
 
 Also, consult the [CHANGELOG](./CHANGELOG.md) for additional upgrade links.
 
+#### Common Upgrade Scenarios
+
+For step-by-step guides on common migrations, see the [Common Upgrades Guide](./docs/common-upgrades.md):
+
+- [Migrating Package Managers](./docs/common-upgrades.md#migrating-package-managers) (Yarn ↔ npm, pnpm)
+- [Migrating from Babel to SWC](./docs/common-upgrades.md#migrating-from-babel-to-swc) (20-70x faster builds)
+- [Migrating from Webpack to Rspack](./docs/common-upgrades.md#migrating-from-webpack-to-rspack) (5-10x faster builds)
+
 ### Paths
 
 By default, Shakapacker ships with simple conventions for where the JavaScript app files and compiled webpack bundles will go in your Rails app. All these options are configurable from `config/shakapacker.yml` file.
