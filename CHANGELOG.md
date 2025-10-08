@@ -50,6 +50,9 @@ Changes since the last non-beta release.
 
 ### Fixed
 
+- Fixed `rake shakapacker:migrate_to_swc` to correctly set `javascript_transpiler: "swc"` instead of unused `swc: true` flag ([#659](https://github.com/shakacode/shakapacker/pull/659))
+  - The migration now properly configures SWC as the transpiler
+  - Users who previously ran the migration should update their `config/shakapacker.yml` to use `javascript_transpiler: "swc"` instead of `swc: true`
 - Restore `RspackPlugin` type as an alias to `RspackPluginInstance` for backward compatibility. The type is now deprecated in favor of `RspackPluginInstance`. [#650](https://github.com/shakacode/shakapacker/issues/650)
 
 ## [v9.0.0] - October 5, 2025
