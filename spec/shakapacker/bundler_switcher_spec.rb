@@ -10,6 +10,19 @@ describe Shakapacker::BundlerSwitcher do
   let(:custom_config_path) { root_path.join(".shakapacker-switch-bundler-dependencies.yml") }
   let(:switcher) { described_class.new(root_path) }
 
+  # Helper to load YAML with Ruby version compatibility
+  def load_yaml_for_test(path)
+    if YAML.respond_to?(:unsafe_load)
+      YAML.unsafe_load(File.read(path))
+    else
+      begin
+        YAML.safe_load(File.read(path), permitted_classes: [], permitted_symbols: [], aliases: true)
+      rescue ArgumentError
+        YAML.load(File.read(path)) # rubocop:disable Security/YAMLLoad
+      end
+    end
+  end
+
   before do
     FileUtils.mkdir_p(root_path.join("config"))
 
@@ -86,7 +99,7 @@ describe Shakapacker::BundlerSwitcher do
 
     it "updates config file when switching from webpack to rspack" do
       switcher.switch_to("rspack")
-      config = YAML.load_file(config_path, aliases: true)
+      config = load_yaml_for_test(config_path)
       expect(config["default"]["assets_bundler"]).to eq("rspack")
     end
 
@@ -97,13 +110,13 @@ describe Shakapacker::BundlerSwitcher do
       File.write(config_path, config_content)
 
       switcher.switch_to("webpack")
-      config = YAML.load_file(config_path, aliases: true)
+      config = load_yaml_for_test(config_path)
       expect(config["default"]["assets_bundler"]).to eq("webpack")
     end
 
     it "updates javascript_transpiler to swc when switching to rspack" do
       switcher.switch_to("rspack")
-      config = YAML.load_file(config_path, aliases: true)
+      config = load_yaml_for_test(config_path)
       expect(config["default"]["javascript_transpiler"]).to eq("swc")
     end
 
@@ -113,7 +126,7 @@ describe Shakapacker::BundlerSwitcher do
       File.write(config_path, config_content)
 
       switcher.switch_to("rspack")
-      config = YAML.load_file(config_path, aliases: true)
+      config = load_yaml_for_test(config_path)
       expect(config["default"]["javascript_transpiler"]).to eq("swc")
     end
 
@@ -182,21 +195,21 @@ describe Shakapacker::BundlerSwitcher do
 
     it "creates valid YAML config" do
       switcher.init_config
-      config = YAML.load_file(custom_config_path, aliases: true)
+      config = load_yaml_for_test(custom_config_path)
       expect(config).to have_key("rspack")
       expect(config).to have_key("webpack")
     end
 
     it "includes default rspack dependencies" do
       switcher.init_config
-      config = YAML.load_file(custom_config_path, aliases: true)
+      config = load_yaml_for_test(custom_config_path)
       expect(config["rspack"]["devDependencies"]).to include("@rspack/cli")
       expect(config["rspack"]["dependencies"]).to include("@rspack/core")
     end
 
     it "includes default webpack dependencies" do
       switcher.init_config
-      config = YAML.load_file(custom_config_path, aliases: true)
+      config = load_yaml_for_test(custom_config_path)
       expect(config["webpack"]["devDependencies"]).to include("webpack")
       expect(config["webpack"]["devDependencies"]).to include("webpack-cli")
     end
