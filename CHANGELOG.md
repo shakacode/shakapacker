@@ -56,16 +56,16 @@ _No unreleased changes._
   - Secure command execution (prevents shell injection)
   - Usage: `rails shakapacker:switch_bundler [webpack|rspack] [--install-deps] [--no-uninstall]`
   - See rake task help: `rails shakapacker:switch_bundler --help`
-- **Stimulus compatibility built into SWC migration** ([#657](https://github.com/shakacode/shakapacker/issues/657))
+- **Stimulus compatibility built into SWC migration** ([#658](https://github.com/shakacode/shakapacker/pull/658))
   - `rake shakapacker:migrate_to_swc` now creates `config/swc.config.js` with `keepClassNames: true`
   - Prevents SWC from mangling class names, which breaks Stimulus controller discovery
   - Includes React Fast Refresh configuration by default
-- **Comprehensive Stimulus documentation** for SWC users ([#657](https://github.com/shakacode/shakapacker/issues/657))
-  - Added "Using SWC with Stimulus" section to `docs/using_swc_loader.md`
+- **Comprehensive Stimulus documentation** for SWC users ([#658](https://github.com/shakacode/shakapacker/pull/658))
+  - Added "Using SWC with Stimulus" section to [docs/using_swc_loader.md](./docs/using_swc_loader.md#using-swc-with-stimulus)
   - Documents symptoms of missing configuration (silent failures)
   - Explains common errors like `env` and `jsc.target` conflicts
   - Added Stimulus compatibility checklist to migration guide
-- **Enhanced `rake shakapacker:doctor` for SWC configuration validation** ([#657](https://github.com/shakacode/shakapacker/issues/657))
+- **Enhanced `rake shakapacker:doctor` for SWC configuration validation** ([#658](https://github.com/shakacode/shakapacker/pull/658))
   - Detects `loose: true` in config and warns about potential issues
   - Detects missing `keepClassNames: true` when Stimulus is installed
   - Detects conflicting `jsc.target` and `env` configuration
