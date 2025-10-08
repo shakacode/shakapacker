@@ -42,6 +42,11 @@ Changes since the last non-beta release.
   - Documents symptoms of missing configuration (silent failures)
   - Explains common errors like `env` and `jsc.target` conflicts
   - Added Stimulus compatibility checklist to migration guide
+- **Enhanced `rake shakapacker:doctor` for SWC configuration validation** ([#657](https://github.com/shakacode/shakapacker/issues/657))
+  - Detects `loose: true` in config and warns about potential issues
+  - Detects missing `keepClassNames: true` when Stimulus is installed
+  - Detects conflicting `jsc.target` and `env` configuration
+  - Provides actionable warnings with links to documentation
 
 ### Fixed
 
