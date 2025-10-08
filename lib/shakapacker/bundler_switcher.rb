@@ -172,6 +172,23 @@ module Shakapacker
         if install_deps
           puts ""
           puts "📦 Managing dependencies..."
+          puts ""
+
+          # Show what will be removed (only when switching)
+          if switching && (!deps_to_remove[:dev].empty? || !deps_to_remove[:prod].empty?)
+            puts "   🗑️  Removing:"
+            deps_to_remove[:dev].each { |dep| puts "      - #{dep} (dev)" }
+            deps_to_remove[:prod].each { |dep| puts "      - #{dep} (prod)" }
+            puts ""
+          end
+
+          # Show what will be installed
+          if !deps_to_install[:dev].empty? || !deps_to_install[:prod].empty?
+            puts "   📦 Installing:"
+            deps_to_install[:dev].each { |dep| puts "      - #{dep} (dev)" }
+            deps_to_install[:prod].each { |dep| puts "      - #{dep} (prod)" }
+            puts ""
+          end
 
           # Remove old bundler dependencies (only when switching)
           if switching
@@ -189,14 +206,12 @@ module Shakapacker
 
       def remove_dependencies(deps)
         unless deps[:dev].empty?
-          puts "   Removing old dev dependencies..."
           unless system("npm", "uninstall", *deps[:dev])
             puts "   ⚠️  Warning: Failed to uninstall some dev dependencies"
           end
         end
 
         unless deps[:prod].empty?
-          puts "   Removing old prod dependencies..."
           unless system("npm", "uninstall", *deps[:prod])
             puts "   ⚠️  Warning: Failed to uninstall some prod dependencies"
           end
@@ -205,7 +220,6 @@ module Shakapacker
 
       def install_dependencies(deps)
         unless deps[:dev].empty?
-          puts "   Installing new dev dependencies..."
           unless system("npm", "install", "--save-dev", *deps[:dev])
             puts "❌ Failed to install dev dependencies"
             raise "Failed to install dev dependencies"
@@ -213,7 +227,6 @@ module Shakapacker
         end
 
         unless deps[:prod].empty?
-          puts "   Installing new prod dependencies..."
           unless system("npm", "install", "--save", *deps[:prod])
             puts "❌ Failed to install prod dependencies"
             raise "Failed to install prod dependencies"
