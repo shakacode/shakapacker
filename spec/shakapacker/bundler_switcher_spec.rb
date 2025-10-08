@@ -26,6 +26,9 @@ describe Shakapacker::BundlerSwitcher do
   before do
     FileUtils.mkdir_p(root_path.join("config"))
 
+    # Mock package manager detection to always return npm for consistent tests
+    allow(switcher).to receive(:detect_package_manager).and_return("npm")
+
     # Create a sample shakapacker.yml
     config_content = <<~YAML
       default: &default
