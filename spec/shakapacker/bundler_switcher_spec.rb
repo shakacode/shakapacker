@@ -3,6 +3,7 @@ require "shakapacker/bundler_switcher"
 require "fileutils"
 require "tmpdir"
 require "yaml"
+require "json"
 
 describe Shakapacker::BundlerSwitcher do
   let(:root_path) { Pathname.new(Dir.mktmpdir) }
@@ -25,6 +26,9 @@ describe Shakapacker::BundlerSwitcher do
 
   before do
     FileUtils.mkdir_p(root_path.join("config"))
+
+    # Create a minimal package.json for package_json gem
+    File.write(root_path.join("package.json"), JSON.generate({ "name" => "test-app", "version" => "1.0.0" }))
 
     # Mock package manager detection to always return npm for consistent tests
     allow(switcher).to receive(:detect_package_manager).and_return("npm")
@@ -159,41 +163,51 @@ describe Shakapacker::BundlerSwitcher do
       end
 
       it "reinstalls deps when install_deps is true" do
-        allow(switcher).to receive(:system).and_return(true)
-        expect(switcher).to receive(:system).at_least(:once)
+        package_json = instance_double("PackageJson")
+        manager = instance_double("PackageJson::Managers::Base")
+        allow(switcher).to receive(:get_package_json).and_return(package_json)
+        allow(package_json).to receive(:manager).and_return(manager)
+
+        expect(manager).to receive(:add).twice.and_return(true)
         switcher.switch_to("webpack", install_deps: true)
       end
     end
 
     context "with install_deps option" do
-      it "calls npm to install dependencies when install_deps is true" do
-        allow(switcher).to receive(:system).and_return(true)
+      it "calls package manager to install dependencies when install_deps is true" do
+        package_json = instance_double("PackageJson")
+        manager = instance_double("PackageJson::Managers::Base")
+        allow(switcher).to receive(:get_package_json).and_return(package_json)
+        allow(package_json).to receive(:manager).and_return(manager)
 
-        # Expect uninstall calls for webpack deps (including SWC)
-        expect(switcher).to receive(:system).with("npm", "uninstall", "webpack", "webpack-cli", "webpack-dev-server", "@pmmmwh/react-refresh-webpack-plugin", "@swc/core", "swc-loader").and_return(true)
-        expect(switcher).to receive(:system).with("npm", "uninstall", "webpack-assets-manifest", "webpack-merge").and_return(true)
+        # Expect remove calls for webpack deps
+        expect(manager).to receive(:remove).with(["webpack", "webpack-cli", "webpack-dev-server", "@pmmmwh/react-refresh-webpack-plugin", "@swc/core", "swc-loader"]).and_return(true)
+        expect(manager).to receive(:remove).with(["webpack-assets-manifest", "webpack-merge"]).and_return(true)
 
-        # Expect install calls for rspack deps
-        expect(switcher).to receive(:system).with("npm", "install", "--save-dev", "@rspack/cli", "@rspack/plugin-react-refresh").and_return(true)
-        expect(switcher).to receive(:system).with("npm", "install", "--save", "@rspack/core", "rspack-manifest-plugin").and_return(true)
+        # Expect add calls for rspack deps
+        expect(manager).to receive(:add).with(["@rspack/cli", "@rspack/plugin-react-refresh"], type: :dev).and_return(true)
+        expect(manager).to receive(:add).with(["@rspack/core", "rspack-manifest-plugin"], type: :production).and_return(true)
 
         switcher.switch_to("rspack", install_deps: true)
       end
 
-      it "does not call npm when install_deps is false" do
-        expect(switcher).not_to receive(:system)
+      it "does not call package manager when install_deps is false" do
         switcher.switch_to("rspack", install_deps: false)
+        # No expectations needed - just verify it doesn't raise
       end
 
       it "skips uninstall when no_uninstall is true" do
-        allow(switcher).to receive(:system).and_return(true)
+        package_json = instance_double("PackageJson")
+        manager = instance_double("PackageJson::Managers::Base")
+        allow(switcher).to receive(:get_package_json).and_return(package_json)
+        allow(package_json).to receive(:manager).and_return(manager)
 
-        # Should NOT call uninstall
-        expect(switcher).not_to receive(:system).with("npm", "uninstall", anything)
+        # Should NOT call remove
+        expect(manager).not_to receive(:remove)
 
-        # Should only call install
-        expect(switcher).to receive(:system).with("npm", "install", "--save-dev", "@rspack/cli", "@rspack/plugin-react-refresh").and_return(true)
-        expect(switcher).to receive(:system).with("npm", "install", "--save", "@rspack/core", "rspack-manifest-plugin").and_return(true)
+        # Should only call add
+        expect(manager).to receive(:add).with(["@rspack/cli", "@rspack/plugin-react-refresh"], type: :dev).and_return(true)
+        expect(manager).to receive(:add).with(["@rspack/core", "rspack-manifest-plugin"], type: :production).and_return(true)
 
         switcher.switch_to("rspack", install_deps: true, no_uninstall: true)
       end
@@ -267,15 +281,30 @@ describe Shakapacker::BundlerSwitcher do
     end
 
     it "uses custom dependencies when config file exists" do
-      allow(switcher).to receive(:system).and_return(true)
-      expect(switcher).to receive(:system).with("npm", "install", "--save-dev", "@rspack/cli", "custom-rspack-dep").and_return(true)
+      package_json = instance_double("PackageJson")
+      manager = instance_double("PackageJson::Managers::Base")
+      allow(switcher).to receive(:get_package_json).and_return(package_json)
+      allow(package_json).to receive(:manager).and_return(manager)
+
+      expect(manager).to receive(:remove).with(["webpack", "custom-webpack-dep"]).and_return(true)
+      expect(manager).to receive(:remove).with(["webpack-merge"]).and_return(true)
+      expect(manager).to receive(:add).with(["@rspack/cli", "custom-rspack-dep"], type: :dev).and_return(true)
+      expect(manager).to receive(:add).with(["@rspack/core"], type: :production).and_return(true)
+
       switcher.switch_to("rspack", install_deps: true)
     end
   end
 
   describe "error handling" do
-    it "raises error when npm install fails" do
-      allow(switcher).to receive(:system).and_return(false)
+    it "raises error when package manager add fails" do
+      package_json = instance_double("PackageJson")
+      manager = instance_double("PackageJson::Managers::Base")
+      allow(switcher).to receive(:get_package_json).and_return(package_json)
+      allow(package_json).to receive(:manager).and_return(manager)
+
+      allow(manager).to receive(:remove).and_return(true)
+      allow(manager).to receive(:add).and_return(false)
+
       expect do
         switcher.switch_to("rspack", install_deps: true)
       end.to raise_error(/Failed to install/)

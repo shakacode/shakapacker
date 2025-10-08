@@ -210,67 +210,42 @@ module Shakapacker
       end
 
       def remove_dependencies(deps)
-        package_manager = detect_package_manager
+        package_json = get_package_json
 
         unless deps[:dev].empty?
-          unless execute_remove_command(package_manager, deps[:dev])
+          unless package_json.manager.remove(deps[:dev])
             puts "   ⚠️  Warning: Failed to uninstall some dev dependencies"
           end
         end
 
         unless deps[:prod].empty?
-          unless execute_remove_command(package_manager, deps[:prod])
+          unless package_json.manager.remove(deps[:prod])
             puts "   ⚠️  Warning: Failed to uninstall some prod dependencies"
           end
         end
       end
 
       def install_dependencies(deps)
-        package_manager = detect_package_manager
+        package_json = get_package_json
 
         unless deps[:dev].empty?
-          unless execute_install_command(package_manager, deps[:dev], dev: true)
+          unless package_json.manager.add(deps[:dev], type: :dev)
             puts "❌ Failed to install dev dependencies"
             raise "Failed to install dev dependencies"
           end
         end
 
         unless deps[:prod].empty?
-          unless execute_install_command(package_manager, deps[:prod], dev: false)
+          unless package_json.manager.add(deps[:prod], type: :production)
             puts "❌ Failed to install prod dependencies"
             raise "Failed to install prod dependencies"
           end
         end
       end
 
-      def execute_install_command(package_manager, packages, dev:)
-        case package_manager
-        when "yarn"
-          args = dev ? ["add", "--dev"] : ["add"]
-          system("yarn", *args, *packages)
-        when "pnpm"
-          args = dev ? ["add", "-D"] : ["add"]
-          system("pnpm", *args, *packages)
-        when "bun"
-          args = dev ? ["add", "--dev"] : ["add"]
-          system("bun", *args, *packages)
-        else # npm
-          args = dev ? ["install", "--save-dev"] : ["install", "--save"]
-          system("npm", *args, *packages)
-        end
-      end
-
-      def execute_remove_command(package_manager, packages)
-        case package_manager
-        when "yarn"
-          system("yarn", "remove", *packages)
-        when "pnpm"
-          system("pnpm", "remove", *packages)
-        when "bun"
-          system("bun", "remove", *packages)
-        else # npm
-          system("npm", "uninstall", *packages)
-        end
+      def get_package_json
+        require "package_json"
+        PackageJson.read(root_path)
       end
 
       def print_manual_dependency_instructions(bundler, deps_to_install, deps_to_remove)
@@ -290,8 +265,7 @@ module Shakapacker
       end
 
       def detect_package_manager
-        require "shakapacker/utils/manager"
-        Shakapacker::Utils::Manager.guess_binary
+        get_package_json.manager.binary
       rescue StandardError
         "npm" # Fallback to npm if detection fails
       end
