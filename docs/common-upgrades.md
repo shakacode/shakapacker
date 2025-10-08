@@ -330,9 +330,41 @@ bin/shakapacker compile
 
 ### Quick Migration Steps
 
-#### 1. Install Rspack dependencies
+#### 1. Use the switch bundler rake task (recommended)
+
+Shakapacker provides a convenient rake task to automate the migration:
 
 ```bash
+# Switch to rspack with automatic dependency management
+rails shakapacker:switch_bundler rspack --install-deps
+
+# Or with rake (note the -- separator)
+rake shakapacker:switch_bundler rspack -- --install-deps
+
+# Fast switching without uninstalling webpack (keeps both)
+rails shakapacker:switch_bundler rspack --install-deps --no-uninstall
+```
+
+The task will:
+
+- Update `config/shakapacker.yml` to use rspack
+- Install rspack dependencies (with `--install-deps`)
+- Optionally uninstall webpack dependencies (default) or keep both (with `--no-uninstall`)
+- Update `javascript_transpiler` to `swc` (recommended for rspack)
+- Preserve your config file comments and structure
+
+**Custom dependencies:** You can customize which dependencies are installed:
+
+```bash
+rails shakapacker:switch_bundler --init-config
+```
+
+#### 2. Manual installation (alternative)
+
+If you prefer manual control:
+
+```bash
+# Install Rspack dependencies
 # Using Yarn
 yarn add --dev @rspack/core @rspack/cli
 
@@ -341,31 +373,22 @@ npm install --save-dev @rspack/core @rspack/cli
 
 # Using pnpm
 pnpm add --save-dev @rspack/core @rspack/cli
-```
 
-#### 2. Remove webpack dependencies (optional)
-
-```bash
-# You can keep webpack installed during migration for comparison
+# Remove webpack dependencies (optional)
 yarn remove webpack webpack-cli webpack-dev-server
-
-# Or npm
-npm uninstall webpack webpack-cli webpack-dev-server
-
-# Or pnpm
-pnpm remove webpack webpack-cli webpack-dev-server
+# Or: npm uninstall webpack webpack-cli webpack-dev-server
+# Or: pnpm remove webpack webpack-cli webpack-dev-server
 ```
 
-#### 3. Update shakapacker.yml
+Then update `config/shakapacker.yml`:
 
 ```yaml
-# config/shakapacker.yml
 default: &default
   assets_bundler: rspack
   javascript_transpiler: swc # Rspack defaults to SWC for best performance
 ```
 
-#### 4. Create Rspack configuration
+#### 3. Create Rspack configuration
 
 Create `config/rspack/rspack.config.js` based on your webpack config. Start with a minimal configuration:
 
@@ -400,7 +423,7 @@ module.exports = merge(baseConfig, {
 })
 ```
 
-#### 5. Update TypeScript configuration
+#### 4. Update TypeScript configuration
 
 Add `isolatedModules: true` to your `tsconfig.json`:
 
@@ -412,7 +435,7 @@ Add `isolatedModules: true` to your `tsconfig.json`:
 }
 ```
 
-#### 6. Replace incompatible plugins
+#### 5. Replace incompatible plugins
 
 Some webpack plugins need Rspack equivalents:
 
@@ -436,7 +459,7 @@ const { rspack } = require("@rspack/core")
 plugins: [new rspack.CssExtractRspackPlugin()]
 ```
 
-#### 7. Update asset handling
+#### 6. Update asset handling
 
 Replace file loaders with asset modules:
 
@@ -454,7 +477,7 @@ Replace file loaders with asset modules:
 }
 ```
 
-#### 8. Install React refresh plugin (if using React)
+#### 7. Install React refresh plugin (if using React)
 
 ```bash
 yarn add --dev @rspack/plugin-react-refresh
@@ -471,7 +494,7 @@ module.exports = {
 }
 ```
 
-#### 9. Test your build
+#### 8. Test your build
 
 ```bash
 # Development build
@@ -481,7 +504,7 @@ bin/shakapacker
 bin/shakapacker --mode production
 ```
 
-#### 10. Update development workflow
+#### 9. Update development workflow
 
 Rspack's dev server works the same way:
 
