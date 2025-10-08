@@ -273,9 +273,21 @@ async function loadConfigsForEnv(
   console.log(`[Config Exporter] Bundler: ${bundler}`)
 
   // Load the config
+  // Register ts-node for TypeScript config files
+  if (configFile.endsWith(".ts")) {
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    require("ts-node/register/transpile-only")
+  }
+
   // eslint-disable-next-line @typescript-eslint/no-var-requires
   delete require.cache[require.resolve(configFile)]
-  const loadedConfig = require(configFile)
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  let loadedConfig = require(configFile)
+
+  // Handle ES module default export
+  if (typeof loadedConfig === "object" && "default" in loadedConfig) {
+    loadedConfig = loadedConfig.default
+  }
 
   // Determine config type and split if array
   const configs: any[] = Array.isArray(loadedConfig)

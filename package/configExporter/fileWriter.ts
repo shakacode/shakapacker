@@ -1,5 +1,6 @@
 import { writeFileSync, mkdirSync, existsSync } from "fs"
-import { resolve, dirname } from "path"
+import { resolve, dirname, relative, isAbsolute } from "path"
+import { tmpdir } from "os"
 import { FileOutput } from "./types"
 
 /**
@@ -73,9 +74,13 @@ export class FileWriter {
     const absPath = resolve(outputPath)
     const cwd = process.cwd()
 
-    if (!absPath.startsWith(cwd) && !absPath.startsWith("/tmp")) {
+    const isWithin = (base: string, target: string) => {
+      const rel = relative(base, target)
+      return rel === "" || (!rel.startsWith("..") && !isAbsolute(rel))
+    }
+    if (!isWithin(cwd, absPath) && !isWithin(tmpdir(), absPath)) {
       console.warn(
-        `[Config Exporter] Warning: Writing to ${absPath} which is outside current directory`
+        `[Config Exporter] Warning: Writing to ${absPath} which is outside current directory (${cwd}) or temp (${tmpdir()})`
       )
     }
   }

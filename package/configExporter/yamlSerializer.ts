@@ -1,5 +1,6 @@
 import { ConfigMetadata } from "./types"
 import { getDocForKey } from "./configDocs"
+import { relative, isAbsolute } from "path"
 
 /**
  * Serializes webpack/rspack config to YAML format with optional inline documentation.
@@ -59,7 +60,7 @@ export class YamlSerializer {
     }
 
     if (typeof value === "string") {
-      return this.serializeString(value)
+      return this.serializeString(value, indent)
     }
 
     if (typeof value === "function") {
@@ -81,14 +82,15 @@ export class YamlSerializer {
     return String(value)
   }
 
-  private serializeString(str: string): string {
+  private serializeString(str: string, indent: number = 0): string {
     // Make absolute paths relative for cleaner output
     const cleaned = this.makePathRelative(str)
 
     // Handle multiline strings
     if (cleaned.includes("\n")) {
       const lines = cleaned.split("\n")
-      return "|\n" + lines.map((line) => "  " + line).join("\n")
+      const lineIndent = " ".repeat(indent + 2)
+      return "|\n" + lines.map((line) => lineIndent + line).join("\n")
     }
 
     // Escape strings that need quoting
@@ -111,7 +113,7 @@ export class YamlSerializer {
     const source = fn.toString()
 
     // Compact the source: remove extra whitespace but keep it readable
-    const compacted = source
+    let compacted = source
       .split("\n")
       .map((line) => line.trim())
       .filter((line) => line.length > 0)
@@ -119,10 +121,11 @@ export class YamlSerializer {
 
     // For very long functions, truncate with ellipsis
     if (compacted.length > 500) {
-      return `"${compacted.substring(0, 500)}..."`
+      compacted = compacted.substring(0, 500) + "..."
     }
 
-    return `"${compacted}"`
+    // Use serializeString to properly escape the function source
+    return this.serializeString(compacted)
   }
 
   private serializeArray(arr: any[], indent: number, keyPath: string): string {
@@ -132,15 +135,26 @@ export class YamlSerializer {
 
     const lines: string[] = []
     const itemIndent = " ".repeat(indent + 2)
+    const contentIndent = " ".repeat(indent + 4)
 
     arr.forEach((item, index) => {
       const itemPath = `${keyPath}[${index}]`
-      const serialized = this.serializeValue(item, indent + 2, itemPath)
+      const serialized = this.serializeValue(item, indent + 4, itemPath)
 
       if (typeof item === "object" && !Array.isArray(item) && item !== null) {
-        // For objects in arrays, use '- key: value' format
-        lines.push(`${itemIndent}- ${serialized.trim()}`)
+        // For objects in arrays, emit marker on its own line and indent content
+        lines.push(`${itemIndent}-`)
+        serialized.split("\n").forEach((line: string) => {
+          lines.push(contentIndent + line)
+        })
+      } else if (serialized.includes("\n")) {
+        // For multiline values, emit marker on its own line and indent content
+        lines.push(`${itemIndent}-`)
+        serialized.split("\n").forEach((line: string) => {
+          lines.push(contentIndent + line)
+        })
       } else {
+        // For simple values, keep on same line
         lines.push(`${itemIndent}- ${serialized}`)
       }
     })
@@ -207,16 +221,20 @@ export class YamlSerializer {
 
   private makePathRelative(str: string): string {
     if (typeof str !== "string") return str
+    if (!isAbsolute(str)) return str
 
-    // Convert absolute paths to relative paths
-    if (str.startsWith(this.appRoot + "/")) {
-      return "./" + str.substring(this.appRoot.length + 1)
-    }
+    // Convert absolute paths to relative paths using path.relative
+    const rel = relative(this.appRoot, str)
 
-    if (str === this.appRoot) {
+    if (rel === "") {
       return "."
     }
 
-    return str
+    // If path is outside appRoot or already absolute, keep original
+    if (rel.startsWith("..") || isAbsolute(rel)) {
+      return str
+    }
+
+    return "./" + rel
   }
 }
