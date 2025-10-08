@@ -2,6 +2,8 @@
 
 This guide outlines new features, breaking changes, and migration steps for upgrading from Shakapacker v8 to v9.
 
+> **⚠️ Important for v9.1.0 Users:** If you're upgrading to v9.1.0 or later, please note the [SWC Configuration Breaking Change](#swc-loose-mode-breaking-change-v910) below. This affects users who previously configured SWC in v9.0.0.
+
 ## New Features
 
 ### TypeScript Support
@@ -40,6 +42,49 @@ See the [TypeScript Documentation](./typescript.md) for usage examples.
 - Remove `NODE_ENV=development` from your `docker-compose.yml` or Dockerfile
 - Remove custom scripts that set NODE_ENV before running the dev server
 - Remove `NODE_ENV=development` from your `bin/dev` or Procfile.dev
+
+## SWC Loose Mode Breaking Change (v9.1.0)
+
+> **⚠️ This breaking change was introduced in v9.1.0.** If you're upgrading from v9.0.0, pay special attention to this section.
+
+**What changed:** SWC default configuration now uses `loose: false` instead of `loose: true`.
+
+**Why:** The previous default of `loose: true` caused:
+
+- **Silent failures with Stimulus controllers** - Controllers wouldn't register properly
+- **Incorrect behavior with spread operators** on iterables (e.g., `[...new Set()]`)
+- **Deviation from SWC and Babel defaults** - Both tools default to `loose: false`
+
+**Impact:**
+
+- **Most projects:** No action needed. The new default is more correct and fixes bugs.
+- **Stimulus users:** This fixes silent controller failures you may have experienced.
+- **Projects relying on loose mode behavior:** May need to explicitly configure `loose: true` (not recommended).
+
+**When you might need the old behavior:**
+
+- If you have code that breaks with spec-compliant transforms
+- Note: `loose: true` provides slightly faster build times but generates less spec-compliant code
+
+**How to restore old behavior (not recommended):**
+
+Create or update `config/swc.config.js`:
+
+```javascript
+module.exports = {
+  options: {
+    jsc: {
+      // Only use this if you have code that requires loose transforms.
+      // This provides slightly faster build performance but may cause runtime bugs.
+      loose: true // Restore v9.0.0 behavior
+    }
+  }
+}
+```
+
+**Better solution:** Fix your code to work with spec-compliant transforms. The `loose: false` default aligns with both SWC and Babel standards and prevents subtle bugs.
+
+**Using Stimulus?** The new default includes `keepClassNames: true` to prevent SWC from mangling class names. If you use `rake shakapacker:migrate_to_swc`, this is configured automatically. See [Using SWC with Stimulus](./using_swc_loader.md#using-swc-with-stimulus) for details.
 
 ## Breaking Changes
 

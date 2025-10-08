@@ -11,21 +11,30 @@
 
 Changes since the last non-beta release.
 
+_No unreleased changes._
+
+## [v9.1.0] - October 8, 2025
+
+**⚠️ IMPORTANT:** This release includes a breaking change for SWC users. Please see the [v9 Upgrade Guide - SWC Loose Mode Breaking Change](./docs/v9_upgrade.md#swc-loose-mode-breaking-change-v910) for migration details.
+
 ### ⚠️ Breaking Changes
 
-- **SWC default configuration now uses `loose: false` for spec-compliant transforms** ([#657](https://github.com/shakacode/shakapacker/issues/657))
+- **SWC default configuration now uses `loose: false` for spec-compliant transforms** ([#658](https://github.com/shakacode/shakapacker/pull/658))
   - Previously, Shakapacker set `loose: true` by default in SWC configuration, which caused:
     - Silent failures with Stimulus controllers
     - Incorrect behavior with spread operators on iterables (e.g., `[...new Set()]`)
     - Deviation from both SWC and Babel upstream defaults
   - Now defaults to `loose: false`, matching SWC's default and fixing compatibility with Stimulus
   - This aligns with the previous fix to Babel configuration in [PR #107](https://github.com/shakacode/shakapacker/pull/107)
-  - **Migration:** If you need the old behavior for performance reasons, add to `config/swc.config.js`:
+  - **Migration:** Most projects need no changes as the new default provides spec-compliant behavior. Projects with Stimulus will benefit from this fix. See [v9 Upgrade Guide - SWC Loose Mode](./docs/v9_upgrade.md#swc-loose-mode-breaking-change-v910) for details
+  - If you must restore the old behavior (not recommended), add to `config/swc.config.js`:
     ```javascript
     module.exports = {
       options: {
         jsc: {
-          loose: true // Restore old behavior (not recommended)
+          // Only use this if you have code that requires loose transforms.
+          // This provides slightly faster build performance but may cause runtime bugs.
+          loose: true // Restore v9.0.0 behavior
         }
       }
     }
@@ -47,16 +56,16 @@ Changes since the last non-beta release.
   - Secure command execution (prevents shell injection)
   - Usage: `rails shakapacker:switch_bundler [webpack|rspack] [--install-deps] [--no-uninstall]`
   - See rake task help: `rails shakapacker:switch_bundler --help`
-- **Stimulus compatibility built into SWC migration** ([#657](https://github.com/shakacode/shakapacker/issues/657))
+- **Stimulus compatibility built into SWC migration** ([#658](https://github.com/shakacode/shakapacker/pull/658))
   - `rake shakapacker:migrate_to_swc` now creates `config/swc.config.js` with `keepClassNames: true`
   - Prevents SWC from mangling class names, which breaks Stimulus controller discovery
   - Includes React Fast Refresh configuration by default
-- **Comprehensive Stimulus documentation** for SWC users ([#657](https://github.com/shakacode/shakapacker/issues/657))
-  - Added "Using SWC with Stimulus" section to `docs/using_swc_loader.md`
+- **Comprehensive Stimulus documentation** for SWC users ([#658](https://github.com/shakacode/shakapacker/pull/658))
+  - Added "Using SWC with Stimulus" section to [docs/using_swc_loader.md](./docs/using_swc_loader.md#using-swc-with-stimulus)
   - Documents symptoms of missing configuration (silent failures)
   - Explains common errors like `env` and `jsc.target` conflicts
   - Added Stimulus compatibility checklist to migration guide
-- **Enhanced `rake shakapacker:doctor` for SWC configuration validation** ([#657](https://github.com/shakacode/shakapacker/issues/657))
+- **Enhanced `rake shakapacker:doctor` for SWC configuration validation** ([#658](https://github.com/shakacode/shakapacker/pull/658))
   - Detects `loose: true` in config and warns about potential issues
   - Detects missing `keepClassNames: true` when Stimulus is installed
   - Detects conflicting `jsc.target` and `env` configuration
