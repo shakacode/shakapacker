@@ -16,7 +16,7 @@
  *   --client-only              Generate only client config (sets CLIENT_BUNDLE_ONLY=yes)
  *   --server-only              Generate only server config (sets SERVER_BUNDLE_ONLY=yes)
  *   --output=<filename>         Output file (default: stdout)
- *   --depth=<number>           Inspection depth (default: 10, use 'null' for unlimited)
+ *   --depth=<number>           Inspection depth (default: 20, use 'null' for unlimited)
  *   --format=json|inspect      Output format (default: inspect)
  *   --verbose                  Show full output with function definitions (default: compact mode)
  *   --help                     Show this help message
@@ -99,7 +99,7 @@ const options = {
   clientOnly: false,
   serverOnly: false,
   output: null,
-  depth: 10, // Default depth to prevent stack overflow with circular refs
+  depth: 20, // Default depth sufficient for deeply nested webpack/rspack configs
   format: "inspect",
   help: false,
   verbose: false // Verbose mode shows full output with function definitions
@@ -155,7 +155,7 @@ Options:
   --client-only              Generate only client config (sets CLIENT_BUNDLE_ONLY=yes)
   --server-only              Generate only server config (sets SERVER_BUNDLE_ONLY=yes)
   --output=<filename>         Output file (default: stdout)
-  --depth=<number>           Inspection depth (default: 10, use 'null' for unlimited)
+  --depth=<number>           Inspection depth (default: 20, use 'null' for unlimited)
   --format=json|inspect      Output format (default: inspect)
   --verbose                  Show full output with function definitions (default: compact mode)
   --help, -h                 Show this help message
