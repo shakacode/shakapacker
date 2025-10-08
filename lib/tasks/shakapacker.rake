@@ -9,7 +9,8 @@ tasks = {
   "shakapacker:check_binstubs"          => "Verifies that bin/shakapacker is present",
   "shakapacker:binstubs"                => "Installs Shakapacker binstubs in this application",
   "shakapacker:verify_install"          => "Verifies if Shakapacker is installed",
-  "shakapacker:doctor"                  => "Checks for configuration issues and missing dependencies"
+  "shakapacker:doctor"                  => "Checks for configuration issues and missing dependencies",
+  "shakapacker:switch_bundler"          => "Switch between webpack and rspack bundlers"
 }.freeze
 
 desc "Lists all available tasks in Shakapacker"

@@ -1,4 +1,5 @@
 # Shakapacker (v9)
+
 ---
 
 _🚀 Shakapacker 9 supports [Rspack](https://rspack.rs/)! 10x faster than webpack!_
@@ -7,11 +8,11 @@ _🚀 Shakapacker 9 supports [Rspack](https://rspack.rs/)! 10x faster than webpa
 
 _Official, actively maintained successor to [rails/webpacker](https://github.com/rails/webpacker). ShakaCode stands behind the long-term maintenance and development of this project for the Rails community._
 
-* ⚠️ See the [6-stable](https://github.com/shakacode/shakapacker/tree/6-stable) branch for Shakapacker v6.x code and documentation. :warning:
-* **See [V9 Upgrade](./docs/v9_upgrade.md) for upgrading from the v8 release.**
-* See [V8 Upgrade](./docs/v8_upgrade.md) for upgrading from the v7 release.
-* See [V7 Upgrade](./docs/v7_upgrade.md) for upgrading from the v6 release.
-* See [V6 Upgrade](./docs/v6_upgrade.md) for upgrading from v5 or prior v6 releases.
+- ⚠️ See the [6-stable](https://github.com/shakacode/shakapacker/tree/6-stable) branch for Shakapacker v6.x code and documentation. :warning:
+- **See [V9 Upgrade](./docs/v9_upgrade.md) for upgrading from the v8 release.**
+- See [V8 Upgrade](./docs/v8_upgrade.md) for upgrading from the v7 release.
+- See [V7 Upgrade](./docs/v7_upgrade.md) for upgrading from the v6 release.
+- See [V6 Upgrade](./docs/v6_upgrade.md) for upgrading from v5 or prior v6 releases.
 
 [![Ruby specs](https://github.com/shakacode/shakapacker/workflows/Ruby%20specs/badge.svg)](https://github.com/shakacode/shakapacker/actions)
 [![Jest specs](https://github.com/shakacode/shakapacker/workflows/Jest%20specs/badge.svg)](https://github.com/shakacode/shakapacker/actions)
@@ -33,9 +34,10 @@ See a comparison of [Shakapacker with jsbundling-rails](https://github.com/rails
 For discussions, see our [Slack Channel](https://reactrails.slack.com/join/shared_invite/enQtNjY3NTczMjczNzYxLTlmYjdiZmY3MTVlMzU2YWE0OWM0MzNiZDI0MzdkZGFiZTFkYTFkOGVjODBmOWEyYWQ3MzA2NGE1YWJjNmVlMGE).
 
 ---
+
 ## ShakaCode Support
 
-[ShakaCode](https://www.shakacode.com) focuses on helping Ruby on Rails teams use React and Webpack better. We can upgrade your project and improve your development and customer experiences, allowing you to focus on building new features or fixing bugs instead. 
+[ShakaCode](https://www.shakacode.com) focuses on helping Ruby on Rails teams use React and Webpack better. We can upgrade your project and improve your development and customer experiences, allowing you to focus on building new features or fixing bugs instead.
 
 For an overview of working with us, see our [Client Engagement Model](https://www.shakacode.com/blog/client-engagement-model/) article and [how we bill for time](https://www.shakacode.com/blog/shortcut-jira-trello-github-toggl-time-and-task-tracking/).
 
@@ -44,6 +46,7 @@ We also specialize in helping development teams lower infrastructure and CI cost
 If you think ShakaCode can help your project, [click here](https://meetings.hubspot.com/justingordon/30-minute-consultation) to book a call with [Justin Gordon](mailto:justin@shakacode.com), the creator of React on Rails and Shakapacker.
 
 Here's a testimonial of how ShakaCode can help from [Florian Gößler](https://github.com/FGoessler) of [Blinkist](https://www.blinkist.com/), January 2, 2023:
+
 > Hey Justin 👋
 >
 > I just wanted to let you know that we today shipped the webpacker to shakapacker upgrades and it all seems to be running smoothly! Thanks again for all your support and your teams work! 😍
@@ -59,50 +62,50 @@ Read the [full review here](https://clutch.co/profile/shakacode#reviews?sort_by=
 <!-- START doctoc generated TOC please keep comment here to allow auto update -->
 <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
 
-  - [Prerequisites](#prerequisites)
-  - [Features](#features)
-    - [Optional support](#optional-support)
-  - [Installation](#installation)
-    - [Rails v6+](#rails-v6)
-  - [Concepts](#concepts)
-  - [Usage](#usage)
-    - [Configuration and Code](#configuration-and-code)
-    - [View Helpers](#view-helpers)
-      - [View Helpers `javascript_pack_tag` and `stylesheet_pack_tag`](#view-helpers-javascript_pack_tag-and-stylesheet_pack_tag)
-      - [View Helpers `append_javascript_pack_tag`, `prepend_javascript_pack_tag` and `append_stylesheet_pack_tag`](#view-helper-append_javascript_pack_tag-prepend_javascript_pack_tag-and-append_stylesheet_pack_tag)
-      - [View Helper: `asset_pack_path`](#view-helper-asset_pack_path)
-      - [View Helper: `image_pack_tag`](#view-helper-image_pack_tag)
-      - [View Helper: `favicon_pack_tag`](#view-helper-favicon_pack_tag)
-      - [View Helper: `preload_pack_asset`](#view-helper-preload_pack_asset)
-    - [Images in Stylesheets](#images-in-stylesheets)
-    - [Server-Side Rendering (SSR)](#server-side-rendering-ssr)
-    - [Development](#development)
-      - [Automatic Webpack Code Building](#automatic-webpack-code-building)
-      - [Compiler strategies](#compiler-strategies)
-      - [Common Development Commands](#common-development-commands)
-    - [Webpack Configuration](#webpack-configuration)
-    - [Babel configuration](#babel-configuration)
-    - [SWC configuration](#swc-configuration)
-    - [esbuild loader configuration](#esbuild-loader-configuration)
-    - [Integrations](#integrations)
-      - [React](#react)
-      - [Typescript](#typescript)
-      - [CSS](#css)
-      - [Postcss](#postcss)
-      - [Sass](#sass)
-      - [Less](#less)
-      - [Stylus](#stylus)
-      - [CoffeeScript](#coffeescript)
-      - [Other frameworks](#other-frameworks)
-    - [Custom Rails environments](#custom-rails-environments)
-    - [Upgrading](#upgrading)
-    - [Paths](#paths)
-    - [Additional paths](#additional-paths)
-  - [Deployment](#deployment)
-  - [Example Apps](#example-apps)
-  - [Troubleshooting](#troubleshooting)
-  - [Contributing](#contributing)
-  - [License](#license)
+- [Prerequisites](#prerequisites)
+- [Features](#features)
+  - [Optional support](#optional-support)
+- [Installation](#installation)
+  - [Rails v6+](#rails-v6)
+- [Concepts](#concepts)
+- [Usage](#usage)
+  - [Configuration and Code](#configuration-and-code)
+  - [View Helpers](#view-helpers)
+    - [View Helpers `javascript_pack_tag` and `stylesheet_pack_tag`](#view-helpers-javascript_pack_tag-and-stylesheet_pack_tag)
+    - [View Helpers `append_javascript_pack_tag`, `prepend_javascript_pack_tag` and `append_stylesheet_pack_tag`](#view-helper-append_javascript_pack_tag-prepend_javascript_pack_tag-and-append_stylesheet_pack_tag)
+    - [View Helper: `asset_pack_path`](#view-helper-asset_pack_path)
+    - [View Helper: `image_pack_tag`](#view-helper-image_pack_tag)
+    - [View Helper: `favicon_pack_tag`](#view-helper-favicon_pack_tag)
+    - [View Helper: `preload_pack_asset`](#view-helper-preload_pack_asset)
+  - [Images in Stylesheets](#images-in-stylesheets)
+  - [Server-Side Rendering (SSR)](#server-side-rendering-ssr)
+  - [Development](#development)
+    - [Automatic Webpack Code Building](#automatic-webpack-code-building)
+    - [Compiler strategies](#compiler-strategies)
+    - [Common Development Commands](#common-development-commands)
+  - [Webpack Configuration](#webpack-configuration)
+  - [Babel configuration](#babel-configuration)
+  - [SWC configuration](#swc-configuration)
+  - [esbuild loader configuration](#esbuild-loader-configuration)
+  - [Integrations](#integrations)
+    - [React](#react)
+    - [Typescript](#typescript)
+    - [CSS](#css)
+    - [Postcss](#postcss)
+    - [Sass](#sass)
+    - [Less](#less)
+    - [Stylus](#stylus)
+    - [CoffeeScript](#coffeescript)
+    - [Other frameworks](#other-frameworks)
+  - [Custom Rails environments](#custom-rails-environments)
+  - [Upgrading](#upgrading)
+  - [Paths](#paths)
+  - [Additional paths](#additional-paths)
+- [Deployment](#deployment)
+- [Example Apps](#example-apps)
+- [Troubleshooting](#troubleshooting)
+- [Contributing](#contributing)
+- [License](#license)
 - [Supporters](#supporters)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
@@ -114,6 +117,7 @@ Read the [full review here](https://clutch.co/profile/shakacode#reviews?sort_by=
 - Node.js 14+
 
 ## Features
+
 - Rails view helpers that fully support Webpack output, including HMR and code splitting.
 - Convenient but not required webpack configuration. The only requirement is that your webpack configuration creates a manifest.
 - HMR with the `shakapacker-dev-server`, such as for hot-reloading React!
@@ -126,17 +130,20 @@ Read the [full review here](https://clutch.co/profile/shakacode#reviews?sort_by=
 - Extensible and configurable. For example, all major dependencies are specified as peers, so you can upgrade easily.
 
 ### Optional support
- _Requires extra packages to be installed._
- - React
- - TypeScript
- - Stylesheets - Sass, Less, Stylus and Css, PostCSS
- - CoffeeScript
+
+_Requires extra packages to be installed._
+
+- React
+- TypeScript
+- Stylesheets - Sass, Less, Stylus and Css, PostCSS
+- CoffeeScript
 
 ## Installation
 
 ### Rails v6+
 
 With Rails v6+, skip JavaScript for a new app and follow below Manual Installation Steps to manually add the `shakapacker` gem to your Gemfile.
+
 ```bash
 rails new myapp --skip-javascript
 ```
@@ -178,7 +185,7 @@ If you wish to use [Yarn PnP](https://yarnpkg.com/features/pnp) you will need to
 > [!NOTE]
 >
 > The rest of the documentation will only reference `npm` when providing commands such as to install optional packages except in cases where
-> a particular package manager requires a very different command; otherwise it should be safe to just replace `npm` with the name of your 
+> a particular package manager requires a very different command; otherwise it should be safe to just replace `npm` with the name of your
 > preferred package manager when running the command
 
 Note, in v6+, most JS packages are peer dependencies. Thus, the installer will add the packages:
@@ -203,6 +210,7 @@ making these peer dependencies, you have control over the versions used in your 
 ### Optional Peer Dependencies
 
 All peer dependencies in Shakapacker are marked as optional via `peerDependenciesMeta`. This design decision ensures:
+
 - **No warnings during package installation** when dependencies are not needed
 - **Clear visibility of supported package versions** for upgrades
 - **Flexibility to choose only the tools you need** (webpack vs rspack, babel vs swc vs esbuild)
@@ -215,6 +223,7 @@ version compatibility constraints when you do install those packages.
 Depending on your setup, you'll need different subsets of the optional peer dependencies:
 
 **For Webpack + Babel (traditional setup):**
+
 ```json
 {
   "dependencies": {
@@ -235,6 +244,7 @@ Depending on your setup, you'll need different subsets of the optional peer depe
 ```
 
 **For Webpack + SWC (faster alternative):**
+
 ```json
 {
   "dependencies": {
@@ -252,6 +262,7 @@ Depending on your setup, you'll need different subsets of the optional peer depe
 ```
 
 **For Rspack + SWC (10x faster bundling):**
+
 ```json
 {
   "dependencies": {
@@ -265,7 +276,21 @@ Depending on your setup, you'll need different subsets of the optional peer depe
 }
 ```
 
+**Quick tip:** You can easily switch between webpack and rspack using:
+
+```bash
+rails shakapacker:switch_bundler rspack --install-deps
+# or with rake (note the -- separator)
+rake shakapacker:switch_bundler rspack -- --install-deps
+
+# For faster switching, use --no-uninstall to keep both bundlers installed
+rails shakapacker:switch_bundler webpack --install-deps --no-uninstall
+```
+
+See the [Rspack Migration Guide](./docs/rspack_migration_guide.md) for details.
+
 **For CSS/Sass processing (add to any config above):**
+
 ```json
 {
   "dependencies": {
@@ -294,10 +319,11 @@ You will need your file system to correspond to the setup of your `config/shakap
 Suppose you have the following configuration:
 
 `shakapacker.yml`
+
 ```yml
 default: &default
   source_path: app/javascript
-  source_entry_path: packs 
+  source_entry_path: packs
   public_root_path: public
   public_output_path: packs
   nested_entries: false
@@ -331,6 +357,7 @@ To enable/disable the usage of contentHash in any node environment (specified us
 You can use the environment variable `SHAKAPACKER_CONFIG` to enforce a particular path to the config file rather than the default `config/shakapacker.yml`.
 
 ### View Helpers
+
 The Shakapacker view helpers generate the script and link tags to get the webpack output onto your views.
 
 Be sure to consult the API documentation in the source code of [helper.rb](./lib/shakapacker/helper.rb).
@@ -358,6 +385,7 @@ You can provide multiple packs and other attributes. Note, `defer` defaults to s
 ```
 
 The resulting HTML would look like this:
+
 ```html
 <script src="/packs/vendor-16838bab065ae1e314.js" data-turbo-track="reload" defer></script>
 <script src="/packs/calendar~runtime-16838bab065ae1e314.js" data-turbo-track="reload" defer></script>
@@ -390,7 +418,7 @@ Note that when using `async: true`, scripts may execute in any order as soon as 
 >
 > When both `async` and `defer` attributes are specified, `async` takes precedence according to HTML5 specifications. So if you pass both `async: true` and `defer: true`, the script tag will use `async`.
 
-**Important:** Pass all your pack names as multiple arguments, not multiple calls, when using `javascript_pack_tag` and the `stylesheet_pack_tag`. Otherwise, you will get duplicated chunks on the page. 
+**Important:** Pass all your pack names as multiple arguments, not multiple calls, when using `javascript_pack_tag` and the `stylesheet_pack_tag`. Otherwise, you will get duplicated chunks on the page.
 
 ```erb
 <%# DO %>
@@ -406,7 +434,7 @@ you may use multiple calls to stylesheet_pack_tag if,
 say,
 you require multiple `<style>` tags for different output media:
 
-``` erb
+```erb
 <%= stylesheet_pack_tag 'application', media: 'screen' %>
 <%= stylesheet_pack_tag 'print', media: 'print' %>
 ```
@@ -416,18 +444,21 @@ you require multiple `<style>` tags for different output media:
 If you need to configure your script pack names or stylesheet pack names from the view for a route or partials, then you will need some logic to ensure you call the helpers only once with multiple arguments. The new view helpers, `append_javascript_pack_tag` and `append_stylesheet_pack_tag` can solve this problem. The helper `append_javascript_pack_tag` will queue up script packs when the `javascript_pack_tag` is finally used. Similarly,`append_stylesheet_pack_tag` will queue up style packs when the `stylesheet_pack_tag` is finally used.
 
 Main view:
+
 ```erb
 <% append_javascript_pack_tag 'calendar' %>
 <% append_stylesheet_pack_tag 'calendar' %>
 ```
 
 Some partial:
+
 ```erb
 <% append_javascript_pack_tag 'map' %>
 <% append_stylesheet_pack_tag 'map' %>
 ```
 
 And the main layout has:
+
 ```erb
 <%= javascript_pack_tag 'application' %>
 <%= stylesheet_pack_tag 'application' %>
@@ -449,9 +480,9 @@ Thus, you can distribute the logic of what packs are needed for any route. All t
 The typical issue is that your layout might reference some partials that need to configure packs. A good way to solve this problem is to use `content_for` to ensure that the code to render your partial comes before the call to `javascript_pack_tag`.
 
 ```erb
-<% content_for :footer do 
+<% content_for :footer do
    render 'shared/footer' %>
-   
+
 <%= javascript_pack_tag %>
 
 <%= content_for :footer %>
@@ -460,16 +491,19 @@ The typical issue is that your layout might reference some partials that need to
 There is also `prepend_javascript_pack_tag` that will put the entry at the front of the queue. This is handy when you want an entry in the main layout to go before the partial and main layout `append_javascript_pack_tag` entries.
 
 Main view:
+
 ```erb
 <% append_javascript_pack_tag 'map' %>
 ```
 
 Some partial:
+
 ```erb
 <% append_javascript_pack_tag 'map' %>
 ```
 
 And the main layout has:
+
 ```erb
 <% prepend_javascript_pack_tag 'main' %>
 <%= javascript_pack_tag 'application' %>
@@ -486,6 +520,7 @@ For alternative options for setting the additional packs, [see this discussion](
 #### View Helper: `asset_pack_path`
 
 If you want to link a static asset for `<img />` tag, you can use the `asset_pack_path` helper:
+
 ```erb
 <img src="<%= asset_pack_path 'static/logo.svg' %>" />
 ```
@@ -493,30 +528,35 @@ If you want to link a static asset for `<img />` tag, you can use the `asset_pac
 #### View Helper: `image_pack_tag`
 
 Or use the dedicated helper:
+
 ```erb
 <%= image_pack_tag 'application.png', size: '16x10', alt: 'Edit Entry' %>
 <%= image_pack_tag 'picture.png', srcset: { 'picture-2x.png' => '2x' } %>
 ```
 
 #### View Helper: `favicon_pack_tag`
+
 If you want to create a favicon:
+
 ```erb
 <%= favicon_pack_tag 'mb-icon.png', rel: 'apple-touch-icon', type: 'image/png' %>
 ```
 
 #### View Helper: `preload_pack_asset`
+
 If you want to preload a static asset in your `<head>`, you can use the `preload_pack_asset` helper:
+
 ```erb
 <%= preload_pack_asset 'fonts/fa-regular-400.woff2' %>
 ```
 
-
 ### Images in Stylesheets
+
 If you want to use images in your stylesheets:
 
 ```css
 .foo {
-  background-image: url('../images/logo.svg')
+  background-image: url("../images/logo.svg");
 }
 ```
 
@@ -596,25 +636,24 @@ end
 
 **Note:** Don't forget to prefix `ruby` when running these binstubs on Windows
 
-
 ### Webpack Configuration
 
 First, you don't _need_ to use Shakapacker's webpack configuration. However, the `shakapacker` NPM package provides convenient access to configuration code that reads the `config/shakapacker.yml` file which the view helpers also use. If you have your customized webpack configuration, at the minimum, you must ensure:
 
 1. Your output files go to the right directory
 2. Your output includes a manifest, via package [`webpack-assets-manifest`](https://github.com/webdeveric/webpack-assets-manifest) that maps output names (your 'packs') to the fingerprinted versions, including bundle-splitting dependencies. That's the main secret sauce of Shakapacker!
- 
+
 The webpack configuration used by Shakapacker lives in `config/webpack/webpack.config.js`; this makes it easy to customize the configuration beyond what's available in `config/shakapacker.yml` by giving you complete control of the final configuration. By default, this file exports the result of `generateWebpackConfig` which handles generating a webpack configuration based on `config/shakapacker.yml`.
 
 The easiest way to modify this config is to pass your desired customizations to `generateWebpackConfig` which will use [webpack-merge](https://github.com/survivejs/webpack-merge) to merge them with the configuration generated from `config/shakapacker.yml`:
 
 ```js
 // config/webpack/webpack.config.js
-const { generateWebpackConfig } = require('shakapacker')
+const { generateWebpackConfig } = require("shakapacker")
 
 const options = {
   resolve: {
-      extensions: ['.css', '.ts', '.tsx']
+    extensions: [".css", ".ts", ".tsx"]
   }
 }
 
@@ -626,13 +665,13 @@ The `shakapacker` package also exports the `merge` function from [webpack-merge]
 
 ```js
 // config/webpack/webpack.config.js
-const { generateWebpackConfig, merge } = require('shakapacker')
+const { generateWebpackConfig, merge } = require("shakapacker")
 
 const webpackConfig = generateWebpackConfig()
 
 const options = {
   resolve: {
-    extensions: ['.css', '.ts', '.tsx']
+    extensions: [".css", ".ts", ".tsx"]
   }
 }
 
@@ -650,11 +689,11 @@ You might add separate files to keep your code more organized.
 module.exports = {
   resolve: {
     alias: {
-      jquery: 'jquery/src/jquery',
-      vue: 'vue/dist/vue.js',
-      React: 'react',
-      ReactDOM: 'react-dom',
-      vue_resource: 'vue-resource/dist/vue-resource'
+      jquery: "jquery/src/jquery",
+      vue: "vue/dist/vue.js",
+      React: "react",
+      ReactDOM: "react-dom",
+      vue_resource: "vue-resource/dist/vue-resource"
     }
   }
 }
@@ -665,9 +704,9 @@ Then `require` this file in your `config/webpack/webpack.config.js`:
 ```js
 // config/webpack/webpack.config.js
 // use the new NPM package name, `shakapacker`.
-const { generateWebpackConfig } = require('shakapacker')
+const { generateWebpackConfig } = require("shakapacker")
 
-const customConfig = require('./custom')
+const customConfig = require("./custom")
 
 module.exports = generateWebpackConfig(customConfig)
 ```
@@ -676,7 +715,7 @@ If you need access to configs within Shakapacker's configuration, you can import
 
 ```js
 // config/webpack/webpack.config.js
-const { generateWebpackConfig } = require('shakapacker')
+const { generateWebpackConfig } = require("shakapacker")
 
 const webpackConfig = generateWebpackConfig()
 
@@ -690,11 +729,12 @@ console.log(JSON.stringify(webpackConfig, undefined, 2))
 You may want to modify the rules in the default configuration. For instance, if you are using a custom svg loader, you may want to remove `.svg` from the default file loader rules. You can search and filter the default rules like so:
 
 ```js
-const fileRule = config.module.rules.find(rule => rule.test.test('.svg'));
+const fileRule = config.module.rules.find((rule) => rule.test.test(".svg"))
 // removing svg from asset file rule's test RegExp
-fileRule.test = /\.(bmp|gif|jpe?g|png|tiff|ico|avif|webp|eot|otf|ttf|woff|woff2)$/
+fileRule.test =
+  /\.(bmp|gif|jpe?g|png|tiff|ico|avif|webp|eot|otf|ttf|woff|woff2)$/
 // changing the rule type from 'asset/resource' to 'asset'. See https://webpack.js.org/guides/asset-modules/
-fileRule.type = 'asset'
+fileRule.type = "asset"
 ```
 
 ### Babel configuration
@@ -708,8 +748,8 @@ By default, you will find the Shakapacker preset in your `package.json`. Note, y
   ]
 },
 ```
-Optionally, you can change your Babel configuration by removing these lines in your `package.json` and adding [a Babel configuration file](https://babeljs.io/docs/en/config-files) to your project. For an example of customization based on the original, see [Customizing Babel Config](./docs/customizing_babel_config.md).
 
+Optionally, you can change your Babel configuration by removing these lines in your `package.json` and adding [a Babel configuration file](https://babeljs.io/docs/en/config-files) to your project. For an example of customization based on the original, see [Customizing Babel Config](./docs/customizing_babel_config.md).
 
 ### SWC configuration
 
@@ -776,30 +816,30 @@ Then modify the webpack config to use it as a plugin:
 
 ```js
 // config/webpack/webpack.config.js
-const { generateWebpackConfig } = require("shakapacker");
-const ForkTSCheckerWebpackPlugin = require("fork-ts-checker-webpack-plugin");
+const { generateWebpackConfig } = require("shakapacker")
+const ForkTSCheckerWebpackPlugin = require("fork-ts-checker-webpack-plugin")
 
 module.exports = generateWebpackConfig({
-  plugins: [new ForkTSCheckerWebpackPlugin()],
-});
+  plugins: [new ForkTSCheckerWebpackPlugin()]
+})
 ```
 
 Optionally, your webpack config file itself can be written in Typescript:
 
-``` bash
+```bash
 npm install ts-node @types/node @types/webpack
 ```
 
 ```ts
 // config/webpack/webpack.config.ts
-import { generateWebpackConfig } from "shakapacker";
-import ForkTSCheckerWebpackPlugin from "fork-ts-checker-webpack-plugin";
+import { generateWebpackConfig } from "shakapacker"
+import ForkTSCheckerWebpackPlugin from "fork-ts-checker-webpack-plugin"
 
 const config = generateWebpackConfig({
-  plugins: [new ForkTSCheckerWebpackPlugin()],
-});
+  plugins: [new ForkTSCheckerWebpackPlugin()]
+})
 
-export default config;
+export default config
 ```
 
 #### CSS
@@ -814,11 +854,11 @@ Optionally, add the `CSS` extension to webpack config for easy resolution.
 
 ```js
 // config/webpack/webpack.config.js
-const { generateWebpackConfig } = require('shakapacker')
+const { generateWebpackConfig } = require("shakapacker")
 
 const customConfig = {
   resolve: {
-    extensions: ['.css']
+    extensions: [".css"]
   }
 }
 
@@ -835,6 +875,7 @@ npm install postcss postcss-loader
 ```
 
 Optionally add these two plugins if they are required in your `postcss.config.js`:
+
 ```bash
 npm install postcss-preset-env postcss-flexbugs-fixes
 ```
@@ -850,16 +891,19 @@ You will also need to install [Dart Sass](https://github.com/sass/dart-sass), [N
 Please refer to [sass-loader documentation](https://www.npmjs.com/package/sass-loader) and individual packages repos for more information on all the options.
 
 ##### Dart Sass
+
 ```bash
 npm install sass
 ```
 
 ##### Node Sass
+
 ```bash
 npm install node-sass
 ```
 
 ##### Sass Embedded
+
 ```bash
 npm install sass-embedded
 ```
@@ -891,33 +935,34 @@ Please follow Webpack integration guide for the relevant framework or library,
 3. [Vue](https://vue-loader.vuejs.org/guide/)
 
 For example to add Vue support:
+
 ```js
 // config/webpack/rules/vue.js
-const { VueLoaderPlugin } = require('vue-loader')
+const { VueLoaderPlugin } = require("vue-loader")
 
 module.exports = {
   module: {
     rules: [
       {
         test: /\.vue$/,
-        loader: 'vue-loader'
+        loader: "vue-loader"
       }
     ]
   },
   plugins: [new VueLoaderPlugin()],
   resolve: {
-    extensions: ['.vue']
+    extensions: [".vue"]
   }
 }
 ```
 
 ```js
 // config/webpack/webpack.config.js
-const { generateWebpackConfig, merge } = require('shakapacker')
+const { generateWebpackConfig, merge } = require("shakapacker")
 
 const webpackConfig = generateWebpackConfig()
 
-const vueConfig = require('./rules/vue')
+const vueConfig = require("./rules/vue")
 
 module.exports = merge(vueConfig, webpackConfig)
 ```
@@ -1029,11 +1074,12 @@ This is particularly useful when working with libraries like React on Rails wher
 If you're using React on Rails with separate client and server bundles, you can now leverage the `private_output_path` configuration instead of using custom webpack configurations:
 
 1. Update your `config/shakapacker.yml`:
+
    ```yml
    # Before: both client and server bundles in public/
    # After: separate directories
-   public_output_path: packs        # Client bundles (publicly served)
-   private_output_path: ssr-bundles  # Server bundles (not publicly served)
+   public_output_path: packs # Client bundles (publicly served)
+   private_output_path: ssr-bundles # Server bundles (not publicly served)
    ```
 
 2. Update your webpack configuration to use the appropriate output path based on the bundle type
@@ -1059,15 +1105,15 @@ If you are adding Shakapacker to an existing app that has most of the assets ins
 add additional paths that webpack should look up when resolving modules:
 
 ```yml
-additional_paths: ['app/assets', 'vendor/assets']
+additional_paths: ["app/assets", "vendor/assets"]
 ```
 
 You can then import these items inside your modules like so:
 
 ```js
 // Note it's relative to parent directory i.e. app/assets
-import 'stylesheets/main'
-import 'images/rails.png'
+import "stylesheets/main"
+import "images/rails.png"
 ```
 
 Assets put in these folders will also have their path stripped just like with the `source_path`.
@@ -1079,7 +1125,6 @@ A file in `app/assets/images/image.svg` with `additional_paths: ['app/assets']` 
 **Note:** Please be careful when adding paths here otherwise it will make the compilation slow, consider adding specific paths instead of the whole parent directory if you just need to reference one or two modules
 
 **Also note:** While importing assets living outside your `source_path` defined in shakapacker.yml (like, for instance, assets under `app/assets`) from within your packs using _relative_ paths like `import '../../assets/javascripts/file.js'` will work in development, Shakapacker won't recompile the bundle in production unless a file that lives in one of it's watched paths has changed (check out `Shakapacker::MtimeStrategy#latest_modified_timestamp` or `Shakapacker::DigestStrategy#watched_files_digest` depending on strategy configured by `compiler_strategy` option in `shakapacker.yml`). That's why you'd need to add `app/assets` to the additional_paths as stated above and use `import 'javascripts/file.js'` instead.
-
 
 ## Deployment
 
@@ -1113,6 +1158,7 @@ Shakapacker supports serving JavaScript bundles and assets from a CDN. The key c
 For detailed CDN setup instructions, including CloudFlare configuration, troubleshooting, and advanced setups, see the [CDN Setup Guide](./docs/cdn_setup.md).
 
 **Quick example:**
+
 ```bash
 export SHAKAPACKER_ASSET_HOST=https://cdn.example.com
 RAILS_ENV=production bundle exec rails assets:precompile
@@ -1121,8 +1167,8 @@ RAILS_ENV=production bundle exec rails assets:precompile
 For more deployment documentation, see [Deployment](./docs/deployment.md).
 
 ## Example Apps
-* [React on Rails Tutorial With SSR, HMR fast refresh, and TypeScript](https://github.com/shakacode/react_on_rails_tutorial_with_ssr_and_hmr_fast_refresh)
 
+- [React on Rails Tutorial With SSR, HMR fast refresh, and TypeScript](https://github.com/shakacode/react_on_rails_tutorial_with_ssr_and_hmr_fast_refresh)
 
 ## Troubleshooting
 
@@ -1135,7 +1181,7 @@ We encourage you to contribute to Shakapacker! See [CONTRIBUTING](CONTRIBUTING.m
 ## License
 
 Shakapacker is released under the [MIT License](https://opensource.org/licenses/MIT).
-  
+
 ## Supporters
 
 The following companies support our Open Source projects, and ShakaCode uses their products!
