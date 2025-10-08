@@ -182,7 +182,7 @@ pnpm run build
 
 ## Migrating from Babel to SWC
 
-SWC is a Rust-based JavaScript/TypeScript compiler that's 20-70x faster than Babel. For complete details, see [JavaScript Transpiler Configuration](./transpiler-migration.md).
+SWC is a Rust-based JavaScript/TypeScript compiler that's significantly faster than Babel (20-70x on multi-core with optimal setup, 5-7.5x in typical single-threaded scenarios). For complete details, see [JavaScript Transpiler Configuration](./transpiler-migration.md).
 
 ### Quick Migration Steps
 
@@ -266,11 +266,15 @@ bundle exec rspec
 
 ### Performance Expectations
 
+Typical build time improvements when migrating from Babel to SWC (single-threaded transpilation):
+
 | Project Size           | Babel | SWC | Improvement |
 | ---------------------- | ----- | --- | ----------- |
 | Small (<100 files)     | 5s    | 1s  | 5x faster   |
 | Medium (100-500 files) | 20s   | 3s  | 6.7x faster |
 | Large (500+ files)     | 60s   | 8s  | 7.5x faster |
+
+**Note:** With multi-core optimization and ideal conditions, SWC can achieve 20-70x improvements over Babel.
 
 ### Common Issues
 
@@ -280,10 +284,12 @@ Add decorator support to `config/swc.config.js`:
 
 ```javascript
 module.exports = {
-  jsc: {
-    parser: {
-      decorators: true,
-      decoratorsBeforeExport: true
+  options: {
+    jsc: {
+      parser: {
+        decorators: true,
+        decoratorsBeforeExport: true
+      }
     }
   }
 }
@@ -517,13 +523,15 @@ bin/shakapacker-dev-server
 
 ### Performance Benefits
 
-Typical improvements when migrating from webpack to Rspack:
+Typical build time improvements when migrating from webpack to Rspack:
 
 | Build Type       | Webpack | Rspack | Improvement |
 | ---------------- | ------- | ------ | ----------- |
 | Cold build       | 60s     | 8s     | 7.5x faster |
 | Hot reload       | 3s      | 0.5s   | 6x faster   |
 | Production build | 120s    | 15s    | 8x faster   |
+
+**Note:** Actual improvements vary based on project size, configuration, and hardware. Rspack's Rust-based architecture provides consistent 5-10x performance gains across most scenarios.
 
 ### Common Issues
 
