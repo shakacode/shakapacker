@@ -35,8 +35,9 @@ Changes since the last non-beta release.
 
 - **New `shakapacker:switch_bundler` rake task** for easy switching between webpack and rspack
   - Automatically updates `config/shakapacker.yml` to switch bundler configuration
-  - Optional `--install-deps` flag to automatically manage npm dependencies
+  - Optional `--install-deps` flag to automatically manage dependencies
   - `--no-uninstall` flag for faster switching by keeping both bundlers installed
+  - **Supports all package managers**: Auto-detects and uses npm, yarn, pnpm, or bun
   - Shows clear list of packages being added/removed during dependency management
   - Support for custom dependency configuration via `.shakapacker-switch-bundler-dependencies.yml`
   - Includes SWC dependencies (`@swc/core`, `swc-loader`) in default webpack setup
