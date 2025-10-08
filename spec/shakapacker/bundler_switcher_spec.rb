@@ -166,8 +166,8 @@ describe Shakapacker::BundlerSwitcher do
       it "calls npm to install dependencies when install_deps is true" do
         allow(switcher).to receive(:system).and_return(true)
 
-        # Expect uninstall calls for webpack deps
-        expect(switcher).to receive(:system).with("npm", "uninstall", "webpack", "webpack-cli", "webpack-dev-server", "@pmmmwh/react-refresh-webpack-plugin").and_return(true)
+        # Expect uninstall calls for webpack deps (including SWC)
+        expect(switcher).to receive(:system).with("npm", "uninstall", "webpack", "webpack-cli", "webpack-dev-server", "@pmmmwh/react-refresh-webpack-plugin", "@swc/core", "swc-loader").and_return(true)
         expect(switcher).to receive(:system).with("npm", "uninstall", "webpack-assets-manifest", "webpack-merge").and_return(true)
 
         # Expect install calls for rspack deps

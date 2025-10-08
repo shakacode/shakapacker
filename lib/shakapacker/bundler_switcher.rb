@@ -16,7 +16,7 @@ module Shakapacker
     }.freeze
 
     DEFAULT_WEBPACK_DEPS = {
-      dev: %w[webpack webpack-cli webpack-dev-server @pmmmwh/react-refresh-webpack-plugin],
+      dev: %w[webpack webpack-cli webpack-dev-server @pmmmwh/react-refresh-webpack-plugin @swc/core swc-loader],
       prod: %w[webpack-assets-manifest webpack-merge]
     }.freeze
 
