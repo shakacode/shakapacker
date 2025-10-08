@@ -282,6 +282,9 @@ Depending on your setup, you'll need different subsets of the optional peer depe
 rails shakapacker:switch_bundler rspack --install-deps
 # or with rake (note the -- separator)
 rake shakapacker:switch_bundler rspack -- --install-deps
+
+# For faster switching, use --no-uninstall to keep both bundlers installed
+rails shakapacker:switch_bundler webpack --install-deps --no-uninstall
 ```
 
 See the [Rspack Migration Guide](./docs/rspack_migration_guide.md) for details.
