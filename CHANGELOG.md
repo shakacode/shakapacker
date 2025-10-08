@@ -33,6 +33,14 @@ Changes since the last non-beta release.
 
 ### Added
 
+- **New `shakapacker:switch_bundler` rake task** for easy switching between webpack and rspack
+  - Automatically updates `config/shakapacker.yml` to switch bundler configuration
+  - Optional `--install-deps` flag to automatically manage npm dependencies
+  - Support for custom dependency configuration via `.shakapacker-switch-bundler-dependencies.yml`
+  - Preserves config file structure and comments during updates
+  - Updates `javascript_transpiler` to `swc` when switching to rspack (recommended)
+  - Usage: `rails shakapacker:switch_bundler [webpack|rspack] [--install-deps]`
+  - See rake task help: `rails shakapacker:switch_bundler --help`
 - **Stimulus compatibility built into SWC migration** ([#657](https://github.com/shakacode/shakapacker/issues/657))
   - `rake shakapacker:migrate_to_swc` now creates `config/swc.config.js` with `keepClassNames: true`
   - Prevents SWC from mangling class names, which breaks Stimulus controller discovery
