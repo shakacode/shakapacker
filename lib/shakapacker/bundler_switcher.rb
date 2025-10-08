@@ -2,7 +2,6 @@
 
 require "yaml"
 require "fileutils"
-require "json"
 
 module Shakapacker
   # Provides functionality to switch between webpack and rspack bundlers
@@ -145,12 +144,14 @@ module Shakapacker
       def update_config(bundler)
         content = File.read(config_path)
 
-        # Replace assets_bundler value (matches both 'webpack' and "webpack" or rspack)
-        content.gsub!(/^(\s*assets_bundler:\s*['"]?)(webpack|rspack)(['"]?)/, "\\1#{bundler}\\3")
+        # Replace assets_bundler value (handles spaces, tabs, and various quote styles)
+        # Only matches uncommented lines
+        content.gsub!(/^([ \t]*assets_bundler:[ \t]*['"]?)(webpack|rspack)(['"]?)/, "\\1#{bundler}\\3")
 
         # Update javascript_transpiler recommendation for rspack
-        if bundler == "rspack" && content !~ /javascript_transpiler:\s*['"]?swc['"]?/
-          content.gsub!(/^(\s*javascript_transpiler:\s*['"]?)\w+(['"]?)/, "\\1swc\\2")
+        # Only update if not already set to swc and only on uncommented lines
+        if bundler == "rspack" && content !~ /^[ \t]*javascript_transpiler:[ \t]*['"]?swc['"]?/
+          content.gsub!(/^([ \t]*javascript_transpiler:[ \t]*['"]?)\w+(['"]?)/, "\\1swc\\2")
         end
 
         File.write(config_path, content)
@@ -187,14 +188,14 @@ module Shakapacker
       def remove_dependencies(deps)
         unless deps[:dev].empty?
           puts "   Removing old dev dependencies..."
-          unless system("npm uninstall #{deps[:dev].join(' ')}")
+          unless system("npm", "uninstall", *deps[:dev])
             puts "   ⚠️  Warning: Failed to uninstall some dev dependencies"
           end
         end
 
         unless deps[:prod].empty?
           puts "   Removing old prod dependencies..."
-          unless system("npm uninstall #{deps[:prod].join(' ')}")
+          unless system("npm", "uninstall", *deps[:prod])
             puts "   ⚠️  Warning: Failed to uninstall some prod dependencies"
           end
         end
@@ -203,7 +204,7 @@ module Shakapacker
       def install_dependencies(deps)
         unless deps[:dev].empty?
           puts "   Installing new dev dependencies..."
-          unless system("npm install --save-dev #{deps[:dev].join(' ')}")
+          unless system("npm", "install", "--save-dev", *deps[:dev])
             puts "❌ Failed to install dev dependencies"
             raise "Failed to install dev dependencies"
           end
@@ -211,7 +212,7 @@ module Shakapacker
 
         unless deps[:prod].empty?
           puts "   Installing new prod dependencies..."
-          unless system("npm install --save #{deps[:prod].join(' ')}")
+          unless system("npm", "install", "--save", *deps[:prod])
             puts "❌ Failed to install prod dependencies"
             raise "Failed to install prod dependencies"
           end
@@ -220,11 +221,12 @@ module Shakapacker
 
       def clean_install_for_rspack
         puts ""
-        puts "   🔧 Fixing rspack native bindings (cleaning node_modules and package-lock.json)..."
+        puts "   🔧 Fixing rspack native bindings..."
+        puts "   ⚠️  This will remove node_modules and package-lock.json for a clean reinstall"
         FileUtils.rm_rf(root_path.join("node_modules"))
         FileUtils.rm_f(root_path.join("package-lock.json"))
         puts "   Running clean npm install..."
-        unless system("npm install")
+        unless system("npm", "install")
           puts "❌ Failed to run clean npm install"
           raise "Failed to run clean npm install"
         end

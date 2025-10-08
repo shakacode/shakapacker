@@ -152,9 +152,17 @@ describe Shakapacker::BundlerSwitcher do
     context "with install_deps option" do
       it "calls npm to install dependencies when install_deps is true" do
         allow(switcher).to receive(:system).and_return(true)
-        expect(switcher).to receive(:system).with(/npm install --save-dev/).and_return(true)
-        expect(switcher).to receive(:system).with(/npm install --save/).and_return(true)
-        expect(switcher).to receive(:system).with(/npm uninstall/).at_least(:once).and_return(true)
+
+        # Expect uninstall calls for webpack deps
+        expect(switcher).to receive(:system).with("npm", "uninstall", "webpack", "webpack-cli", "webpack-dev-server", "@pmmmwh/react-refresh-webpack-plugin").and_return(true)
+        expect(switcher).to receive(:system).with("npm", "uninstall", "webpack-assets-manifest", "webpack-merge").and_return(true)
+
+        # Expect install calls for rspack deps
+        expect(switcher).to receive(:system).with("npm", "install", "--save-dev", "@rspack/cli", "@rspack/plugin-react-refresh").and_return(true)
+        expect(switcher).to receive(:system).with("npm", "install", "--save", "@rspack/core", "rspack-manifest-plugin").and_return(true)
+
+        # Expect clean install for rspack
+        expect(switcher).to receive(:system).with("npm", "install").and_return(true)
 
         switcher.switch_to("rspack", install_deps: true)
       end
@@ -234,7 +242,7 @@ describe Shakapacker::BundlerSwitcher do
 
     it "uses custom dependencies when config file exists" do
       allow(switcher).to receive(:system).and_return(true)
-      expect(switcher).to receive(:system).with(/custom-rspack-dep/).and_return(true)
+      expect(switcher).to receive(:system).with("npm", "install", "--save-dev", "@rspack/cli", "custom-rspack-dep").and_return(true)
       switcher.switch_to("rspack", install_deps: true)
     end
   end
