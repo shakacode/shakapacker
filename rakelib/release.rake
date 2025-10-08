@@ -21,9 +21,16 @@ which are installed via `bundle install` and `yarn global add release-it`
               automatically perform a patch version bump.
 2nd argument: Perform a dry run by passing 'true' as a second argument.
 
+The task will:
+1. Pull latest changes and bump versions
+2. Publish to npm (requires OTP)
+3. Publish to RubyGems (requires OTP)
+4. Update spec/dummy lockfiles (Gemfile.lock, package-lock.json, yarn.lock)
+5. Commit and push the lockfile updates
+
 Note, accept defaults for npmjs options. Script will pause to get 2FA tokens.
 
-Example: `rake release[2.1.0,false]`")
+Example: `rake create_release[2.1.0,false]`")
 task :create_release, %i[gem_version dry_run] do |_t, args|
   # Check if there are uncommitted changes
   Shakapacker::Utils::Misc.uncommitted_changes?(RaisingMessageHandler.new)
@@ -63,7 +70,7 @@ task :create_release, %i[gem_version dry_run] do |_t, args|
 
   Shakapacker::Utils::Misc.sh_in_dir(gem_root, "gem release") unless is_dry_run
 
-  # Update spec/dummy Gemfile.lock to use the new version
+  # Update spec/dummy lockfiles to use the new version
   spec_dummy_dir = File.join(gem_root, "spec", "dummy")
   puts "ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ"
   puts "Updating spec/dummy dependencies"
@@ -72,12 +79,19 @@ task :create_release, %i[gem_version dry_run] do |_t, args|
   # Note: spec/dummy uses npm (not yarn) as defined in its packageManager field
   Shakapacker::Utils::Misc.sh_in_dir(spec_dummy_dir, "npm install") unless is_dry_run
 
-  # Check if there are changes to spec/dummy/Gemfile.lock
-  changes_output = `git status --porcelain spec/dummy/Gemfile.lock 2>&1`
-  if !changes_output.strip.empty? && !is_dry_run
-    puts "Committing and pushing spec/dummy/Gemfile.lock changes"
-    Shakapacker::Utils::Misc.sh_in_dir(gem_root, "git add spec/dummy/Gemfile.lock")
-    Shakapacker::Utils::Misc.sh_in_dir(gem_root, "git commit -m 'Update spec/dummy Gemfile.lock after release'")
+  # Check if there are changes to spec/dummy lockfiles and commit them
+  lockfiles = ["spec/dummy/Gemfile.lock", "spec/dummy/package-lock.json", "spec/dummy/yarn.lock"]
+  changed_lockfiles = lockfiles.select do |lockfile|
+    changes_output = `git status --porcelain #{lockfile} 2>&1`
+    !changes_output.strip.empty?
+  end
+
+  if !changed_lockfiles.empty? && !is_dry_run
+    puts "ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ"
+    puts "Committing and pushing spec/dummy lockfile changes: #{changed_lockfiles.join(', ')}"
+    puts "ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ"
+    Shakapacker::Utils::Misc.sh_in_dir(gem_root, "git add #{changed_lockfiles.join(' ')}")
+    Shakapacker::Utils::Misc.sh_in_dir(gem_root, "git commit -m 'Update spec/dummy lockfiles after release'")
     Shakapacker::Utils::Misc.sh_in_dir(gem_root, "git push")
   end
 end
