@@ -75,7 +75,7 @@
 
 6. Generate webpack stats for build analysis (useful for bundle size optimization):
 
-   ```
+   ```bash
    NODE_ENV=development bin/shakapacker --profile --json > /tmp/webpack-stats.json
    ```
 

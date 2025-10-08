@@ -1,5 +1,5 @@
 import { writeFileSync, mkdirSync, existsSync } from "fs"
-import { resolve, dirname, relative, isAbsolute } from "path"
+import { resolve, dirname, relative, isAbsolute, basename } from "path"
 import { tmpdir } from "os"
 import { FileOutput } from "./types"
 
@@ -17,7 +17,9 @@ export class FileWriter {
 
     // Write each file
     outputs.forEach((output) => {
-      const filePath = resolve(targetDir, output.filename)
+      const safeName = basename(output.filename)
+      const filePath = resolve(targetDir, safeName)
+      this.validateOutputPath(filePath)
       this.writeFile(filePath, output.content)
       console.log(`[Config Exporter] Created: ${filePath}`)
     })
@@ -35,6 +37,7 @@ export class FileWriter {
     const dir = dirname(filePath)
     this.ensureDirectory(dir)
 
+    this.validateOutputPath(filePath)
     this.writeFile(filePath, content)
     console.log(`[Config Exporter] Config exported to: ${filePath}`)
   }

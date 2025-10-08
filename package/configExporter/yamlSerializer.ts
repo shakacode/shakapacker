@@ -184,10 +184,13 @@ export class YamlSerializer {
         }
       }
 
-      const serialized = this.serializeValue(value, indent + 2, fullKeyPath)
-
-      // Handle nested objects and arrays differently
-      if (
+      // Handle multiline strings specially with block scalar
+      if (typeof value === "string" && value.includes("\n")) {
+        lines.push(`${keyIndent}${key}: |`)
+        for (const line of value.split("\n")) {
+          lines.push(`${valueIndent}${line}`)
+        }
+      } else if (
         typeof value === "object" &&
         value !== null &&
         !Array.isArray(value)
@@ -212,6 +215,7 @@ export class YamlSerializer {
           lines.push(arrayLines)
         }
       } else {
+        const serialized = this.serializeValue(value, indent + 2, fullKeyPath)
         lines.push(`${keyIndent}${key}: ${serialized}`)
       }
     })
