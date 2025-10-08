@@ -181,11 +181,6 @@ module Shakapacker
           # Install new bundler dependencies
           install_dependencies(deps_to_install)
 
-          # Clean reinstall to fix optional dependencies (rspack native bindings)
-          if bundler == "rspack"
-            clean_install_for_rspack
-          end
-
           puts "   ✅ Dependencies updated"
         else
           print_manual_dependency_instructions(bundler, deps_to_install, deps_to_remove)
@@ -223,19 +218,6 @@ module Shakapacker
             puts "❌ Failed to install prod dependencies"
             raise "Failed to install prod dependencies"
           end
-        end
-      end
-
-      def clean_install_for_rspack
-        puts ""
-        puts "   🔧 Fixing rspack native bindings..."
-        puts "   ⚠️  This will remove node_modules and package-lock.json for a clean reinstall"
-        FileUtils.rm_rf(root_path.join("node_modules"))
-        FileUtils.rm_f(root_path.join("package-lock.json"))
-        puts "   Running clean npm install..."
-        unless system("npm", "install")
-          puts "❌ Failed to run clean npm install"
-          raise "Failed to run clean npm install"
         end
       end
 

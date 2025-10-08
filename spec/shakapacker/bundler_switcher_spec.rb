@@ -174,9 +174,6 @@ describe Shakapacker::BundlerSwitcher do
         expect(switcher).to receive(:system).with("npm", "install", "--save-dev", "@rspack/cli", "@rspack/plugin-react-refresh").and_return(true)
         expect(switcher).to receive(:system).with("npm", "install", "--save", "@rspack/core", "rspack-manifest-plugin").and_return(true)
 
-        # Expect clean install for rspack
-        expect(switcher).to receive(:system).with("npm", "install").and_return(true)
-
         switcher.switch_to("rspack", install_deps: true)
       end
 
