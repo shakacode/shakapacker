@@ -26,13 +26,15 @@ _No unreleased changes._
     - Deviation from both SWC and Babel upstream defaults
   - Now defaults to `loose: false`, matching SWC's default and fixing compatibility with Stimulus
   - This aligns with the previous fix to Babel configuration in [PR #107](https://github.com/shakacode/shakapacker/pull/107)
-  - **Migration:** Most projects need no changes. See [v9 Upgrade Guide - SWC Loose Mode](./docs/v9_upgrade.md#swc-loose-mode-breaking-change-v910) for details
+  - **Migration:** Most projects need no changes as the new default provides spec-compliant behavior. Projects with Stimulus will benefit from this fix. See [v9 Upgrade Guide - SWC Loose Mode](./docs/v9_upgrade.md#swc-loose-mode-breaking-change-v910) for details
   - If you must restore the old behavior (not recommended), add to `config/swc.config.js`:
     ```javascript
     module.exports = {
       options: {
         jsc: {
-          loose: true // Restore old behavior (not recommended)
+          // Only use this if you have code that requires loose transforms.
+          // This provides slightly faster build performance but may cause runtime bugs.
+          loose: true // Restore v9.0.0 behavior
         }
       }
     }

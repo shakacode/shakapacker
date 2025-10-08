@@ -63,8 +63,8 @@ See the [TypeScript Documentation](./typescript.md) for usage examples.
 
 **When you might need the old behavior:**
 
-- If you have performance-critical code that relied on loose mode
 - If you have code that breaks with spec-compliant transforms
+- Note: `loose: true` provides slightly faster build times but generates less spec-compliant code
 
 **How to restore old behavior (not recommended):**
 
@@ -74,6 +74,8 @@ Create or update `config/swc.config.js`:
 module.exports = {
   options: {
     jsc: {
+      // Only use this if you have code that requires loose transforms.
+      // This provides slightly faster build performance but may cause runtime bugs.
       loose: true // Restore v9.0.0 behavior
     }
   }
