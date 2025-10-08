@@ -999,6 +999,32 @@ describe Shakapacker::Doctor do
             expect(doctor.issues).to include(match(/Both 'jsc\.target' and 'env' are configured.*cannot be used together/))
           end
         end
+
+        context "when transform.target is used (not jsc.target) with env" do
+          before do
+            File.write(root_path.join("config/swc.config.js"), <<~JS)
+              module.exports = {
+                options: {
+                  jsc: {
+                    transform: {
+                      react: {
+                        runtime: "automatic"
+                      }
+                    }
+                  },
+                  env: {
+                    targets: "> 0.25%"
+                  }
+                }
+              }
+            JS
+          end
+
+          it "does not flag as conflicting (no jsc.target, only transform config)" do
+            doctor.send(:check_javascript_transpiler_dependencies)
+            expect(doctor.issues).not_to include(match(/Both 'jsc\.target' and 'env'/))
+          end
+        end
       end
     end
   end

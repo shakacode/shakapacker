@@ -459,7 +459,7 @@ module Shakapacker
       end
 
       def check_swc_config_settings(config_path)
-        config_content = File.read(config_path)
+        config_content = File.read(config_path, encoding: "UTF-8")
 
         # Check for loose: true (deprecated default)
         if config_content.match?(/loose\s*:\s*true/)
@@ -480,7 +480,8 @@ module Shakapacker
         end
 
         # Check for jsc.target and env conflict
-        if config_content.match?(/jsc\s*:\s*\{[^}]*target\s*:/) && config_content.match?(/env\s*:\s*\{/)
+        # Use word boundary to avoid false positives with transform.target or other nested properties
+        if config_content.match?(/jsc\s*:\s*\{[^}]*\btarget\s*:/) && config_content.match?(/env\s*:\s*\{/)
           @issues << "SWC configuration: Both 'jsc.target' and 'env' are configured. These cannot be used together. " \
                      "Remove 'jsc.target' and use only 'env' (Shakapacker sets this automatically). " \
                      "See: https://github.com/shakacode/shakapacker/blob/main/docs/using_swc_loader.md#using-swc-with-stimulus"
