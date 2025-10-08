@@ -93,7 +93,9 @@ module Shakapacker
       current = current_bundler
       puts "Current bundler: #{current}"
       puts ""
-      puts "Usage: rails shakapacker:switch_bundler [webpack|rspack] [--install-deps] [--init-config] [--help]"
+      puts "Usage:"
+      puts "  rails shakapacker:switch_bundler [webpack|rspack] [OPTIONS]"
+      puts "  rake shakapacker:switch_bundler [webpack|rspack] -- [OPTIONS]"
       puts ""
       puts "Options:"
       puts "  --install-deps    Automatically install/uninstall dependencies"
@@ -101,10 +103,15 @@ module Shakapacker
       puts "  --help, -h        Show this help message"
       puts ""
       puts "Examples:"
-      puts "  rails shakapacker:switch_bundler rspack              # Switch to rspack (manual dependency install)"
-      puts "  rails shakapacker:switch_bundler rspack --install-deps   # Switch to rspack and auto-manage deps"
-      puts "  rails shakapacker:switch_bundler webpack --install-deps  # Switch to webpack and auto-manage deps"
-      puts "  rails shakapacker:switch_bundler --init-config           # Create custom dependencies config file"
+      puts "  # Using rails command"
+      puts "  rails shakapacker:switch_bundler rspack --install-deps"
+      puts "  rails shakapacker:switch_bundler webpack --install-deps"
+      puts "  rails shakapacker:switch_bundler --init-config"
+      puts ""
+      puts "  # Using rake command (note the -- separator)"
+      puts "  rake shakapacker:switch_bundler rspack -- --install-deps"
+      puts "  rake shakapacker:switch_bundler webpack -- --install-deps"
+      puts "  rake shakapacker:switch_bundler -- --init-config"
     end
 
     private

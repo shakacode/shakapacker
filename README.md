@@ -280,6 +280,8 @@ Depending on your setup, you'll need different subsets of the optional peer depe
 
 ```bash
 rails shakapacker:switch_bundler rspack --install-deps
+# or with rake (note the -- separator)
+rake shakapacker:switch_bundler rspack -- --install-deps
 ```
 
 See the [Rspack Migration Guide](./docs/rspack_migration_guide.md) for details.

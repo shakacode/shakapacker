@@ -9,6 +9,7 @@ namespace :shakapacker do
 
     Usage:
       rails shakapacker:switch_bundler [webpack|rspack] [OPTIONS]
+      rake shakapacker:switch_bundler [webpack|rspack] -- [OPTIONS]
 
     Options:
       --install-deps    Automatically install/uninstall bundler dependencies
@@ -18,18 +19,25 @@ namespace :shakapacker do
     Examples:
       # Switch to rspack with automatic dependency management
       rails shakapacker:switch_bundler rspack --install-deps
+      rake shakapacker:switch_bundler rspack -- --install-deps
 
       # Switch to rspack (manual dependency management)
       rails shakapacker:switch_bundler rspack
+      rake shakapacker:switch_bundler rspack
 
       # Switch back to webpack with dependency management
       rails shakapacker:switch_bundler webpack --install-deps
+      rake shakapacker:switch_bundler webpack -- --install-deps
 
       # Create custom dependencies config file
       rails shakapacker:switch_bundler --init-config
+      rake shakapacker:switch_bundler -- --init-config
 
       # Show current bundler and usage help
       rails shakapacker:switch_bundler --help
+      rake shakapacker:switch_bundler -- --help
+
+    Note: When using 'rake', you must use '--' to separate rake options from task arguments.
 
     What it does:
       - Updates 'assets_bundler' in config/shakapacker.yml
