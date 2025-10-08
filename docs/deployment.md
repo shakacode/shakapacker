@@ -3,7 +3,7 @@
 Shakapacker hooks up a new `shakapacker:compile` task to `assets:precompile`, which gets run whenever you run `assets:precompile`.
 If you are not using Sprockets `shakapacker:compile` is automatically aliased to `assets:precompile`.
 
-```
+````
 
 ## Heroku
 
@@ -15,16 +15,40 @@ heroku addons:create heroku-postgresql:hobby-dev
 heroku buildpacks:add heroku/nodejs
 heroku buildpacks:add heroku/ruby
 git push heroku master
-```
+````
 
 We're essentially doing the following here:
 
-* Creating an app on Heroku
-* Creating a Postgres database for the app (this is assuming that you're using Heroku Postgres for your app)
-* Adding the Heroku NodeJS and Ruby buildpacks for your app. This allows the `npm` or `yarn` executables to properly function when compiling your app - as well as Ruby.
-* Pushing your code to Heroku and kicking off the deployment
+- Creating an app on Heroku
+- Creating a Postgres database for the app (this is assuming that you're using Heroku Postgres for your app)
+- Adding the Heroku NodeJS and Ruby buildpacks for your app. This allows the `npm` or `yarn` executables to properly function when compiling your app - as well as Ruby.
+- Pushing your code to Heroku and kicking off the deployment
 
 Your production build process is responsible for installing your JavaScript dependencies before `rake assets:precompile`. For example, if you are on Heroku, the `heroku/nodejs` buildpack must run **prior** to the `heroku/ruby` buildpack for precompilation to run successfully.
+
+### Custom Rails Environments (e.g., staging)
+
+When deploying to custom Rails environments like `staging`, you don't need to add that environment to your `shakapacker.yml` file. Shakapacker automatically falls back to sensible defaults:
+
+1. First, it looks for the environment you're deploying to (e.g., `staging`)
+2. If not found, it falls back to `development` configuration
+3. If that's not found, it falls back to `default` configuration
+
+This means you can deploy to Heroku staging environments without modifying your configuration:
+
+```bash
+# This works even without a "staging" section in shakapacker.yml
+heroku config:set RAILS_ENV=staging -a my-app-staging
+```
+
+**Note:** If you want staging-specific configuration (like caching manifests), you can explicitly add a `staging` section to your `config/shakapacker.yml`:
+
+```yaml
+staging:
+  <<: *default
+  compile: false
+  cache_manifest: true
+```
 
 ## Nginx
 
@@ -117,10 +141,10 @@ namespace :deploy do
   desc "Run rake js install"
   task :js_install do
     require "package_json"
-    
+
     # this will use the package manager specified via `packageManager`, or otherwise fallback to `npm`
     native_js_install_command = PackageJson.read.manager.native_install_command(frozen: true).join(" ")
-    
+
     on roles(:web) do
       within release_path do
         execute("cd #{release_path} && #{native_js_install_command}")

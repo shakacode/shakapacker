@@ -23,6 +23,7 @@
    ```
 
 ## Incorrect peer dependencies
+
 Shakapacker uses peer dependencies to make it easier to manage what versions are being used for your app, which is especially
 useful for patching security vulnerabilities. However, not all package managers will actually enforce these versions - notably,
 Yarn will omit a warning rather than erroring if you forget to update a peer dependency:
@@ -32,6 +33,7 @@ warning " > shakapacker@6.1.1" has incorrect peer dependency "compression-webpac
 ```
 
 This omission resulted in an error in the browser:
+
 ```
 Failed to load resource: net::ERR_CONTENT_DECODING_FAILED
 ```
@@ -39,6 +41,41 @@ Failed to load resource: net::ERR_CONTENT_DECODING_FAILED
 The error was caused by an old version of the peer dependency `webpack-compression-plugin`.
 
 So, be sure to investigate warnings from `yarn install`!
+
+## NoMethodError: undefined method 'deep_symbolize_keys' for nil:NilClass
+
+If you see this error during deployment (especially on Heroku with a staging environment):
+
+```
+NoMethodError: undefined method 'deep_symbolize_keys' for nil:NilClass
+  from shakapacker/configuration.rb:XXX:in 'load'
+```
+
+This happens when deploying to a custom Rails environment (like `staging`) that isn't explicitly defined in your `config/shakapacker.yml` file.
+
+**Solution:** This was fixed in Shakapacker v9.1.1+. Upgrade to the latest version:
+
+```ruby
+# Gemfile
+gem 'shakapacker', '~> 9.1'
+```
+
+After upgrading, Shakapacker will automatically fall back to sensible defaults when your environment isn't defined:
+
+1. First tries your environment (e.g., `staging`)
+2. Falls back to `development` configuration
+3. Falls back to `default` configuration
+
+**Alternative:** If you can't upgrade immediately, explicitly add your environment to `config/shakapacker.yml`:
+
+```yaml
+staging:
+  <<: *default
+  compile: false
+  cache_manifest: true
+```
+
+See the [deployment guide](./deployment.md#custom-rails-environments-eg-staging) for more details.
 
 ## ENOENT: no such file or directory - node-sass
 
@@ -54,7 +91,7 @@ thing, like Heroku.
 
 However, if you get this on local development, or not during a deploy then you
 may need to rebuild `node-sass`. It's a bit of a weird error; basically, it
-can't find the `node-sass` binary.  An easy solution is to create a postinstall
+can't find the `node-sass` binary. An easy solution is to create a postinstall
 hook to ensure `node-sass` is rebuilt whenever new modules are installed.
 
 In `package.json`:
@@ -67,19 +104,18 @@ In `package.json`:
 
 ## Can't find hello_react.js in manifest.json
 
-* If you get this error `Can't find hello_react.js in manifest.json`
-when loading a view in the browser it's because webpack is still compiling packs.
-Shakapacker uses a `manifest.json` file to keep track of packs in all environments,
-however since this file is generated after packs are compiled by webpack. So,
-if you load a view in browser whilst webpack is compiling you will get this error.
-Therefore, make sure webpack
-(i.e `./bin/shakapacker-dev-server`) is running and has
-completed the compilation successfully before loading a view.
-
+- If you get this error `Can't find hello_react.js in manifest.json`
+  when loading a view in the browser it's because webpack is still compiling packs.
+  Shakapacker uses a `manifest.json` file to keep track of packs in all environments,
+  however since this file is generated after packs are compiled by webpack. So,
+  if you load a view in browser whilst webpack is compiling you will get this error.
+  Therefore, make sure webpack
+  (i.e `./bin/shakapacker-dev-server`) is running and has
+  completed the compilation successfully before loading a view.
 
 ## throw er; // Unhandled 'error' event
 
-* If you get this error while trying to use Elm, try rebuilding Elm. You can do
+- If you get this error while trying to use Elm, try rebuilding Elm. You can do
   so with a postinstall hook in your `package.json`:
 
 ```json
@@ -90,9 +126,9 @@ completed the compilation successfully before loading a view.
 
 ## webpack or webpack-dev-server not found
 
-* This could happen if `shakapacker:install` step is skipped. Please run `bundle exec rails shakapacker:install` to fix the issue.
+- This could happen if `shakapacker:install` step is skipped. Please run `bundle exec rails shakapacker:install` to fix the issue.
 
-* If you encounter the above error on heroku after upgrading from Rails 4.x to 5.1.x, then the problem might be related to missing `yarn` binstub. Please run following commands to update/add binstubs:
+- If you encounter the above error on heroku after upgrading from Rails 4.x to 5.1.x, then the problem might be related to missing `yarn` binstub. Please run following commands to update/add binstubs:
 
 ```bash
 bundle config --delete bin
@@ -137,6 +173,7 @@ chmod +x $HOME/your_rails_app/node_modules/.bin/elm-make
 ```
 
 ## Rake assets:precompile fails. ExecJS::RuntimeError
+
 This error occurs because you are trying to minify by `terser` a pack that's already been minified by Shakapacker. To avoid this conflict and prevent appearing of `ExecJS::RuntimeError` error, you will need to disable uglifier from Rails config:
 
 ```ruby
@@ -152,10 +189,11 @@ Rails.application.config.assets.js_compressor = Uglifier.new(harmony: true)
 ### Angular: WARNING in ./node_modules/@angular/core/esm5/core.js, Critical dependency: the request of a dependency is an expression
 
 To silent these warnings, please update `config/webpack/webpack.config.js`:
+
 ```js
-const webpack = require('webpack')
-const { resolve } = require('path')
-const { generateWebpackConfig } = require('shakapacker')
+const webpack = require("webpack")
+const { resolve } = require("path")
+const { generateWebpackConfig } = require("shakapacker")
 
 module.exports = generateWebpackConfig({
   plugins: [
@@ -192,6 +230,7 @@ Thus ProvidePlugin manages build-time dependencies to global symbols whereas the
 **You don't need to assign dependencies on `window`.**
 
 For instance, with [jQuery](https://jquery.com/):
+
 ```diff
 // app/javascript/entrypoints/application.js
 
@@ -200,19 +239,20 @@ For instance, with [jQuery](https://jquery.com/):
 ```
 
 Instead do:
+
 ```js
 // config/webpack/webpack.config.js
 
-const webpack = require('webpack')
-const { generateWebpackConfig } = require('shakapacker')
+const webpack = require("webpack")
+const { generateWebpackConfig } = require("shakapacker")
 
 module.exports = generateWebpackConfig({
   plugins: [
     new webpack.ProvidePlugin({
-      $: 'jquery',
-      jQuery: 'jquery',
+      $: "jquery",
+      jQuery: "jquery"
     })
-  ],
+  ]
 })
 ```
 
@@ -225,7 +265,7 @@ application is using your staging `config.asset_host` host when using
 
 This can be fixed by setting the environment variable `SHAKAPACKER_ASSET_HOST` to
 an empty string where your assets are compiled. On Heroku this is done under
-*Settings* -> *Config Vars*.
+_Settings_ -> _Config Vars_.
 
 This way shakapacker won't hard-code the CDN host into the manifest file used by
 `javascript_pack_tag`, but instead fetch the CDN host at runtime, resolving the
@@ -243,6 +283,7 @@ In order to generate the storage path, we rely on the filename that's [provided 
 This usually works out of the box. There's a potential problem however, if you use the [context setting](https://webpack.js.org/configuration/entry-context/#context) in your webpack config. By default this is set to current Node working directory/project root.
 
 If you were to override it like:
+
 ```
 {
   context: path.resolve(__dirname, '../../app/javascript')
@@ -252,12 +293,14 @@ If you were to override it like:
 Then the filename available in the rule generator will be relative to that directory.
 
 This means for example:
+
 - a static asset from `node_modules` folder could end up being referenced with path of `../../node_modules/some_module/static_file.jpg` rather than simply `node_modules/some_module/static_file.jpg`.
 - a static asset in one of the `additional_paths`, example `app/assets/images/image.jpg`, would end up being referenced with path of `../assets/images/image.jpg`.
 
 Those paths are later passed to [output path generation in the rule](https://github.com/shakacode/shakapacker/blob/e52b335dbabfb934fe7d3076a8322b97d5ef3470/package/rules/file.js#L25-L26), where we would end up with a path like `static/../../node_modules/some_module/static_file.jpg`, resulting in the file being output in a location two directories above the desired path.
 
 You can avoid this by:
+
 - not using overridden `context` in your webpack config, if there's no good reason for it.
 - using custom Webpack config to modify the static file rule, following a similar process as outlined in the [Webpack Configuration](https://github.com/shakacode/shakapacker/blob/main/README.md#webpack-configuration) section of the readme.
 
