@@ -126,14 +126,14 @@ function parseArguments(args: string[]): ExportOptions {
 function applyDefaults(options: ExportOptions): void {
   if (options.doctor) {
     options.save = true
-    if (options.format === null) options.format = "yaml"
-    if (options.annotate === null) options.annotate = true
+    if (options.format === undefined) options.format = "yaml"
+    if (options.annotate === undefined) options.annotate = true
   } else if (options.save) {
-    if (options.format === null) options.format = "yaml"
-    if (options.annotate === null) options.annotate = true
+    if (options.format === undefined) options.format = "yaml"
+    if (options.annotate === undefined) options.annotate = true
   } else {
-    if (options.format === null) options.format = "inspect"
-    if (options.annotate === null) options.annotate = false
+    if (options.format === undefined) options.format = "inspect"
+    if (options.annotate === undefined) options.annotate = false
   }
 }
 
