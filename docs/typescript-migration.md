@@ -254,7 +254,8 @@ npm run type-check
 - `WebpackConfigWithDevServer` - Webpack configuration with dev server
 - `RspackConfigWithDevServer` - Rspack configuration with dev server
 - `WebpackPluginInstance` - Webpack plugin instance type
-- `RspackPlugin` - Rspack plugin interface
+- `RspackPluginInstance` - Rspack plugin instance type
+- `RspackPlugin` - **⚠️ Deprecated:** Use `RspackPluginInstance` instead
 
 ### Helper Types
 - `CompressionPluginOptions` - Compression plugin configuration

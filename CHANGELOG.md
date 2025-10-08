@@ -11,6 +11,10 @@
 
 Changes since the last non-beta release.
 
+### Fixed
+
+- Restore `RspackPlugin` type as an alias to `RspackPluginInstance` for backward compatibility. The type is now deprecated in favor of `RspackPluginInstance`. [#650](https://github.com/shakacode/shakapacker/issues/650)
+
 ## [v9.0.0] - October 5, 2025
 
 See the [v9 Upgrade Guide](https://github.com/shakacode/shakapacker/blob/main/docs/v9_upgrade.md) for detailed migration instructions.

@@ -40,6 +40,7 @@ export type {
 // Environment configuration types
 export type {
   WebpackConfigWithDevServer,
+  RspackPluginInstance,
   RspackPlugin,
   RspackDevServerConfig,
   RspackConfigWithDevServer,
