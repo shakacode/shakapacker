@@ -2,13 +2,13 @@ export interface ExportOptions {
   doctor?: boolean
   save?: boolean
   saveDir?: string
-  bundler?: "webpack" | "rspack" | null
+  bundler?: "webpack" | "rspack"
   env?: "development" | "production" | "test"
   clientOnly?: boolean
   serverOnly?: boolean
-  output?: string | null
-  format?: "yaml" | "json" | "inspect" | null
-  annotate?: boolean | null
+  output?: string
+  format?: "yaml" | "json" | "inspect"
+  annotate?: boolean
   verbose?: boolean
   depth?: number | null
   help?: boolean
