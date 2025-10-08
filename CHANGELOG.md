@@ -11,16 +11,23 @@
 
 Changes since the last non-beta release.
 
+_No unreleased changes._
+
+## [v9.1.0] - October 8, 2025
+
+**⚠️ IMPORTANT:** This release includes a breaking change for SWC users. Please see the [v9 Upgrade Guide - SWC Loose Mode Breaking Change](./docs/v9_upgrade.md#swc-loose-mode-breaking-change-v910) for migration details.
+
 ### ⚠️ Breaking Changes
 
-- **SWC default configuration now uses `loose: false` for spec-compliant transforms** ([#657](https://github.com/shakacode/shakapacker/issues/657))
+- **SWC default configuration now uses `loose: false` for spec-compliant transforms** ([#658](https://github.com/shakacode/shakapacker/pull/658))
   - Previously, Shakapacker set `loose: true` by default in SWC configuration, which caused:
     - Silent failures with Stimulus controllers
     - Incorrect behavior with spread operators on iterables (e.g., `[...new Set()]`)
     - Deviation from both SWC and Babel upstream defaults
   - Now defaults to `loose: false`, matching SWC's default and fixing compatibility with Stimulus
   - This aligns with the previous fix to Babel configuration in [PR #107](https://github.com/shakacode/shakapacker/pull/107)
-  - **Migration:** If you need the old behavior for performance reasons, add to `config/swc.config.js`:
+  - **Migration:** Most projects need no changes. See [v9 Upgrade Guide - SWC Loose Mode](./docs/v9_upgrade.md#swc-loose-mode-breaking-change-v910) for details
+  - If you must restore the old behavior (not recommended), add to `config/swc.config.js`:
     ```javascript
     module.exports = {
       options: {
