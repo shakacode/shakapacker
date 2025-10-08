@@ -78,15 +78,17 @@ rm package-lock.json
 
 #### 2. Install Yarn (if not already installed)
 
-```bash
-npm install -g yarn
-```
-
-Or use Corepack (recommended for modern Node.js):
+Use Corepack (recommended for modern Node.js):
 
 ```bash
 corepack enable
 corepack prepare yarn@stable --activate
+```
+
+Alternative - install globally via npm:
+
+```bash
+npm install -g yarn
 ```
 
 #### 3. Install dependencies with Yarn
@@ -119,15 +121,17 @@ yarn build
 
 #### 1. Install pnpm
 
-```bash
-npm install -g pnpm
-```
-
-Or use Corepack (recommended):
+Use Corepack (recommended):
 
 ```bash
 corepack enable
 corepack prepare pnpm@latest --activate
+```
+
+Alternative - install globally via npm:
+
+```bash
+npm install -g pnpm
 ```
 
 #### 2. Remove existing lock files
@@ -217,41 +221,25 @@ If you're configuring manually, create `config/swc.config.js`:
 
 ```javascript
 // config/swc.config.js
+// This file is merged with Shakapacker's default SWC configuration
+// See: https://swc.rs/docs/configuration/compilation
+
 module.exports = {
-  jsc: {
-    parser: {
-      syntax: "ecmascript",
-      jsx: true,
-      dynamicImport: true,
-      decorators: false
-    },
-    transform: {
-      react: {
-        runtime: "automatic"
+  options: {
+    jsc: {
+      // CRITICAL for Stimulus compatibility: Prevents SWC from mangling class names
+      keepClassNames: true,
+      transform: {
+        react: {
+          runtime: "automatic"
+        }
       }
     }
   }
 }
 ```
 
-**Important for Stimulus users:** Add `keepClassNames: true`:
-
-```javascript
-module.exports = {
-  jsc: {
-    keepClassNames: true, // Required for Stimulus
-    parser: {
-      syntax: "ecmascript",
-      jsx: true
-    },
-    transform: {
-      react: {
-        runtime: "automatic"
-      }
-    }
-  }
-}
-```
+**Note:** The `options` wrapper is required for proper merging with Shakapacker's defaults. Using `.swcrc` instead will completely override Shakapacker's settings and may cause build failures.
 
 #### 5. Update React refresh plugin (if using React)
 
