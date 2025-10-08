@@ -27,7 +27,7 @@ module Shakapacker
     end
 
     def current_bundler
-      config = YAML.load_file(config_path, aliases: true)
+      config = load_yaml_config(config_path)
       config.dig("default", "assets_bundler") || "webpack"
     end
 
@@ -121,7 +121,7 @@ module Shakapacker
         if File.exist?(custom_config_path)
           puts "📝 Using custom dependencies from #{CUSTOM_DEPS_CONFIG}"
           begin
-            custom = YAML.load_file(custom_config_path, aliases: true)
+            custom = load_yaml_config(custom_config_path)
           rescue Psych::SyntaxError => e
             puts "❌ Error parsing #{CUSTOM_DEPS_CONFIG}: #{e.message}"
             puts "   Please fix the YAML syntax or delete the file to use defaults"
@@ -254,6 +254,21 @@ module Shakapacker
           puts "   npm uninstall #{deps_to_remove[:dev].join(' ')}"
           puts "   npm uninstall #{deps_to_remove[:prod].join(' ')}"
         end
+      end
+
+      # Load YAML config file with Ruby version compatibility
+      # Ruby 3.1+ supports aliases: keyword, older versions need YAML.safe_load
+      def load_yaml_config(path)
+        if YAML.respond_to?(:unsafe_load_file)
+          # Ruby 3.1+: Use unsafe_load_file to support aliases/anchors
+          YAML.unsafe_load_file(path)
+        else
+          # Ruby 2.7-3.0: Use safe_load with aliases enabled
+          YAML.safe_load(File.read(path), permitted_classes: [], permitted_symbols: [], aliases: true)
+        end
+      rescue ArgumentError
+        # Ruby 2.7 doesn't support aliases keyword - fall back to YAML.load
+        YAML.load(File.read(path)) # rubocop:disable Security/YAMLLoad
       end
   end
 end
