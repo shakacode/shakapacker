@@ -210,32 +210,66 @@ module Shakapacker
       end
 
       def remove_dependencies(deps)
+        package_manager = detect_package_manager
+
         unless deps[:dev].empty?
-          unless system("npm", "uninstall", *deps[:dev])
+          unless execute_remove_command(package_manager, deps[:dev])
             puts "   ⚠️  Warning: Failed to uninstall some dev dependencies"
           end
         end
 
         unless deps[:prod].empty?
-          unless system("npm", "uninstall", *deps[:prod])
+          unless execute_remove_command(package_manager, deps[:prod])
             puts "   ⚠️  Warning: Failed to uninstall some prod dependencies"
           end
         end
       end
 
       def install_dependencies(deps)
+        package_manager = detect_package_manager
+
         unless deps[:dev].empty?
-          unless system("npm", "install", "--save-dev", *deps[:dev])
+          unless execute_install_command(package_manager, deps[:dev], dev: true)
             puts "❌ Failed to install dev dependencies"
             raise "Failed to install dev dependencies"
           end
         end
 
         unless deps[:prod].empty?
-          unless system("npm", "install", "--save", *deps[:prod])
+          unless execute_install_command(package_manager, deps[:prod], dev: false)
             puts "❌ Failed to install prod dependencies"
             raise "Failed to install prod dependencies"
           end
+        end
+      end
+
+      def execute_install_command(package_manager, packages, dev:)
+        case package_manager
+        when "yarn"
+          args = dev ? ["add", "--dev"] : ["add"]
+          system("yarn", *args, *packages)
+        when "pnpm"
+          args = dev ? ["add", "-D"] : ["add"]
+          system("pnpm", *args, *packages)
+        when "bun"
+          args = dev ? ["add", "--dev"] : ["add"]
+          system("bun", *args, *packages)
+        else # npm
+          args = dev ? ["install", "--save-dev"] : ["install", "--save"]
+          system("npm", *args, *packages)
+        end
+      end
+
+      def execute_remove_command(package_manager, packages)
+        case package_manager
+        when "yarn"
+          system("yarn", "remove", *packages)
+        when "pnpm"
+          system("pnpm", "remove", *packages)
+        when "bun"
+          system("bun", "remove", *packages)
+        else # npm
+          system("npm", "uninstall", *packages)
         end
       end
 
@@ -244,22 +278,55 @@ module Shakapacker
         puts "⚠️  Dependencies not automatically installed (use --install-deps to auto-install)"
         puts ""
 
-        if bundler == "rspack"
-          puts "📦 To install rspack dependencies, run:"
-          puts "   npm install --save-dev #{deps_to_install[:dev].join(' ')}"
-          puts "   npm install --save #{deps_to_install[:prod].join(' ')}"
-          puts ""
-          puts "🗑️  To remove webpack dependencies, run:"
-          puts "   npm uninstall #{deps_to_remove[:dev].join(' ')}"
-          puts "   npm uninstall #{deps_to_remove[:prod].join(' ')}"
-        else
-          puts "📦 To install webpack dependencies, run:"
-          puts "   npm install --save-dev #{deps_to_install[:dev].join(' ')}"
-          puts "   npm install --save #{deps_to_install[:prod].join(' ')}"
-          puts ""
-          puts "🗑️  To remove rspack dependencies, run:"
-          puts "   npm uninstall #{deps_to_remove[:dev].join(' ')}"
-          puts "   npm uninstall #{deps_to_remove[:prod].join(' ')}"
+        package_manager = detect_package_manager
+        target_name = bundler == "rspack" ? "rspack" : "webpack"
+        old_name = bundler == "rspack" ? "webpack" : "rspack"
+
+        puts "📦 To install #{target_name} dependencies, run:"
+        print_install_commands(package_manager, deps_to_install)
+        puts ""
+        puts "🗑️  To remove #{old_name} dependencies, run:"
+        print_uninstall_commands(package_manager, deps_to_remove)
+      end
+
+      def detect_package_manager
+        require "shakapacker/utils/manager"
+        Shakapacker::Utils::Manager.guess_binary
+      rescue StandardError
+        "npm" # Fallback to npm if detection fails
+      end
+
+      def print_install_commands(package_manager, deps)
+        case package_manager
+        when "yarn"
+          puts "   yarn add --dev #{deps[:dev].join(' ')}" unless deps[:dev].empty?
+          puts "   yarn add #{deps[:prod].join(' ')}" unless deps[:prod].empty?
+        when "pnpm"
+          puts "   pnpm add -D #{deps[:dev].join(' ')}" unless deps[:dev].empty?
+          puts "   pnpm add #{deps[:prod].join(' ')}" unless deps[:prod].empty?
+        when "bun"
+          puts "   bun add --dev #{deps[:dev].join(' ')}" unless deps[:dev].empty?
+          puts "   bun add #{deps[:prod].join(' ')}" unless deps[:prod].empty?
+        else # npm
+          puts "   npm install --save-dev #{deps[:dev].join(' ')}" unless deps[:dev].empty?
+          puts "   npm install --save #{deps[:prod].join(' ')}" unless deps[:prod].empty?
+        end
+      end
+
+      def print_uninstall_commands(package_manager, deps)
+        case package_manager
+        when "yarn"
+          puts "   yarn remove #{deps[:dev].join(' ')}" unless deps[:dev].empty?
+          puts "   yarn remove #{deps[:prod].join(' ')}" unless deps[:prod].empty?
+        when "pnpm"
+          puts "   pnpm remove #{deps[:dev].join(' ')}" unless deps[:dev].empty?
+          puts "   pnpm remove #{deps[:prod].join(' ')}" unless deps[:prod].empty?
+        when "bun"
+          puts "   bun remove #{deps[:dev].join(' ')}" unless deps[:dev].empty?
+          puts "   bun remove #{deps[:prod].join(' ')}" unless deps[:prod].empty?
+        else # npm
+          puts "   npm uninstall #{deps[:dev].join(' ')}" unless deps[:dev].empty?
+          puts "   npm uninstall #{deps[:prod].join(' ')}" unless deps[:prod].empty?
         end
       end
 
