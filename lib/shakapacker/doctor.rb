@@ -152,9 +152,9 @@ module Shakapacker
           end
         end
 
-        # Check if ensure_consistent_versioning is enabled and warn if versions might mismatch
+        # Check if ensure_consistent_versioning is enabled
         if config.ensure_consistent_versioning?
-          @info << "Version consistency checking is enabled"
+          @info << "Version consistency checking: enabled (ensures shakapacker gem and npm package versions match at runtime)"
         end
       end
 
@@ -394,7 +394,15 @@ module Shakapacker
           # Rspack has built-in SWC support
           @info << "Rspack has built-in SWC support - no additional loaders needed"
           if package_installed?("swc-loader")
-            @warnings << "swc-loader is not needed with Rspack (SWC is built-in) - consider removing it"
+            package_manager = detect_package_manager
+            remove_cmd = case package_manager
+                         when "yarn" then "yarn remove swc-loader"
+                         when "npm" then "npm uninstall swc-loader"
+                         when "pnpm" then "pnpm remove swc-loader"
+                         when "bun" then "bun remove swc-loader"
+                        else "npm uninstall swc-loader"
+            end
+            @warnings << "swc-loader is not needed with Rspack (SWC is built-in). Rspack includes SWC transpilation natively, so this package is redundant. Remove it with: #{remove_cmd}"
           end
         end
       end
@@ -428,7 +436,8 @@ module Shakapacker
         transpiler = config.javascript_transpiler
 
         if babel_config_exists && transpiler != "babel"
-          @warnings << "Babel configuration files found but javascript_transpiler is '#{transpiler}'. Consider removing Babel configs or setting javascript_transpiler: 'babel'"
+          babel_files = babel_configs.select(&:exist?).map { |f| f.relative_path_from(root_path) }.join(", ")
+          @warnings << "Babel configuration files found (#{babel_files}) but javascript_transpiler is '#{transpiler}'. These Babel configs are being ignored. Either remove the Babel configuration files or set javascript_transpiler: 'babel' in shakapacker.yml to use Babel instead of #{transpiler}."
         end
 
         # Check for redundant dependencies
@@ -532,9 +541,13 @@ module Shakapacker
           root_path.join("config/webpack/commonWebpackConfig.ts")
         ]
 
+        config_found = false
+        no_explicit_config_warned = false
+
         webpack_config_paths.each do |config_path|
           next unless config_path.exist?
 
+          config_found = true
           config_content = File.read(config_path)
 
           # Check for the invalid configuration: namedExport: true with exportLocalsConvention: 'camelCase'
@@ -544,10 +557,11 @@ module Shakapacker
             @issues << "  Change to 'camelCaseOnly' or 'dashesOnly'. See docs/v9_upgrade.md for details"
           end
 
-          # Warn if CSS modules are used but no configuration is found
-          if !config_content.match(/namedExport/) && !config_content.match(/exportLocalsConvention/)
+          # Warn if CSS modules are used but no configuration is found (only once)
+          if !no_explicit_config_warned && !config_content.match(/namedExport/) && !config_content.match(/exportLocalsConvention/)
             @info << "CSS module files found but no explicit CSS modules configuration detected"
             @info << "  v9 defaults: namedExport: true, exportLocalsConvention: 'camelCaseOnly'"
+            no_explicit_config_warned = true
           end
         end
 
@@ -831,14 +845,15 @@ module Shakapacker
           end
 
           def print_binstub_status
-            binstub_path = doctor.root_path.join("bin/shakapacker")
-            if binstub_path.exist?
-              puts "✓ Shakapacker binstub found"
-            end
-
+            shakapacker_binstub = doctor.root_path.join("bin/shakapacker")
             export_config_binstub = doctor.root_path.join("bin/export-bundler-config")
-            if export_config_binstub.exist?
-              puts "✓ Config export binstub found"
+
+            if shakapacker_binstub.exist? && export_config_binstub.exist?
+              puts "✓ Shakapacker binstubs found"
+            elsif shakapacker_binstub.exist?
+              puts "✓ Shakapacker binstub found (bin/shakapacker)"
+            elsif export_config_binstub.exist?
+              puts "✓ Config export binstub found (bin/export-bundler-config)"
             end
           end
 
@@ -859,7 +874,7 @@ module Shakapacker
             else
               print_issues if doctor.issues.any?
               print_warnings if doctor.warnings.any?
-              print_fix_instructions
+              print_fix_instructions if has_dependency_issues?
             end
           end
 
@@ -877,6 +892,12 @@ module Shakapacker
               puts "  #{index + 1}. #{warning}"
             end
             puts ""
+          end
+
+          def has_dependency_issues?
+            # Check if any issues or warnings are about missing dependencies
+            all_messages = doctor.issues + doctor.warnings
+            all_messages.any? { |msg| msg.include?("Missing") || msg.include?("not installed") }
           end
 
           def print_fix_instructions

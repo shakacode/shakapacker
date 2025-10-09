@@ -857,7 +857,7 @@ describe Shakapacker::Doctor do
 
         it "warns about inconsistent configuration" do
           doctor.send(:check_javascript_transpiler_dependencies)
-          expect(doctor.warnings).to include(match(/Babel configuration files found but javascript_transpiler is 'swc'/))
+          expect(doctor.warnings).to include(match(/Babel configuration files found .* but javascript_transpiler is 'swc'/))
         end
       end
 
