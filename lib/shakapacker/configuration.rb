@@ -117,6 +117,10 @@ class Shakapacker::Configuration
     assets_bundler == "webpack"
   end
 
+  def precompile_hook
+    fetch(:precompile_hook)
+  end
+
   def javascript_transpiler
     # Show deprecation warning if using old 'webpack_loader' key
     if data.has_key?(:webpack_loader) && !data.has_key?(:javascript_transpiler)

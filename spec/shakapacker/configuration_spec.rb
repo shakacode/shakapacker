@@ -648,6 +648,53 @@ describe "Shakapacker::Configuration" do
     end
   end
 
+  describe "#precompile_hook" do
+    context "with precompile_hook set in config" do
+      it "returns the configured precompile_hook" do
+        test_config = Tempfile.new(["shakapacker", ".yml"])
+        test_config.write(<<~YAML)
+          production:
+            source_path: app/javascript
+            precompile_hook: 'bin/shakapacker-precompile-hook'
+        YAML
+        test_config.rewind
+
+        config = Shakapacker::Configuration.new(
+          root_path: ROOT_PATH,
+          config_path: Pathname.new(test_config.path),
+          env: "production"
+        )
+
+        expect(config.precompile_hook).to eq "bin/shakapacker-precompile-hook"
+
+        test_config.close
+        test_config.unlink
+      end
+    end
+
+    context "without precompile_hook set in config" do
+      it "returns nil" do
+        test_config = Tempfile.new(["shakapacker", ".yml"])
+        test_config.write(<<~YAML)
+          production:
+            source_path: app/javascript
+        YAML
+        test_config.rewind
+
+        config = Shakapacker::Configuration.new(
+          root_path: ROOT_PATH,
+          config_path: Pathname.new(test_config.path),
+          env: "production"
+        )
+
+        expect(config.precompile_hook).to be_nil
+
+        test_config.close
+        test_config.unlink
+      end
+    end
+  end
+
   context "with completely missing environment and no default section" do
     it "handles missing default section gracefully" do
       # Create a minimal config file with no default or development sections

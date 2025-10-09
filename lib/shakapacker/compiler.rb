@@ -26,6 +26,7 @@ class Shakapacker::Compiler
       true
     else
       acquire_ipc_lock do
+        run_precompile_hook if config.precompile_hook
         run_webpack.tap do |success|
           after_compile_hook
         end
@@ -76,6 +77,27 @@ class Shakapacker::Compiler
     def optional_ruby_runner
       first_line = File.readlines(bin_shakapacker_path).first.chomp
       /ruby/.match?(first_line) ? RbConfig.ruby : ""
+    end
+
+    def run_precompile_hook
+      hook_command = config.precompile_hook
+      logger.info "Running precompile hook: #{hook_command}"
+
+      stdout, stderr, status = Open3.capture3(
+        webpack_env,
+        hook_command,
+        chdir: File.expand_path(config.root_path)
+      )
+
+      if status.success?
+        logger.info "Precompile hook completed successfully"
+        logger.info stdout unless stdout.empty?
+        logger.warn stderr unless stderr.empty?
+      else
+        non_empty_streams = [stdout, stderr].delete_if(&:empty?)
+        logger.error "\nPRECOMPILE HOOK FAILED:\nEXIT STATUS: #{status}\nOUTPUTS:\n#{non_empty_streams.join("\n\n")}"
+        raise "Precompile hook failed with exit status #{status.exitstatus}"
+      end
     end
 
     def run_webpack
