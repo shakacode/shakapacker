@@ -4078,6 +4078,7 @@ setprototypeof@1.2.0:
   dependencies:
     js-yaml "^4.1.0"
     path-complete-extname "^1.0.0"
+    webpack-merge "^5.8.0"
 
 shallow-clone@^3.0.0:
   version "3.0.1"
