@@ -102,7 +102,8 @@ export class YamlSerializer {
       cleaned.startsWith(" ") ||
       cleaned.endsWith(" ")
     ) {
-      return `"${cleaned.replace(/"/g, '\\"')}"`
+      // Escape backslashes first, then quotes to avoid double-escaping
+      return `"${cleaned.replace(/\\/g, "\\\\").replace(/"/g, '\\"')}"`
     }
 
     return cleaned
