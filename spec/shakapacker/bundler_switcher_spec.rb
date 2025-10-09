@@ -169,6 +169,7 @@ describe Shakapacker::BundlerSwitcher do
         allow(package_json).to receive(:manager).and_return(manager)
 
         expect(manager).to receive(:add).twice.and_return(true)
+        expect(manager).to receive(:install).and_return(true)
         switcher.switch_to("webpack", install_deps: true)
       end
     end
@@ -187,6 +188,9 @@ describe Shakapacker::BundlerSwitcher do
         # Expect add calls for rspack deps
         expect(manager).to receive(:add).with(["@rspack/cli", "@rspack/plugin-react-refresh"], type: :dev).and_return(true)
         expect(manager).to receive(:add).with(["@rspack/core", "rspack-manifest-plugin"], type: :production).and_return(true)
+
+        # Expect install call to resolve optional dependencies
+        expect(manager).to receive(:install).and_return(true)
 
         switcher.switch_to("rspack", install_deps: true)
       end
@@ -208,6 +212,9 @@ describe Shakapacker::BundlerSwitcher do
         # Should only call add
         expect(manager).to receive(:add).with(["@rspack/cli", "@rspack/plugin-react-refresh"], type: :dev).and_return(true)
         expect(manager).to receive(:add).with(["@rspack/core", "rspack-manifest-plugin"], type: :production).and_return(true)
+
+        # Should call install to resolve optional dependencies
+        expect(manager).to receive(:install).and_return(true)
 
         switcher.switch_to("rspack", install_deps: true, no_uninstall: true)
       end
@@ -290,6 +297,7 @@ describe Shakapacker::BundlerSwitcher do
       expect(manager).to receive(:remove).with(["webpack-merge"]).and_return(true)
       expect(manager).to receive(:add).with(["@rspack/cli", "custom-rspack-dep"], type: :dev).and_return(true)
       expect(manager).to receive(:add).with(["@rspack/core"], type: :production).and_return(true)
+      expect(manager).to receive(:install).and_return(true)
 
       switcher.switch_to("rspack", install_deps: true)
     end
@@ -308,6 +316,21 @@ describe Shakapacker::BundlerSwitcher do
       expect do
         switcher.switch_to("rspack", install_deps: true)
       end.to raise_error(/Failed to install/)
+    end
+
+    it "raises error when package manager install fails" do
+      package_json = instance_double("PackageJson")
+      manager = instance_double("PackageJson::Managers::Base")
+      allow(switcher).to receive(:get_package_json).and_return(package_json)
+      allow(package_json).to receive(:manager).and_return(manager)
+
+      allow(manager).to receive(:remove).and_return(true)
+      allow(manager).to receive(:add).and_return(true)
+      allow(manager).to receive(:install).and_return(false)
+
+      expect do
+        switcher.switch_to("rspack", install_deps: true)
+      end.to raise_error(/Failed to run full install/)
     end
 
     it "raises error when custom config YAML is invalid" do

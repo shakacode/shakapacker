@@ -241,6 +241,13 @@ module Shakapacker
             raise "Failed to install prod dependencies"
           end
         end
+
+        # Run a full install to ensure optional dependencies (like native bindings) are properly resolved
+        # This is especially important for packages like @rspack/core that use platform-specific native modules
+        unless package_json.manager.install
+          puts "❌ Failed to run full install to resolve optional dependencies"
+          raise "Failed to run full install"
+        end
       end
 
       def get_package_json
