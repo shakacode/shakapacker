@@ -19,7 +19,8 @@ let cachedCacheTTL: number | null = null
  */
 function isWatchMode(): boolean {
   if (cachedIsWatchMode === null) {
-    cachedIsWatchMode = process.argv.includes('--watch') || process.env.WEBPACK_WATCH === 'true'
+    cachedIsWatchMode =
+      process.argv.includes("--watch") || process.env.WEBPACK_WATCH === "true"
   }
   return cachedIsWatchMode
 }
@@ -31,10 +32,10 @@ function getCacheTTL(): number {
   if (cachedCacheTTL === null) {
     if (process.env.SHAKAPACKER_CACHE_TTL) {
       cachedCacheTTL = parseInt(process.env.SHAKAPACKER_CACHE_TTL, 10)
-    } else if (process.env.NODE_ENV === 'production' && !isWatchMode()) {
+    } else if (process.env.NODE_ENV === "production" && !isWatchMode()) {
       cachedCacheTTL = Infinity
     } else if (isWatchMode()) {
-      cachedCacheTTL = 5000  // 5 seconds in watch mode
+      cachedCacheTTL = 5000 // 5 seconds in watch mode
     } else {
       cachedCacheTTL = 60000 // 1 minute in dev
     }
@@ -44,11 +45,14 @@ function getCacheTTL(): number {
 
 // Only validate in development or when explicitly enabled
 function shouldValidate(): boolean {
-  return process.env.NODE_ENV !== 'production' || process.env.SHAKAPACKER_STRICT_VALIDATION === 'true'
+  return (
+    process.env.NODE_ENV !== "production" ||
+    process.env.SHAKAPACKER_STRICT_VALIDATION === "true"
+  )
 }
 
 // Debug logging for cache operations
-const debugCache = process.env.SHAKAPACKER_DEBUG_CACHE === 'true'
+const debugCache = process.env.SHAKAPACKER_DEBUG_CACHE === "true"
 
 /**
  * Clear the validation cache
@@ -58,7 +62,7 @@ export function clearValidationCache(): void {
   // Reassign to a new WeakMap to clear all entries
   validatedConfigs = new WeakMap<object, CacheEntry>()
   if (debugCache) {
-    console.log('[SHAKAPACKER DEBUG] Validation cache cleared')
+    console.log("[SHAKAPACKER DEBUG] Validation cache cleared")
   }
 }
 
@@ -70,15 +74,17 @@ export function clearValidationCache(): void {
  * This ensures application security is never compromised for performance.
  */
 export function isValidConfig(obj: unknown): obj is Config {
-  if (typeof obj !== 'object' || obj === null) {
+  if (typeof obj !== "object" || obj === null) {
     return false
   }
 
   // Check cache with TTL
   const cached = validatedConfigs.get(obj as object)
-  if (cached && (Date.now() - cached.timestamp) < getCacheTTL()) {
+  if (cached && Date.now() - cached.timestamp < getCacheTTL()) {
     if (debugCache) {
-      console.log(`[SHAKAPACKER DEBUG] Config validation cache hit (result: ${cached.result})`)
+      console.log(
+        `[SHAKAPACKER DEBUG] Config validation cache hit (result: ${cached.result})`
+      )
     }
     return cached.result
   }
@@ -87,53 +93,70 @@ export function isValidConfig(obj: unknown): obj is Config {
 
   // Check required string fields
   const requiredStringFields = [
-    'source_path',
-    'source_entry_path',
-    'public_root_path',
-    'public_output_path',
-    'cache_path',
-    'javascript_transpiler'
+    "source_path",
+    "source_entry_path",
+    "public_root_path",
+    "public_output_path",
+    "cache_path",
+    "javascript_transpiler"
   ]
 
   for (const field of requiredStringFields) {
-    if (typeof config[field] !== 'string') {
+    if (typeof config[field] !== "string") {
       // Cache negative result
-      validatedConfigs.set(obj as object, { result: false, timestamp: Date.now() })
+      validatedConfigs.set(obj as object, {
+        result: false,
+        timestamp: Date.now()
+      })
       return false
     }
     // SECURITY: Path traversal validation ALWAYS runs (not subject to shouldValidate)
     // This ensures paths are safe regardless of environment or validation mode
-    if (field.includes('path') && !isPathTraversalSafe(config[field] as string)) {
-      console.warn(`[SHAKAPACKER SECURITY] Invalid path in ${field}: ${config[field]}`)
-      validatedConfigs.set(obj as object, { result: false, timestamp: Date.now() })
+    if (
+      field.includes("path") &&
+      !isPathTraversalSafe(config[field] as string)
+    ) {
+      console.warn(
+        `[SHAKAPACKER SECURITY] Invalid path in ${field}: ${config[field]}`
+      )
+      validatedConfigs.set(obj as object, {
+        result: false,
+        timestamp: Date.now()
+      })
       return false
     }
   }
-  
+
   // Check required boolean fields
   const requiredBooleanFields = [
-    'nested_entries',
-    'css_extract_ignore_order_warnings',
-    'webpack_compile_output',
-    'shakapacker_precompile',
-    'cache_manifest',
-    'ensure_consistent_versioning',
-    'useContentHash',
-    'compile'
+    "nested_entries",
+    "css_extract_ignore_order_warnings",
+    "webpack_compile_output",
+    "shakapacker_precompile",
+    "cache_manifest",
+    "ensure_consistent_versioning",
+    "useContentHash",
+    "compile"
   ]
-  
+
   for (const field of requiredBooleanFields) {
-    if (typeof config[field] !== 'boolean') {
+    if (typeof config[field] !== "boolean") {
       // Cache negative result
-      validatedConfigs.set(obj as object, { result: false, timestamp: Date.now() })
+      validatedConfigs.set(obj as object, {
+        result: false,
+        timestamp: Date.now()
+      })
       return false
     }
   }
-  
+
   // Check arrays
   if (!Array.isArray(config.additional_paths)) {
     // Cache negative result
-    validatedConfigs.set(obj as object, { result: false, timestamp: Date.now() })
+    validatedConfigs.set(obj as object, {
+      result: false,
+      timestamp: Date.now()
+    })
     return false
   }
 
@@ -141,8 +164,13 @@ export function isValidConfig(obj: unknown): obj is Config {
   // This critical security check ensures user-provided paths cannot escape the project directory
   for (const additionalPath of config.additional_paths as string[]) {
     if (!isPathTraversalSafe(additionalPath)) {
-      console.warn(`[SHAKAPACKER SECURITY] Invalid additional_path: ${additionalPath}`)
-      validatedConfigs.set(obj as object, { result: false, timestamp: Date.now() })
+      console.warn(
+        `[SHAKAPACKER SECURITY] Invalid additional_path: ${additionalPath}`
+      )
+      validatedConfigs.set(obj as object, {
+        result: false,
+        timestamp: Date.now()
+      })
       return false
     }
   }
@@ -156,25 +184,36 @@ export function isValidConfig(obj: unknown): obj is Config {
   }
 
   // Deep validation of optional fields (only in development or with SHAKAPACKER_STRICT_VALIDATION=true)
-  if (config.dev_server !== undefined && !isValidDevServerConfig(config.dev_server)) {
+  if (
+    config.dev_server !== undefined &&
+    !isValidDevServerConfig(config.dev_server)
+  ) {
     // Cache negative result
-    validatedConfigs.set(obj as object, { result: false, timestamp: Date.now() })
+    validatedConfigs.set(obj as object, {
+      result: false,
+      timestamp: Date.now()
+    })
     return false
   }
 
   if (config.integrity !== undefined) {
     const integrity = config.integrity as Record<string, unknown>
-    if (typeof integrity.enabled !== 'boolean' ||
-        typeof integrity.cross_origin !== 'string') {
+    if (
+      typeof integrity.enabled !== "boolean" ||
+      typeof integrity.cross_origin !== "string"
+    ) {
       // Cache negative result
-      validatedConfigs.set(obj as object, { result: false, timestamp: Date.now() })
+      validatedConfigs.set(obj as object, {
+        result: false,
+        timestamp: Date.now()
+      })
       return false
     }
   }
-  
+
   // Cache positive result
   validatedConfigs.set(obj as object, { result: true, timestamp: Date.now() })
-  
+
   return true
 }
 
@@ -183,28 +222,30 @@ export function isValidConfig(obj: unknown): obj is Config {
  * In production, performs minimal validation for performance
  */
 export function isValidDevServerConfig(obj: unknown): obj is DevServerConfig {
-  if (typeof obj !== 'object' || obj === null) {
+  if (typeof obj !== "object" || obj === null) {
     return false
   }
-  
+
   // In production, skip deep validation unless explicitly enabled
   if (!shouldValidate()) {
     return true
   }
-  
+
   const config = obj as Record<string, unknown>
-  
+
   // All fields are optional, just check types if present
-  if (config.hmr !== undefined && 
-      typeof config.hmr !== 'boolean' && 
-      config.hmr !== 'only') {
+  if (
+    config.hmr !== undefined &&
+    typeof config.hmr !== "boolean" &&
+    config.hmr !== "only"
+  ) {
     return false
   }
-  
+
   if (config.port !== undefined && !validatePort(config.port)) {
     return false
   }
-  
+
   return true
 }
 
@@ -213,7 +254,7 @@ export function isValidDevServerConfig(obj: unknown): obj is DevServerConfig {
  * Checks if an object looks like a valid Rspack plugin
  */
 export function isValidRspackPlugin(obj: unknown): boolean {
-  if (typeof obj !== 'object' || obj === null) {
+  if (typeof obj !== "object" || obj === null) {
     return false
   }
 
@@ -221,18 +262,21 @@ export function isValidRspackPlugin(obj: unknown): boolean {
 
   // Check for common plugin patterns
   // Most rspack plugins should have an apply method
-  if (typeof plugin.apply === 'function') {
+  if (typeof plugin.apply === "function") {
     return true
   }
 
   // Check for constructor name pattern (e.g., HtmlRspackPlugin)
-  const constructorName = plugin.constructor?.name || ''
-  if (constructorName.includes('Plugin') || constructorName.includes('Rspack')) {
+  const constructorName = plugin.constructor?.name || ""
+  if (
+    constructorName.includes("Plugin") ||
+    constructorName.includes("Rspack")
+  ) {
     return true
   }
 
   // Check for common plugin properties
-  if ('name' in plugin && typeof plugin.name === 'string') {
+  if ("name" in plugin && typeof plugin.name === "string") {
     return true
   }
 
@@ -248,7 +292,7 @@ export function isValidRspackPluginArray(arr: unknown): boolean {
     return false
   }
 
-  return arr.every(item => isValidRspackPlugin(item))
+  return arr.every((item) => isValidRspackPlugin(item))
 }
 
 /**
@@ -256,24 +300,24 @@ export function isValidRspackPluginArray(arr: unknown): boolean {
  * In production, performs minimal validation for performance
  */
 export function isValidYamlConfig(obj: unknown): obj is YamlConfig {
-  if (typeof obj !== 'object' || obj === null) {
+  if (typeof obj !== "object" || obj === null) {
     return false
   }
-  
+
   // In production, skip deep validation unless explicitly enabled
   if (!shouldValidate()) {
     return true
   }
-  
+
   const config = obj as Record<string, unknown>
-  
+
   // Each key should map to an object
   for (const env of Object.keys(config)) {
-    if (typeof config[env] !== 'object' || config[env] === null) {
+    if (typeof config[env] !== "object" || config[env] === null) {
       return false
     }
   }
-  
+
   return true
 }
 
@@ -283,47 +327,54 @@ export function isValidYamlConfig(obj: unknown): obj is YamlConfig {
  * In production, performs minimal validation for performance
  */
 export function isPartialConfig(obj: unknown): obj is Partial<Config> {
-  if (typeof obj !== 'object' || obj === null) {
+  if (typeof obj !== "object" || obj === null) {
     return false
   }
-  
+
   // In production, skip deep validation unless explicitly enabled
   if (!shouldValidate()) {
     return true
   }
-  
+
   const config = obj as Record<string, unknown>
-  
+
   // Check string fields if present
   const stringFields = [
-    'source_path', 'source_entry_path', 'public_root_path',
-    'public_output_path', 'cache_path', 'javascript_transpiler'
+    "source_path",
+    "source_entry_path",
+    "public_root_path",
+    "public_output_path",
+    "cache_path",
+    "javascript_transpiler"
   ]
-  
+
   for (const field of stringFields) {
-    if (field in config && typeof config[field] !== 'string') {
+    if (field in config && typeof config[field] !== "string") {
       return false
     }
   }
-  
+
   // Check boolean fields if present
   const booleanFields = [
-    'nested_entries', 'css_extract_ignore_order_warnings',
-    'webpack_compile_output', 'shakapacker_precompile',
-    'cache_manifest', 'ensure_consistent_versioning'
+    "nested_entries",
+    "css_extract_ignore_order_warnings",
+    "webpack_compile_output",
+    "shakapacker_precompile",
+    "cache_manifest",
+    "ensure_consistent_versioning"
   ]
-  
+
   for (const field of booleanFields) {
-    if (field in config && typeof config[field] !== 'boolean') {
+    if (field in config && typeof config[field] !== "boolean") {
       return false
     }
   }
-  
+
   // Check arrays if present
-  if ('additional_paths' in config && !Array.isArray(config.additional_paths)) {
+  if ("additional_paths" in config && !Array.isArray(config.additional_paths)) {
     return false
   }
-  
+
   return true
 }
 
@@ -338,5 +389,3 @@ export function createConfigValidationError(
   const message = `Invalid configuration in ${configPath} for environment '${environment}'`
   return new Error(details ? `${message}: ${details}` : message)
 }
-
-

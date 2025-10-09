@@ -1,4 +1,4 @@
-lockfileVersion: '6.0'
+lockfileVersion: "6.0"
 
 settings:
   autoInstallPeers: true
@@ -15,8 +15,10 @@ devDependencies:
     version: 1.0.1
 
 packages:
-
   /right-pad@1.0.1:
-    resolution: {integrity: sha512-bYBjgxmkvTAfgIYy328fmkwhp39v8lwVgWhhrzxPV3yHtcSqyYKe9/XOhvW48UFjATg3VuJbpsp5822ACNvkmw==}
-    engines: {node: '>= 0.10'}
+    resolution:
+      {
+        integrity: sha512-bYBjgxmkvTAfgIYy328fmkwhp39v8lwVgWhhrzxPV3yHtcSqyYKe9/XOhvW48UFjATg3VuJbpsp5822ACNvkmw==
+      }
+    engines: { node: ">= 0.10" }
     dev: true

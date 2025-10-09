@@ -11,7 +11,10 @@ const { merge } = require("webpack-merge")
 const baseConfig = require("./base")
 const { moduleExists } = require("../utils/helpers")
 const config = require("../config")
-import type { Configuration as WebpackConfiguration, WebpackPluginInstance } from "webpack"
+import type {
+  Configuration as WebpackConfiguration,
+  WebpackPluginInstance
+} from "webpack"
 import type { CompressionPluginConstructor } from "./types"
 
 const optimizationPath = resolve(

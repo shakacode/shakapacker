@@ -23,8 +23,8 @@ const HelloWorld: FunctionComponent<Props> = (props: Props) => {
       'color: green; background-color: lightgreen; font-weight: bold;',
       'ShakaCode is hiring!',
       'color: green; background-color: lightgreen; font-weight: normal;',
-      'Check out our open positions: https://www.shakacode.com/career/',
-    );
+      'Check out our open positions: https://www.shakacode.com/career/'
+    )
   }, [])
 
   return (

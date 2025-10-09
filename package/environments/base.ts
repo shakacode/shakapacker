@@ -53,13 +53,13 @@ const getEntryObject = (): Entry => {
   if (config.source_entry_path === "/" && config.nested_entries) {
     throw new Error(
       `Invalid Shakapacker configuration detected!\n\n` +
-      `You have set source_entry_path to '/' with nested_entries enabled.\n` +
-      `This would create webpack entry points for EVERY file in your source directory,\n` +
-      `which would severely impact build performance.\n\n` +
-      `To fix this issue, either:\n` +
-      `1. Set 'nested_entries: false' in your shakapacker.yml\n` +
-      `2. Change 'source_entry_path' to a specific subdirectory (e.g., 'packs')\n` +
-      `3. Or use both options for better organization of your entry points`
+        `You have set source_entry_path to '/' with nested_entries enabled.\n` +
+        `This would create webpack entry points for EVERY file in your source directory,\n` +
+        `which would severely impact build performance.\n\n` +
+        `To fix this issue, either:\n` +
+        `1. Set 'nested_entries: false' in your shakapacker.yml\n` +
+        `2. Change 'source_entry_path' to a specific subdirectory (e.g., 'packs')\n` +
+        `3. Or use both options for better organization of your entry points`
     )
   }
 
@@ -73,7 +73,7 @@ const getEntryObject = (): Entry => {
     const previousPaths = entries[name]
     if (previousPaths) {
       const pathArray = Array.isArray(previousPaths)
-        ? previousPaths as string[]
+        ? (previousPaths as string[])
         : [previousPaths as string]
       pathArray.push(assetPath)
       entries[name] = pathArray
@@ -89,7 +89,9 @@ const getModulePaths = (): string[] => {
   const result = [resolve(config.source_path)]
 
   if (config.additional_paths) {
-    config.additional_paths.forEach((path: string) => result.push(resolve(path)))
+    config.additional_paths.forEach((path: string) =>
+      result.push(resolve(path))
+    )
   }
   result.push("node_modules")
 
@@ -108,9 +110,13 @@ const baseConfig: Configuration = {
     publicPath: config.publicPath,
 
     // This is required for SRI to work.
-    crossOriginLoading: config.integrity && config.integrity.enabled
-      ? (config.integrity.cross_origin as "anonymous" | "use-credentials" | false)
-      : false
+    crossOriginLoading:
+      config.integrity && config.integrity.enabled
+        ? (config.integrity.cross_origin as
+            | "anonymous"
+            | "use-credentials"
+            | false)
+        : false
   },
   entry: getEntryObject(),
   resolve: {
@@ -135,4 +141,3 @@ const baseConfig: Configuration = {
 }
 
 export = baseConfig
-

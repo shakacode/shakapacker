@@ -10,7 +10,10 @@ interface StyleRule {
   type?: string
 }
 
-const getStyleRule = (test: RegExp, preprocessors: any[] = []): StyleRule | null => {
+const getStyleRule = (
+  test: RegExp,
+  preprocessors: any[] = []
+): StyleRule | null => {
   if (moduleExists("css-loader")) {
     const tryPostcss = () =>
       canProcess("postcss-loader", (loaderPath: string) => ({
@@ -38,7 +41,7 @@ const getStyleRule = (test: RegExp, preprocessors: any[] = []): StyleRule | null
             // Note: css-loader requires 'camelCaseOnly' or 'dashesOnly' when namedExport is true
             // Using 'camelCase' with namedExport: true causes a build error
             namedExport: true,
-            exportLocalsConvention: 'camelCaseOnly'
+            exportLocalsConvention: "camelCaseOnly"
           }
         }
       },

@@ -9,7 +9,7 @@ const baseConfig = require("./base")
 const webpackDevServerConfig = require("../webpackDevServerConfig")
 const { runningWebpackDevServer } = require("../env")
 const { moduleExists } = require("../utils/helpers")
-import type { 
+import type {
   WebpackConfigWithDevServer,
   RspackConfigWithDevServer,
   ReactRefreshWebpackPlugin,

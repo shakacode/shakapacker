@@ -26,8 +26,8 @@ default: &default
 
   integrity:
     enabled: false
-    hash_functions: ["sha384"]
-    cross_origin: "anonymous"
+    hash_functions: ['sha384']
+    cross_origin: 'anonymous'
 
 development:
   <<: *default

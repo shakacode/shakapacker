@@ -1,7 +1,6 @@
 # Note: You must restart bin/shakapacker-dev-server for changes to take effect
 
-default: &default
-  # cache_manifest will be fetched from bundled defaults
+default: &default # cache_manifest will be fetched from bundled defaults
   shakapacker_precompile: false
 
 staging:

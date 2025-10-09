@@ -75,16 +75,12 @@
     },
     "bootstrap": {
       "assets": {
-        "js": [
-          "/packs/bootstrap-300631c4f0e0f9c865bc.js"
-        ]
+        "js": ["/packs/bootstrap-300631c4f0e0f9c865bc.js"]
       }
     },
     "main": {
       "assets": {
-        "js": [
-          "/packs/main-e323a53c7f30f5d53cbb.js"
-        ]
+        "js": ["/packs/main-e323a53c7f30f5d53cbb.js"]
       }
     },
     "hello_stimulus": {
@@ -97,9 +93,7 @@
     },
     "print/application": {
       "assets": {
-        "css": [
-          "/packs/print/application-983b6c164a47f7ed49cd.css"
-        ]
+        "css": ["/packs/print/application-983b6c164a47f7ed49cd.css"]
       }
     },
     "application_with_integrity": {

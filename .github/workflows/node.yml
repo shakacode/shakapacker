@@ -31,6 +31,9 @@ jobs:
       - name: Node eslint
         run: yarn lint
 
+      - name: Prettier format check
+        run: yarn prettier --check .
+
       - name: Detect dead code
         run: yarn knip
 

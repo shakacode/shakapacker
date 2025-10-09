@@ -3,7 +3,7 @@ name: Generator specs
 on:
   push:
     branches:
-      - 'main'
+      - "main"
   pull_request:
 
 concurrency:
@@ -18,7 +18,7 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest]
-        ruby: ['2.7', '3.0', '3.1', '3.2', '3.3', '3.4']
+        ruby: ["2.7", "3.0", "3.1", "3.2", "3.3", "3.4"]
         gemfile:
           - gemfiles/Gemfile-rails.7.0.x
           - gemfiles/Gemfile-rails.7.1.x
@@ -28,17 +28,17 @@ jobs:
           # upcomming Rails versions, maybe before a release.
           #- gemfiles/Gemfile-rails-edge
         exclude:
-          - ruby: '2.7'
+          - ruby: "2.7"
             gemfile: gemfiles/Gemfile-rails.7.2.x
-          - ruby: '2.7'
+          - ruby: "2.7"
             gemfile: gemfiles/Gemfile-rails.8.0.x
-          - ruby: '3.0'
+          - ruby: "3.0"
             gemfile: gemfiles/Gemfile-rails.7.2.x
-          - ruby: '3.0'
+          - ruby: "3.0"
             gemfile: gemfiles/Gemfile-rails.8.0.x
-          - ruby: '3.1'
+          - ruby: "3.1"
             gemfile: gemfiles/Gemfile-rails.8.0.x
-          - ruby: '3.4'
+          - ruby: "3.4"
             gemfile: gemfiles/Gemfile-rails.7.0.x
 
     env:
@@ -57,7 +57,7 @@ jobs:
         with:
           node-version: 20.x
           cache: yarn
-      
+
       - name: Install Node dependencies
         run: yarn install --frozen-lockfile --production=false
 
