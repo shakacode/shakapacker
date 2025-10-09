@@ -1,5 +1,50 @@
 namespace :shakapacker do
-  desc "Export webpack or rspack bundler configuration for analysis"
+  desc <<~DESC
+    Export webpack or rspack configuration for debugging and analysis
+
+    Exports your resolved webpack/rspack configuration in human-readable formats.
+    Use this to debug configuration issues, compare environments, or analyze
+    client vs server bundle differences.
+
+    Usage:
+      rails shakapacker:export_bundler_config [OPTIONS]
+      rake shakapacker:export_bundler_config -- [OPTIONS]
+
+    Quick Start (Recommended):
+      rails shakapacker:export_bundler_config --doctor
+
+    This exports all configs (dev + prod, client + server) to shakapacker-config-exports/
+    directory in annotated YAML format - perfect for troubleshooting.
+
+    Common Options:
+      --doctor              Export everything for troubleshooting (recommended)
+      --save                Save current environment configs to files
+      --save-dir=<dir>      Custom output directory (requires --save)
+      --env=development|production|test    Specify environment
+      --client-only         Export only client config
+      --server-only         Export only server config
+      --format=yaml|json|inspect           Output format
+      --help, -h            Show detailed help
+
+    Examples:
+      # Export all configs for troubleshooting
+      rails shakapacker:export_bundler_config --doctor
+
+      # Save production client config
+      rails shakapacker:export_bundler_config --save --env=production --client-only
+
+      # View development config in terminal
+      rails shakapacker:export_bundler_config
+
+      # Show detailed help
+      rails shakapacker:export_bundler_config --help
+
+    Note: When using 'rake', you must use '--' to separate rake options from task arguments.
+          Example: rake shakapacker:export_bundler_config -- --doctor
+
+    The task automatically falls back to the gem version if bin/export-bundler-config
+    binstub is not installed. To install all binstubs, run: rails shakapacker:binstubs
+  DESC
   task :export_bundler_config do
     # Try to use the binstub if it exists, otherwise use the gem's version
     bin_path = Rails.root.join("bin/export-bundler-config")
