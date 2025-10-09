@@ -51,10 +51,15 @@ describe Shakapacker::Doctor do
     FileUtils.rm_rf(root_path)
   end
 
+  # Helper to extract warning messages from the new hash format
+  def warning_messages
+    doctor.warnings.map { |w| w[:message] }
+  end
+
   describe "#initialize" do
     it "initializes with empty issues, warnings, and info" do
       expect(doctor.issues).to be_empty
-      expect(doctor.warnings).to be_empty
+      expect(warning_messages).to be_empty
       expect(doctor.info).to be_empty
     end
 
@@ -142,7 +147,7 @@ describe Shakapacker::Doctor do
     context "when no entry files exist" do
       it "adds warning for no entry files" do
         doctor.send(:check_entry_points)
-        expect(doctor.warnings).to include(match(/No entry point files found/))
+        expect(warning_messages).to include(match(/No entry point files found/))
       end
     end
 
@@ -188,7 +193,7 @@ describe Shakapacker::Doctor do
 
       it "adds warning for empty manifest" do
         doctor.send(:check_output_paths)
-        expect(doctor.warnings).to include(match(/Manifest file is empty/))
+        expect(warning_messages).to include(match(/Manifest file is empty/))
       end
     end
 
@@ -228,7 +233,7 @@ describe Shakapacker::Doctor do
 
       it "adds deprecation warning" do
         doctor.send(:check_deprecated_config)
-        expect(doctor.warnings).to include(match(/webpack_loader.*should be renamed/))
+        expect(warning_messages).to include(match(/webpack_loader.*should be renamed/))
       end
     end
 
@@ -239,7 +244,7 @@ describe Shakapacker::Doctor do
 
       it "adds deprecation warning" do
         doctor.send(:check_deprecated_config)
-        expect(doctor.warnings).to include(match(/bundler.*should be renamed/))
+        expect(warning_messages).to include(match(/bundler.*should be renamed/))
       end
     end
   end
@@ -261,7 +266,7 @@ describe Shakapacker::Doctor do
 
       it "does not add warnings" do
         doctor.send(:check_version_consistency)
-        expect(doctor.warnings).to be_empty
+        expect(warning_messages).to be_empty
       end
     end
 
@@ -277,7 +282,7 @@ describe Shakapacker::Doctor do
 
       it "adds version mismatch warning" do
         doctor.send(:check_version_consistency)
-        expect(doctor.warnings).to include(match(/Version mismatch/))
+        expect(warning_messages).to include(match(/Version mismatch/))
       end
     end
   end
@@ -295,7 +300,7 @@ describe Shakapacker::Doctor do
 
       it "adds environment mismatch warning" do
         doctor.send(:check_environment_consistency)
-        expect(doctor.warnings).to include(match(/Environment mismatch/))
+        expect(warning_messages).to include(match(/Environment mismatch/))
       end
     end
 
@@ -394,7 +399,7 @@ describe Shakapacker::Doctor do
 
       it "adds warning about conflicting installations" do
         doctor.send(:check_peer_dependencies)
-        expect(doctor.warnings).to include(match(/Both webpack and rspack are installed/))
+        expect(warning_messages).to include(match(/Both webpack and rspack are installed/))
       end
     end
   end
@@ -417,7 +422,7 @@ describe Shakapacker::Doctor do
 
         it "adds case sensitivity warning" do
           doctor.send(:check_windows_platform)
-          expect(doctor.warnings).to include(match(/case sensitivity issue/))
+          expect(warning_messages).to include(match(/case sensitivity issue/))
         end
       end
     end
@@ -433,8 +438,8 @@ describe Shakapacker::Doctor do
 
       it "adds warnings for legacy files" do
         doctor.send(:check_legacy_webpacker_files)
-        expect(doctor.warnings).to include(match(/Legacy webpacker file.*webpacker.yml/))
-        expect(doctor.warnings).to include(match(/Legacy webpacker file.*bin\/webpack/))
+        expect(warning_messages).to include(match(/Legacy webpacker file.*webpacker.yml/))
+        expect(warning_messages).to include(match(/Legacy webpacker file.*bin\/webpack/))
       end
     end
   end
@@ -448,7 +453,7 @@ describe Shakapacker::Doctor do
 
       it "adds warning for outdated version" do
         doctor.send(:check_node_installation)
-        expect(doctor.warnings).to include(match(/Node.js version.*outdated/))
+        expect(warning_messages).to include(match(/Node.js version.*outdated/))
       end
     end
 
@@ -460,7 +465,7 @@ describe Shakapacker::Doctor do
 
       it "does not add warnings" do
         doctor.send(:check_node_installation)
-        expect(doctor.warnings).to be_empty
+        expect(warning_messages).to be_empty
       end
     end
 
@@ -492,7 +497,7 @@ describe Shakapacker::Doctor do
       it "does not add issues or warnings" do
         doctor.send(:check_assets_compilation)
         expect(doctor.issues).to be_empty
-        expect(doctor.warnings).to be_empty
+        expect(warning_messages).to be_empty
       end
     end
 
@@ -527,7 +532,7 @@ describe Shakapacker::Doctor do
 
       it "warns about outdated compilation" do
         doctor.send(:check_assets_compilation)
-        expect(doctor.warnings).to include(match(/Source files have been modified after last asset compilation/))
+        expect(warning_messages).to include(match(/Source files have been modified after last asset compilation/))
       end
     end
 
@@ -632,7 +637,7 @@ describe Shakapacker::Doctor do
 
       it "does not add warnings" do
         doctor.send(:check_binstub)
-        expect(doctor.warnings).to be_empty
+        expect(warning_messages).to be_empty
       end
     end
 
@@ -645,7 +650,7 @@ describe Shakapacker::Doctor do
 
       it "adds missing binstubs warning" do
         doctor.send(:check_binstub)
-        expect(doctor.warnings).to include(match(/Missing binstubs:.*bin\/shakapacker/))
+        expect(warning_messages).to include(match(/Missing binstubs:.*bin\/shakapacker/))
       end
     end
 
@@ -658,14 +663,14 @@ describe Shakapacker::Doctor do
 
       it "adds missing binstubs warning" do
         doctor.send(:check_binstub)
-        expect(doctor.warnings).to include(match(/Missing binstubs:.*bin\/export-bundler-config/))
+        expect(warning_messages).to include(match(/Missing binstubs:.*bin\/export-bundler-config/))
       end
     end
 
     context "when no binstubs exist" do
       it "adds missing binstubs warning for all three" do
         doctor.send(:check_binstub)
-        expect(doctor.warnings).to include(match(/Missing binstubs:.*bin\/shakapacker.*bin\/shakapacker-dev-server.*bin\/export-bundler-config/))
+        expect(warning_messages).to include(match(/Missing binstubs:.*bin\/shakapacker.*bin\/shakapacker-dev-server.*bin\/export-bundler-config/))
       end
     end
   end
@@ -776,7 +781,7 @@ describe Shakapacker::Doctor do
 
           it "warns about redundant swc-loader" do
             doctor.send(:check_javascript_transpiler_dependencies)
-            expect(doctor.warnings).to include(match(/swc-loader is not needed with Rspack/))
+            expect(warning_messages).to include(match(/swc-loader is not needed with Rspack/))
           end
         end
       end
@@ -860,7 +865,7 @@ describe Shakapacker::Doctor do
 
         it "warns about inconsistent configuration" do
           doctor.send(:check_javascript_transpiler_dependencies)
-          expect(doctor.warnings).to include(match(/Babel configuration files found .* but javascript_transpiler is 'swc'/))
+          expect(warning_messages).to include(match(/Babel configuration files found .* but javascript_transpiler is 'swc'/))
         end
       end
 
@@ -879,7 +884,7 @@ describe Shakapacker::Doctor do
 
         it "warns about redundant dependencies" do
           doctor.send(:check_javascript_transpiler_dependencies)
-          expect(doctor.warnings).to include(match(/Both SWC and Babel dependencies are installed/))
+          expect(warning_messages).to include(match(/Both SWC and Babel dependencies are installed/))
         end
       end
 
@@ -904,7 +909,7 @@ describe Shakapacker::Doctor do
 
         it "warns about .swcrc anti-pattern" do
           doctor.send(:check_javascript_transpiler_dependencies)
-          expect(doctor.warnings).to include(match(/\.swcrc file detected.*overrides Shakapacker's default.*migrate to config\/swc\.config\.js/))
+          expect(warning_messages).to include(match(/\.swcrc file detected.*overrides Shakapacker's default.*migrate to config\/swc\.config\.js/))
         end
       end
 
@@ -954,7 +959,7 @@ describe Shakapacker::Doctor do
 
           it "warns about loose: true causing issues" do
             doctor.send(:check_javascript_transpiler_dependencies)
-            expect(doctor.warnings).to include(match(/'loose: true' detected.*silent failures with Stimulus/))
+            expect(warning_messages).to include(match(/'loose: true' detected.*silent failures with Stimulus/))
           end
         end
 
@@ -1004,7 +1009,7 @@ describe Shakapacker::Doctor do
 
           it "warns about missing keepClassNames" do
             doctor.send(:check_javascript_transpiler_dependencies)
-            expect(doctor.warnings).to include(match(/Stimulus appears to be in use.*'keepClassNames: true' is not set/))
+            expect(warning_messages).to include(match(/Stimulus appears to be in use.*'keepClassNames: true' is not set/))
           end
         end
 
@@ -1075,7 +1080,7 @@ describe Shakapacker::Doctor do
       it "does not add issues" do
         doctor.send(:check_css_dependencies)
         expect(doctor.issues).to be_empty
-        expect(doctor.warnings).to be_empty
+        expect(warning_messages).to be_empty
       end
     end
 
@@ -1088,7 +1093,7 @@ describe Shakapacker::Doctor do
         doctor.send(:check_css_dependencies)
         expect(doctor.issues).to include(match(/Missing required dependency 'css-loader'/))
         expect(doctor.issues).to include(match(/Missing required dependency 'style-loader'/))
-        expect(doctor.warnings).to include(match(/Optional dependency 'mini-css-extract-plugin'/))
+        expect(warning_messages).to include(match(/Optional dependency 'mini-css-extract-plugin'/))
       end
     end
   end
@@ -1107,7 +1112,7 @@ describe Shakapacker::Doctor do
 
       it "checks for TypeScript dependencies" do
         doctor.send(:check_file_type_dependencies)
-        expect(doctor.warnings).to include(match(/@babel\/preset-typescript/))
+        expect(warning_messages).to include(match(/@babel\/preset-typescript/))
       end
     end
 
@@ -1207,7 +1212,7 @@ describe Shakapacker::Doctor do
       it "skips the check" do
         doctor.send(:check_css_modules_configuration)
         expect(doctor.issues).to be_empty
-        expect(doctor.warnings).to be_empty
+        expect(warning_messages).to be_empty
       end
     end
 
@@ -1308,9 +1313,9 @@ describe Shakapacker::Doctor do
 
         it "warns about v8-style imports" do
           doctor.send(:check_css_modules_configuration)
-          expect(doctor.warnings).to include(match(/Potential v8-style CSS module imports detected/))
-          expect(doctor.warnings).to include(match(/v9 uses named exports/))
-          expect(doctor.warnings).to include(match(/See docs\/v9_upgrade.md for migration guide/))
+          expect(warning_messages).to include(match(/Potential v8-style CSS module imports detected/))
+          expect(warning_messages).to include(match(/v9 uses named exports/))
+          expect(warning_messages).to include(match(/See docs\/v9_upgrade.md for migration guide/))
         end
       end
 
@@ -1326,7 +1331,7 @@ describe Shakapacker::Doctor do
 
         it "does not warn about imports" do
           doctor.send(:check_css_modules_configuration)
-          expect(doctor.warnings).not_to include(match(/v8-style CSS module imports/))
+          expect(warning_messages).not_to include(match(/v8-style CSS module imports/))
         end
       end
     end
