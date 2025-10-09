@@ -910,9 +910,13 @@ module Shakapacker
           end
 
           def has_dependency_issues?
-            # Check if any issues or warnings are about missing dependencies
+            # Check if any issues or warnings are about missing npm/package dependencies
             all_messages = doctor.issues + doctor.warnings
-            all_messages.any? { |msg| msg.include?("Missing") || msg.include?("not installed") }
+            all_messages.any? do |msg|
+              (msg.include?("Missing") && msg.include?("dependency")) ||
+              msg.include?("not installed") ||
+              msg.include?("is not installed")
+            end
           end
 
           def print_fix_instructions
