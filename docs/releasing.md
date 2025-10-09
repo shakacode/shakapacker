@@ -65,7 +65,7 @@ The `create_release` task automatically:
    - Prompts for RubyGems OTP (2FA code)
 5. **Updates spec/dummy lockfiles:**
    - Runs `bundle install` to update `Gemfile.lock`
-   - Runs `yarn install` to update `yarn.lock`
+   - Runs `yarn install` to update `yarn.lock` and `package-lock.json` (yarn maintains both for compatibility)
 6. **Commits and pushes lockfile changes** automatically
 
 ### 4. Version Format
@@ -124,12 +124,12 @@ rake create_release[10.0.0.rc.1]  # Gem: 10.0.0.rc.1, npm: 10.0.0-rc.1
 
 ### Uncommitted Changes After Release
 
-If you see uncommitted changes to `spec/dummy/yarn.lock` or `spec/dummy/Gemfile.lock` after a release, this means:
+If you see uncommitted changes to lockfiles after a release, this means:
 
 1. The release was successful but the lockfile commit step may have failed
 2. **Solution:** Manually commit these files:
    ```bash
-   git add spec/dummy/Gemfile.lock spec/dummy/yarn.lock
+   git add spec/dummy/Gemfile.lock spec/dummy/package-lock.json spec/dummy/yarn.lock
    git commit -m 'Update spec/dummy lockfiles after release'
    git push
    ```
@@ -183,7 +183,7 @@ If you need to release manually (not recommended):
    bundle install
    yarn install
    cd ../..
-   git add spec/dummy/Gemfile.lock spec/dummy/yarn.lock
+   git add spec/dummy/Gemfile.lock spec/dummy/package-lock.json spec/dummy/yarn.lock
    git commit -m 'Update spec/dummy lockfiles after release'
    git push
    ```
