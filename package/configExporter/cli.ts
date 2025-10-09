@@ -319,8 +319,15 @@ async function loadConfigsForEnv(
   // Load the config
   // Register ts-node for TypeScript config files
   if (configFile.endsWith(".ts")) {
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
-    require("ts-node/register/transpile-only")
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
+      require("ts-node/register/transpile-only")
+    } catch (error) {
+      throw new Error(
+        "TypeScript config detected but ts-node is not available. " +
+          "Install ts-node as a dev dependency: npm install --save-dev ts-node"
+      )
+    }
   }
 
   // Clear require cache for config file and all related modules

@@ -68,7 +68,7 @@ export class YamlSerializer {
     }
 
     if (value instanceof RegExp) {
-      return JSON.stringify(value.toString())
+      return this.serializeString(value.toString())
     }
 
     if (Array.isArray(value)) {
