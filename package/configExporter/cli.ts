@@ -211,6 +211,27 @@ async function runDoctorMode(
   createdFiles.forEach((file) => {
     console.log(`  ✓ ${basename(file)}`)
   })
+
+  // Check if directory should be added to .gitignore
+  const gitignorePath = resolve(process.cwd(), ".gitignore")
+  const dirName = basename(targetDir)
+  let shouldSuggestGitignore = false
+
+  if (existsSync(gitignorePath)) {
+    const gitignoreContent = readFileSync(gitignorePath, "utf8")
+    if (!gitignoreContent.includes(dirName)) {
+      shouldSuggestGitignore = true
+    }
+  }
+
+  if (shouldSuggestGitignore) {
+    console.log("\n" + "─".repeat(80))
+    console.log(
+      "💡 Tip: Add the export directory to .gitignore to avoid committing config files:"
+    )
+    console.log(`\n  echo "${dirName}/" >> .gitignore\n`)
+  }
+
   console.log("\n" + "=".repeat(80) + "\n")
 }
 
