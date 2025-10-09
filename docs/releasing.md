@@ -39,6 +39,9 @@ The automated release task handles the entire release process:
 # For a specific version (e.g., 9.1.0)
 rake create_release[9.1.0]
 
+# For a beta release (note: use period, not dash)
+rake create_release[9.2.0.beta.1]  # Creates npm package 9.2.0-beta.1
+
 # For a patch version bump (auto-increments)
 rake create_release
 
@@ -69,12 +72,26 @@ The `create_release` task automatically:
 
 **Important:** Use Ruby gem version format (no dashes):
 
-- ✅ Correct: `9.1.0`, `9.2.0.beta.1`
-- ❌ Wrong: `9.1.0-beta.1`
+- ✅ Correct: `9.1.0`, `9.2.0.beta.1`, `9.0.0.rc.2`
+- ❌ Wrong: `9.1.0-beta.1`, `9.0.0-rc.2`
 
 The task automatically converts Ruby gem format to npm semver format:
 
 - Ruby: `9.2.0.beta.1` → npm: `9.2.0-beta.1`
+- Ruby: `9.0.0.rc.2` → npm: `9.0.0-rc.2`
+
+**Examples:**
+
+```bash
+# Regular release
+rake create_release[9.1.0]  # Gem: 9.1.0, npm: 9.1.0
+
+# Beta release
+rake create_release[9.2.0.beta.1]  # Gem: 9.2.0.beta.1, npm: 9.2.0-beta.1
+
+# Release candidate
+rake create_release[10.0.0.rc.1]  # Gem: 10.0.0.rc.1, npm: 10.0.0-rc.1
+```
 
 ### 5. During the Release
 

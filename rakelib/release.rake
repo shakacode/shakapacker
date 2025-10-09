@@ -90,7 +90,7 @@ task :create_release, %i[gem_version dry_run] do |_t, args|
     puts "ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ"
     puts "Committing and pushing spec/dummy lockfile changes: #{changed_lockfiles.join(', ')}"
     puts "ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ"
-    Shakapacker::Utils::Misc.sh_in_dir(gem_root, "git add #{changed_lockfiles.join(' ')}")
+    Shakapacker::Utils::Misc.sh_in_dir(gem_root, "git add -- #{changed_lockfiles.join(' ')}")
     Shakapacker::Utils::Misc.sh_in_dir(gem_root, "git commit -m 'Update spec/dummy lockfiles after release'")
     Shakapacker::Utils::Misc.sh_in_dir(gem_root, "git push")
   end
