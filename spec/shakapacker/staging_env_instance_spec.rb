@@ -43,15 +43,16 @@ describe "Shakapacker::Instance with staging environment" do
     it "should handle staging environment without Rails being loaded" do
       # This simulates what happens when RAILS_ENV=staging is set
       # and the config doesn't have a staging section
-      expect {
-        config = Shakapacker::Configuration.new(
-          root_path: Pathname.new(Dir.pwd),
-          config_path: Pathname.new(config_path),
-          env: "staging"
-        )
-        # Access a config property that would trigger the fallback logging
-        config.source_path
-      }.not_to raise_error
+      config = Shakapacker::Configuration.new(
+        root_path: Pathname.new(Dir.pwd),
+        config_path: Pathname.new(config_path),
+        env: "staging"
+      )
+
+      # Should fall back to production config values
+      expect(config.compile?).to eq(false)
+      expect(config.source_path.to_s).to end_with("app/packs")
+      expect(config.source_entry_path.to_s).to end_with("entrypoints")
     end
   end
 end
