@@ -1,9 +1,10 @@
-const { loaderMatches } = require("../utils/helpers")
-const { getEsbuildLoaderConfig } = require("../esbuild")
-const { javascript_transpiler: javascriptTranspiler } = require("../config")
-const jscommon = require("./jscommon")
+import { loaderMatches } from "../utils/helpers"
+import { getEsbuildLoaderConfig } from "../esbuild"
+import config from "../config"
+const javascriptTranspiler = config.javascript_transpiler
+import jscommon from "./jscommon"
 
-export = loaderMatches(javascriptTranspiler, "esbuild", () => ({
+export default loaderMatches(javascriptTranspiler, "esbuild", () => ({
   test: /\.(ts|tsx|js|jsx|mjs|coffee)?(\.erb)?$/,
   ...jscommon,
   use: ({ resource }: { resource: string }) => getEsbuildLoaderConfig(resource)

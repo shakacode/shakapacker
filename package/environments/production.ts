@@ -6,12 +6,15 @@
 /* eslint global-require: 0 */
 /* eslint import/no-dynamic-require: 0 */
 
-const { resolve } = require("path")
-const { merge } = require("webpack-merge")
-const baseConfig = require("./base")
-const { moduleExists } = require("../utils/helpers")
-const config = require("../config")
-import type { Configuration as WebpackConfiguration, WebpackPluginInstance } from "webpack"
+import { resolve } from "path"
+import { merge } from "webpack-merge"
+import baseConfig from "./base"
+import { moduleExists } from "../utils/helpers"
+import config from "../config"
+import type {
+  Configuration as WebpackConfiguration,
+  WebpackPluginInstance
+} from "webpack"
 import type { CompressionPluginConstructor } from "./types"
 
 const optimizationPath = resolve(

@@ -1,10 +1,10 @@
-const { requireOrError } = require("../utils/requireOrError")
+import { requireOrError } from "../utils/requireOrError"
 
 const { RspackManifestPlugin } = requireOrError("rspack-manifest-plugin")
 const rspack = requireOrError("@rspack/core")
-const config = require("../config")
-const { isProduction } = require("../env")
-const { moduleExists } = require("../utils/helpers")
+import config from "../config"
+import { isProduction } from "../env"
+import { moduleExists } from "../utils/helpers"
 
 interface ManifestFile {
   name: string
@@ -18,7 +18,11 @@ interface EntrypointAssets {
 
 interface Manifest {
   entrypoints?: Record<string, { assets: EntrypointAssets }>
-  [key: string]: string | { assets: EntrypointAssets } | Record<string, { assets: EntrypointAssets }> | undefined
+  [key: string]:
+    | string
+    | { assets: EntrypointAssets }
+    | Record<string, { assets: EntrypointAssets }>
+    | undefined
 }
 
 const getPlugins = (): unknown[] => {
@@ -29,7 +33,11 @@ const getPlugins = (): unknown[] => {
       publicPath: config.publicPathWithoutCDN,
       writeToFileEmit: true,
       // rspack-manifest-plugin uses different option names than webpack-assets-manifest
-      generate: (seed: Manifest | null, files: ManifestFile[], entrypoints: Record<string, string[]>) => {
+      generate: (
+        seed: Manifest | null,
+        files: ManifestFile[],
+        entrypoints: Record<string, string[]>
+      ) => {
         const manifest: Manifest = seed || {}
 
         // Add files mapping first
@@ -38,7 +46,10 @@ const getPlugins = (): unknown[] => {
         })
 
         // Add entrypoints information compatible with Shakapacker expectations
-        const entrypointsManifest: Record<string, { assets: EntrypointAssets }> = {}
+        const entrypointsManifest: Record<
+          string,
+          { assets: EntrypointAssets }
+        > = {}
         Object.entries(entrypoints).forEach(
           ([entrypointName, entrypointFiles]) => {
             const jsFiles = entrypointFiles
@@ -86,7 +97,7 @@ const getPlugins = (): unknown[] => {
   }
 
   // Use Rspack's built-in SubresourceIntegrityPlugin
-  if (config.integrity.enabled) {
+  if (config.integrity && config.integrity.enabled) {
     plugins.push(
       new rspack.SubresourceIntegrityPlugin({
         hashFuncNames: config.integrity.hash_functions,
@@ -98,6 +109,4 @@ const getPlugins = (): unknown[] => {
   return plugins
 }
 
-export = {
-  getPlugins
-}
+export { getPlugins }

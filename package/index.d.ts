@@ -1,3 +1,13 @@
-declare const _default: any;
-export = _default;
+export {
+  config,
+  devServer,
+  generateWebpackConfig,
+  baseConfig,
+  env,
+  rules,
+  moduleExists,
+  canProcess,
+  inliningCss
+} from "./index"
+export * from "webpack-merge"
 //# sourceMappingURL=index.d.ts.map

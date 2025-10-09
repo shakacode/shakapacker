@@ -1,7 +1,7 @@
-const { requireOrError } = require("../utils/requireOrError")
+import { requireOrError } from "../utils/requireOrError"
 
 const TerserPlugin = requireOrError("terser-webpack-plugin")
-const { moduleExists } = require("../utils/helpers")
+import { moduleExists } from "../utils/helpers"
 
 const tryCssMinimizer = (): unknown | null => {
   if (
@@ -52,6 +52,4 @@ const getOptimization = (): OptimizationConfig => {
   }
 }
 
-export = {
-  getOptimization
-}
+export { getOptimization }

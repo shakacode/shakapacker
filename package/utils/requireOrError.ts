@@ -1,6 +1,6 @@
 /* eslint global-require: 0 */
 /* eslint import/no-dynamic-require: 0 */
-const config = require("../config")
+import config from "../config"
 
 const requireOrError = (moduleName: string): any => {
   try {
@@ -12,4 +12,4 @@ const requireOrError = (moduleName: string): any => {
   }
 }
 
-export = { requireOrError }
+export { requireOrError }

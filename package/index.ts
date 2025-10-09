@@ -1,17 +1,30 @@
 /* eslint global-require: 0 */
 /* eslint import/no-dynamic-require: 0 */
 
-const webpackMerge = require("webpack-merge")
+import * as webpackMerge from "webpack-merge"
 import { resolve } from "path"
 import { existsSync } from "fs"
 // @ts-ignore: webpack is an optional peer dependency (using type-only import)
 import type { Configuration } from "webpack"
-const config = require("./config")
-const baseConfig = require("./environments/base")
-const devServer = require("./dev_server")
-const env = require("./env")
-const { moduleExists, canProcess } = require("./utils/helpers")
-const inliningCss = require("./utils/inliningCss")
+import config from "./config"
+import baseConfig from "./environments/base"
+import devServer from "./dev_server"
+import {
+  railsEnv,
+  nodeEnv,
+  isProduction,
+  isDevelopment,
+  runningWebpackDevServer
+} from "./env"
+const env = {
+  railsEnv,
+  nodeEnv,
+  isProduction,
+  isDevelopment,
+  runningWebpackDevServer
+}
+import { moduleExists, canProcess } from "./utils/helpers"
+import inliningCss from "./utils/inliningCss"
 
 const rulesPath = resolve(__dirname, "rules", `${config.assets_bundler}.js`)
 const rules = require(rulesPath)
@@ -41,8 +54,8 @@ const generateWebpackConfig = (
   return webpackMerge.merge({}, environmentConfig, extraConfig)
 }
 
-export = {
-  config, // shakapacker.yml
+export {
+  config,
   devServer,
   generateWebpackConfig,
   baseConfig,
@@ -50,6 +63,6 @@ export = {
   rules,
   moduleExists,
   canProcess,
-  inliningCss,
-  ...webpackMerge
+  inliningCss
 }
+export * from "webpack-merge"

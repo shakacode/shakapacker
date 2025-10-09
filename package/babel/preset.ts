@@ -17,7 +17,10 @@ const coreJsVersion = (): string => {
   }
 }
 
-export = function config(api: ConfigAPI): { presets: PluginItem[]; plugins: PluginItem[] } {
+export default function config(api: ConfigAPI): {
+  presets: PluginItem[]
+  plugins: PluginItem[]
+} {
   const validEnv = ["development", "test", "production"]
   const currentEnv = api.env()
   const isDevelopmentEnv = api.env("development")
@@ -45,9 +48,9 @@ export = function config(api: ConfigAPI): { presets: PluginItem[]; plugins: Plug
     moduleExists("@babel/preset-typescript") && "@babel/preset-typescript"
   ].filter(Boolean) as PluginItem[]
 
-  const plugins: PluginItem[] = [["@babel/plugin-transform-runtime", { helpers: false }]].filter(
-    Boolean
-  ) as PluginItem[]
+  const plugins: PluginItem[] = [
+    ["@babel/plugin-transform-runtime", { helpers: false }]
+  ].filter(Boolean) as PluginItem[]
 
   return {
     presets,

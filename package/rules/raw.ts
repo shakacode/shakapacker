@@ -1,4 +1,4 @@
-const config = require("../config")
+import config from "../config"
 
 const rspackRawConfig = () => ({
   resourceQuery: /raw/,
@@ -21,5 +21,6 @@ const webpackRawConfig = () => ({
   ]
 })
 
-export =
-  config.assets_bundler === "rspack" ? rspackRawConfig() : webpackRawConfig()
+export default config.assets_bundler === "rspack"
+  ? rspackRawConfig()
+  : webpackRawConfig()

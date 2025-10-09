@@ -3,9 +3,9 @@
  * @module environments/test
  */
 
-const { merge } = require("webpack-merge")
-const config = require("../config")
-const baseConfig = require("./base")
+import { merge } from "webpack-merge"
+import config from "../config"
+import baseConfig from "./base"
 import type { Configuration as WebpackConfiguration } from "webpack"
 
 interface TestConfig {

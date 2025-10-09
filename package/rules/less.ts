@@ -1,12 +1,11 @@
-const { canProcess } = require("../utils/helpers")
-const { getStyleRule } = require("../utils/getStyleRule")
+import { canProcess } from "../utils/helpers"
+import { getStyleRule } from "../utils/getStyleRule"
 
-const {
-  additional_paths: paths,
-  source_path: sourcePath
-} = require("../config")
+import config from "../config"
+const paths = config.additional_paths
+const sourcePath = config.source_path
 
-export = canProcess("less-loader", (resolvedPath: string) =>
+export default canProcess("less-loader", (resolvedPath: string) =>
   getStyleRule(/\.(less)(\.erb)?$/i, [
     {
       loader: resolvedPath,

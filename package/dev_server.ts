@@ -1,6 +1,6 @@
 // These are the raw shakapacker dev server config settings from the YML file with ENV overrides applied.
-const { isBoolean } = require("./utils/helpers")
-const config = require("./config")
+import { isBoolean } from "./utils/helpers"
+import config from "./config"
 import { DevServerConfig } from "./types"
 
 const envFetch = (key: string): string | boolean | undefined => {
@@ -18,9 +18,9 @@ if (devServerConfig) {
     const envValue = envFetch(`${envPrefix}_${key.toUpperCase()}`)
     if (envValue !== undefined) {
       // Use bracket notation to avoid ASI issues
-      (devServerConfig as Record<string, unknown>)[key] = envValue
+      ;(devServerConfig as Record<string, unknown>)[key] = envValue
     }
   })
 }
 
-export = devServerConfig || {}
+export default devServerConfig || {}

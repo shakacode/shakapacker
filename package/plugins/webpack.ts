@@ -1,10 +1,10 @@
-const { requireOrError } = require("../utils/requireOrError")
+import { requireOrError } from "../utils/requireOrError"
 // TODO: Change to `const { WebpackAssetsManifest }` when dropping 'webpack-assets-manifest < 6.0.0' (Node >=20.10.0) support
 const WebpackAssetsManifest = requireOrError("webpack-assets-manifest")
 const webpack = requireOrError("webpack")
-const config = require("../config")
-const { isProduction } = require("../env")
-const { moduleExists } = require("../utils/helpers")
+import config from "../config"
+import { isProduction } from "../env"
+import { moduleExists } from "../utils/helpers"
 
 const getPlugins = (): unknown[] => {
   // TODO: Remove WebpackAssetsManifestConstructor workaround when dropping 'webpack-assets-manifest < 6.0.0' (Node >=20.10.0) support
@@ -20,8 +20,8 @@ const getPlugins = (): unknown[] => {
       output: config.manifestPath,
       entrypointsUseAssets: true,
       publicPath: config.publicPathWithoutCDN,
-      integrity: config.integrity.enabled,
-      integrityHashes: config.integrity.hash_functions
+      integrity: config.integrity?.enabled,
+      integrityHashes: config.integrity?.hash_functions
     })
   ]
 
@@ -40,7 +40,7 @@ const getPlugins = (): unknown[] => {
   }
 
   if (
-    config.integrity.enabled &&
+    config.integrity?.enabled &&
     moduleExists("webpack-subresource-integrity")
   ) {
     const SubresourceIntegrityPlugin = requireOrError(
@@ -57,6 +57,4 @@ const getPlugins = (): unknown[] => {
   return plugins
 }
 
-export = {
-  getPlugins
-}
+export { getPlugins }

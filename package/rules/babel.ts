@@ -1,9 +1,10 @@
-const { loaderMatches } = require("../utils/helpers")
-const { javascript_transpiler: javascriptTranspiler } = require("../config")
-const { isProduction } = require("../env")
-const jscommon = require("./jscommon")
+import { loaderMatches } from "../utils/helpers"
+import config from "../config"
+const javascriptTranspiler = config.javascript_transpiler
+import { isProduction } from "../env"
+import jscommon from "./jscommon"
 
-export = loaderMatches(javascriptTranspiler, "babel", () => ({
+export default loaderMatches(javascriptTranspiler, "babel", () => ({
   test: /\.(js|jsx|mjs|ts|tsx|coffee)?(\.erb)?$/,
   ...jscommon,
   use: [

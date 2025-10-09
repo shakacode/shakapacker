@@ -1,7 +1,14 @@
 /* eslint global-require: 0 */
 
-const { moduleExists } = require("../utils/helpers")
-const { debug, info, warn } = require("../utils/debug")
+import { moduleExists } from "../utils/helpers"
+import { debug, info, warn } from "../utils/debug"
+import css from "./css"
+import sass from "./sass"
+import less from "./less"
+import stylus from "./stylus"
+import erb from "./erb"
+import file from "./file"
+import raw from "./raw"
 
 debug("Loading Rspack rules configuration...")
 
@@ -67,7 +74,6 @@ rules.push({
 debug("Checking for CSS loader...")
 if (moduleExists("css-loader")) {
   debug("css-loader found, loading CSS rule configuration...")
-  const css = require("./css")
   if (css) {
     debug("Successfully added CSS rule")
     rules.push(css)
@@ -82,7 +88,6 @@ if (moduleExists("css-loader")) {
 debug("Checking for Sass loader...")
 if (moduleExists("sass") && moduleExists("sass-loader")) {
   debug("sass and sass-loader found, loading Sass rule configuration...")
-  const sass = require("./sass")
   if (sass) {
     debug("Successfully added Sass rule")
     rules.push(sass)
@@ -99,7 +104,6 @@ if (moduleExists("sass") && moduleExists("sass-loader")) {
 debug("Checking for Less loader...")
 if (moduleExists("less") && moduleExists("less-loader")) {
   debug("less and less-loader found, loading Less rule configuration...")
-  const less = require("./less")
   if (less) {
     debug("Successfully added Less rule")
     rules.push(less)
@@ -116,7 +120,6 @@ if (moduleExists("less") && moduleExists("less-loader")) {
 debug("Checking for Stylus loader...")
 if (moduleExists("stylus") && moduleExists("stylus-loader")) {
   debug("stylus and stylus-loader found, loading Stylus rule configuration...")
-  const stylus = require("./stylus")
   if (stylus) {
     debug("Successfully added Stylus rule")
     rules.push(stylus)
@@ -131,8 +134,6 @@ if (moduleExists("stylus") && moduleExists("stylus-loader")) {
 
 // ERB template support
 debug("Checking for ERB template support...")
-const erb = require("./erb")
-
 if (erb) {
   debug("Successfully added ERB rule")
   rules.push(erb)
@@ -143,8 +144,6 @@ if (erb) {
 // File/asset handling using Rspack's built-in asset modules
 // This is a critical rule required for proper asset handling
 debug("Adding file/asset handling rule...")
-const file = require("./file")
-
 if (!file) {
   throw new Error(
     "CRITICAL: file rule configuration returned null. " +
@@ -159,8 +158,6 @@ rules.push(file)
 // Raw file loading
 // This is a critical rule required for raw file imports
 debug("Adding raw file loading rule...")
-const raw = require("./raw")
-
 if (!raw) {
   throw new Error(
     "CRITICAL: raw rule configuration returned null. " +
@@ -173,4 +170,4 @@ debug("Successfully added raw file rule")
 rules.push(raw)
 
 debug(`Rspack rules configuration complete. Total rules: ${rules.length}`)
-export = rules
+export default rules

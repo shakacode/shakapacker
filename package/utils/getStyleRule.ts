@@ -1,16 +1,19 @@
 /* eslint global-require: 0 */
-const { canProcess, moduleExists } = require("./helpers")
-const { requireOrError } = require("./requireOrError")
-const config = require("../config")
-const inliningCss = require("./inliningCss")
+import { canProcess, moduleExists } from "./helpers"
+import { requireOrError } from "./requireOrError"
+import config from "../config"
+import inliningCss from "./inliningCss"
 
-interface StyleRule {
+export interface StyleRule {
   test: RegExp
   use: any[]
   type?: string
 }
 
-const getStyleRule = (test: RegExp, preprocessors: any[] = []): StyleRule | null => {
+const getStyleRule = (
+  test: RegExp,
+  preprocessors: any[] = []
+): StyleRule | null => {
   if (moduleExists("css-loader")) {
     const tryPostcss = () =>
       canProcess("postcss-loader", (loaderPath: string) => ({
@@ -38,7 +41,7 @@ const getStyleRule = (test: RegExp, preprocessors: any[] = []): StyleRule | null
             // Note: css-loader requires 'camelCaseOnly' or 'dashesOnly' when namedExport is true
             // Using 'camelCase' with namedExport: true causes a build error
             namedExport: true,
-            exportLocalsConvention: 'camelCaseOnly'
+            exportLocalsConvention: "camelCaseOnly"
           }
         }
       },
@@ -61,4 +64,4 @@ const getStyleRule = (test: RegExp, preprocessors: any[] = []): StyleRule | null
   return null
 }
 
-export = { getStyleRule }
+export { getStyleRule }
