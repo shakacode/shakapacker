@@ -13,9 +13,10 @@ Changes since the last non-beta release.
 
 ### Fixed
 
-- Fixed NoMethodError when custom environment (e.g., staging) is not defined in shakapacker.yml ([#669](https://github.com/shakacode/shakapacker/pull/669))
+- Fixed NoMethodError when custom environment (e.g., staging) is not defined in shakapacker.yml. [PR #669](https://github.com/shakacode/shakapacker/pull/669) by [justin808](https://github.com/justin808).
   - When deploying to environments like Heroku staging with `RAILS_ENV=staging`, shakapacker would crash with `undefined method 'deep_symbolize_keys' for nil:NilClass`
   - Now properly falls back to development environment configuration, then default configuration
+  - Logs informational message when falling back to help with debugging
   - This ensures shakapacker works with any Rails environment even if not explicitly defined in shakapacker.yml
   - Fixes [#663](https://github.com/shakacode/shakapacker/issues/663)
 
