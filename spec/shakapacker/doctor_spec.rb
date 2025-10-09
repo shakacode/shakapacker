@@ -1289,10 +1289,10 @@ describe Shakapacker::Doctor do
           File.write(webpack_config_path, webpack_config)
         end
 
-        it "adds info about default v9 configuration" do
+        it "does not warn since v9 defaults work fine" do
           doctor.send(:check_css_modules_configuration)
-          expect(doctor.info).to include(match(/CSS module files.*found but no explicit CSS modules.*configuration/))
-          expect(doctor.info).to include(match(/Shakapacker v9 defaults: namedExport: true, exportLocalsConvention: 'camelCaseOnly'/))
+          expect(doctor.info).to be_empty
+          expect(doctor.issues).to be_empty
         end
       end
 

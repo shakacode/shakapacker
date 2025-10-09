@@ -148,6 +148,9 @@ module Shakapacker
                      package_json.dig("devDependencies", "shakapacker")
 
         if npm_version
+          # Skip version check for github/file references
+          return if npm_version.start_with?("github:", "git+", "file:", "link:", "./", "../", "/")
+
           gem_version = Shakapacker::VERSION rescue nil
           if gem_version && !versions_compatible?(gem_version, npm_version)
             @warnings << "Version mismatch: shakapacker gem is #{gem_version} but npm package is #{npm_version}"
@@ -567,14 +570,8 @@ module Shakapacker
             @issues << "  Change to 'camelCaseOnly' or 'dashesOnly'. See docs/v9_upgrade.md for details"
           end
 
-          # Warn if CSS modules are used but no configuration is found (only once)
-          if !no_explicit_config_warned && !config_content.match(/namedExport/) && !config_content.match(/exportLocalsConvention/)
-            @info << "CSS module files (*.module.css, *.module.scss) found but no explicit CSS modules loader configuration detected in webpack config"
-            @info << "  Using Shakapacker v9 defaults: namedExport: true, exportLocalsConvention: 'camelCaseOnly'"
-            @info << "  This means you import CSS modules like: import { className } from './styles.module.css'"
-            @info << "  To customize, add modules: { namedExport: ..., exportLocalsConvention: ... } to your css-loader config"
-            no_explicit_config_warned = true
-          end
+          # Only warn if CSS modules are misconfigured, not just because config is missing
+          # The v9 defaults work fine, so no need to warn users unnecessarily
         end
 
         # Check for common v8 to v9 migration issues
