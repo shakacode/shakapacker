@@ -21,15 +21,15 @@ style-loader is how you are probably are used to serving CSS in development with
 
 ### benefits
 
-* No [Flash Of Unstyled Content (FOUC)](https://en.wikipedia.org/wiki/Flash_of_unstyled_content) on HMR refreshes
-* Smaller/faster incremental updates.
+- No [Flash Of Unstyled Content (FOUC)](https://en.wikipedia.org/wiki/Flash_of_unstyled_content) on HMR refreshes
+- Smaller/faster incremental updates.
 
 ### drawbacks
 
-* Inflated JS deliverable size; requires JS execution before CSS is available
-* FOUC on initial page load
-* Adds an extra dependency
-* Divergence in delivery mechanism from production
+- Inflated JS deliverable size; requires JS execution before CSS is available
+- FOUC on initial page load
+- Adds an extra dependency
+- Divergence in delivery mechanism from production
 
 ## Why would I pick mini-css-extract-plugin?
 
@@ -37,12 +37,12 @@ mini-css-extract-plugin's behavior is much more true to a production deployment'
 
 ### benefits
 
-* Required for production, so it's going to be in play anyhow. Using only it simplifies the config and eliminates the style-loader dependency.
-* No FOUC on initial page loads
-* CSS delivered via `<link>` tags matches the mechanism used in production (I have been guilty of omitting my `stylesheet_pack_tag` for my first deploy because CSS worked fine with just the `javascript_pack_tag` in development.)
+- Required for production, so it's going to be in play anyhow. Using only it simplifies the config and eliminates the style-loader dependency.
+- No FOUC on initial page loads
+- CSS delivered via `<link>` tags matches the mechanism used in production (I have been guilty of omitting my `stylesheet_pack_tag` for my first deploy because CSS worked fine with just the `javascript_pack_tag` in development.)
 
 ### drawbacks
 
-* Invokes a separate HTTP request, compared to style-loader
-* Potential for FOUC on HMR refreshes
-* More data transferred per refresh (full stylesheet reload, rather than just an incremental patch). Not likely to be noticed for local development, but still a technical difference. This may only be the case [when you're using local CSS modules](https://github.com/webpack-contrib/mini-css-extract-plugin/blob/master/src/hmr/hotModuleReplacement.js#L267-L273).
+- Invokes a separate HTTP request, compared to style-loader
+- Potential for FOUC on HMR refreshes
+- More data transferred per refresh (full stylesheet reload, rather than just an incremental patch). Not likely to be noticed for local development, but still a technical difference. This may only be the case [when you're using local CSS modules](https://github.com/webpack-contrib/mini-css-extract-plugin/blob/master/src/hmr/hotModuleReplacement.js#L267-L273).

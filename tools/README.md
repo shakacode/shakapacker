@@ -7,12 +7,14 @@ A jscodeshift codemod to help migrate CSS module imports from v8 to v9 format.
 ### What it does
 
 #### For JavaScript files (.js, .jsx):
+
 - Converts `import styles from './styles.module.css'` to `import { className1, className2 } from './styles.module.css'`
 - Automatically detects which CSS classes are used in the file
 - Handles kebab-case to camelCase conversion (e.g., `my-button` → `myButton`)
 - Updates all class references from `styles.className` to `className`
 
 #### For TypeScript files (.ts, .tsx):
+
 - Converts `import styles from './styles.module.css'` to `import * as styles from './styles.module.css'`
 - Preserves the same usage pattern (`styles.className`)
 - Works around TypeScript's limitation with dynamic named exports
@@ -26,21 +28,25 @@ npm install -g jscodeshift
 ### Usage
 
 #### Dry run (see what would change):
+
 ```bash
 npx jscodeshift -t tools/css-modules-v9-codemod.js src/ --dry
 ```
 
 #### Apply to JavaScript files:
+
 ```bash
 npx jscodeshift -t tools/css-modules-v9-codemod.js src/
 ```
 
 #### Apply to TypeScript files:
+
 ```bash
 npx jscodeshift -t tools/css-modules-v9-codemod.js --parser tsx src/
 ```
 
 #### Apply to specific file patterns:
+
 ```bash
 # Only .jsx files
 npx jscodeshift -t tools/css-modules-v9-codemod.js src/**/*.jsx
@@ -59,32 +65,35 @@ npx jscodeshift -t tools/css-modules-v9-codemod.js --parser tsx src/**/*.tsx
 ### Examples
 
 #### Before (JavaScript):
+
 ```javascript
-import styles from './Button.module.css';
+import styles from "./Button.module.css"
 
 function Button() {
   return (
     <button className={styles.button}>
-      <span className={styles['button-text']}>Click me</span>
+      <span className={styles["button-text"]}>Click me</span>
     </button>
-  );
+  )
 }
 ```
 
 #### After (JavaScript):
+
 ```javascript
-import { button, buttonText } from './Button.module.css';
+import { button, buttonText } from "./Button.module.css"
 
 function Button() {
   return (
     <button className={button}>
       <span className={buttonText}>Click me</span>
     </button>
-  );
+  )
 }
 ```
 
 #### Before (TypeScript):
+
 ```typescript
 import styles from './Button.module.css';
 
@@ -94,6 +103,7 @@ const Button: React.FC = () => {
 ```
 
 #### After (TypeScript):
+
 ```typescript
 import * as styles from './Button.module.css';
 

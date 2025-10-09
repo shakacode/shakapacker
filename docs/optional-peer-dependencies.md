@@ -20,16 +20,16 @@ As of Shakapacker v9, all peer dependencies are marked as optional via `peerDepe
   "dependencies": {
     "js-yaml": "^4.1.0",
     "path-complete-extname": "^1.0.0",
-    "webpack-merge": "^5.8.0"  // Direct dependency - always available
+    "webpack-merge": "^5.8.0" // Direct dependency - always available
   },
   "peerDependencies": {
     "webpack": "^5.76.0",
-    "@rspack/core": "^1.0.0",
+    "@rspack/core": "^1.0.0"
     // ... all build tools
   },
   "peerDependenciesMeta": {
     "webpack": { "optional": true },
-    "@rspack/core": { "optional": true },
+    "@rspack/core": { "optional": true }
     // ... all marked as optional
   }
 }
@@ -49,6 +49,7 @@ Type-only imports are erased during compilation and don't trigger module resolut
 ## Configuration Examples
 
 ### Webpack + Babel (Traditional)
+
 ```json
 {
   "dependencies": {
@@ -63,6 +64,7 @@ Type-only imports are erased during compilation and don't trigger module resolut
 ```
 
 ### Webpack + SWC (20x Faster)
+
 ```json
 {
   "dependencies": {
@@ -76,6 +78,7 @@ Type-only imports are erased during compilation and don't trigger module resolut
 ```
 
 ### Rspack + SWC (10x Faster Bundling)
+
 ```json
 {
   "dependencies": {
@@ -100,6 +103,7 @@ If upgrading from Shakapacker v8:
 ### New Installations
 
 The installer (`rails shakapacker:install`) only adds packages needed for your configuration:
+
 - Detects your preferred bundler (webpack/rspack)
 - Installs appropriate JavaScript transpiler (babel/swc/esbuild)
 - Adds only required dependencies
@@ -129,12 +133,13 @@ Verify Shakapacker loads without optional dependencies:
 
 ```javascript
 // This works even without webpack installed (when using rspack)
-const shakapacker = require('shakapacker');
+const shakapacker = require("shakapacker")
 ```
 
 ### CI Integration
 
 The test suite includes:
+
 - `spec/shakapacker/optional_dependencies_spec.rb` - Package.json structure validation
 - `spec/shakapacker/doctor_optional_peer_spec.rb` - Doctor command validation
 - `test/peer-dependencies.sh` - Installation warning tests

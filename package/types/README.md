@@ -8,8 +8,8 @@ Instead of importing types from deep paths:
 
 ```typescript
 // ❌ Old way - importing from multiple deep paths
-import type { Config } from 'shakapacker/package/types'
-import type { WebpackConfigWithDevServer } from 'shakapacker/package/environments/types'
+import type { Config } from "shakapacker/package/types"
+import type { WebpackConfigWithDevServer } from "shakapacker/package/environments/types"
 ```
 
 You can now import all types from a single location:
@@ -20,12 +20,13 @@ import type {
   Config,
   WebpackConfigWithDevServer,
   RspackConfigWithDevServer
-} from 'shakapacker/types'
+} from "shakapacker/types"
 ```
 
 ## Available Types
 
 ### Core Configuration Types
+
 - `Config` - Main Shakapacker configuration interface
 - `YamlConfig` - YAML configuration structure
 - `LegacyConfig` - Legacy configuration with deprecated options
@@ -33,12 +34,14 @@ import type {
 - `DevServerConfig` - Development server configuration
 
 ### Loader Types
+
 - `ShakapackerLoader` - Loader interface
 - `ShakapackerLoaderOptions` - Loader options interface
 - `LoaderResolver` - Function type for resolving loaders
 - `LoaderConfig` - Loader configuration interface
 
 ### Webpack/Rspack Types
+
 - `WebpackConfigWithDevServer` - Webpack config with dev server
 - `RspackConfigWithDevServer` - Rspack config with dev server
 - `RspackPluginInstance` - Rspack plugin instance type
@@ -50,12 +53,14 @@ import type {
 - `ReactRefreshRspackPlugin` - React refresh plugin for Rspack
 
 ### Webpack-Specific Types
+
 - `ShakapackerWebpackConfig` - Extended Webpack configuration
 - `ShakapackerRule` - Extended Webpack rule
 - `LoaderType` - String or loader object type
 - `LoaderUtils` - Loader utility functions
 
 ### Re-exported Types
+
 - `WebpackConfiguration` - From 'webpack'
 - `WebpackPluginInstance` - From 'webpack'
 - `RuleSetRule` - From 'webpack'
@@ -64,21 +69,18 @@ import type {
 ## Example Usage
 
 ```typescript
-import type {
-  Config,
-  WebpackConfigWithDevServer
-} from 'shakapacker/types'
+import type { Config, WebpackConfigWithDevServer } from "shakapacker/types"
 
 const config: Config = {
-  source_path: 'app/javascript',
-  source_entry_path: 'packs',
-  public_root_path: 'public',
-  public_output_path: 'packs',
+  source_path: "app/javascript",
+  source_entry_path: "packs",
+  public_root_path: "public",
+  public_output_path: "packs"
   // ... other config
 }
 
 const webpackConfig: WebpackConfigWithDevServer = {
-  mode: 'development',
+  mode: "development",
   devServer: {
     hot: true,
     port: 3035

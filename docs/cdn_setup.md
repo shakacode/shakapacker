@@ -64,7 +64,7 @@ Add the `asset_host` setting to your `config/shakapacker.yml`:
 production:
   # ... other settings ...
   asset_host: https://cdn.example.com
-  
+
   # You can also set different CDN hosts per environment
 staging:
   asset_host: https://staging-cdn.example.com
@@ -77,8 +77,8 @@ Configure in your Rails environment file (e.g., `config/environments/production.
 ```ruby
 Rails.application.configure do
   # ... other settings ...
-  
-  # This will be used by Shakapacker if SHAKAPACKER_ASSET_HOST 
+
+  # This will be used by Shakapacker if SHAKAPACKER_ASSET_HOST
   # and asset_host in shakapacker.yml are not set
   config.action_controller.asset_host = 'https://cdn.example.com'
 end
@@ -95,6 +95,7 @@ RAILS_ENV=production bundle exec rails assets:precompile
 ```
 
 This ensures that:
+
 - Webpack's `publicPath` is set to your CDN URL
 - Dynamic imports and code-split chunks load from the CDN
 - Asset manifest references use CDN URLs
@@ -189,9 +190,9 @@ If using code splitting, verify dynamic chunks load from CDN:
 
 ```javascript
 // This dynamic import should load from CDN
-import('./components/HeavyComponent').then(module => {
+import("./components/HeavyComponent").then((module) => {
   // Check Network tab - chunk should load from CDN
-});
+})
 ```
 
 ## Troubleshooting
@@ -201,6 +202,7 @@ import('./components/HeavyComponent').then(module => {
 **Problem**: Assets are still loading from your application domain.
 
 **Solutions**:
+
 1. Ensure you set `SHAKAPACKER_ASSET_HOST` **before** running `assets:precompile`
 2. Clear Rails cache: `rails tmp:cache:clear`
 3. Check the manifest.json file includes CDN URLs:
@@ -213,6 +215,7 @@ import('./components/HeavyComponent').then(module => {
 **Problem**: Browser shows CORS errors when loading assets from CDN.
 
 **Solutions**:
+
 1. Configure your CDN to add CORS headers:
    ```
    Access-Control-Allow-Origin: *
@@ -227,6 +230,7 @@ import('./components/HeavyComponent').then(module => {
 **Problem**: Web fonts fail to load from CDN due to CORS.
 
 **Solutions**:
+
 1. Ensure CDN sends proper CORS headers for font files
 2. In CloudFlare, create a page rule for `*.woff2`, `*.woff`, `*.ttf` files with CORS headers
 3. Consider hosting fonts separately or using base64 encoding
@@ -277,6 +281,7 @@ production:
 ```
 
 Ensure your CDN serves files with CORS headers:
+
 ```
 Access-Control-Allow-Origin: *
 ```
@@ -339,7 +344,7 @@ production:
   compile: false
   cache_manifest: true
   asset_host: <%= ENV.fetch('SHAKAPACKER_ASSET_HOST', 'https://cdn.example.com') %>
-  
+
   # Enable integrity checking
   integrity:
     enabled: true
@@ -352,7 +357,7 @@ production:
 Rails.application.configure do
   # Fallback if SHAKAPACKER_ASSET_HOST is not set
   config.action_controller.asset_host = 'https://cdn.example.com'
-  
+
   # Ensure proper headers for CDN
   config.public_file_server.headers = {
     'Cache-Control' => 'public, max-age=31536000',

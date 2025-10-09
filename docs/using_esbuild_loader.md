@@ -11,6 +11,7 @@ If you face any issues, please report them at https://github.com/shakacode/shaka
 While esbuild is a complete bundler, through the usage of [esbuild-loader](https://github.com/privatenumber/esbuild-loader), you can still leverage esbuild's speedy transpilation and minification in your Webpack-based configs.
 
 Please note, that unlike Babel or SWC loader, esbuild-loader has got no support for things like:
+
 - React Hot Module reload
 - ES5 as a compilation target
 - Automatic polyfills for missing browser features
@@ -28,7 +29,7 @@ npm install esbuild esbuild-loader
 ```
 
 2. Add or change `javascript_transpiler` value in your default `shakapacker.yml` config to `esbuild`
-The default configuration of babel is done by using `package.json` to use the file within the `shakapacker` package.
+   The default configuration of babel is done by using `package.json` to use the file within the `shakapacker` package.
 
 ```yml
 default: &default
@@ -47,7 +48,7 @@ default: &default
   cache_manifest: false
 
   # Select JavaScript transpiler to use, available options are 'babel' (default), 'swc' or 'esbuild'
-  javascript_transpiler: 'esbuild'
+  javascript_transpiler: "esbuild"
 ```
 
 ### (Optional) Replace minification with esbuild
@@ -59,14 +60,14 @@ o do so, you need to modify your webpack configuration and use `ESBuildMinifyPlu
 Example:
 
 ```js
-const { generateWebpackConfig } = require('shakapacker')
-const { ESBuildMinifyPlugin } = require('esbuild-loader')
+const { generateWebpackConfig } = require("shakapacker")
+const { ESBuildMinifyPlugin } = require("esbuild-loader")
 
 const options = {
   optimization: {
     minimizer: [
       new ESBuildMinifyPlugin({
-        target: 'es2015' 
+        target: "es2015"
       })
     ]
   }
@@ -101,11 +102,10 @@ See some examples below of potential `config/babel.config.js`.
 
 ### Example: Specifying esnext target environment
 
-
 ```js
 const customConfig = {
   options: {
-    target: 'esnext'
+    target: "esnext"
   }
 }
 
@@ -115,12 +115,12 @@ module.exports = customConfig
 ### Example: Using custom jsxFragment and jsxFactory
 
 ```js
-const { env } = require('shakapacker')
+const { env } = require("shakapacker")
 
 const customConfig = {
   options: {
-    jsxFragment: 'Fragment',
-    jsxFactory: 'h' 
+    jsxFragment: "Fragment",
+    jsxFactory: "h"
   }
 }
 

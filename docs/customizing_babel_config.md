@@ -1,14 +1,13 @@
 # Customizing Babel Config
 
 ## Default Configuration
+
 The default configuration of babel is done by using `package.json` to use the file within the `shakapacker` package.
 
 ```json
 {
   "babel": {
-    "presets": [
-      "./node_modules/shakapacker/package/babel/preset.js"
-    ]
+    "presets": ["./node_modules/shakapacker/package/babel/preset.js"]
   }
 }
 ```
@@ -22,7 +21,7 @@ This is a very basic skeleton that you can use that includes the Shakapacker pre
 ```js
 // babel.config.js
 module.exports = function (api) {
-  const defaultConfigFunc = require('shakapacker/package/babel/preset.js')
+  const defaultConfigFunc = require("shakapacker/package/babel/preset.js")
   const resultConfig = defaultConfigFunc(api)
 
   const changesOnDefault = {
@@ -31,7 +30,7 @@ module.exports = function (api) {
     ].filter(Boolean),
     plugins: [
       // put custom plugins here
-    ].filter(Boolean),
+    ].filter(Boolean)
   }
 
   resultConfig.presets = [...resultConfig.presets, ...changesOnDefault.presets]
@@ -55,30 +54,31 @@ And then update the configuration:
 ```js
 // babel.config.js
 module.exports = function (api) {
-  const defaultConfigFunc = require('shakapacker/package/babel/preset.js')
+  const defaultConfigFunc = require("shakapacker/package/babel/preset.js")
   const resultConfig = defaultConfigFunc(api)
-  const isDevelopmentEnv = api.env('development')
-  const isProductionEnv = api.env('production')
-  const isTestEnv = api.env('test')
+  const isDevelopmentEnv = api.env("development")
+  const isProductionEnv = api.env("production")
+  const isTestEnv = api.env("test")
 
   const changesOnDefault = {
     presets: [
       [
-        '@babel/preset-react',
+        "@babel/preset-react",
         {
           development: isDevelopmentEnv || isTestEnv,
           useBuiltIns: true
-        } 
+        }
       ]
     ].filter(Boolean),
     plugins: [
-      isProductionEnv && ['babel-plugin-transform-react-remove-prop-types', 
-        { 
-          removeImport: true 
+      isProductionEnv && [
+        "babel-plugin-transform-react-remove-prop-types",
+        {
+          removeImport: true
         }
       ],
-      process.env.WEBPACK_SERVE && 'react-refresh/babel'
-    ].filter(Boolean),
+      process.env.WEBPACK_SERVE && "react-refresh/babel"
+    ].filter(Boolean)
   }
 
   resultConfig.presets = [...resultConfig.presets, ...changesOnDefault.presets]

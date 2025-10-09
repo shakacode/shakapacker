@@ -18,6 +18,7 @@ If you are not using CDN, then this change will have no effect on your setup.
 If you are using CDN and your CDN host is static, `config.asset_host` setting in Rails will be respected during compilation and when referencing assets through view helpers.
 
 If your host might differ, between various environments for example, you will either need to:
+
 - Ensure the assets are specifically rebuilt for each environment (Heroku pipeline promote feature for example does not do that by default).
 - Make sure the assets are compiled with `SHAKAPACKER_ASSET_HOST=''` ENV variable to avoid hardcording URLs in packs output.
 
@@ -131,41 +132,41 @@ The function will return the same object with less risk:
 
 ```js
 // before
-const { globalMutableWebpackConfig, merge } = require('shakapacker');
+const { globalMutableWebpackConfig, merge } = require("shakapacker")
 
 const customConfig = {
   module: {
     rules: [
       {
-        test: require.resolve('jquery'),
-        loader: 'expose-loader',
-        options: { exposes: ['$', 'jQuery'] }
+        test: require.resolve("jquery"),
+        loader: "expose-loader",
+        options: { exposes: ["$", "jQuery"] }
       }
     ]
   }
-};
+}
 
-module.exports = merge(globalMutableWebpackConfig, customConfig);
+module.exports = merge(globalMutableWebpackConfig, customConfig)
 ```
 
 ```js
 // after
-const { generateWebpackConfig, merge } = require('shakapacker');
+const { generateWebpackConfig, merge } = require("shakapacker")
 
 const customConfig = {
   module: {
     rules: [
       {
-        test: require.resolve('jquery'),
-        loader: 'expose-loader',
-        options: { exposes: ['$', 'jQuery'] }
+        test: require.resolve("jquery"),
+        loader: "expose-loader",
+        options: { exposes: ["$", "jQuery"] }
       }
     ]
   }
-};
+}
 
 // you can also pass your config directly to the generator function to have it merged in!
-module.exports = merge(generateWebpackConfig(), customConfig);
+module.exports = merge(generateWebpackConfig(), customConfig)
 ```
 
 ## `additional_paths` are now stripped just like with `source_path`

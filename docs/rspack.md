@@ -10,7 +10,7 @@ First, install the required Rspack dependencies:
 npm install @rspack/core @rspack/cli -D
 # or
 yarn add @rspack/core @rspack/cli -D
-# or  
+# or
 pnpm add @rspack/core @rspack/cli -D
 # or
 bun add @rspack/core @rspack/cli -D
@@ -23,9 +23,8 @@ Note: These packages are already listed as optional peer dependencies in Shakapa
 To enable Rspack, update your `config/shakapacker.yml`:
 
 ```yaml
-default: &default
-  # ... other config options
-  assets_bundler: 'rspack'  # Change from 'webpack' to 'rspack'
+default: &default # ... other config options
+  assets_bundler: "rspack" # Change from 'webpack' to 'rspack'
 ```
 
 ### Configuration Files
@@ -33,7 +32,7 @@ default: &default
 Rspack uses its own configuration directory to keep things organized. Create your Rspack configuration file at `config/rspack/rspack.config.js`:
 
 ```javascript
-const { generateRspackConfig } = require('shakapacker/rspack')
+const { generateRspackConfig } = require("shakapacker/rspack")
 
 module.exports = generateRspackConfig()
 ```
@@ -43,14 +42,12 @@ module.exports = generateRspackConfig()
 If you need to customize your Rspack configuration:
 
 ```javascript
-const { generateRspackConfig } = require('shakapacker/rspack')
+const { generateRspackConfig } = require("shakapacker/rspack")
 
 const rspackConfig = generateRspackConfig({
-  plugins: [
-    new SomeRspackCompatiblePlugin()
-  ],
+  plugins: [new SomeRspackCompatiblePlugin()],
   resolve: {
-    extensions: ['.ts', '.tsx', '.js', '.jsx']
+    extensions: [".ts", ".tsx", ".js", ".jsx"]
   }
 })
 
@@ -62,14 +59,16 @@ module.exports = rspackConfig
 If you have an existing `config/webpack/webpack.config.js`, you can migrate it to `config/rspack/rspack.config.js`:
 
 **Old (webpack.config.js):**
+
 ```javascript
-const { generateWebpackConfig } = require('shakapacker')
+const { generateWebpackConfig } = require("shakapacker")
 module.exports = generateWebpackConfig()
 ```
 
 **New (rspack.config.js):**
+
 ```javascript
-const { generateRspackConfig } = require('shakapacker/rspack')
+const { generateRspackConfig } = require("shakapacker/rspack")
 module.exports = generateRspackConfig()
 ```
 
@@ -89,11 +88,11 @@ Rspack has built-in loaders that are faster than their webpack counterparts:
 
 Most webpack plugins work with Rspack, but some have Rspack-specific alternatives:
 
-| Webpack Plugin | Rspack Alternative | Status |
-|---|---|---|
-| `mini-css-extract-plugin` | `rspack.CssExtractRspackPlugin` | Built-in |
-| `copy-webpack-plugin` | `rspack.CopyRspackPlugin` | Built-in |
-| `terser-webpack-plugin` | `rspack.SwcJsMinimizerRspackPlugin` | Built-in |
+| Webpack Plugin            | Rspack Alternative                  | Status   |
+| ------------------------- | ----------------------------------- | -------- |
+| `mini-css-extract-plugin` | `rspack.CssExtractRspackPlugin`     | Built-in |
+| `copy-webpack-plugin`     | `rspack.CopyRspackPlugin`           | Built-in |
+| `terser-webpack-plugin`   | `rspack.SwcJsMinimizerRspackPlugin` | Built-in |
 
 ### Minification
 
@@ -136,28 +135,31 @@ The same dev server configuration in `shakapacker.yml` applies to both webpack a
 Rspack typically provides:
 
 - **2-10x faster** cold builds
-- **5-20x faster** incremental builds  
+- **5-20x faster** incremental builds
 - **Faster HMR** (Hot Module Replacement)
 - **Lower memory usage**
 
 ## Migration Checklist
 
 1. **Install Rspack dependencies:**
+
    ```bash
    npm install @rspack/core @rspack/cli -D
    ```
 
 2. **Update configuration:**
+
    ```yaml
    # config/shakapacker.yml
    default: &default
-     assets_bundler: 'rspack'
+     assets_bundler: "rspack"
    ```
 
 3. **Create Rspack config:**
+
    ```javascript
    // config/rspack/rspack.config.js
-   const { generateRspackConfig } = require('shakapacker/rspack')
+   const { generateRspackConfig } = require("shakapacker/rspack")
    module.exports = generateRspackConfig()
    ```
 
