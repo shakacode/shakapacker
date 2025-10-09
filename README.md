@@ -767,6 +767,27 @@ Please note that if you want opt-in to use esbuild-loader, you can skip [React](
 
 To switch between Babel, SWC, or esbuild, or to configure environment-specific transpiler settings, see the [Transpiler Migration Guide](./docs/transpiler-migration.md).
 
+### Debugging Configuration
+
+Shakapacker provides a powerful utility to export and analyze your webpack/rspack configuration:
+
+```bash
+# Export all configs for troubleshooting (recommended)
+bin/export-bundler-config --doctor
+
+# Or via rake task
+bundle exec rake shakapacker:export_bundler_config -- --doctor
+```
+
+This exports development and production configurations for both client and server bundles to `shakapacker-config-exports/` directory in annotated YAML format. Perfect for:
+
+- Debugging configuration issues
+- Comparing webpack vs rspack configs (works with `rake shakapacker:switch_bundler`)
+- Understanding differences between development and production
+- Analyzing client vs server bundle configurations
+
+For more options and usage examples, see the [Troubleshooting Guide](./docs/troubleshooting.md#exporting-webpack--rspack-configuration).
+
 ### Integrations
 
 Shakapacker out of the box supports JS and static assets (fonts, images etc.) compilation. To enable support for CoffeeScript or TypeScript install relevant packages:

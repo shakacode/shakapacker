@@ -17,10 +17,69 @@
 
 4. You can also pass additional options to the command to run the webpack-dev-server and start the webpack-dev-server with the option `--debug-shakapacker`
 
-5. ChatGPT and other AI tools can consume this output file. Change the NODE_ENV per your needs. Then upload the file to your favorite AI tool.
+5. **Export your full webpack/rspack configuration for analysis**: Use the `bin/export-bundler-config` utility to export your complete resolved configuration. This is especially helpful for:
+
+   - **Migrations**: Comparing configurations before and after migrating between webpack and rspack, or between different Shakapacker versions
+   - **Debugging**: Inspecting the exact configuration webpack/rspack is using, including all merged settings
+   - **AI Analysis**: Uploading the exported config to ChatGPT or other AI tools for troubleshooting
+
+   **Installation**: The utility is installed when you run `rake shakapacker:binstubs` or can be used directly via `rake shakapacker:export_bundler_config`.
+
+   **RECOMMENDED - Quick troubleshooting:**
+
+   ```bash
+   # Install the binstub (one-time setup)
+   rake shakapacker:binstubs
+
+   # Export EVERYTHING for troubleshooting (dev + prod, annotated YAML)
+   bin/export-bundler-config --doctor
+   # Creates: webpack-development-client.yaml, webpack-development-server.yaml,
+   #          webpack-production-client.yaml, webpack-production-server.yaml
    ```
+
+   **Other usage examples:**
+
+   ```bash
+   # Save current environment configs with auto-generated names
+   bin/export-bundler-config --save
+   # Creates: webpack-development-client.yaml, webpack-development-server.yaml
+
+   # Save to specific directory
+   bin/export-bundler-config --save --save-dir=./debug-configs
+
+   # Export only client config for production
+   bin/export-bundler-config --save --env=production --client-only
+   # Creates: webpack-production-client.yaml
+
+   # Compare development vs production configs
+   bin/export-bundler-config --save --save-dir=./configs
+   diff configs/webpack-development-client.yaml configs/webpack-production-client.yaml
+
+   # View config in terminal (no files created)
+   bin/export-bundler-config
+
+   # Export without inline documentation annotations
+   bin/export-bundler-config --save --no-annotate
+
+   # Export in JSON format for programmatic analysis
+   bin/export-bundler-config --save --format=json
+   ```
+
+   **Config files are automatically named:** `{bundler}-{env}-{type}.{ext}`
+
+   - Examples: `webpack-development-client.yaml`, `rspack-production-server.yaml`
+   - YAML format includes inline documentation explaining each config key
+   - Separate files for client and server bundles (cleaner than combined)
+
+   See `bin/export-bundler-config --help` for all available options.
+
+6. Generate webpack stats for build analysis (useful for bundle size optimization):
+
+   ```bash
    NODE_ENV=development bin/shakapacker --profile --json > /tmp/webpack-stats.json
    ```
+
+   ChatGPT and other AI tools can consume this output file. Change the NODE_ENV per your needs.
 
 ## Incorrect peer dependencies
 

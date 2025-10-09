@@ -327,6 +327,11 @@ module Shakapacker
         unless binstub_path.exist?
           @warnings << "Shakapacker binstub not found at bin/shakapacker. Run 'rails shakapacker:binstubs' to create it."
         end
+
+        export_config_binstub = root_path.join("bin/export-bundler-config")
+        unless export_config_binstub.exist?
+          @warnings << "Config export binstub not found at bin/export-bundler-config. Run 'rails shakapacker:binstubs' to create it."
+        end
       end
 
       def check_javascript_transpiler_dependencies
@@ -830,6 +835,11 @@ module Shakapacker
             if binstub_path.exist?
               puts "✓ Shakapacker binstub found"
             end
+
+            export_config_binstub = doctor.root_path.join("bin/export-bundler-config")
+            if export_config_binstub.exist?
+              puts "✓ Config export binstub found"
+            end
           end
 
           def print_info_messages
@@ -873,6 +883,12 @@ module Shakapacker
             package_manager = doctor.send(:package_manager)
             puts "To fix missing dependencies, run:"
             puts "  #{package_manager_install_command(package_manager)}"
+            puts ""
+            puts "For debugging configuration issues, export your webpack/rspack config:"
+            puts "  bin/export-bundler-config --doctor"
+            puts "  (Exports annotated YAML configs for dev and production - best for troubleshooting)"
+            puts ""
+            puts "  See 'bin/export-bundler-config --help' for more options"
           end
 
           def package_manager_install_command(manager)
