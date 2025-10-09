@@ -37,4 +37,75 @@ describe "Shakapacker" do
   it "automatically cleans up app_autoload_paths" do
     expect($test_app_autoload_paths_in_initializer).to eq []
   end
+
+  describe "#ensure_node_env!" do
+    after do
+      # Clean up ENV after each test
+      ENV.delete("NODE_ENV")
+      ENV.delete("RAILS_ENV")
+    end
+
+    it "sets NODE_ENV to development when RAILS_ENV is development" do
+      ENV["RAILS_ENV"] = "development"
+      ENV.delete("NODE_ENV")
+
+      Shakapacker.ensure_node_env!
+
+      expect(ENV["NODE_ENV"]).to eq("development")
+    end
+
+    it "sets NODE_ENV to test when RAILS_ENV is test" do
+      ENV["RAILS_ENV"] = "test"
+      ENV.delete("NODE_ENV")
+
+      Shakapacker.ensure_node_env!
+
+      expect(ENV["NODE_ENV"]).to eq("test")
+    end
+
+    it "sets NODE_ENV to production when RAILS_ENV is staging" do
+      ENV["RAILS_ENV"] = "staging"
+      ENV.delete("NODE_ENV")
+
+      Shakapacker.ensure_node_env!
+
+      expect(ENV["NODE_ENV"]).to eq("production")
+    end
+
+    it "sets NODE_ENV to production when RAILS_ENV is production" do
+      ENV["RAILS_ENV"] = "production"
+      ENV.delete("NODE_ENV")
+
+      Shakapacker.ensure_node_env!
+
+      expect(ENV["NODE_ENV"]).to eq("production")
+    end
+
+    it "sets NODE_ENV to production when RAILS_ENV is any other custom environment" do
+      ENV["RAILS_ENV"] = "custom_env"
+      ENV.delete("NODE_ENV")
+
+      Shakapacker.ensure_node_env!
+
+      expect(ENV["NODE_ENV"]).to eq("production")
+    end
+
+    it "does not override existing NODE_ENV" do
+      ENV["RAILS_ENV"] = "staging"
+      ENV["NODE_ENV"] = "development"
+
+      Shakapacker.ensure_node_env!
+
+      expect(ENV["NODE_ENV"]).to eq("development")
+    end
+
+    it "handles nil RAILS_ENV by defaulting to production" do
+      ENV.delete("RAILS_ENV")
+      ENV.delete("NODE_ENV")
+
+      Shakapacker.ensure_node_env!
+
+      expect(ENV["NODE_ENV"]).to eq("production")
+    end
+  end
 end
