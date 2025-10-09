@@ -26,28 +26,43 @@ Your production build process is responsible for installing your JavaScript depe
 
 ### Custom Rails Environments (e.g., staging)
 
-When deploying to custom Rails environments like `staging`, you don't need to add that environment to your `shakapacker.yml` file. Shakapacker automatically falls back to production-like defaults:
+Shakapacker uses **RAILS_ENV** to look up configuration in `shakapacker.yml`, but uses **NODE_ENV** for webpack/rspack optimizations. For production-like environments such as staging:
+
+**Using the rake task (recommended):**
+
+```bash
+# NODE_ENV defaults to 'production' automatically
+RAILS_ENV=staging bundle exec rails assets:precompile
+```
+
+**Using bin/shakapacker directly:**
+
+```bash
+# Must explicitly set NODE_ENV=production for optimizations
+RAILS_ENV=staging NODE_ENV=production bin/shakapacker
+```
+
+**Configuration fallback:**
+
+You don't need to add custom environments to your `shakapacker.yml`. Shakapacker automatically falls back to production-like defaults:
 
 1. First, it looks for the environment you're deploying to (e.g., `staging`)
 2. If not found, it falls back to `production` configuration
 3. If that's not found, it falls back to `default` configuration
 
-This means you can deploy to Heroku staging environments without modifying your configuration - staging will use production settings by default:
+This means staging environments automatically use production settings (compile: false, cache_manifest: true, etc.).
 
-```bash
-# This works even without a "staging" section in shakapacker.yml
-# Staging will automatically use production configuration
-heroku config:set RAILS_ENV=staging -a my-app-staging
-```
+**Optional: Staging-specific configuration**
 
-**Note:** If you want staging-specific configuration (different from production), you can explicitly add a `staging` section to your `config/shakapacker.yml`:
+If you want different settings for staging, explicitly add a `staging` section:
 
 ```yaml
 staging:
   <<: *default
   compile: false
   cache_manifest: true
-  # Any staging-specific overrides here
+  # Staging-specific overrides (e.g., different output path)
+  public_output_path: packs-staging
 ```
 
 ## Nginx
