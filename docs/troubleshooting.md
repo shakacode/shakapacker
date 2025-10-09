@@ -64,7 +64,6 @@ After upgrading, Shakapacker will automatically fall back to sensible defaults w
 
 1. First tries your environment (e.g., `staging`)
 2. Falls back to `production` configuration
-3. Falls back to `default` configuration
 
 **Alternative:** If you can't upgrade immediately, explicitly add your environment to `config/shakapacker.yml`:
 

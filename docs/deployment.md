@@ -51,7 +51,6 @@ You don't need to add custom environments to your `shakapacker.yml`. Shakapacker
 
 1. First, it looks for the environment you're deploying to (e.g., `staging`)
 2. If not found, it falls back to `production` configuration
-3. If that's not found, it falls back to `default` configuration
 
 This means staging environments automatically use production settings (compile: false, cache_manifest: true, etc.).
 
