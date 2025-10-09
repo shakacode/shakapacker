@@ -42,7 +42,6 @@ RAILS_ENV=staging bundle exec rails assets:precompile
 
 - `RAILS_ENV=development` → `NODE_ENV=development`
 - `RAILS_ENV=test` → `NODE_ENV=test`
-- `RAILS_ENV=staging` → `NODE_ENV=production` (automatic!)
 - `RAILS_ENV=production` → `NODE_ENV=production`
 - Any other custom env → `NODE_ENV=production`
 
