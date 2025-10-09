@@ -304,12 +304,15 @@ async function loadConfigsForEnv(
 
   // Clear require cache for config file and all related modules
   // This is critical for loading different environments in the same process
+  // MUST clear shakapacker module cache so env.nodeEnv is re-read!
   const configDir = dirname(configFile)
   Object.keys(require.cache).forEach((key) => {
     if (
       key.includes("webpack.config") ||
       key.includes("rspack.config") ||
       key.startsWith(configDir) ||
+      key.includes("/shakapacker/") || // Clear shakapacker so env is re-read
+      key.includes("\\shakapacker\\") || // Windows path
       key === configFile
     ) {
       delete require.cache[key]
