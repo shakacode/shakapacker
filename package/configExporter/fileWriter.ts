@@ -32,14 +32,16 @@ export class FileWriter {
   /**
    * Write a single file
    */
-  writeSingleFile(filePath: string, content: string): void {
+  writeSingleFile(filePath: string, content: string, quiet = false): void {
     // Ensure parent directory exists
     const dir = dirname(filePath)
     this.ensureDirectory(dir)
 
     this.validateOutputPath(filePath)
     this.writeFile(filePath, content)
-    console.log(`[Config Exporter] Config exported to: ${filePath}`)
+    if (!quiet && process.env.VERBOSE) {
+      console.log(`[Config Exporter] Config exported to: ${filePath}`)
+    }
   }
 
   /**

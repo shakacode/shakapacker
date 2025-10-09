@@ -2,7 +2,7 @@
 // Migrating from bin/export-bundler-config but streamlined for TypeScript
 
 import { existsSync, readFileSync } from "fs"
-import { resolve, dirname, sep, delimiter } from "path"
+import { resolve, dirname, sep, delimiter, basename } from "path"
 import { inspect } from "util"
 import { load as loadYaml } from "js-yaml"
 import { ExportOptions, ConfigMetadata, FileOutput } from "./types"
@@ -165,9 +165,11 @@ async function runDoctorMode(
   options: ExportOptions,
   appRoot: string
 ): Promise<void> {
-  console.log(
-    "[Config Exporter] Doctor mode: Exporting development AND production configs"
-  )
+  console.log("\n" + "=".repeat(80))
+  console.log("🔍 Config Exporter - Doctor Mode")
+  console.log("=".repeat(80))
+  console.log("\nExporting development AND production configs...")
+  console.log("")
 
   const environments: Array<"development" | "production"> = [
     "development",
@@ -177,7 +179,10 @@ async function runDoctorMode(
   const defaultDir = resolve(process.cwd(), "shakapacker-config-exports")
   const targetDir = options.saveDir || defaultDir
 
+  const createdFiles: string[] = []
+
   for (const env of environments) {
+    console.log(`\n📦 Loading ${env} configuration...`)
     const configs = await loadConfigsForEnv(env, options, appRoot)
 
     for (const { config, metadata } of configs) {
@@ -189,10 +194,24 @@ async function runDoctorMode(
         options.format!
       )
 
+      const fullPath = resolve(targetDir, filename)
       const fileOutput: FileOutput = { filename, content: output, metadata }
-      fileWriter.writeSingleFile(resolve(targetDir, filename), output)
+      fileWriter.writeSingleFile(fullPath, output, true) // quiet mode
+      createdFiles.push(fullPath)
     }
   }
+
+  // Print summary
+  console.log("\n" + "=".repeat(80))
+  console.log("✅ Export Complete!")
+  console.log("=".repeat(80))
+  console.log(`\nCreated ${createdFiles.length} configuration file(s) in:`)
+  console.log(`  ${targetDir}\n`)
+  console.log("Files:")
+  createdFiles.forEach((file) => {
+    console.log(`  ✓ ${basename(file)}`)
+  })
+  console.log("\n" + "=".repeat(80) + "\n")
 }
 
 async function runSaveMode(
@@ -269,9 +288,12 @@ async function loadConfigsForEnv(
 
   // Find and load config file
   const configFile = findConfigFile(bundler, appRoot)
-  console.log(`[Config Exporter] Loading config: ${configFile}`)
-  console.log(`[Config Exporter] Environment: ${env}`)
-  console.log(`[Config Exporter] Bundler: ${bundler}`)
+  // Quiet mode for cleaner output - only show if verbose or errors
+  if (process.env.VERBOSE) {
+    console.log(`[Config Exporter] Loading config: ${configFile}`)
+    console.log(`[Config Exporter] Environment: ${env}`)
+    console.log(`[Config Exporter] Bundler: ${bundler}`)
+  }
 
   // Load the config
   // Register ts-node for TypeScript config files
@@ -282,10 +304,12 @@ async function loadConfigsForEnv(
 
   // Clear require cache for config file and all related modules
   // This is critical for loading different environments in the same process
+  const configDir = dirname(configFile)
   Object.keys(require.cache).forEach((key) => {
     if (
       key.includes("webpack.config") ||
       key.includes("rspack.config") ||
+      key.startsWith(configDir) ||
       key === configFile
     ) {
       delete require.cache[key]
