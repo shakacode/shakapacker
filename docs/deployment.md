@@ -3,8 +3,6 @@
 Shakapacker hooks up a new `shakapacker:compile` task to `assets:precompile`, which gets run whenever you run `assets:precompile`.
 If you are not using Sprockets `shakapacker:compile` is automatically aliased to `assets:precompile`.
 
-````
-
 ## Heroku
 
 In order for your Shakapacker app to run on Heroku, you'll need to do a bit of configuration before hand.
@@ -15,7 +13,7 @@ heroku addons:create heroku-postgresql:hobby-dev
 heroku buildpacks:add heroku/nodejs
 heroku buildpacks:add heroku/ruby
 git push heroku master
-````
+```
 
 We're essentially doing the following here:
 
