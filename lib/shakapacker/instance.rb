@@ -10,11 +10,12 @@ class Shakapacker::Instance
     @root_path = root_path || (defined?(Rails) && Rails&.root) || Pathname.new(Dir.pwd)
 
     # Use Rails.root.join for config_path if Rails is defined and no config_path is provided
-    default_config_path = if defined?(Rails) && Rails&.root
-      Rails.root.join("config/shakapacker.yml")
-                          else
-                            Pathname.new(File.join(Dir.pwd, "config/shakapacker.yml"))
-    end
+    default_config_path =
+      if defined?(Rails) && Rails&.root
+        Rails.root.join("config/shakapacker.yml")
+      else
+        Pathname.new(File.join(Dir.pwd, "config/shakapacker.yml"))
+      end
 
     @config_path = Pathname.new(ENV["SHAKAPACKER_CONFIG"] || config_path || default_config_path)
   end
