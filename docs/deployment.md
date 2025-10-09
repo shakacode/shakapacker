@@ -26,7 +26,10 @@ Your production build process is responsible for installing your JavaScript depe
 
 ### Custom Rails Environments (e.g., staging)
 
-Shakapacker uses **RAILS_ENV** to look up configuration in `shakapacker.yml`, but uses **NODE_ENV** for webpack/rspack optimizations.
+**Key distinction:**
+
+- **RAILS_ENV** is used to look up configuration in `config/shakapacker.yml`
+- **NODE_ENV** is used by your `webpack.config.js` (or `rspack.config.js`) for build optimizations
 
 **Good news:** As of this version, `bin/shakapacker` automatically sets `NODE_ENV=production` for custom environments like staging:
 
