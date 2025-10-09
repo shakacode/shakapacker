@@ -632,5 +632,66 @@ describe "Shakapacker::Configuration" do
     it "does not raise NoMethodError for deep_symbolize_keys on missing environment" do
       expect { config.fetch(:source_path) }.not_to raise_error
     end
+
+    it "logs a warning about the fallback" do
+      # Reset memoized data to trigger load again
+      config.instance_variable_set(:@data, nil)
+      expect(Shakapacker.logger).to receive(:info).with(
+        /Shakapacker environment 'staging' not found.*falling back to 'default'/
+      )
+      config.compile?
+    end
+
+    it "returns configuration from default section" do
+      # The shakapacker_no_precompile.yml file has shakapacker_precompile: false in default
+      expect(config.shakapacker_precompile?).to be false
+    end
+  end
+
+  context "with completely missing environment and no default section" do
+    it "handles missing default section gracefully" do
+      # Create a minimal config file with no default or development sections
+      test_config = Tempfile.new(["shakapacker", ".yml"])
+      test_config.write(<<~YAML)
+        production:
+          source_path: app/javascript
+      YAML
+      test_config.rewind
+
+      config = Shakapacker::Configuration.new(
+        root_path: ROOT_PATH,
+        config_path: Pathname.new(test_config.path),
+        env: "staging"
+      )
+
+      # Should not raise error, should return empty config
+      expect { config.fetch(:source_path) }.not_to raise_error
+
+      test_config.close
+      test_config.unlink
+    end
+
+    it "logs when falling back to empty configuration" do
+      test_config = Tempfile.new(["shakapacker", ".yml"])
+      test_config.write(<<~YAML)
+        production:
+          source_path: app/javascript
+      YAML
+      test_config.rewind
+
+      config = Shakapacker::Configuration.new(
+        root_path: ROOT_PATH,
+        config_path: Pathname.new(test_config.path),
+        env: "staging"
+      )
+
+      expect(Shakapacker.logger).to receive(:info).with(
+        /Shakapacker environment 'staging' not found.*falling back to 'none \(using empty configuration\)'/
+      )
+      config.fetch(:source_path)
+
+      test_config.close
+      test_config.unlink
+    end
   end
 end

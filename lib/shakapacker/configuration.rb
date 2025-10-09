@@ -255,7 +255,21 @@ class Shakapacker::Configuration
       rescue ArgumentError
         YAML.load_file(config_path.to_s)
       end
-      env_config = config[env] || config[Shakapacker::DEFAULT_ENV] || config["default"]
+
+      # Try to find environment-specific configuration with fallback
+      if config[env]
+        env_config = config[env]
+      elsif config[Shakapacker::DEFAULT_ENV]
+        log_fallback(env, Shakapacker::DEFAULT_ENV)
+        env_config = config[Shakapacker::DEFAULT_ENV]
+      elsif config["default"]
+        log_fallback(env, "default")
+        env_config = config["default"]
+      else
+        log_fallback(env, "none (using empty configuration)")
+        env_config = nil
+      end
+
       symbolized_config = env_config&.deep_symbolize_keys || {}
 
       return symbolized_config
@@ -289,5 +303,14 @@ class Shakapacker::Configuration
       return ".#{path}" if path.start_with?("/")
 
       path
+    end
+
+    def log_fallback(requested_env, fallback_env)
+      return unless Shakapacker.logger
+
+      Shakapacker.logger.info(
+        "Shakapacker environment '#{requested_env}' not found in #{config_path}, " \
+        "falling back to '#{fallback_env}'"
+      )
     end
 end
