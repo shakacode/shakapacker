@@ -11,6 +11,24 @@
 
 Changes since the last non-beta release.
 
+### Added
+
+- **New config export utility for debugging webpack/rspack configurations** [PR #647](https://github.com/shakacode/shakapacker/pull/647) by [justin808](https://github.com/justin808).
+  - Adds `bin/export-bundler-config` utility with three modes:
+    - **Doctor mode** (`--doctor`): Exports all configs (dev + prod, client + server) to `shakapacker-config-exports/` directory - best for troubleshooting
+    - **Save mode** (`--save`): Export current environment configs to files
+    - **Stdout mode** (default): View configs in terminal
+  - **Output formats:** YAML (with optional inline documentation), JSON, or Node.js inspect
+  - **Smart features:**
+    - Environment isolation ensures dev/prod configs are truly different
+    - Auto-detects bundler from `shakapacker.yml`
+    - Pretty-prints functions (up to 50 lines)
+    - Validates bundler value and output paths
+    - Sanitizes filenames to prevent path traversal
+    - Helpful `.gitignore` suggestions
+  - **Usage:** `bin/export-bundler-config --doctor` or `bundle exec rake shakapacker:export_bundler_config`
+  - Lays groundwork for future config diff feature (tracked in [#667](https://github.com/shakacode/shakapacker/issues/667))
+
 ### Fixed
 
 - Fixed NoMethodError when custom environment (e.g., staging) is not defined in shakapacker.yml. [PR #669](https://github.com/shakacode/shakapacker/pull/669) by [justin808](https://github.com/justin808).
