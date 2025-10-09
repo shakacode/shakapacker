@@ -112,20 +112,27 @@ export class YamlSerializer {
     // Get function source code
     const source = fn.toString()
 
-    // Compact the source: remove extra whitespace but keep it readable
-    let compacted = source
-      .split("\n")
-      .map((line) => line.trim())
-      .filter((line) => line.length > 0)
-      .join(" ")
+    // Pretty-print function: maintain readable formatting
+    const lines = source.split("\n")
 
-    // For very long functions, truncate with ellipsis
-    if (compacted.length > 500) {
-      compacted = compacted.substring(0, 500) + "..."
-    }
+    // For very long functions, truncate
+    const maxLines = 50
+    const truncated = lines.length > maxLines
+    const displayLines = truncated ? lines.slice(0, maxLines) : lines
 
-    // Use serializeString to properly escape the function source
-    return this.serializeString(compacted)
+    // Clean up indentation while preserving structure
+    const minIndent = Math.min(
+      ...displayLines
+        .filter((l) => l.trim().length > 0)
+        .map((l) => l.match(/^\s*/)?.[0].length || 0)
+    )
+
+    const formatted =
+      displayLines.map((line) => line.substring(minIndent)).join("\n") +
+      (truncated ? "\n..." : "")
+
+    // Use serializeString to properly handle multiline
+    return this.serializeString(formatted)
   }
 
   private serializeArray(arr: any[], indent: number, keyPath: string): string {
@@ -141,17 +148,31 @@ export class YamlSerializer {
       const itemPath = `${keyPath}[${index}]`
       const serialized = this.serializeValue(item, indent + 4, itemPath)
 
+      // Add documentation for array items if available
+      if (this.annotate) {
+        const doc = getDocForKey(itemPath)
+        if (doc) {
+          lines.push(`${itemIndent}# ${doc}`)
+        }
+      }
+
       if (typeof item === "object" && !Array.isArray(item) && item !== null) {
         // For objects in arrays, emit marker on its own line and indent content
         lines.push(`${itemIndent}-`)
         serialized.split("\n").forEach((line: string) => {
-          lines.push(contentIndent + line)
+          if (line.trim().length > 0) {
+            // Skip empty lines
+            lines.push(contentIndent + line)
+          }
         })
       } else if (serialized.includes("\n")) {
         // For multiline values, emit marker on its own line and indent content
         lines.push(`${itemIndent}-`)
         serialized.split("\n").forEach((line: string) => {
-          lines.push(contentIndent + line)
+          if (line.trim().length > 0) {
+            // Skip empty lines
+            lines.push(contentIndent + line)
+          }
         })
       } else {
         // For simple values, keep on same line

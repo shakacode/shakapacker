@@ -16,6 +16,9 @@ gemfiles/*.lock
 .yalc
 yalc.lock
 
+# Config exporter output directory
+shakapacker-config-exports/
+
 # TypeScript generated files
 package/**/*.d.ts
 package/**/*.d.ts.map

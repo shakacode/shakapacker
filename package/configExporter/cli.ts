@@ -174,7 +174,8 @@ async function runDoctorMode(
     "production"
   ]
   const fileWriter = new FileWriter()
-  const targetDir = options.saveDir || process.cwd()
+  const defaultDir = resolve(process.cwd(), "shakapacker-config-exports")
+  const targetDir = options.saveDir || defaultDir
 
   for (const env of environments) {
     const configs = await loadConfigsForEnv(env, options, appRoot)
@@ -279,8 +280,18 @@ async function loadConfigsForEnv(
     require("ts-node/register/transpile-only")
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
-  delete require.cache[require.resolve(configFile)]
+  // Clear require cache for config file and all related modules
+  // This is critical for loading different environments in the same process
+  Object.keys(require.cache).forEach((key) => {
+    if (
+      key.includes("webpack.config") ||
+      key.includes("rspack.config") ||
+      key === configFile
+    ) {
+      delete require.cache[key]
+    }
+  })
+
   // eslint-disable-next-line @typescript-eslint/no-var-requires
   let loadedConfig = require(configFile)
 
