@@ -21,7 +21,7 @@ try {
     cwd: process.cwd()
   })
   process.exit(0)
-} catch (error) {
+} catch {
   // Type checking failed
   process.exit(1)
 }
