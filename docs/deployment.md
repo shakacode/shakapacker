@@ -26,26 +26,28 @@ Your production build process is responsible for installing your JavaScript depe
 
 ### Custom Rails Environments (e.g., staging)
 
-When deploying to custom Rails environments like `staging`, you don't need to add that environment to your `shakapacker.yml` file. Shakapacker automatically falls back to sensible defaults:
+When deploying to custom Rails environments like `staging`, you don't need to add that environment to your `shakapacker.yml` file. Shakapacker automatically falls back to production-like defaults:
 
 1. First, it looks for the environment you're deploying to (e.g., `staging`)
-2. If not found, it falls back to `development` configuration
+2. If not found, it falls back to `production` configuration
 3. If that's not found, it falls back to `default` configuration
 
-This means you can deploy to Heroku staging environments without modifying your configuration:
+This means you can deploy to Heroku staging environments without modifying your configuration - staging will use production settings by default:
 
 ```bash
 # This works even without a "staging" section in shakapacker.yml
+# Staging will automatically use production configuration
 heroku config:set RAILS_ENV=staging -a my-app-staging
 ```
 
-**Note:** If you want staging-specific configuration (like caching manifests), you can explicitly add a `staging` section to your `config/shakapacker.yml`:
+**Note:** If you want staging-specific configuration (different from production), you can explicitly add a `staging` section to your `config/shakapacker.yml`:
 
 ```yaml
 staging:
   <<: *default
   compile: false
   cache_manifest: true
+  # Any staging-specific overrides here
 ```
 
 ## Nginx

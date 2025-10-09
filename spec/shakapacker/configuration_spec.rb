@@ -429,8 +429,8 @@ describe "Shakapacker::Configuration" do
       )
     end
 
-    it "#cache_manifest? fall back to 'development' config from bundled file" do
-      expect(config.cache_manifest?).to be false
+    it "#cache_manifest? falls back to 'production' config from bundled file" do
+      expect(config.cache_manifest?).to be true
     end
 
     it "#shakapacker_precompile? use 'staging' config from custom file" do
@@ -625,7 +625,7 @@ describe "Shakapacker::Configuration" do
       )
     end
 
-    it "falls back to development environment without raising error" do
+    it "falls back to production environment without raising error" do
       expect { config.compile? }.not_to raise_error
     end
 
@@ -633,17 +633,17 @@ describe "Shakapacker::Configuration" do
       expect { config.fetch(:source_path) }.not_to raise_error
     end
 
-    it "logs a warning about the fallback" do
+    it "logs a warning about the fallback to production" do
       # Reset memoized data to trigger load again
       config.instance_variable_set(:@data, nil)
       expect(Shakapacker.logger).to receive(:info).with(
-        /Shakapacker environment 'staging' not found.*falling back to 'default'/
+        /Shakapacker environment 'staging' not found.*falling back to 'production'/
       )
       config.compile?
     end
 
-    it "returns configuration from default section" do
-      # The shakapacker_no_precompile.yml file has shakapacker_precompile: false in default
+    it "returns configuration from production section" do
+      # The shakapacker_no_precompile.yml file has shakapacker_precompile: false (from default, inherited by production)
       expect(config.shakapacker_precompile?).to be false
     end
   end
@@ -674,7 +674,7 @@ describe "Shakapacker::Configuration" do
     it "logs when falling back to empty configuration" do
       test_config = Tempfile.new(["shakapacker", ".yml"])
       test_config.write(<<~YAML)
-        production:
+        development:
           source_path: app/javascript
       YAML
       test_config.rewind

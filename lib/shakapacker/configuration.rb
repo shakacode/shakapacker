@@ -257,11 +257,12 @@ class Shakapacker::Configuration
       end
 
       # Try to find environment-specific configuration with fallback
+      # Fallback order: requested env → production → default → empty
       if config[env]
         env_config = config[env]
-      elsif config[Shakapacker::DEFAULT_ENV]
-        log_fallback(env, Shakapacker::DEFAULT_ENV)
-        env_config = config[Shakapacker::DEFAULT_ENV]
+      elsif config["production"]
+        log_fallback(env, "production")
+        env_config = config["production"]
       elsif config["default"]
         log_fallback(env, "default")
         env_config = config["default"]
@@ -295,7 +296,8 @@ class Shakapacker::Configuration
         rescue ArgumentError
           YAML.load_file(path)
         end
-        HashWithIndifferentAccess.new(config[env] || config[Shakapacker::DEFAULT_ENV])
+        # Fallback to production for unknown environments, then development
+        HashWithIndifferentAccess.new(config[env] || config["production"] || config[Shakapacker::DEFAULT_ENV])
       end
     end
 
