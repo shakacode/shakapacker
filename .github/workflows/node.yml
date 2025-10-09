@@ -3,7 +3,7 @@ name: Node based checks
 on:
   push:
     branches:
-      - 'main'
+      - "main"
   pull_request:
 
 concurrency:
@@ -30,6 +30,12 @@ jobs:
 
       - name: Node eslint
         run: yarn lint
+
+      - name: Detect dead code
+        run: yarn knip
+
+      - name: Detect dead code in production
+        run: yarn knip:production
 
   type-check:
     name: TypeScript Type Checking
