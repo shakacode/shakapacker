@@ -5,17 +5,23 @@ require "semantic_range"
 
 module Shakapacker
   class Doctor
-    attr_reader :config, :root_path, :issues, :warnings, :info
+    attr_reader :config, :root_path, :issues, :warnings, :info, :options
 
-    def initialize(config = nil, root_path = nil)
+    def initialize(config = nil, root_path = nil, options = {})
       @config = config || Shakapacker.config
       @root_path = root_path || (defined?(Rails) ? Rails.root : Pathname.new(Dir.pwd))
       @issues = []
       @warnings = []
       @info = []
+      @options = options
     end
 
     def run
+      if options[:help]
+        print_help
+        return
+      end
+
       perform_checks
       report_results
     end
@@ -25,6 +31,37 @@ module Shakapacker
     end
 
     private
+
+      def print_help
+        puts <<~HELP
+          Shakapacker Doctor - Diagnostic tool for Shakapacker configuration
+
+          Usage:
+            bin/rails shakapacker:doctor [options]
+
+          Options:
+            --help       Show this help message
+            --verbose    Show detailed information about all checks
+
+          Description:
+            The doctor command checks for common configuration issues and missing
+            dependencies in your Shakapacker setup, including:
+
+            • Configuration file validity
+            • Entry points and output paths
+            • Node.js and package manager installation
+            • Required npm dependencies
+            • JavaScript transpiler configuration
+            • CSS and CSS Modules setup
+            • Binstubs presence
+            • Version consistency
+            • Legacy file detection
+
+          Exit codes:
+            0 - No issues found
+            1 - Issues detected (see output for details)
+        HELP
+      end
 
       def perform_checks
         # Core configuration checks
@@ -782,24 +819,66 @@ module Shakapacker
 
         private
 
+          def verbose?
+            doctor.options[:verbose]
+          end
+
           def print_header
             puts "Running Shakapacker doctor..."
             puts "=" * 60
+            if verbose?
+              puts "Mode: Verbose (showing all checks)"
+              puts ""
+            end
           end
 
           def print_checks
             if doctor.config.config_path.exist?
               config_relative_path = doctor.config.config_path.relative_path_from(doctor.root_path)
               puts "✓ Configuration file found (#{config_relative_path})"
+              if verbose?
+                puts "  Assets bundler: #{doctor.config.assets_bundler}"
+                puts "  Source path: #{doctor.config.source_path.relative_path_from(doctor.root_path)}"
+                puts "  Public output path: #{doctor.config.public_output_path.relative_path_from(doctor.root_path)}"
+              end
               print_transpiler_status
               print_bundler_status
               print_css_status
+            elsif verbose?
+              puts "✗ Configuration file not found"
             end
 
             print_node_status
             print_package_manager_status
             print_binstub_status
+            print_verbose_checks if verbose?
             print_info_messages
+          end
+
+          def print_verbose_checks
+            puts "\nVerbose diagnostics:"
+
+            # Show environment info
+            rails_env = defined?(Rails) ? Rails.env : ENV["RAILS_ENV"]
+            node_env = ENV["NODE_ENV"]
+            puts "  • Rails environment: #{rails_env || 'not set'}"
+            puts "  • Node environment: #{node_env || 'not set'}"
+
+            # Show gem/npm versions
+            if doctor.send(:package_json_exists?)
+              package_json = doctor.send(:read_package_json)
+              npm_version = package_json.dig("dependencies", "shakapacker") ||
+                           package_json.dig("devDependencies", "shakapacker")
+              puts "  • Shakapacker gem version: #{Shakapacker::VERSION}"
+              puts "  • Shakapacker npm version: #{npm_version || 'not installed'}"
+            end
+
+            # Show paths
+            puts "  • Root path: #{doctor.root_path}"
+            if doctor.config.config_path.exist?
+              puts "  • Cache path: #{doctor.config.cache_path}"
+              puts "  • Manifest path: #{doctor.config.manifest_path}"
+            end
           end
 
           def print_transpiler_status
