@@ -25,7 +25,7 @@ The task will:
 1. Pull latest changes and bump versions
 2. Publish to npm (requires OTP)
 3. Publish to RubyGems (requires OTP)
-4. Update spec/dummy lockfiles (runs bundle install and yarn install)
+4. Update spec/dummy lockfiles (runs bundle install and npm install)
 5. Commit and push the lockfile updates
 
 Note, accept defaults for npmjs options. Script will pause to get 2FA tokens.
@@ -76,11 +76,11 @@ task :create_release, %i[gem_version dry_run] do |_t, args|
   puts "Updating spec/dummy dependencies"
   puts "ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ"
   Shakapacker::Utils::Misc.sh_in_dir(spec_dummy_dir, "bundle install") unless is_dry_run
-  # Note: spec/dummy uses yarn as defined in its packageManager field
-  Shakapacker::Utils::Misc.sh_in_dir(spec_dummy_dir, "yarn install") unless is_dry_run
+  # Note: spec/dummy uses npm as defined in its packageManager field
+  Shakapacker::Utils::Misc.sh_in_dir(spec_dummy_dir, "npm install") unless is_dry_run
 
   # Check if there are changes to spec/dummy lockfiles and commit them
-  # Note: We check all lockfiles because yarn maintains both yarn.lock and package-lock.json for compatibility
+  # Note: We check both npm and yarn lockfiles since the project supports multiple package managers for testing
   require "shellwords"
   lockfiles = ["spec/dummy/Gemfile.lock", "spec/dummy/package-lock.json", "spec/dummy/yarn.lock"]
   existing_lockfiles = lockfiles.select { |f| File.exist?(File.join(gem_root, f)) }

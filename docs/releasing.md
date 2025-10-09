@@ -65,7 +65,7 @@ The `create_release` task automatically:
    - Prompts for RubyGems OTP (2FA code)
 5. **Updates spec/dummy lockfiles:**
    - Runs `bundle install` to update `Gemfile.lock`
-   - Runs `yarn install` to update `yarn.lock` and `package-lock.json` (yarn maintains both for compatibility)
+   - Runs `npm install` to update `package-lock.json` (yarn.lock may also be updated for multi-package-manager compatibility testing)
 6. **Commits and pushes lockfile changes** automatically
 
 ### 4. Version Format
@@ -181,7 +181,7 @@ If you need to release manually (not recommended):
    ```bash
    cd spec/dummy
    bundle install
-   yarn install
+   npm install
    cd ../..
    git add spec/dummy/Gemfile.lock spec/dummy/package-lock.json spec/dummy/yarn.lock
    git commit -m 'Update spec/dummy lockfiles after release'
