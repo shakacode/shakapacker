@@ -294,8 +294,9 @@ class Shakapacker::Configuration
         rescue ArgumentError
           YAML.load_file(path)
         end
-        # Fallback to production for unknown environments, then development
-        HashWithIndifferentAccess.new(config[env] || config["production"] || config[Shakapacker::DEFAULT_ENV])
+        # Use the requested environment from bundled config, fallback to production
+        # (bundled config always has development, test, and production sections)
+        HashWithIndifferentAccess.new(config[env] || config["production"])
       end
     end
 
