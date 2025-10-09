@@ -24,6 +24,13 @@ module Shakapacker
     ENV["NODE_ENV"] = original
   end
 
+  # Set NODE_ENV based on RAILS_ENV if not already set
+  # - development/test environments use their RAILS_ENV value
+  # - all other environments (production, staging, etc.) use "production" for webpack optimizations
+  def ensure_node_env!
+    ENV["NODE_ENV"] ||= %w[development test].include?(ENV["RAILS_ENV"]) ? ENV["RAILS_ENV"] : "production"
+  end
+
   def ensure_log_goes_to_stdout
     old_logger = Shakapacker.logger
     Shakapacker.logger = Logger.new(STDOUT)
