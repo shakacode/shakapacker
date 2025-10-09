@@ -1,7 +1,33 @@
 require "shakapacker/doctor"
 
 namespace :shakapacker do
-  desc "Checks for common Shakapacker configuration issues and missing dependencies"
+  desc <<~DESC
+    Checks for common Shakapacker configuration issues and missing dependencies
+
+    Performs comprehensive diagnostics including:
+    • Configuration file validity and deprecated settings
+    • Entry points, output paths, and asset compilation status
+    • Node.js and package manager installation
+    • Required and optional npm dependencies
+    • JavaScript transpiler (Babel, SWC, esbuild) configuration
+    • CSS, CSS Modules, and stylesheet preprocessor setup
+    • Binstubs presence (shakapacker, shakapacker-dev-server, export-bundler-config)
+    • Version consistency between gem and npm package
+    • Legacy Webpacker file detection
+
+    Options:
+      --help       Show detailed help and usage information
+      --verbose    Display additional diagnostic details (paths, versions, environment)
+
+    Examples:
+      bin/rails shakapacker:doctor
+      bin/rails shakapacker:doctor --verbose
+      bin/rails shakapacker:doctor --help
+
+    Exit codes:
+      0 - No issues found
+      1 - Issues or warnings detected (see output for details)
+  DESC
   task doctor: :environment do
     # Parse command-line options
     options = {}
