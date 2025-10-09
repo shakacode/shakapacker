@@ -47,6 +47,5 @@
     "webpack-dev-server": "^5.2.2",
     "@rspack/dev-server": "^1.1.4",
     "@rspack/plugin-react-refresh": "^1.5.1"
-  },
-  "packageManager": "npm@10.9.0"
+  }
 }

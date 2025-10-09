@@ -76,7 +76,7 @@ task :create_release, %i[gem_version dry_run] do |_t, args|
   puts "Updating spec/dummy dependencies"
   puts "ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ"
   Shakapacker::Utils::Misc.sh_in_dir(spec_dummy_dir, "bundle install") unless is_dry_run
-  # Note: spec/dummy uses npm as defined in its packageManager field
+  # Note: spec/dummy uses npm (matching CI configuration)
   Shakapacker::Utils::Misc.sh_in_dir(spec_dummy_dir, "npm install") unless is_dry_run
 
   # Check if there are changes to spec/dummy lockfiles and commit them
