@@ -159,21 +159,21 @@ export class YamlSerializer {
       if (typeof item === "object" && !Array.isArray(item) && item !== null) {
         // For objects in arrays, emit marker on its own line and indent content
         lines.push(`${itemIndent}-`)
-        serialized.split("\n").forEach((line: string) => {
-          if (line.trim().length > 0) {
-            // Skip empty lines
+        serialized
+          .split("\n")
+          .filter((line: string) => line.trim().length > 0)
+          .forEach((line: string) => {
             lines.push(contentIndent + line)
-          }
-        })
+          })
       } else if (serialized.includes("\n")) {
         // For multiline values, emit marker on its own line and indent content
         lines.push(`${itemIndent}-`)
-        serialized.split("\n").forEach((line: string) => {
-          if (line.trim().length > 0) {
-            // Skip empty lines
+        serialized
+          .split("\n")
+          .filter((line: string) => line.trim().length > 0)
+          .forEach((line: string) => {
             lines.push(contentIndent + line)
-          }
-        })
+          })
       } else {
         // For simple values, keep on same line
         lines.push(`${itemIndent}- ${serialized}`)
