@@ -269,6 +269,34 @@ bin/shakapacker --mode production
 3. **Enable Caching:** Rspack has built-in persistent caching
 4. **Use SWC:** The built-in SWC loader is significantly faster than Babel
 
+## Debugging Configuration
+
+To compare your webpack and rspack configurations during migration:
+
+```bash
+# Export webpack configs before switching
+bin/export-bundler-config --doctor
+
+# Switch to rspack
+rails shakapacker:switch_bundler rspack --install-deps
+
+# Export rspack configs to compare
+bin/export-bundler-config --doctor
+
+# Compare the files in shakapacker-config-exports/
+diff shakapacker-config-exports/webpack-production-client.yaml \
+     shakapacker-config-exports/rspack-production-client.yaml
+```
+
+The config export utility creates annotated YAML files that make it easy to:
+
+- Verify plugin replacements are correct
+- Compare loader configurations
+- Identify missing or different options
+- Debug configuration issues
+
+See the [Troubleshooting Guide](./troubleshooting.md#exporting-webpack--rspack-configuration) for more details.
+
 ## Resources
 
 - [Rspack Documentation](https://rspack.rs)

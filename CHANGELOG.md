@@ -11,6 +11,8 @@
 
 Changes since the last non-beta release.
 
+## [v9.1.1] - October 9, 2025
+
 ### Added
 
 - **New config export utility for debugging webpack/rspack configurations** [PR #647](https://github.com/shakacode/shakapacker/pull/647) by [justin808](https://github.com/justin808).
@@ -27,6 +29,7 @@ Changes since the last non-beta release.
     - Sanitizes filenames to prevent path traversal
     - Helpful `.gitignore` suggestions
   - **Usage:** `bin/export-bundler-config --doctor` or `bundle exec rake shakapacker:export_bundler_config`
+  - Works seamlessly with `rake shakapacker:switch_bundler` for comparing webpack vs rspack configs
   - Lays groundwork for future config diff feature (tracked in [#667](https://github.com/shakacode/shakapacker/issues/667))
 
 ### Fixed
