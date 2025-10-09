@@ -24,7 +24,7 @@ module Shakapacker
     ].freeze
     def self.run(argv)
       $stdout.sync = true
-      ENV["NODE_ENV"] ||= (ENV["RAILS_ENV"] == "production") ? "production" : "development"
+      ENV["NODE_ENV"] ||= %w[development test].include?(ENV["RAILS_ENV"]) ? ENV["RAILS_ENV"] : "production"
 
       # Create a single runner instance to avoid loading configuration twice.
       # We extend it with the appropriate build command based on the bundler type.
