@@ -532,6 +532,12 @@ async function autoDetectBundler(
       const config: any = loadYaml(readFileSync(configPath, "utf8"))
       const envConfig = config[env] || config.default || {}
       const bundler = envConfig.assets_bundler || "webpack"
+      if (bundler !== "webpack" && bundler !== "rspack") {
+        console.warn(
+          `[Config Exporter] Invalid bundler '${bundler}' in shakapacker.yml, defaulting to webpack`
+        )
+        return "webpack"
+      }
       console.log(`[Config Exporter] Auto-detected bundler: ${bundler}`)
       return bundler
     }
