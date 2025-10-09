@@ -429,8 +429,8 @@ describe "Shakapacker::Configuration" do
       )
     end
 
-    it "#cache_manifest? fall back to 'development' config from bundled file" do
-      expect(config.cache_manifest?).to be false
+    it "#cache_manifest? falls back to 'production' config from bundled file" do
+      expect(config.cache_manifest?).to be true
     end
 
     it "#shakapacker_precompile? use 'staging' config from custom file" do
@@ -613,6 +613,85 @@ describe "Shakapacker::Configuration" do
         expect($stderr).to receive(:puts).with(/DEPRECATION WARNING.*webpack_loader.*deprecated.*javascript_transpiler/)
         expect(config.javascript_transpiler).to eq "swc"
       end
+    end
+  end
+
+  context "with missing environment in config file" do
+    let(:config) do
+      Shakapacker::Configuration.new(
+        root_path: ROOT_PATH,
+        config_path: Pathname.new(File.expand_path("./test_app/config/shakapacker_no_precompile.yml", __dir__)),
+        env: "staging"
+      )
+    end
+
+    it "falls back to production environment without raising error" do
+      expect { config.compile? }.not_to raise_error
+    end
+
+    it "does not raise NoMethodError for deep_symbolize_keys on missing environment" do
+      expect { config.fetch(:source_path) }.not_to raise_error
+    end
+
+    it "logs a warning about the fallback to production" do
+      # Reset memoized data to trigger load again
+      config.instance_variable_set(:@data, nil)
+      expect(Shakapacker.logger).to receive(:info).with(
+        /Shakapacker environment 'staging' not found.*falling back to 'production'/
+      )
+      config.compile?
+    end
+
+    it "returns configuration from production section" do
+      # The shakapacker_no_precompile.yml file has shakapacker_precompile: false (from default, inherited by production)
+      expect(config.shakapacker_precompile?).to be false
+    end
+  end
+
+  context "with completely missing environment and no default section" do
+    it "handles missing default section gracefully" do
+      # Create a minimal config file with no default or development sections
+      test_config = Tempfile.new(["shakapacker", ".yml"])
+      test_config.write(<<~YAML)
+        production:
+          source_path: app/javascript
+      YAML
+      test_config.rewind
+
+      config = Shakapacker::Configuration.new(
+        root_path: ROOT_PATH,
+        config_path: Pathname.new(test_config.path),
+        env: "staging"
+      )
+
+      # Should not raise error, should return empty config
+      expect { config.fetch(:source_path) }.not_to raise_error
+
+      test_config.close
+      test_config.unlink
+    end
+
+    it "logs when falling back to bundled defaults" do
+      test_config = Tempfile.new(["shakapacker", ".yml"])
+      test_config.write(<<~YAML)
+        development:
+          source_path: app/javascript
+      YAML
+      test_config.rewind
+
+      config = Shakapacker::Configuration.new(
+        root_path: ROOT_PATH,
+        config_path: Pathname.new(test_config.path),
+        env: "staging"
+      )
+
+      expect(Shakapacker.logger).to receive(:info).with(
+        /Shakapacker environment 'staging' not found.*falling back to 'none \(will use bundled defaults\)'/
+      )
+      config.fetch(:source_path)
+
+      test_config.close
+      test_config.unlink
     end
   end
 end

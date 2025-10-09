@@ -6,7 +6,7 @@ module Shakapacker
   class RspackRunner < Shakapacker::Runner
     def self.run(argv)
       $stdout.sync = true
-      ENV["NODE_ENV"] ||= (ENV["RAILS_ENV"] == "production") ? "production" : "development"
+      Shakapacker.ensure_node_env!
       new(argv).run
     end
 

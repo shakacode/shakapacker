@@ -3,8 +3,6 @@
 Shakapacker hooks up a new `shakapacker:compile` task to `assets:precompile`, which gets run whenever you run `assets:precompile`.
 If you are not using Sprockets `shakapacker:compile` is automatically aliased to `assets:precompile`.
 
-```
-
 ## Heroku
 
 In order for your Shakapacker app to run on Heroku, you'll need to do a bit of configuration before hand.
@@ -19,12 +17,58 @@ git push heroku master
 
 We're essentially doing the following here:
 
-* Creating an app on Heroku
-* Creating a Postgres database for the app (this is assuming that you're using Heroku Postgres for your app)
-* Adding the Heroku NodeJS and Ruby buildpacks for your app. This allows the `npm` or `yarn` executables to properly function when compiling your app - as well as Ruby.
-* Pushing your code to Heroku and kicking off the deployment
+- Creating an app on Heroku
+- Creating a Postgres database for the app (this is assuming that you're using Heroku Postgres for your app)
+- Adding the Heroku NodeJS and Ruby buildpacks for your app. This allows the `npm` or `yarn` executables to properly function when compiling your app - as well as Ruby.
+- Pushing your code to Heroku and kicking off the deployment
 
 Your production build process is responsible for installing your JavaScript dependencies before `rake assets:precompile`. For example, if you are on Heroku, the `heroku/nodejs` buildpack must run **prior** to the `heroku/ruby` buildpack for precompilation to run successfully.
+
+### Custom Rails Environments (e.g., staging)
+
+**Key distinction:**
+
+- **RAILS_ENV** is used to look up configuration in `config/shakapacker.yml`
+- **NODE_ENV** is used by your `webpack.config.js` (or `rspack.config.js`) for build optimizations
+
+**Good news:** As of this version, `bin/shakapacker` automatically sets `NODE_ENV=production` for custom environments like staging:
+
+```bash
+# NODE_ENV automatically set to 'production' for staging
+RAILS_ENV=staging bin/shakapacker
+
+# Also works with rake task
+RAILS_ENV=staging bundle exec rails assets:precompile
+```
+
+**How it works:**
+
+- `RAILS_ENV=development` → `NODE_ENV=development`
+- `RAILS_ENV=test` → `NODE_ENV=test`
+- `RAILS_ENV=production` → `NODE_ENV=production`
+- Any other custom env → `NODE_ENV=production`
+
+**Configuration fallback:**
+
+You don't need to add custom environments to your `shakapacker.yml`. Shakapacker automatically falls back to production-like defaults:
+
+1. First, it looks for the environment you're deploying to (e.g., `staging`)
+2. If not found, it falls back to `production` configuration
+
+This means staging environments automatically use production settings (compile: false, cache_manifest: true, etc.).
+
+**Optional: Staging-specific configuration**
+
+If you want different settings for staging, explicitly add a `staging` section:
+
+```yaml
+staging:
+  <<: *default
+  compile: false
+  cache_manifest: true
+  # Staging-specific overrides (e.g., different output path)
+  public_output_path: packs-staging
+```
 
 ## Nginx
 
@@ -117,10 +161,10 @@ namespace :deploy do
   desc "Run rake js install"
   task :js_install do
     require "package_json"
-    
+
     # this will use the package manager specified via `packageManager`, or otherwise fallback to `npm`
     native_js_install_command = PackageJson.read.manager.native_install_command(frozen: true).join(" ")
-    
+
     on roles(:web) do
       within release_path do
         execute("cd #{release_path} && #{native_js_install_command}")

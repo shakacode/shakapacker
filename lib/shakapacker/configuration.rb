@@ -255,7 +255,21 @@ class Shakapacker::Configuration
       rescue ArgumentError
         YAML.load_file(config_path.to_s)
       end
-      symbolized_config = config[env].deep_symbolize_keys
+
+      # Try to find environment-specific configuration with fallback
+      # Fallback order: requested env → production
+      if config[env]
+        env_config = config[env]
+      elsif config["production"]
+        log_fallback(env, "production")
+        env_config = config["production"]
+      else
+        # No suitable configuration found - rely on bundled defaults
+        log_fallback(env, "none (will use bundled defaults)")
+        env_config = nil
+      end
+
+      symbolized_config = env_config&.deep_symbolize_keys || {}
 
       return symbolized_config
     rescue Errno::ENOENT => e
@@ -280,7 +294,10 @@ class Shakapacker::Configuration
         rescue ArgumentError
           YAML.load_file(path)
         end
-        HashWithIndifferentAccess.new(config[env] || config[Shakapacker::DEFAULT_ENV])
+        # Load defaults from bundled shakapacker.yml (always has all environments)
+        # Note: This differs from load() which reads user's config and may be missing environments
+        # Fallback to production ensures staging and other custom envs get production-like defaults
+        HashWithIndifferentAccess.new(config[env] || config["production"])
       end
     end
 
@@ -288,5 +305,14 @@ class Shakapacker::Configuration
       return ".#{path}" if path.start_with?("/")
 
       path
+    end
+
+    def log_fallback(requested_env, fallback_env)
+      return unless Shakapacker.logger
+
+      Shakapacker.logger.info(
+        "Shakapacker environment '#{requested_env}' not found in #{config_path}, " \
+        "falling back to '#{fallback_env}'"
+      )
     end
 end
