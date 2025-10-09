@@ -109,7 +109,7 @@ module Shakapacker
           begin
             manifest_content = JSON.parse(File.read(manifest_path))
             if manifest_content.empty?
-              @warnings << "Manifest file is empty - you may need to run 'rails assets:precompile'"
+              @warnings << "Manifest file is empty - you may need to run 'bin/rails assets:precompile'"
             end
           rescue JSON::ParserError
             @issues << "Manifest file #{manifest_path} contains invalid JSON"
@@ -125,13 +125,15 @@ module Shakapacker
 
       def check_deprecated_config
         config_file = File.read(config.config_path)
+        config_relative_path = config.config_path.relative_path_from(root_path)
 
         if config_file.include?("webpack_loader:")
-          @warnings << "Deprecated config: 'webpack_loader' should be renamed to 'javascript_transpiler'"
+          @warnings << "Deprecated config: 'webpack_loader' should be renamed to 'javascript_transpiler' in #{config_relative_path}"
         end
 
         if config_file.include?("bundler:")
-          @warnings << "Deprecated config: 'bundler' should be renamed to 'assets_bundler'"
+          @warnings << "Deprecated config: 'bundler' should be renamed to 'assets_bundler' in #{config_relative_path}"
+          @warnings << "  Fix: Open #{config_relative_path} and change 'bundler:' to 'assets_bundler:'"
         end
       rescue => e
         # Ignore read errors as config file check already handles missing file
@@ -263,15 +265,15 @@ module Shakapacker
           if source_files.any?
             newest_source = source_files.map { |f| File.mtime(f) }.max
             if newest_source > File.mtime(manifest_path)
-              @warnings << "Source files have been modified after last asset compilation. Run 'rails assets:precompile'"
+              @warnings << "Source files have been modified after last asset compilation. Run 'bin/rails assets:precompile'"
             end
           end
         else
           rails_env = defined?(Rails) ? Rails.env : ENV["RAILS_ENV"]
           if rails_env == "production"
-            @issues << "No compiled assets found (manifest.json missing). Run 'rails assets:precompile'"
+            @issues << "No compiled assets found (manifest.json missing). Run 'bin/rails assets:precompile'"
           else
-            @info << "Assets not yet compiled. Run 'rails assets:precompile' or start the dev server"
+            @info << "Assets not yet compiled. Run 'bin/rails assets:precompile' or start the dev server"
           end
         end
       end
@@ -323,14 +325,22 @@ module Shakapacker
       end
 
       def check_binstub
-        binstub_path = root_path.join("bin/shakapacker")
-        unless binstub_path.exist?
-          @warnings << "Shakapacker binstub not found at bin/shakapacker. Run 'rails shakapacker:binstubs' to create it."
+        missing_binstubs = []
+
+        expected_binstubs = {
+          "bin/shakapacker" => "Main Shakapacker binstub",
+          "bin/shakapacker-dev-server" => "Development server binstub",
+          "bin/export-bundler-config" => "Config export binstub"
+        }
+
+        expected_binstubs.each do |path, description|
+          unless root_path.join(path).exist?
+            missing_binstubs << "#{path} (#{description})"
+          end
         end
 
-        export_config_binstub = root_path.join("bin/export-bundler-config")
-        unless export_config_binstub.exist?
-          @warnings << "Config export binstub not found at bin/export-bundler-config. Run 'rails shakapacker:binstubs' to create it."
+        unless missing_binstubs.empty?
+          @warnings << "Missing binstubs: #{missing_binstubs.join(', ')}. Run 'bin/rails shakapacker:binstubs' to create them."
         end
       end
 
@@ -559,8 +569,10 @@ module Shakapacker
 
           # Warn if CSS modules are used but no configuration is found (only once)
           if !no_explicit_config_warned && !config_content.match(/namedExport/) && !config_content.match(/exportLocalsConvention/)
-            @info << "CSS module files found but no explicit CSS modules configuration detected"
-            @info << "  v9 defaults: namedExport: true, exportLocalsConvention: 'camelCaseOnly'"
+            @info << "CSS module files (*.module.css, *.module.scss) found but no explicit CSS modules loader configuration detected in webpack config"
+            @info << "  Using Shakapacker v9 defaults: namedExport: true, exportLocalsConvention: 'camelCaseOnly'"
+            @info << "  This means you import CSS modules like: import { className } from './styles.module.css'"
+            @info << "  To customize, add modules: { namedExport: ..., exportLocalsConvention: ... } to your css-loader config"
             no_explicit_config_warned = true
           end
         end
@@ -780,7 +792,8 @@ module Shakapacker
 
           def print_checks
             if doctor.config.config_path.exist?
-              puts "✓ Configuration file found"
+              config_relative_path = doctor.config.config_path.relative_path_from(doctor.root_path)
+              puts "✓ Configuration file found (#{config_relative_path})"
               print_transpiler_status
               print_bundler_status
               print_css_status
@@ -845,15 +858,20 @@ module Shakapacker
           end
 
           def print_binstub_status
-            shakapacker_binstub = doctor.root_path.join("bin/shakapacker")
-            export_config_binstub = doctor.root_path.join("bin/export-bundler-config")
+            binstubs = [
+              "bin/shakapacker",
+              "bin/shakapacker-dev-server",
+              "bin/export-bundler-config"
+            ]
 
-            if shakapacker_binstub.exist? && export_config_binstub.exist?
-              puts "✓ Shakapacker binstubs found"
-            elsif shakapacker_binstub.exist?
-              puts "✓ Shakapacker binstub found (bin/shakapacker)"
-            elsif export_config_binstub.exist?
-              puts "✓ Config export binstub found (bin/export-bundler-config)"
+            existing_binstubs = binstubs.select { |b| doctor.root_path.join(b).exist? }
+
+            if existing_binstubs.length == binstubs.length
+              puts "✓ All Shakapacker binstubs found (#{existing_binstubs.join(', ')})"
+            elsif existing_binstubs.any?
+              existing_binstubs.each do |binstub|
+                puts "✓ #{binstub} found"
+              end
             end
           end
 

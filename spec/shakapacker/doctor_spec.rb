@@ -619,12 +619,14 @@ describe Shakapacker::Doctor do
 
   describe "binstub checks" do
     let(:binstub_path) { root_path.join("bin/shakapacker") }
+    let(:dev_server_binstub_path) { root_path.join("bin/shakapacker-dev-server") }
     let(:export_config_binstub_path) { root_path.join("bin/export-bundler-config") }
 
     context "when all binstubs exist" do
       before do
         FileUtils.mkdir_p(binstub_path.dirname)
         File.write(binstub_path, "#!/usr/bin/env ruby")
+        File.write(dev_server_binstub_path, "#!/usr/bin/env ruby")
         File.write(export_config_binstub_path, "#!/usr/bin/env node")
       end
 
@@ -637,12 +639,13 @@ describe Shakapacker::Doctor do
     context "when shakapacker binstub does not exist" do
       before do
         FileUtils.mkdir_p(binstub_path.dirname)
+        File.write(dev_server_binstub_path, "#!/usr/bin/env ruby")
         File.write(export_config_binstub_path, "#!/usr/bin/env node")
       end
 
-      it "adds shakapacker binstub warning" do
+      it "adds missing binstubs warning" do
         doctor.send(:check_binstub)
-        expect(doctor.warnings).to include(match(/Shakapacker binstub not found/))
+        expect(doctor.warnings).to include(match(/Missing binstubs:.*bin\/shakapacker/))
       end
     end
 
@@ -650,19 +653,19 @@ describe Shakapacker::Doctor do
       before do
         FileUtils.mkdir_p(binstub_path.dirname)
         File.write(binstub_path, "#!/usr/bin/env ruby")
+        File.write(dev_server_binstub_path, "#!/usr/bin/env ruby")
       end
 
-      it "adds config export binstub warning" do
+      it "adds missing binstubs warning" do
         doctor.send(:check_binstub)
-        expect(doctor.warnings).to include(match(/Config export binstub not found/))
+        expect(doctor.warnings).to include(match(/Missing binstubs:.*bin\/export-bundler-config/))
       end
     end
 
     context "when no binstubs exist" do
-      it "adds both binstub warnings" do
+      it "adds missing binstubs warning for all three" do
         doctor.send(:check_binstub)
-        expect(doctor.warnings).to include(match(/Shakapacker binstub not found/))
-        expect(doctor.warnings).to include(match(/Config export binstub not found/))
+        expect(doctor.warnings).to include(match(/Missing binstubs:.*bin\/shakapacker.*bin\/shakapacker-dev-server.*bin\/export-bundler-config/))
       end
     end
   end
@@ -1288,8 +1291,8 @@ describe Shakapacker::Doctor do
 
         it "adds info about default v9 configuration" do
           doctor.send(:check_css_modules_configuration)
-          expect(doctor.info).to include(match(/CSS module files found but no explicit CSS modules configuration/))
-          expect(doctor.info).to include(match(/v9 defaults: namedExport: true, exportLocalsConvention: 'camelCaseOnly'/))
+          expect(doctor.info).to include(match(/CSS module files.*found but no explicit CSS modules.*configuration/))
+          expect(doctor.info).to include(match(/Shakapacker v9 defaults: namedExport: true, exportLocalsConvention: 'camelCaseOnly'/))
         end
       end
 
