@@ -308,11 +308,18 @@ class Shakapacker::Configuration
     end
 
     def log_fallback(requested_env, fallback_env)
-      return unless Shakapacker.logger
+      # Don't try to log if we're being called from a context without Rails
+      # This avoids the circular dependency where logger tries to get instance
+      # which needs Rails to be defined
+      begin
+        return unless Shakapacker.respond_to?(:logger) && Shakapacker.logger
 
-      Shakapacker.logger.info(
-        "Shakapacker environment '#{requested_env}' not found in #{config_path}, " \
-        "falling back to '#{fallback_env}'"
-      )
+        Shakapacker.logger.info(
+          "Shakapacker environment '#{requested_env}' not found in #{config_path}, " \
+          "falling back to '#{fallback_env}'"
+        )
+      rescue NameError, NoMethodError
+        # Silently ignore if logger is not available (e.g., in standalone runner context)
+      end
     end
 end
