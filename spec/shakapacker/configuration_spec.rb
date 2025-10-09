@@ -671,7 +671,7 @@ describe "Shakapacker::Configuration" do
       test_config.unlink
     end
 
-    it "logs when falling back to empty configuration" do
+    it "logs when falling back to bundled defaults" do
       test_config = Tempfile.new(["shakapacker", ".yml"])
       test_config.write(<<~YAML)
         development:
@@ -686,7 +686,7 @@ describe "Shakapacker::Configuration" do
       )
 
       expect(Shakapacker.logger).to receive(:info).with(
-        /Shakapacker environment 'staging' not found.*falling back to 'none \(using empty configuration\)'/
+        /Shakapacker environment 'staging' not found.*falling back to 'none \(will use bundled defaults\)'/
       )
       config.fetch(:source_path)
 

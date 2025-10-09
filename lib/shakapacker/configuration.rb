@@ -257,17 +257,15 @@ class Shakapacker::Configuration
       end
 
       # Try to find environment-specific configuration with fallback
-      # Fallback order: requested env → production → default → empty
+      # Fallback order: requested env → production
       if config[env]
         env_config = config[env]
       elsif config["production"]
         log_fallback(env, "production")
         env_config = config["production"]
-      elsif config["default"]
-        log_fallback(env, "default")
-        env_config = config["default"]
       else
-        log_fallback(env, "none (using empty configuration)")
+        # No suitable configuration found - rely on bundled defaults
+        log_fallback(env, "none (will use bundled defaults)")
         env_config = nil
       end
 
