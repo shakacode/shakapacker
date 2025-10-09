@@ -80,7 +80,8 @@ task :create_release, %i[gem_version dry_run] do |_t, args|
   Shakapacker::Utils::Misc.sh_in_dir(spec_dummy_dir, "yarn install") unless is_dry_run
 
   # Check if there are changes to spec/dummy lockfiles and commit them
-  lockfiles = ["spec/dummy/Gemfile.lock", "spec/dummy/package-lock.json", "spec/dummy/yarn.lock"]
+  # Note: Only checking yarn.lock since we use yarn (not npm) per packageManager field
+  lockfiles = ["spec/dummy/Gemfile.lock", "spec/dummy/yarn.lock"]
   changed_lockfiles = lockfiles.select do |lockfile|
     changes_output = `git status --porcelain #{lockfile} 2>&1`
     !changes_output.strip.empty?
