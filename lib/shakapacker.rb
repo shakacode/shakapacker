@@ -7,6 +7,9 @@ module Shakapacker
   extend self
 
   DEFAULT_ENV = "development".freeze
+  # Environments that use their RAILS_ENV value for NODE_ENV
+  # All other environments (production, staging, etc.) use "production" for webpack optimizations
+  DEV_TEST_ENVS = %w[development test].freeze
 
   def instance=(instance)
     @instance = instance
@@ -28,7 +31,7 @@ module Shakapacker
   # - development/test environments use their RAILS_ENV value
   # - all other environments (production, staging, etc.) use "production" for webpack optimizations
   def ensure_node_env!
-    ENV["NODE_ENV"] ||= %w[development test].include?(ENV["RAILS_ENV"]) ? ENV["RAILS_ENV"] : "production"
+    ENV["NODE_ENV"] ||= DEV_TEST_ENVS.include?(ENV["RAILS_ENV"]) ? ENV["RAILS_ENV"] : "production"
   end
 
   def ensure_log_goes_to_stdout

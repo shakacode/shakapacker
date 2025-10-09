@@ -294,8 +294,9 @@ class Shakapacker::Configuration
         rescue ArgumentError
           YAML.load_file(path)
         end
-        # Use the requested environment from bundled config, fallback to production
-        # (bundled config always has development, test, and production sections)
+        # Load defaults from bundled shakapacker.yml (always has all environments)
+        # Note: This differs from load() which reads user's config and may be missing environments
+        # Fallback to production ensures staging and other custom envs get production-like defaults
         HashWithIndifferentAccess.new(config[env] || config["production"])
       end
     end
