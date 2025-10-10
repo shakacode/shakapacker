@@ -1021,8 +1021,8 @@ module Shakapacker
 
               if is_subitem
                 # Don't increment number for sub-items, but wrap long lines
-                # Indent sub-items to align with the message text (after the number)
-                subitem_prefix = "  #{category_prefix}      "
+                # Indent sub-items to align with the message text (no category prefix for sub-items)
+                subitem_prefix = "                     "  # 21 spaces to align with message text
                 wrapped = wrap_text(warning[:message], 100, subitem_prefix)
                 puts wrapped
               else
