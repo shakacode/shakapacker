@@ -510,9 +510,15 @@ describe Shakapacker::Doctor do
         File.utime(old_time, old_time, manifest_path)
       end
 
-      it "adds info about old compilation" do
+      it "adds info about old compilation in verbose mode" do
+        verbose_doctor = described_class.new(config, root_path, { verbose: true })
+        verbose_doctor.send(:check_assets_compilation)
+        expect(verbose_doctor.info).to include(match(/Assets were last compiled.*hours ago/))
+      end
+
+      it "does not show compilation age in normal mode" do
         doctor.send(:check_assets_compilation)
-        expect(doctor.info).to include(match(/Assets were last compiled.*hours ago/))
+        expect(doctor.info).to be_empty
       end
     end
 

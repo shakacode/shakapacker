@@ -313,7 +313,8 @@ module Shakapacker
           # Check if manifest is recent (within last 24 hours)
           manifest_age_hours = (Time.now - File.mtime(manifest_path)) / 3600
 
-          if manifest_age_hours > 24
+          if manifest_age_hours > 24 && options[:verbose]
+            # Only show age in verbose mode - it's not actionable information
             @info << "Assets were last compiled #{manifest_age_hours.round} hours ago. Consider recompiling if you've made changes."
           end
 
@@ -329,7 +330,8 @@ module Shakapacker
           rails_env = defined?(Rails) ? Rails.env : ENV["RAILS_ENV"]
           if rails_env == "production"
             @issues << "No compiled assets found (manifest.json missing). Run 'bin/rails assets:precompile'"
-          else
+          elsif options[:verbose]
+            # Only show in verbose mode for non-production environments
             @info << "Assets not yet compiled. Run 'bin/rails assets:precompile' or start the dev server"
           end
         end
