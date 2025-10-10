@@ -1,11 +1,181 @@
 # Configuration Diff Tool
 
-Shakapacker provides a powerful configuration diff tool to help you compare webpack/rspack configurations and identify differences. This is particularly useful for:
+Shakapacker provides a powerful configuration diff tool to help you compare webpack/rspack configurations and identify differences.
 
-- Comparing development vs production configurations
-- Debugging configuration issues
-- Understanding what changed between environments
-- Analyzing differences between client and server bundles
+## Why Use This Instead of Visual Diff Tools?
+
+While traditional file diff tools (like `diff`, `vimdiff`, or GitHub's diff view) work great for source code, webpack/rspack configurations present unique challenges:
+
+**Configuration-Specific Intelligence**
+
+- Understands webpack/rspack structure (nested objects, arrays, plugins)
+- Identifies meaningful changes (e.g., "mode changed from development to production")
+- Ignores irrelevant differences (timestamps, absolute paths)
+
+**Path Normalization**
+
+- Automatically normalizes absolute paths to relative paths
+- Makes diffs portable across different machines and environments
+- Example: `/Users/you/project/app` and `/home/ci/build/app` both become `./app`
+
+**Focused Analysis**
+
+- Filter out noise with `--ignore-paths` and `--ignore-keys`
+- Highlight only the changes that matter for your investigation
+- Example: Ignore all plugin-specific config with `--ignore-paths="plugins.*"`
+
+**Multiple Output Formats**
+
+- Summary view for quick overview
+- Detailed view for investigation
+- JSON/YAML for documentation or CI integration
+- Traditional diff tools only show line-by-line changes
+
+**Semantic Understanding**
+
+- Groups changes by operation type (added, removed, changed)
+- Shows value types to understand the nature of changes
+- Handles special types (functions, RegExp) that visual diffs struggle with
+
+## Common Use Cases
+
+### 1. Troubleshooting "Works in Dev, Fails in Prod"
+
+When your app works perfectly in development but fails in production:
+
+```bash
+# Export both environments
+bin/export-bundler-config --doctor
+
+# Compare to find differences
+bin/diff-bundler-config \
+  --left=shakapacker-config-exports/webpack-development-client.yaml \
+  --right=shakapacker-config-exports/webpack-production-client.yaml \
+  --format=summary
+```
+
+**What to look for:**
+
+- Mode and optimization settings
+- Source map configuration differences
+- Plugin differences (compression, minification)
+- Output path and filename patterns
+
+### 2. Debugging After Upgrade
+
+After upgrading Shakapacker, webpack, or dependencies:
+
+```bash
+# Export baseline before upgrade
+bin/export-bundler-config --save --output=config-before-upgrade.yaml
+
+# Upgrade dependencies...
+
+# Export after upgrade
+bin/export-bundler-config --save --output=config-after-upgrade.yaml
+
+# See what changed
+bin/diff-bundler-config \
+  --left=config-before-upgrade.yaml \
+  --right=config-after-upgrade.yaml
+```
+
+**What to look for:**
+
+- New or removed plugins
+- Changed loader configurations
+- Modified optimization settings
+- Breaking changes in config structure
+
+### 3. Understanding Client vs Server Bundle Differences
+
+For server-side rendering setups:
+
+```bash
+bin/export-bundler-config --doctor
+
+bin/diff-bundler-config \
+  --left=shakapacker-config-exports/webpack-production-client.yaml \
+  --right=shakapacker-config-exports/webpack-production-server.yaml
+```
+
+**What to look for:**
+
+- Target differences (web vs node)
+- Output format (library exports for SSR)
+- External dependencies
+- Different entry points
+
+### 4. Webpack to Rspack Migration
+
+When migrating from webpack to rspack:
+
+```bash
+# Export webpack config
+bin/export-bundler-config --save --bundler=webpack --output=webpack-config.yaml
+
+# Switch to rspack
+rake shakapacker:switch_bundler
+
+# Export rspack config
+bin/export-bundler-config --save --bundler=rspack --output=rspack-config.yaml
+
+# Compare
+bin/diff-bundler-config \
+  --left=webpack-config.yaml \
+  --right=rspack-config.yaml \
+  --ignore-paths="plugins.*" # Focus on core config, not plugin details
+```
+
+**What to look for:**
+
+- Unsupported plugins or loaders
+- Configuration syntax differences
+- Performance optimization differences
+
+### 5. Team Collaboration & Code Review
+
+Generate diff reports for pull requests:
+
+```bash
+bin/diff-bundler-config \
+  --left=main-branch-config.yaml \
+  --right=feature-branch-config.yaml \
+  --format=yaml \
+  --output=config-changes.yaml
+```
+
+Commit the `config-changes.yaml` file to document configuration changes in your PR.
+
+## Integration with --doctor Mode
+
+The `--doctor` mode of the export tool is specifically designed to work seamlessly with the diff tool:
+
+```bash
+# Step 1: Export all configs for comprehensive analysis
+bin/export-bundler-config --doctor
+```
+
+This creates a `shakapacker-config-exports/` directory with:
+
+- `webpack-development-client.yaml`
+- `webpack-development-server.yaml`
+- `webpack-production-client.yaml`
+- `webpack-production-server.yaml`
+
+```bash
+# Step 2: Compare any combination
+bin/diff-bundler-config \
+  --left=shakapacker-config-exports/webpack-development-client.yaml \
+  --right=shakapacker-config-exports/webpack-production-client.yaml
+```
+
+**Benefits of using --doctor with diff:**
+
+1. All configs exported in one command
+2. Consistent format (annotated YAML) optimized for comparison
+3. Includes metadata about when and how configs were generated
+4. Perfect for attaching to support requests or bug reports
 
 ## Quick Start
 
