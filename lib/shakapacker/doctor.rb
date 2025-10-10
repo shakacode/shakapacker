@@ -399,7 +399,8 @@ module Shakapacker
         end
 
         unless missing_binstubs.empty?
-          add_action_required("Missing binstubs: #{missing_binstubs.join(', ')}. Run 'bin/rails shakapacker:binstubs' to create them.")
+          add_action_required("Missing binstubs: #{missing_binstubs.join(', ')}")
+          add_action_required("  Fix: Run 'bin/rails shakapacker:binstubs' to create them")
         end
       end
 
@@ -471,7 +472,8 @@ module Shakapacker
                          when "bun" then "bun remove swc-loader"
                         else "npm uninstall swc-loader"
             end
-            add_warning("swc-loader is not needed with Rspack (SWC is built-in). Rspack includes SWC transpilation natively, so this package is redundant. Remove it with: #{remove_cmd}")
+            add_warning("swc-loader is not needed with Rspack (SWC is built-in). Rspack includes SWC transpilation natively, so this package is redundant")
+            add_warning("  Fix: Remove it with: #{remove_cmd}")
           end
         end
       end
@@ -506,7 +508,8 @@ module Shakapacker
 
         if babel_config_exists && transpiler != "babel"
           babel_files = babel_configs.select(&:exist?).map { |f| f.relative_path_from(root_path) }.join(", ")
-          add_warning("Babel configuration files found (#{babel_files}) but javascript_transpiler is '#{transpiler}'. These Babel configs are being ignored. Either remove the Babel configuration files or set javascript_transpiler: 'babel' in shakapacker.yml to use Babel instead of #{transpiler}.")
+          add_warning("Babel configuration files found (#{babel_files}) but javascript_transpiler is '#{transpiler}'. These Babel configs are ignored by Shakapacker (though they may still be used by ESLint or other tools)")
+          add_warning("  Fix: Remove Babel config files if not needed, or set javascript_transpiler: 'babel' in shakapacker.yml to use Babel for transpilation")
         end
 
         # Check for redundant dependencies
@@ -1018,7 +1021,9 @@ module Shakapacker
 
               if is_subitem
                 # Don't increment number for sub-items, but wrap long lines
-                wrapped = wrap_text(warning[:message], 100, "  #{category_prefix} ")
+                # Indent sub-items to align with the message text (after the number)
+                subitem_prefix = "  #{category_prefix}      "
+                wrapped = wrap_text(warning[:message], 100, subitem_prefix)
                 puts wrapped
               else
                 item_number += 1
