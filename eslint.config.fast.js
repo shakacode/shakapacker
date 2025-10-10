@@ -16,7 +16,13 @@ const compat = new FlatCompat({
 module.exports = [
   // Global ignores (replaces .eslintignore)
   {
-    ignores: ["lib/**", "node_modules/**", "vendor/**", "spec/**", "package/**"]
+    ignores: [
+      "lib/**",
+      "**/node_modules/**",
+      "vendor/**",
+      "spec/**",
+      "package/**"
+    ]
   },
 
   // Base config for all JS files
