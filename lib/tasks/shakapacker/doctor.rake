@@ -21,8 +21,8 @@ namespace :shakapacker do
 
     Examples:
       bin/rails shakapacker:doctor
-      bin/rails shakapacker:doctor --verbose
-      bin/rails shakapacker:doctor --help
+      bin/rails shakapacker:doctor -- --verbose
+      bin/rails shakapacker:doctor -- --help
 
     Exit codes:
       0 - No issues found

@@ -75,17 +75,20 @@ describe Shakapacker::Doctor do
       reporter.send(:print_warnings)
       result = output.string
 
-      # Check formatting rules:
-      # 1. Category prefix starts at left margin (no leading spaces on lines with [)
-      expect(result).to match(/^\[REQUIRED\]/)
-      expect(result).to match(/^\[RECOMMENDED\]/)
+      # Check formatting rules for new format: N. [CATEGORY]  Message
+      # 1. Lines start with numbers at left margin
+      expect(result).to match(/^1\. \[REQUIRED\]/)
+      expect(result).to match(/^2\. \[RECOMMENDED\]/)
 
-      # 2. Only 2 spaces after ]
-      expect(result).to match(/^\[REQUIRED\]  \d+\./)
-      expect(result).to match(/^\[RECOMMENDED\]  \d+\./)
+      # 2. Two spaces after ]
+      expect(result).to match(/^\d+\. \[REQUIRED\]  /)
+      expect(result).to match(/^\d+\. \[RECOMMENDED\]  /)
 
-      # 3. Fix lines should be indented consistently
-      expect(result).to include("                Fix:")
+      # 3. Fix lines should be indented with 15 spaces to align all Fix instructions
+      expect(result).to include("               Fix:")
+
+      # 4. Blank line after warnings header
+      expect(result).to match(/Warnings \(\d+\):\n\n/)
     end
   end
 
@@ -278,6 +281,17 @@ describe Shakapacker::Doctor do
       it "adds deprecation warning" do
         doctor.send(:check_deprecated_config)
         expect(warning_messages).to include(match(/bundler.*should be renamed/))
+      end
+    end
+
+    context "with correct assets_bundler config" do
+      before do
+        File.write(config_path, "assets_bundler: webpack")
+      end
+
+      it "does not add deprecation warning" do
+        doctor.send(:check_deprecated_config)
+        expect(warning_messages).not_to include(match(/bundler.*should be renamed/))
       end
     end
   end

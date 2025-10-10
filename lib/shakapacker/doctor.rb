@@ -185,7 +185,9 @@ module Shakapacker
           add_action_required("Deprecated config: 'webpack_loader' should be renamed to 'javascript_transpiler' in #{config_relative_path}")
         end
 
-        if config_file.include?("bundler:")
+        # Check for standalone "bundler:" but not "assets_bundler:"
+        # Match "bundler:" at start of line or preceded by non-underscore character
+        if config_file.match?(/^\s*bundler:/m) || config_file.match?(/[^_]bundler:/)
           add_action_required("Deprecated config: 'bundler' should be renamed to 'assets_bundler' in #{config_relative_path}.")
           add_action_required("  Fix: Open #{config_relative_path} and change 'bundler:' to 'assets_bundler:'.")
         end
@@ -848,6 +850,7 @@ module Shakapacker
           def print_header
             puts "Running Shakapacker doctor..."
             puts "=" * 60
+            puts ""
             if verbose?
               puts "Mode: Verbose (showing all checks)"
               puts ""
@@ -900,6 +903,28 @@ module Shakapacker
             if doctor.config.config_path.exist?
               puts "  • Cache path: #{doctor.config.cache_path}"
               puts "  • Manifest path: #{doctor.config.manifest_path}"
+            end
+
+            # Show environment-specific shakapacker.yml configuration values
+            if doctor.config.config_path.exist?
+              puts "\nConfiguration values for '#{doctor.config.env}' environment:"
+              config_data = doctor.config.send(:data)
+              if config_data.any?
+                config_data.each do |key, value|
+                  # Format the value nicely - truncate long arrays/hashes
+                  formatted_value = case value
+                                    when Array
+                                      value.length > 3 ? "#{value.first(3).inspect}... (#{value.length} items)" : value.inspect
+                                    when Hash
+                                      value.length > 3 ? "{...} (#{value.length} keys)" : value.inspect
+                                   else
+                                      value.inspect
+                  end
+                  puts "  • #{key}: #{formatted_value}"
+                end
+              else
+                puts "  (using bundled defaults - no environment-specific config found)"
+              end
             end
           end
 
@@ -984,6 +1009,7 @@ module Shakapacker
 
           def print_summary
             puts "=" * 60
+            puts ""
 
             if doctor.issues.empty? && doctor.warnings.empty?
               puts "✅ No issues found! Shakapacker appears to be configured correctly."
@@ -1006,6 +1032,7 @@ module Shakapacker
             # Count only main items (not sub-items)
             main_item_count = doctor.warnings.count { |w| !w[:message].start_with?("  ") }
             puts "⚠️  Warnings (#{main_item_count}):"
+            puts ""
 
             item_number = 0
             doctor.warnings.each do |warning|
@@ -1020,16 +1047,15 @@ module Shakapacker
               is_subitem = warning[:message].start_with?("  ")
 
               if is_subitem
-                # Don't increment number for sub-items, but wrap long lines
-                # Indent sub-items to align with the message text (16 spaces)
-                subitem_prefix = "                "
+                # Fix instructions align at column 16 (length of "N. [RECOMMENDED]  ")
+                # This ensures all Fix lines align vertically regardless of category
+                subitem_prefix = " " * 15
                 wrapped = wrap_text(warning[:message], 100, subitem_prefix)
                 puts wrapped
               else
                 item_number += 1
-                # Format: [CATEGORY]  N. Message
-                # No leading spaces, 2 spaces after ]
-                prefix = "#{category_prefix}  #{item_number}. "
+                # Format: N. [CATEGORY]  Message
+                prefix = "#{item_number}. #{category_prefix}  "
                 wrapped = wrap_text(warning[:message], 100, prefix)
                 puts wrapped
               end
