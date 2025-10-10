@@ -1007,8 +1007,8 @@ module Shakapacker
             item_number = 0
             doctor.warnings.each do |warning|
               category_prefix = case warning[:category]
-                                when :action_required then "[ACTION REQUIRED]"
-                                when :info then "[INFO]"
+                                when :action_required then "[REQUIRED]    "
+                                when :info then "[INFO]        "
                                 when :recommended then "[RECOMMENDED]"
                                else ""
               end
