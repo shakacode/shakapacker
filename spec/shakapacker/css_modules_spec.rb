@@ -185,10 +185,10 @@ describe "CSS Modules Configuration" do
       expect(style_rule_content).to include("namedExport: true")
 
       # Should have exportLocalsConvention: 'camelCaseOnly' (not 'camelCase')
-      expect(style_rule_content).to include("exportLocalsConvention: 'camelCaseOnly'")
+      expect(style_rule_content).to include('exportLocalsConvention: "camelCaseOnly"')
 
       # Should NOT have the invalid 'camelCase' with namedExport: true
-      expect(style_rule_content).not_to include("exportLocalsConvention: 'camelCase'")
+      expect(style_rule_content).not_to include('exportLocalsConvention: "camelCase"')
 
       # Should have explanatory comment about the requirement
       expect(style_rule_content).to include("css-loader requires 'camelCaseOnly' or 'dashesOnly'")
