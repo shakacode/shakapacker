@@ -1,13 +1,14 @@
 // This will be a substantial file - the main CLI entry point
 // Migrating from bin/export-bundler-config but streamlined for TypeScript
 
-import { existsSync, readFileSync } from "fs"
+import { existsSync, readFileSync, writeFileSync } from "fs"
 import { resolve, dirname, sep, delimiter, basename } from "path"
 import { inspect } from "util"
 import { load as loadYaml } from "js-yaml"
 import { ExportOptions, ConfigMetadata, FileOutput } from "./types"
 import { YamlSerializer } from "./yamlSerializer"
 import { FileWriter } from "./fileWriter"
+import { ConfigFileLoader, generateSampleConfigFile } from "./configFile"
 
 // Main CLI entry point
 export async function run(args: string[]): Promise<number> {
@@ -17,6 +18,16 @@ export async function run(args: string[]): Promise<number> {
     if (options.help) {
       showHelp()
       return 0
+    }
+
+    // Handle --init command
+    if (options.init) {
+      return runInitCommand(options)
+    }
+
+    // Handle --list-builds command
+    if (options.listBuilds) {
+      return runListBuildsCommand(options)
     }
 
     // Set up environment
@@ -60,7 +71,11 @@ function parseArguments(args: string[]): ExportOptions {
     doctor: false,
     save: false,
     saveDir: undefined,
-    annotate: undefined
+    annotate: undefined,
+    init: false,
+    configFile: undefined,
+    build: undefined,
+    listBuilds: false
   }
 
   const parseValue = (arg: string, prefix: string): string => {
@@ -80,6 +95,10 @@ function parseArguments(args: string[]): ExportOptions {
       options.save = true
     } else if (arg.startsWith("--save-dir=")) {
       options.saveDir = parseValue(arg, "--save-dir=")
+    } else if (arg === "--webpack") {
+      options.bundler = "webpack"
+    } else if (arg === "--rspack") {
+      options.bundler = "rspack"
     } else if (arg.startsWith("--bundler=")) {
       const bundler = parseValue(arg, "--bundler=")
       if (bundler !== "webpack" && bundler !== "rspack") {
@@ -117,6 +136,14 @@ function parseArguments(args: string[]): ExportOptions {
       options.annotate = false
     } else if (arg === "--verbose") {
       options.verbose = true
+    } else if (arg === "--init") {
+      options.init = true
+    } else if (arg.startsWith("--config-file=")) {
+      options.configFile = parseValue(arg, "--config-file=")
+    } else if (arg.startsWith("--build=")) {
+      options.build = parseValue(arg, "--build=")
+    } else if (arg === "--list-builds") {
+      options.listBuilds = true
     }
   }
 
@@ -159,6 +186,51 @@ function validateOptions(options: ExportOptions): void {
       "--annotate (or default with --save/--doctor) requires --format=yaml. Use --no-annotate or --format=inspect/json."
     )
   }
+
+  if (options.build && !options.configFile) {
+    const loader = new ConfigFileLoader()
+    if (!loader.exists()) {
+      throw new Error(
+        "--build requires a config file. Run --init to create .bundler-config.yml or use --config-file=<path>."
+      )
+    }
+  }
+}
+
+function runInitCommand(options: ExportOptions): number {
+  const configPath = options.configFile || ".bundler-config.yml"
+  const fullPath = resolve(process.cwd(), configPath)
+
+  if (existsSync(fullPath)) {
+    console.error(
+      `[Config Exporter] Error: Config file already exists: ${fullPath}`
+    )
+    console.error(
+      `Remove it first or use --config-file=<path> for a different location.`
+    )
+    return 1
+  }
+
+  const sampleConfig = generateSampleConfigFile()
+  writeFileSync(fullPath, sampleConfig, "utf8")
+
+  console.log(`[Config Exporter] ✅ Created config file: ${fullPath}`)
+  console.log(`\nNext steps:`)
+  console.log(`  1. Edit the config file to match your build setup`)
+  console.log(
+    `  2. List available builds: bin/export-bundler-config --list-builds`
+  )
+  console.log(
+    `  3. Export a build: bin/export-bundler-config --build=<name> --save\n`
+  )
+
+  return 0
+}
+
+function runListBuildsCommand(options: ExportOptions): number {
+  const loader = new ConfigFileLoader(options.configFile)
+  loader.listBuilds()
+  return 0
 }
 
 async function runDoctorMode(
@@ -191,7 +263,8 @@ async function runDoctorMode(
         metadata.bundler,
         metadata.environment,
         metadata.configType,
-        options.format!
+        options.format!,
+        metadata.buildName
       )
 
       const fullPath = resolve(targetDir, filename)
@@ -266,7 +339,8 @@ async function runSaveMode(
         metadata.bundler,
         metadata.environment,
         metadata.configType,
-        options.format!
+        options.format!,
+        metadata.buildName
       )
       fileWriter.writeSingleFile(resolve(targetDir, filename), output)
     }
@@ -294,12 +368,46 @@ async function loadConfigsForEnv(
   options: ExportOptions,
   appRoot: string
 ): Promise<Array<{ config: any; metadata: ConfigMetadata }>> {
-  // Auto-detect bundler if not specified
-  const bundler = options.bundler || (await autoDetectBundler(env, appRoot))
+  let bundler: "webpack" | "rspack"
+  let buildName: string | undefined
+  let buildOutputs: string[] = []
+  let customConfigFile: string | undefined
 
-  // Set environment variables
-  process.env.NODE_ENV = env
-  process.env.RAILS_ENV = env
+  // If using config file build
+  if (options.build) {
+    const loader = new ConfigFileLoader(options.configFile)
+    const defaultBundler = await autoDetectBundler(env, appRoot)
+    const resolvedBuild = loader.resolveBuild(
+      options.build,
+      options,
+      defaultBundler
+    )
+
+    bundler = resolvedBuild.bundler
+    buildName = resolvedBuild.name
+    buildOutputs = resolvedBuild.outputs
+    customConfigFile = resolvedBuild.configFile
+
+    // Set environment variables from config
+    for (const [key, value] of Object.entries(resolvedBuild.environment)) {
+      process.env[key] = value
+    }
+
+    // Use env from config if not overridden by CLI
+    if (resolvedBuild.environment.NODE_ENV && !options.env) {
+      env = resolvedBuild.environment.NODE_ENV as
+        | "development"
+        | "production"
+        | "test"
+    }
+  } else {
+    // Auto-detect bundler if not specified
+    bundler = options.bundler || (await autoDetectBundler(env, appRoot))
+
+    // Set environment variables
+    process.env.NODE_ENV = env
+    process.env.RAILS_ENV = env
+  }
 
   if (options.clientOnly) {
     process.env.CLIENT_BUNDLE_ONLY = "yes"
@@ -308,12 +416,15 @@ async function loadConfigsForEnv(
   }
 
   // Find and load config file
-  const configFile = findConfigFile(bundler, appRoot)
+  const configFile = customConfigFile || findConfigFile(bundler, appRoot)
   // Quiet mode for cleaner output - only show if verbose or errors
   if (process.env.VERBOSE) {
     console.log(`[Config Exporter] Loading config: ${configFile}`)
     console.log(`[Config Exporter] Environment: ${env}`)
     console.log(`[Config Exporter] Bundler: ${bundler}`)
+    if (buildName) {
+      console.log(`[Config Exporter] Build: ${buildName}`)
+    }
   }
 
   // Load the config
@@ -368,8 +479,10 @@ async function loadConfigsForEnv(
   configs.forEach((cfg, index) => {
     let configType: "client" | "server" | "all" = "all"
 
-    // Try to infer config type from the config itself
-    if (configs.length === 2) {
+    // Use outputs from build config if available
+    if (buildOutputs.length > 0 && buildOutputs[index]) {
+      configType = buildOutputs[index] as "client" | "server" | "all"
+    } else if (configs.length === 2) {
       // Likely client and server configs
       configType = index === 0 ? "client" : "server"
     } else if (options.clientOnly) {
@@ -385,6 +498,7 @@ async function loadConfigsForEnv(
       configFile,
       configType,
       configCount: configs.length,
+      buildName,
       environmentVariables: {
         NODE_ENV: process.env.NODE_ENV,
         RAILS_ENV: process.env.RAILS_ENV,
@@ -630,54 +744,69 @@ Shakapacker Config Exporter
 Exports webpack or rspack configuration in a verbose, human-readable format
 for comparison and analysis.
 
-QUICK START (for troubleshooting):
-  bin/export-bundler-config --doctor
+QUICK START:
+  # Initialize config file with build definitions
+  bin/export-bundler-config --init
 
-  Exports annotated YAML configs for both development and production.
-  Creates separate files for client and server bundles.
-  Best for debugging, AI analysis, and comparing configurations.
+  # List available builds from config file
+  bin/export-bundler-config --list-builds
+
+  # Export a specific build
+  bin/export-bundler-config --build=dev --save
+
+  # Troubleshooting mode (exports dev + prod)
+  bin/export-bundler-config --doctor
 
 Usage:
   bin/export-bundler-config [options]
 
-Options:
+Config File Options:
+  --init                     Generate sample .bundler-config.yml with examples
+  --config-file=<path>       Path to config file (default: .bundler-config.yml)
+  --build=<name>             Export config for specific build from config file
+  --list-builds              List all available builds from config file
+
+Bundler Selection:
+  --webpack                  Use webpack (overrides config file)
+  --rspack                   Use rspack (overrides config file)
+  --bundler=webpack|rspack   Alternative syntax (auto-detected if not provided)
+
+Export Modes:
   --doctor                   Export all configs for troubleshooting (dev + prod, annotated YAML)
   --save                     Save to auto-generated file(s) (default: YAML format)
   --save-dir=<directory>     Directory for output files (requires --save)
-  --bundler=webpack|rspack   Specify bundler (auto-detected if not provided)
-  --env=development|production|test    Node environment (default: development, ignored with --doctor)
+  --output=<filename>        Output to specific file (default: stdout)
+
+Environment Options:
+  --env=development|production|test    Node environment (default: development)
   --client-only              Generate only client config (sets CLIENT_BUNDLE_ONLY=yes)
   --server-only              Generate only server config (sets SERVER_BUNDLE_ONLY=yes)
-  --output=<filename>        Output to specific file (default: stdout)
-  --depth=<number>           Inspection depth (default: 20, use 'null' for unlimited)
+
+Output Format:
   --format=yaml|json|inspect Output format (default: inspect for stdout, yaml for --save/--doctor)
   --no-annotate              Disable inline documentation (YAML only)
+  --depth=<number>           Inspection depth (default: 20, use 'null' for unlimited)
   --verbose                  Show full output without compact mode
   --help, -h                 Show this help message
 
-Note: --client-only and --server-only are mutually exclusive.
-      --save-dir requires --save.
-      --output and --save-dir are mutually exclusive.
-      If neither --client-only nor --server-only specified, both configs are generated.
-
 Examples:
-  # RECOMMENDED: Export everything for troubleshooting
+
+  # Config File Workflow
+  bin/export-bundler-config --init
+  bin/export-bundler-config --list-builds
+  bin/export-bundler-config --build=dev --save
+  bin/export-bundler-config --build=dev --save --rspack
+
+  # Traditional Workflow (without config file)
   bin/export-bundler-config --doctor
-  # Creates: webpack-development-client.yaml, webpack-development-server.yaml,
-  #          webpack-production-client.yaml, webpack-production-server.yaml
-
-  # Save current environment configs
-  bin/export-bundler-config --save
-  # Creates: webpack-development-client.yaml, webpack-development-server.yaml
-
-  # Save to specific directory
+  bin/export-bundler-config --save --env=production --client-only
   bin/export-bundler-config --save --save-dir=./debug
 
-  # Export only client config for production
-  bin/export-bundler-config --save --env=production --client-only
-  # Creates: webpack-production-client.yaml
+Output File Naming:
+  Without build: {bundler}-{env}-{type}.{ext}
+    Example: webpack-development-client.yaml
 
-  # View config in terminal (stdout)
-  bin/export-bundler-config
+  With build: {bundler}-{build}-{type}.{ext}
+    Example: webpack-dev-client.yaml, rspack-cypress-dev-server.yaml
 `)
 }
