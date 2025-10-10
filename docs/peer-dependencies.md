@@ -8,7 +8,7 @@ To simplify peer dependencies while supporting both webpack & rspack, we decided
 
 ## Essential for Rspack
 
-```
+```text
     "@rspack/cli": "^1.0.0",
     "@rspack/core": "^1.0.0",
     "rspack-manifest-plugin": "^5.0.0",
@@ -16,7 +16,7 @@ To simplify peer dependencies while supporting both webpack & rspack, we decided
 
 ## Essential for Webpack
 
-```
+```text
     "mini-css-extract-plugin": "^2.0.0",
     "terser-webpack-plugin": "^5.3.1",
     "webpack": "^5.76.0",
@@ -29,7 +29,7 @@ To simplify peer dependencies while supporting both webpack & rspack, we decided
 
 ## Highly recommended
 
-```
+```text
     "compression-webpack-plugin": "^9.0.0 || ^10.0.0|| ^11.0.0",
     "css-loader": "^6.0.0 || ^7.0.0",
     "sass-loader": "^13.0.0 || ^14.0.0 || ^15.0.0 || ^16.0.0",
@@ -40,7 +40,7 @@ To simplify peer dependencies while supporting both webpack & rspack, we decided
 
 ### Babel (installed automatically when `javascript_transpiler: 'babel'`)
 
-```
+```text
     "@babel/core": "^7.17.9",
     "@babel/plugin-transform-runtime": "^7.17.0",
     "@babel/preset-env": "^7.16.11",
@@ -52,7 +52,7 @@ Note: These dependencies are only installed if you're using Babel as your JavaSc
 
 ### SWC (default - 20x faster than Babel)
 
-```
+```text
     "@swc/core": "latest",
     "swc-loader": "latest"
 ```
@@ -63,7 +63,7 @@ Note: These dependencies are only installed if you're using Babel as your JavaSc
 
 ### esbuild
 
-```
+```text
     "esbuild": "latest",
     "esbuild-loader": "latest"
 ```
