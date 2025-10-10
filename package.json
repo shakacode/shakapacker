@@ -60,6 +60,7 @@
     "@types/webpack": "^5.28.5",
     "@types/webpack-dev-server": "^4.7.2",
     "@types/webpack-merge": "^5.0.0",
+    "@types/yargs": "^17.0.33",
     "@typescript-eslint/eslint-plugin": "^8.46.0",
     "@typescript-eslint/parser": "^8.46.0",
     "babel-loader": "^8.2.4",
@@ -89,7 +90,8 @@
     "typescript": "^5.9.2",
     "webpack": "5.93.0",
     "webpack-assets-manifest": "^5.0.6",
-    "webpack-subresource-integrity": "^5.1.0"
+    "webpack-subresource-integrity": "^5.1.0",
+    "yargs": "^17.7.2"
   },
   "peerDependencies": {
     "@babel/core": "^7.17.9",
