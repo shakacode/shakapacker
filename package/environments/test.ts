@@ -50,4 +50,4 @@ const webpackTestConfig = (): Partial<WebpackConfiguration> => ({
 const bundlerConfig =
   config.assets_bundler === "rspack" ? rspackTestConfig() : webpackTestConfig()
 
-module.exports = merge(baseConfig, bundlerConfig)
+export default merge(baseConfig, bundlerConfig)

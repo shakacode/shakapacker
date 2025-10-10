@@ -16,13 +16,6 @@ import {
   isDevelopment,
   runningWebpackDevServer
 } from "./env"
-const env = {
-  railsEnv,
-  nodeEnv,
-  isProduction,
-  isDevelopment,
-  runningWebpackDevServer
-}
 import { moduleExists, canProcess } from "./utils/helpers"
 import inliningCss from "./utils/inliningCss"
 
@@ -47,7 +40,6 @@ const generateWebpackConfig = (
     )
   }
 
-  const { nodeEnv } = env
   const path = resolve(__dirname, "environments", `${nodeEnv}.js`)
   const environmentConfig = existsSync(path) ? require(path) : baseConfig
 
@@ -59,7 +51,11 @@ export {
   devServer,
   generateWebpackConfig,
   baseConfig,
-  env,
+  railsEnv,
+  nodeEnv,
+  isProduction,
+  isDevelopment,
+  runningWebpackDevServer,
   rules,
   moduleExists,
   canProcess,

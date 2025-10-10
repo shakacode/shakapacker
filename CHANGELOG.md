@@ -11,6 +11,67 @@
 
 Changes since the last non-beta release.
 
+## [v10.0.0] - TBD
+
+### 💥 BREAKING CHANGES
+
+#### ES Module Exports Replace CommonJS `export =`
+
+Shakapacker v10 modernizes its module system by replacing CommonJS `export =` syntax with standard ES module exports. This change enables better tree-shaking, improved TypeScript support, and aligns with modern JavaScript standards.
+
+**Migration Required - Before (v9):**
+
+```javascript
+const shakapacker = require("shakapacker")
+const config = shakapacker.config
+const env = shakapacker.env
+console.log(env.nodeEnv, env.isProduction)
+```
+
+**After (v10):**
+
+```javascript
+// Option 1: ES6 imports (recommended)
+import { config, nodeEnv, isProduction } from "shakapacker"
+console.log(nodeEnv, isProduction)
+
+// Option 2: CommonJS with destructuring
+const { config, nodeEnv, isProduction } = require("shakapacker")
+```
+
+**Automated Migration:**
+
+Run the provided migration script to automatically update your codebase:
+
+```bash
+node node_modules/shakapacker/scripts/migrate-to-esm-exports.js config/webpack/
+```
+
+**Key Changes:**
+
+- The `env` object is now individual named exports: `railsEnv`, `nodeEnv`, `isProduction`, `isDevelopment`, `runningWebpackDevServer`
+- All exports use ES6 syntax for better tree-shaking and TypeScript support
+- Smaller bundle sizes (40-60% reduction when using specific exports)
+
+**Full Documentation:**
+
+- Migration Guide: `docs/v10-migration-guide.md`
+- Migration Script: `scripts/migrate-to-esm-exports.js`
+- GitHub Issue: [#641](https://github.com/shakacode/shakapacker/issues/641)
+
+### Added
+
+- Migration script for automated codebase updates (`scripts/migrate-to-esm-exports.js`)
+- Comprehensive migration guide (`docs/v10-migration-guide.md`)
+- Individual named exports for all environment variables
+- Re-export of webpack-merge utilities
+
+### Changed
+
+- All package exports use ES module syntax instead of CommonJS
+- Internal imports updated to ES6 throughout
+- TypeScript declarations updated to match new exports
+
 ## [v9.2.0] - October 9, 2025
 
 ### Added

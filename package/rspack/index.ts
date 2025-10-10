@@ -18,13 +18,6 @@ import {
   isDevelopment,
   runningWebpackDevServer
 } from "../env"
-const env = {
-  railsEnv,
-  nodeEnv,
-  isProduction,
-  isDevelopment,
-  runningWebpackDevServer
-}
 import { moduleExists, canProcess } from "../utils/helpers"
 import inliningCss from "../utils/inliningCss"
 import { getPlugins } from "../plugins/rspack"
@@ -46,7 +39,6 @@ const generateRspackConfig = (
     )
   }
 
-  const { nodeEnv } = env
   const path = resolve(__dirname, "../environments", `${nodeEnv}.js`)
   // eslint-disable-next-line @typescript-eslint/no-require-imports
   const environmentConfig = existsSync(path) ? require(path) : baseConfig
@@ -77,7 +69,11 @@ export {
   devServer,
   generateRspackConfig,
   baseConfig,
-  env,
+  railsEnv,
+  nodeEnv,
+  isProduction,
+  isDevelopment,
+  runningWebpackDevServer,
   rules,
   moduleExists,
   canProcess,
