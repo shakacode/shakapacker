@@ -10,7 +10,8 @@
     "package/**/*.test.ts",
     "package/**/*.spec.ts",
     "test/**/*.ts",
-    "test/**/*.tsx"
+    "test/**/*.tsx",
+    "knip.ts"
   ],
   "exclude": ["node_modules"]
 }
