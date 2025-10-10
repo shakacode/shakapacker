@@ -12,7 +12,6 @@ This guide is for Shakapacker maintainers who need to publish a new release.
    ```
 
 2. **Ensure you have publishing access:**
-
    - npm: You must be a collaborator on the [shakapacker npm package](https://www.npmjs.com/package/shakapacker)
    - RubyGems: You must be an owner of the [shakapacker gem](https://rubygems.org/gems/shakapacker)
 
@@ -103,7 +102,6 @@ rake create_release[10.0.0.rc.1]  # Gem: 10.0.0.rc.1, npm: 10.0.0-rc.1
 ### 6. After Release
 
 1. Verify the release on:
-
    - [npm](https://www.npmjs.com/package/shakapacker)
    - [RubyGems](https://rubygems.org/gems/shakapacker)
    - [GitHub releases](https://github.com/shakacode/shakapacker/releases)

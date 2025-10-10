@@ -580,7 +580,6 @@ For maximum performance improvements, you can combine multiple migrations:
 This combination provides the best performance improvement (up to 50-70x faster builds):
 
 1. **First, migrate to SWC** (while still on webpack)
-
    - Follow [Migrating from Babel to SWC](#migrating-from-babel-to-swc)
    - Test thoroughly
    - This is a smaller change to validate first

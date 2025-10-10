@@ -72,7 +72,6 @@ yarn lint --cache
 
 1. Install [Yarn](https://classic.yarnpkg.com/)
 2. To test your changes on a Rails test project do the following steps:
-
    - For Ruby gem, update `Gemfile` and point the `shakapacker` to the locally developing Shakapacker project:
      ```ruby
      gem 'shakapacker', path: "relative_or_absolute_path_to_local_shakapacker"

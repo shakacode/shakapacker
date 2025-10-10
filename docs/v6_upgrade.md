@@ -115,7 +115,6 @@ _If you're on webpacker v5, follow [how to upgrade to webpacker v6.0.0.rc.6 from
    **Important:** If you encounter the error `[webpack-cli] Invalid options object. Dev Server has been initialized using an options object that does not match the API schema` with an unknown property `_assetEmittingPreviousFiles`, this indicates your webpack-dev-server configuration contains deprecated options.
 
    To resolve this issue:
-
    - Ensure you're using webpack-cli >= 4.7.0 with webpack-dev-server 5.x (webpack-cli 4.7+ is compatible with webpack-dev-server v5)
    - Check your current versions: `npm list webpack-cli webpack-dev-server`
    - Remove any legacy options like `_assetEmittingPreviousFiles` from your dev-server configuration
