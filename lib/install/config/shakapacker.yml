@@ -43,11 +43,11 @@ default: &default
   # Select JavaScript transpiler to use
   # Available options: 'swc' (default, 20x faster), 'babel', or 'esbuild'
   # Note: When using rspack, swc is used automatically regardless of this setting
-  javascript_transpiler: "swc"
+  javascript_transpiler: 'swc'
 
   # Select assets bundler to use
   # Available options: 'webpack' (default) or 'rspack'
-  assets_bundler: "webpack"
+  assets_bundler: 'webpack'
 
   # Hook to run before webpack compilation (e.g., for generating dynamic entry points)
   # SECURITY: Only reference trusted scripts within your project. The hook command will be
@@ -118,14 +118,14 @@ development:
     # Should we use gzip compression?
     compress: true
     # Note that apps that do not check the host are vulnerable to DNS rebinding attacks
-    allowed_hosts: "auto"
+    allowed_hosts: 'auto'
     # Shows progress and colorizes output of bin/shakapacker[-dev-server]
     pretty: true
     headers:
-      "Access-Control-Allow-Origin": "*"
+      'Access-Control-Allow-Origin': '*'
     static:
       watch:
-        ignored: "**/node_modules/**"
+        ignored: '**/node_modules/**'
 
 test:
   <<: *default

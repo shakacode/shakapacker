@@ -115,10 +115,22 @@ class Shakapacker::Compiler
       executable = Shellwords.shellwords(hook_command).first
       executable_path = config.root_path.join(executable)
 
-      # Security: Verify the hook points to a file within the project
-      unless executable_path.to_s.start_with?(config.root_path.to_s)
+      # Security: Resolve symlinks and verify the hook points to a file within the project
+      # This prevents symlink bypass attacks and path traversal attacks
+      begin
+        resolved_path = executable_path.realpath
+        resolved_root = config.root_path.realpath
+      rescue Errno::ENOENT
+        # If file doesn't exist, use cleanpath for basic validation
+        resolved_path = executable_path.cleanpath
+        resolved_root = config.root_path.cleanpath
+      end
+
+      # Verify path is within project root with proper separator check
+      # Using File::SEPARATOR prevents partial path matches (e.g., /project vs /project-evil)
+      unless resolved_path.to_s.start_with?(resolved_root.to_s + File::SEPARATOR)
         raise "Security Error: precompile_hook must reference a script within the project root. " \
-              "Got: #{hook_command}"
+              "Got: #{hook_command} (resolved to: #{resolved_path})"
       end
 
       # Warn if the executable doesn't exist within the project

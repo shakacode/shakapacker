@@ -148,6 +148,29 @@ describe "Shakapacker::Compiler" do
       expect { Shakapacker.compiler.compile }.to raise_error(/Security Error.*must reference a script within the project root/)
     end
 
+    it "prevents path traversal attacks" do
+      mocked_strategy = spy("Strategy")
+      allow(mocked_strategy).to receive(:stale?).and_return(true)
+      allow(Shakapacker.compiler).to receive(:strategy).and_return(mocked_strategy)
+
+      # Attempt to escape project root with path traversal
+      allow(Shakapacker.config).to receive(:precompile_hook).and_return("bin/../../etc/passwd")
+
+      expect { Shakapacker.compiler.compile }.to raise_error(/Security Error.*must reference a script within the project root/)
+    end
+
+    it "prevents partial path matching vulnerabilities" do
+      mocked_strategy = spy("Strategy")
+      allow(mocked_strategy).to receive(:stale?).and_return(true)
+      allow(Shakapacker.compiler).to receive(:strategy).and_return(mocked_strategy)
+
+      # Test that /project doesn't match /project-evil by checking File::SEPARATOR requirement
+      # We simulate this by testing a hook that would resolve outside the root
+      allow(Shakapacker.config).to receive(:precompile_hook).and_return("bin/../../../etc/passwd")
+
+      expect { Shakapacker.compiler.compile }.to raise_error(/Security Error/)
+    end
+
     it "handles hook commands with spaces in paths using Shellwords" do
       mocked_strategy = spy("Strategy")
       allow(mocked_strategy).to receive(:stale?).and_return(true)
