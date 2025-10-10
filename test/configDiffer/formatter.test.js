@@ -67,11 +67,10 @@ describe("DiffFormatter", () => {
       const formatter = new DiffFormatter()
       const output = formatter.formatSummary(mockResult)
 
-      expect(output).toContain("Configuration Diff Summary")
-      expect(output).toContain("Total Changes: 3")
-      expect(output).toContain("Added:       1")
-      expect(output).toContain("Removed:     1")
-      expect(output).toContain("Changed:     1")
+      expect(output).toContain("3 changes")
+      expect(output).toContain("+1")
+      expect(output).toContain("-1")
+      expect(output).toContain("~1")
     })
 
     test("shows success message when no changes", () => {
@@ -94,41 +93,37 @@ describe("DiffFormatter", () => {
       const formatter = new DiffFormatter()
       const output = formatter.formatDetailed(mockResult)
 
-      expect(output).toContain("Configuration Diff - Detailed Report")
-      expect(output).toContain("Compared at:")
-      expect(output).toContain("Left:")
-      expect(output).toContain("Right:")
-      expect(output).toContain("ADDED")
-      expect(output).toContain("REMOVED")
-      expect(output).toContain("CHANGED")
+      expect(output).toContain("Webpack/Rspack Configuration Comparison")
+      expect(output).toContain("Comparing:")
+      expect(output).toContain("config1.yaml")
+      expect(output).toContain("config2.yaml")
+      expect(output).toContain("Legend:")
     })
 
-    test("groups entries by operation", () => {
+    test("shows changes with symbols", () => {
       const formatter = new DiffFormatter()
       const output = formatter.formatDetailed(mockResult)
 
-      expect(output).toContain("➕ ADDED (1)")
-      expect(output).toContain("➖ REMOVED (1)")
-      expect(output).toContain("🔄 CHANGED (1)")
+      expect(output).toContain("[+]")
+      expect(output).toContain("[-]")
+      expect(output).toContain("[~]")
     })
 
     test("formats entry details", () => {
       const formatter = new DiffFormatter()
       const output = formatter.formatDetailed(mockResult)
 
-      expect(output).toContain("Path: newKey")
-      expect(output).toContain("Path: oldKey")
-      expect(output).toContain("Path: changedKey")
-      expect(output).toContain("Type: string")
+      expect(output).toContain("newKey")
+      expect(output).toContain("oldKey")
+      expect(output).toContain("changedKey")
     })
 
     test("shows old and new values for changed entries", () => {
       const formatter = new DiffFormatter()
       const output = formatter.formatDetailed(mockResult)
 
-      const changedSection = output.split("CHANGED")[1]
-      expect(changedSection).toContain("Old:")
-      expect(changedSection).toContain("New:")
+      expect(output).toContain("Old value:")
+      expect(output).toContain("New value:")
     })
   })
 })
