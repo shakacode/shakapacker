@@ -118,7 +118,14 @@ class Shakapacker::Configuration
   end
 
   def precompile_hook
-    fetch(:precompile_hook)
+    hook = fetch(:precompile_hook)
+    return nil if hook.nil? || (hook.is_a?(String) && hook.strip.empty?)
+
+    unless hook.is_a?(String)
+      raise "Shakapacker configuration error: precompile_hook must be a string, got #{hook.class}"
+    end
+
+    hook.strip
   end
 
   def javascript_transpiler

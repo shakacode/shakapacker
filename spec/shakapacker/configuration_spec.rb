@@ -670,6 +670,27 @@ describe "Shakapacker::Configuration" do
         test_config.close
         test_config.unlink
       end
+
+      it "strips whitespace from the hook command" do
+        test_config = Tempfile.new(["shakapacker", ".yml"])
+        test_config.write(<<~YAML)
+          production:
+            source_path: app/javascript
+            precompile_hook: '  bin/shakapacker-precompile-hook  '
+        YAML
+        test_config.rewind
+
+        config = Shakapacker::Configuration.new(
+          root_path: ROOT_PATH,
+          config_path: Pathname.new(test_config.path),
+          env: "production"
+        )
+
+        expect(config.precompile_hook).to eq "bin/shakapacker-precompile-hook"
+
+        test_config.close
+        test_config.unlink
+      end
     end
 
     context "without precompile_hook set in config" do
@@ -688,6 +709,94 @@ describe "Shakapacker::Configuration" do
         )
 
         expect(config.precompile_hook).to be_nil
+
+        test_config.close
+        test_config.unlink
+      end
+    end
+
+    context "with empty string precompile_hook" do
+      it "returns nil for empty string" do
+        test_config = Tempfile.new(["shakapacker", ".yml"])
+        test_config.write(<<~YAML)
+          production:
+            source_path: app/javascript
+            precompile_hook: ''
+        YAML
+        test_config.rewind
+
+        config = Shakapacker::Configuration.new(
+          root_path: ROOT_PATH,
+          config_path: Pathname.new(test_config.path),
+          env: "production"
+        )
+
+        expect(config.precompile_hook).to be_nil
+
+        test_config.close
+        test_config.unlink
+      end
+
+      it "returns nil for whitespace-only string" do
+        test_config = Tempfile.new(["shakapacker", ".yml"])
+        test_config.write(<<~YAML)
+          production:
+            source_path: app/javascript
+            precompile_hook: '   '
+        YAML
+        test_config.rewind
+
+        config = Shakapacker::Configuration.new(
+          root_path: ROOT_PATH,
+          config_path: Pathname.new(test_config.path),
+          env: "production"
+        )
+
+        expect(config.precompile_hook).to be_nil
+
+        test_config.close
+        test_config.unlink
+      end
+    end
+
+    context "with invalid precompile_hook type" do
+      it "raises error for boolean value" do
+        test_config = Tempfile.new(["shakapacker", ".yml"])
+        test_config.write(<<~YAML)
+          production:
+            source_path: app/javascript
+            precompile_hook: true
+        YAML
+        test_config.rewind
+
+        config = Shakapacker::Configuration.new(
+          root_path: ROOT_PATH,
+          config_path: Pathname.new(test_config.path),
+          env: "production"
+        )
+
+        expect { config.precompile_hook }.to raise_error(/precompile_hook must be a string/)
+
+        test_config.close
+        test_config.unlink
+      end
+
+      it "raises error for numeric value" do
+        test_config = Tempfile.new(["shakapacker", ".yml"])
+        test_config.write(<<~YAML)
+          production:
+            source_path: app/javascript
+            precompile_hook: 123
+        YAML
+        test_config.rewind
+
+        config = Shakapacker::Configuration.new(
+          root_path: ROOT_PATH,
+          config_path: Pathname.new(test_config.path),
+          env: "production"
+        )
+
+        expect { config.precompile_hook }.to raise_error(/precompile_hook must be a string/)
 
         test_config.close
         test_config.unlink

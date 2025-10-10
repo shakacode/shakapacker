@@ -68,7 +68,7 @@ describe "Shakapacker::Compiler" do
       call_count = 0
       allow(Open3).to receive(:capture3) do |*args|
         call_count += 1
-        if call_count == 1 && args[1] == "echo 'Hook executed'"
+        if call_count == 1 && args[1] == "bin/test-hook"
           ["Hook output", "", hook_status]
         else
           ["", "", webpack_status]
@@ -76,8 +76,7 @@ describe "Shakapacker::Compiler" do
       end
 
       # Temporarily stub config to return hook
-      original_precompile_hook = Shakapacker.config.precompile_hook
-      allow(Shakapacker.config).to receive(:precompile_hook).and_return("echo 'Hook executed'")
+      allow(Shakapacker.config).to receive(:precompile_hook).and_return("bin/test-hook")
 
       expect(Shakapacker.compiler.compile).to be true
       expect(call_count).to eq(2) # Both hook and webpack were called
@@ -108,12 +107,72 @@ describe "Shakapacker::Compiler" do
       allow(Shakapacker.compiler).to receive(:strategy).and_return(mocked_strategy)
 
       hook_status = OpenStruct.new(success?: false, exitstatus: 1)
-      allow(Open3).to receive(:capture3).and_return(["", "Error", hook_status])
+      allow(Open3).to receive(:capture3).and_return(["", "Error output", hook_status])
 
       # Temporarily stub config to return failing hook
-      allow(Shakapacker.config).to receive(:precompile_hook).and_return("exit 1")
+      allow(Shakapacker.config).to receive(:precompile_hook).and_return("bin/failing-hook")
 
-      expect { Shakapacker.compiler.compile }.to raise_error(/Precompile hook failed/)
+      expect { Shakapacker.compiler.compile }.to raise_error(/Precompile hook 'bin\/failing-hook' failed/)
+    end
+
+    it "handles hook with both stdout and stderr" do
+      mocked_strategy = spy("Strategy")
+      allow(mocked_strategy).to receive(:stale?).and_return(true)
+      allow(Shakapacker.compiler).to receive(:strategy).and_return(mocked_strategy)
+
+      hook_status = OpenStruct.new(success?: true, exitstatus: 0)
+      webpack_status = OpenStruct.new(success?: true)
+
+      call_count = 0
+      allow(Open3).to receive(:capture3) do |*args|
+        call_count += 1
+        if call_count == 1
+          ["Standard output", "Warning message", hook_status]
+        else
+          ["", "", webpack_status]
+        end
+      end
+
+      allow(Shakapacker.config).to receive(:precompile_hook).and_return("bin/verbose-hook")
+
+      expect(Shakapacker.compiler.compile).to be true
+    end
+
+    it "validates hook is within project root" do
+      mocked_strategy = spy("Strategy")
+      allow(mocked_strategy).to receive(:stale?).and_return(true)
+      allow(Shakapacker.compiler).to receive(:strategy).and_return(mocked_strategy)
+
+      allow(Shakapacker.config).to receive(:precompile_hook).and_return("/etc/passwd")
+
+      expect { Shakapacker.compiler.compile }.to raise_error(/Security Error.*must reference a script within the project root/)
+    end
+
+    it "warns when hook executable does not exist" do
+      mocked_strategy = spy("Strategy")
+      allow(mocked_strategy).to receive(:stale?).and_return(true)
+      allow(Shakapacker.compiler).to receive(:strategy).and_return(mocked_strategy)
+
+      hook_status = OpenStruct.new(success?: true, exitstatus: 0)
+      webpack_status = OpenStruct.new(success?: true)
+
+      call_count = 0
+      allow(Open3).to receive(:capture3) do |*args|
+        call_count += 1
+        if call_count == 1
+          ["", "", hook_status]
+        else
+          ["", "", webpack_status]
+        end
+      end
+
+      allow(Shakapacker.config).to receive(:precompile_hook).and_return("bin/nonexistent-hook")
+      allow(File).to receive(:exist?).and_call_original
+      allow(File).to receive(:exist?).with(anything).and_return(false)
+
+      expect(Shakapacker.logger).to receive(:warn).with(/executable not found/).at_least(:once)
+      expect(Shakapacker.logger).to receive(:warn).at_least(:once)
+      expect(Shakapacker.compiler.compile).to be true
     end
   end
 end

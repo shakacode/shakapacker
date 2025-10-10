@@ -81,6 +81,8 @@ class Shakapacker::Compiler
 
     def run_precompile_hook
       hook_command = config.precompile_hook
+      validate_precompile_hook(hook_command)
+
       logger.info "Running precompile hook: #{hook_command}"
 
       stdout, stderr, status = Open3.capture3(
@@ -95,8 +97,33 @@ class Shakapacker::Compiler
         logger.warn stderr unless stderr.empty?
       else
         non_empty_streams = [stdout, stderr].delete_if(&:empty?)
-        logger.error "\nPRECOMPILE HOOK FAILED:\nEXIT STATUS: #{status}\nOUTPUTS:\n#{non_empty_streams.join("\n\n")}"
-        raise "Precompile hook failed with exit status #{status.exitstatus}"
+        logger.error "\nPRECOMPILE HOOK FAILED:\nEXIT STATUS: #{status.exitstatus}\nCOMMAND: #{hook_command}\nOUTPUTS:\n#{non_empty_streams.join("\n\n")}"
+        logger.error "\nTo fix this:"
+        logger.error "  1. Check that the hook script exists and is executable"
+        logger.error "  2. Test the hook command manually: #{hook_command}"
+        logger.error "  3. Review the error output above for details"
+        logger.error "  4. You can disable the hook temporarily by commenting out 'precompile_hook' in shakapacker.yml"
+        raise "Precompile hook '#{hook_command}' failed with exit status #{status.exitstatus}"
+      end
+    end
+
+    def validate_precompile_hook(hook_command)
+      # Extract the executable path (first word/token before any arguments)
+      # This handles both "bin/script" and "bin/script --arg"
+      executable = hook_command.split(/\s+/).first
+      executable_path = config.root_path.join(executable)
+
+      # Security: Verify the hook points to a file within the project
+      unless executable_path.to_s.start_with?(config.root_path.to_s)
+        raise "Security Error: precompile_hook must reference a script within the project root. " \
+              "Got: #{hook_command}"
+      end
+
+      # Warn if the executable doesn't exist (but don't fail - it might be a system command)
+      unless File.exist?(executable_path)
+        logger.warn "⚠️  Warning: precompile_hook executable not found: #{executable_path}"
+        logger.warn "   If this is intentional (e.g., a system command), you can ignore this warning."
+        logger.warn "   Otherwise, ensure the script exists before running webpack."
       end
     end
 
