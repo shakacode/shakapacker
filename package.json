@@ -213,7 +213,7 @@
     ]
   },
   "engines": {
-    "node": ">= 14",
+    "node": ">= 20",
     "yarn": ">=1 <5"
   },
   "publishConfig": {
