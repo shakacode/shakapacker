@@ -27,27 +27,23 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: "20"
-          cache: "yarn"
-          cache-dependency-path: spec/dummy/yarn.lock
+          cache: "npm"
+          cache-dependency-path: spec/dummy/package-lock.json
 
-      - name: Install yalc
-        run: npm install -g yalc
-
-      - name: Build TypeScript
+      - name: Build TypeScript and create package
         run: |
           cd ../..
           yarn install --frozen-lockfile --production=false
           yarn build
-
-      - name: Publish shakapacker to yalc
-        run: |
-          cd ../..
-          yalc publish
+          # Create a tarball that can be installed like a real npm package
+          npm pack
 
       - name: Install dependencies
         run: |
-          yalc link shakapacker
-          yarn install
+          # Install shakapacker from the tarball (npm handles nested dependencies better than yarn)
+          npm install ../../shakapacker-*.tgz
+          # Install remaining dependencies
+          npm install
 
       - name: Switch to Webpack
         run: bin/test-bundler webpack
@@ -80,27 +76,23 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: "20"
-          cache: "yarn"
-          cache-dependency-path: spec/dummy/yarn.lock
+          cache: "npm"
+          cache-dependency-path: spec/dummy/package-lock.json
 
-      - name: Install yalc
-        run: npm install -g yalc
-
-      - name: Build TypeScript
+      - name: Build TypeScript and create package
         run: |
           cd ../..
           yarn install --frozen-lockfile --production=false
           yarn build
-
-      - name: Publish shakapacker to yalc
-        run: |
-          cd ../..
-          yalc publish
+          # Create a tarball that can be installed like a real npm package
+          npm pack
 
       - name: Install dependencies
         run: |
-          yalc link shakapacker
-          yarn install
+          # Install shakapacker from the tarball (npm handles nested dependencies better than yarn)
+          npm install ../../shakapacker-*.tgz
+          # Install remaining dependencies
+          npm install
 
       - name: Switch to RSpack
         run: bin/test-bundler rspack
@@ -133,27 +125,23 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: "20"
-          cache: "yarn"
-          cache-dependency-path: spec/dummy/yarn.lock
+          cache: "npm"
+          cache-dependency-path: spec/dummy/package-lock.json
 
-      - name: Install yalc
-        run: npm install -g yalc
-
-      - name: Build TypeScript
+      - name: Build TypeScript and create package
         run: |
           cd ../..
           yarn install --frozen-lockfile --production=false
           yarn build
-
-      - name: Publish shakapacker to yalc
-        run: |
-          cd ../..
-          yalc publish
+          # Create a tarball that can be installed like a real npm package
+          npm pack
 
       - name: Install dependencies
         run: |
-          yalc link shakapacker
-          yarn install
+          # Install shakapacker from the tarball (npm handles nested dependencies better than yarn)
+          npm install ../../shakapacker-*.tgz
+          # Install remaining dependencies
+          npm install
 
       - name: Test switching between bundlers
         run: |
