@@ -1,14 +1,26 @@
-const { requireOrError } = require("../utils/requireOrError")
+import requireOrError from "../utils/requireOrError"
+import { moduleExists } from "../utils/helpers"
 
-const TerserPlugin = requireOrError("terser-webpack-plugin")
-const { moduleExists } = require("../utils/helpers")
+interface TerserPluginConstructor {
+  new (options: unknown): unknown
+}
+
+interface CssMinimizerPluginConstructor {
+  new (): unknown
+}
+
+const TerserPlugin = requireOrError(
+  "terser-webpack-plugin"
+) as TerserPluginConstructor
 
 const tryCssMinimizer = (): unknown | null => {
   if (
     moduleExists("css-loader") &&
     moduleExists("css-minimizer-webpack-plugin")
   ) {
-    const CssMinimizerPlugin = requireOrError("css-minimizer-webpack-plugin")
+    const CssMinimizerPlugin = requireOrError(
+      "css-minimizer-webpack-plugin"
+    ) as CssMinimizerPluginConstructor
     return new CssMinimizerPlugin()
   }
 
@@ -52,6 +64,4 @@ const getOptimization = (): OptimizationConfig => {
   }
 }
 
-export = {
-  getOptimization
-}
+export { getOptimization }

@@ -1,5 +1,6 @@
 /* eslint global-require: 0 */
 /* eslint import/no-dynamic-require: 0 */
+/* eslint @typescript-eslint/no-require-imports: 0 */
 
 import * as webpackMerge from "webpack-merge"
 import { resolve } from "path"
@@ -9,9 +10,11 @@ import type { Configuration } from "webpack"
 import config from "./config"
 import baseConfig from "./environments/base"
 import devServer from "./dev_server"
-import env from "./env"
 import { moduleExists, canProcess } from "./utils/helpers"
 import inliningCss from "./utils/inliningCss"
+
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const env = require("./env")
 
 const rulesPath = resolve(__dirname, "rules", `${config.assets_bundler}.js`)
 const rules = require(rulesPath)
@@ -36,12 +39,13 @@ const generateWebpackConfig = (
 
   const { nodeEnv } = env
   const path = resolve(__dirname, "environments", `${nodeEnv}.js`)
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
   const environmentConfig = existsSync(path) ? require(path) : baseConfig
 
   return webpackMerge.merge({}, environmentConfig, extraConfig)
 }
 
-export = {
+export {
   config, // shakapacker.yml
   devServer,
   generateWebpackConfig,
@@ -50,6 +54,8 @@ export = {
   rules,
   moduleExists,
   canProcess,
-  inliningCss,
-  ...webpackMerge
+  inliningCss
 }
+
+// Re-export webpack-merge utilities
+export * from "webpack-merge"

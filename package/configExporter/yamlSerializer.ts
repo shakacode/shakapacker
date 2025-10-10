@@ -1,6 +1,6 @@
+import { relative, isAbsolute } from "path"
 import { ConfigMetadata } from "./types"
 import { getDocForKey } from "./configDocs"
-import { relative, isAbsolute } from "path"
 
 /**
  * Serializes webpack/rspack config to YAML format with optional inline documentation.
@@ -8,6 +8,7 @@ import { relative, isAbsolute } from "path"
  */
 export class YamlSerializer {
   private annotate: boolean
+
   private appRoot: string
 
   constructor(options: { annotate: boolean; appRoot: string }) {
@@ -33,7 +34,7 @@ export class YamlSerializer {
 
   private createHeader(metadata: ConfigMetadata): string {
     const lines: string[] = []
-    lines.push("# " + "=".repeat(77))
+    lines.push(`# ${"=".repeat(77)}`)
     lines.push("# Webpack/Rspack Configuration Export")
     lines.push(`# Generated: ${metadata.exportedAt}`)
     lines.push(`# Environment: ${metadata.environment}`)
@@ -42,7 +43,7 @@ export class YamlSerializer {
     if (metadata.configCount > 1) {
       lines.push(`# Total Configs: ${metadata.configCount}`)
     }
-    lines.push("# " + "=".repeat(77))
+    lines.push(`# ${"=".repeat(77)}`)
     return lines.join("\n")
   }
 
@@ -90,7 +91,7 @@ export class YamlSerializer {
     if (cleaned.includes("\n")) {
       const lines = cleaned.split("\n")
       const lineIndent = " ".repeat(indent + 2)
-      return "|\n" + lines.map((line) => lineIndent + line).join("\n")
+      return `|\n${lines.map((line) => lineIndent + line).join("\n")}`
     }
 
     // Escape strings that need quoting
@@ -195,7 +196,7 @@ export class YamlSerializer {
       }
     })
 
-    return "\n" + lines.join("\n")
+    return `\n${lines.join("\n")}`
   }
 
   private serializeObject(obj: any, indent: number, keyPath: string): string {
@@ -275,6 +276,6 @@ export class YamlSerializer {
       return str
     }
 
-    return "./" + rel
+    return `./${rel}`
   }
 }

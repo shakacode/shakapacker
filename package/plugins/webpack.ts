@@ -1,10 +1,24 @@
-const { requireOrError } = require("../utils/requireOrError")
+import requireOrError from "../utils/requireOrError"
+import config from "../config"
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const { isProduction } = require("../env")
+import { moduleExists } from "../utils/helpers"
+
+interface WebpackModule {
+  EnvironmentPlugin: new (env: NodeJS.ProcessEnv) => unknown
+}
+
+interface MiniCssExtractPluginConstructor {
+  new (options: unknown): unknown
+}
+
+interface SubresourceIntegrityPluginConstructor {
+  new (options: unknown): unknown
+}
+
 // TODO: Change to `const { WebpackAssetsManifest }` when dropping 'webpack-assets-manifest < 6.0.0' (Node >=20.10.0) support
 const WebpackAssetsManifest = requireOrError("webpack-assets-manifest")
-const webpack = requireOrError("webpack")
-const config = require("../config")
-const { isProduction } = require("../env")
-const { moduleExists } = require("../utils/helpers")
+const webpack = requireOrError("webpack") as WebpackModule
 
 const getPlugins = (): unknown[] => {
   // TODO: Remove WebpackAssetsManifestConstructor workaround when dropping 'webpack-assets-manifest < 6.0.0' (Node >=20.10.0) support
@@ -31,7 +45,9 @@ const getPlugins = (): unknown[] => {
 
   if (moduleExists("css-loader") && moduleExists("mini-css-extract-plugin")) {
     const hash = isProduction || config.useContentHash ? "-[contenthash:8]" : ""
-    const MiniCssExtractPlugin = requireOrError("mini-css-extract-plugin")
+    const MiniCssExtractPlugin = requireOrError(
+      "mini-css-extract-plugin"
+    ) as MiniCssExtractPluginConstructor
     plugins.push(
       new MiniCssExtractPlugin({
         filename: `css/[name]${hash}.css`,
@@ -49,7 +65,7 @@ const getPlugins = (): unknown[] => {
   ) {
     const SubresourceIntegrityPlugin = requireOrError(
       "webpack-subresource-integrity"
-    )
+    ) as SubresourceIntegrityPluginConstructor
     plugins.push(
       new SubresourceIntegrityPlugin({
         hashFuncNames: config.integrity.hash_functions,
@@ -61,6 +77,4 @@ const getPlugins = (): unknown[] => {
   return plugins
 }
 
-export = {
-  getPlugins
-}
+export { getPlugins }

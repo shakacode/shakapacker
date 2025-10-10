@@ -2,21 +2,22 @@ import { resolve } from "path"
 import { load } from "js-yaml"
 import { existsSync, readFileSync } from "fs"
 import { merge } from "webpack-merge"
-const { ensureTrailingSlash } = require("./utils/helpers")
+import { Config, YamlConfig } from "./types"
+import { ensureTrailingSlash } from "./utils/helpers"
+import configPath from "./utils/configPath"
+import defaultConfigPath from "./utils/defaultConfigPath"
+
+// eslint-disable-next-line @typescript-eslint/no-require-imports
 const { railsEnv } = require("./env")
-const configPath = require("./utils/configPath")
-const defaultConfigPath = require("./utils/defaultConfigPath")
-import { Config, YamlConfig, LegacyConfig } from "./types"
-const {
+import {
   isValidYamlConfig,
   createConfigValidationError,
-  isPartialConfig,
-  isValidConfig
-} = require("./utils/typeGuards")
-const {
+  isPartialConfig
+} from "./utils/typeGuards"
+import {
   isFileNotFoundError,
   createFileOperationError
-} = require("./utils/errorHelpers")
+} from "./utils/errorHelpers"
 
 const loadAndValidateYaml = (path: string): YamlConfig => {
   const fileContent = readFileSync(path, "utf8")
@@ -26,7 +27,7 @@ const loadAndValidateYaml = (path: string): YamlConfig => {
     throw createConfigValidationError(path, railsEnv, "Invalid YAML structure")
   }
 
-  return yamlContent as YamlConfig
+  return yamlContent
 }
 
 const getDefaultConfig = (): Partial<Config> => {

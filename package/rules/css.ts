@@ -1,3 +1,3 @@
-const { getStyleRule } = require("../utils/getStyleRule")
+import { getStyleRule } from "../utils/getStyleRule"
 
-export = getStyleRule(/\.(css)$/i)
+export default getStyleRule(/\.(css)$/i)
