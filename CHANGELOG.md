@@ -11,26 +11,6 @@
 
 Changes since the last non-beta release.
 
-### Added
-
-- **Knip for detecting dead code** [PR #675](https://github.com/shakacode/shakapacker/pull/675).
-  - Added Knip configuration to detect unused files, dependencies, and exports
-  - Integrated into CI pipeline to prevent accumulation of dead code
-  - Helps maintain a clean and efficient codebase
-
-### Changed
-
-- **Upgraded to ESLint v9 with flat config** [PR #677](https://github.com/shakacode/shakapacker/pull/677).
-  - Migrated from legacy `.eslintrc.js` to modern `eslint.config.mjs` flat config format
-  - Updated all ESLint plugins to their latest versions compatible with ESLint v9
-  - Improved linting performance and consistency across the project
-- **Replaced require with import in package/index.ts** [PR #674](https://github.com/shakacode/shakapacker/pull/674).
-  - Modernized TypeScript entry point to use ES modules
-  - Improves consistency with modern JavaScript practices
-- **Formatted all markdown files with prettier** [PR #673](https://github.com/shakacode/shakapacker/pull/673).
-  - Applied consistent formatting to all documentation
-  - Ensures better readability and maintainability
-
 ### Fixed
 
 - Fixed TypeScript type definitions to export proper types instead of `any` [PR #684](https://github.com/shakacode/shakapacker/pull/684).
