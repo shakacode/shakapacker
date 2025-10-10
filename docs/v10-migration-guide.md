@@ -129,10 +129,12 @@ node node_modules/shakapacker/scripts/migrate-to-esm-exports.js .
 
 **What the script does:**
 
+- **Creates timestamped backups** (`.backup-TIMESTAMP`) before any modifications
 - Converts `require('shakapacker')` to ES6 imports
 - Updates `shakapacker.env.*` to use named env exports
+- Converts `module.exports =` to `export default` (prevents mixing CJS/ESM syntax errors)
 - Preserves other `require()` calls unrelated to Shakapacker
-- Creates a backup before making changes
+- **Aborts if backup creation fails** to prevent data loss
 
 ### Manual Migration
 

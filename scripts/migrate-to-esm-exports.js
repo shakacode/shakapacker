@@ -15,42 +15,72 @@
  *   node scripts/migrate-to-esm-exports.js config/webpack/
  *
  * What it does:
+ * - Creates timestamped backup files before any modifications (.backup-TIMESTAMP)
  * - Converts require('shakapacker') to import { ... } from 'shakapacker'
  * - Updates shakapacker.config to just config
  * - Updates shakapacker.env.* to destructured env properties
+ * - Converts module.exports = ... to export default ... (prevents mixed CJS/ESM)
  * - Preserves other require() calls that aren't related to shakapacker
+ * - Aborts on backup failure to prevent data loss
  */
 
 const fs = require("fs")
 const path = require("path")
 
+function createBackup(filePath) {
+  const timestamp = new Date().toISOString().replace(/[:.]/g, "-")
+  const backupPath = `${filePath}.backup-${timestamp}`
+
+  try {
+    fs.copyFileSync(filePath, backupPath)
+    return backupPath
+  } catch (error) {
+    console.error(
+      `❌ Failed to create backup for ${filePath}: ${error.message}`
+    )
+    throw new Error(
+      `Backup failed for ${filePath}. Aborting migration to prevent data loss.`
+    )
+  }
+}
+
 function migrateFile(filePath) {
   const content = fs.readFileSync(filePath, "utf8")
   let modified = content
+  let hasChanges = false
 
   // Pattern 1: const shakapacker = require('shakapacker')
   // Convert to: import * as shakapacker from 'shakapacker' (for backward compat)
-  modified = modified.replace(
-    /const\s+(\w+)\s*=\s*require\(['"]shakapacker['"]\)/g,
-    "import * as $1 from 'shakapacker'"
-  )
+  const pattern1 = /const\s+(\w+)\s*=\s*require\(['"]shakapacker['"]\)/g
+  if (pattern1.test(content)) {
+    modified = modified.replace(
+      /const\s+(\w+)\s*=\s*require\(['"]shakapacker['"]\)/g,
+      "import * as $1 from 'shakapacker'"
+    )
+    hasChanges = true
+  }
 
   // Pattern 2: const { config, env, ... } = require('shakapacker')
   // Convert to: import { config, railsEnv, nodeEnv, ... } from 'shakapacker'
-  modified = modified.replace(
-    /const\s*\{\s*([^}]+)\}\s*=\s*require\(['"]shakapacker['"]\)/g,
-    (match, exports) => {
-      // Replace 'env' with individual env exports
-      let newExports = exports
-      if (newExports.includes("env")) {
-        newExports = newExports.replace(
-          /env/g,
-          "railsEnv, nodeEnv, isProduction, isDevelopment, runningWebpackDevServer"
-        )
+  const pattern2 =
+    /const\s*\{\s*([^}]+)\}\s*=\s*require\(['"]shakapacker['"]\)/g
+  if (pattern2.test(content)) {
+    modified = modified.replace(
+      /const\s*\{\s*([^}]+)\}\s*=\s*require\(['"]shakapacker['"]\)/g,
+      (match, exports) => {
+        // Replace 'env' with individual env exports
+        let newExports = exports
+        if (newExports.includes("env")) {
+          newExports = newExports.replace(
+            /env/g,
+            "railsEnv, nodeEnv, isProduction, isDevelopment, runningWebpackDevServer"
+          )
+        }
+        return `import { ${newExports} } from 'shakapacker'`
       }
-      return `import { ${newExports} } from 'shakapacker'`
-    }
-  )
+    )
+    hasChanges = true
+  }
 
   // Pattern 3: shakapacker.config -> config (if shakapacker was imported as namespace)
   // This handles cases where someone does: const shakapacker = require('shakapacker'); shakapacker.config
@@ -62,6 +92,7 @@ function migrateFile(filePath) {
         content.includes(`${varName} = require('shakapacker')`) ||
         content.includes(`import * as ${varName} from 'shakapacker'`)
       ) {
+        hasChanges = true
         return "config"
       }
       return match
@@ -76,17 +107,39 @@ function migrateFile(filePath) {
         content.includes(`${varName} = require('shakapacker')`) ||
         content.includes(`import * as ${varName} from 'shakapacker'`)
       ) {
+        hasChanges = true
         return envProp
       }
       return match
     }
   )
 
+  // Pattern 5: module.exports = ... -> export default ...
+  // This prevents mixing ESM imports with CJS exports (which causes SyntaxError)
+  const pattern5 = /^(\s*)module\.exports\s*=\s*/gm
+  if (pattern5.test(modified)) {
+    modified = modified.replace(
+      /^(\s*)module\.exports\s*=\s*/gm,
+      "$1export default "
+    )
+    hasChanges = true
+  }
+
   // Only write if changes were made
-  if (modified !== content) {
-    fs.writeFileSync(filePath, modified, "utf8")
-    console.log(`✅ Migrated: ${filePath}`)
-    return true
+  if (hasChanges && modified !== content) {
+    // Create backup before modifying
+    const backupPath = createBackup(filePath)
+
+    try {
+      fs.writeFileSync(filePath, modified, "utf8")
+      console.log(`✅ Migrated: ${filePath}`)
+      console.log(`   Backup: ${backupPath}`)
+      return true
+    } catch (error) {
+      console.error(`❌ Failed to write ${filePath}: ${error.message}`)
+      console.error(`   Original file preserved in backup: ${backupPath}`)
+      return false
+    }
   }
 
   return false
@@ -152,5 +205,13 @@ const migratedCount = processPath(targetPath)
 console.log("")
 console.log(`✨ Migration complete! Migrated ${migratedCount} file(s).`)
 console.log("")
-console.log("⚠️  Please review the changes and test your application.")
-console.log("   Some manual adjustments may still be needed for complex cases.")
+if (migratedCount > 0) {
+  console.log("📦 Backup files created with .backup-TIMESTAMP extension")
+  console.log("   You can restore from backups if needed")
+  console.log("")
+}
+console.log("⚠️  Next steps:")
+console.log("   1. Review the changes carefully")
+console.log("   2. Test your webpack/rspack build")
+console.log("   3. Delete backup files once you've verified everything works")
+console.log("   4. Some manual adjustments may be needed for complex cases")
