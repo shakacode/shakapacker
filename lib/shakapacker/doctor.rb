@@ -999,14 +999,25 @@ module Shakapacker
 
           def print_warnings
             puts "⚠️  Warnings (#{doctor.warnings.length}):"
-            doctor.warnings.each_with_index do |warning, index|
+            item_number = 0
+            doctor.warnings.each do |warning|
               category_prefix = case warning[:category]
                                 when :action_required then "[ACTION REQUIRED]"
                                 when :info then "[INFO]"
                                 when :recommended then "[RECOMMENDED]"
                                else ""
               end
-              puts "  #{category_prefix} #{index + 1}. #{warning[:message]}"
+
+              # Sub-items start with whitespace (indented fix instructions)
+              is_subitem = warning[:message].start_with?("  ")
+
+              if is_subitem
+                # Don't increment number for sub-items
+                puts "  #{category_prefix} #{warning[:message]}"
+              else
+                item_number += 1
+                puts "  #{category_prefix} #{item_number}. #{warning[:message]}"
+              end
             end
             puts ""
           end
