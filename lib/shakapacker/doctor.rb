@@ -1094,8 +1094,10 @@ module Shakapacker
 
           def has_dependency_issues?
             # Check if any issues or warnings are about missing npm/package dependencies
+            # Exclude optional dependencies - only show install instructions for required dependencies
             all_messages = doctor.issues + doctor.warnings.map { |w| w[:message] }
             all_messages.any? do |msg|
+              next if msg.include?("Optional")
               (msg.include?("Missing") && msg.include?("dependency")) ||
               msg.include?("not installed") ||
               msg.include?("is not installed")
