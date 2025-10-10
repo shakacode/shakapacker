@@ -18,7 +18,6 @@
 4. You can also pass additional options to the command to run the webpack-dev-server and start the webpack-dev-server with the option `--debug-shakapacker`
 
 5. **Export your full webpack/rspack configuration for analysis**: Use the `bin/export-bundler-config` utility to export your complete resolved configuration. This is especially helpful for:
-
    - **Migrations**: Comparing configurations before and after migrating between webpack and rspack, or between different Shakapacker versions
    - **Debugging**: Inspecting the exact configuration webpack/rspack is using, including all merged settings
    - **AI Analysis**: Uploading the exported config to ChatGPT or other AI tools for troubleshooting
@@ -66,7 +65,6 @@
    ```
 
    **Config files are automatically named:** `{bundler}-{env}-{type}.{ext}`
-
    - Examples: `webpack-development-client.yaml`, `rspack-production-server.yaml`
    - YAML format includes inline documentation explaining each config key
    - Separate files for client and server bundles (cleaner than combined)

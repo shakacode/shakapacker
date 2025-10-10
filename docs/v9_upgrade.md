@@ -130,7 +130,6 @@ import * as styles from './Component.module.css';
 **Migration Options:**
 
 1. **Update your code** (Recommended):
-
    - JavaScript: Change to named imports (`import { className }`)
    - TypeScript: Change to namespace imports (`import * as styles`)
    - Kebab-case class names are automatically converted to camelCase

@@ -11,6 +11,22 @@
 
 Changes since the last non-beta release.
 
+### Changed
+
+- Allow ESLint v9 and migrated to flat config format. [PR #677](https://github.com/shakacode/shakapacker/pull/677) by [justin808](https://github.com/justin808).
+
+### Fixed
+
+- Fixed rspack native bindings installation issue when switching bundlers. [PR #672](https://github.com/shakacode/shakapacker/pull/672) by [justin808](https://github.com/justin808).
+  - Running `rake shakapacker:switch_bundler rspack -- --install-deps` now properly installs platform-specific native bindings
+  - Fixes "Cannot find native binding" error when switching to rspack
+- Fixed Rails constant error when using custom environments like staging. [PR #681](https://github.com/shakacode/shakapacker/pull/681) by [justin808](https://github.com/justin808).
+  - `RAILS_ENV=staging` no longer causes "uninitialized constant Shakapacker::Instance::Rails" error
+  - Shakapacker now works in non-Rails contexts (like standalone runner)
+- Fixed TypeScript type definitions to export proper types instead of `any`. [PR #684](https://github.com/shakacode/shakapacker/pull/684) by [justin808](https://github.com/justin808).
+  - Previously `package/index.d.ts` was exporting all types as `any`, breaking IDE autocomplete
+  - Now properly exports typed interfaces for `WebpackConfig`, `RspackConfig`, etc.
+
 ## [v9.2.0] - October 9, 2025
 
 ### Added
@@ -116,7 +132,6 @@ See the [v9 Upgrade Guide](https://github.com/shakacode/shakapacker/blob/main/do
 ### ⚠️ Breaking Changes
 
 1. **SWC is now the default JavaScript transpiler instead of Babel** ([PR 603](https://github.com/shakacode/shakapacker/pull/603) by [justin808](https://github.com/justin808))
-
    - Babel dependencies are no longer included as peer dependencies
    - Improves compilation speed by 20x
    - **Migration for existing projects:**
@@ -133,7 +148,6 @@ See the [v9 Upgrade Guide](https://github.com/shakacode/shakapacker/blob/main/do
        ```
 
 2. **CSS Modules now use named exports by default** ([PR 599](https://github.com/shakacode/shakapacker/pull/599))
-
    - **JavaScript:** Use named imports: `import { className } from './styles.module.css'`
    - **TypeScript:** Use namespace imports: `import * as styles from './styles.module.css'`
    - To keep the old behavior with default imports, see [CSS Modules Export Mode documentation](./docs/css-modules-export-mode.md) for configuration instructions
@@ -399,7 +413,6 @@ See the [v8 Upgrade Guide](https://github.com/shakacode/shakapacker/blob/main/do
 
 - Set `source_entry_path` to `packs` and `nested_entries` to `true` in`shakapacker.yml` [PR 284](https://github.com/shakacode/shakapacker/pull/284) by [ahangarha](https://github.com/ahangarha).
 - Dev server configuration is modified to follow [webpack recommended configurations](https://webpack.js.org/configuration/dev-server/) for dev server. [PR276](https://github.com/shakacode/shakapacker/pull/276) by [ahangarha](https://github.com/ahangarha):
-
   - Deprecated `https` entry is removed from the default configuration file, allowing to set `server` or `https` as per the project requirements. For more detail, check webpack documentation. The `https` entry can be effective only if there is no `server` entry in the config file.
   - `allowed_hosts` is now set to `auto` instead of `all` by default.
 
