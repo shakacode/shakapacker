@@ -3,6 +3,109 @@
 Shakapacker hooks up a new `shakapacker:compile` task to `assets:precompile`, which gets run whenever you run `assets:precompile`.
 If you are not using Sprockets `shakapacker:compile` is automatically aliased to `assets:precompile`.
 
+## Precompile Hook
+
+Shakapacker supports running a custom command before webpack compilation via the `precompile_hook` configuration option. This is useful for dynamically generating entry points or performing other preparatory tasks before asset compilation.
+
+### Configuration
+
+Add the `precompile_hook` option to your `config/shakapacker.yml`:
+
+```yaml
+production:
+  # Hook to run before webpack compilation (e.g., for generating dynamic entry points)
+  # SECURITY: Only reference trusted scripts within your project.
+  precompile_hook: "bin/shakapacker-precompile-hook"
+```
+
+### Creating a Precompile Hook Script
+
+Create an executable script at the path specified in your configuration:
+
+```bash
+#!/usr/bin/env ruby
+# bin/shakapacker-precompile-hook
+
+puts "Generating dynamic webpack entries..."
+# Your custom logic here
+# For example, generate entry points based on database records
+# or copy files from another location
+
+exit 0  # Exit with 0 for success, non-zero for failure
+```
+
+Make the script executable:
+
+```bash
+chmod +x bin/shakapacker-precompile-hook
+```
+
+### How It Works
+
+- The hook runs **before** webpack compilation starts
+- It executes in your project root directory
+- It has access to the same environment variables as webpack (including `SHAKAPACKER_ASSET_HOST`, `NODE_ENV`, etc.)
+- If the hook fails (exits with non-zero status), webpack compilation is prevented
+- The hook output is logged to the Rails logger
+
+### Security
+
+For security reasons, the precompile hook is validated to ensure:
+
+- The command must reference a script within your project root
+- Symlinks are resolved to prevent symlink bypass attacks
+- Path traversal attempts (e.g., `../../etc/passwd`) are blocked
+- The executable path is properly validated before execution
+
+### Example Use Cases
+
+**Dynamically generating entry points:**
+
+```ruby
+#!/usr/bin/env ruby
+# Generate entry points from database records
+require_relative "../config/environment"
+
+Theme.find_each do |theme|
+  File.write(
+    Rails.root.join("app/javascript/packs/theme_#{theme.id}.js"),
+    "import '../themes/#{theme.identifier}';"
+  )
+end
+```
+
+**Copying vendor assets:**
+
+```bash
+#!/bin/bash
+# Copy third-party assets before compilation
+cp -r vendor/custom-lib/assets/* app/javascript/vendor/
+```
+
+### Troubleshooting
+
+If the precompile hook fails, you'll see an error message like:
+
+```
+PRECOMPILE HOOK FAILED:
+EXIT STATUS: 1
+COMMAND: bin/shakapacker-precompile-hook
+OUTPUTS: [error details]
+
+To fix this:
+  1. Check that the hook script exists and is executable
+  2. Test the hook command manually: bin/shakapacker-precompile-hook
+  3. Review the error output above for details
+  4. You can disable the hook temporarily by commenting out 'precompile_hook' in shakapacker.yml
+```
+
+To debug the hook, run it manually:
+
+```bash
+bin/shakapacker-precompile-hook
+echo $?  # Should output 0 for success
+```
+
 ## Heroku
 
 In order for your Shakapacker app to run on Heroku, you'll need to do a bit of configuration before hand.
