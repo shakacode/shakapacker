@@ -68,11 +68,11 @@ function migrateFile(filePath) {
     modified = modified.replace(
       /const\s*\{\s*([^}]+)\}\s*=\s*require\(['"]shakapacker['"]\)/g,
       (match, exports) => {
-        // Replace 'env' with individual env exports
+        // Replace 'env' with individual env exports (use word boundaries to avoid replacing 'environment', etc.)
         let newExports = exports
         if (newExports.includes("env")) {
           newExports = newExports.replace(
-            /env/g,
+            /\benv\b/g,
             "railsEnv, nodeEnv, isProduction, isDevelopment, runningWebpackDevServer"
           )
         }
