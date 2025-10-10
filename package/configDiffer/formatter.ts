@@ -1,5 +1,6 @@
 import { dump as dumpYaml } from "js-yaml"
 import { DiffResult, DiffEntry, DiffOperation } from "./types"
+import { getDocForKey, hasDocumentation } from "./configDocs"
 
 export class DiffFormatter {
   formatJson(result: DiffResult): string {
@@ -21,108 +22,176 @@ export class DiffFormatter {
     })
   }
 
-  formatSummary(result: DiffResult): string {
+  formatContextual(result: DiffResult): string {
     const lines: string[] = []
 
     lines.push("=".repeat(80))
-    lines.push("Configuration Diff Summary")
+    lines.push("Webpack/Rspack Configuration Comparison")
     lines.push("=".repeat(80))
     lines.push("")
 
-    lines.push("Total Changes: " + result.summary.totalChanges)
-    lines.push("  Added:       " + result.summary.added)
-    lines.push("  Removed:     " + result.summary.removed)
-    lines.push("  Changed:     " + result.summary.changed)
-    if (result.summary.unchanged !== undefined) {
-      lines.push("  Unchanged:   " + result.summary.unchanged)
+    if (result.metadata.leftFile && result.metadata.rightFile) {
+      lines.push(`Comparing: ${result.metadata.leftFile}`)
+      lines.push(`      vs:  ${result.metadata.rightFile}`)
+      lines.push("")
     }
 
     if (result.summary.totalChanges === 0) {
-      lines.push("")
       lines.push("✅ No differences found - configurations are identical")
+      lines.push("")
+      return lines.join("\n")
     }
 
+    lines.push(
+      `Found ${result.summary.totalChanges} difference(s): ` +
+        `${result.summary.added} added, ${result.summary.removed} removed, ${result.summary.changed} changed`
+    )
     lines.push("")
+    lines.push("=".repeat(80))
+    lines.push("")
+
+    // Group and sort entries for better readability
+    const sortedEntries = [...result.entries].sort((a, b) => {
+      // Sort by path depth first (shallower first), then alphabetically
+      if (a.path.path.length !== b.path.path.length) {
+        return a.path.path.length - b.path.path.length
+      }
+      return a.path.humanPath.localeCompare(b.path.humanPath)
+    })
+
+    sortedEntries.forEach((entry, index) => {
+      if (entry.operation === "unchanged") return
+
+      lines.push(this.formatContextualEntry(entry, index + 1))
+      lines.push("")
+    })
+
+    lines.push("=".repeat(80))
+    lines.push("")
+    lines.push("Legend:")
+    lines.push("  [+] = Added in right config")
+    lines.push("  [-] = Removed from right config")
+    lines.push("  [~] = Changed between configs")
+    lines.push("")
+
     return lines.join("\n")
   }
 
+  // Keep formatDetailed as an alias for backward compatibility
   formatDetailed(result: DiffResult): string {
-    const lines: string[] = []
+    return this.formatContextual(result)
+  }
 
-    lines.push("=".repeat(80))
-    lines.push("Configuration Diff - Detailed Report")
-    lines.push("=".repeat(80))
-    lines.push("")
-
-    lines.push(`Compared at: ${result.metadata.comparedAt}`)
-    if (result.metadata.leftFile && result.metadata.rightFile) {
-      lines.push(`Left:  ${result.metadata.leftFile}`)
-      lines.push(`Right: ${result.metadata.rightFile}`)
+  // Simplified summary - just counts
+  formatSummary(result: DiffResult): string {
+    if (result.summary.totalChanges === 0) {
+      return "✅ No differences found"
     }
+
+    return (
+      `${result.summary.totalChanges} changes: ` +
+      `+${result.summary.added} -${result.summary.removed} ~${result.summary.changed}`
+    )
+  }
+
+  private formatContextualEntry(entry: DiffEntry, index: number): string {
+    const lines: string[] = []
+    const symbol =
+      entry.operation === "added"
+        ? "[+]"
+        : entry.operation === "removed"
+          ? "[-]"
+          : "[~]"
+
+    lines.push(`${index}. ${symbol} ${entry.path.humanPath}`)
     lines.push("")
 
-    lines.push(this.formatSummary(result))
-
-    if (result.summary.totalChanges > 0) {
-      lines.push("=".repeat(80))
-      lines.push("Changes")
-      lines.push("=".repeat(80))
+    // Add documentation if available
+    const doc = getDocForKey(entry.path.humanPath)
+    if (doc) {
+      lines.push(`   What it does:`)
+      lines.push(`   ${doc.description}`)
       lines.push("")
 
-      const grouped = this.groupByOperation(result.entries)
-
-      if (grouped.added && grouped.added.length > 0) {
-        lines.push("➕ ADDED (" + grouped.added.length + ")")
-        lines.push("-".repeat(80))
-        grouped.added.forEach((entry) => {
-          lines.push(this.formatEntry(entry))
-        })
+      if (doc.affects) {
+        lines.push(`   Affects: ${doc.affects}`)
         lines.push("")
       }
 
-      if (grouped.removed && grouped.removed.length > 0) {
-        lines.push("➖ REMOVED (" + grouped.removed.length + ")")
-        lines.push("-".repeat(80))
-        grouped.removed.forEach((entry) => {
-          lines.push(this.formatEntry(entry))
-        })
-        lines.push("")
-      }
-
-      if (grouped.changed && grouped.changed.length > 0) {
-        lines.push("🔄 CHANGED (" + grouped.changed.length + ")")
-        lines.push("-".repeat(80))
-        grouped.changed.forEach((entry) => {
-          lines.push(this.formatEntry(entry))
-        })
+      if (doc.defaultValue) {
+        lines.push(`   Default: ${doc.defaultValue}`)
         lines.push("")
       }
     }
 
-    lines.push("=".repeat(80))
-    lines.push("")
+    // Show the change
+    if (entry.operation === "added") {
+      lines.push(`   Added value: ${this.formatValue(entry.newValue)}`)
+    } else if (entry.operation === "removed") {
+      lines.push(`   Removed value: ${this.formatValue(entry.oldValue)}`)
+    } else if (entry.operation === "changed") {
+      lines.push(`   Old value: ${this.formatValue(entry.oldValue)}`)
+      lines.push(`   New value: ${this.formatValue(entry.newValue)}`)
+
+      // Add impact analysis for specific keys
+      const impact = this.analyzeImpact(entry)
+      if (impact) {
+        lines.push("")
+        lines.push(`   Impact: ${impact}`)
+      }
+    }
+
+    // Add documentation link if available
+    if (doc && doc.documentationUrl) {
+      lines.push("")
+      lines.push(`   Documentation: ${doc.documentationUrl}`)
+    }
 
     return lines.join("\n")
   }
 
-  private formatEntry(entry: DiffEntry): string {
-    const lines: string[] = []
-    const indent = "  "
+  private analyzeImpact(entry: DiffEntry): string | null {
+    const path = entry.path.humanPath
+    const oldVal = entry.oldValue
+    const newVal = entry.newValue
 
-    lines.push(`${indent}Path: ${entry.path.humanPath}`)
-    lines.push(`${indent}Type: ${entry.valueType}`)
-
-    if (entry.operation === "added") {
-      lines.push(`${indent}Value: ${this.formatValue(entry.newValue)}`)
-    } else if (entry.operation === "removed") {
-      lines.push(`${indent}Value: ${this.formatValue(entry.oldValue)}`)
-    } else if (entry.operation === "changed") {
-      lines.push(`${indent}Old: ${this.formatValue(entry.oldValue)}`)
-      lines.push(`${indent}New: ${this.formatValue(entry.newValue)}`)
+    // Specific impact analysis
+    if (path === "mode") {
+      if (newVal === "production") {
+        return "Enabling production optimizations (minification, tree-shaking)"
+      } else if (newVal === "development") {
+        return "Enabling development features (better error messages, faster builds)"
+      }
     }
 
-    lines.push("")
-    return lines.join("\n")
+    if (path === "optimization.minimize") {
+      if (newVal === true || newVal === "true") {
+        return "Code will be minified - smaller bundles but slower builds"
+      } else {
+        return "Minification disabled - larger bundles but faster builds"
+      }
+    }
+
+    if (path === "devtool") {
+      if (newVal === "source-map") {
+        return "Full source maps - best debugging but slower builds"
+      } else if (newVal === "eval") {
+        return "Fastest builds but poor debugging experience"
+      } else if (
+        String(newVal).includes("cheap") ||
+        String(newVal).includes("eval")
+      ) {
+        return "Faster builds with some debugging capability"
+      }
+    }
+
+    if (path.includes("output.filename")) {
+      if (String(newVal).includes("[contenthash]")) {
+        return "Cache busting enabled - better long-term caching"
+      }
+    }
+
+    return null
   }
 
   private formatValue(value: any): string {
