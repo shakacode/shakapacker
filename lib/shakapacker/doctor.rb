@@ -1012,7 +1012,7 @@ module Shakapacker
               category_prefix = case warning[:category]
                                 when :action_required then "[REQUIRED]    "
                                 when :info then "[INFO]        "
-                                when :recommended then "[RECOMMENDED]"
+                                when :recommended then "[RECOMMENDED] "
                                else ""
               end
 
@@ -1022,13 +1022,14 @@ module Shakapacker
               if is_subitem
                 # Don't increment number for sub-items, but wrap long lines
                 # Indent sub-items to align with the message text (no category prefix for sub-items)
-                subitem_prefix = "                     "  # 21 spaces to align with message text
+                subitem_prefix = "                      "  # 22 spaces to align with message text
                 wrapped = wrap_text(warning[:message], 100, subitem_prefix)
                 puts wrapped
               else
                 item_number += 1
                 # Right-align numbers for better visual alignment (assume max 99 warnings)
                 number_str = "#{item_number}.".rjust(3)
+                # Add space after category_prefix to ensure alignment
                 prefix = "  #{category_prefix} #{number_str} "
                 wrapped = wrap_text(warning[:message], 100, prefix)
                 puts wrapped
