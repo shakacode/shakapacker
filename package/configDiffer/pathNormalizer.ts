@@ -59,19 +59,43 @@ export class PathNormalizer {
       return false
     }
 
-    const pathIndicators = [
-      "/",
-      "\\",
-      "./",
-      ".\\",
-      "../",
-      "..\\",
-      "~/",
-      "C:",
-      "D:"
-    ]
+    // Exclude URLs with schemes (http://, https://, file://, webpack://, etc.)
+    if (/^[a-zA-Z][a-zA-Z0-9+.-]*:\/\//.test(str)) {
+      return false
+    }
 
-    return pathIndicators.some((indicator) => str.includes(indicator))
+    // Exclude module specifiers starting with @
+    if (str.startsWith("@")) {
+      return false
+    }
+
+    // Check for actual filesystem paths
+    // Absolute POSIX paths
+    if (str.startsWith("/") || str.startsWith("\\")) {
+      return true
+    }
+
+    // Relative paths
+    if (
+      str.startsWith("./") ||
+      str.startsWith(".\\") ||
+      str.startsWith("../") ||
+      str.startsWith("..\\")
+    ) {
+      return true
+    }
+
+    // Home directory paths
+    if (str.startsWith("~/")) {
+      return true
+    }
+
+    // Windows drive paths (C:\, D:\, C:/, D:/, etc.)
+    if (/^[A-Za-z]:[\\/]/.test(str)) {
+      return true
+    }
+
+    return false
   }
 
   private isPlainObject(value: any): boolean {

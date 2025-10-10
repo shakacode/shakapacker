@@ -36,11 +36,16 @@ export async function run(args: string[]): Promise<number> {
     let normalizedRight = rightConfig
 
     if (options.normalizePaths) {
-      const basePath =
+      const leftBasePath =
         PathNormalizer.detectBasePath(leftConfig) || process.cwd()
-      const normalizer = new PathNormalizer(basePath)
-      normalizedLeft = normalizer.normalize(leftConfig).normalized
-      normalizedRight = normalizer.normalize(rightConfig).normalized
+      const rightBasePath =
+        PathNormalizer.detectBasePath(rightConfig) || process.cwd()
+
+      const leftNormalizer = new PathNormalizer(leftBasePath)
+      const rightNormalizer = new PathNormalizer(rightBasePath)
+
+      normalizedLeft = leftNormalizer.normalize(leftConfig).normalized
+      normalizedRight = rightNormalizer.normalize(rightConfig).normalized
     }
 
     const diffEngine = new DiffEngine(options)
