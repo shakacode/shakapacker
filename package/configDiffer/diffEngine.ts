@@ -157,14 +157,7 @@ export class DiffEngine {
       return "(root)"
     }
 
-    return path
-      .map((segment) => {
-        if (segment.startsWith("[") && segment.endsWith("]")) {
-          return segment
-        }
-        return segment
-      })
-      .join(this.options.pathSeparator)
+    return path.join(this.options.pathSeparator)
   }
 
   private shouldIgnorePath(path: string[]): boolean {
