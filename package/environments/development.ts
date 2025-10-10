@@ -6,16 +6,15 @@
 import { merge } from "webpack-merge"
 import type {
   WebpackConfigWithDevServer,
-  RspackConfigWithDevServer,
-  ReactRefreshWebpackPlugin,
-  ReactRefreshRspackPlugin
+  RspackConfigWithDevServer
 } from "./types"
 import config from "../config"
 import baseConfig from "./base"
 import webpackDevServerConfig from "../webpackDevServerConfig"
+import { moduleExists } from "../utils/helpers"
+
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const { runningWebpackDevServer } = require("../env")
-import { moduleExists } from "../utils/helpers"
 
 /**
  * Base development configuration shared between webpack and rspack
@@ -88,4 +87,4 @@ const rspackDevConfig = (): RspackConfigWithDevServer => {
 const bundlerConfig =
   config.assets_bundler === "rspack" ? rspackDevConfig() : webpackDevConfig()
 
-export default merge(baseConfig, bundlerConfig)
+export = merge(baseConfig, bundlerConfig)

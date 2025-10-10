@@ -37,3 +37,4 @@ const getOptimization = (): OptimizationConfig => {
 }
 
 export { getOptimization }
+export default getOptimization

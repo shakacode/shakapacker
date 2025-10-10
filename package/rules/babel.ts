@@ -1,8 +1,9 @@
 import { loaderMatches } from "../utils/helpers"
 import config from "../config"
+import jscommon from "./jscommon"
+
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const { isProduction } = require("../env")
-import jscommon from "./jscommon"
 
 const { javascript_transpiler: javascriptTranspiler } = config
 

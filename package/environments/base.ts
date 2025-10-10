@@ -5,7 +5,7 @@
 import { Dirent, existsSync, readdirSync } from "fs"
 import { basename, dirname, join, relative, resolve } from "path"
 import extname from "path-complete-extname"
-// @ts-ignore: webpack is an optional peer dependency (using type-only import)
+// @ts-expect-error: webpack is an optional peer dependency (using type-only import)
 import type { Configuration, Entry } from "webpack"
 import config from "../config"
 // eslint-disable-next-line @typescript-eslint/no-require-imports

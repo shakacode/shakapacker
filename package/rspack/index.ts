@@ -12,13 +12,14 @@ import type { RspackConfigWithDevServer } from "../environments/types"
 import config from "../config"
 import baseConfig from "../environments/base"
 import devServer from "../dev_server"
-// eslint-disable-next-line @typescript-eslint/no-require-imports
-const env = require("../env")
 import { moduleExists, canProcess } from "../utils/helpers"
 import inliningCss from "../utils/inliningCss"
 import { getPlugins } from "../plugins/rspack"
 import { getOptimization } from "../optimization/rspack"
 import { validateRspackDependencies } from "../utils/validateDependencies"
+
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const env = require("../env")
 
 const rulesPath = resolve(__dirname, "../rules", "rspack.js")
 const rules = require(rulesPath)

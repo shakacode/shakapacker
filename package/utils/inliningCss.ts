@@ -1,6 +1,7 @@
+import devServer from "../dev_server"
+
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const { runningWebpackDevServer } = require("../env")
-import devServer from "../dev_server"
 
 // This logic is tied to lib/shakapacker/instance.rb
 const inliningCss: boolean =
