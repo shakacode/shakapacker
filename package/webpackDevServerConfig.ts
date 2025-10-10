@@ -10,7 +10,7 @@ interface WebpackDevServerConfig {
   devMiddleware?: {
     publicPath?: string
   }
-  hot?: boolean | "only"
+  hot?: boolean | string
   liveReload?: boolean
   historyApiFallback?:
     | boolean
