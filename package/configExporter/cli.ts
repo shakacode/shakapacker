@@ -187,11 +187,12 @@ function validateOptions(options: ExportOptions): void {
     )
   }
 
-  if (options.build && !options.configFile) {
-    const loader = new ConfigFileLoader()
+  if (options.build) {
+    const loader = new ConfigFileLoader(options.configFile)
     if (!loader.exists()) {
+      const configPath = options.configFile || ".bundler-config.yml"
       throw new Error(
-        "--build requires a config file. Run --init to create .bundler-config.yml or use --config-file=<path>."
+        `--build requires a config file but ${configPath} not found. Run --init to create it.`
       )
     }
   }
@@ -228,9 +229,14 @@ function runInitCommand(options: ExportOptions): number {
 }
 
 function runListBuildsCommand(options: ExportOptions): number {
-  const loader = new ConfigFileLoader(options.configFile)
-  loader.listBuilds()
-  return 0
+  try {
+    const loader = new ConfigFileLoader(options.configFile)
+    loader.listBuilds()
+    return 0
+  } catch (error: any) {
+    console.error(`[Config Exporter] Error: ${error.message}`)
+    return 1
+  }
 }
 
 async function runDoctorMode(
@@ -480,8 +486,24 @@ async function loadConfigsForEnv(
     let configType: "client" | "server" | "all" = "all"
 
     // Use outputs from build config if available
-    if (buildOutputs.length > 0 && buildOutputs[index]) {
-      configType = buildOutputs[index] as "client" | "server" | "all"
+    if (
+      buildOutputs.length > 0 &&
+      index < buildOutputs.length &&
+      buildOutputs[index]
+    ) {
+      const outputValue = buildOutputs[index]
+      // Validate the output value is a valid config type
+      if (
+        outputValue === "client" ||
+        outputValue === "server" ||
+        outputValue === "all"
+      ) {
+        configType = outputValue
+      } else {
+        console.warn(
+          `[Config Exporter] Warning: Invalid output type '${outputValue}' at index ${index}, using 'all'`
+        )
+      }
     } else if (configs.length === 2) {
       // Likely client and server configs
       configType = index === 0 ? "client" : "server"
