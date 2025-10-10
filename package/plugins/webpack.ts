@@ -20,8 +20,12 @@ const getPlugins = (): unknown[] => {
       output: config.manifestPath,
       entrypointsUseAssets: true,
       publicPath: config.publicPathWithoutCDN,
-      integrity: config.integrity.enabled,
-      integrityHashes: config.integrity.hash_functions
+      ...(config.integrity
+        ? {
+            integrity: config.integrity.enabled,
+            integrityHashes: config.integrity.hash_functions
+          }
+        : {})
     })
   ]
 
