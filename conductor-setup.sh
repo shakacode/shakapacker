@@ -33,7 +33,7 @@ $BUNDLE_CMD install
 
 # Install JavaScript dependencies
 echo "📦 Installing JavaScript dependencies..."
-yarn install
+yarn install --frozen-lockfile
 
 # Set up Husky git hooks
 echo "🪝 Setting up Husky git hooks..."
