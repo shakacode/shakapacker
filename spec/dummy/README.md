@@ -53,29 +53,34 @@ bin/test-bundler rspack yarn build
 ### How it Works
 
 The script works by copying the appropriate configuration file:
+
 - `config/shakapacker-webpack.yml` → `config/shakapacker.yml` (for Webpack)
 - `config/shakapacker-rspack.yml` → `config/shakapacker.yml` (for RSpack)
 
 ## Configuration Files
 
 ### Bundler Configurations
+
 - `config/shakapacker.yml` - Active configuration (modified by test-bundler)
 - `config/shakapacker-webpack.yml` - Webpack-specific settings
 - `config/shakapacker-rspack.yml` - RSpack-specific settings
 
 ### Build Configurations
+
 - `config/webpack/webpack.config.js` - Webpack build configuration
 - `config/rspack/rspack.config.js` - RSpack build configuration
 
 ## Key Differences
 
 ### Webpack Configuration
+
 - Uses `assets_bundler: 'webpack'`
 - Default transpiler: `babel`
 - Dev server uses `hmr` option
 - More mature, stable option
 
 ### RSpack Configuration
+
 - Uses `assets_bundler: 'rspack'`
 - Recommended transpiler: `swc` (faster)
 - Dev server uses `hot` option
@@ -96,23 +101,27 @@ SHAKAPACKER_ASSET_BUNDLER=rspack bin/shakapacker
 ## Testing
 
 ### Run Tests with Webpack
+
 ```bash
 bin/test-bundler webpack
 bundle exec rspec
 ```
 
 ### Run Tests with RSpack
+
 ```bash
 bin/test-bundler rspack
 bundle exec rspec
 ```
 
 ### CI Testing
+
 The CI automatically tests both bundlers in parallel. See `.github/workflows/test-bundlers.yml` for the configuration.
 
 ## Troubleshooting
 
 ### Missing Dependencies
+
 If you get errors about missing packages after switching bundlers:
 
 ```bash
@@ -124,14 +133,17 @@ yarn add @rspack/core @rspack/cli rspack-manifest-plugin
 ```
 
 ### Configuration Issues
+
 If the app doesn't work after switching:
 
 1. Check that the correct config is active:
+
    ```bash
    grep assets_bundler config/shakapacker.yml
    ```
 
 2. Ensure the config files exist:
+
    ```bash
    ls -la config/shakapacker-*.yml
    ```

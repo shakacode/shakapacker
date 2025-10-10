@@ -18,7 +18,7 @@ if (devServerConfig) {
     const envValue = envFetch(`${envPrefix}_${key.toUpperCase()}`)
     if (envValue !== undefined) {
       // Use bracket notation to avoid ASI issues
-      (devServerConfig as Record<string, unknown>)[key] = envValue
+      ;(devServerConfig as Record<string, unknown>)[key] = envValue
     }
   })
 }

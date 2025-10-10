@@ -21,7 +21,10 @@ const { validateRspackDependencies } = require("../utils/validateDependencies")
 const rulesPath = resolve(__dirname, "../rules", "rspack.js")
 const rules = require(rulesPath)
 
-const generateRspackConfig = (extraConfig: RspackConfigWithDevServer = {}, ...extraArgs: unknown[]): RspackConfigWithDevServer => {
+const generateRspackConfig = (
+  extraConfig: RspackConfigWithDevServer = {},
+  ...extraArgs: unknown[]
+): RspackConfigWithDevServer => {
   // Validate required dependencies first
   validateRspackDependencies()
   if (extraArgs.length > 0) {
@@ -49,7 +52,12 @@ const generateRspackConfig = (extraConfig: RspackConfigWithDevServer = {}, ...ex
 }
 
 // Re-export webpack-merge utilities for backward compatibility
-export { merge, mergeWithCustomize, mergeWithRules, unique } from "webpack-merge"
+export {
+  merge,
+  mergeWithCustomize,
+  mergeWithRules,
+  unique
+} from "webpack-merge"
 
 export {
   config, // shakapacker.yml

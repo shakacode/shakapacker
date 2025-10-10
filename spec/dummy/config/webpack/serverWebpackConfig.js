@@ -16,7 +16,9 @@ const configureServer = () => {
   }
 
   if (!serverEntry['server-bundle']) {
-    throw new Error('Create a pack with the file name \'server-bundle.js\' containing all the server rendering files')
+    throw new Error(
+      "Create a pack with the file name 'server-bundle.js' containing all the server rendering files"
+    )
   }
 
   serverWebpackConfig.entry = serverEntry
@@ -49,7 +51,7 @@ const configureServer = () => {
     // If using the React on Rails Pro node server renderer, uncomment the next line
     // libraryTarget: 'commonjs2',
     path: config.outputPath,
-    publicPath: config.publicPath,
+    publicPath: config.publicPath
     // https://webpack.js.org/configuration/output/#outputglobalobject
   }
 
@@ -66,39 +68,45 @@ const configureServer = () => {
   // Remove the mini-css-extract-plugin from the style loaders because
   // the client build will handle exporting CSS.
   // replace file-loader with null-loader
-  const rules = serverWebpackConfig.module.rules;
+  const rules = serverWebpackConfig.module.rules
   rules.forEach((rule) => {
     if (Array.isArray(rule.use)) {
       // remove the mini-css-extract-plugin and style-loader
       rule.use = rule.use.filter((item) => {
-        let testValue;
+        let testValue
         if (typeof item === 'string') {
-          testValue = item;
+          testValue = item
         } else if (typeof item.loader === 'string') {
-          testValue = item.loader;
+          testValue = item.loader
         }
-        return !(testValue.match(/mini-css-extract-plugin/) || testValue === 'style-loader');
-      });
+        return !(
+          testValue.match(/mini-css-extract-plugin/) ||
+          testValue === 'style-loader'
+        )
+      })
       const cssLoader = rule.use.find((item) => {
-        let testValue;
+        let testValue
 
         if (typeof item === 'string') {
-          testValue = item;
+          testValue = item
         } else if (typeof item.loader === 'string') {
-          testValue = item.loader;
+          testValue = item.loader
         }
 
-        return testValue.includes('css-loader');
-      });
+        return testValue.includes('css-loader')
+      })
       if (cssLoader && cssLoader.options) {
-        cssLoader.options.modules = { exportOnlyLocals: true };
+        cssLoader.options.modules = { exportOnlyLocals: true }
       }
 
       // Skip writing image files during SSR by setting emitFile to false
-    } else if (rule.use && (rule.use.loader === 'url-loader' || rule.use.loader === 'file-loader')) {
-      rule.use.options.emitFile = false;
+    } else if (
+      rule.use &&
+      (rule.use.loader === 'url-loader' || rule.use.loader === 'file-loader')
+    ) {
+      rule.use.options.emitFile = false
     }
-  });
+  })
 
   // eval works well for the SSR bundle because it's the fastest and shows
   // lines in the server bundle which is good for debugging SSR

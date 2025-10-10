@@ -1,8 +1,8 @@
 // @ts-ignore: webpack is an optional peer dependency (using type-only import)
-import type { Configuration, RuleSetRule, RuleSetUseItem } from 'webpack'
+import type { Configuration, RuleSetRule, RuleSetUseItem } from "webpack"
 
 export interface ShakapackerWebpackConfig extends Configuration {
-  module?: Configuration['module'] & {
+  module?: Configuration["module"] & {
     rules?: RuleSetRule[]
   }
 }

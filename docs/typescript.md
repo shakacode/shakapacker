@@ -8,8 +8,8 @@ Shakapacker v9 includes TypeScript support, providing type safety and better IDE
 
 ```typescript
 // webpack.config.ts
-import { generateWebpackConfig } from 'shakapacker'
-import type { Configuration } from 'webpack'
+import { generateWebpackConfig } from "shakapacker"
+import type { Configuration } from "webpack"
 
 const config: Configuration = generateWebpackConfig({
   // Your config with full type safety
@@ -22,7 +22,7 @@ export default config
 
 ```javascript
 // webpack.config.js
-const { generateWebpackConfig } = require('shakapacker')
+const { generateWebpackConfig } = require("shakapacker")
 
 /** @type {import('webpack').Configuration} */
 const config = {
@@ -48,10 +48,12 @@ module.exports = generateWebpackConfig(config)
 ## IDE Setup
 
 ### VS Code
+
 - Install TypeScript extension (built-in)
 - Set `"typescript.tsdk": "node_modules/typescript/lib"` in settings
 
 ### WebStorm/IntelliJ
+
 - Enable TypeScript service in Settings → Languages & Frameworks → TypeScript
 
 ## Common Patterns
@@ -59,7 +61,7 @@ module.exports = generateWebpackConfig(config)
 ### Environment-Specific Config
 
 ```typescript
-import { generateWebpackConfig, env } from 'shakapacker'
+import { generateWebpackConfig, env } from "shakapacker"
 
 const config = generateWebpackConfig({
   optimization: {
@@ -71,8 +73,8 @@ const config = generateWebpackConfig({
 ### Rspack Config
 
 ```typescript
-import { generateRspackConfig } from 'shakapacker/rspack'
-import type { RspackOptions } from '@rspack/core'
+import { generateRspackConfig } from "shakapacker/rspack"
+import type { RspackOptions } from "@rspack/core"
 
 const config: RspackOptions = {
   // Rspack-specific config
@@ -84,13 +86,15 @@ export default generateRspackConfig(config)
 ## Troubleshooting
 
 **Cannot find module 'shakapacker'**
+
 ```typescript
 /// <reference types="shakapacker" />
 ```
 
 **Type errors with custom loaders**
+
 ```typescript
-use: [require.resolve('custom-loader') as any]
+use: [require.resolve("custom-loader") as any]
 ```
 
 ## Further Reading

@@ -3,6 +3,7 @@
 This guide helps you adopt TypeScript types in your Shakapacker configuration files for better type safety and IDE support.
 
 ## Table of Contents
+
 - [Benefits](#benefits)
 - [Quick Start](#quick-start)
 - [Migration Steps](#migration-steps)
@@ -12,6 +13,7 @@ This guide helps you adopt TypeScript types in your Shakapacker configuration fi
 ## Benefits
 
 Using TypeScript with Shakapacker provides:
+
 - **Type Safety**: Catch configuration errors at compile time
 - **IDE Support**: Get autocompletion and inline documentation
 - **Better Refactoring**: Safely rename and restructure configurations
@@ -56,13 +58,13 @@ Rename `config/webpack/webpack.config.js` to `config/webpack/webpack.config.ts`:
 
 ```typescript
 // config/webpack/webpack.config.ts
-import { generateWebpackConfig, merge } from 'shakapacker'
-import type { WebpackConfigWithDevServer } from 'shakapacker/types'
-import type { Configuration } from 'webpack'
+import { generateWebpackConfig, merge } from "shakapacker"
+import type { WebpackConfigWithDevServer } from "shakapacker/types"
+import type { Configuration } from "webpack"
 
 const customConfig: Configuration = {
   resolve: {
-    extensions: ['.css', '.ts', '.tsx']
+    extensions: [".css", ".ts", ".tsx"]
   }
 }
 
@@ -83,7 +85,7 @@ import type {
   WebpackConfigWithDevServer,
   RspackConfigWithDevServer,
   CompressionPluginOptions
-} from 'shakapacker/types'
+} from "shakapacker/types"
 ```
 
 ### Step 2: Type Your Configuration Objects
@@ -94,16 +96,16 @@ Add type annotations to your configuration objects:
 // Before (JavaScript)
 const customConfig = {
   resolve: {
-    extensions: ['.css', '.ts', '.tsx']
+    extensions: [".css", ".ts", ".tsx"]
   }
 }
 
 // After (TypeScript)
-import type { Configuration } from 'webpack'
+import type { Configuration } from "webpack"
 
 const customConfig: Configuration = {
   resolve: {
-    extensions: ['.css', '.ts', '.tsx']
+    extensions: [".css", ".ts", ".tsx"]
   }
 }
 ```
@@ -120,8 +122,8 @@ function modifyConfig(config) {
 }
 
 // After (TypeScript)
-import type { Configuration } from 'webpack'
-import type { WebpackPluginInstance } from 'shakapacker/types'
+import type { Configuration } from "webpack"
+import type { WebpackPluginInstance } from "shakapacker/types"
 
 function modifyConfig(config: Configuration): Configuration {
   const plugins = config.plugins as WebpackPluginInstance[]
@@ -134,11 +136,11 @@ function modifyConfig(config: Configuration): Configuration {
 
 ```typescript
 // config/webpack/development.ts
-import { generateWebpackConfig } from 'shakapacker'
-import type { WebpackConfigWithDevServer } from 'shakapacker/types'
+import { generateWebpackConfig } from "shakapacker"
+import type { WebpackConfigWithDevServer } from "shakapacker/types"
 
 const developmentConfig: WebpackConfigWithDevServer = generateWebpackConfig({
-  devtool: 'eval-cheap-module-source-map',
+  devtool: "eval-cheap-module-source-map",
   devServer: {
     hot: true,
     port: 3035
@@ -153,11 +155,11 @@ export default developmentConfig
 ### Pattern 1: Custom Loaders
 
 ```typescript
-import type { RuleSetRule } from 'webpack'
+import type { RuleSetRule } from "webpack"
 
 const customLoader: RuleSetRule = {
   test: /\.svg$/,
-  use: ['@svgr/webpack']
+  use: ["@svgr/webpack"]
 }
 
 const config: Configuration = generateWebpackConfig({
@@ -170,12 +172,12 @@ const config: Configuration = generateWebpackConfig({
 ### Pattern 2: Plugin Configuration
 
 ```typescript
-import CompressionPlugin from 'compression-webpack-plugin'
-import type { CompressionPluginOptions } from 'shakapacker/types'
+import CompressionPlugin from "compression-webpack-plugin"
+import type { CompressionPluginOptions } from "shakapacker/types"
 
 const compressionOptions: CompressionPluginOptions = {
-  filename: '[path][base].gz',
-  algorithm: 'gzip',
+  filename: "[path][base].gz",
+  algorithm: "gzip",
   test: /\.(js|css|html|json|ico|svg|eot|otf|ttf)$/
 }
 
@@ -187,8 +189,8 @@ const config: Configuration = generateWebpackConfig({
 ### Pattern 3: Conditional Configuration
 
 ```typescript
-import type { Configuration } from 'webpack'
-import { env } from 'shakapacker'
+import type { Configuration } from "webpack"
+import { env } from "shakapacker"
 
 const config: Configuration = generateWebpackConfig()
 
@@ -208,11 +210,11 @@ export default config
 
 ```typescript
 // config/rspack/rspack.config.ts
-import type { RspackConfigWithDevServer } from 'shakapacker/types'
-import { generateWebpackConfig } from 'shakapacker'
+import type { RspackConfigWithDevServer } from "shakapacker/types"
+import { generateWebpackConfig } from "shakapacker"
 
 const rspackConfig: RspackConfigWithDevServer = generateWebpackConfig({
-  mode: 'development',
+  mode: "development",
   devServer: {
     hot: true,
     port: 3036
@@ -246,11 +248,13 @@ npm run type-check
 ## Available Types Reference
 
 ### Core Types
+
 - `Config` - Shakapacker configuration from shakapacker.yml
 - `Env` - Environment variables and helpers
 - `DevServerConfig` - Development server configuration
 
 ### Webpack/Rspack Types
+
 - `WebpackConfigWithDevServer` - Webpack configuration with dev server
 - `RspackConfigWithDevServer` - Rspack configuration with dev server
 - `WebpackPluginInstance` - Webpack plugin instance type
@@ -258,6 +262,7 @@ npm run type-check
 - `RspackPlugin` - **⚠️ Deprecated:** Use `RspackPluginInstance` instead
 
 ### Helper Types
+
 - `CompressionPluginOptions` - Compression plugin configuration
 - `ReactRefreshWebpackPlugin` - React refresh for Webpack
 - `ReactRefreshRspackPlugin` - React refresh for Rspack
@@ -287,7 +292,7 @@ plugins.push(new MyPlugin())
 
 ```typescript
 // If types aren't available, declare them
-declare module 'my-custom-loader' {
+declare module "my-custom-loader" {
   const loader: any
   export default loader
 }
@@ -316,27 +321,31 @@ Here's a complete example of a typed webpack configuration:
 
 ```typescript
 // config/webpack/webpack.config.ts
-import { generateWebpackConfig, merge, config as shakapackerConfig } from 'shakapacker'
-import type { Configuration } from 'webpack'
-import type { WebpackConfigWithDevServer } from 'shakapacker/types'
-import CompressionPlugin from 'compression-webpack-plugin'
-import { resolve } from 'path'
+import {
+  generateWebpackConfig,
+  merge,
+  config as shakapackerConfig
+} from "shakapacker"
+import type { Configuration } from "webpack"
+import type { WebpackConfigWithDevServer } from "shakapacker/types"
+import CompressionPlugin from "compression-webpack-plugin"
+import { resolve } from "path"
 
 // Type-safe custom configuration
 const customConfig: Configuration = {
   resolve: {
-    extensions: ['.css', '.ts', '.tsx'],
+    extensions: [".css", ".ts", ".tsx"],
     alias: {
-      '@': resolve(__dirname, '../../app/javascript'),
-      'components': resolve(__dirname, '../../app/javascript/components'),
-      'utils': resolve(__dirname, '../../app/javascript/utils')
+      "@": resolve(__dirname, "../../app/javascript"),
+      components: resolve(__dirname, "../../app/javascript/components"),
+      utils: resolve(__dirname, "../../app/javascript/utils")
     }
   },
   module: {
     rules: [
       {
         test: /\.svg$/,
-        use: ['@svgr/webpack'],
+        use: ["@svgr/webpack"],
         issuer: /\.(tsx?|jsx?)$/
       }
     ]
@@ -347,13 +356,13 @@ const customConfig: Configuration = {
 const webpackConfig: Configuration = generateWebpackConfig(customConfig)
 
 // Type-safe modifications based on environment
-if (shakapackerConfig.env === 'production') {
+if (shakapackerConfig.env === "production") {
   const plugins = (webpackConfig.plugins || []) as WebpackPluginInstance[]
 
   plugins.push(
     new CompressionPlugin({
-      filename: '[path][base].br',
-      algorithm: 'brotliCompress',
+      filename: "[path][base].br",
+      algorithm: "brotliCompress",
       test: /\.(js|css|html|json|ico|svg|eot|otf|ttf)$/
     })
   )

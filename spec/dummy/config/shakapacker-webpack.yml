@@ -63,10 +63,10 @@ default: &default
   integrity:
     enabled: false
     # Which cryptographic function(s) to use, for generating the integrity hash(es). Default sha-384. Other possible values sha256, sha512
-    hash_functions: ["sha384"]
+    hash_functions: ['sha384']
     # Default "anonymous". Other possible value "use-credentials"
     # https://developer.mozilla.org/en-US/docs/Web/Security/Subresource_Integrity#cross-origin_resource_sharing_and_subresource_integrity
-    cross_origin: "anonymous"
+    cross_origin: 'anonymous'
 
 development:
   <<: *default

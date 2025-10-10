@@ -1,7 +1,8 @@
 import { DevServerConfig } from "./types"
 const snakeToCamelCase = require("./utils/snakeToCamelCase")
 
-const shakapackerDevServerYamlConfig = require("./dev_server") as DevServerConfig
+const shakapackerDevServerYamlConfig =
+  require("./dev_server") as DevServerConfig
 const { outputPath: contentBase, publicPath } = require("./config") as {
   outputPath: string
   publicPath: string
@@ -13,9 +14,11 @@ interface WebpackDevServerConfig {
   }
   hot?: boolean | string
   liveReload?: boolean
-  historyApiFallback?: boolean | {
-    disableDotRule?: boolean
-  }
+  historyApiFallback?:
+    | boolean
+    | {
+        disableDotRule?: boolean
+      }
   static?: {
     publicPath?: string
     [key: string]: unknown
@@ -32,7 +35,12 @@ interface WebpackDevServerConfig {
   magicHtml?: boolean
   onAfterSetupMiddleware?: (devServer: unknown) => void
   onBeforeSetupMiddleware?: (devServer: unknown) => void
-  open?: boolean | string | string[] | Record<string, unknown> | Record<string, unknown>[]
+  open?:
+    | boolean
+    | string
+    | string[]
+    | Record<string, unknown>
+    | Record<string, unknown>[]
   port?: "auto" | string | number
   proxy?: unknown
   server?: string | boolean | Record<string, unknown>
@@ -69,7 +77,9 @@ const webpackDevServerMappedKeys = new Set([
 ])
 
 function createDevServerConfig(): WebpackDevServerConfig {
-  const devServerYamlConfig = { ...shakapackerDevServerYamlConfig } as DevServerConfig & Record<string, unknown>
+  const devServerYamlConfig = {
+    ...shakapackerDevServerYamlConfig
+  } as DevServerConfig & Record<string, unknown>
   const liveReload =
     devServerYamlConfig.live_reload !== undefined
       ? devServerYamlConfig.live_reload
@@ -92,9 +102,11 @@ function createDevServerConfig(): WebpackDevServerConfig {
   delete devServerYamlConfig.hmr
 
   if (devServerYamlConfig.static) {
-    config.static = { 
-      ...config.static, 
-      ...(typeof devServerYamlConfig.static === 'object' ? devServerYamlConfig.static as Record<string, unknown> : {})
+    config.static = {
+      ...config.static,
+      ...(typeof devServerYamlConfig.static === "object"
+        ? (devServerYamlConfig.static as Record<string, unknown>)
+        : {})
     }
     delete devServerYamlConfig.static
   }

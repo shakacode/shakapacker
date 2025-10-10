@@ -18,7 +18,7 @@ const getOptimization = (): OptimizationConfig => {
     ]
   } catch (error: unknown) {
     const errorMessage = error instanceof Error ? error.message : String(error)
-    const errorStack = error instanceof Error ? error.stack : ''
+    const errorStack = error instanceof Error ? error.stack : ""
     // Log full error with stack trace
     logError(
       `Failed to configure Rspack minimizers: ${errorMessage}\n${errorStack}`

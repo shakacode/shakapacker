@@ -53,19 +53,17 @@ npm install --dev react-refresh @pmmmwh/react-refresh-webpack-plugin
 Alter `config/webpack/webpack.config.js` like so:
 
 ```js
-const { generateWebpackConfig, inliningCss } = require('shakapacker');
-const ReactRefreshWebpackPlugin = require('@pmmmwh/react-refresh-webpack-plugin');
-const isDevelopment = process.env.NODE_ENV !== 'production';
+const { generateWebpackConfig, inliningCss } = require("shakapacker")
+const ReactRefreshWebpackPlugin = require("@pmmmwh/react-refresh-webpack-plugin")
+const isDevelopment = process.env.NODE_ENV !== "production"
 
-const webpackConfig = generateWebpackConfig();
+const webpackConfig = generateWebpackConfig()
 
 if (isDevelopment && inliningCss) {
-  webpackConfig.plugins.push(
-    new ReactRefreshWebpackPlugin()
-  );
+  webpackConfig.plugins.push(new ReactRefreshWebpackPlugin())
 }
 
-module.exports = webpackConfig;
+module.exports = webpackConfig
 ```
 
 This applies the plugin to the webpack configuration.
@@ -85,16 +83,16 @@ Then create a `babel.config.js` file in the root of project and add the followin
 
 ```js
 module.exports = function (api) {
-  const defaultConfigFunc = require('shakapacker/package/babel/preset.js')
+  const defaultConfigFunc = require("shakapacker/package/babel/preset.js")
   const resultConfig = defaultConfigFunc(api)
-  const isDevelopmentEnv = api.env('development')
-  const isProductionEnv = api.env('production')
-  const isTestEnv = api.env('test')
+  const isDevelopmentEnv = api.env("development")
+  const isProductionEnv = api.env("production")
+  const isTestEnv = api.env("test")
 
   const changesOnDefault = {
     presets: [
       [
-        '@babel/preset-react',
+        "@babel/preset-react",
         {
           development: isDevelopmentEnv || isTestEnv,
           useBuiltIns: true
@@ -102,17 +100,18 @@ module.exports = function (api) {
       ]
     ].filter(Boolean),
     plugins: [
-      isProductionEnv && ['babel-plugin-transform-react-remove-prop-types',
+      isProductionEnv && [
+        "babel-plugin-transform-react-remove-prop-types",
         {
           removeImport: true
         }
       ],
-      process.env.WEBPACK_SERVE && 'react-refresh/babel'
-    ].filter(Boolean),
+      process.env.WEBPACK_SERVE && "react-refresh/babel"
+    ].filter(Boolean)
   }
 
   resultConfig.presets = [...resultConfig.presets, ...changesOnDefault.presets]
-  resultConfig.plugins = [...resultConfig.plugins, ...changesOnDefault.plugins ]
+  resultConfig.plugins = [...resultConfig.plugins, ...changesOnDefault.plugins]
 
   return resultConfig
 }
@@ -127,6 +126,7 @@ HMR for your React app is now enabled. 🚀
 To test that all of the above is working, you can follow these instructions to create a basic React app using Shakapacker.
 
 1. Create a new Rails app:
+
 ```shell
 rails new myapp --skip-javascript
 cd myapp
@@ -138,44 +138,52 @@ npm install css-loader style-loader mini-css-extract-plugin css-minimizer-webpac
 ```
 
 2. Generate a controller
+
 ```shell
 rails g controller site index
 echo '<div id="root"></div>' > app/views/site/index.html.erb
 ```
 
 3. Create a CSS file and a React component:
+
 ```shell
 touch app/javascript/App.css app/javascript/App.js
 ```
 
 4. Edit `app/javascript/packs/application.js` like so:
+
 ```jsx
-import React from 'react';
-import { createRoot } from 'react-dom/client';
-import HelloMessage from '../App';
+import React from "react"
+import { createRoot } from "react-dom/client"
+import HelloMessage from "../App"
 
-const container = document.getElementById('root');
-const root = createRoot(container);
+const container = document.getElementById("root")
+const root = createRoot(container)
 
-document.addEventListener('DOMContentLoaded', () => {
-  root.render(<HelloMessage name="World" />);
-});
+document.addEventListener("DOMContentLoaded", () => {
+  root.render(<HelloMessage name="World" />)
+})
 ```
 
 5. Add the following to `app/javascript/App.js`:
+
 ```jsx
-import React from 'react';
-import 'App.css';
-const HelloMessage = ({ name }) => <h1>Hello, {name}!</h1>;
-export default HelloMessage;
+import React from "react"
+import "App.css"
+const HelloMessage = ({ name }) => <h1>Hello, {name}!</h1>
+export default HelloMessage
 ```
 
 6. Add the following to `app/javascript/App.css`:
+
 ```css
-h1 { color: blue; }
+h1 {
+  color: blue;
+}
 ```
 
 7. Enable HMR in config/shakapacker.yml:
+
 ```shell
 hmr: true
 ```
@@ -189,22 +197,21 @@ npm install --dev react-refresh @pmmmwh/react-refresh-webpack-plugin
 9. Alter `config/webpack/webpack.config.js` like so:
 
 ```js
-const { generateWebpackConfig, inliningCss } = require('shakapacker');
-const ReactRefreshWebpackPlugin = require('@pmmmwh/react-refresh-webpack-plugin');
-const isDevelopment = process.env.NODE_ENV !== 'production';
+const { generateWebpackConfig, inliningCss } = require("shakapacker")
+const ReactRefreshWebpackPlugin = require("@pmmmwh/react-refresh-webpack-plugin")
+const isDevelopment = process.env.NODE_ENV !== "production"
 
-const webpackConfig = generateWebpackConfig();
+const webpackConfig = generateWebpackConfig()
 
 if (isDevelopment && inliningCss) {
-  webpackConfig.plugins.push(
-    new ReactRefreshWebpackPlugin()
-  );
+  webpackConfig.plugins.push(new ReactRefreshWebpackPlugin())
 }
 
-module.exports = webpackConfig;
+module.exports = webpackConfig
 ```
 
 10. Remove the Babel configuration from `package.json`
+
 ```diff
 - "babel": {
 -   "presets": [
@@ -214,18 +221,19 @@ module.exports = webpackConfig;
 ```
 
 11. Create a `babel.config.js` file in the project root and add the following [sample code](https://github.com/shakacode/shakapacker/blob/main/docs/customizing_babel_config.md#react-configuration):
+
 ```js
 module.exports = function (api) {
-  const defaultConfigFunc = require('shakapacker/package/babel/preset.js')
+  const defaultConfigFunc = require("shakapacker/package/babel/preset.js")
   const resultConfig = defaultConfigFunc(api)
-  const isDevelopmentEnv = api.env('development')
-  const isProductionEnv = api.env('production')
-  const isTestEnv = api.env('test')
+  const isDevelopmentEnv = api.env("development")
+  const isProductionEnv = api.env("production")
+  const isTestEnv = api.env("test")
 
   const changesOnDefault = {
     presets: [
       [
-        '@babel/preset-react',
+        "@babel/preset-react",
         {
           development: isDevelopmentEnv || isTestEnv,
           useBuiltIns: true
@@ -233,23 +241,25 @@ module.exports = function (api) {
       ]
     ].filter(Boolean),
     plugins: [
-      isProductionEnv && ['babel-plugin-transform-react-remove-prop-types',
+      isProductionEnv && [
+        "babel-plugin-transform-react-remove-prop-types",
         {
           removeImport: true
         }
       ],
-      process.env.WEBPACK_SERVE && 'react-refresh/babel'
-    ].filter(Boolean),
+      process.env.WEBPACK_SERVE && "react-refresh/babel"
+    ].filter(Boolean)
   }
 
   resultConfig.presets = [...resultConfig.presets, ...changesOnDefault.presets]
-  resultConfig.plugins = [...resultConfig.plugins, ...changesOnDefault.plugins ]
+  resultConfig.plugins = [...resultConfig.plugins, ...changesOnDefault.plugins]
 
   return resultConfig
 }
 ```
 
 9. Start the Rails server and the `shakapacker-dev-server` in separate console windows:
+
 ```shell
 rails s
 ./bin/shakapacker-dev-server

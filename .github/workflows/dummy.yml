@@ -3,7 +3,7 @@ name: Dummy specs
 on:
   push:
     branches:
-      - 'main'
+      - "main"
   pull_request:
 
 concurrency:
@@ -21,10 +21,10 @@ jobs:
           persist-credentials: false
       - uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: "20"
       - uses: ruby/setup-ruby@v1
         with:
-          ruby-version: '3.2'
+          ruby-version: "3.2"
           rubygems: latest
       - name: Install dependencies
         run: |
@@ -32,7 +32,7 @@ jobs:
           yarn install --frozen-lockfile --production=false
           npm install -g yalc
           cd spec/dummy && npm install
-      
+
       - name: Build TypeScript
         run: yarn build
 

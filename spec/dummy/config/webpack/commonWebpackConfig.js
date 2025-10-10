@@ -8,10 +8,11 @@ const commonOptions = {
 }
 
 const ignoreWarningsConfig = {
-  ignoreWarnings: [/Module not found: Error: Can't resolve 'react-dom\/client'/],
-};
+  ignoreWarnings: [/Module not found: Error: Can't resolve 'react-dom\/client'/]
+}
 // Copy the object using merge b/c the baseClientWebpackConfig and commonOptions are mutable globals
 // const commonWebpackConfig = () => (merge({}, baseClientWebpackConfig, commonOptions))
-const commonWebpackConfig = () => generateWebpackConfig(merge(commonOptions, ignoreWarningsConfig))
+const commonWebpackConfig = () =>
+  generateWebpackConfig(merge(commonOptions, ignoreWarningsConfig))
 
 module.exports = commonWebpackConfig

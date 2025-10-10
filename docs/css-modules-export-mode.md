@@ -10,8 +10,8 @@ In pure JavaScript projects, you can use true named imports:
 
 ```js
 // v9 - named exports in JavaScript
-import { bright, container } from './Foo.module.css';
-<button className={bright} />
+import { bright, container } from "./Foo.module.css"
+;<button className={bright} />
 ```
 
 ### TypeScript Usage
@@ -27,6 +27,7 @@ import * as styles from './Foo.module.css';
 **Why namespace imports?** While webpack's css-loader generates true named exports at runtime (with `namedExport: true`), TypeScript's type system cannot determine these dynamic exports during compilation. The namespace import pattern allows TypeScript to treat the import as an object with string keys, bypassing the need for static export validation while still benefiting from the runtime optimizations of named exports.
 
 ### Benefits of v9 Configuration
+
 - Eliminates certain webpack warnings
 - Provides better tree-shaking potential
 - Aligns with modern JavaScript module standards
@@ -37,6 +38,7 @@ import * as styles from './Foo.module.css';
 When `namedExport: true` is enabled (v9 default), css-loader requires `exportLocalsConvention` to be either `'camelCaseOnly'` or `'dashesOnly'`.
 
 **The following will cause a build error:**
+
 ```js
 modules: {
   namedExport: true,
@@ -45,11 +47,13 @@ modules: {
 ```
 
 **Error message:**
+
 ```
 "exportLocalsConvention" with "camelCase" value is incompatible with "namedExport: true" option
 ```
 
 **Correct v9 configuration:**
+
 ```js
 modules: {
   namedExport: true,
@@ -60,23 +64,26 @@ modules: {
 **exportLocalsConvention options with namedExport:**
 
 When `namedExport: true`, you can use:
+
 - `'camelCaseOnly'` (v9 default): Exports ONLY the camelCase version (e.g., only `myButton`)
 - `'dashesOnly'`: Exports ONLY the original kebab-case version (e.g., only `my-button`)
 
 **Not compatible with namedExport: true:**
+
 - `'camelCase'`: Exports both versions (both `my-button` and `myButton`) - only works with `namedExport: false` (v8 behavior)
 
 **Configuration Quick Reference:**
 
-| namedExport | exportLocalsConvention | `.my-button` exports | Use Case | Compatible? |
-|-------------|------------------------|---------------------|----------|-------------|
-| `true` | `'camelCaseOnly'` | `myButton` | JavaScript conventions | ✅ Valid |
-| `true` | `'dashesOnly'` | `'my-button'` | Preserve CSS naming | ✅ Valid |
-| `false` | `'camelCase'` | Both `myButton` AND `'my-button'` | v8 compatibility | ✅ Valid |
-| `false` | `'asIs'` | `'my-button'` | No transformation | ✅ Valid |
-| `true` | `'camelCase'` | - | - | ❌ Build Error |
+| namedExport | exportLocalsConvention | `.my-button` exports              | Use Case               | Compatible?    |
+| ----------- | ---------------------- | --------------------------------- | ---------------------- | -------------- |
+| `true`      | `'camelCaseOnly'`      | `myButton`                        | JavaScript conventions | ✅ Valid       |
+| `true`      | `'dashesOnly'`         | `'my-button'`                     | Preserve CSS naming    | ✅ Valid       |
+| `false`     | `'camelCase'`          | Both `myButton` AND `'my-button'` | v8 compatibility       | ✅ Valid       |
+| `false`     | `'asIs'`               | `'my-button'`                     | No transformation      | ✅ Valid       |
+| `true`      | `'camelCase'`          | -                                 | -                      | ❌ Build Error |
 
 **When to use each option:**
+
 - Use `'camelCaseOnly'` if you prefer standard JavaScript naming conventions
 - Use `'dashesOnly'` if you want to preserve your CSS class names exactly as written
 - Use `'camelCase'` (with `namedExport: false`) only if you need both versions available
@@ -87,8 +94,8 @@ In Shakapacker v8 and earlier, the default behavior was to use a **default expor
 
 ```js
 // v8 and earlier default
-import styles from './Foo.module.css';
-<button className={styles.bright} />
+import styles from "./Foo.module.css"
+;<button className={styles.bright} />
 ```
 
 ---
@@ -102,21 +109,23 @@ When upgrading to Shakapacker v9, you'll need to update your CSS Module imports 
 #### Option 1: Update Your Code (Recommended)
 
 **For JavaScript projects:**
+
 ```js
 // Before (v8)
-import styles from './Component.module.css';
-<div className={styles.container}>
+import styles from "./Component.module.css"
+;<div className={styles.container}>
   <button className={styles.button}>Click me</button>
 </div>
 
 // After (v9) - JavaScript
-import { container, button } from './Component.module.css';
-<div className={container}>
+import { container, button } from "./Component.module.css"
+;<div className={container}>
   <button className={button}>Click me</button>
 </div>
 ```
 
 **For TypeScript projects:**
+
 ```typescript
 // Before (v8)
 import styles from './Component.module.css';
@@ -149,44 +158,44 @@ This approach modifies the common webpack configuration that applies to all envi
 
 ```js
 // config/webpack/commonWebpackConfig.js
-const { generateWebpackConfig, merge } = require('shakapacker');
+const { generateWebpackConfig, merge } = require("shakapacker")
 
-const baseClientWebpackConfig = generateWebpackConfig();
+const baseClientWebpackConfig = generateWebpackConfig()
 
 // Override CSS Modules configuration to use v8-style default exports
 const overrideCssModulesConfig = (config) => {
   // Find the CSS rule in the module rules
-  const cssRule = config.module.rules.find(rule =>
-    rule.test && rule.test.toString().includes('css')
-  );
+  const cssRule = config.module.rules.find(
+    (rule) => rule.test && rule.test.toString().includes("css")
+  )
 
   if (cssRule && cssRule.use) {
-    const cssLoaderUse = cssRule.use.find(use =>
-      use.loader && use.loader.includes('css-loader')
-    );
+    const cssLoaderUse = cssRule.use.find(
+      (use) => use.loader && use.loader.includes("css-loader")
+    )
 
     if (cssLoaderUse && cssLoaderUse.options && cssLoaderUse.options.modules) {
       // Override v9 default to use v8-style default exports
-      cssLoaderUse.options.modules.namedExport = false;
-      cssLoaderUse.options.modules.exportLocalsConvention = 'asIs';
+      cssLoaderUse.options.modules.namedExport = false
+      cssLoaderUse.options.modules.exportLocalsConvention = "asIs"
     }
   }
 
-  return config;
-};
+  return config
+}
 
 const commonOptions = {
   resolve: {
-    extensions: ['.css', '.ts', '.tsx'],
-  },
-};
+    extensions: [".css", ".ts", ".tsx"]
+  }
+}
 
 const commonWebpackConfig = () => {
-  const config = merge({}, baseClientWebpackConfig, commonOptions);
-  return overrideCssModulesConfig(config);
-};
+  const config = merge({}, baseClientWebpackConfig, commonOptions)
+  return overrideCssModulesConfig(config)
+}
 
-module.exports = commonWebpackConfig;
+module.exports = commonWebpackConfig
 ```
 
 ### Option 2: Create `config/webpack/environment.js` (Alternative)
@@ -195,8 +204,8 @@ If you prefer using a separate environment file:
 
 ```js
 // config/webpack/environment.js
-const { environment } = require('@shakacode/shakapacker');
-const getStyleRule = require('@shakacode/shakapacker/package/utils/getStyleRule');
+const { environment } = require("@shakacode/shakapacker")
+const getStyleRule = require("@shakacode/shakapacker/package/utils/getStyleRule")
 
 // CSS Modules rule for *.module.css with v8-style default export
 const cssModulesRule = getStyleRule(/\.module\.css$/i, [], {
@@ -204,14 +213,14 @@ const cssModulesRule = getStyleRule(/\.module\.css$/i, [], {
   importLoaders: 2,
   modules: {
     auto: true,
-    namedExport: false,            // <-- override v9 default
-    exportLocalsConvention: 'asIs' // keep class names as-is instead of camelCase
+    namedExport: false, // <-- override v9 default
+    exportLocalsConvention: "asIs" // keep class names as-is instead of camelCase
   }
-});
+})
 
 // Ensure this rule wins for *.module.css
 if (cssModulesRule) {
-  environment.loaders.prepend('css-modules', cssModulesRule);
+  environment.loaders.prepend("css-modules", cssModulesRule)
 }
 
 // Plain CSS rule for non-modules
@@ -219,13 +228,13 @@ const plainCssRule = getStyleRule(/(?<!\.module)\.css$/i, [], {
   sourceMap: true,
   importLoaders: 2,
   modules: false
-});
+})
 
 if (plainCssRule) {
-  environment.loaders.append('css', plainCssRule);
+  environment.loaders.append("css", plainCssRule)
 }
 
-module.exports = environment;
+module.exports = environment
 ```
 
 Then reference this in your environment-specific configs (development.js, production.js, etc.).
@@ -238,25 +247,32 @@ If you also use Sass modules, add similar configuration for SCSS files:
 // For Option 1 approach, extend the overrideCssModulesConfig function:
 const overrideCssModulesConfig = (config) => {
   // Handle both CSS and SCSS rules
-  const styleRules = config.module.rules.filter(rule =>
-    rule.test && (rule.test.toString().includes('css') || rule.test.toString().includes('scss'))
-  );
+  const styleRules = config.module.rules.filter(
+    (rule) =>
+      rule.test &&
+      (rule.test.toString().includes("css") ||
+        rule.test.toString().includes("scss"))
+  )
 
-  styleRules.forEach(rule => {
+  styleRules.forEach((rule) => {
     if (rule.use) {
-      const cssLoaderUse = rule.use.find(use =>
-        use.loader && use.loader.includes('css-loader')
-      );
+      const cssLoaderUse = rule.use.find(
+        (use) => use.loader && use.loader.includes("css-loader")
+      )
 
-      if (cssLoaderUse && cssLoaderUse.options && cssLoaderUse.options.modules) {
-        cssLoaderUse.options.modules.namedExport = false;
-        cssLoaderUse.options.modules.exportLocalsConvention = 'asIs';
+      if (
+        cssLoaderUse &&
+        cssLoaderUse.options &&
+        cssLoaderUse.options.modules
+      ) {
+        cssLoaderUse.options.modules.namedExport = false
+        cssLoaderUse.options.modules.exportLocalsConvention = "asIs"
       }
     }
-  });
+  })
 
-  return config;
-};
+  return config
+}
 ```
 
 ---
@@ -269,10 +285,10 @@ const overrideCssModulesConfig = (config) => {
 
 ```js
 // Old (v8 - default export)
-import styles from './Component.module.css';
+import styles from "./Component.module.css"
 
 // New (v9 - named exports)
-import { bright, container, button } from './Component.module.css';
+import { bright, container, button } from "./Component.module.css"
 ```
 
 #### 2. Update Class References
@@ -305,8 +321,8 @@ With `exportLocalsConvention: 'camelCaseOnly'`, kebab-case class names are autom
 
 ```js
 // v9 default - camelCase conversion
-import { myButton, primaryColor } from './styles.module.css';
-<button className={myButton} />
+import { myButton, primaryColor } from "./styles.module.css"
+;<button className={myButton} />
 ```
 
 **Option B: Keep kebab-case with 'dashesOnly'**
@@ -339,30 +355,33 @@ For large codebases, you can create a codemod to automate the migration:
 
 ```js
 // css-modules-v9-migration.js
-module.exports = function(fileInfo, api) {
-  const j = api.jscodeshift;
-  const root = j(fileInfo.source);
-  
+module.exports = function (fileInfo, api) {
+  const j = api.jscodeshift
+  const root = j(fileInfo.source)
+
   // Find CSS module imports
-  root.find(j.ImportDeclaration, {
-    source: { value: value => value.endsWith('.module.css') }
-  }).forEach(path => {
-    const defaultSpecifier = path.node.specifiers.find(
-      spec => spec.type === 'ImportDefaultSpecifier'
-    );
-    
-    if (defaultSpecifier) {
-      // Convert default import to namespace import for analysis
-      // Then extract used properties and convert to named imports
-      // ... codemod implementation
-    }
-  });
-  
-  return root.toSource();
-};
+  root
+    .find(j.ImportDeclaration, {
+      source: { value: (value) => value.endsWith(".module.css") }
+    })
+    .forEach((path) => {
+      const defaultSpecifier = path.node.specifiers.find(
+        (spec) => spec.type === "ImportDefaultSpecifier"
+      )
+
+      if (defaultSpecifier) {
+        // Convert default import to namespace import for analysis
+        // Then extract used properties and convert to named imports
+        // ... codemod implementation
+      }
+    })
+
+  return root.toSource()
+}
 ```
 
 Run with:
+
 ```bash
 npx jscodeshift -t css-modules-v9-migration.js src/
 ```
@@ -371,14 +390,14 @@ npx jscodeshift -t css-modules-v9-migration.js src/
 
 ## Version Comparison
 
-| Feature | v8 (and earlier) | v9 |
-|---------|-----------------|----|
-| Default behavior | Default export object | Named exports |
-| Import syntax | `import styles from '...'` | `import { className } from '...'` |
-| Class reference | `styles.className` | `className` |
-| Export convention | `asIs` (no transformation) | `camelCaseOnly` |
-| TypeScript warnings | May show warnings | No warnings |
-| Tree-shaking | Limited | Optimized |
+| Feature             | v8 (and earlier)           | v9                                |
+| ------------------- | -------------------------- | --------------------------------- |
+| Default behavior    | Default export object      | Named exports                     |
+| Import syntax       | `import styles from '...'` | `import { className } from '...'` |
+| Class reference     | `styles.className`         | `className`                       |
+| Export convention   | `asIs` (no transformation) | `camelCaseOnly`                   |
+| TypeScript warnings | May show warnings          | No warnings                       |
+| Tree-shaking        | Limited                    | Optimized                         |
 
 ---
 
@@ -419,12 +438,12 @@ Verify your imports work correctly:
 
 ```js
 // v9 default (named exports)
-import { bright } from './Foo.module.css';
-console.log(bright); // 'Foo_bright__hash'
+import { bright } from "./Foo.module.css"
+console.log(bright) // 'Foo_bright__hash'
 
 // Or if using v8 configuration (default export)
-import styles from './Foo.module.css';
-console.log(styles); // { bright: 'Foo_bright__hash' }
+import styles from "./Foo.module.css"
+console.log(styles) // { bright: 'Foo_bright__hash' }
 ```
 
 ### 3. Debug Webpack Configuration (Optional)
@@ -444,6 +463,7 @@ Then search for `css-loader` options in the generated JSON file.
 ### Build Error: exportLocalsConvention Incompatible with namedExport
 
 If you see this error during build:
+
 ```
 "exportLocalsConvention" with "camelCase" value is incompatible with "namedExport: true" option
 ```
@@ -477,9 +497,9 @@ If your CSS classes aren't applying after the upgrade:
 
 ```typescript
 // src/types/css-modules.d.ts
-declare module '*.module.css' {
-  const classes: { [key: string]: string };
-  export = classes;
+declare module "*.module.css" {
+  const classes: { [key: string]: string }
+  export = classes
 }
 ```
 
@@ -487,9 +507,9 @@ declare module '*.module.css' {
 
 ```typescript
 // src/types/css-modules.d.ts
-declare module '*.module.css' {
-  const classes: { [key: string]: string };
-  export default classes;
+declare module "*.module.css" {
+  const classes: { [key: string]: string }
+  export default classes
 }
 ```
 
