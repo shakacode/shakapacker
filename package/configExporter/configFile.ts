@@ -1,6 +1,6 @@
 import { existsSync, readFileSync } from "fs"
-import { resolve } from "path"
-import { load as loadYaml } from "js-yaml"
+import { resolve, relative, isAbsolute } from "path"
+import { load as loadYaml, FAILSAFE_SCHEMA } from "js-yaml"
 import {
   BundlerConfigFile,
   BuildConfig,
@@ -8,18 +8,55 @@ import {
   ExportOptions
 } from "./types"
 
+/**
+ * Loads and validates bundler configuration files
+ * @example
+ * const loader = new ConfigFileLoader('.bundler-config.yml')
+ * const config = loader.load()
+ */
 export class ConfigFileLoader {
   private configFilePath: string
 
+  /**
+   * @param configFilePath - Path to config file (defaults to .bundler-config.yml in cwd)
+   * @throws Error if path is outside project directory
+   */
   constructor(configFilePath?: string) {
     this.configFilePath =
       configFilePath || resolve(process.cwd(), ".bundler-config.yml")
+    this.validateConfigPath()
   }
 
+  /**
+   * Validates that the config file path is within the project directory
+   * to prevent path traversal attacks
+   * @throws Error if path traversal is detected
+   */
+  private validateConfigPath(): void {
+    const absPath = resolve(this.configFilePath)
+    const cwd = process.cwd()
+    const rel = relative(cwd, absPath)
+
+    if (rel.startsWith("..") || (isAbsolute(rel) && !absPath.startsWith(cwd))) {
+      throw new Error(
+        `Config file must be within project directory. Attempted path: ${this.configFilePath}`
+      )
+    }
+  }
+
+  /**
+   * Checks if the config file exists
+   * @returns true if file exists, false otherwise
+   */
   exists(): boolean {
     return existsSync(this.configFilePath)
   }
 
+  /**
+   * Loads and validates the config file
+   * @returns Parsed and validated config file
+   * @throws Error if file doesn't exist, is invalid YAML, or fails validation
+   */
   load(): BundlerConfigFile {
     if (!this.exists()) {
       throw new Error(
@@ -30,7 +67,11 @@ export class ConfigFileLoader {
 
     try {
       const content = readFileSync(this.configFilePath, "utf8")
-      const parsed = loadYaml(content) as BundlerConfigFile
+      // Use FAILSAFE_SCHEMA to prevent code execution via YAML parsing
+      const parsed = loadYaml(content, {
+        schema: FAILSAFE_SCHEMA,
+        json: true
+      }) as BundlerConfigFile
 
       this.validate(parsed)
       return parsed
@@ -92,6 +133,14 @@ export class ConfigFileLoader {
     }
   }
 
+  /**
+   * Resolves a build configuration by name
+   * @param buildName - Name of the build from config file
+   * @param options - CLI options that may override build settings
+   * @param defaultBundler - Fallback bundler if not specified
+   * @returns Resolved build configuration with all settings applied
+   * @throws Error if build name not found
+   */
   resolveBuild(
     buildName: string,
     options: ExportOptions,
@@ -207,6 +256,11 @@ export class ConfigFileLoader {
     return args
   }
 
+  /**
+   * Lists all available builds from the config file
+   * Prints formatted output to console
+   * @throws Error if config file doesn't exist or is invalid
+   */
   listBuilds(): void {
     const config = this.load()
     const builds = config.builds
@@ -229,6 +283,10 @@ export class ConfigFileLoader {
   }
 }
 
+/**
+ * Generates a sample configuration file with examples and documentation
+ * @returns YAML content as string ready to be written to file
+ */
 export function generateSampleConfigFile(): string {
   // Using ${'$'} to escape template literal substitution in comments
   return `# Bundler Build Configurations
