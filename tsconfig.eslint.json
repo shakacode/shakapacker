@@ -4,14 +4,6 @@
     "noEmit": true,
     "rootDir": "."
   },
-  "include": [
-    "package/**/*.ts",
-    "package/**/*.tsx",
-    "package/**/*.test.ts",
-    "package/**/*.spec.ts",
-    "test/**/*.ts",
-    "test/**/*.tsx",
-    "knip.ts"
-  ],
-  "exclude": ["node_modules"]
+  "include": ["**/*.ts", "**/*.tsx"],
+  "exclude": ["node_modules", "vendor"]
 }
