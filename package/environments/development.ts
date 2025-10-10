@@ -3,18 +3,19 @@
  * @module environments/development
  */
 
-const { merge } = require("webpack-merge")
-const config = require("../config")
-const baseConfig = require("./base")
-const webpackDevServerConfig = require("../webpackDevServerConfig")
-const { runningWebpackDevServer } = require("../env")
-const { moduleExists } = require("../utils/helpers")
+import { merge } from "webpack-merge"
 import type {
   WebpackConfigWithDevServer,
   RspackConfigWithDevServer,
   ReactRefreshWebpackPlugin,
   ReactRefreshRspackPlugin
 } from "./types"
+import config from "../config"
+import baseConfig from "./base"
+import webpackDevServerConfig from "../webpackDevServerConfig"
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const { runningWebpackDevServer } = require("../env")
+import { moduleExists } from "../utils/helpers"
 
 /**
  * Base development configuration shared between webpack and rspack
@@ -40,7 +41,7 @@ const webpackDevConfig = (): WebpackConfigWithDevServer => {
     devServerConfig.hot &&
     moduleExists("@pmmmwh/react-refresh-webpack-plugin")
   ) {
-    // eslint-disable-next-line global-require
+    // eslint-disable-next-line global-require, @typescript-eslint/no-require-imports
     const ReactRefreshWebpackPlugin = require("@pmmmwh/react-refresh-webpack-plugin")
     webpackConfig.plugins = [
       ...(webpackConfig.plugins || []),
@@ -73,7 +74,7 @@ const rspackDevConfig = (): RspackConfigWithDevServer => {
     devServerConfig.hot &&
     moduleExists("@rspack/plugin-react-refresh")
   ) {
-    // eslint-disable-next-line global-require
+    // eslint-disable-next-line global-require, @typescript-eslint/no-require-imports
     const ReactRefreshPlugin = require("@rspack/plugin-react-refresh")
     rspackConfig.plugins = [
       ...(rspackConfig.plugins || []),
@@ -87,4 +88,4 @@ const rspackDevConfig = (): RspackConfigWithDevServer => {
 const bundlerConfig =
   config.assets_bundler === "rspack" ? rspackDevConfig() : webpackDevConfig()
 
-module.exports = merge(baseConfig, bundlerConfig)
+export default merge(baseConfig, bundlerConfig)

@@ -40,10 +40,4 @@ const info = (message: string, ...args: unknown[]): void => {
   }
 }
 
-export = {
-  debug,
-  warn,
-  error,
-  info,
-  isDebugMode
-}
+export { debug, warn, error, info, isDebugMode }

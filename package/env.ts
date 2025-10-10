@@ -1,9 +1,9 @@
 import { load } from "js-yaml"
 import { readFileSync } from "fs"
-const defaultConfigPath = require("./utils/defaultConfigPath")
-const configPath = require("./utils/configPath")
-const { isFileNotFoundError } = require("./utils/errorHelpers")
-const { sanitizeEnvValue } = require("./utils/pathValidation")
+import defaultConfigPath from "./utils/defaultConfigPath"
+import configPath from "./utils/configPath"
+import { isFileNotFoundError } from "./utils/errorHelpers"
+import { sanitizeEnvValue } from "./utils/pathValidation"
 
 const NODE_ENVIRONMENTS = ["development", "production", "test"] as const
 

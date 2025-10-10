@@ -13,13 +13,7 @@ const compat = new FlatCompat({
 module.exports = [
   // Global ignores (replaces .eslintignore)
   {
-    ignores: [
-      "lib/**",
-      "**/node_modules/**",
-      "vendor/**",
-      "spec/**",
-      "package/**" // TODO: Remove after issue #644 is resolved (lints package/ TS source files)
-    ]
+    ignores: ["lib/**", "**/node_modules/**", "vendor/**", "spec/**"]
   },
 
   // Base config for all JS files
@@ -131,7 +125,10 @@ module.exports = [
       // Strict: no 'any' types allowed - use 'unknown' or specific types instead
       "@typescript-eslint/no-explicit-any": "error",
       // Allow implicit return types - TypeScript can infer them
-      "@typescript-eslint/explicit-module-boundary-types": "off"
+      "@typescript-eslint/explicit-module-boundary-types": "off",
+      // Disable no-undef for TypeScript - TypeScript compiler handles this
+      // This prevents false positives for ambient types like NodeJS.ProcessEnv
+      "no-undef": "off"
     }
   },
 

@@ -5,17 +5,18 @@
 
 /* eslint global-require: 0 */
 /* eslint import/no-dynamic-require: 0 */
+/* eslint @typescript-eslint/no-require-imports: 0 */
 
-const { resolve } = require("path")
-const { merge } = require("webpack-merge")
-const baseConfig = require("./base")
-const { moduleExists } = require("../utils/helpers")
-const config = require("../config")
 import type {
   Configuration as WebpackConfiguration,
   WebpackPluginInstance
 } from "webpack"
+import { resolve } from "path"
+import { merge } from "webpack-merge"
 import type { CompressionPluginConstructor } from "./types"
+import baseConfig from "./base"
+import { moduleExists } from "../utils/helpers"
+import config from "../config"
 
 const optimizationPath = resolve(
   __dirname,
@@ -27,7 +28,7 @@ const { getOptimization } = require(optimizationPath)
 
 let CompressionPlugin: CompressionPluginConstructor | null = null
 if (moduleExists("compression-webpack-plugin")) {
-  // eslint-disable-next-line global-require
+  // eslint-disable-next-line global-require, @typescript-eslint/no-require-imports
   CompressionPlugin = require("compression-webpack-plugin")
 }
 
@@ -80,4 +81,4 @@ Content hashes get added to the filenames regardless of setting useContentHash i
 `)
 }
 
-module.exports = merge(baseConfig, productionConfig)
+export default merge(baseConfig, productionConfig)

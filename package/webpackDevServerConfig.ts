@@ -1,12 +1,9 @@
 import { DevServerConfig } from "./types"
-const snakeToCamelCase = require("./utils/snakeToCamelCase")
+import snakeToCamelCase from "./utils/snakeToCamelCase"
+import shakapackerDevServerYamlConfig from "./dev_server"
+import config from "./config"
 
-const shakapackerDevServerYamlConfig =
-  require("./dev_server") as DevServerConfig
-const { outputPath: contentBase, publicPath } = require("./config") as {
-  outputPath: string
-  publicPath: string
-}
+const { outputPath: contentBase, publicPath } = config
 
 interface WebpackDevServerConfig {
   devMiddleware?: {
@@ -86,7 +83,7 @@ function createDevServerConfig(): WebpackDevServerConfig {
       : !devServerYamlConfig.hmr
   delete devServerYamlConfig.live_reload
 
-  const config: WebpackDevServerConfig = {
+  const devServerConfig: WebpackDevServerConfig = {
     devMiddleware: {
       publicPath
     },
@@ -102,8 +99,8 @@ function createDevServerConfig(): WebpackDevServerConfig {
   delete devServerYamlConfig.hmr
 
   if (devServerYamlConfig.static) {
-    config.static = {
-      ...config.static,
+    devServerConfig.static = {
+      ...devServerConfig.static,
       ...(typeof devServerYamlConfig.static === "object"
         ? (devServerYamlConfig.static as Record<string, unknown>)
         : {})
@@ -112,18 +109,18 @@ function createDevServerConfig(): WebpackDevServerConfig {
   }
 
   if (devServerYamlConfig.client) {
-    config.client = devServerYamlConfig.client
+    devServerConfig.client = devServerYamlConfig.client
     delete devServerYamlConfig.client
   }
 
   Object.keys(devServerYamlConfig).forEach((yamlKey) => {
     const camelYamlKey = snakeToCamelCase(yamlKey)
     if (webpackDevServerMappedKeys.has(camelYamlKey)) {
-      config[camelYamlKey] = devServerYamlConfig[yamlKey]
+      devServerConfig[camelYamlKey] = devServerYamlConfig[yamlKey]
     }
   })
 
-  return config
+  return devServerConfig
 }
 
-export = createDevServerConfig
+export default createDevServerConfig

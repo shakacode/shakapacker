@@ -1,13 +1,14 @@
 /* eslint global-require: 0 */
 /* eslint import/no-dynamic-require: 0 */
+/* eslint @typescript-eslint/no-require-imports: 0 */
 
-const { basename, dirname, join, relative, resolve } = require("path")
-const { existsSync, readdirSync } = require("fs")
-import { Dirent } from "fs"
-const extname = require("path-complete-extname")
+import { Dirent, existsSync, readdirSync } from "fs"
+import { basename, dirname, join, relative, resolve } from "path"
+import extname from "path-complete-extname"
 // @ts-ignore: webpack is an optional peer dependency (using type-only import)
 import type { Configuration, Entry } from "webpack"
-const config = require("../config")
+import config from "../config"
+// eslint-disable-next-line @typescript-eslint/no-require-imports
 const { isProduction } = require("../env")
 
 const pluginsPath = resolve(
@@ -73,7 +74,7 @@ const getEntryObject = (): Entry => {
     const previousPaths = entries[name]
     if (previousPaths) {
       const pathArray = Array.isArray(previousPaths)
-        ? (previousPaths as string[])
+        ? previousPaths
         : [previousPaths as string]
       pathArray.push(assetPath)
       entries[name] = pathArray
@@ -140,4 +141,4 @@ const baseConfig: Configuration = {
   }
 }
 
-export = baseConfig
+export default baseConfig
