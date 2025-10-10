@@ -11,6 +11,14 @@
 
 Changes since the last non-beta release.
 
+### Fixed
+
+- Fixed integrity config handling to avoid passing undefined to plugin when config.integrity is null/undefined. Uses conditional spreading to omit properties entirely.
+- Clarified sass-loader version check: use >= 16 instead of > 15 for better semantic accuracy.
+- Reverted overly restrictive hot type: allow any string value, not just boolean or "only".
+- Fixed regex bug in env replacement: use word boundaries to prevent partial matches.
+- Fixed migration script: add backups and proper module.exports conversion for ESM migration.
+
 ## [v10.0.0] - TBD
 
 ### Added - ES Module Exports (Fully Backward Compatible)
