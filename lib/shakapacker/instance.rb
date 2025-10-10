@@ -5,9 +5,14 @@ class Shakapacker::Instance
 
   attr_reader :root_path, :config_path
 
-  def initialize(root_path: Rails.root, config_path: Rails.root.join("config/shakapacker.yml"))
-    @root_path = root_path
-    @config_path = Pathname.new(ENV["SHAKAPACKER_CONFIG"] || config_path)
+  def initialize(root_path: nil, config_path: nil)
+    # Use Rails.root if Rails is defined and no root_path is provided
+    @root_path = root_path || (defined?(Rails) && Rails&.root) || Pathname.new(Dir.pwd)
+
+    # Use the determined root_path to construct the default config path
+    default_config_path = @root_path.join("config/shakapacker.yml")
+
+    @config_path = Pathname.new(ENV["SHAKAPACKER_CONFIG"] || config_path || default_config_path)
   end
 
   def env
