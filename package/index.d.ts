@@ -1,7 +1,10 @@
-// Named exports
-export { default as config } from "./config"
-export { default as devServer } from "./dev_server"
-export { default as baseConfig } from "./environments/base"
+import type Config from "./config"
+import type DevServer from "./dev_server"
+import type BaseConfig from "./environments/base"
+import type InliningCss from "./utils/inliningCss"
+import type { Configuration } from "webpack"
+
+// Re-export env values
 export {
   railsEnv,
   nodeEnv,
@@ -9,35 +12,52 @@ export {
   isDevelopment,
   runningWebpackDevServer
 } from "./env"
+
+// Re-export utilities
 export { moduleExists, canProcess } from "./utils/helpers"
-export { default as inliningCss } from "./utils/inliningCss"
+
+// Re-export from webpack-merge
 export * from "webpack-merge"
 
-// @ts-ignore: webpack is an optional peer dependency
-import type { Configuration } from "webpack"
-
+// Named exports
+export const config: Config
+export const devServer: DevServer
+export const baseConfig: BaseConfig
+export const inliningCss: InliningCss
 export const rules: any
+
 export function generateWebpackConfig(
   extraConfig?: Configuration,
   ...extraArgs: unknown[]
 ): Configuration
 
 // Default export for backward compatibility
-declare const _default: {
-  config: typeof config
-  devServer: typeof devServer
+// Includes all webpack-merge exports plus shakapacker-specific properties
+interface DefaultExport {
+  config: Config
+  devServer: DevServer
   generateWebpackConfig: typeof generateWebpackConfig
-  baseConfig: typeof baseConfig
+  baseConfig: BaseConfig
   env: {
-    railsEnv: typeof railsEnv
-    nodeEnv: typeof nodeEnv
-    isProduction: typeof isProduction
-    isDevelopment: typeof isDevelopment
-    runningWebpackDevServer: typeof runningWebpackDevServer
+    railsEnv: string
+    nodeEnv: string
+    isProduction: boolean
+    isDevelopment: boolean
+    runningWebpackDevServer: boolean
   }
-  rules: typeof rules
+  rules: any
   moduleExists: typeof moduleExists
   canProcess: typeof canProcess
-  inliningCss: typeof inliningCss
+  inliningCss: InliningCss
+  // webpack-merge exports spread into default export
+  merge: typeof import("webpack-merge").merge
+  mergeWithCustomize: typeof import("webpack-merge").mergeWithCustomize
+  mergeWithRules: typeof import("webpack-merge").mergeWithRules
+  unique: typeof import("webpack-merge").unique
+  customizeArray: typeof import("webpack-merge").customizeArray
+  customizeObject: typeof import("webpack-merge").customizeObject
+  CustomizeRule: typeof import("webpack-merge").CustomizeRule
 }
+
+declare const _default: DefaultExport
 export default _default
