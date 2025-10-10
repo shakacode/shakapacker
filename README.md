@@ -354,12 +354,18 @@ To enable/disable the usage of contentHash in any node environment (specified us
 
 #### Precompile Hook
 
-Shakapacker supports running a custom command before webpack compilation via the `precompile_hook` configuration option. This is useful for dynamically generating entry points or performing other preparatory tasks before asset compilation. For detailed documentation, see the [Deployment Guide - Precompile Hook](docs/deployment.md#precompile-hook).
+Shakapacker supports running a custom command before webpack compilation via the `precompile_hook` configuration option. This is useful for:
+
+- Dynamically generating entry points (e.g., React on Rails `generate_packs`)
+- Running preparatory tasks before asset compilation in both development and production
 
 ```yaml
-production:
-  precompile_hook: "bin/shakapacker-precompile-hook"
+# Works in all environments (development, production)
+default: &default
+  precompile_hook: "bin/rails react_on_rails:generate_packs"
 ```
+
+For complete documentation including React on Rails integration, security features, and troubleshooting, see the [Precompile Hook Guide](docs/precompile_hook.md).
 
 #### Setting custom config path
 
