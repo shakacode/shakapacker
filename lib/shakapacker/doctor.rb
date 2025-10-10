@@ -998,7 +998,10 @@ module Shakapacker
           end
 
           def print_warnings
-            puts "⚠️  Warnings (#{doctor.warnings.length}):"
+            # Count only main items (not sub-items)
+            main_item_count = doctor.warnings.count { |w| !w[:message].start_with?("  ") }
+            puts "⚠️  Warnings (#{main_item_count}):"
+
             item_number = 0
             doctor.warnings.each do |warning|
               category_prefix = case warning[:category]
@@ -1012,14 +1015,55 @@ module Shakapacker
               is_subitem = warning[:message].start_with?("  ")
 
               if is_subitem
-                # Don't increment number for sub-items
-                puts "  #{category_prefix} #{warning[:message]}"
+                # Don't increment number for sub-items, but wrap long lines
+                wrapped = wrap_text(warning[:message], 100, "  #{category_prefix} ")
+                puts wrapped
               else
                 item_number += 1
-                puts "  #{category_prefix} #{item_number}. #{warning[:message]}"
+                # Right-align numbers for better visual alignment (assume max 99 warnings)
+                number_str = "#{item_number}.".rjust(3)
+                prefix = "  #{category_prefix} #{number_str} "
+                wrapped = wrap_text(warning[:message], 100, prefix)
+                puts wrapped
               end
             end
             puts ""
+          end
+
+          def wrap_text(text, max_width, prefix)
+            # Strip leading whitespace from sub-items
+            text = text.strip
+
+            # Calculate available width for text
+            available_width = max_width - prefix.length
+            return prefix + text if text.length <= available_width
+
+            # Wrap long lines
+            words = text.split(" ")
+            lines = []
+            current_line = []
+            current_length = 0
+
+            words.each do |word|
+              word_length = word.length + (current_line.empty? ? 0 : 1) # +1 for space
+
+              if current_length + word_length <= available_width
+                current_line << word
+                current_length += word_length
+              else
+                lines << current_line.join(" ") unless current_line.empty?
+                current_line = [word]
+                current_length = word.length
+              end
+            end
+            lines << current_line.join(" ") unless current_line.empty?
+
+            # Format output
+            result = prefix + lines[0]
+            lines[1..].each do |line|
+              result += "\n" + (" " * prefix.length) + line
+            end
+            result
           end
 
           def has_dependency_issues?
