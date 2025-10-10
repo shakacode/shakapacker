@@ -615,13 +615,9 @@ module Shakapacker
           root_path.join("config/webpack/commonWebpackConfig.ts")
         ]
 
-        config_found = false
-        no_explicit_config_warned = false
-
         webpack_config_paths.each do |config_path|
           next unless config_path.exist?
 
-          config_found = true
           config_content = File.read(config_path)
 
           # Check for the invalid configuration: namedExport: true with exportLocalsConvention: 'camelCase'
@@ -630,9 +626,6 @@ module Shakapacker
             @issues << "  Using exportLocalsConvention: 'camelCase' with namedExport: true will cause build errors"
             @issues << "  Change to 'camelCaseOnly' or 'dashesOnly'. See docs/v9_upgrade.md for details"
           end
-
-          # Only warn if CSS modules are misconfigured, not just because config is missing
-          # The v9 defaults work fine, so no need to warn users unnecessarily
         end
 
         # Check for common v8 to v9 migration issues

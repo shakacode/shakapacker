@@ -43,6 +43,11 @@ describe "Shakapacker::Doctor with optional peer dependencies" do
   let(:assets_bundler) { "webpack" }
   let(:doctor) { Shakapacker::Doctor.new(config, root_path) }
 
+  # Helper method to extract warning messages from warning hashes
+  def warning_messages
+    doctor.warnings.map { |w| w[:message] }
+  end
+
   before do
     stub_const("Rails", double(root: root_path, env: "development")) if !defined?(Rails)
     FileUtils.mkdir_p(root_path.join("config"))
@@ -254,7 +259,7 @@ describe "Shakapacker::Doctor with optional peer dependencies" do
       it "warns about both webpack and rspack being installed" do
         doctor.send(:check_peer_dependencies)
 
-        conflict_warnings = doctor.warnings.select { |w|
+        conflict_warnings = warning_messages.select { |w|
           w.include?("Both webpack and rspack")
         }
         expect(conflict_warnings).not_to be_empty
