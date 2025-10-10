@@ -56,6 +56,39 @@ describe Shakapacker::Doctor do
     doctor.warnings.map { |w| w[:message] }
   end
 
+  describe "warning formatting" do
+    it "formats warnings with correct indentation and spacing" do
+      # Create a test scenario with warnings
+      doctor.instance_variable_get(:@warnings) << { category: :action_required, message: "Test required warning" }
+      doctor.instance_variable_get(:@warnings) << { category: :action_required, message: "  Fix: Test fix instruction" }
+      doctor.instance_variable_get(:@warnings) << { category: :recommended, message: "Test recommended warning" }
+
+      # Capture the output
+      output = StringIO.new
+      reporter = Shakapacker::Doctor::Reporter.new(doctor)
+
+      # Stub puts to capture output
+      allow(reporter).to receive(:puts) do |text|
+        output.puts(text) if text
+      end
+
+      reporter.send(:print_warnings)
+      result = output.string
+
+      # Check formatting rules:
+      # 1. Category prefix starts at left margin (no leading spaces on lines with [)
+      expect(result).to match(/^\[REQUIRED\]/)
+      expect(result).to match(/^\[RECOMMENDED\]/)
+
+      # 2. Only 2 spaces after ]
+      expect(result).to match(/^\[REQUIRED\]  \d+\./)
+      expect(result).to match(/^\[RECOMMENDED\]  \d+\./)
+
+      # 3. Fix lines should be indented consistently
+      expect(result).to include("                Fix:")
+    end
+  end
+
   describe "#initialize" do
     it "initializes with empty issues, warnings, and info" do
       expect(doctor.issues).to be_empty

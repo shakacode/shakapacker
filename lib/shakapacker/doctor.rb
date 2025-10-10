@@ -186,8 +186,8 @@ module Shakapacker
         end
 
         if config_file.include?("bundler:")
-          add_action_required("Deprecated config: 'bundler' should be renamed to 'assets_bundler' in #{config_relative_path}")
-          add_action_required("  Fix: Open #{config_relative_path} and change 'bundler:' to 'assets_bundler:'")
+          add_action_required("Deprecated config: 'bundler' should be renamed to 'assets_bundler' in #{config_relative_path}.")
+          add_action_required("  Fix: Open #{config_relative_path} and change 'bundler:' to 'assets_bundler:'.")
         end
       rescue => e
         # Ignore read errors as config file check already handles missing file
@@ -399,8 +399,8 @@ module Shakapacker
         end
 
         unless missing_binstubs.empty?
-          add_action_required("Missing binstubs: #{missing_binstubs.join(', ')}")
-          add_action_required("  Fix: Run 'bin/rails shakapacker:binstubs' to create them")
+          add_action_required("Missing binstubs: #{missing_binstubs.join(', ')}.")
+          add_action_required("  Fix: Run 'bin/rails shakapacker:binstubs' to create them.")
         end
       end
 
@@ -472,8 +472,8 @@ module Shakapacker
                          when "bun" then "bun remove swc-loader"
                         else "npm uninstall swc-loader"
             end
-            add_warning("swc-loader is not needed with Rspack (SWC is built-in). Rspack includes SWC transpilation natively, so this package is redundant")
-            add_warning("  Fix: Remove it with: #{remove_cmd}")
+            add_warning("swc-loader is not needed with Rspack (SWC is built-in). Rspack includes SWC transpilation natively, so this package is redundant.")
+            add_warning("  Fix: Remove it with: #{remove_cmd}.")
           end
         end
       end
@@ -508,8 +508,8 @@ module Shakapacker
 
         if babel_config_exists && transpiler != "babel"
           babel_files = babel_configs.select(&:exist?).map { |f| f.relative_path_from(root_path) }.join(", ")
-          add_warning("Babel configuration files found (#{babel_files}) but javascript_transpiler is '#{transpiler}'. These Babel configs are ignored by Shakapacker (though they may still be used by ESLint or other tools)")
-          add_warning("  Fix: Remove Babel config files if not needed, or set javascript_transpiler: 'babel' in shakapacker.yml to use Babel for transpilation")
+          add_warning("Babel configuration files found (#{babel_files}) but javascript_transpiler is '#{transpiler}'. These Babel configs are ignored by Shakapacker (though they may still be used by ESLint or other tools).")
+          add_warning("  Fix: Remove Babel config files if not needed, or set javascript_transpiler: 'babel' in shakapacker.yml to use Babel for transpilation.")
         end
 
         # Check for redundant dependencies
@@ -1010,9 +1010,9 @@ module Shakapacker
             item_number = 0
             doctor.warnings.each do |warning|
               category_prefix = case warning[:category]
-                                when :action_required then "[REQUIRED]    "
-                                when :info then "[INFO]        "
-                                when :recommended then "[RECOMMENDED] "
+                                when :action_required then "[REQUIRED]"
+                                when :info then "[INFO]"
+                                when :recommended then "[RECOMMENDED]"
                                else ""
               end
 
@@ -1021,16 +1021,15 @@ module Shakapacker
 
               if is_subitem
                 # Don't increment number for sub-items, but wrap long lines
-                # Indent sub-items to align with the message text (no category prefix for sub-items)
-                subitem_prefix = "                      "  # 22 spaces to align with message text
+                # Indent sub-items to align with the message text (16 spaces)
+                subitem_prefix = "                "
                 wrapped = wrap_text(warning[:message], 100, subitem_prefix)
                 puts wrapped
               else
                 item_number += 1
-                # Right-align numbers for better visual alignment (assume max 99 warnings)
-                number_str = "#{item_number}.".rjust(3)
-                # Add space after category_prefix to ensure alignment
-                prefix = "  #{category_prefix} #{number_str} "
+                # Format: [CATEGORY]  N. Message
+                # No leading spaces, 2 spaces after ]
+                prefix = "#{category_prefix}  #{item_number}. "
                 wrapped = wrap_text(warning[:message], 100, prefix)
                 puts wrapped
               end
