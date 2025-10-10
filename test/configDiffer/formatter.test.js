@@ -118,12 +118,13 @@ describe("DiffFormatter", () => {
       expect(output).toContain("changedKey")
     })
 
-    test("shows old and new values for changed entries", () => {
+    test("shows values with file labels for changed entries", () => {
       const formatter = new DiffFormatter()
       const output = formatter.formatDetailed(mockResult)
 
-      expect(output).toContain("Old value:")
-      expect(output).toContain("New value:")
+      expect(output).toContain("Values:")
+      // Should have left/right labels or extracted short names
+      expect(output).toMatch(/(left|right|config\d):/i)
     })
   })
 })
