@@ -36,8 +36,8 @@
     "build:types": "tsc",
     "knip": "knip",
     "knip:production": "knip --production",
-    "lint": "eslint .",
-    "lint:fast": "eslint . --config eslint.config.fast.js",
+    "lint": "eslint . --cache",
+    "lint:fast": "eslint . --config eslint.config.fast.js --cache",
     "test": "jest",
     "type-check": "tsc --noEmit",
     "prepublishOnly": "yarn build && yarn type-check"

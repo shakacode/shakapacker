@@ -18,7 +18,7 @@ module.exports = [
       "**/node_modules/**",
       "vendor/**",
       "spec/**",
-      "package/**"
+      "package/**" // TODO: Remove after PR #644 merges (lints package/ TS source files)
     ]
   },
 
