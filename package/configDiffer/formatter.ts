@@ -25,6 +25,10 @@ export class DiffFormatter {
   formatContextual(result: DiffResult): string {
     const lines: string[] = []
 
+    // Extract short names from filenames
+    const leftLabel = this.getShortLabel(result.metadata.leftFile, "left")
+    const rightLabel = this.getShortLabel(result.metadata.rightFile, "right")
+
     lines.push("=".repeat(80))
     lines.push("Webpack/Rspack Configuration Comparison")
     lines.push("=".repeat(80))
@@ -62,19 +66,65 @@ export class DiffFormatter {
     sortedEntries.forEach((entry, index) => {
       if (entry.operation === "unchanged") return
 
-      lines.push(this.formatContextualEntry(entry, index + 1))
+      lines.push(
+        this.formatContextualEntry(entry, index + 1, leftLabel, rightLabel)
+      )
       lines.push("")
     })
 
     lines.push("=".repeat(80))
     lines.push("")
     lines.push("Legend:")
-    lines.push("  [+] = Added in right config")
-    lines.push("  [-] = Removed from right config")
-    lines.push("  [~] = Changed between configs")
+    lines.push(`  [+] = Added in ${rightLabel}`)
+    lines.push(`  [-] = Removed from ${rightLabel}`)
+    lines.push(`  [~] = Changed between configs`)
     lines.push("")
 
     return lines.join("\n")
+  }
+
+  private getShortLabel(
+    filename: string | undefined,
+    fallback: string
+  ): string {
+    if (!filename) return fallback
+
+    // Extract meaningful short name from filename
+    // Examples:
+    //   webpack-development-client.yaml -> dev-client
+    //   webpack-production-server.yaml -> prod-server
+    //   shakapacker-config-exports/webpack-development-client.yaml -> dev-client
+    const basename = filename.split("/").pop() || filename
+    const withoutExt = basename.replace(/\.(yaml|yml|json|js|ts)$/, "")
+
+    // Try to extract env-type pattern
+    const match = withoutExt.match(
+      /(development|production|test|dev|prod).*?(client|server)/i
+    )
+    if (match) {
+      const env = match[1]
+        .toLowerCase()
+        .replace("development", "dev")
+        .replace("production", "prod")
+      const type = match[2].toLowerCase()
+      return `${env}-${type}`
+    }
+
+    // Try to extract just the env
+    const envMatch = withoutExt.match(/(development|production|test|dev|prod)/i)
+    if (envMatch) {
+      return envMatch[1]
+        .toLowerCase()
+        .replace("development", "dev")
+        .replace("production", "prod")
+    }
+
+    // Fall back to basename without extension, shortened
+    if (withoutExt.length > 20) {
+      return withoutExt.substring(0, 17) + "..."
+    }
+
+    return withoutExt
   }
 
   // Keep formatDetailed as an alias for backward compatibility
@@ -94,7 +144,12 @@ export class DiffFormatter {
     )
   }
 
-  private formatContextualEntry(entry: DiffEntry, index: number): string {
+  private formatContextualEntry(
+    entry: DiffEntry,
+    index: number,
+    leftLabel: string,
+    rightLabel: string
+  ): string {
     const lines: string[] = []
     const symbol =
       entry.operation === "added"
@@ -124,14 +179,17 @@ export class DiffFormatter {
       }
     }
 
-    // Show the change
+    // Show the values from each file with their labels
+    lines.push(`   Values:`)
     if (entry.operation === "added") {
-      lines.push(`   Added value: ${this.formatValue(entry.newValue)}`)
+      lines.push(`     ${leftLabel}:  <not set>`)
+      lines.push(`     ${rightLabel}: ${this.formatValue(entry.newValue)}`)
     } else if (entry.operation === "removed") {
-      lines.push(`   Removed value: ${this.formatValue(entry.oldValue)}`)
+      lines.push(`     ${leftLabel}:  ${this.formatValue(entry.oldValue)}`)
+      lines.push(`     ${rightLabel}: <not set>`)
     } else if (entry.operation === "changed") {
-      lines.push(`   Old value: ${this.formatValue(entry.oldValue)}`)
-      lines.push(`   New value: ${this.formatValue(entry.newValue)}`)
+      lines.push(`     ${leftLabel}:  ${this.formatValue(entry.oldValue)}`)
+      lines.push(`     ${rightLabel}: ${this.formatValue(entry.newValue)}`)
 
       // Add impact analysis for specific keys
       const impact = this.analyzeImpact(entry)
