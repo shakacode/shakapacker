@@ -23,12 +23,13 @@ describe "Shakapacker::Instance with staging environment" do
     let(:config_path) { File.join(Dir.pwd, "spec/fixtures/staging_config.yml") }
 
     before do
-      # Create a minimal config file for testing
+      # Create a minimal config file for testing with distinct values
       FileUtils.mkdir_p(File.dirname(config_path))
       File.write(config_path, <<~YAML)
         development:
-          source_path: app/packs
-          source_entry_path: entrypoints
+          source_path: app/javascript
+          source_entry_path: packs
+          compile: true
         production:
           source_path: app/packs
           source_entry_path: entrypoints
