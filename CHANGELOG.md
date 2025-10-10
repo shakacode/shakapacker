@@ -11,6 +11,10 @@
 
 Changes since the last non-beta release.
 
+### Changed
+
+- Allow ESLint v9 and migrated to flat config format. [PR #677](https://github.com/shakacode/shakapacker/pull/677) by [justin808](https://github.com/justin808).
+
 ### Fixed
 
 - Fixed rspack native bindings installation issue when switching bundlers. [PR #672](https://github.com/shakacode/shakapacker/pull/672) by [justin808](https://github.com/justin808).
