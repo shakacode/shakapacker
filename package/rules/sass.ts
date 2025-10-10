@@ -7,7 +7,7 @@ const extraPaths = config.additional_paths
 
 export default canProcess("sass-loader", (resolvedPath: string) => {
   const optionKey =
-    parseInt(packageMajorVersion("sass-loader"), 10) > 15
+    parseInt(packageMajorVersion("sass-loader"), 10) >= 16
       ? "loadPaths"
       : "includePaths"
   return getStyleRule(/\.(scss|sass)(\.erb)?$/i, [
