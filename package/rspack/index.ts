@@ -57,13 +57,16 @@ const generateRspackConfig = (
 }
 
 // Re-export webpack-merge utilities for backward compatibility
-export {
+import {
   merge,
   mergeWithCustomize,
   mergeWithRules,
   unique
 } from "webpack-merge"
 
+export { merge, mergeWithCustomize, mergeWithRules, unique }
+
+// Named exports (new in v10 - recommended)
 export {
   config, // shakapacker.yml
   devServer,
@@ -78,4 +81,30 @@ export {
   moduleExists,
   canProcess,
   inliningCss
+}
+
+// Default export for backward compatibility (deprecated)
+// This allows existing code using `const shakapacker = require('shakapacker/rspack')` to keep working
+const env = {
+  railsEnv,
+  nodeEnv,
+  isProduction,
+  isDevelopment,
+  runningWebpackDevServer
+}
+
+export default {
+  config,
+  devServer,
+  generateRspackConfig,
+  baseConfig,
+  env,
+  rules,
+  moduleExists,
+  canProcess,
+  inliningCss,
+  merge,
+  mergeWithCustomize,
+  mergeWithRules,
+  unique
 }

@@ -46,6 +46,7 @@ const generateWebpackConfig = (
   return webpackMerge.merge({}, environmentConfig, extraConfig)
 }
 
+// Named exports (new in v10 - recommended)
 export {
   config,
   devServer,
@@ -62,3 +63,27 @@ export {
   inliningCss
 }
 export * from "webpack-merge"
+
+// Default export for backward compatibility (deprecated)
+// This allows existing code using `const shakapacker = require('shakapacker')` to keep working
+// The env object is provided for backward compatibility but individual env exports are preferred
+const env = {
+  railsEnv,
+  nodeEnv,
+  isProduction,
+  isDevelopment,
+  runningWebpackDevServer
+}
+
+export default {
+  config,
+  devServer,
+  generateWebpackConfig,
+  baseConfig,
+  env,
+  rules,
+  moduleExists,
+  canProcess,
+  inliningCss,
+  ...webpackMerge
+}

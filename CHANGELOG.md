@@ -13,64 +13,65 @@ Changes since the last non-beta release.
 
 ## [v10.0.0] - TBD
 
-### 💥 BREAKING CHANGES
+### Added - ES Module Exports (Fully Backward Compatible)
 
-#### ES Module Exports Replace CommonJS `export =`
+Shakapacker v10 adds modern ES module exports while maintaining **100% backward compatibility**. Your existing code continues to work unchanged.
 
-Shakapacker v10 modernizes its module system by replacing CommonJS `export =` syntax with standard ES module exports. This change improves TypeScript support and aligns with modern JavaScript standards.
-
-**Migration Required - Before (v9):**
+**✅ No Changes Required - Your Code Still Works:**
 
 ```javascript
+// This continues to work exactly as before (no changes needed)
 const shakapacker = require("shakapacker")
 const config = shakapacker.config
 const env = shakapacker.env
 console.log(env.nodeEnv, env.isProduction)
 ```
 
-**After (v10):**
+**✨ New: Modern Import Syntax (Optional):**
+
+For new code or if you prefer modern syntax, you can now use ES6 imports:
 
 ```javascript
-// Option 1: ES6 imports (recommended)
+// Named imports (recommended for new code)
 import { config, nodeEnv, isProduction } from "shakapacker"
 console.log(nodeEnv, isProduction)
 
-// Option 2: CommonJS with destructuring
-const { config, nodeEnv, isProduction } = require("shakapacker")
+// Or default import (also works)
+import shakapacker from "shakapacker"
+console.log(shakapacker.env.nodeEnv)
 ```
 
-**Automated Migration:**
+**Benefits of Upgrading (Optional):**
 
-Run the provided migration script to automatically update your codebase:
+- Better TypeScript autocomplete and type inference
+- Clearer, more explicit imports
+- Consistent with modern JavaScript conventions
+
+**Optional Migration:**
+
+If you want to modernize your imports (not required), use the provided script:
 
 ```bash
 node node_modules/shakapacker/scripts/migrate-to-esm-exports.js config/webpack/
 ```
 
-**Key Changes:**
+**Documentation:**
 
-- The `env` object is now individual named exports: `railsEnv`, `nodeEnv`, `isProduction`, `isDevelopment`, `runningWebpackDevServer`
-- All exports use ES6 syntax for better TypeScript support
-- Cleaner, more explicit imports
-
-**Full Documentation:**
-
-- Migration Guide: `docs/v10-migration-guide.md`
+- Upgrade Guide: `docs/v10-migration-guide.md`
 - Migration Script: `scripts/migrate-to-esm-exports.js`
 - GitHub Issue: [#641](https://github.com/shakacode/shakapacker/issues/641)
 
 ### Added
 
-- Migration script for automated codebase updates (`scripts/migrate-to-esm-exports.js`)
-- Comprehensive migration guide (`docs/v10-migration-guide.md`)
-- Individual named exports for all environment variables
-- Re-export of webpack-merge utilities
+- Named ES module exports alongside existing default export
+- Individual environment exports: `railsEnv`, `nodeEnv`, `isProduction`, `isDevelopment`, `runningWebpackDevServer`
+- Optional migration script for modernizing imports
+- Comprehensive upgrade guide
 
 ### Changed
 
-- All package exports use ES module syntax instead of CommonJS
-- Internal imports updated to ES6 throughout
-- TypeScript declarations updated to match new exports
+- Internal package code now uses ES6 imports (no impact on users)
+- TypeScript declarations support both import styles
 
 ## [v9.2.0] - October 9, 2025
 
