@@ -13,6 +13,14 @@ Changes since the last non-beta release.
 
 ### Fixed
 
+- Fixed rspack native bindings installation issue when switching bundlers [PR #672](https://github.com/shakacode/shakapacker/pull/672).
+  - Running `rake shakapacker:switch_bundler rspack -- --install-deps` now properly installs platform-specific native bindings
+  - Added full `npm install` step after adding packages to resolve optional dependencies
+  - Fixes "Cannot find native binding" error when switching to rspack
+- Fixed Rails constant error when using custom environments like staging [PR #681](https://github.com/shakacode/shakapacker/pull/681).
+  - `RAILS_ENV=staging` no longer causes "uninitialized constant Shakapacker::Instance::Rails" error
+  - Shakapacker now works in non-Rails contexts (like standalone runner)
+  - Added graceful fallback when Rails is not defined
 - Fixed TypeScript type definitions to export proper types instead of `any` [PR #684](https://github.com/shakacode/shakapacker/pull/684).
   - Previously `package/index.d.ts` was exporting all types as `any`, breaking IDE autocomplete
   - Now properly exports typed interfaces for `WebpackConfig`, `RspackConfig`, etc.
