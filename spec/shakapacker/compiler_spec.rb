@@ -148,6 +148,32 @@ describe "Shakapacker::Compiler" do
       expect { Shakapacker.compiler.compile }.to raise_error(/Security Error.*must reference a script within the project root/)
     end
 
+    it "handles hook commands with spaces in paths using Shellwords" do
+      mocked_strategy = spy("Strategy")
+      allow(mocked_strategy).to receive(:stale?).and_return(true)
+      allow(Shakapacker.compiler).to receive(:strategy).and_return(mocked_strategy)
+
+      hook_status = OpenStruct.new(success?: true, exitstatus: 0)
+      webpack_status = OpenStruct.new(success?: true)
+
+      call_count = 0
+      allow(Open3).to receive(:capture3) do |*args|
+        call_count += 1
+        if call_count == 1
+          ["", "", hook_status]
+        else
+          ["", "", webpack_status]
+        end
+      end
+
+      # Hook command with quoted path containing spaces
+      allow(Shakapacker.config).to receive(:precompile_hook).and_return("'bin/my script' --arg1 --arg2")
+      allow(File).to receive(:exist?).and_call_original
+      allow(File).to receive(:exist?).with(anything).and_return(true)
+
+      expect(Shakapacker.compiler.compile).to be true
+    end
+
     it "warns when hook executable does not exist" do
       mocked_strategy = spy("Strategy")
       allow(mocked_strategy).to receive(:stale?).and_return(true)

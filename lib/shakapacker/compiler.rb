@@ -1,5 +1,6 @@
 require "open3"
 require "fileutils"
+require "shellwords"
 
 require_relative "compiler_strategy"
 
@@ -109,8 +110,9 @@ class Shakapacker::Compiler
 
     def validate_precompile_hook(hook_command)
       # Extract the executable path (first word/token before any arguments)
-      # This handles both "bin/script" and "bin/script --arg"
-      executable = hook_command.split(/\s+/).first
+      # Uses Shellwords to properly handle paths with spaces and quoted arguments
+      # Examples: "bin/script", "bin/script --arg", "'bin/my script' --arg"
+      executable = Shellwords.shellwords(hook_command).first
       executable_path = config.root_path.join(executable)
 
       # Security: Verify the hook points to a file within the project
@@ -119,11 +121,11 @@ class Shakapacker::Compiler
               "Got: #{hook_command}"
       end
 
-      # Warn if the executable doesn't exist (but don't fail - it might be a system command)
+      # Warn if the executable doesn't exist within the project
       unless File.exist?(executable_path)
         logger.warn "⚠️  Warning: precompile_hook executable not found: #{executable_path}"
-        logger.warn "   If this is intentional (e.g., a system command), you can ignore this warning."
-        logger.warn "   Otherwise, ensure the script exists before running webpack."
+        logger.warn "   The hook command is configured but the script does not exist within the project root."
+        logger.warn "   Please ensure the script exists or remove 'precompile_hook' from your shakapacker.yml configuration."
       end
     end
 
