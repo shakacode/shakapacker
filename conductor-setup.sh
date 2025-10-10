@@ -35,6 +35,10 @@ $BUNDLE_CMD install
 echo "📦 Installing JavaScript dependencies..."
 yarn install
 
+# Reset yarn.lock to avoid cosmetic formatting changes
+echo "🔄 Resetting yarn.lock formatting..."
+git restore yarn.lock 2>/dev/null || true
+
 # Set up Husky git hooks
 echo "🪝 Setting up Husky git hooks..."
 npx husky
