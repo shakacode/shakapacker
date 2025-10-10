@@ -58,6 +58,7 @@
     "swc-loader": "^0.1.15",
     "webpack": "5.93.0",
     "webpack-assets-manifest": "^5.0.6",
+    "webpack-cli": "^6.0.0",
     "webpack-merge": "^5.8.0",
     "webpack-subresource-integrity": "^5.1.0"
   },

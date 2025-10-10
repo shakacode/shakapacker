@@ -10,6 +10,10 @@
     "@babel/preset-react": "^7.18.6",
     "@babel/preset-typescript": "^7.17.12",
     "@babel/runtime": "^7.18.3",
+    "@rspack/cli": "^1.5.7",
+    "@rspack/core": "^1.5.7",
+    "@swc/core": "^1.9.0",
+    "@swc/helpers": "^0.5.15",
     "@types/react": "^18.3.3",
     "@types/react-dom": "^18.3.0",
     "babel-loader": "^10.0.0",
@@ -24,7 +28,8 @@
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-on-rails": "^16.1.0",
-    "shakapacker": "file:.yalc/shakapacker",
+    "rspack-manifest-plugin": "^5.1.0",
+    "shakapacker": "file:../../shakapacker-9.2.0.tgz",
     "style-loader": "^4.0.0",
     "terser-webpack-plugin": "^5.3.14",
     "typescript": "^4.7.3",
@@ -33,19 +38,14 @@
     "webpack-cli": "^6.0.1",
     "webpack-merge": "^6.0.1",
     "webpack-sources": "^3.2.3",
-    "webpack-subresource-integrity": "^5.1.0",
-    "@rspack/core": "^1.5.7",
-    "@rspack/cli": "^1.5.7",
-    "rspack-manifest-plugin": "^5.1.0",
-    "@swc/core": "^1.9.0",
-    "@swc/helpers": "^0.5.15"
+    "webpack-subresource-integrity": "^5.1.0"
   },
   "devDependencies": {
     "@pmmmwh/react-refresh-webpack-plugin": "^0.6.1",
+    "@rspack/dev-server": "^1.1.4",
+    "@rspack/plugin-react-refresh": "^1.5.1",
     "fork-ts-checker-webpack-plugin": "^6.5.2",
     "react-refresh": "^0.17.0",
-    "webpack-dev-server": "^5.2.2",
-    "@rspack/dev-server": "^1.1.4",
-    "@rspack/plugin-react-refresh": "^1.5.1"
+    "webpack-dev-server": "^5.2.2"
   }
 }

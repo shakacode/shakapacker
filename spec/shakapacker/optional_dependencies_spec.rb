@@ -77,6 +77,7 @@ describe "Optional Peer Dependencies" do
       # Verify that build-essential packages are in dependencies, not devDependencies
       build_packages = %w[
         webpack
+        webpack-cli
         @rspack/core
         @rspack/cli
         @swc/core
