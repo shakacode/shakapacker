@@ -2,9 +2,7 @@ const sass = require("../../../package/rules/sass")
 
 jest.mock("../../../package/utils/helpers", () => {
   const original = jest.requireActual("../../../package/utils/helpers")
-  const canProcess = (rule, fn) => {
-    return fn("This path was mocked")
-  }
+  const canProcess = (rule, fn) => fn("This path was mocked")
   const packageMajorVersion = () => "16"
   return {
     ...original,
