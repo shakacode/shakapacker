@@ -17,7 +17,7 @@ Changes since the last non-beta release.
 
 #### ES Module Exports Replace CommonJS `export =`
 
-Shakapacker v10 modernizes its module system by replacing CommonJS `export =` syntax with standard ES module exports. This change enables better tree-shaking, improved TypeScript support, and aligns with modern JavaScript standards.
+Shakapacker v10 modernizes its module system by replacing CommonJS `export =` syntax with standard ES module exports. This change improves TypeScript support and aligns with modern JavaScript standards.
 
 **Migration Required - Before (v9):**
 
@@ -50,8 +50,8 @@ node node_modules/shakapacker/scripts/migrate-to-esm-exports.js config/webpack/
 **Key Changes:**
 
 - The `env` object is now individual named exports: `railsEnv`, `nodeEnv`, `isProduction`, `isDevelopment`, `runningWebpackDevServer`
-- All exports use ES6 syntax for better tree-shaking and TypeScript support
-- Smaller bundle sizes (40-60% reduction when using specific exports)
+- All exports use ES6 syntax for better TypeScript support
+- Cleaner, more explicit imports
 
 **Full Documentation:**
 

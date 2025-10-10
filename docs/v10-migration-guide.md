@@ -2,26 +2,13 @@
 
 ## Overview
 
-Shakapacker v10 replaces CommonJS `export =` syntax with modern ES module exports throughout the package. This provides better tree-shaking, improved TypeScript support, and aligns with modern JavaScript standards.
+Shakapacker v10 replaces CommonJS `export =` syntax with standard ES module exports throughout the package. This improves TypeScript support and aligns with modern JavaScript standards.
 
-## Benefits of ES Module Exports
+## Why This Change?
 
-### 1. **Better Tree-Shaking**
+### **Improved TypeScript Support**
 
-ES modules allow bundlers to eliminate unused code more effectively:
-
-```javascript
-// Before: Entire shakapacker object is included
-const shakapacker = require("shakapacker")
-const config = shakapacker.config // Still bundles everything
-
-// After: Only config is included
-import { config } from "shakapacker" // Tree-shaking removes unused exports
-```
-
-### 2. **Improved TypeScript Support**
-
-Named exports provide better type inference and autocomplete:
+Named exports provide better type inference and autocomplete in your webpack config files:
 
 ```typescript
 // Before: Type inference can be lossy
@@ -33,37 +20,28 @@ import { config } from 'shakapacker'
 config.  // Full autocomplete and type checking
 ```
 
-### 3. **Explicit Dependencies**
+### **Clearer, More Explicit Imports**
 
-Import statements clearly show what your code depends on:
-
-```javascript
-// Before: Hard to see what's actually used
-const shakapacker = require("shakapacker")
-
-// After: Clear dependencies
-import { config, generateWebpackConfig, merge } from "shakapacker"
-```
-
-### 4. **Future-Proof**
-
-ES modules are the standard for modern JavaScript and are required for:
-
-- Native ES modules in browsers
-- Deno and other modern runtimes
-- Better tooling support (IDEs, linters, etc.)
-
-### 5. **Smaller Bundle Sizes**
-
-By importing only what you need, your final bundle can be significantly smaller:
+Import statements make it immediately obvious what your config depends on:
 
 ```javascript
-// Before: ~50KB (estimated, full package)
+// Before: Unclear what's being used
 const shakapacker = require("shakapacker")
+// ... somewhere later in the file
+shakapacker.config.outputPath
 
-// After: ~5KB (estimated, just config and helpers)
-import { config, moduleExists } from "shakapacker"
+// After: Clear at the top of the file
+import { config, generateWebpackConfig } from "shakapacker"
+config.outputPath
 ```
+
+### **Modern JavaScript Standards**
+
+ES modules are the standard syntax for modern JavaScript:
+
+- Better IDE and editor support
+- Consistent with how you import other packages
+- Aligns with Node.js ESM direction
 
 ## Breaking Changes
 
