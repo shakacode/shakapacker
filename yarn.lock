@@ -1050,7 +1050,7 @@
     "@rspack/binding-win32-ia32-msvc" "1.5.8"
     "@rspack/binding-win32-x64-msvc" "1.5.8"
 
-"@rspack/cli@^1.5.7":
+"@rspack/cli@^1.5.8":
   version "1.5.8"
   resolved "https://registry.npmjs.org/@rspack/cli/-/cli-1.5.8.tgz#f7e1c008423ebe7e53f63aa539d48b04b9999716"
   integrity sha512-CVqxLGTHBLGDJxYRlVNCtbWix+bXLIHxT11225wAXSyn/5/kJYWxJNNy42vjUNNGSP1Va/aI5lse/pCZjn3xNA==
@@ -1063,7 +1063,7 @@
     webpack-bundle-analyzer "4.10.2"
     yargs "17.7.2"
 
-"@rspack/core@^1.5.7":
+"@rspack/core@^1.5.8":
   version "1.5.8"
   resolved "https://registry.npmjs.org/@rspack/core/-/core-1.5.8.tgz#d7c2aa848a469873b07cb01073b9311a80105794"
   integrity sha512-sUd2LfiDhqYVfvknuoz0+/c+wSpn693xotnG5g1CSWKZArbtwiYzBIVnNlcHGmuoBRsnj/TkSq8dTQ7gwfBroQ==
