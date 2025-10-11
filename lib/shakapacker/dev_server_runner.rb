@@ -8,16 +8,21 @@ require_relative "runner"
 module Shakapacker
   class DevServerRunner < Shakapacker::Runner
     def self.run(argv)
-      # Handle help flags before loading configuration
+      # Show Shakapacker help before webpack/rspack dev server help
       if argv.include?("--help") || argv.include?("-h")
         print_help
-        exit(0)
+        puts "\n" + "=" * 80
+        puts "WEBPACK/RSPACK DEV SERVER OPTIONS"
+        puts "=" * 80
+        puts "The following options are passed through to webpack-dev-server/rspack-dev-server:\n\n"
+        # Continue to show bundler help by not exiting
       end
 
-      # Handle version flags before loading configuration
+      # Handle version flags - show both Shakapacker and bundler versions
       if argv.include?("--version") || argv.include?("-v")
         print_version
-        exit(0)
+        puts "\nDev server version:"
+        # Continue to show bundler version by not exiting
       end
 
       new(argv).run
@@ -25,30 +30,30 @@ module Shakapacker
 
     def self.print_help
       puts <<~HELP
+        ================================================================================
+        SHAKAPACKER DEV SERVER - Development Server with Hot Module Replacement
+        ================================================================================
+
         Usage: bin/shakapacker-dev-server [options]
 
-        Starts the Shakapacker development server with hot module replacement.
-
-        Options:
-          -h, --help              Show this help message
-          -v, --version           Show Shakapacker version
+        Shakapacker-specific options:
           --debug-shakapacker     Enable Node.js debugging (--inspect-brk)
 
         Configuration:
           Host, port, and HTTPS settings are configured in config/shakapacker.yml
           under the 'dev_server' section.
 
-        Note: --host and --port CLI flags are not supported. Please configure
-        these in shakapacker.yml instead.
-
-        All other options are passed through to webpack-dev-server/rspack-dev-server.
-        See documentation for available options:
-          Webpack: https://webpack.js.org/configuration/dev-server/
-          Rspack:  https://rspack.dev/config/dev-server
+        Note: --host and --port CLI flags are NOT supported by Shakapacker.
+        Please configure these in config/shakapacker.yml instead.
 
         Examples:
           bin/shakapacker-dev-server                # Start dev server
           bin/shakapacker-dev-server --debug-shakapacker # Debug with Node inspector
+
+        All other options are passed through to webpack-dev-server or rspack-dev-server.
+        See their documentation for details:
+          Webpack: https://webpack.js.org/configuration/dev-server/
+          Rspack:  https://rspack.dev/config/dev-server
       HELP
     end
 

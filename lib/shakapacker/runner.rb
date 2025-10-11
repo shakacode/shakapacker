@@ -26,16 +26,21 @@ module Shakapacker
     def self.run(argv)
       $stdout.sync = true
 
-      # Handle help flags before loading configuration
+      # Show Shakapacker help before webpack/rspack help
       if argv.include?("--help") || argv.include?("-h")
         print_help
-        exit(0)
+        puts "\n" + "=" * 80
+        puts "WEBPACK/RSPACK OPTIONS"
+        puts "=" * 80
+        puts "The following options are passed through to webpack/rspack:\n\n"
+        # Continue to show bundler help by not exiting
       end
 
-      # Handle version flags before loading configuration
+      # Handle version flags - show both Shakapacker and bundler versions
       if argv.include?("--version") || argv.include?("-v")
         print_version
-        exit(0)
+        puts "\nBundler version:"
+        # Continue to show bundler version by not exiting
       end
 
       Shakapacker.ensure_node_env!
@@ -139,27 +144,27 @@ module Shakapacker
 
       def self.print_help
         puts <<~HELP
+        ================================================================================
+        SHAKAPACKER - Rails Webpack/Rspack Integration
+        ================================================================================
+
         Usage: bin/shakapacker [options]
 
-        Shakapacker provides a wrapper around webpack/rspack for Rails applications.
-
-        Options:
-          -h, --help                Show this help message
-          -v, --version             Show Shakapacker version
+        Shakapacker-specific options:
           --debug-shakapacker       Enable Node.js debugging (--inspect-brk)
           --trace-deprecation       Show stack traces for deprecations
           --no-deprecation          Silence deprecation warnings
-
-        All other options are passed through to webpack/rspack.
-        See webpack/rspack documentation for available options:
-          Webpack: https://webpack.js.org/api/cli/
-          Rspack:  https://rspack.dev/api/cli
 
         Examples:
           bin/shakapacker                    # Build for production
           bin/shakapacker --mode development # Build for development
           bin/shakapacker --watch            # Watch mode
           bin/shakapacker --debug-shakapacker # Debug with Node inspector
+
+        All other options (--mode, --watch, --config, etc.) are passed through
+        to webpack or rspack. See their documentation for details:
+          Webpack: https://webpack.js.org/api/cli/
+          Rspack:  https://rspack.dev/api/cli
       HELP
       end
 
