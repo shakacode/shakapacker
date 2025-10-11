@@ -65,7 +65,7 @@ const rspackDevConfig = (): RspackConfigWithDevServer => {
         ...(devServerConfig.devMiddleware || {}),
         writeToDisk: (filePath: string) => !filePath.includes(".hot-update.")
       }
-    }
+    } as RspackConfigWithDevServer["devServer"]
   }
 
   if (
@@ -87,4 +87,7 @@ const rspackDevConfig = (): RspackConfigWithDevServer => {
 const bundlerConfig =
   config.assets_bundler === "rspack" ? rspackDevConfig() : webpackDevConfig()
 
-export = merge(baseConfig, bundlerConfig)
+export = merge(
+  baseConfig,
+  bundlerConfig as unknown as typeof baseConfig
+) as unknown as WebpackConfigWithDevServer & RspackConfigWithDevServer
