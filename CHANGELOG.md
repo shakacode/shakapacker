@@ -17,9 +17,6 @@ Changes since the last non-beta release.
 
 ### Fixed
 
-- Fixed integrity config handling in webpack.ts to avoid passing undefined to plugin when config.integrity is null/undefined. Uses conditional spreading to omit properties entirely and adds null check before SubresourceIntegrityPlugin instantiation.
-- Fixed integrity config handling in rspack.ts to check if config.integrity exists before accessing enabled property.
-- Clarified sass-loader version check: use >= 16 instead of > 15 for better semantic accuracy and proper parseInt conversion.
 - Fixed rspack native bindings installation issue when switching bundlers. [PR #672](https://github.com/shakacode/shakapacker/pull/672) by [justin808](https://github.com/justin808).
   - Running `rake shakapacker:switch_bundler rspack -- --install-deps` now properly installs platform-specific native bindings
   - Fixes "Cannot find native binding" error when switching to rspack
