@@ -1,12 +1,10 @@
 import requireOrError from "../utils/requireOrError"
 import { error as logError } from "../utils/debug"
 
-interface RspackCore {
+const rspack = requireOrError<{
   SwcJsMinimizerRspackPlugin: new () => unknown
   LightningCssMinimizerRspackPlugin: new () => unknown
-}
-
-const rspack = requireOrError("@rspack/core")
+}>("@rspack/core")
 
 interface OptimizationConfig {
   minimize: boolean

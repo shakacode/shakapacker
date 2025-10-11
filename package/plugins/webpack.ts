@@ -5,18 +5,6 @@ import { moduleExists } from "../utils/helpers"
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const { isProduction } = require("../env")
 
-interface WebpackModule {
-  EnvironmentPlugin: new (env: NodeJS.ProcessEnv) => unknown
-}
-
-interface MiniCssExtractPluginConstructor {
-  new (options: unknown): unknown
-}
-
-interface SubresourceIntegrityPluginConstructor {
-  new (options: unknown): unknown
-}
-
 // TODO: Change to `const { WebpackAssetsManifest }` when dropping 'webpack-assets-manifest < 6.0.0' (Node >=20.10.0) support
 interface WebpackAssetsManifestModule {
   WebpackAssetsManifest?: new (options: unknown) => WebpackPluginInstance
@@ -26,7 +14,10 @@ const WebpackAssetsManifest = requireOrError<
   | WebpackAssetsManifestModule
   | (new (options: unknown) => WebpackPluginInstance)
 >("webpack-assets-manifest")
-const webpack = requireOrError<WebpackModule>("webpack")
+
+const webpack = requireOrError<{
+  EnvironmentPlugin: new (env: NodeJS.ProcessEnv) => unknown
+}>("webpack")
 
 const getPlugins = (): unknown[] => {
   // TODO: Remove WebpackAssetsManifestConstructor workaround when dropping 'webpack-assets-manifest < 6.0.0' (Node >=20.10.0) support
@@ -52,7 +43,7 @@ const getPlugins = (): unknown[] => {
 
   if (moduleExists("css-loader") && moduleExists("mini-css-extract-plugin")) {
     const hash = isProduction || config.useContentHash ? "-[contenthash:8]" : ""
-    const MiniCssExtractPlugin = requireOrError(
+    const MiniCssExtractPlugin = requireOrError<new (options: unknown) => unknown>(
       "mini-css-extract-plugin"
     )
     plugins.push(
@@ -70,7 +61,7 @@ const getPlugins = (): unknown[] => {
     config.integrity?.enabled &&
     moduleExists("webpack-subresource-integrity")
   ) {
-    const SubresourceIntegrityPlugin = requireOrError(
+    const SubresourceIntegrityPlugin = requireOrError<new (options: unknown) => unknown>(
       "webpack-subresource-integrity"
     )
     plugins.push(

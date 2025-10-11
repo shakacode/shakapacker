@@ -4,20 +4,15 @@ import { moduleExists } from "../utils/helpers"
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const { isProduction } = require("../env")
 
-interface RspackManifestPluginModule {
+const { RspackManifestPlugin } = requireOrError<{
   RspackManifestPlugin: new (options: unknown) => unknown
-}
+}>("rspack-manifest-plugin")
 
-interface RspackCore {
+const rspack = requireOrError<{
   EnvironmentPlugin: new (env: NodeJS.ProcessEnv) => unknown
   CssExtractRspackPlugin: new (options: unknown) => unknown
   SubresourceIntegrityPlugin: new (options: unknown) => unknown
-}
-
-const { RspackManifestPlugin } = requireOrError(
-  "rspack-manifest-plugin"
-)
-const rspack = requireOrError("@rspack/core")
+}>("@rspack/core")
 
 interface ManifestFile {
   name: string

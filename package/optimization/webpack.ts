@@ -1,15 +1,7 @@
 import requireOrError from "../utils/requireOrError"
 import { moduleExists } from "../utils/helpers"
 
-interface TerserPluginConstructor {
-  new (options: unknown): unknown
-}
-
-interface CssMinimizerPluginConstructor {
-  new (): unknown
-}
-
-const TerserPlugin = requireOrError(
+const TerserPlugin = requireOrError<new (options: unknown) => unknown>(
   "terser-webpack-plugin"
 )
 
@@ -18,7 +10,7 @@ const tryCssMinimizer = (): unknown | null => {
     moduleExists("css-loader") &&
     moduleExists("css-minimizer-webpack-plugin")
   ) {
-    const CssMinimizerPlugin = requireOrError(
+    const CssMinimizerPlugin = requireOrError<new () => unknown>(
       "css-minimizer-webpack-plugin"
     )
     return new CssMinimizerPlugin()
