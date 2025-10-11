@@ -28,31 +28,26 @@ jobs:
         with:
           node-version: "20"
           cache: "yarn"
-          cache-dependency-path: |
-            yarn.lock
-            spec/dummy/yarn.lock
+          cache-dependency-path: spec/dummy/yarn.lock
 
-      - name: Build TypeScript and create package
+      - name: Install yalc
+        run: npm install -g yalc
+
+      - name: Build TypeScript
         run: |
           cd ../..
-          # Clean up any existing tarballs from previous runs
-          rm -f shakapacker-*.tgz
           yarn install --frozen-lockfile --production=false
           yarn build
-          # Create a tarball that can be installed like a real npm package
-          npm pack
+
+      - name: Publish shakapacker to yalc
+        run: |
+          cd ../..
+          yalc publish
 
       - name: Install dependencies
         run: |
-          # Remove any existing shakapacker reference to avoid conflicts
-          npm pkg delete dependencies.shakapacker
-          # Install shakapacker from the tarball
-          # Note: We use npm here instead of yarn because npm properly handles
-          # installing packages from tarballs with their nested dependencies.
-          # Yarn has issues with symlinked dependencies when using local file references.
-          npm install ../../shakapacker-*.tgz
-          # Install remaining dependencies from package.json
-          npm install
+          yalc link shakapacker
+          yarn install
 
       - name: Switch to Webpack
         run: bin/test-bundler webpack
@@ -86,31 +81,26 @@ jobs:
         with:
           node-version: "20"
           cache: "yarn"
-          cache-dependency-path: |
-            yarn.lock
-            spec/dummy/yarn.lock
+          cache-dependency-path: spec/dummy/yarn.lock
 
-      - name: Build TypeScript and create package
+      - name: Install yalc
+        run: npm install -g yalc
+
+      - name: Build TypeScript
         run: |
           cd ../..
-          # Clean up any existing tarballs from previous runs
-          rm -f shakapacker-*.tgz
           yarn install --frozen-lockfile --production=false
           yarn build
-          # Create a tarball that can be installed like a real npm package
-          npm pack
+
+      - name: Publish shakapacker to yalc
+        run: |
+          cd ../..
+          yalc publish
 
       - name: Install dependencies
         run: |
-          # Remove any existing shakapacker reference to avoid conflicts
-          npm pkg delete dependencies.shakapacker
-          # Install shakapacker from the tarball
-          # Note: We use npm here instead of yarn because npm properly handles
-          # installing packages from tarballs with their nested dependencies.
-          # Yarn has issues with symlinked dependencies when using local file references.
-          npm install ../../shakapacker-*.tgz
-          # Install remaining dependencies from package.json
-          npm install
+          yalc link shakapacker
+          yarn install
 
       - name: Switch to RSpack
         run: bin/test-bundler rspack
@@ -144,31 +134,26 @@ jobs:
         with:
           node-version: "20"
           cache: "yarn"
-          cache-dependency-path: |
-            yarn.lock
-            spec/dummy/yarn.lock
+          cache-dependency-path: spec/dummy/yarn.lock
 
-      - name: Build TypeScript and create package
+      - name: Install yalc
+        run: npm install -g yalc
+
+      - name: Build TypeScript
         run: |
           cd ../..
-          # Clean up any existing tarballs from previous runs
-          rm -f shakapacker-*.tgz
           yarn install --frozen-lockfile --production=false
           yarn build
-          # Create a tarball that can be installed like a real npm package
-          npm pack
+
+      - name: Publish shakapacker to yalc
+        run: |
+          cd ../..
+          yalc publish
 
       - name: Install dependencies
         run: |
-          # Remove any existing shakapacker reference to avoid conflicts
-          npm pkg delete dependencies.shakapacker
-          # Install shakapacker from the tarball
-          # Note: We use npm here instead of yarn because npm properly handles
-          # installing packages from tarballs with their nested dependencies.
-          # Yarn has issues with symlinked dependencies when using local file references.
-          npm install ../../shakapacker-*.tgz
-          # Install remaining dependencies from package.json
-          npm install
+          yalc link shakapacker
+          yarn install
 
       - name: Test switching between bundlers
         run: |

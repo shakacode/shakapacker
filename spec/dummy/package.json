@@ -29,7 +29,7 @@
     "react-dom": "^18.3.1",
     "react-on-rails": "^16.1.0",
     "rspack-manifest-plugin": "^5.1.0",
-    "shakapacker": "../../",
+    "shakapacker": "file:.yalc/shakapacker",
     "style-loader": "^4.0.0",
     "terser-webpack-plugin": "^5.3.14",
     "typescript": "^4.7.3",
