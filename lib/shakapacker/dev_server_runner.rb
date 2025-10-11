@@ -8,7 +8,53 @@ require_relative "runner"
 module Shakapacker
   class DevServerRunner < Shakapacker::Runner
     def self.run(argv)
+      # Handle help flags before loading configuration
+      if argv.include?("--help") || argv.include?("-h")
+        print_help
+        exit(0)
+      end
+
+      # Handle version flags before loading configuration
+      if argv.include?("--version") || argv.include?("-v")
+        print_version
+        exit(0)
+      end
+
       new(argv).run
+    end
+
+    def self.print_help
+      puts <<~HELP
+        Usage: bin/shakapacker-dev-server [options]
+
+        Starts the Shakapacker development server with hot module replacement.
+
+        Options:
+          -h, --help              Show this help message
+          -v, --version           Show Shakapacker version
+          --debug-shakapacker     Enable Node.js debugging (--inspect-brk)
+
+        Configuration:
+          Host, port, and HTTPS settings are configured in config/shakapacker.yml
+          under the 'dev_server' section.
+
+        Note: --host and --port CLI flags are not supported. Please configure
+        these in shakapacker.yml instead.
+
+        All other options are passed through to webpack-dev-server/rspack-dev-server.
+        See documentation for available options:
+          Webpack: https://webpack.js.org/configuration/dev-server/
+          Rspack:  https://rspack.dev/config/dev-server
+
+        Examples:
+          bin/shakapacker-dev-server                # Start dev server
+          bin/shakapacker-dev-server --debug-shakapacker # Debug with Node inspector
+      HELP
+    end
+
+    def self.print_version
+      puts "Shakapacker #{Shakapacker::VERSION}"
+      puts "Framework: Rails #{defined?(Rails) ? Rails.version : "N/A"}"
     end
 
     def run

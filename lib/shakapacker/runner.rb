@@ -1,6 +1,7 @@
 require_relative "utils/misc"
 require_relative "utils/manager"
 require_relative "configuration"
+require_relative "version"
 
 require "package_json"
 require "pathname"
@@ -24,6 +25,19 @@ module Shakapacker
     ].freeze
     def self.run(argv)
       $stdout.sync = true
+
+      # Handle help flags before loading configuration
+      if argv.include?("--help") || argv.include?("-h")
+        print_help
+        exit(0)
+      end
+
+      # Handle version flags before loading configuration
+      if argv.include?("--version") || argv.include?("-v")
+        print_version
+        exit(0)
+      end
+
       Shakapacker.ensure_node_env!
 
       # Create a single runner instance to avoid loading configuration twice.
@@ -121,6 +135,37 @@ module Shakapacker
 
       def assets_bundler_commands
         BASE_COMMANDS
+      end
+
+      def self.print_help
+        puts <<~HELP
+        Usage: bin/shakapacker [options]
+
+        Shakapacker provides a wrapper around webpack/rspack for Rails applications.
+
+        Options:
+          -h, --help                Show this help message
+          -v, --version             Show Shakapacker version
+          --debug-shakapacker       Enable Node.js debugging (--inspect-brk)
+          --trace-deprecation       Show stack traces for deprecations
+          --no-deprecation          Silence deprecation warnings
+
+        All other options are passed through to webpack/rspack.
+        See webpack/rspack documentation for available options:
+          Webpack: https://webpack.js.org/api/cli/
+          Rspack:  https://rspack.dev/api/cli
+
+        Examples:
+          bin/shakapacker                    # Build for production
+          bin/shakapacker --mode development # Build for development
+          bin/shakapacker --watch            # Watch mode
+          bin/shakapacker --debug-shakapacker # Debug with Node inspector
+      HELP
+      end
+
+      def self.print_version
+        puts "Shakapacker #{Shakapacker::VERSION}"
+        puts "Framework: Rails #{defined?(Rails) ? Rails.version : "N/A"}"
       end
 
     private
