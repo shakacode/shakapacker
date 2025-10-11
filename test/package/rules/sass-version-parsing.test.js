@@ -53,7 +53,8 @@ describe("sass-loader version comparison", () => {
 
   describe("version 16 is the boundary", () => {
     // Helper function to determine option key (same logic as production code)
-    const getOptionKey = (version) => (version >= 16 ? "loadPaths" : "includePaths")
+    const getOptionKey = (version) =>
+      version >= 16 ? "loadPaths" : "includePaths"
 
     test("sass-loader v15 uses includePaths", () => {
       expect(getOptionKey(15)).toBe("includePaths")
