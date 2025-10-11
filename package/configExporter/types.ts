@@ -19,13 +19,14 @@ export interface ConfigMetadata {
   bundler: string
   environment: string
   configFile: string
-  configType: "client" | "server" | "all"
+  configType: "client" | "server" | "all" | "client-hmr"
   configCount: number
   environmentVariables: {
     NODE_ENV?: string
     RAILS_ENV?: string
     CLIENT_BUNDLE_ONLY?: string
     SERVER_BUNDLE_ONLY?: string
+    WEBPACK_SERVE?: string
   }
 }
 
