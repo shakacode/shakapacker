@@ -17,7 +17,7 @@ Changes since the last non-beta release.
 
 ### Fixed
 
-- Fixed integrity config handling in webpack.ts to avoid passing undefined to plugin when config.integrity is null/undefined. Uses conditional spreading to omit properties entirely.
+- Fixed integrity config handling in webpack.ts to avoid passing undefined to plugin when config.integrity is null/undefined. Uses conditional spreading to omit properties entirely and adds null check before SubresourceIntegrityPlugin instantiation.
 - Fixed integrity config handling in rspack.ts to check if config.integrity exists before accessing enabled property.
 - Clarified sass-loader version check: use >= 16 instead of > 15 for better semantic accuracy and proper parseInt conversion.
 - Fixed rspack native bindings installation issue when switching bundlers. [PR #672](https://github.com/shakacode/shakapacker/pull/672) by [justin808](https://github.com/justin808).
@@ -135,6 +135,7 @@ See the [v9 Upgrade Guide](https://github.com/shakacode/shakapacker/blob/main/do
 ### ⚠️ Breaking Changes
 
 1. **SWC is now the default JavaScript transpiler instead of Babel** ([PR 603](https://github.com/shakacode/shakapacker/pull/603) by [justin808](https://github.com/justin808))
+
    - Babel dependencies are no longer included as peer dependencies
    - Improves compilation speed by 20x
    - **Migration for existing projects:**
@@ -151,6 +152,7 @@ See the [v9 Upgrade Guide](https://github.com/shakacode/shakapacker/blob/main/do
        ```
 
 2. **CSS Modules now use named exports by default** ([PR 599](https://github.com/shakacode/shakapacker/pull/599))
+
    - **JavaScript:** Use named imports: `import { className } from './styles.module.css'`
    - **TypeScript:** Use namespace imports: `import * as styles from './styles.module.css'`
    - To keep the old behavior with default imports, see [CSS Modules Export Mode documentation](./docs/css-modules-export-mode.md) for configuration instructions
@@ -416,6 +418,7 @@ See the [v8 Upgrade Guide](https://github.com/shakacode/shakapacker/blob/main/do
 
 - Set `source_entry_path` to `packs` and `nested_entries` to `true` in`shakapacker.yml` [PR 284](https://github.com/shakacode/shakapacker/pull/284) by [ahangarha](https://github.com/ahangarha).
 - Dev server configuration is modified to follow [webpack recommended configurations](https://webpack.js.org/configuration/dev-server/) for dev server. [PR276](https://github.com/shakacode/shakapacker/pull/276) by [ahangarha](https://github.com/ahangarha):
+
   - Deprecated `https` entry is removed from the default configuration file, allowing to set `server` or `https` as per the project requirements. For more detail, check webpack documentation. The `https` entry can be effective only if there is no `server` entry in the config file.
   - `allowed_hosts` is now set to `auto` instead of `all` by default.
 

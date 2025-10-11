@@ -44,6 +44,7 @@ const getPlugins = (): unknown[] => {
   }
 
   if (
+    config.integrity &&
     config.integrity.enabled &&
     moduleExists("webpack-subresource-integrity")
   ) {
