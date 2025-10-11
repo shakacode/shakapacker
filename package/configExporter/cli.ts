@@ -9,6 +9,7 @@ import yargs from "yargs"
 import { ExportOptions, ConfigMetadata, FileOutput } from "./types"
 import { YamlSerializer } from "./yamlSerializer"
 import { FileWriter } from "./fileWriter"
+import { AiPromptGenerator } from "./aiPromptGenerator"
 
 // Read version from package.json
 const packageJson = JSON.parse(
@@ -226,12 +227,14 @@ async function runDoctorMode(
   const targetDir = options.saveDir || defaultDir
 
   const createdFiles: string[] = []
+  let detectedBundler = "webpack"
 
   for (const env of environments) {
     console.log(`\n📦 Loading ${env} configuration...`)
     const configs = await loadConfigsForEnv(env, options, appRoot)
 
     for (const { config, metadata } of configs) {
+      detectedBundler = metadata.bundler
       const output = formatConfig(config, metadata, options, appRoot)
       const filename = fileWriter.generateFilename(
         metadata.bundler,
@@ -247,16 +250,42 @@ async function runDoctorMode(
     }
   }
 
+  // Generate AI analysis prompt
+  const aiPromptGenerator = new AiPromptGenerator()
+  const fileBasenames = createdFiles.map((f) => basename(f))
+  const aiPromptContent = aiPromptGenerator.generatePrompt(
+    fileBasenames,
+    targetDir,
+    detectedBundler
+  )
+  const aiPromptFilename = aiPromptGenerator.generatePromptFilename()
+  const aiPromptPath = resolve(targetDir, aiPromptFilename)
+  fileWriter.writeSingleFile(aiPromptPath, aiPromptContent, true)
+  createdFiles.push(aiPromptPath)
+
   // Print summary
   console.log("\n" + "=".repeat(80))
   console.log("✅ Export Complete!")
   console.log("=".repeat(80))
-  console.log(`\nCreated ${createdFiles.length} configuration file(s) in:`)
+  console.log(`\nCreated ${createdFiles.length} file(s) in:`)
   console.log(`  ${targetDir}\n`)
-  console.log("Files:")
+  console.log("Configuration Files:")
   createdFiles.forEach((file) => {
-    console.log(`  ✓ ${basename(file)}`)
+    const name = basename(file)
+    if (name.endsWith(".md")) {
+      // Don't show AI prompt in main list, will highlight separately
+      return
+    }
+    console.log(`  ✓ ${name}`)
   })
+  console.log("")
+  console.log("AI Analysis:")
+  console.log(
+    `  🤖 ${aiPromptFilename} - Use this prompt to get AI recommendations`
+  )
+  console.log(
+    "     Copy the contents and paste into an AI assistant for configuration analysis"
+  )
 
   // Check if directory should be added to .gitignore
   const gitignorePath = resolve(process.cwd(), ".gitignore")
