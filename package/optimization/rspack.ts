@@ -6,7 +6,7 @@ interface RspackCore {
   LightningCssMinimizerRspackPlugin: new () => unknown
 }
 
-const rspack = requireOrError("@rspack/core") as RspackCore
+const rspack = requireOrError("@rspack/core")
 
 interface OptimizationConfig {
   minimize: boolean

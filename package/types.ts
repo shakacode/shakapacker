@@ -63,7 +63,7 @@ type WebSocketType = "sockjs" | "ws"
  * @see {import('webpack-dev-server').Configuration}
  */
 export interface DevServerConfig {
-  allowed_hosts?: "all" | "auto" | string | string[]
+  allowed_hosts?: "all" | "auto" | (string & {}) | string[]
   bonjour?: boolean | Record<string, unknown> // bonjour.BonjourOptions
   client?: Record<string, unknown> // Client
   compress?: boolean
@@ -71,7 +71,7 @@ export interface DevServerConfig {
   headers?: Header | (() => Header)
   history_api_fallback?: boolean | Record<string, unknown> // HistoryApiFallbackOptions
   hmr?: "only" | boolean
-  host?: "local-ip" | "local-ipv4" | "local-ipv6" | string
+  host?: "local-ip" | "local-ipv4" | "local-ipv6" | (string & {})
   http2?: boolean
   https?: boolean | https.ServerOptions
   ipc?: boolean | string
@@ -85,23 +85,25 @@ export interface DevServerConfig {
     | string[]
     | Record<string, unknown>
     | Record<string, unknown>[]
-  port?: "auto" | string | number
+  port?: "auto" | (string & {}) | number
   proxy?: unknown // ProxyConfigMap | ProxyConfigArray
   setup_exit_signals?: boolean
+  // eslint-disable-next-line @typescript-eslint/no-redundant-type-constituents
   static?: boolean | string | unknown // Static | Array<string | Static>
+  // eslint-disable-next-line @typescript-eslint/no-redundant-type-constituents
   watch_files?: string | string[] | unknown // WatchFiles | Array<WatchFiles | string>
   web_socket_server?:
-    | string
+    | (string & {})
     | boolean
     | WebSocketType
     | {
-        type?: string | boolean | WebSocketType
+        type?: (string & {}) | boolean | WebSocketType
         options?: Record<string, unknown>
       }
   server?:
-    | string
+    | (string & {})
     | boolean
     | ServerType
-    | { type?: string | boolean | ServerType; options?: https.ServerOptions }
+    | { type?: (string & {}) | boolean | ServerType; options?: https.ServerOptions }
   [otherWebpackDevServerConfigKey: string]: unknown
 }

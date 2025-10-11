@@ -11,7 +11,7 @@ interface CssMinimizerPluginConstructor {
 
 const TerserPlugin = requireOrError(
   "terser-webpack-plugin"
-) as TerserPluginConstructor
+)
 
 const tryCssMinimizer = (): unknown | null => {
   if (
@@ -20,7 +20,7 @@ const tryCssMinimizer = (): unknown | null => {
   ) {
     const CssMinimizerPlugin = requireOrError(
       "css-minimizer-webpack-plugin"
-    ) as CssMinimizerPluginConstructor
+    )
     return new CssMinimizerPlugin()
   }
 
@@ -31,8 +31,7 @@ interface OptimizationConfig {
   minimizer: unknown[]
 }
 
-const getOptimization = (): OptimizationConfig => {
-  return {
+const getOptimization = (): OptimizationConfig => ({
     minimizer: [
       tryCssMinimizer(),
       new TerserPlugin({
@@ -61,7 +60,6 @@ const getOptimization = (): OptimizationConfig => {
         }
       })
     ].filter(Boolean)
-  }
-}
+  })
 
 export { getOptimization }

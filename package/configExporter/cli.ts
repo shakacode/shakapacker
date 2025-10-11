@@ -5,58 +5,13 @@ import { existsSync, readFileSync } from "fs"
 import { resolve, dirname, sep, delimiter, basename } from "path"
 import { inspect } from "util"
 import { load as loadYaml } from "js-yaml"
-import yargs from "yargs"
 import { ExportOptions, ConfigMetadata, FileOutput } from "./types"
 import { YamlSerializer } from "./yamlSerializer"
 import { FileWriter } from "./fileWriter"
 
-// Read version from package.json
-const packageJson = JSON.parse(
-  readFileSync(resolve(__dirname, "../../package.json"), "utf8")
-)
-const VERSION = packageJson.version
-
-// Main CLI entry point
-export async function run(args: string[]): Promise<number> {
-  try {
-    const options = parseArguments(args)
-
-    // Set up environment
-    const appRoot = findAppRoot()
-    process.chdir(appRoot)
-    setupNodePath(appRoot)
-
-    // Apply defaults
-    applyDefaults(options)
-
-    // Validate after defaults are applied
-    if (options.annotate && options.format !== "yaml") {
-      throw new Error(
-        "Annotation requires YAML format. Use --no-annotate or --format=yaml."
-      )
-    }
-
-    // Execute based on mode
-    if (options.doctor) {
-      await runDoctorMode(options, appRoot)
-    } else if (options.save) {
-      await runSaveMode(options, appRoot)
-    } else {
-      await runStdoutMode(options, appRoot)
-    }
-
-    return 0
-  } catch (error: any) {
-    console.error(`[Config Exporter] Error: ${error.message}`)
-    return 1
-  }
-}
-
-function parseArguments(args: string[]): ExportOptions {
-  const argv = yargs(args)
-    .version(VERSION)
-    .usage(
-      `Shakapacker Config Exporter
+function showHelp(): void {
+  console.log(`
+Shakapacker Config Exporter
 
 Exports webpack or rspack configuration in a verbose, human-readable format
 for comparison and analysis.
@@ -65,99 +20,37 @@ QUICK START (for troubleshooting):
   bin/export-bundler-config --doctor
 
   Exports annotated YAML configs for both development and production.
-  Creates separate files for client, server, and HMR client bundles.
-  Best for debugging, AI analysis, and comparing configurations.`
-    )
-    .option("doctor", {
-      type: "boolean",
-      default: false,
-      description:
-        "Export all configs for troubleshooting (dev + prod, annotated YAML)"
-    })
-    .option("save", {
-      type: "boolean",
-      default: false,
-      description: "Save to auto-generated file(s) (default: YAML format)"
-    })
-    .option("save-dir", {
-      type: "string",
-      description: "Directory for output files (requires --save)"
-    })
-    .option("bundler", {
-      type: "string",
-      choices: ["webpack", "rspack"] as const,
-      description: "Specify bundler (auto-detected if not provided)"
-    })
-    .option("env", {
-      type: "string",
-      choices: ["development", "production", "test"] as const,
-      default: "development" as const,
-      description: "Node environment (ignored with --doctor)"
-    })
-    .option("client-only", {
-      type: "boolean",
-      default: false,
-      description: "Generate only client config (sets CLIENT_BUNDLE_ONLY=yes)"
-    })
-    .option("server-only", {
-      type: "boolean",
-      default: false,
-      description: "Generate only server config (sets SERVER_BUNDLE_ONLY=yes)"
-    })
-    .option("output", {
-      type: "string",
-      description: "Output to specific file (default: stdout)"
-    })
-    .option("depth", {
-      type: "number",
-      default: 20,
-      coerce: (value: number | string) => {
-        if (value === "null" || value === null) return null
-        return typeof value === "number" ? value : parseInt(String(value), 10)
-      },
-      description: "Inspection depth (use 'null' for unlimited)"
-    })
-    .option("format", {
-      type: "string",
-      choices: ["yaml", "json", "inspect"] as const,
-      description:
-        "Output format (default: inspect for stdout, yaml for --save/--doctor)"
-    })
-    .option("annotate", {
-      type: "boolean",
-      description:
-        "Enable inline documentation (YAML only, default with --save/--doctor)"
-    })
-    .option("verbose", {
-      type: "boolean",
-      default: false,
-      description: "Show full output without compact mode"
-    })
-    .check((argv) => {
-      if (argv["client-only"] && argv["server-only"]) {
-        throw new Error(
-          "--client-only and --server-only are mutually exclusive. Please specify only one."
-        )
-      }
-      if (argv["save-dir"] && !argv.save && !argv.doctor) {
-        throw new Error("--save-dir requires --save or --doctor flag.")
-      }
-      if (argv.output && argv["save-dir"]) {
-        throw new Error(
-          "--output and --save-dir are mutually exclusive. Use one or the other."
-        )
-      }
-      return true
-    })
-    .help("help")
-    .alias("help", "h")
-    .epilogue(
-      `Examples:
+  Creates separate files for client and server bundles.
+  Best for debugging, AI analysis, and comparing configurations.
+
+Usage:
+  bin/export-bundler-config [options]
+
+Options:
+  --doctor                   Export all configs for troubleshooting (dev + prod, annotated YAML)
+  --save                     Save to auto-generated file(s) (default: YAML format)
+  --save-dir=<directory>     Directory for output files (requires --save)
+  --bundler=webpack|rspack   Specify bundler (auto-detected if not provided)
+  --env=development|production|test    Node environment (default: development, ignored with --doctor)
+  --client-only              Generate only client config (sets CLIENT_BUNDLE_ONLY=yes)
+  --server-only              Generate only server config (sets SERVER_BUNDLE_ONLY=yes)
+  --output=<filename>        Output to specific file (default: stdout)
+  --depth=<number>           Inspection depth (default: 20, use 'null' for unlimited)
+  --format=yaml|json|inspect Output format (default: inspect for stdout, yaml for --save/--doctor)
+  --no-annotate              Disable inline documentation (YAML only)
+  --verbose                  Show full output without compact mode
+  --help, -h                 Show this help message
+
+Note: --client-only and --server-only are mutually exclusive.
+      --save-dir requires --save.
+      --output and --save-dir are mutually exclusive.
+      If neither --client-only nor --server-only specified, both configs are generated.
+
+Examples:
   # RECOMMENDED: Export everything for troubleshooting
   bin/export-bundler-config --doctor
-  # Creates: webpack-development-client-hmr.yaml, webpack-development-client.yaml,
-  #          webpack-development-server.yaml, webpack-production-client.yaml,
-  #          webpack-production-server.yaml
+  # Creates: webpack-development-client.yaml, webpack-development-server.yaml,
+  #          webpack-production-client.yaml, webpack-production-server.yaml
 
   # Save current environment configs
   bin/export-bundler-config --save
@@ -171,222 +64,225 @@ QUICK START (for troubleshooting):
   # Creates: webpack-production-client.yaml
 
   # View config in terminal (stdout)
-  bin/export-bundler-config`
-    )
-    .strict()
-    .parseSync()
+  bin/export-bundler-config
+`)
+}
 
-  // Type assertions are safe here because yargs validates choices at runtime
-  return {
-    bundler: argv.bundler as "webpack" | "rspack" | undefined,
-    env: argv.env as "development" | "production" | "test",
-    clientOnly: argv["client-only"],
-    serverOnly: argv["server-only"],
-    output: argv.output,
-    depth: argv.depth as number | null,
-    format: argv.format as "yaml" | "json" | "inspect" | undefined,
-    help: false, // yargs handles help internally
-    verbose: argv.verbose,
-    doctor: argv.doctor,
-    save: argv.save,
-    saveDir: argv["save-dir"],
-    annotate: argv.annotate
+function setupNodePath(appRoot: string): void {
+  const nodePaths = [
+    resolve(appRoot, "node_modules"),
+    resolve(appRoot, "..", "..", "node_modules"),
+    resolve(appRoot, "..", "..", "package"),
+    ...(appRoot.includes("/spec/dummy")
+      ? [resolve(appRoot, "../../node_modules")]
+      : [])
+  ].filter((p) => existsSync(p))
+
+  if (nodePaths.length > 0) {
+    const existingNodePath = process.env.NODE_PATH || ""
+    process.env.NODE_PATH = existingNodePath
+      ? `${nodePaths.join(delimiter)}${delimiter}${existingNodePath}`
+      : nodePaths.join(delimiter)
+
+    // eslint-disable-next-line @typescript-eslint/no-var-requires, @typescript-eslint/no-require-imports
+    require("module").Module._initPaths()
   }
 }
 
-function applyDefaults(options: ExportOptions): void {
-  if (options.doctor) {
-    options.save = true
-    if (options.format === undefined) options.format = "yaml"
-    if (options.annotate === undefined) options.annotate = true
-  } else if (options.save) {
-    if (options.format === undefined) options.format = "yaml"
-    if (options.annotate === undefined) options.annotate = true
-  } else {
-    if (options.format === undefined) options.format = "inspect"
-    if (options.annotate === undefined) options.annotate = false
+function findAppRoot(): string {
+  let currentDir = process.cwd()
+  const root = dirname(currentDir).split(sep)[0] + sep
+
+  while (currentDir !== root && currentDir !== dirname(currentDir)) {
+    if (
+      existsSync(resolve(currentDir, "package.json")) ||
+      existsSync(resolve(currentDir, "config/shakapacker.yml"))
+    ) {
+      return currentDir
+    }
+    currentDir = dirname(currentDir)
   }
+
+  return process.cwd()
 }
 
-async function runDoctorMode(
-  options: ExportOptions,
+function findConfigFile(
+  bundler: "webpack" | "rspack",
   appRoot: string
-): Promise<void> {
-  console.log(`\n${"=".repeat(80)}`)
-  console.log("🔍 Config Exporter - Doctor Mode")
-  console.log("=".repeat(80))
-  console.log("\nExporting development AND production configs...")
-  console.log("")
+): string {
+  const extensions = ["ts", "js"]
 
-  const environments: Array<"development" | "production"> = [
-    "development",
-    "production"
-  ]
-  const fileWriter = new FileWriter()
-  const defaultDir = resolve(process.cwd(), "shakapacker-config-exports")
-  const targetDir = options.saveDir || defaultDir
+  if (bundler === "rspack") {
+    for (const ext of extensions) {
+      const rspackPath = resolve(appRoot, `config/rspack/rspack.config.${ext}`)
+      if (existsSync(rspackPath)) {
+        return rspackPath
+      }
+    }
+  }
 
-  const createdFiles: string[] = []
+  // Fall back to webpack config
+  for (const ext of extensions) {
+    const webpackPath = resolve(appRoot, `config/webpack/webpack.config.${ext}`)
+    if (existsSync(webpackPath)) {
+      return webpackPath
+    }
+  }
 
-  for (const env of environments) {
-    console.log(`\n📦 Loading ${env} configuration...`)
+  throw new Error(
+    `Could not find ${bundler} config file. Expected: config/${bundler}/${bundler}.config.{js,ts}`
+  )
+}
 
-    // For development, also load the HMR client config and server watch config
-    if (env === "development") {
-      // Save original env vars
-      const originalWebpackServe = process.env.WEBPACK_SERVE
-      const originalClientBundleOnly = process.env.CLIENT_BUNDLE_ONLY
-      const originalServerBundleOnly = process.env.SERVER_BUNDLE_ONLY
+async function autoDetectBundler(
+  env: string,
+  appRoot: string
+): Promise<"webpack" | "rspack"> {
+  try {
+    const configPath =
+      process.env.SHAKAPACKER_CONFIG ||
+      resolve(appRoot, "config/shakapacker.yml")
 
-      // 1. Generate HMR client config (WEBPACK_SERVE=true + CLIENT_BUNDLE_ONLY=yes)
-      process.env.WEBPACK_SERVE = "true"
-      process.env.CLIENT_BUNDLE_ONLY = "yes"
-      delete process.env.SERVER_BUNDLE_ONLY
-
-      const hmrConfigs = await loadConfigsForEnv(env, options, appRoot)
-
-      for (const { config, metadata } of hmrConfigs) {
-        // Update configType to indicate this is the HMR variant
-        const hmrMetadata: ConfigMetadata = {
-          ...metadata,
-          configType: "client-hmr"
-        }
-        const output = formatConfig(config, hmrMetadata, options, appRoot)
-        const filename = fileWriter.generateFilename(
-          metadata.bundler,
-          metadata.environment,
-          "client-hmr",
-          options.format!
+    if (existsSync(configPath)) {
+      const config: any = loadYaml(readFileSync(configPath, "utf8"))
+      const envConfig = config[env] || config.default || {}
+      const bundler = envConfig.assets_bundler || "webpack"
+      if (bundler !== "webpack" && bundler !== "rspack") {
+        console.warn(
+          `[Config Exporter] Invalid bundler '${bundler}' in shakapacker.yml, defaulting to webpack`
         )
-
-        const fullPath = resolve(targetDir, filename)
-        fileWriter.writeSingleFile(fullPath, output, true) // quiet mode
-        createdFiles.push(fullPath)
+        return "webpack"
       }
-
-      // Restore original env vars
-      if (originalWebpackServe === undefined) {
-        delete process.env.WEBPACK_SERVE
-      } else {
-        process.env.WEBPACK_SERVE = originalWebpackServe
-      }
-      if (originalClientBundleOnly === undefined) {
-        delete process.env.CLIENT_BUNDLE_ONLY
-      } else {
-        process.env.CLIENT_BUNDLE_ONLY = originalClientBundleOnly
-      }
-      if (originalServerBundleOnly === undefined) {
-        delete process.env.SERVER_BUNDLE_ONLY
-      } else {
-        process.env.SERVER_BUNDLE_ONLY = originalServerBundleOnly
-      }
+      console.log(`[Config Exporter] Auto-detected bundler: ${bundler}`)
+      return bundler
     }
-
-    // Load standard configs (no CLIENT_BUNDLE_ONLY or SERVER_BUNDLE_ONLY)
-    const configs = await loadConfigsForEnv(env, options, appRoot)
-
-    for (const { config, metadata } of configs) {
-      const output = formatConfig(config, metadata, options, appRoot)
-      const filename = fileWriter.generateFilename(
-        metadata.bundler,
-        metadata.environment,
-        metadata.configType,
-        options.format!
-      )
-
-      const fullPath = resolve(targetDir, filename)
-      const fileOutput: FileOutput = { filename, content: output, metadata }
-      fileWriter.writeSingleFile(fullPath, output, true) // quiet mode
-      createdFiles.push(fullPath)
-    }
-  }
-
-  // Print summary
-  console.log(`\n${"=".repeat(80)}`)
-  console.log("✅ Export Complete!")
-  console.log("=".repeat(80))
-  console.log(`\nCreated ${createdFiles.length} configuration file(s) in:`)
-  console.log(`  ${targetDir}\n`)
-  console.log("Files:")
-  createdFiles.forEach((file) => {
-    console.log(`  ✓ ${basename(file)}`)
-  })
-
-  // Check if directory should be added to .gitignore
-  const gitignorePath = resolve(process.cwd(), ".gitignore")
-  const dirName = basename(targetDir)
-  let shouldSuggestGitignore = false
-
-  if (existsSync(gitignorePath)) {
-    const gitignoreContent = readFileSync(gitignorePath, "utf8")
-    if (!gitignoreContent.includes(dirName)) {
-      shouldSuggestGitignore = true
-    }
-  }
-
-  if (shouldSuggestGitignore) {
-    console.log(`\n${"─".repeat(80)}`)
-    console.log(
-      "💡 Tip: Add the export directory to .gitignore to avoid committing config files:"
+  } catch (error: unknown) {
+    console.warn(
+      `[Config Exporter] Error detecting bundler, defaulting to webpack`
     )
-    console.log(`\n  echo "${dirName}/" >> .gitignore\n`)
   }
 
-  console.log(`\n${"=".repeat(80)}\n`)
+  return "webpack"
 }
 
-async function runSaveMode(
+function cleanConfig(obj: any, rootPath: string): any {
+  const makePathRelative = (str: string): string => {
+    if (typeof str === "string" && str.startsWith(rootPath)) {
+      return `./${str.substring(rootPath.length + 1)}`
+    }
+    return str
+  }
+
+  function clean(value: any, key?: string, parent?: any): any {
+    // Remove EnvironmentPlugin keys and defaultValues
+    if (
+      parent &&
+      parent.constructor &&
+      parent.constructor.name === "EnvironmentPlugin"
+    ) {
+      if (key === "keys" || key === "defaultValues") {
+        return undefined
+      }
+    }
+
+    if (typeof value === "function") {
+      // Show function source
+      const source = value.toString()
+      const compacted = source
+        .split("\n")
+        .map((line: string) => line.trim())
+        .filter((line: string) => line.length > 0)
+        .join(" ")
+      return compacted
+    }
+
+    if (typeof value === "string") {
+      return makePathRelative(value)
+    }
+
+    if (Array.isArray(value)) {
+      return value
+        .map((item, i) => clean(item, String(i), value))
+        .filter((v) => v !== undefined)
+    }
+
+    if (value && typeof value === "object") {
+      const cleaned: any = {}
+      for (const k in value) {
+        if (Object.prototype.hasOwnProperty.call(value, k)) {
+          const cleanedValue = clean(value[k], k, value)
+          if (cleanedValue !== undefined) {
+            cleaned[k] = cleanedValue
+          }
+        }
+      }
+      return cleaned
+    }
+
+    return value
+  }
+
+  return clean(obj)
+}
+
+function formatConfig(
+  config: any,
+  metadata: ConfigMetadata,
   options: ExportOptions,
   appRoot: string
-): Promise<void> {
-  console.log(`[Config Exporter] Save mode: Exporting ${options.env} configs`)
-
-  const fileWriter = new FileWriter()
-  const targetDir = options.saveDir || process.cwd()
-  const configs = await loadConfigsForEnv(options.env!, options, appRoot)
-
-  if (options.output) {
-    // Single file output
-    const combined = configs.map((c) => c.config)
-    const { metadata } = configs[0]
-    metadata.configCount = combined.length
-
-    const output = formatConfig(
-      combined.length === 1 ? combined[0] : combined,
-      metadata,
-      options,
+): string {
+  if (options.format === "yaml") {
+    const serializer = new YamlSerializer({
+      annotate: options.annotate!,
       appRoot
-    )
-    fileWriter.writeSingleFile(resolve(options.output), output)
-  } else {
-    // Multi-file output (one per config)
-    for (const { config, metadata } of configs) {
-      const output = formatConfig(config, metadata, options, appRoot)
-      const filename = fileWriter.generateFilename(
-        metadata.bundler,
-        metadata.environment,
-        metadata.configType,
-        options.format!
-      )
-      fileWriter.writeSingleFile(resolve(targetDir, filename), output)
-    }
+    })
+    return serializer.serialize(config, metadata)
   }
-}
+  if (options.format === "json") {
+    const jsonReplacer = (key: string, value: any): any => {
+      if (typeof value === "function") {
+        return `[Function: ${value.name || "anonymous"}]`
+      }
+      if (value instanceof RegExp) {
+        return `[RegExp: ${value.toString()}]`
+      }
+      if (
+        value &&
+        typeof value === "object" &&
+        value.constructor &&
+        value.constructor.name !== "Object" &&
+        value.constructor.name !== "Array"
+      ) {
+        return `[${value.constructor.name}]`
+      }
+      return value
+    }
+    return JSON.stringify({ metadata, config }, jsonReplacer, 2)
+  }
+  // inspect format
+  const inspectOptions = {
+    depth: options.depth,
+    colors: false,
+    maxArrayLength: null,
+    maxStringLength: null,
+    breakLength: 120,
+    compact: false
+  }
 
-async function runStdoutMode(
-  options: ExportOptions,
-  appRoot: string
-): Promise<void> {
-  const configs = await loadConfigsForEnv(options.env!, options, appRoot)
-  const combined = configs.map((c) => c.config)
-  const { metadata } = configs[0]
-  metadata.configCount = combined.length
+  let output = `=== METADATA ===\n\n${inspect(metadata, inspectOptions)}\n\n`
+  output += "=== CONFIG ===\n\n"
 
-  const config = combined.length === 1 ? combined[0] : combined
-  const output = formatConfig(config, metadata, options, appRoot)
+  if (Array.isArray(config)) {
+    output += `Total configs: ${config.length}\n\n`
+    config.forEach((cfg, index) => {
+      output += `--- Config [${index}] ---\n\n`
+      output += `${inspect(cfg, inspectOptions)}\n\n`
+    })
+  } else {
+    output += `${inspect(config, inspectOptions)}\n`
+  }
 
-  console.log(`\n${"=".repeat(80)}\n`)
-  console.log(output)
+  return output
 }
 
 async function loadConfigsForEnv(
@@ -472,9 +368,6 @@ async function loadConfigsForEnv(
     if (configs.length === 2) {
       // Likely client and server configs
       configType = index === 0 ? "client" : "server"
-    } else if (configs.length === 1 && process.env.WEBPACK_SERVE === "true") {
-      // WEBPACK_SERVE returns single client config for HMR
-      configType = "client"
     } else if (options.clientOnly) {
       configType = "client"
     } else if (options.serverOnly) {
@@ -492,8 +385,7 @@ async function loadConfigsForEnv(
         NODE_ENV: process.env.NODE_ENV,
         RAILS_ENV: process.env.RAILS_ENV,
         CLIENT_BUNDLE_ONLY: process.env.CLIENT_BUNDLE_ONLY,
-        SERVER_BUNDLE_ONLY: process.env.SERVER_BUNDLE_ONLY,
-        WEBPACK_SERVE: process.env.WEBPACK_SERVE
+        SERVER_BUNDLE_ONLY: process.env.SERVER_BUNDLE_ONLY
       }
     }
 
@@ -509,219 +401,286 @@ async function loadConfigsForEnv(
   return results
 }
 
-function formatConfig(
-  config: any,
-  metadata: ConfigMetadata,
+async function runStdoutMode(
   options: ExportOptions,
   appRoot: string
-): string {
-  if (options.format === "yaml") {
-    const serializer = new YamlSerializer({
-      annotate: options.annotate!,
-      appRoot
-    })
-    return serializer.serialize(config, metadata)
-  }
-  if (options.format === "json") {
-    const jsonReplacer = (key: string, value: any): any => {
-      if (typeof value === "function") {
-        return `[Function: ${value.name || "anonymous"}]`
-      }
-      if (value instanceof RegExp) {
-        return `[RegExp: ${value.toString()}]`
-      }
-      if (
-        value &&
-        typeof value === "object" &&
-        value.constructor &&
-        value.constructor.name !== "Object" &&
-        value.constructor.name !== "Array"
-      ) {
-        return `[${value.constructor.name}]`
-      }
-      return value
-    }
-    return JSON.stringify({ metadata, config }, jsonReplacer, 2)
-  }
-  // inspect format
-  const inspectOptions = {
-    depth: options.depth,
-    colors: false,
-    maxArrayLength: null,
-    maxStringLength: null,
-    breakLength: 120,
-    compact: false
-  }
+): Promise<void> {
+  const configs = await loadConfigsForEnv(options.env!, options, appRoot)
+  const combined = configs.map((c) => c.config)
+  const { metadata } = configs[0]
+  metadata.configCount = combined.length
 
-  let output = `=== METADATA ===\n\n${inspect(metadata, inspectOptions)}\n\n`
-  output += "=== CONFIG ===\n\n"
+  const config = combined.length === 1 ? combined[0] : combined
+  const output = formatConfig(config, metadata, options, appRoot)
 
-  if (Array.isArray(config)) {
-    output += `Total configs: ${config.length}\n\n`
-    config.forEach((cfg, index) => {
-      output += `--- Config [${index}] ---\n\n`
-      output += `${inspect(cfg, inspectOptions)}\n\n`
-    })
-  } else {
-    output += `${inspect(config, inspectOptions)}\n`
-  }
-
-  return output
+  console.log(`\n${"=".repeat(80)}\n`)
+  console.log(output)
 }
 
-function cleanConfig(obj: any, rootPath: string): any {
-  const makePathRelative = (str: string): string => {
-    if (typeof str === "string" && str.startsWith(rootPath)) {
-      return `./${str.substring(rootPath.length + 1)}`
-    }
-    return str
-  }
-
-  function clean(value: any, key?: string, parent?: any): any {
-    // Remove EnvironmentPlugin keys and defaultValues
-    if (
-      parent &&
-      parent.constructor &&
-      parent.constructor.name === "EnvironmentPlugin"
-    ) {
-      if (key === "keys" || key === "defaultValues") {
-        return undefined
-      }
-    }
-
-    if (typeof value === "function") {
-      // Show function source
-      const source = value.toString()
-      const compacted = source
-        .split("\n")
-        .map((line: string) => line.trim())
-        .filter((line: string) => line.length > 0)
-        .join(" ")
-      return compacted
-    }
-
-    if (typeof value === "string") {
-      return makePathRelative(value)
-    }
-
-    if (Array.isArray(value)) {
-      return value
-        .map((item, i) => clean(item, String(i), value))
-        .filter((v) => v !== undefined)
-    }
-
-    if (value && typeof value === "object") {
-      const cleaned: any = {}
-      for (const k in value) {
-        if (Object.prototype.hasOwnProperty.call(value, k)) {
-          const cleanedValue = clean(value[k], k, value)
-          if (cleanedValue !== undefined) {
-            cleaned[k] = cleanedValue
-          }
-        }
-      }
-      return cleaned
-    }
-
-    return value
-  }
-
-  return clean(obj)
-}
-
-async function autoDetectBundler(
-  env: string,
+async function runSaveMode(
+  options: ExportOptions,
   appRoot: string
-): Promise<"webpack" | "rspack"> {
-  try {
-    const configPath =
-      process.env.SHAKAPACKER_CONFIG ||
-      resolve(appRoot, "config/shakapacker.yml")
+): Promise<void> {
+  console.log(`[Config Exporter] Save mode: Exporting ${options.env} configs`)
 
-    if (existsSync(configPath)) {
-      const config: any = loadYaml(readFileSync(configPath, "utf8"))
-      const envConfig = config[env] || config.default || {}
-      const bundler = envConfig.assets_bundler || "webpack"
-      if (bundler !== "webpack" && bundler !== "rspack") {
-        console.warn(
-          `[Config Exporter] Invalid bundler '${bundler}' in shakapacker.yml, defaulting to webpack`
-        )
-        return "webpack"
-      }
-      console.log(`[Config Exporter] Auto-detected bundler: ${bundler}`)
-      return bundler
+  const fileWriter = new FileWriter()
+  const targetDir = options.saveDir || process.cwd()
+  const configs = await loadConfigsForEnv(options.env!, options, appRoot)
+
+  if (options.output) {
+    // Single file output
+    const combined = configs.map((c) => c.config)
+    const { metadata } = configs[0]
+    metadata.configCount = combined.length
+
+    const output = formatConfig(
+      combined.length === 1 ? combined[0] : combined,
+      metadata,
+      options,
+      appRoot
+    )
+    fileWriter.writeSingleFile(resolve(options.output), output)
+  } else {
+    // Multi-file output (one per config)
+    for (const { config, metadata } of configs) {
+      const output = formatConfig(config, metadata, options, appRoot)
+      const filename = fileWriter.generateFilename(
+        metadata.bundler,
+        metadata.environment,
+        metadata.configType,
+        options.format!
+      )
+      fileWriter.writeSingleFile(resolve(targetDir, filename), output)
     }
-  } catch (error: any) {
-    console.warn(
-      `[Config Exporter] Error detecting bundler, defaulting to webpack`
+  }
+}
+
+async function runDoctorMode(
+  options: ExportOptions,
+  appRoot: string
+): Promise<void> {
+  console.log(`\n${"=".repeat(80)}`)
+  console.log("🔍 Config Exporter - Doctor Mode")
+  console.log("=".repeat(80))
+  console.log("\nExporting development AND production configs...")
+  console.log("")
+
+  const environments: Array<"development" | "production"> = [
+    "development",
+    "production"
+  ]
+  const fileWriter = new FileWriter()
+  const defaultDir = resolve(process.cwd(), "shakapacker-config-exports")
+  const targetDir = options.saveDir || defaultDir
+
+  const createdFiles: string[] = []
+
+  for (const env of environments) {
+    console.log(`\n📦 Loading ${env} configuration...`)
+    const configs = await loadConfigsForEnv(env, options, appRoot)
+
+    for (const { config, metadata } of configs) {
+      const output = formatConfig(config, metadata, options, appRoot)
+      const filename = fileWriter.generateFilename(
+        metadata.bundler,
+        metadata.environment,
+        metadata.configType,
+        options.format!
+      )
+
+      const fullPath = resolve(targetDir, filename)
+      const fileOutput: FileOutput = { filename, content: output, metadata }
+      fileWriter.writeSingleFile(fullPath, output, true) // quiet mode
+      createdFiles.push(fullPath)
+    }
+  }
+
+  // Print summary
+  console.log(`\n${"=".repeat(80)}`)
+  console.log("✅ Export Complete!")
+  console.log("=".repeat(80))
+  console.log(`\nCreated ${createdFiles.length} configuration file(s) in:`)
+  console.log(`  ${targetDir}\n`)
+  console.log("Files:")
+  createdFiles.forEach((file) => {
+    console.log(`  ✓ ${basename(file)}`)
+  })
+
+  // Check if directory should be added to .gitignore
+  const gitignorePath = resolve(process.cwd(), ".gitignore")
+  const dirName = basename(targetDir)
+  let shouldSuggestGitignore = false
+
+  if (existsSync(gitignorePath)) {
+    const gitignoreContent = readFileSync(gitignorePath, "utf8")
+    if (!gitignoreContent.includes(dirName)) {
+      shouldSuggestGitignore = true
+    }
+  }
+
+  if (shouldSuggestGitignore) {
+    console.log(`\n${"─".repeat(80)}`)
+    console.log(
+      "💡 Tip: Add the export directory to .gitignore to avoid committing config files:"
+    )
+    console.log(`\n  echo "${dirName}/" >> .gitignore\n`)
+  }
+
+  console.log(`\n${"=".repeat(80)}\n`)
+}
+
+function validateOptions(options: ExportOptions): void {
+  if (options.clientOnly && options.serverOnly) {
+    throw new Error(
+      "--client-only and --server-only are mutually exclusive. Please specify only one."
     )
   }
 
-  return "webpack"
+  if (options.saveDir && !options.save && !options.doctor) {
+    throw new Error("--save-dir requires --save or --doctor flag.")
+  }
+
+  if (options.output && options.saveDir) {
+    throw new Error(
+      "--output and --save-dir are mutually exclusive. Use one or the other."
+    )
+  }
+
+  if (options.annotate && options.format !== "yaml") {
+    throw new Error(
+      "--annotate (or default with --save/--doctor) requires --format=yaml. Use --no-annotate or --format=inspect/json."
+    )
+  }
 }
 
-function findConfigFile(
-  bundler: "webpack" | "rspack",
-  appRoot: string
-): string {
-  const extensions = ["ts", "js"]
+function applyDefaults(options: ExportOptions): void {
+  if (options.doctor) {
+    options.save = true
+    if (options.format === undefined) options.format = "yaml"
+    if (options.annotate === undefined) options.annotate = true
+  } else if (options.save) {
+    if (options.format === undefined) options.format = "yaml"
+    if (options.annotate === undefined) options.annotate = true
+  } else {
+    if (options.format === undefined) options.format = "inspect"
+    if (options.annotate === undefined) options.annotate = false
+  }
+}
 
-  if (bundler === "rspack") {
-    for (const ext of extensions) {
-      const rspackPath = resolve(appRoot, `config/rspack/rspack.config.${ext}`)
-      if (existsSync(rspackPath)) {
-        return rspackPath
+function parseArguments(args: string[]): ExportOptions {
+  const options: ExportOptions = {
+    bundler: undefined,
+    env: "development",
+    clientOnly: false,
+    serverOnly: false,
+    output: undefined,
+    depth: 20,
+    format: undefined,
+    help: false,
+    verbose: false,
+    doctor: false,
+    save: false,
+    saveDir: undefined,
+    annotate: undefined
+  }
+
+  const parseValue = (arg: string, prefix: string): string => {
+    const value = arg.substring(prefix.length)
+    if (value.length === 0) {
+      throw new Error(`${prefix} requires a value`)
+    }
+    return value
+  }
+
+  for (const arg of args) {
+    if (arg === "--help" || arg === "-h") {
+      options.help = true
+    } else if (arg === "--doctor") {
+      options.doctor = true
+    } else if (arg === "--save") {
+      options.save = true
+    } else if (arg.startsWith("--save-dir=")) {
+      options.saveDir = parseValue(arg, "--save-dir=")
+    } else if (arg.startsWith("--bundler=")) {
+      const bundler = parseValue(arg, "--bundler=")
+      if (bundler !== "webpack" && bundler !== "rspack") {
+        throw new Error(
+          `Invalid bundler '${bundler}'. Must be 'webpack' or 'rspack'.`
+        )
       }
+      options.bundler = bundler
+    } else if (arg.startsWith("--env=")) {
+      const env = parseValue(arg, "--env=")
+      if (env !== "development" && env !== "production" && env !== "test") {
+        throw new Error(
+          `Invalid environment '${env}'. Must be 'development', 'production', or 'test'.`
+        )
+      }
+      options.env = env
+    } else if (arg === "--client-only") {
+      options.clientOnly = true
+    } else if (arg === "--server-only") {
+      options.serverOnly = true
+    } else if (arg.startsWith("--output=")) {
+      options.output = parseValue(arg, "--output=")
+    } else if (arg.startsWith("--depth=")) {
+      const depth = parseValue(arg, "--depth=")
+      options.depth = depth === "null" ? null : parseInt(depth, 10)
+    } else if (arg.startsWith("--format=")) {
+      const format = parseValue(arg, "--format=")
+      if (format !== "yaml" && format !== "json" && format !== "inspect") {
+        throw new Error(
+          `Invalid format '${format}'. Must be 'yaml', 'json', or 'inspect'.`
+        )
+      }
+      options.format = format
+    } else if (arg === "--no-annotate") {
+      options.annotate = false
+    } else if (arg === "--verbose") {
+      options.verbose = true
     }
   }
 
-  // Fall back to webpack config
-  for (const ext of extensions) {
-    const webpackPath = resolve(appRoot, `config/webpack/webpack.config.${ext}`)
-    if (existsSync(webpackPath)) {
-      return webpackPath
-    }
-  }
-
-  throw new Error(
-    `Could not find ${bundler} config file. Expected: config/${bundler}/${bundler}.config.{js,ts}`
-  )
+  return options
 }
 
-function findAppRoot(): string {
-  let currentDir = process.cwd()
-  const root = dirname(currentDir).split(sep)[0] + sep
+// Main CLI entry point
+export async function run(args: string[]): Promise<number> {
+  try {
+    const options = parseArguments(args)
 
-  while (currentDir !== root && currentDir !== dirname(currentDir)) {
-    if (
-      existsSync(resolve(currentDir, "package.json")) ||
-      existsSync(resolve(currentDir, "config/shakapacker.yml"))
-    ) {
-      return currentDir
+    if (options.help) {
+      showHelp()
+      return 0
     }
-    currentDir = dirname(currentDir)
-  }
 
-  return process.cwd()
-}
+    // Set up environment
+    const appRoot = findAppRoot()
+    process.chdir(appRoot)
+    setupNodePath(appRoot)
 
-function setupNodePath(appRoot: string): void {
-  const nodePaths = [
-    resolve(appRoot, "node_modules"),
-    resolve(appRoot, "..", "..", "node_modules"),
-    resolve(appRoot, "..", "..", "package"),
-    ...(appRoot.includes("/spec/dummy")
-      ? [resolve(appRoot, "../../node_modules")]
-      : [])
-  ].filter((p) => existsSync(p))
+    // Apply defaults
+    applyDefaults(options)
 
-  if (nodePaths.length > 0) {
-    const existingNodePath = process.env.NODE_PATH || ""
-    process.env.NODE_PATH = existingNodePath
-      ? `${nodePaths.join(delimiter)}${delimiter}${existingNodePath}`
-      : nodePaths.join(delimiter)
+    // Validate options
+    validateOptions(options)
 
-    // eslint-disable-next-line @typescript-eslint/no-var-requires, @typescript-eslint/no-require-imports
-    require("module").Module._initPaths()
+    // Execute based on mode
+    if (options.doctor) {
+      await runDoctorMode(options, appRoot)
+    } else if (options.save) {
+      await runSaveMode(options, appRoot)
+    } else {
+      await runStdoutMode(options, appRoot)
+    }
+
+    return 0
+  } catch (error: unknown) {
+    if (error instanceof Error) {
+      console.error(`[Config Exporter] Error: ${error.message}`)
+    } else {
+      console.error(`[Config Exporter] Error: ${String(error)}`)
+    }
+    return 1
   }
 }

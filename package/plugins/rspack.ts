@@ -1,8 +1,8 @@
 import requireOrError from "../utils/requireOrError"
 import config from "../config"
+import { moduleExists } from "../utils/helpers"
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const { isProduction } = require("../env")
-import { moduleExists } from "../utils/helpers"
 
 interface RspackManifestPluginModule {
   RspackManifestPlugin: new (options: unknown) => unknown
@@ -16,8 +16,8 @@ interface RspackCore {
 
 const { RspackManifestPlugin } = requireOrError(
   "rspack-manifest-plugin"
-) as RspackManifestPluginModule
-const rspack = requireOrError("@rspack/core") as RspackCore
+)
+const rspack = requireOrError("@rspack/core")
 
 interface ManifestFile {
   name: string

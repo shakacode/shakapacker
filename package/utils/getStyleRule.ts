@@ -35,9 +35,9 @@ const getStyleRule = (
 
     const extractionPlugin =
       config.assets_bundler === "rspack"
-        ? (requireOrError("@rspack/core") as RspackCore).CssExtractRspackPlugin
+        ? (requireOrError("@rspack/core")).CssExtractRspackPlugin
             .loader
-        : (requireOrError("mini-css-extract-plugin") as MiniCssExtractPlugin)
+        : (requireOrError("mini-css-extract-plugin"))
             .loader
 
     const use = [

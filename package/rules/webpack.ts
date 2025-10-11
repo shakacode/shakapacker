@@ -1,6 +1,3 @@
-/* eslint global-require: 0 */
-/* eslint import/no-dynamic-require: 0 */
-
 import raw from "./raw"
 import file from "./file"
 import css from "./css"

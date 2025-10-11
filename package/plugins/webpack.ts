@@ -1,8 +1,9 @@
+import type { WebpackPluginInstance } from "webpack"
 import requireOrError from "../utils/requireOrError"
 import config from "../config"
+import { moduleExists } from "../utils/helpers"
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const { isProduction } = require("../env")
-import { moduleExists } from "../utils/helpers"
 
 interface WebpackModule {
   EnvironmentPlugin: new (env: NodeJS.ProcessEnv) => unknown
@@ -47,7 +48,7 @@ const getPlugins = (): unknown[] => {
     const hash = isProduction || config.useContentHash ? "-[contenthash:8]" : ""
     const MiniCssExtractPlugin = requireOrError(
       "mini-css-extract-plugin"
-    ) as MiniCssExtractPluginConstructor
+    )
     plugins.push(
       new MiniCssExtractPlugin({
         filename: `css/[name]${hash}.css`,
@@ -65,7 +66,7 @@ const getPlugins = (): unknown[] => {
   ) {
     const SubresourceIntegrityPlugin = requireOrError(
       "webpack-subresource-integrity"
-    ) as SubresourceIntegrityPluginConstructor
+    )
     plugins.push(
       new SubresourceIntegrityPlugin({
         hashFuncNames: config.integrity.hash_functions,
