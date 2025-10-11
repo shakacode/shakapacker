@@ -51,11 +51,12 @@ export class FileWriter {
    *   webpack-development-client.yaml
    *   rspack-production-server.yaml
    *   webpack-test-all.json
+   *   webpack-development-client-hmr.yaml
    */
   generateFilename(
     bundler: string,
     env: string,
-    configType: "client" | "server" | "all",
+    configType: "client" | "server" | "all" | "client-hmr",
     format: "yaml" | "json" | "inspect"
   ): string {
     const ext = format === "yaml" ? "yaml" : format === "json" ? "json" : "txt"
