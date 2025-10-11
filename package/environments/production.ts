@@ -14,9 +14,11 @@ import type {
 import { resolve } from "path"
 import { merge } from "webpack-merge"
 import type { CompressionPluginConstructor } from "./types"
-import baseConfig from "./base"
 import { moduleExists } from "../utils/helpers"
 import config from "../config"
+
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const baseConfig = require("./base")
 
 const optimizationPath = resolve(
   __dirname,

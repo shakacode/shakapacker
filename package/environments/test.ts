@@ -6,7 +6,9 @@
 import type { Configuration as WebpackConfiguration } from "webpack"
 import { merge } from "webpack-merge"
 import config from "../config"
-import baseConfig from "./base"
+
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const baseConfig = require("./base")
 
 interface TestConfig {
   mode: "development" | "production" | "none"

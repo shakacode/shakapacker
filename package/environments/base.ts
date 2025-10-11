@@ -140,4 +140,4 @@ const baseConfig: Configuration = {
   }
 }
 
-export default baseConfig
+export = baseConfig

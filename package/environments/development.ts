@@ -9,12 +9,13 @@ import type {
   RspackConfigWithDevServer
 } from "./types"
 import config from "../config"
-import baseConfig from "./base"
 import webpackDevServerConfig from "../webpackDevServerConfig"
 import { moduleExists } from "../utils/helpers"
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const { runningWebpackDevServer } = require("../env")
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const baseConfig = require("./base")
 
 /**
  * Base development configuration shared between webpack and rspack

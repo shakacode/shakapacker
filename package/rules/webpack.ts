@@ -13,7 +13,7 @@ import coffee from "./coffee"
 import less from "./less"
 import stylus from "./stylus"
 
-export default [
+export = [
   raw,
   file,
   css,

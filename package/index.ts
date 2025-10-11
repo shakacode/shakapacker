@@ -7,13 +7,14 @@ import { resolve } from "path"
 import { existsSync } from "fs"
 import type { Configuration } from "webpack"
 import config from "./config"
-import baseConfig from "./environments/base"
 import devServer from "./dev_server"
 import { moduleExists, canProcess } from "./utils/helpers"
 import inliningCss from "./utils/inliningCss"
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const env = require("./env")
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const baseConfig = require("./environments/base")
 
 const rulesPath = resolve(__dirname, "rules", `${config.assets_bundler}.js`)
 const rules = require(rulesPath)
