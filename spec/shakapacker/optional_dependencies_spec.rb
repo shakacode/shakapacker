@@ -73,31 +73,45 @@ describe "Optional Peer Dependencies" do
       end
     end
 
-    it "includes both webpack and rspack as direct dependencies" do
-      # Verify that build-essential packages are in dependencies, not devDependencies
-      build_packages = %w[
-        webpack
-        webpack-cli
-        @rspack/core
-        @rspack/cli
-        @swc/core
-        babel-loader
-        swc-loader
-        esbuild-loader
-        css-loader
-        sass-loader
-        mini-css-extract-plugin
-        compression-webpack-plugin
-        webpack-assets-manifest
-        rspack-manifest-plugin
-        webpack-subresource-integrity
-      ]
+    it "can load shakapacker without webpack when using rspack" do
+      Dir.mktmpdir do |dir|
+        # Create a test package with only rspack dependencies
+        test_package = {
+          "name" => "test-rspack-only",
+          "version" => "1.0.0",
+          "dependencies" => {
+            "shakapacker" => "file:#{shakapacker_root}",
+            "@rspack/core" => "^1.0.0",
+            "rspack-manifest-plugin" => "^5.0.0"
+          }
+        }
 
-      build_packages.each do |pkg|
-        expect(package_json["dependencies"]).to include(pkg),
-          "Expected #{pkg} to be in dependencies"
-        expect(package_json["devDependencies"] || {}).not_to include(pkg),
-          "Expected #{pkg} NOT to be in devDependencies"
+        File.write(File.join(dir, "package.json"), JSON.pretty_generate(test_package))
+
+        # Install dependencies
+        `cd #{dir} && npm install --silent 2>&1`
+
+        # Create a test script that attempts to load shakapacker
+        test_script = <<~JS
+          try {
+            const shakapacker = require('shakapacker');
+            console.log('SUCCESS: Shakapacker loaded without webpack');
+            process.exit(0);
+          } catch (error) {
+            console.error('ERROR:', error.message);
+            process.exit(1);
+          }
+        JS
+
+        File.write(File.join(dir, "test.js"), test_script)
+
+        # Run the test script
+        output = `cd #{dir} && node test.js 2>&1`
+        status = $?.exitstatus
+
+        expect(status).to eq(0),
+          "Shakapacker should load successfully without webpack installed"
+        expect(output).to include("SUCCESS")
       end
     end
   end

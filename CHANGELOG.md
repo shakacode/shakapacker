@@ -13,13 +13,6 @@ Changes since the last non-beta release.
 
 ### Changed
 
-- **Moved build tools from devDependencies to dependencies** [PR #685](https://github.com/shakacode/shakapacker/pull/685) by [Claude Code](https://claude.com/claude-code).
-  - Fixes production build failures when running `npm install --production` by ensuring build-essential packages are always installed
-  - **Moved to dependencies:** webpack, webpack-cli, @rspack/core, @rspack/cli, @swc/core, babel-loader, swc-loader, esbuild-loader, css-loader, sass-loader, mini-css-extract-plugin, compression-webpack-plugin, webpack-assets-manifest, rspack-manifest-plugin, webpack-subresource-integrity
-  - **Kept in devDependencies:** Type definitions, linting tools, testing tools, development utilities
-  - All packages remain in peerDependencies with `optional: true`, so consuming applications can still choose their bundler and tooling preferences
-  - **No migration needed:** This change is backward compatible and primarily fixes `npm install --production` scenarios
-  - Fixes [#662](https://github.com/shakacode/shakapacker/issues/662)
 - Allow ESLint v9 and migrated to flat config format. [PR #677](https://github.com/shakacode/shakapacker/pull/677) by [justin808](https://github.com/justin808).
 
 ### Fixed
