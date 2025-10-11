@@ -499,18 +499,22 @@ module Shakapacker
         ]
 
         babel_config_exists = babel_configs.any?(&:exist?)
+        babel_in_package_json = false
 
         # Check if package.json has babel config
         if package_json_exists?
           package_json = read_package_json
-          babel_config_exists ||= package_json.key?("babel")
+          babel_in_package_json = package_json.key?("babel")
+          babel_config_exists ||= babel_in_package_json
         end
 
         transpiler = config.javascript_transpiler
 
         if babel_config_exists && transpiler != "babel"
-          babel_files = babel_configs.select(&:exist?).map { |f| f.relative_path_from(root_path) }.join(", ")
-          add_warning("Babel configuration files found (#{babel_files}) but javascript_transpiler is '#{transpiler}'. These Babel configs are ignored by Shakapacker (though they may still be used by ESLint or other tools).")
+          babel_files = babel_configs.select(&:exist?).map { |f| f.relative_path_from(root_path) }
+          babel_files << "package.json" if babel_in_package_json
+          babel_files_str = babel_files.join(", ")
+          add_warning("Babel configuration files found (#{babel_files_str}) but javascript_transpiler is '#{transpiler}'. These Babel configs are ignored by Shakapacker (though they may still be used by ESLint or other tools).")
           add_warning("  Fix: Remove Babel config files if not needed, or set javascript_transpiler: 'babel' in shakapacker.yml to use Babel for transpilation.")
         end
 
