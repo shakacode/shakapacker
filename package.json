@@ -45,7 +45,8 @@
   "dependencies": {
     "js-yaml": "^4.1.0",
     "path-complete-extname": "^1.0.0",
-    "webpack-merge": "^5.8.0"
+    "webpack-merge": "^5.8.0",
+    "yargs": "^17.7.2"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.2.0",
@@ -90,8 +91,7 @@
     "typescript": "^5.9.2",
     "webpack": "5.93.0",
     "webpack-assets-manifest": "^5.0.6",
-    "webpack-subresource-integrity": "^5.1.0",
-    "yargs": "^17.7.2"
+    "webpack-subresource-integrity": "^5.1.0"
   },
   "peerDependencies": {
     "@babel/core": "^7.17.9",
