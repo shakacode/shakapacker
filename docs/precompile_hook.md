@@ -1,9 +1,9 @@
 # Precompile Hook
 
-The `precompile_hook` configuration option allows you to run a custom command before webpack compilation. This is useful for:
+The `precompile_hook` configuration option allows you to run a custom command before asset compilation. This is useful for:
 
 - Dynamically generating entry points (e.g., from database records)
-- Running preparatory tasks before asset compilation
+- Running preparatory tasks before bundling
 - Integrating with tools like React on Rails that need to generate packs
 
 ## When to Use
@@ -12,7 +12,7 @@ The precompile hook is especially useful when you need to run commands like:
 
 - `bin/rails react_on_rails:generate_packs` - Generate dynamic entry points
 - `bin/rails react_on_rails:locale` - Generate locale files
-- Any custom script that prepares files before webpack runs
+- Any custom script that prepares files before asset compilation
 
 **Important:** The hook runs in **both development and production**:
 
@@ -83,11 +83,13 @@ chmod +x bin/shakapacker-precompile-hook
 
 ### Execution Flow
 
-1. **Triggered** when webpack compilation starts
+1. **Triggered** when asset compilation starts
 2. **Hook runs** in your project root directory
 3. **Environment variables** are passed through (including `NODE_ENV`, `RAILS_ENV`, `SHAKAPACKER_ASSET_HOST`)
-4. **On success** (exit code 0): Webpack compilation proceeds
+4. **On success** (exit code 0): Compilation proceeds
 5. **On failure** (non-zero exit code): Compilation stops with error
+
+**Migration Note:** If you're migrating from manually calling precompile tasks (e.g., in `lib/tasks/assets.rake`), ensure you don't run the same commands twice. The hook runs automatically before compilation, so remove manual invocations from your Rake tasks to avoid duplicate execution.
 
 ### Logging
 
@@ -263,50 +265,18 @@ To disable the hook for testing:
 ```yaml
 # config/shakapacker.yml
 default:
-  &default # precompile_hook: 'bin/shakapacker-precompile-hook'  # Commented out
-
+  # precompile_hook: 'bin/shakapacker-precompile-hook'
 ```
 
 ### Common Issues
 
-**Issue:** Hook works in development but fails in production
+**Issue:** Hook fails in production but works in development - Verify all dependencies are available (database, commands, gems)
 
-```bash
-# Check that all dependencies are available in production
-# For Ruby scripts, ensure database is accessible
-# For shell scripts, ensure all commands exist
-```
+**Issue:** Generated files not found - Check `source_path` and `source_entry_path` in `shakapacker.yml`
 
-**Issue:** Hook runs but webpack doesn't see the generated files
-
-```bash
-# Ensure files are created in the correct location
-# Check source_path and source_entry_path in shakapacker.yml
-echo "Creating file in: $(pwd)/app/javascript/packs/generated.js"
-```
-
-**Issue:** Permission denied when running hook
-
-```bash
-chmod +x bin/shakapacker-precompile-hook
-git add bin/shakapacker-precompile-hook
-git commit -m "Make hook executable"
-```
+**Issue:** Permission denied - Run `chmod +x bin/shakapacker-precompile-hook`
 
 ## Advanced Usage
-
-### Environment-Specific Hooks
-
-```yaml
-development:
-  precompile_hook: "bin/dev-setup"
-
-test:
-  precompile_hook: "bin/test-setup"
-
-production:
-  precompile_hook: "bin/production-setup"
-```
 
 ### Conditional Execution
 
