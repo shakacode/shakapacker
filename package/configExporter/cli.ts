@@ -5,19 +5,21 @@ import { existsSync, readFileSync } from "fs"
 import { resolve, dirname, sep, delimiter, basename } from "path"
 import { inspect } from "util"
 import { load as loadYaml } from "js-yaml"
+import yargs from "yargs"
 import { ExportOptions, ConfigMetadata, FileOutput } from "./types"
 import { YamlSerializer } from "./yamlSerializer"
 import { FileWriter } from "./fileWriter"
+
+// Read version from package.json
+const packageJson = JSON.parse(
+  readFileSync(resolve(__dirname, "../../package.json"), "utf8")
+)
+const VERSION = packageJson.version
 
 // Main CLI entry point
 export async function run(args: string[]): Promise<number> {
   try {
     const options = parseArguments(args)
-
-    if (options.help) {
-      showHelp()
-      return 0
-    }
 
     // Set up environment
     const appRoot = findAppRoot()
@@ -27,8 +29,12 @@ export async function run(args: string[]): Promise<number> {
     // Apply defaults
     applyDefaults(options)
 
-    // Validate options
-    validateOptions(options)
+    // Validate after defaults are applied
+    if (options.annotate && options.format !== "yaml") {
+      throw new Error(
+        "Annotation requires YAML format. Use --no-annotate or --format=yaml."
+      )
+    }
 
     // Execute based on mode
     if (options.doctor) {
@@ -47,80 +53,144 @@ export async function run(args: string[]): Promise<number> {
 }
 
 function parseArguments(args: string[]): ExportOptions {
-  const options: ExportOptions = {
-    bundler: undefined,
-    env: "development",
-    clientOnly: false,
-    serverOnly: false,
-    output: undefined,
-    depth: 20,
-    format: undefined,
-    help: false,
-    verbose: false,
-    doctor: false,
-    save: false,
-    saveDir: undefined,
-    annotate: undefined
-  }
+  const argv = yargs(args)
+    .version(VERSION)
+    .usage(
+      `Shakapacker Config Exporter
 
-  const parseValue = (arg: string, prefix: string): string => {
-    const value = arg.substring(prefix.length)
-    if (value.length === 0) {
-      throw new Error(`${prefix} requires a value`)
-    }
-    return value
-  }
+Exports webpack or rspack configuration in a verbose, human-readable format
+for comparison and analysis.
 
-  for (const arg of args) {
-    if (arg === "--help" || arg === "-h") {
-      options.help = true
-    } else if (arg === "--doctor") {
-      options.doctor = true
-    } else if (arg === "--save") {
-      options.save = true
-    } else if (arg.startsWith("--save-dir=")) {
-      options.saveDir = parseValue(arg, "--save-dir=")
-    } else if (arg.startsWith("--bundler=")) {
-      const bundler = parseValue(arg, "--bundler=")
-      if (bundler !== "webpack" && bundler !== "rspack") {
+QUICK START (for troubleshooting):
+  bin/export-bundler-config --doctor
+
+  Exports annotated YAML configs for both development and production.
+  Creates separate files for client and server bundles.
+  Best for debugging, AI analysis, and comparing configurations.`
+    )
+    .option("doctor", {
+      type: "boolean",
+      default: false,
+      description:
+        "Export all configs for troubleshooting (dev + prod, annotated YAML)"
+    })
+    .option("save", {
+      type: "boolean",
+      default: false,
+      description: "Save to auto-generated file(s) (default: YAML format)"
+    })
+    .option("save-dir", {
+      type: "string",
+      description: "Directory for output files (requires --save)"
+    })
+    .option("bundler", {
+      type: "string",
+      choices: ["webpack", "rspack"] as const,
+      description: "Specify bundler (auto-detected if not provided)"
+    })
+    .option("env", {
+      type: "string",
+      choices: ["development", "production", "test"] as const,
+      default: "development" as const,
+      description: "Node environment (ignored with --doctor)"
+    })
+    .option("client-only", {
+      type: "boolean",
+      default: false,
+      description: "Generate only client config (sets CLIENT_BUNDLE_ONLY=yes)"
+    })
+    .option("server-only", {
+      type: "boolean",
+      default: false,
+      description: "Generate only server config (sets SERVER_BUNDLE_ONLY=yes)"
+    })
+    .option("output", {
+      type: "string",
+      description: "Output to specific file (default: stdout)"
+    })
+    .option("depth", {
+      type: "number",
+      default: 20,
+      coerce: (value: number | string) => {
+        if (value === "null" || value === null) return null
+        return typeof value === "number" ? value : parseInt(String(value), 10)
+      },
+      description: "Inspection depth (use 'null' for unlimited)"
+    })
+    .option("format", {
+      type: "string",
+      choices: ["yaml", "json", "inspect"] as const,
+      description:
+        "Output format (default: inspect for stdout, yaml for --save/--doctor)"
+    })
+    .option("annotate", {
+      type: "boolean",
+      description:
+        "Enable inline documentation (YAML only, default with --save/--doctor)"
+    })
+    .option("verbose", {
+      type: "boolean",
+      default: false,
+      description: "Show full output without compact mode"
+    })
+    .check((argv) => {
+      if (argv["client-only"] && argv["server-only"]) {
         throw new Error(
-          `Invalid bundler '${bundler}'. Must be 'webpack' or 'rspack'.`
+          "--client-only and --server-only are mutually exclusive. Please specify only one."
         )
       }
-      options.bundler = bundler
-    } else if (arg.startsWith("--env=")) {
-      const env = parseValue(arg, "--env=")
-      if (env !== "development" && env !== "production" && env !== "test") {
+      if (argv["save-dir"] && !argv.save && !argv.doctor) {
+        throw new Error("--save-dir requires --save or --doctor flag.")
+      }
+      if (argv.output && argv["save-dir"]) {
         throw new Error(
-          `Invalid environment '${env}'. Must be 'development', 'production', or 'test'.`
+          "--output and --save-dir are mutually exclusive. Use one or the other."
         )
       }
-      options.env = env
-    } else if (arg === "--client-only") {
-      options.clientOnly = true
-    } else if (arg === "--server-only") {
-      options.serverOnly = true
-    } else if (arg.startsWith("--output=")) {
-      options.output = parseValue(arg, "--output=")
-    } else if (arg.startsWith("--depth=")) {
-      const depth = parseValue(arg, "--depth=")
-      options.depth = depth === "null" ? null : parseInt(depth, 10)
-    } else if (arg.startsWith("--format=")) {
-      const format = parseValue(arg, "--format=")
-      if (format !== "yaml" && format !== "json" && format !== "inspect") {
-        throw new Error(
-          `Invalid format '${format}'. Must be 'yaml', 'json', or 'inspect'.`
-        )
-      }
-      options.format = format
-    } else if (arg === "--no-annotate") {
-      options.annotate = false
-    } else if (arg === "--verbose") {
-      options.verbose = true
-    }
-  }
+      return true
+    })
+    .help("help")
+    .alias("help", "h")
+    .epilogue(
+      `Examples:
+  # RECOMMENDED: Export everything for troubleshooting
+  bin/export-bundler-config --doctor
+  # Creates: webpack-development-client.yaml, webpack-development-server.yaml,
+  #          webpack-production-client.yaml, webpack-production-server.yaml
 
-  return options
+  # Save current environment configs
+  bin/export-bundler-config --save
+  # Creates: webpack-development-client.yaml, webpack-development-server.yaml
+
+  # Save to specific directory
+  bin/export-bundler-config --save --save-dir=./debug
+
+  # Export only client config for production
+  bin/export-bundler-config --save --env=production --client-only
+  # Creates: webpack-production-client.yaml
+
+  # View config in terminal (stdout)
+  bin/export-bundler-config`
+    )
+    .strict()
+    .parseSync()
+
+  // Type assertions are safe here because yargs validates choices at runtime
+  return {
+    bundler: argv.bundler as "webpack" | "rspack" | undefined,
+    env: argv.env as "development" | "production" | "test",
+    clientOnly: argv["client-only"],
+    serverOnly: argv["server-only"],
+    output: argv.output,
+    depth: argv.depth as number | null,
+    format: argv.format as "yaml" | "json" | "inspect" | undefined,
+    help: false, // yargs handles help internally
+    verbose: argv.verbose,
+    doctor: argv.doctor,
+    save: argv.save,
+    saveDir: argv["save-dir"],
+    annotate: argv.annotate
+  }
 }
 
 function applyDefaults(options: ExportOptions): void {
@@ -134,30 +204,6 @@ function applyDefaults(options: ExportOptions): void {
   } else {
     if (options.format === undefined) options.format = "inspect"
     if (options.annotate === undefined) options.annotate = false
-  }
-}
-
-function validateOptions(options: ExportOptions): void {
-  if (options.clientOnly && options.serverOnly) {
-    throw new Error(
-      "--client-only and --server-only are mutually exclusive. Please specify only one."
-    )
-  }
-
-  if (options.saveDir && !options.save && !options.doctor) {
-    throw new Error("--save-dir requires --save or --doctor flag.")
-  }
-
-  if (options.output && options.saveDir) {
-    throw new Error(
-      "--output and --save-dir are mutually exclusive. Use one or the other."
-    )
-  }
-
-  if (options.annotate && options.format !== "yaml") {
-    throw new Error(
-      "--annotate (or default with --save/--doctor) requires --format=yaml. Use --no-annotate or --format=inspect/json."
-    )
   }
 }
 
@@ -621,63 +667,4 @@ function setupNodePath(appRoot: string): void {
     // eslint-disable-next-line @typescript-eslint/no-var-requires
     require("module").Module._initPaths()
   }
-}
-
-function showHelp(): void {
-  console.log(`
-Shakapacker Config Exporter
-
-Exports webpack or rspack configuration in a verbose, human-readable format
-for comparison and analysis.
-
-QUICK START (for troubleshooting):
-  bin/export-bundler-config --doctor
-
-  Exports annotated YAML configs for both development and production.
-  Creates separate files for client and server bundles.
-  Best for debugging, AI analysis, and comparing configurations.
-
-Usage:
-  bin/export-bundler-config [options]
-
-Options:
-  --doctor                   Export all configs for troubleshooting (dev + prod, annotated YAML)
-  --save                     Save to auto-generated file(s) (default: YAML format)
-  --save-dir=<directory>     Directory for output files (requires --save)
-  --bundler=webpack|rspack   Specify bundler (auto-detected if not provided)
-  --env=development|production|test    Node environment (default: development, ignored with --doctor)
-  --client-only              Generate only client config (sets CLIENT_BUNDLE_ONLY=yes)
-  --server-only              Generate only server config (sets SERVER_BUNDLE_ONLY=yes)
-  --output=<filename>        Output to specific file (default: stdout)
-  --depth=<number>           Inspection depth (default: 20, use 'null' for unlimited)
-  --format=yaml|json|inspect Output format (default: inspect for stdout, yaml for --save/--doctor)
-  --no-annotate              Disable inline documentation (YAML only)
-  --verbose                  Show full output without compact mode
-  --help, -h                 Show this help message
-
-Note: --client-only and --server-only are mutually exclusive.
-      --save-dir requires --save.
-      --output and --save-dir are mutually exclusive.
-      If neither --client-only nor --server-only specified, both configs are generated.
-
-Examples:
-  # RECOMMENDED: Export everything for troubleshooting
-  bin/export-bundler-config --doctor
-  # Creates: webpack-development-client.yaml, webpack-development-server.yaml,
-  #          webpack-production-client.yaml, webpack-production-server.yaml
-
-  # Save current environment configs
-  bin/export-bundler-config --save
-  # Creates: webpack-development-client.yaml, webpack-development-server.yaml
-
-  # Save to specific directory
-  bin/export-bundler-config --save --save-dir=./debug
-
-  # Export only client config for production
-  bin/export-bundler-config --save --env=production --client-only
-  # Creates: webpack-production-client.yaml
-
-  # View config in terminal (stdout)
-  bin/export-bundler-config
-`)
 }
