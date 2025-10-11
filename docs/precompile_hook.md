@@ -91,6 +91,8 @@ chmod +x bin/shakapacker-precompile-hook
 
 **Migration Note:** If you're migrating from custom `assets:precompile` enhancements (e.g., in `lib/tasks/assets.rake`), ensure you don't run the same commands twice. React on Rails versions before 16.1.1 automatically prepend `react_on_rails:generate_packs` to `assets:precompile`. Versions 16.1.1+ detect `precompile_hook` and skip automatic task enhancement to avoid duplicate execution. For custom Rake task enhancements, remove manual invocations when adding `precompile_hook`.
 
+To verify correct migration, run `rake assets:precompile` and check the logs. Commands like `react_on_rails:generate_packs` should appear **only once** in the output. If you see duplicate execution, either upgrade React on Rails to 16.1.1+ or remove your custom task enhancements.
+
 ### Logging
 
 The hook's stdout and stderr are logged:
