@@ -175,14 +175,45 @@ export class ConfigFileLoader {
     // Convert bundler_env to CLI args
     const bundlerEnvArgs = this.convertBundlerEnvToArgs(build.bundler_env || {})
 
-    // Resolve outputs
+    // Resolve and validate outputs
     const outputs = build.outputs || []
 
+    // Validate edge cases
+    if (outputs.length === 0) {
+      throw new Error(
+        `Build '${buildName}' has empty outputs array. ` +
+          `Please specify at least one output type (client, server, or all).`
+      )
+    }
+
+    // Check for duplicates
+    const uniqueOutputs = new Set(outputs)
+    if (uniqueOutputs.size !== outputs.length) {
+      throw new Error(
+        `Build '${buildName}' has duplicate output types. ` +
+          `Each output type should appear only once.`
+      )
+    }
+
     // Resolve config file
-    const configFile = build.config
-      ? this.expandEnvironmentVariables({ config: build.config }, bundler)
-          .config
-      : undefined
+    let configFile: string | undefined
+    if (build.config) {
+      configFile = this.expandEnvironmentVariables(
+        { config: build.config },
+        bundler
+      ).config
+
+      // Validate config file path (prevent path traversal)
+      if (
+        configFile &&
+        (configFile.includes("..") || !configFile.startsWith("config/"))
+      ) {
+        throw new Error(
+          `Invalid config file path in build '${buildName}': "${configFile}". ` +
+            `Config files must be within the config/ directory.`
+        )
+      }
+    }
 
     return {
       name: buildName,
@@ -225,16 +256,40 @@ export class ConfigFileLoader {
     expanded = expanded.replace(
       /\$\{([^}:]+):-([^}]*)\}/g,
       (_, varName, defaultValue) => {
+        // Validate env var name to prevent regex injection
+        if (!this.isValidEnvVarName(varName)) {
+          console.warn(
+            `[Config Exporter] Warning: Invalid environment variable name: ${varName}`
+          )
+          return `\${${varName}:-${defaultValue}}`
+        }
         return process.env[varName] || defaultValue
       }
     )
 
     // Replace ${VAR} with VAR value
     expanded = expanded.replace(/\$\{([^}:]+)\}/g, (_, varName) => {
+      // Validate env var name to prevent regex injection
+      if (!this.isValidEnvVarName(varName)) {
+        console.warn(
+          `[Config Exporter] Warning: Invalid environment variable name: ${varName}`
+        )
+        return `\${${varName}}`
+      }
       return process.env[varName] || ""
     })
 
     return expanded
+  }
+
+  /**
+   * Validates that an environment variable name matches the standard format
+   * Must start with letter or underscore, followed by letters, numbers, or underscores
+   * @param name - The variable name to validate
+   * @returns true if valid, false otherwise
+   */
+  private isValidEnvVarName(name: string): boolean {
+    return /^[A-Z_][A-Z0-9_]*$/i.test(name)
   }
 
   private convertBundlerEnvToArgs(
@@ -296,119 +351,104 @@ export function generateSampleConfigFile(): string {
 # You can define multiple builds with different environments and settings.
 
 # Default bundler for all builds (can be overridden per-build or with --webpack/--rspack flags)
-default_bundler: webpack  # Options: webpack | rspack
+default_bundler: rspack  # Options: webpack | rspack
+
+# Use these builds as defaults for --doctor mode (optional)
+# When set to true, --doctor will export ALL builds defined below instead of hardcoded defaults
+# shakapacker_default_builds: true
 
 builds:
   # ============================================================================
-  # DEVELOPMENT BUILDS
+  # DEVELOPMENT WITH HMR (Hot Module Replacement)
   # ============================================================================
+  # For Procfile.dev: WEBPACK_SERVE=true bin/shakapacker-dev-server
+  # Creates client bundle with React Fast Refresh enabled
 
-  # Development: Client and Server bundles
+  dev-hmr:
+    description: Client bundle with HMR (React Fast Refresh)
+    environment:
+      NODE_ENV: development
+      RAILS_ENV: development
+      WEBPACK_SERVE: "true"
+    outputs:
+      - client
+
+  # ============================================================================
+  # DEVELOPMENT (Standard)
+  # ============================================================================
+  # For Procfile.dev-static-assets: bin/shakapacker --watch
+  # Creates both client and server bundles without HMR
+
   dev:
-    description: Build admin and consumer bundles for dev env
-
-    # Shell environment variables (NODE_ENV, RAILS_ENV, etc.)
-    environment:
-      NODE_OPTIONS: "--max-old-space-size=4096"
-      NODE_ENV: development
-      RAILS_ENV: development
-
-    # Bundler-specific --env arguments
-    # Key-value pairs: "env: dev" becomes "--env env=dev"
-    # Boolean true: "instrumented: true" becomes "--env instrumented"
-    bundler_env:
-      env: dev
-
-    # Output types (maps to config array indices)
-    # Used for file naming and metadata
-    outputs:
-      - client
-      - server
-
-    # Optional: Override config file path
-    # Supports ${"$"}{BUNDLER} substitution (webpack/rspack)
-    # config: ${"$"}{BUNDLER}.config.ts  # Defaults to auto-detected file
-
-  # Development: Server bundle only
-  dev-server:
-    description: Build server bundle for dev env
+    description: Development client and server bundles (no HMR)
     environment:
       NODE_ENV: development
       RAILS_ENV: development
-    bundler_env:
-      env: serverBundleDev
-    outputs:
-      - server
-
-  # ============================================================================
-  # TEST BUILDS
-  # ============================================================================
-
-  # Cypress development
-  cypress-dev:
-    description: Build for Cypress development
-    environment:
-      NODE_OPTIONS: "--max-old-space-size=4096"
-      BABEL_ENV: test
-      RAILS_ENV: test
-      NODE_ENV: test
-    bundler_env:
-      env: dev
     outputs:
       - client
       - server
 
   # ============================================================================
-  # PRODUCTION BUILDS
+  # PRODUCTION
   # ============================================================================
+  # For asset precompilation: RAILS_ENV=production bin/shakapacker
+  # Creates optimized production bundles
 
-  # Production: Server bundle
-  prod-server:
-    description: Build server bundle for production
-    environment:
-      NODE_ENV: production
-      # Supports shell-style default values: ${"$"}{VAR:-default}
-      RAILS_ENV: ${"$"}{RAILS_ENV:-production}
-    bundler_env:
-      env: serverBundleProd
-    outputs:
-      - server
-
-  # Production: Server with instrumentation
-  prod-instrumented:
-    description: Build server bundle with instrumentation
-    environment:
-      NODE_ENV: production
-      RAILS_ENV: ${"$"}{RAILS_ENV:-production}
-    bundler_env:
-      env: serverBundleProd
-      instrumented: true      # Becomes --env instrumented
-      modernBrowsers: true    # Becomes --env modernBrowsers
-    outputs:
-      - server
-
-  # Production: Client bundles
-  prod-consumer:
-    description: Build consumer bundle for production
+  prod:
+    description: Production client and server bundles
     environment:
       NODE_ENV: production
       RAILS_ENV: production
-    bundler_env:
-      env: prod
     outputs:
       - client
+      - server
 
-  # Production: Legacy bundles
-  prod-legacy:
-    description: Build polyfilled bundles for production
-    environment:
-      NODE_ENV: production
-      RAILS_ENV: production
-    bundler_env:
-      env: prod
-      legacy: true
-    outputs:
-      - client
+  # ============================================================================
+  # ADDITIONAL EXAMPLES
+  # ============================================================================
+
+  # Example: Single bundle only (client or server)
+  # dev-client-only:
+  #   description: Development client bundle only
+  #   environment:
+  #     NODE_ENV: development
+  #     RAILS_ENV: development
+  #     CLIENT_BUNDLE_ONLY: "yes"
+  #   outputs:
+  #     - client
+
+  # Example: Using bundler --env flags
+  # prod-modern:
+  #   description: Production with custom webpack/rspack --env flags
+  #   environment:
+  #     NODE_ENV: production
+  #     RAILS_ENV: production
+  #   bundler_env:
+  #     target: modern         # Becomes: --env target=modern
+  #     instrumented: true     # Becomes: --env instrumented
+  #   outputs:
+  #     - client
+  #     - server
+
+  # Example: Variable substitution with defaults
+  # staging:
+  #   description: Staging environment with variable substitution
+  #   environment:
+  #     NODE_ENV: production
+  #     RAILS_ENV: ${"$"}{RAILS_ENV:-staging}  # Use env var or default to 'staging'
+  #   outputs:
+  #     - client
+  #     - server
+
+  # Example: Custom config file path (uses ${"$"}{BUNDLER} substitution)
+  # custom-config:
+  #   description: Using custom config file location
+  #   environment:
+  #     NODE_ENV: development
+  #   config: config/${"$"}{BUNDLER}/${"$"}{BUNDLER}.config.js
+  #   outputs:
+  #     - client
+  #     - server
 
 # ============================================================================
 # USAGE EXAMPLES
@@ -420,32 +460,30 @@ builds:
 # List all available builds:
 #   bin/export-bundler-config --list-builds
 #
-# Export specific build:
-#   bin/export-bundler-config --build=dev --save
-#   Creates: webpack-dev-client.yml, webpack-dev-server.yml
+# Export development build configs:
+#   bin/export-bundler-config --build=dev-hmr --save
+#   Creates: rspack-dev-hmr-client.yml
 #
-# Export with rspack instead:
-#   bin/export-bundler-config --build=dev --save --rspack
+#   bin/export-bundler-config --build=dev --save
 #   Creates: rspack-dev-client.yml, rspack-dev-server.yml
 #
-# Export to stdout for inspection:
-#   bin/export-bundler-config --build=cypress-dev
+# Export production build:
+#   bin/export-bundler-config --build=prod --save
+#   Creates: rspack-prod-client.yml, rspack-prod-server.yml
 #
-# Doctor mode (export all for troubleshooting):
-#   bin/export-bundler-config --doctor --config-file=.bundler-config.yml
+# Use webpack instead of default rspack:
+#   bin/export-bundler-config --build=prod --save --webpack
+#   Creates: webpack-prod-client.yml, webpack-prod-server.yml
 #
-# ============================================================================
-# VARIABLE EXPANSION
-# ============================================================================
+# Export to stdout for inspection (no files created):
+#   bin/export-bundler-config --build=dev
 #
-# Supported variable substitutions:
-#   ${"$"}{BUNDLER}           - Replaced with 'webpack' or 'rspack'
-#   ${"$"}{VAR}               - Replaced with environment variable value
-#   ${"$"}{VAR:-default}      - Replaced with VAR or 'default' if not set
+# Export to custom directory:
+#   bin/export-bundler-config --build=prod --save-dir=./debug
 #
-# Examples:
-#   config: ${"$"}{BUNDLER}.config.ts
-#   RAILS_ENV: ${"$"}{RAILS_ENV:-production}
+# Doctor mode (comprehensive troubleshooting):
+#   bin/export-bundler-config --doctor
+#   Creates files in: shakapacker-config-exports/
 #
 `
 }

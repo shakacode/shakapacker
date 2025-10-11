@@ -2,6 +2,7 @@ export interface ExportOptions {
   doctor?: boolean
   save?: boolean
   saveDir?: string
+  stdout?: boolean
   bundler?: "webpack" | "rspack"
   env?: "development" | "production" | "test"
   clientOnly?: boolean
@@ -17,6 +18,7 @@ export interface ExportOptions {
   configFile?: string
   build?: string
   listBuilds?: boolean
+  allBuilds?: boolean
 }
 
 export interface ConfigMetadata {
@@ -44,6 +46,7 @@ export interface FileOutput {
 // Config file schema types
 export interface BundlerConfigFile {
   default_bundler?: "webpack" | "rspack"
+  shakapacker_default_builds?: boolean
   builds: Record<string, BuildConfig>
 }
 
