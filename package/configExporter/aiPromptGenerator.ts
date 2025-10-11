@@ -124,6 +124,8 @@ export class AiPromptGenerator {
         "For comparison, you can reference the standard React on Rails configuration examples:"
       )
       sections.push("")
+      sections.push("**Source Configuration Files (JavaScript):**")
+      sections.push("")
       sections.push(
         "- [commonWebpackConfig.js](https://github.com/shakacode/react_on_rails/blob/master/spec/dummy/config/webpack/commonWebpackConfig.js)"
       )
@@ -135,6 +137,20 @@ export class AiPromptGenerator {
       )
       sections.push(
         "- [webpack.config.js](https://github.com/shakacode/react_on_rails/blob/master/spec/dummy/config/webpack/webpack.config.js)"
+      )
+      sections.push("")
+      sections.push(
+        "**Exported Configuration References (YAML - Coming Soon):**"
+      )
+      sections.push("")
+      sections.push(
+        "The React on Rails team is working on providing exported reference configurations"
+      )
+      sections.push(
+        "in YAML format (similar to the files in this directory) for easier comparison."
+      )
+      sections.push(
+        "Track progress at: https://github.com/shakacode/react_on_rails/issues/1862"
       )
       sections.push("")
       sections.push(

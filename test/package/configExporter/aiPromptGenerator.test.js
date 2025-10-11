@@ -118,6 +118,12 @@ describe("AiPromptGenerator", () => {
     expect(prompt).toContain("### Reference Configuration Examples")
     expect(prompt).toContain("github.com/shakacode/react_on_rails")
     expect(prompt).toContain("spec/dummy/config/webpack/commonWebpackConfig.js")
+
+    // Check for coming soon section
+    expect(prompt).toContain(
+      "Exported Configuration References (YAML - Coming Soon)"
+    )
+    expect(prompt).toContain("react_on_rails/issues/1862")
   })
 
   test("generatePrompt can exclude React on Rails context", () => {
