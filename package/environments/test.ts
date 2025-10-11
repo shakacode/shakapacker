@@ -3,10 +3,12 @@
  * @module environments/test
  */
 
-const { merge } = require("webpack-merge")
-const config = require("../config")
-const baseConfig = require("./base")
 import type { Configuration as WebpackConfiguration } from "webpack"
+import { merge } from "webpack-merge"
+import config from "../config"
+
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const baseConfig = require("./base")
 
 interface TestConfig {
   mode: "development" | "production" | "none"
@@ -50,4 +52,4 @@ const webpackTestConfig = (): Partial<WebpackConfiguration> => ({
 const bundlerConfig =
   config.assets_bundler === "rspack" ? rspackTestConfig() : webpackTestConfig()
 
-module.exports = merge(baseConfig, bundlerConfig)
+export = merge(baseConfig, bundlerConfig)

@@ -79,7 +79,7 @@ export function isValidConfig(obj: unknown): obj is Config {
   }
 
   // Check cache with TTL
-  const cached = validatedConfigs.get(obj as object)
+  const cached = validatedConfigs.get(obj)
   if (cached && Date.now() - cached.timestamp < getCacheTTL()) {
     if (debugCache) {
       console.log(
@@ -104,7 +104,7 @@ export function isValidConfig(obj: unknown): obj is Config {
   for (const field of requiredStringFields) {
     if (typeof config[field] !== "string") {
       // Cache negative result
-      validatedConfigs.set(obj as object, {
+      validatedConfigs.set(obj, {
         result: false,
         timestamp: Date.now()
       })
@@ -112,14 +112,11 @@ export function isValidConfig(obj: unknown): obj is Config {
     }
     // SECURITY: Path traversal validation ALWAYS runs (not subject to shouldValidate)
     // This ensures paths are safe regardless of environment or validation mode
-    if (
-      field.includes("path") &&
-      !isPathTraversalSafe(config[field] as string)
-    ) {
+    if (field.includes("path") && !isPathTraversalSafe(config[field])) {
       console.warn(
         `[SHAKAPACKER SECURITY] Invalid path in ${field}: ${config[field]}`
       )
-      validatedConfigs.set(obj as object, {
+      validatedConfigs.set(obj, {
         result: false,
         timestamp: Date.now()
       })
@@ -142,7 +139,7 @@ export function isValidConfig(obj: unknown): obj is Config {
   for (const field of requiredBooleanFields) {
     if (typeof config[field] !== "boolean") {
       // Cache negative result
-      validatedConfigs.set(obj as object, {
+      validatedConfigs.set(obj, {
         result: false,
         timestamp: Date.now()
       })
@@ -153,7 +150,7 @@ export function isValidConfig(obj: unknown): obj is Config {
   // Check arrays
   if (!Array.isArray(config.additional_paths)) {
     // Cache negative result
-    validatedConfigs.set(obj as object, {
+    validatedConfigs.set(obj, {
       result: false,
       timestamp: Date.now()
     })
@@ -167,7 +164,7 @@ export function isValidConfig(obj: unknown): obj is Config {
       console.warn(
         `[SHAKAPACKER SECURITY] Invalid additional_path: ${additionalPath}`
       )
-      validatedConfigs.set(obj as object, {
+      validatedConfigs.set(obj, {
         result: false,
         timestamp: Date.now()
       })
@@ -179,7 +176,7 @@ export function isValidConfig(obj: unknown): obj is Config {
   // Security checks above still run regardless of this flag
   if (!shouldValidate()) {
     // Cache positive result - basic structure and security validated
-    validatedConfigs.set(obj as object, { result: true, timestamp: Date.now() })
+    validatedConfigs.set(obj, { result: true, timestamp: Date.now() })
     return true
   }
 
@@ -189,7 +186,7 @@ export function isValidConfig(obj: unknown): obj is Config {
     !isValidDevServerConfig(config.dev_server)
   ) {
     // Cache negative result
-    validatedConfigs.set(obj as object, {
+    validatedConfigs.set(obj, {
       result: false,
       timestamp: Date.now()
     })
@@ -203,7 +200,7 @@ export function isValidConfig(obj: unknown): obj is Config {
       typeof integrity.cross_origin !== "string"
     ) {
       // Cache negative result
-      validatedConfigs.set(obj as object, {
+      validatedConfigs.set(obj, {
         result: false,
         timestamp: Date.now()
       })
@@ -212,7 +209,7 @@ export function isValidConfig(obj: unknown): obj is Config {
   }
 
   // Cache positive result
-  validatedConfigs.set(obj as object, { result: true, timestamp: Date.now() })
+  validatedConfigs.set(obj, { result: true, timestamp: Date.now() })
 
   return true
 }

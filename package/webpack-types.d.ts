@@ -1,4 +1,4 @@
-// @ts-ignore: webpack is an optional peer dependency (using type-only import)
+// @ts-expect-error: webpack is an optional peer dependency (using type-only import)
 import type { Configuration, RuleSetRule, RuleSetUseItem } from "webpack"
 
 export interface ShakapackerWebpackConfig extends Configuration {
@@ -13,7 +13,7 @@ export interface ShakapackerRule extends RuleSetRule {
 }
 
 export interface ShakapackerLoaderOptions {
-  [key: string]: any
+  [key: string]: unknown
 }
 
 export interface ShakapackerLoader {

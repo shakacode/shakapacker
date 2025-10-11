@@ -1,4 +1,4 @@
-const { isModuleNotFoundError, getErrorMessage } = require("./errorHelpers")
+import { isModuleNotFoundError, getErrorMessage } from "./errorHelpers"
 
 const isBoolean = (str: string): boolean =>
   /^true/.test(str) || /^false/.test(str)
@@ -61,13 +61,18 @@ const packageFullVersion = (packageName: string): string => {
   try {
     // eslint-disable-next-line import/no-dynamic-require
     const packageJsonPath = require.resolve(`${packageName}/package.json`)
-    // eslint-disable-next-line import/no-dynamic-require, global-require
+    // eslint-disable-next-line import/no-dynamic-require, global-require, @typescript-eslint/no-require-imports
     const packageJson = require(packageJsonPath) as { version: string }
     return packageJson.version
-  } catch (error: any) {
+  } catch (error: unknown) {
     // Re-throw the error with proper code to maintain compatibility with babel preset
     // The preset expects MODULE_NOT_FOUND errors to handle missing core-js gracefully
-    if (error.code === "MODULE_NOT_FOUND") {
+    if (
+      typeof error === "object" &&
+      error !== null &&
+      "code" in error &&
+      error.code === "MODULE_NOT_FOUND"
+    ) {
       throw error
     }
     // For other errors, warn and re-throw

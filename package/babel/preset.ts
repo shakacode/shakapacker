@@ -1,5 +1,5 @@
-import { moduleExists, packageFullVersion } from "../utils/helpers"
 import type { ConfigAPI, PluginItem } from "@babel/core"
+import { moduleExists, packageFullVersion } from "../utils/helpers"
 
 const CORE_JS_VERSION_REGEX = /^\d+\.\d+/
 

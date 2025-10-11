@@ -1,10 +1,9 @@
-import { dirname, sep, normalize } from "path"
-const {
-  additional_paths: additionalPaths,
-  source_path: sourcePath
-} = require("../config")
+import { dirname, normalize } from "path"
+import config from "../config"
 
-export = {
+const { additional_paths: additionalPaths, source_path: sourcePath } = config
+
+export default {
   test: /\.(bmp|gif|jpe?g|png|tiff|ico|avif|webp|eot|otf|ttf|woff|woff2|svg)$/,
   exclude: /\.(js|mjs|jsx|ts|tsx)$/,
   type: "asset/resource",

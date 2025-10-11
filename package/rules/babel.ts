@@ -1,9 +1,13 @@
-const { loaderMatches } = require("../utils/helpers")
-const { javascript_transpiler: javascriptTranspiler } = require("../config")
-const { isProduction } = require("../env")
-const jscommon = require("./jscommon")
+import { loaderMatches } from "../utils/helpers"
+import config from "../config"
+import jscommon from "./jscommon"
 
-export = loaderMatches(javascriptTranspiler, "babel", () => ({
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const { isProduction } = require("../env")
+
+const { javascript_transpiler: javascriptTranspiler } = config
+
+export default loaderMatches(javascriptTranspiler, "babel", () => ({
   test: /\.(js|jsx|mjs|ts|tsx|coffee)?(\.erb)?$/,
   ...jscommon,
   use: [
