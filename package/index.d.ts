@@ -9,7 +9,6 @@
 
 import type { Configuration, RuleSetRule } from "webpack"
 import type { Config, DevServerConfig, Env } from "./types"
-import type { merge } from "webpack-merge"
 
 /**
  * The shape of the Shakapacker module exports.
@@ -38,7 +37,7 @@ interface ShakapackerExports {
   /** Generate webpack configuration with optional custom config */
   generateWebpackConfig: (extraConfig?: Configuration) => Configuration
   /** webpack-merge's merge function */
-  merge: typeof merge
+  merge: (typeof import("webpack-merge"))["merge"]
   /** webpack-merge's mergeWithCustomize function */
   mergeWithCustomize: typeof import("webpack-merge").mergeWithCustomize
   /** webpack-merge's mergeWithRules function */
