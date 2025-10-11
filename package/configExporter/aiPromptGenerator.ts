@@ -150,6 +150,13 @@ export class AiPromptGenerator {
         "in YAML format (similar to the files in this directory) for easier comparison."
       )
       sections.push(
+        "These will include 8 exported config files (4 for webpack, 4 for rspack) covering"
+      )
+      sections.push(
+        "development/production × client/server combinations for both bundlers."
+      )
+      sections.push("")
+      sections.push(
         "Track progress at: https://github.com/shakacode/react_on_rails/issues/1862"
       )
       sections.push("")
