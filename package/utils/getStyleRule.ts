@@ -10,16 +10,6 @@ export interface StyleRule {
   type?: string
 }
 
-interface RspackCore {
-  CssExtractRspackPlugin: {
-    loader: string
-  }
-}
-
-interface MiniCssExtractPlugin {
-  loader: string
-}
-
 const getStyleRule = (
   test: RegExp,
   preprocessors: unknown[] = []
