@@ -13,7 +13,7 @@ import { FileWriter } from "./fileWriter"
 // Main CLI entry point
 export async function run(args: string[]): Promise<number> {
   try {
-    const options = await parseArguments(args)
+    const options = parseArguments(args)
 
     // Set up environment
     const appRoot = findAppRoot()
@@ -46,8 +46,8 @@ export async function run(args: string[]): Promise<number> {
   }
 }
 
-async function parseArguments(args: string[]): Promise<ExportOptions> {
-  const argv = await yargs(args)
+function parseArguments(args: string[]): ExportOptions {
+  const argv = yargs(args)
     .usage(
       `Shakapacker Config Exporter
 
@@ -166,8 +166,9 @@ QUICK START (for troubleshooting):
   bin/export-bundler-config`
     )
     .strict()
-    .parse()
+    .parseSync()
 
+  // Type assertions are safe here because yargs validates choices at runtime
   return {
     bundler: argv.bundler as "webpack" | "rspack" | undefined,
     env: argv.env as "development" | "production" | "test",
