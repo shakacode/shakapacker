@@ -26,6 +26,7 @@ const config: KnipConfig = {
     "@rspack/plugin-react-refresh",
     // CLI tools used by developers
     "@rspack/cli",
+    "webpack-cli",
     "husky",
     // Optional dependencies used in webpack/rspack configs
     "mini-css-extract-plugin",
