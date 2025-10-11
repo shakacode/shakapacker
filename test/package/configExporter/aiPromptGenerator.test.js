@@ -113,6 +113,11 @@ describe("AiPromptGenerator", () => {
     expect(prompt).toContain("commonWebpackConfig.js")
     expect(prompt).toContain("clientWebpackConfig.js")
     expect(prompt).toContain("serverWebpackConfig.js")
+
+    // Check for reference links
+    expect(prompt).toContain("### Reference Configuration Examples")
+    expect(prompt).toContain("github.com/shakacode/react_on_rails")
+    expect(prompt).toContain("spec/dummy/config/webpack/commonWebpackConfig.js")
   })
 
   test("generatePrompt can exclude React on Rails context", () => {

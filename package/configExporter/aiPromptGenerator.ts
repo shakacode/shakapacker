@@ -118,6 +118,29 @@ export class AiPromptGenerator {
       sections.push("   - Uses `css-loader` with `exportOnlyLocals: true`")
       sections.push("   - Target can be 'web' or 'node' depending on renderer")
       sections.push("")
+      sections.push("### Reference Configuration Examples")
+      sections.push("")
+      sections.push(
+        "For comparison, you can reference the standard React on Rails configuration examples:"
+      )
+      sections.push("")
+      sections.push(
+        "- [commonWebpackConfig.js](https://github.com/shakacode/react_on_rails/blob/master/spec/dummy/config/webpack/commonWebpackConfig.js)"
+      )
+      sections.push(
+        "- [clientWebpackConfig.js](https://github.com/shakacode/react_on_rails/blob/master/spec/dummy/config/webpack/clientWebpackConfig.js)"
+      )
+      sections.push(
+        "- [serverWebpackConfig.js](https://github.com/shakacode/react_on_rails/blob/master/spec/dummy/config/webpack/serverWebpackConfig.js)"
+      )
+      sections.push(
+        "- [webpack.config.js](https://github.com/shakacode/react_on_rails/blob/master/spec/dummy/config/webpack/webpack.config.js)"
+      )
+      sections.push("")
+      sections.push(
+        "These files demonstrate best practices for React on Rails webpack/rspack configuration."
+      )
+      sections.push("")
     }
 
     // Analysis requests
