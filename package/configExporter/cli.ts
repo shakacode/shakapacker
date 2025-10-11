@@ -1,7 +1,7 @@
 // This will be a substantial file - the main CLI entry point
 // Migrating from bin/export-bundler-config but streamlined for TypeScript
 
-import { existsSync, readFileSync } from "fs"
+import { existsSync, readFileSync, writeFileSync } from "fs"
 import { resolve, dirname, sep, delimiter, basename } from "path"
 import { inspect } from "util"
 import { load as loadYaml } from "js-yaml"
@@ -9,6 +9,7 @@ import yargs from "yargs"
 import { ExportOptions, ConfigMetadata, FileOutput } from "./types"
 import { YamlSerializer } from "./yamlSerializer"
 import { FileWriter } from "./fileWriter"
+import { ConfigFileLoader, generateSampleConfigFile } from "./configFile"
 
 // Read version from package.json
 const packageJson = JSON.parse(
@@ -20,6 +21,16 @@ const VERSION = packageJson.version
 export async function run(args: string[]): Promise<number> {
   try {
     const options = parseArguments(args)
+
+    // Handle --init command
+    if (options.init) {
+      return runInitCommand(options)
+    }
+
+    // Handle --list-builds command
+    if (options.listBuilds) {
+      return runListBuildsCommand(options)
+    }
 
     // Set up environment
     const appRoot = findAppRoot()
@@ -34,6 +45,17 @@ export async function run(args: string[]): Promise<number> {
       throw new Error(
         "Annotation requires YAML format. Use --no-annotate or --format=yaml."
       )
+    }
+
+    // Validate --build requires config file
+    if (options.build) {
+      const loader = new ConfigFileLoader(options.configFile)
+      if (!loader.exists()) {
+        const configPath = options.configFile || ".bundler-config.yml"
+        throw new Error(
+          `--build requires a config file but ${configPath} not found. Run --init to create it.`
+        )
+      }
     }
 
     // Execute based on mode
@@ -133,7 +155,40 @@ QUICK START (for troubleshooting):
       default: false,
       description: "Show full output without compact mode"
     })
+    .option("init", {
+      type: "boolean",
+      default: false,
+      description: "Generate sample .bundler-config.yml with examples"
+    })
+    .option("config-file", {
+      type: "string",
+      description: "Path to config file (default: .bundler-config.yml)"
+    })
+    .option("build", {
+      type: "string",
+      description: "Export config for specific build from config file"
+    })
+    .option("list-builds", {
+      type: "boolean",
+      default: false,
+      description: "List all available builds from config file"
+    })
+    .option("webpack", {
+      type: "boolean",
+      default: false,
+      description: "Use webpack (overrides config file)"
+    })
+    .option("rspack", {
+      type: "boolean",
+      default: false,
+      description: "Use rspack (overrides config file)"
+    })
     .check((argv) => {
+      if (argv.webpack && argv.rspack) {
+        throw new Error(
+          "--webpack and --rspack are mutually exclusive. Please specify only one."
+        )
+      }
       if (argv["client-only"] && argv["server-only"]) {
         throw new Error(
           "--client-only and --server-only are mutually exclusive. Please specify only one."
@@ -153,21 +208,17 @@ QUICK START (for troubleshooting):
     .alias("help", "h")
     .epilogue(
       `Examples:
-  # RECOMMENDED: Export everything for troubleshooting
+
+  # Config File Workflow
+  bin/export-bundler-config --init
+  bin/export-bundler-config --list-builds
+  bin/export-bundler-config --build=dev --save
+  bin/export-bundler-config --build=dev --save --rspack
+
+  # Traditional Workflow (without config file)
   bin/export-bundler-config --doctor
-  # Creates: webpack-development-client.yaml, webpack-development-server.yaml,
-  #          webpack-production-client.yaml, webpack-production-server.yaml
-
-  # Save current environment configs
-  bin/export-bundler-config --save
-  # Creates: webpack-development-client.yaml, webpack-development-server.yaml
-
-  # Save to specific directory
-  bin/export-bundler-config --save --save-dir=./debug
-
-  # Export only client config for production
   bin/export-bundler-config --save --env=production --client-only
-  # Creates: webpack-production-client.yaml
+  bin/export-bundler-config --save --save-dir=./debug
 
   # View config in terminal (stdout)
   bin/export-bundler-config`
@@ -176,8 +227,16 @@ QUICK START (for troubleshooting):
     .parseSync()
 
   // Type assertions are safe here because yargs validates choices at runtime
+  // Handle --webpack and --rspack flags
+  let bundler: "webpack" | "rspack" | undefined = argv.bundler as
+    | "webpack"
+    | "rspack"
+    | undefined
+  if (argv.webpack) bundler = "webpack"
+  if (argv.rspack) bundler = "rspack"
+
   return {
-    bundler: argv.bundler as "webpack" | "rspack" | undefined,
+    bundler,
     env: argv.env as "development" | "production" | "test",
     clientOnly: argv["client-only"],
     serverOnly: argv["server-only"],
@@ -189,7 +248,11 @@ QUICK START (for troubleshooting):
     doctor: argv.doctor,
     save: argv.save,
     saveDir: argv["save-dir"],
-    annotate: argv.annotate
+    annotate: argv.annotate,
+    init: argv.init,
+    configFile: argv["config-file"],
+    build: argv.build,
+    listBuilds: argv["list-builds"]
   }
 }
 
@@ -204,6 +267,47 @@ function applyDefaults(options: ExportOptions): void {
   } else {
     if (options.format === undefined) options.format = "inspect"
     if (options.annotate === undefined) options.annotate = false
+  }
+}
+
+function runInitCommand(options: ExportOptions): number {
+  const configPath = options.configFile || ".bundler-config.yml"
+  const fullPath = resolve(process.cwd(), configPath)
+
+  if (existsSync(fullPath)) {
+    console.error(
+      `[Config Exporter] Error: Config file already exists: ${fullPath}`
+    )
+    console.error(
+      `Remove it first or use --config-file=<path> for a different location.`
+    )
+    return 1
+  }
+
+  const sampleConfig = generateSampleConfigFile()
+  writeFileSync(fullPath, sampleConfig, "utf8")
+
+  console.log(`[Config Exporter] ✅ Created config file: ${fullPath}`)
+  console.log(`\nNext steps:`)
+  console.log(`  1. Edit the config file to match your build setup`)
+  console.log(
+    `  2. List available builds: bin/export-bundler-config --list-builds`
+  )
+  console.log(
+    `  3. Export a build: bin/export-bundler-config --build=<name> --save\n`
+  )
+
+  return 0
+}
+
+function runListBuildsCommand(options: ExportOptions): number {
+  try {
+    const loader = new ConfigFileLoader(options.configFile)
+    loader.listBuilds()
+    return 0
+  } catch (error: any) {
+    console.error(`[Config Exporter] Error: ${error.message}`)
+    return 1
   }
 }
 
@@ -237,7 +341,8 @@ async function runDoctorMode(
         metadata.bundler,
         metadata.environment,
         metadata.configType,
-        options.format!
+        options.format!,
+        metadata.buildName
       )
 
       const fullPath = resolve(targetDir, filename)
@@ -312,7 +417,8 @@ async function runSaveMode(
         metadata.bundler,
         metadata.environment,
         metadata.configType,
-        options.format!
+        options.format!,
+        metadata.buildName
       )
       fileWriter.writeSingleFile(resolve(targetDir, filename), output)
     }
@@ -340,12 +446,46 @@ async function loadConfigsForEnv(
   options: ExportOptions,
   appRoot: string
 ): Promise<Array<{ config: any; metadata: ConfigMetadata }>> {
-  // Auto-detect bundler if not specified
-  const bundler = options.bundler || (await autoDetectBundler(env, appRoot))
+  let bundler: "webpack" | "rspack"
+  let buildName: string | undefined
+  let buildOutputs: string[] = []
+  let customConfigFile: string | undefined
 
-  // Set environment variables
-  process.env.NODE_ENV = env
-  process.env.RAILS_ENV = env
+  // If using config file build
+  if (options.build) {
+    const loader = new ConfigFileLoader(options.configFile)
+    const defaultBundler = await autoDetectBundler(env, appRoot)
+    const resolvedBuild = loader.resolveBuild(
+      options.build,
+      options,
+      defaultBundler
+    )
+
+    bundler = resolvedBuild.bundler
+    buildName = resolvedBuild.name
+    buildOutputs = resolvedBuild.outputs
+    customConfigFile = resolvedBuild.configFile
+
+    // Set environment variables from config
+    for (const [key, value] of Object.entries(resolvedBuild.environment)) {
+      process.env[key] = value
+    }
+
+    // Use env from config if not overridden by CLI
+    if (resolvedBuild.environment.NODE_ENV && !options.env) {
+      env = resolvedBuild.environment.NODE_ENV as
+        | "development"
+        | "production"
+        | "test"
+    }
+  } else {
+    // Auto-detect bundler if not specified
+    bundler = options.bundler || (await autoDetectBundler(env, appRoot))
+
+    // Set environment variables
+    process.env.NODE_ENV = env
+    process.env.RAILS_ENV = env
+  }
 
   if (options.clientOnly) {
     process.env.CLIENT_BUNDLE_ONLY = "yes"
@@ -354,12 +494,15 @@ async function loadConfigsForEnv(
   }
 
   // Find and load config file
-  const configFile = findConfigFile(bundler, appRoot)
+  const configFile = customConfigFile || findConfigFile(bundler, appRoot)
   // Quiet mode for cleaner output - only show if verbose or errors
   if (process.env.VERBOSE) {
     console.log(`[Config Exporter] Loading config: ${configFile}`)
     console.log(`[Config Exporter] Environment: ${env}`)
     console.log(`[Config Exporter] Bundler: ${bundler}`)
+    if (buildName) {
+      console.log(`[Config Exporter] Build: ${buildName}`)
+    }
   }
 
   // Load the config
@@ -414,8 +557,26 @@ async function loadConfigsForEnv(
   configs.forEach((cfg, index) => {
     let configType: "client" | "server" | "all" = "all"
 
-    // Try to infer config type from the config itself
-    if (configs.length === 2) {
+    // Use outputs from build config if available
+    if (
+      buildOutputs.length > 0 &&
+      index < buildOutputs.length &&
+      buildOutputs[index]
+    ) {
+      const outputValue = buildOutputs[index]
+      // Validate the output value is a valid config type
+      if (
+        outputValue === "client" ||
+        outputValue === "server" ||
+        outputValue === "all"
+      ) {
+        configType = outputValue
+      } else {
+        console.warn(
+          `[Config Exporter] Warning: Invalid output type '${outputValue}' at index ${index}, using 'all'`
+        )
+      }
+    } else if (configs.length === 2) {
       // Likely client and server configs
       configType = index === 0 ? "client" : "server"
     } else if (options.clientOnly) {
@@ -431,6 +592,7 @@ async function loadConfigsForEnv(
       configFile,
       configType,
       configCount: configs.length,
+      buildName,
       environmentVariables: {
         NODE_ENV: process.env.NODE_ENV,
         RAILS_ENV: process.env.RAILS_ENV,
