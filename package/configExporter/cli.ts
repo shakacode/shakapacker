@@ -10,6 +10,12 @@ import { ExportOptions, ConfigMetadata, FileOutput } from "./types"
 import { YamlSerializer } from "./yamlSerializer"
 import { FileWriter } from "./fileWriter"
 
+// Read version from package.json
+const packageJson = JSON.parse(
+  readFileSync(resolve(__dirname, "../../package.json"), "utf8")
+)
+const VERSION = packageJson.version
+
 // Main CLI entry point
 export async function run(args: string[]): Promise<number> {
   try {
@@ -48,6 +54,7 @@ export async function run(args: string[]): Promise<number> {
 
 function parseArguments(args: string[]): ExportOptions {
   const argv = yargs(args)
+    .version(VERSION)
     .usage(
       `Shakapacker Config Exporter
 
