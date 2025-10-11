@@ -4,7 +4,7 @@ import requireOrError from "./requireOrError"
 import config from "../config"
 import inliningCss from "./inliningCss"
 
-interface StyleRule {
+export interface StyleRule {
   test: RegExp
   use: unknown[]
   type?: string
