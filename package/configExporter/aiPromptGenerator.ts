@@ -150,11 +150,19 @@ export class AiPromptGenerator {
         "in YAML format (similar to the files in this directory) for easier comparison."
       )
       sections.push(
-        "These will include 8 exported config files (4 for webpack, 4 for rspack) covering"
+        "These will include 10 exported config files (5 for webpack, 5 for rspack):"
       )
+      sections.push("")
+      sections.push("- Development client (standard build)")
+      sections.push("- Development client with HMR (dev server configuration)")
+      sections.push("- Development server (SSR)")
+      sections.push("- Production client")
+      sections.push("- Production server (SSR)")
+      sections.push("")
       sections.push(
-        "development/production × client/server combinations for both bundlers."
+        "The HMR configs are especially useful for troubleshooting dev server, hot reload,"
       )
+      sections.push("and live reload issues.")
       sections.push("")
       sections.push(
         "Track progress at: https://github.com/shakacode/react_on_rails/issues/1862"
