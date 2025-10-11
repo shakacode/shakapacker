@@ -23,6 +23,13 @@ export async function run(args: string[]): Promise<number> {
     // Apply defaults
     applyDefaults(options)
 
+    // Validate after defaults are applied
+    if (options.annotate && options.format !== "yaml") {
+      throw new Error(
+        "Annotation requires YAML format. Use --no-annotate or --format=yaml."
+      )
+    }
+
     // Execute based on mode
     if (options.doctor) {
       await runDoctorMode(options, appRoot)
@@ -109,9 +116,10 @@ QUICK START (for troubleshooting):
       description:
         "Output format (default: inspect for stdout, yaml for --save/--doctor)"
     })
-    .option("no-annotate", {
+    .option("annotate", {
       type: "boolean",
-      description: "Disable inline documentation (YAML only)"
+      description:
+        "Enable inline documentation (YAML only, default with --save/--doctor)"
     })
     .option("verbose", {
       type: "boolean",
@@ -130,15 +138,6 @@ QUICK START (for troubleshooting):
       if (argv.output && argv["save-dir"]) {
         throw new Error(
           "--output and --save-dir are mutually exclusive. Use one or the other."
-        )
-      }
-      if (
-        argv["no-annotate"] &&
-        argv.format !== "yaml" &&
-        argv.format !== undefined
-      ) {
-        throw new Error(
-          "--no-annotate requires --format=yaml. Use --format=inspect/json instead."
         )
       }
       return true
@@ -182,7 +181,7 @@ QUICK START (for troubleshooting):
     doctor: argv.doctor,
     save: argv.save,
     saveDir: argv["save-dir"],
-    annotate: argv["no-annotate"] ? false : undefined
+    annotate: argv.annotate
   }
 }
 
