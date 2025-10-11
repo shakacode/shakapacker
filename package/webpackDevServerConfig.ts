@@ -21,11 +21,11 @@ interface WebpackDevServerConfig {
     [key: string]: unknown
   }
   client?: Record<string, unknown>
-  allowedHosts?: "all" | "auto" | string | string[]
+  allowedHosts?: "all" | "auto" | (string & {}) | string[]
   bonjour?: boolean | Record<string, unknown>
   compress?: boolean
   headers?: Record<string, unknown> | (() => Record<string, unknown>)
-  host?: "local-ip" | "local-ipv4" | "local-ipv6" | string
+  host?: "local-ip" | "local-ipv4" | "local-ipv6" | (string & {})
   http2?: boolean
   https?: boolean | Record<string, unknown>
   ipc?: boolean | string
@@ -38,13 +38,14 @@ interface WebpackDevServerConfig {
     | string[]
     | Record<string, unknown>
     | Record<string, unknown>[]
-  port?: "auto" | string | number
+  port?: "auto" | (string & {}) | number
   proxy?: unknown
-  server?: string | boolean | Record<string, unknown>
+  server?: (string & {}) | boolean | Record<string, unknown>
   setupExitSignals?: boolean
   setupMiddlewares?: (middlewares: unknown[], devServer: unknown) => unknown[]
+  // eslint-disable-next-line @typescript-eslint/no-redundant-type-constituents
   watchFiles?: string | string[] | unknown
-  webSocketServer?: string | boolean | Record<string, unknown>
+  webSocketServer?: (string & {}) | boolean | Record<string, unknown>
   [key: string]: unknown
 }
 

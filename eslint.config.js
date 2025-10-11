@@ -13,7 +13,14 @@ const compat = new FlatCompat({
 module.exports = [
   // Global ignores (replaces .eslintignore)
   {
-    ignores: ["lib/**", "**/node_modules/**", "vendor/**", "spec/**"]
+    ignores: [
+      "lib/**",
+      "**/node_modules/**",
+      "vendor/**",
+      "spec/**",
+      "package/**/*.js",
+      "package/**/*.d.ts"
+    ]
   },
 
   // Base config for all JS files
@@ -46,7 +53,11 @@ module.exports = [
       "import/no-extraneous-dependencies": "off",
       // TypeScript handles extensions, not needed for JS imports
       "import/extensions": "off",
-      indent: ["error", 2]
+      indent: ["error", 2],
+      // Allow for...of loops - modern JS syntax, won't pollute client code
+      "no-restricted-syntax": "off",
+      // Allow console statements - used for debugging/logging throughout
+      "no-console": "off"
     },
     settings: {
       react: {

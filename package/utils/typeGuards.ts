@@ -67,6 +67,38 @@ export function clearValidationCache(): void {
 }
 
 /**
+ * Type guard to validate DevServerConfig object at runtime
+ * In production, performs minimal validation for performance
+ */
+export function isValidDevServerConfig(obj: unknown): obj is DevServerConfig {
+  if (typeof obj !== "object" || obj === null) {
+    return false
+  }
+
+  // In production, skip deep validation unless explicitly enabled
+  if (!shouldValidate()) {
+    return true
+  }
+
+  const config = obj as Record<string, unknown>
+
+  // All fields are optional, just check types if present
+  if (
+    config.hmr !== undefined &&
+    typeof config.hmr !== "boolean" &&
+    config.hmr !== "only"
+  ) {
+    return false
+  }
+
+  if (config.port !== undefined && !validatePort(config.port)) {
+    return false
+  }
+
+  return true
+}
+
+/**
  * Type guard to validate Config object at runtime
  * In production, caches results for performance unless SHAKAPACKER_STRICT_VALIDATION is set
  *
@@ -210,38 +242,6 @@ export function isValidConfig(obj: unknown): obj is Config {
 
   // Cache positive result
   validatedConfigs.set(obj, { result: true, timestamp: Date.now() })
-
-  return true
-}
-
-/**
- * Type guard to validate DevServerConfig object at runtime
- * In production, performs minimal validation for performance
- */
-export function isValidDevServerConfig(obj: unknown): obj is DevServerConfig {
-  if (typeof obj !== "object" || obj === null) {
-    return false
-  }
-
-  // In production, skip deep validation unless explicitly enabled
-  if (!shouldValidate()) {
-    return true
-  }
-
-  const config = obj as Record<string, unknown>
-
-  // All fields are optional, just check types if present
-  if (
-    config.hmr !== undefined &&
-    typeof config.hmr !== "boolean" &&
-    config.hmr !== "only"
-  ) {
-    return false
-  }
-
-  if (config.port !== undefined && !validatePort(config.port)) {
-    return false
-  }
 
   return true
 }

@@ -6,9 +6,6 @@ import { Config, YamlConfig } from "./types"
 import { ensureTrailingSlash } from "./utils/helpers"
 import configPath from "./utils/configPath"
 import defaultConfigPath from "./utils/defaultConfigPath"
-
-// eslint-disable-next-line @typescript-eslint/no-require-imports
-const { railsEnv } = require("./env")
 import {
   isValidYamlConfig,
   createConfigValidationError,
@@ -18,6 +15,9 @@ import {
   isFileNotFoundError,
   createFileOperationError
 } from "./utils/errorHelpers"
+
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const { railsEnv } = require("./env")
 
 const loadAndValidateYaml = (path: string): YamlConfig => {
   const fileContent = readFileSync(path, "utf8")

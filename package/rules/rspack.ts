@@ -1,5 +1,3 @@
-/* eslint global-require: 0 */
-
 import { moduleExists } from "../utils/helpers"
 import { debug, info, warn } from "../utils/debug"
 import css from "./css"
