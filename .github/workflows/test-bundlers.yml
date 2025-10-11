@@ -27,12 +27,16 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: "20"
-          cache: "npm"
-          cache-dependency-path: spec/dummy/package-lock.json
+          cache: "yarn"
+          cache-dependency-path: |
+            yarn.lock
+            spec/dummy/yarn.lock
 
       - name: Build TypeScript and create package
         run: |
           cd ../..
+          # Clean up any existing tarballs from previous runs
+          rm -f shakapacker-*.tgz
           yarn install --frozen-lockfile --production=false
           yarn build
           # Create a tarball that can be installed like a real npm package
@@ -42,9 +46,12 @@ jobs:
         run: |
           # Remove any existing shakapacker reference to avoid conflicts
           npm pkg delete dependencies.shakapacker
-          # Install shakapacker from the tarball (npm handles nested dependencies better than yarn)
+          # Install shakapacker from the tarball
+          # Note: We use npm here instead of yarn because npm properly handles
+          # installing packages from tarballs with their nested dependencies.
+          # Yarn has issues with symlinked dependencies when using local file references.
           npm install ../../shakapacker-*.tgz
-          # Install remaining dependencies
+          # Install remaining dependencies from package.json
           npm install
 
       - name: Switch to Webpack
@@ -78,12 +85,16 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: "20"
-          cache: "npm"
-          cache-dependency-path: spec/dummy/package-lock.json
+          cache: "yarn"
+          cache-dependency-path: |
+            yarn.lock
+            spec/dummy/yarn.lock
 
       - name: Build TypeScript and create package
         run: |
           cd ../..
+          # Clean up any existing tarballs from previous runs
+          rm -f shakapacker-*.tgz
           yarn install --frozen-lockfile --production=false
           yarn build
           # Create a tarball that can be installed like a real npm package
@@ -93,9 +104,12 @@ jobs:
         run: |
           # Remove any existing shakapacker reference to avoid conflicts
           npm pkg delete dependencies.shakapacker
-          # Install shakapacker from the tarball (npm handles nested dependencies better than yarn)
+          # Install shakapacker from the tarball
+          # Note: We use npm here instead of yarn because npm properly handles
+          # installing packages from tarballs with their nested dependencies.
+          # Yarn has issues with symlinked dependencies when using local file references.
           npm install ../../shakapacker-*.tgz
-          # Install remaining dependencies
+          # Install remaining dependencies from package.json
           npm install
 
       - name: Switch to RSpack
@@ -129,12 +143,16 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: "20"
-          cache: "npm"
-          cache-dependency-path: spec/dummy/package-lock.json
+          cache: "yarn"
+          cache-dependency-path: |
+            yarn.lock
+            spec/dummy/yarn.lock
 
       - name: Build TypeScript and create package
         run: |
           cd ../..
+          # Clean up any existing tarballs from previous runs
+          rm -f shakapacker-*.tgz
           yarn install --frozen-lockfile --production=false
           yarn build
           # Create a tarball that can be installed like a real npm package
@@ -144,9 +162,12 @@ jobs:
         run: |
           # Remove any existing shakapacker reference to avoid conflicts
           npm pkg delete dependencies.shakapacker
-          # Install shakapacker from the tarball (npm handles nested dependencies better than yarn)
+          # Install shakapacker from the tarball
+          # Note: We use npm here instead of yarn because npm properly handles
+          # installing packages from tarballs with their nested dependencies.
+          # Yarn has issues with symlinked dependencies when using local file references.
           npm install ../../shakapacker-*.tgz
-          # Install remaining dependencies
+          # Install remaining dependencies from package.json
           npm install
 
       - name: Test switching between bundlers
