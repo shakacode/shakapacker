@@ -5,17 +5,28 @@ require "semantic_range"
 
 module Shakapacker
   class Doctor
-    attr_reader :config, :root_path, :issues, :warnings, :info
+    attr_reader :config, :root_path, :issues, :warnings, :info, :options
 
-    def initialize(config = nil, root_path = nil)
+    # Warning categories for better organization
+    CATEGORY_ACTION_REQUIRED = :action_required
+    CATEGORY_RECOMMENDED = :recommended
+    CATEGORY_INFO = :info
+
+    def initialize(config = nil, root_path = nil, options = {})
       @config = config || Shakapacker.config
       @root_path = root_path || (defined?(Rails) ? Rails.root : Pathname.new(Dir.pwd))
       @issues = []
-      @warnings = []
+      @warnings = []  # Now stores hashes: { category: :symbol, message: "..." }
       @info = []
+      @options = options
     end
 
     def run
+      if options[:help]
+        print_help
+        return
+      end
+
       perform_checks
       report_results
     end
@@ -25,6 +36,49 @@ module Shakapacker
     end
 
     private
+
+      def add_warning(message, category = CATEGORY_RECOMMENDED)
+        @warnings << { category: category, message: message }
+      end
+
+      def add_action_required(message)
+        add_warning(message, CATEGORY_ACTION_REQUIRED)
+      end
+
+      def add_info_warning(message)
+        add_warning(message, CATEGORY_INFO)
+      end
+
+      def print_help
+        puts <<~HELP
+          Shakapacker Doctor - Diagnostic tool for Shakapacker configuration
+
+          Usage:
+            bin/rails shakapacker:doctor [options]
+
+          Options:
+            --help       Show this help message
+            --verbose    Show detailed information about all checks
+
+          Description:
+            The doctor command checks for common configuration issues and missing
+            dependencies in your Shakapacker setup, including:
+
+            • Configuration file validity
+            • Entry points and output paths
+            • Node.js and package manager installation
+            • Required npm dependencies
+            • JavaScript transpiler configuration
+            • CSS and CSS Modules setup
+            • Binstubs presence
+            • Version consistency
+            • Legacy file detection
+
+          Exit codes:
+            0 - No issues found
+            1 - Issues detected (see output for details)
+        HELP
+      end
 
       def perform_checks
         # Core configuration checks
@@ -80,7 +134,7 @@ module Shakapacker
         # Check for at least one entry point
         entry_files = Dir.glob(File.join(source_entry_path, "**/*.{js,jsx,ts,tsx,coffee}"))
         if entry_files.empty?
-          @warnings << "No entry point files found in #{source_entry_path}"
+          add_warning("No entry point files found in #{source_entry_path}")
         end
       end
 
@@ -109,7 +163,7 @@ module Shakapacker
           begin
             manifest_content = JSON.parse(File.read(manifest_path))
             if manifest_content.empty?
-              @warnings << "Manifest file is empty - you may need to run 'rails assets:precompile'"
+              add_warning("Manifest file is empty - you may need to run 'bin/rails assets:precompile'")
             end
           rescue JSON::ParserError
             @issues << "Manifest file #{manifest_path} contains invalid JSON"
@@ -125,13 +179,17 @@ module Shakapacker
 
       def check_deprecated_config
         config_file = File.read(config.config_path)
+        config_relative_path = config.config_path.relative_path_from(root_path)
 
         if config_file.include?("webpack_loader:")
-          @warnings << "Deprecated config: 'webpack_loader' should be renamed to 'javascript_transpiler'"
+          add_action_required("Deprecated config: 'webpack_loader' should be renamed to 'javascript_transpiler' in #{config_relative_path}")
         end
 
-        if config_file.include?("bundler:")
-          @warnings << "Deprecated config: 'bundler' should be renamed to 'assets_bundler'"
+        # Check for standalone "bundler:" but not "assets_bundler:"
+        # Match "bundler:" at start of line or preceded by non-underscore character
+        if config_file.match?(/^\s*bundler:/m) || config_file.match?(/[^_]bundler:/)
+          add_action_required("Deprecated config: 'bundler' should be renamed to 'assets_bundler' in #{config_relative_path}.")
+          add_action_required("  Fix: Open #{config_relative_path} and change 'bundler:' to 'assets_bundler:'.")
         end
       rescue => e
         # Ignore read errors as config file check already handles missing file
@@ -146,15 +204,18 @@ module Shakapacker
                      package_json.dig("devDependencies", "shakapacker")
 
         if npm_version
+          # Skip version check for github/file references
+          return if npm_version.start_with?("github:", "git+", "file:", "link:", "./", "../", "/")
+
           gem_version = Shakapacker::VERSION rescue nil
           if gem_version && !versions_compatible?(gem_version, npm_version)
-            @warnings << "Version mismatch: shakapacker gem is #{gem_version} but npm package is #{npm_version}"
+            add_info_warning("Version mismatch: shakapacker gem is #{gem_version} but npm package is #{npm_version}")
           end
         end
 
-        # Check if ensure_consistent_versioning is enabled and warn if versions might mismatch
+        # Check if ensure_consistent_versioning is enabled
         if config.ensure_consistent_versioning?
-          @info << "Version consistency checking is enabled"
+          @info << "Version consistency checking: enabled (ensures shakapacker gem and npm package versions match at runtime)"
         end
       end
 
@@ -163,7 +224,7 @@ module Shakapacker
         node_env = ENV["NODE_ENV"]
 
         if rails_env && node_env && rails_env != node_env
-          @warnings << "Environment mismatch: Rails.env is '#{rails_env}' but NODE_ENV is '#{node_env}'"
+          add_warning("Environment mismatch: Rails.env is '#{rails_env}' but NODE_ENV is '#{node_env}'")
         end
 
         # Check SHAKAPACKER_ASSET_HOST for production
@@ -206,7 +267,7 @@ module Shakapacker
 
         # Check for conflicting installations
         if package_installed?("webpack") && package_installed?("@rspack/core")
-          @warnings << "Both webpack and rspack are installed - ensure assets_bundler is set correctly"
+          add_warning("Both webpack and rspack are installed - ensure assets_bundler is set correctly")
         end
       end
 
@@ -242,7 +303,7 @@ module Shakapacker
 
           # Check for case sensitivity issues
           if File.exist?(root_path.join("App")) || File.exist?(root_path.join("APP"))
-            @warnings << "Potential case sensitivity issue detected on Windows filesystem"
+            add_warning("Potential case sensitivity issue detected on Windows filesystem")
           end
         end
       end
@@ -254,7 +315,8 @@ module Shakapacker
           # Check if manifest is recent (within last 24 hours)
           manifest_age_hours = (Time.now - File.mtime(manifest_path)) / 3600
 
-          if manifest_age_hours > 24
+          if manifest_age_hours > 24 && options[:verbose]
+            # Only show age in verbose mode - it's not actionable information
             @info << "Assets were last compiled #{manifest_age_hours.round} hours ago. Consider recompiling if you've made changes."
           end
 
@@ -263,15 +325,16 @@ module Shakapacker
           if source_files.any?
             newest_source = source_files.map { |f| File.mtime(f) }.max
             if newest_source > File.mtime(manifest_path)
-              @warnings << "Source files have been modified after last asset compilation. Run 'rails assets:precompile'"
+              add_warning("Source files have been modified after last asset compilation. Run 'bin/rails assets:precompile'")
             end
           end
         else
           rails_env = defined?(Rails) ? Rails.env : ENV["RAILS_ENV"]
           if rails_env == "production"
-            @issues << "No compiled assets found (manifest.json missing). Run 'rails assets:precompile'"
-          else
-            @info << "Assets not yet compiled. Run 'rails assets:precompile' or start the dev server"
+            @issues << "No compiled assets found (manifest.json missing). Run 'bin/rails assets:precompile'"
+          elsif options[:verbose]
+            # Only show in verbose mode for non-production environments
+            @info << "Assets not yet compiled. Run 'bin/rails assets:precompile' or start the dev server"
           end
         end
       end
@@ -287,7 +350,7 @@ module Shakapacker
         legacy_files.each do |file|
           file_path = root_path.join(file)
           if file_path.exist?
-            @warnings << "Legacy webpacker file found: #{file} - consider removing after migration"
+            add_warning("Legacy webpacker file found: #{file} - consider removing after migration")
           end
         end
       end
@@ -302,7 +365,7 @@ module Shakapacker
           if version_match
             major = version_match[1].to_i
             if major < 14
-              @warnings << "Node.js version #{node_version} is outdated. Recommend upgrading to v14 or higher"
+              add_warning("Node.js version #{node_version} is outdated. Recommend upgrading to v14 or higher")
             end
           end
         else
@@ -313,7 +376,7 @@ module Shakapacker
       rescue Errno::EACCES
         @issues << "Permission denied when checking Node.js version"
       rescue StandardError => e
-        @warnings << "Unable to check Node.js version: #{e.message}"
+        add_warning("Unable to check Node.js version: #{e.message}")
       end
 
       def check_package_manager
@@ -323,14 +386,23 @@ module Shakapacker
       end
 
       def check_binstub
-        binstub_path = root_path.join("bin/shakapacker")
-        unless binstub_path.exist?
-          @warnings << "Shakapacker binstub not found at bin/shakapacker. Run 'rails shakapacker:binstubs' to create it."
+        missing_binstubs = []
+
+        expected_binstubs = {
+          "bin/shakapacker" => "Main Shakapacker binstub",
+          "bin/shakapacker-dev-server" => "Development server binstub",
+          "bin/export-bundler-config" => "Config export binstub"
+        }
+
+        expected_binstubs.each do |path, description|
+          unless root_path.join(path).exist?
+            missing_binstubs << "#{path} (#{description})"
+          end
         end
 
-        export_config_binstub = root_path.join("bin/export-bundler-config")
-        unless export_config_binstub.exist?
-          @warnings << "Config export binstub not found at bin/export-bundler-config. Run 'rails shakapacker:binstubs' to create it."
+        unless missing_binstubs.empty?
+          add_action_required("Missing binstubs: #{missing_binstubs.join(', ')}.")
+          add_action_required("  Fix: Run 'bin/rails shakapacker:binstubs' to create them.")
         end
       end
 
@@ -394,7 +466,16 @@ module Shakapacker
           # Rspack has built-in SWC support
           @info << "Rspack has built-in SWC support - no additional loaders needed"
           if package_installed?("swc-loader")
-            @warnings << "swc-loader is not needed with Rspack (SWC is built-in) - consider removing it"
+            package_manager = detect_package_manager
+            remove_cmd = case package_manager
+                         when "yarn" then "yarn remove swc-loader"
+                         when "npm" then "npm uninstall swc-loader"
+                         when "pnpm" then "pnpm remove swc-loader"
+                         when "bun" then "bun remove swc-loader"
+                        else "npm uninstall swc-loader"
+            end
+            add_warning("swc-loader is not needed with Rspack (SWC is built-in). Rspack includes SWC transpilation natively, so this package is redundant.")
+            add_warning("  Fix: Remove it with: #{remove_cmd}.")
           end
         end
       end
@@ -418,26 +499,32 @@ module Shakapacker
         ]
 
         babel_config_exists = babel_configs.any?(&:exist?)
+        babel_in_package_json = false
 
         # Check if package.json has babel config
         if package_json_exists?
           package_json = read_package_json
-          babel_config_exists ||= package_json.key?("babel")
+          babel_in_package_json = package_json.key?("babel")
+          babel_config_exists ||= babel_in_package_json
         end
 
         transpiler = config.javascript_transpiler
 
         if babel_config_exists && transpiler != "babel"
-          @warnings << "Babel configuration files found but javascript_transpiler is '#{transpiler}'. Consider removing Babel configs or setting javascript_transpiler: 'babel'"
+          babel_files = babel_configs.select(&:exist?).map { |f| f.relative_path_from(root_path) }
+          babel_files << "package.json" if babel_in_package_json
+          babel_files_str = babel_files.join(", ")
+          add_warning("Babel configuration files found (#{babel_files_str}) but javascript_transpiler is '#{transpiler}'. These Babel configs are ignored by Shakapacker (though they may still be used by ESLint or other tools).")
+          add_warning("  Fix: Remove Babel config files if not needed, or set javascript_transpiler: 'babel' in shakapacker.yml to use Babel for transpilation.")
         end
 
         # Check for redundant dependencies
         if transpiler == "swc" && package_installed?("babel-loader")
-          @warnings << "Both SWC and Babel dependencies are installed. Consider removing Babel dependencies to reduce node_modules size"
+          add_warning("Both SWC and Babel dependencies are installed. Consider removing Babel dependencies to reduce node_modules size")
         end
 
         if transpiler == "esbuild" && package_installed?("babel-loader")
-          @warnings << "Both esbuild and Babel dependencies are installed. Consider removing Babel dependencies to reduce node_modules size"
+          add_warning("Both esbuild and Babel dependencies are installed. Consider removing Babel dependencies to reduce node_modules size")
         end
 
         # Check for SWC configuration conflicts
@@ -451,10 +538,10 @@ module Shakapacker
         swc_config_path = root_path.join("config/swc.config.js")
 
         if swcrc_path.exist?
-          @warnings << "SWC configuration: .swcrc file detected. This file completely overrides Shakapacker's default SWC settings and may cause build failures. " \
+          add_warning("SWC configuration: .swcrc file detected. This file completely overrides Shakapacker's default SWC settings and may cause build failures. " \
                       "Please migrate to config/swc.config.js which properly merges with Shakapacker defaults. " \
                       "To migrate: Move your custom settings from .swcrc to config/swc.config.js (see docs for format). " \
-                      "See: https://github.com/shakacode/shakapacker/blob/main/docs/using_swc_loader.md"
+                      "See: https://github.com/shakacode/shakapacker/blob/main/docs/using_swc_loader.md")
         end
 
         if swc_config_path.exist?
@@ -468,18 +555,18 @@ module Shakapacker
 
         # Check for loose: true (deprecated default)
         if config_content.match?(/loose\s*:\s*true/)
-          @warnings << "SWC configuration: 'loose: true' detected in config/swc.config.js. " \
+          add_warning("SWC configuration: 'loose: true' detected in config/swc.config.js. " \
                       "This can cause silent failures with Stimulus controllers and incorrect spread operator behavior. " \
                       "Consider removing this setting to use Shakapacker's default 'loose: false' (spec-compliant). " \
-                      "See: https://github.com/shakacode/shakapacker/blob/main/docs/using_swc_loader.md#using-swc-with-stimulus"
+                      "See: https://github.com/shakacode/shakapacker/blob/main/docs/using_swc_loader.md#using-swc-with-stimulus")
         end
 
         # Check for missing keepClassNames with Stimulus
         if stimulus_likely_used? && !config_content.match?(/keepClassNames\s*:\s*true/)
-          @warnings << "SWC configuration: Stimulus appears to be in use, but 'keepClassNames: true' is not set in config/swc.config.js. " \
+          add_warning("SWC configuration: Stimulus appears to be in use, but 'keepClassNames: true' is not set in config/swc.config.js. " \
                       "Without this setting, Stimulus controllers will fail silently. " \
                       "Add 'keepClassNames: true' to jsc config. " \
-                      "See: https://github.com/shakacode/shakapacker/blob/main/docs/using_swc_loader.md#using-swc-with-stimulus"
+                      "See: https://github.com/shakacode/shakapacker/blob/main/docs/using_swc_loader.md#using-swc-with-stimulus")
         elsif config_content.match?(/keepClassNames\s*:\s*true/)
           @info << "SWC configuration: 'keepClassNames: true' is set (good for Stimulus compatibility)"
         end
@@ -493,7 +580,7 @@ module Shakapacker
         end
       rescue => e
         # Don't fail doctor if SWC config check has issues
-        @warnings << "Unable to validate SWC configuration: #{e.message}"
+        add_warning("Unable to validate SWC configuration: #{e.message}")
       end
 
       def stimulus_likely_used?
@@ -543,19 +630,13 @@ module Shakapacker
             @issues << "  Using exportLocalsConvention: 'camelCase' with namedExport: true will cause build errors"
             @issues << "  Change to 'camelCaseOnly' or 'dashesOnly'. See docs/v9_upgrade.md for details"
           end
-
-          # Warn if CSS modules are used but no configuration is found
-          if !config_content.match(/namedExport/) && !config_content.match(/exportLocalsConvention/)
-            @info << "CSS module files found but no explicit CSS modules configuration detected"
-            @info << "  v9 defaults: namedExport: true, exportLocalsConvention: 'camelCaseOnly'"
-          end
         end
 
         # Check for common v8 to v9 migration issues
         check_css_modules_import_patterns
       rescue => e
         # Don't fail doctor if CSS modules check has issues
-        @warnings << "Unable to validate CSS modules configuration: #{e.message}"
+        add_warning("Unable to validate CSS modules configuration: #{e.message}")
       end
 
       def check_css_modules_import_patterns
@@ -572,10 +653,10 @@ module Shakapacker
 
           # Check for v8 default import pattern with .module.css
           if v8_pattern.match?(content)
-            @warnings << "Potential v8-style CSS module imports detected (using default import)"
-            @warnings << "  v9 uses named exports. Update to: import { className } from './styles.module.css'"
-            @warnings << "  Or use: import * as styles from './styles.module.css' (TypeScript)"
-            @warnings << "  See docs/v9_upgrade.md for migration guide"
+            add_warning("Potential v8-style CSS module imports detected (using default import)")
+            add_warning("  v9 uses named exports. Update to: import { className } from './styles.module.css'")
+            add_warning("  Or use: import * as styles from './styles.module.css' (TypeScript)")
+            add_warning("  See docs/v9_upgrade.md for migration guide")
             break  # Stop after finding first occurrence
           end
         end
@@ -643,7 +724,7 @@ module Shakapacker
 
       def check_optional_dependency(package_name, warnings_array, description)
         unless package_installed?(package_name)
-          warnings_array << "Optional dependency '#{package_name}' for #{description} is not installed"
+          add_warning("Optional dependency '#{package_name}' for #{description} is not installed")
         end
       end
 
@@ -759,23 +840,89 @@ module Shakapacker
 
         private
 
+          def verbose?
+            doctor.options[:verbose]
+          end
+
           def print_header
             puts "Running Shakapacker doctor..."
             puts "=" * 60
+            puts ""
+            if verbose?
+              puts "Mode: Verbose (showing all checks)"
+              puts ""
+            end
           end
 
           def print_checks
             if doctor.config.config_path.exist?
-              puts "✓ Configuration file found"
+              config_relative_path = doctor.config.config_path.relative_path_from(doctor.root_path)
+              puts "✓ Configuration file found (#{config_relative_path})"
+              if verbose?
+                puts "  Assets bundler: #{doctor.config.assets_bundler}"
+                puts "  Source path: #{doctor.config.source_path.relative_path_from(doctor.root_path)}"
+                puts "  Public output path: #{doctor.config.public_output_path.relative_path_from(doctor.root_path)}"
+              end
               print_transpiler_status
               print_bundler_status
               print_css_status
+            elsif verbose?
+              puts "✗ Configuration file not found"
             end
 
             print_node_status
             print_package_manager_status
             print_binstub_status
+            print_verbose_checks if verbose?
             print_info_messages
+          end
+
+          def print_verbose_checks
+            puts "\nVerbose diagnostics:"
+
+            # Show environment info
+            rails_env = defined?(Rails) ? Rails.env : ENV["RAILS_ENV"]
+            node_env = ENV["NODE_ENV"]
+            puts "  • Rails environment: #{rails_env || 'not set'}"
+            puts "  • Node environment: #{node_env || 'not set'}"
+
+            # Show gem/npm versions
+            if doctor.send(:package_json_exists?)
+              package_json = doctor.send(:read_package_json)
+              npm_version = package_json.dig("dependencies", "shakapacker") ||
+                           package_json.dig("devDependencies", "shakapacker")
+              puts "  • Shakapacker gem version: #{Shakapacker::VERSION}"
+              puts "  • Shakapacker npm version: #{npm_version || 'not installed'}"
+            end
+
+            # Show paths
+            puts "  • Root path: #{doctor.root_path}"
+            if doctor.config.config_path.exist?
+              puts "  • Cache path: #{doctor.config.cache_path}"
+              puts "  • Manifest path: #{doctor.config.manifest_path}"
+            end
+
+            # Show environment-specific shakapacker.yml configuration values
+            if doctor.config.config_path.exist?
+              puts "\nConfiguration values for '#{doctor.config.env}' environment:"
+              config_data = doctor.config.send(:data)
+              if config_data.any?
+                config_data.each do |key, value|
+                  # Format the value nicely - truncate long arrays/hashes
+                  formatted_value = case value
+                                    when Array
+                                      value.length > 3 ? "#{value.first(3).inspect}... (#{value.length} items)" : value.inspect
+                                    when Hash
+                                      value.length > 3 ? "{...} (#{value.length} keys)" : value.inspect
+                                   else
+                                      value.inspect
+                  end
+                  puts "  • #{key}: #{formatted_value}"
+                end
+              else
+                puts "  (using bundled defaults - no environment-specific config found)"
+              end
+            end
           end
 
           def print_transpiler_status
@@ -831,14 +978,20 @@ module Shakapacker
           end
 
           def print_binstub_status
-            binstub_path = doctor.root_path.join("bin/shakapacker")
-            if binstub_path.exist?
-              puts "✓ Shakapacker binstub found"
-            end
+            binstubs = [
+              "bin/shakapacker",
+              "bin/shakapacker-dev-server",
+              "bin/export-bundler-config"
+            ]
 
-            export_config_binstub = doctor.root_path.join("bin/export-bundler-config")
-            if export_config_binstub.exist?
-              puts "✓ Config export binstub found"
+            existing_binstubs = binstubs.select { |b| doctor.root_path.join(b).exist? }
+
+            if existing_binstubs.length == binstubs.length
+              puts "✓ All Shakapacker binstubs found (#{existing_binstubs.join(', ')})"
+            elsif existing_binstubs.any?
+              existing_binstubs.each do |binstub|
+                puts "✓ #{binstub} found"
+              end
             end
           end
 
@@ -853,13 +1006,14 @@ module Shakapacker
 
           def print_summary
             puts "=" * 60
+            puts ""
 
             if doctor.issues.empty? && doctor.warnings.empty?
               puts "✅ No issues found! Shakapacker appears to be configured correctly."
             else
               print_issues if doctor.issues.any?
               print_warnings if doctor.warnings.any?
-              print_fix_instructions
+              print_fix_instructions if has_dependency_issues?
             end
           end
 
@@ -872,11 +1026,86 @@ module Shakapacker
           end
 
           def print_warnings
-            puts "⚠️  Warnings (#{doctor.warnings.length}):"
-            doctor.warnings.each_with_index do |warning, index|
-              puts "  #{index + 1}. #{warning}"
+            # Count only main items (not sub-items)
+            main_item_count = doctor.warnings.count { |w| !w[:message].start_with?("  ") }
+            puts "⚠️  Warnings (#{main_item_count}):"
+            puts ""
+
+            item_number = 0
+            doctor.warnings.each do |warning|
+              category_prefix = case warning[:category]
+                                when :action_required then "[REQUIRED]"
+                                when :info then "[INFO]"
+                                when :recommended then "[RECOMMENDED]"
+                               else ""
+              end
+
+              # Sub-items start with whitespace (indented fix instructions)
+              is_subitem = warning[:message].start_with?("  ")
+
+              if is_subitem
+                # Fix instructions align at column 16 (length of "N. [RECOMMENDED]  ")
+                # This ensures all Fix lines align vertically regardless of category
+                subitem_prefix = " " * 15
+                wrapped = wrap_text(warning[:message], 100, subitem_prefix)
+                puts wrapped
+              else
+                item_number += 1
+                # Format: N. [CATEGORY]  Message
+                prefix = "#{item_number}. #{category_prefix}  "
+                wrapped = wrap_text(warning[:message], 100, prefix)
+                puts wrapped
+              end
             end
             puts ""
+          end
+
+          def wrap_text(text, max_width, prefix)
+            # Strip leading whitespace from sub-items
+            text = text.strip
+
+            # Calculate available width for text
+            available_width = max_width - prefix.length
+            return prefix + text if text.length <= available_width
+
+            # Wrap long lines
+            words = text.split(" ")
+            lines = []
+            current_line = []
+            current_length = 0
+
+            words.each do |word|
+              word_length = word.length + (current_line.empty? ? 0 : 1) # +1 for space
+
+              if current_length + word_length <= available_width
+                current_line << word
+                current_length += word_length
+              else
+                lines << current_line.join(" ") unless current_line.empty?
+                current_line = [word]
+                current_length = word.length
+              end
+            end
+            lines << current_line.join(" ") unless current_line.empty?
+
+            # Format output
+            result = prefix + lines[0]
+            lines[1..].each do |line|
+              result += "\n" + (" " * prefix.length) + line
+            end
+            result
+          end
+
+          def has_dependency_issues?
+            # Check if any issues or warnings are about missing npm/package dependencies
+            # Exclude optional dependencies - only show install instructions for required dependencies
+            all_messages = doctor.issues + doctor.warnings.map { |w| w[:message] }
+            all_messages.any? do |msg|
+              next if msg.include?("Optional")
+              (msg.include?("Missing") && msg.include?("dependency")) ||
+              msg.include?("not installed") ||
+              msg.include?("is not installed")
+            end
           end
 
           def print_fix_instructions
