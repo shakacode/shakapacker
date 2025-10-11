@@ -82,13 +82,15 @@ class Shakapacker::Compiler
 
     def run_precompile_hook
       hook_command = config.precompile_hook
-      validate_precompile_hook(hook_command)
+      hook_spec = validate_precompile_hook(hook_command)
 
       logger.info "Running precompile hook: #{hook_command}"
 
+      runtime_env = webpack_env.merge(hook_spec[:env])
       stdout, stderr, status = Open3.capture3(
-        webpack_env,
-        hook_command,
+        runtime_env,
+        hook_spec[:executable],
+        *hook_spec[:args],
         chdir: File.expand_path(config.root_path)
       )
 
@@ -109,10 +111,23 @@ class Shakapacker::Compiler
     end
 
     def validate_precompile_hook(hook_command)
-      # Extract the executable path (first word/token before any arguments)
-      # Uses Shellwords to properly handle paths with spaces and quoted arguments
-      # Examples: "bin/script", "bin/script --arg", "'bin/my script' --arg"
-      executable = Shellwords.shellwords(hook_command).first
+      hook_tokens = begin
+        Shellwords.shellsplit(hook_command)
+      rescue ArgumentError => e
+        raise "Shakapacker configuration error: Invalid precompile_hook command syntax: #{e.message}. Check for unmatched quotes in: #{hook_command}"
+      end
+
+      env_assignments = {}
+      while hook_tokens.first&.match?(/\A[A-Za-z_][A-Za-z0-9_]*=/)
+        key, value = hook_tokens.shift.split("=", 2)
+        env_assignments[key] = value
+      end
+
+      executable = hook_tokens.shift
+      if executable.nil? || executable.empty?
+        raise "Shakapacker configuration error: precompile_hook must include an executable command. Got: #{hook_command}"
+      end
+
       executable_path = config.root_path.join(executable)
 
       # Security: Resolve symlinks and verify the hook points to a file within the project
@@ -139,6 +154,8 @@ class Shakapacker::Compiler
         logger.warn "   The hook command is configured but the script does not exist within the project root."
         logger.warn "   Please ensure the script exists or remove 'precompile_hook' from your shakapacker.yml configuration."
       end
+
+      { env: env_assignments, executable: executable, args: hook_tokens }
     end
 
     def run_webpack

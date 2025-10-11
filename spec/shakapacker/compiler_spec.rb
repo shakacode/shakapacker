@@ -66,11 +66,14 @@ describe "Shakapacker::Compiler" do
 
       # Mock to track hook call and allow subsequent webpack call
       call_count = 0
-      allow(Open3).to receive(:capture3) do |*args|
+      allow(Open3).to receive(:capture3) do |env, *args|
         call_count += 1
-        if call_count == 1 && args[1] == "bin/test-hook"
+        if call_count == 1
+          # First call: hook with executable as first arg
+          expect(args[0]).to eq("bin/test-hook")
           ["Hook output", "", hook_status]
         else
+          # Second call: webpack
           ["", "", webpack_status]
         end
       end
@@ -222,6 +225,89 @@ describe "Shakapacker::Compiler" do
       expect(Shakapacker.logger).to receive(:warn).with(/executable not found/).at_least(:once)
       expect(Shakapacker.logger).to receive(:warn).at_least(:once)
       expect(Shakapacker.compiler.compile).to be true
+    end
+
+    it "raises error for malformed hook command with unmatched quotes" do
+      mocked_strategy = spy("Strategy")
+      allow(mocked_strategy).to receive(:stale?).and_return(true)
+      allow(Shakapacker.compiler).to receive(:strategy).and_return(mocked_strategy)
+
+      allow(Shakapacker.config).to receive(:precompile_hook).and_return("bin/hook 'unclosed quote")
+
+      expect { Shakapacker.compiler.compile }.to raise_error(/Invalid precompile_hook command syntax.*unmatched quotes/)
+    end
+
+    it "raises error for empty hook command after env assignments" do
+      mocked_strategy = spy("Strategy")
+      allow(mocked_strategy).to receive(:stale?).and_return(true)
+      allow(Shakapacker.compiler).to receive(:strategy).and_return(mocked_strategy)
+
+      allow(Shakapacker.config).to receive(:precompile_hook).and_return("FOO=bar")
+
+      expect { Shakapacker.compiler.compile }.to raise_error(/precompile_hook must include an executable command/)
+    end
+
+    it "prevents shell injection via command chaining" do
+      mocked_strategy = spy("Strategy")
+      allow(mocked_strategy).to receive(:stale?).and_return(true)
+      allow(Shakapacker.compiler).to receive(:strategy).and_return(mocked_strategy)
+
+      hook_status = OpenStruct.new(success?: true, exitstatus: 0)
+      webpack_status = OpenStruct.new(success?: true)
+
+      call_count = 0
+      captured_args = []
+      allow(Open3).to receive(:capture3) do |env, *args|
+        call_count += 1
+        captured_args << args if call_count == 1
+        if call_count == 1
+          ["", "", hook_status]
+        else
+          ["", "", webpack_status]
+        end
+      end
+
+      # This malicious command would execute "rm -rf /" if passed to a shell
+      # With shell-free execution, it's treated as arguments to bin/prepare
+      allow(Shakapacker.config).to receive(:precompile_hook).and_return("bin/prepare && rm -rf /")
+      allow(File).to receive(:exist?).and_call_original
+      allow(File).to receive(:exist?).with(anything).and_return(true)
+
+      expect(Shakapacker.compiler.compile).to be true
+      # Verify that "&&" and subsequent tokens are passed as arguments, not executed as shell commands
+      expect(captured_args[0][0]).to eq("bin/prepare")
+      # captured_args[0] contains: [executable, arg1, arg2, ..., {chdir: ...}]
+      expect(captured_args[0][1..4]).to eq(["&&", "rm", "-rf", "/"])
+    end
+
+    it "supports environment variable assignments in hook command" do
+      mocked_strategy = spy("Strategy")
+      allow(mocked_strategy).to receive(:stale?).and_return(true)
+      allow(Shakapacker.compiler).to receive(:strategy).and_return(mocked_strategy)
+
+      hook_status = OpenStruct.new(success?: true, exitstatus: 0)
+      webpack_status = OpenStruct.new(success?: true)
+
+      call_count = 0
+      captured_env = nil
+      allow(Open3).to receive(:capture3) do |env, *args|
+        call_count += 1
+        captured_env = env if call_count == 1
+        if call_count == 1
+          ["", "", hook_status]
+        else
+          ["", "", webpack_status]
+        end
+      end
+
+      allow(Shakapacker.config).to receive(:precompile_hook).and_return("FOO=bar BAZ=qux bin/hook --arg")
+      allow(File).to receive(:exist?).and_call_original
+      allow(File).to receive(:exist?).with(anything).and_return(true)
+
+      expect(Shakapacker.compiler.compile).to be true
+      # Verify environment variables were extracted and merged
+      expect(captured_env["FOO"]).to eq("bar")
+      expect(captured_env["BAZ"]).to eq("qux")
     end
   end
 end
