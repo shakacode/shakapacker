@@ -97,7 +97,7 @@ const getPlugins = (): unknown[] => {
   }
 
   // Use Rspack's built-in SubresourceIntegrityPlugin
-  if (config.integrity.enabled) {
+  if (config.integrity?.enabled) {
     plugins.push(
       new rspack.SubresourceIntegrityPlugin({
         hashFuncNames: config.integrity.hash_functions,

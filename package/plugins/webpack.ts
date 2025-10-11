@@ -20,8 +20,12 @@ const getPlugins = (): unknown[] => {
       output: config.manifestPath,
       entrypointsUseAssets: true,
       publicPath: config.publicPathWithoutCDN,
-      integrity: config.integrity.enabled,
-      integrityHashes: config.integrity.hash_functions
+      ...(config.integrity
+        ? {
+            integrity: config.integrity.enabled,
+            integrityHashes: config.integrity.hash_functions
+          }
+        : {})
     })
   ]
 
@@ -40,7 +44,7 @@ const getPlugins = (): unknown[] => {
   }
 
   if (
-    config.integrity.enabled &&
+    config.integrity?.enabled &&
     moduleExists("webpack-subresource-integrity")
   ) {
     const SubresourceIntegrityPlugin = requireOrError(

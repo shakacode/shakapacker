@@ -78,9 +78,9 @@ const packageFullVersion = (packageName: string): string => {
   }
 }
 
-const packageMajorVersion = (packageName: string): string => {
+const packageMajorVersion = (packageName: string): number => {
   const match = packageFullVersion(packageName).match(/^\d+/)
-  return match ? match[0] : "0"
+  return match ? parseInt(match[0], 10) : 0
 }
 
 export {
