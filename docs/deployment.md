@@ -3,6 +3,22 @@
 Shakapacker hooks up a new `shakapacker:compile` task to `assets:precompile`, which gets run whenever you run `assets:precompile`.
 If you are not using Sprockets `shakapacker:compile` is automatically aliased to `assets:precompile`.
 
+## Precompile Hook
+
+Shakapacker supports running a custom command before webpack compilation via the `precompile_hook` configuration option. This is useful for dynamically generating entry points (e.g., for React on Rails) or performing other preparatory tasks.
+
+**Note:** The precompile hook runs in both development and production environments. For complete documentation, see the [Precompile Hook Guide](precompile_hook.md).
+
+Quick example for production deployment:
+
+```yaml
+# config/shakapacker.yml
+production:
+  precompile_hook: "bin/rails react_on_rails:generate_packs"
+```
+
+This ensures your dynamic entry points are generated before `assets:precompile` runs.
+
 ## Heroku
 
 In order for your Shakapacker app to run on Heroku, you'll need to do a bit of configuration before hand.

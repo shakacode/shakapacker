@@ -352,6 +352,21 @@ Webpack intelligently includes only necessary files. In this example, the file `
 
 To enable/disable the usage of contentHash in any node environment (specified using the `NODE_ENV` environment variable), add/modify `useContentHash` with a boolean value in `config/shakapacker.yml`. This feature is disabled for all environments except production by default. You may not disable the content hash for a `NODE_ENV` of production as that would break the browser caching of assets. Notice that despite the possibility of enabling this option for the development environment, [it is not recommended](https://webpack.js.org/guides/build-performance/#avoid-production-specific-tooling).
 
+#### Precompile Hook
+
+Shakapacker supports running a custom command before webpack compilation via the `precompile_hook` configuration option. This is useful for:
+
+- Dynamically generating entry points (e.g., React on Rails `generate_packs`)
+- Running preparatory tasks before asset compilation in both development and production
+
+```yaml
+# Works in all environments (development, production)
+default: &default
+  precompile_hook: "bin/rails react_on_rails:generate_packs"
+```
+
+For complete documentation including React on Rails integration, security features, and troubleshooting, see the [Precompile Hook Guide](docs/precompile_hook.md).
+
 #### Setting custom config path
 
 You can use the environment variable `SHAKAPACKER_CONFIG` to enforce a particular path to the config file rather than the default `config/shakapacker.yml`.
