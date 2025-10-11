@@ -89,7 +89,7 @@ chmod +x bin/shakapacker-precompile-hook
 4. **On success** (exit code 0): Compilation proceeds
 5. **On failure** (non-zero exit code): Compilation stops with error
 
-**Migration Note:** If you're migrating from manually calling precompile tasks (e.g., in `lib/tasks/assets.rake`), ensure you don't run the same commands twice. The hook runs automatically before compilation, so remove manual invocations from your Rake tasks to avoid duplicate execution.
+**Migration Note:** If you're migrating from custom `assets:precompile` enhancements (e.g., in `lib/tasks/assets.rake`), ensure you don't run the same commands twice. React on Rails versions before 16.1.1 automatically prepend `react_on_rails:generate_packs` to `assets:precompile`. Versions 16.1.1+ detect `precompile_hook` and skip automatic task enhancement to avoid duplicate execution. For custom Rake task enhancements, remove manual invocations when adding `precompile_hook`.
 
 ### Logging
 
