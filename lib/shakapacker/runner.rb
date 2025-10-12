@@ -34,10 +34,8 @@ module Shakapacker
         puts "=" * 80
         puts "The following options are passed through to webpack/rspack:\n\n"
         # Continue to show bundler help by not exiting
-      end
-
-      # Handle version flags - show both Shakapacker and bundler versions
-      if argv.include?("--version") || argv.include?("-v")
+      elsif argv.include?("--version") || argv.include?("-v")
+        # Handle version flags - show both Shakapacker and bundler versions
         print_version
         puts "\nBundler version:"
         # Continue to show bundler version by not exiting

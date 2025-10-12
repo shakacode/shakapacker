@@ -4,6 +4,7 @@ require "socket"
 require_relative "configuration"
 require_relative "dev_server"
 require_relative "runner"
+require_relative "version"
 
 module Shakapacker
   class DevServerRunner < Shakapacker::Runner
@@ -16,10 +17,8 @@ module Shakapacker
         puts "=" * 80
         puts "The following options are passed through to webpack-dev-server/rspack-dev-server:\n\n"
         # Continue to show bundler help by not exiting
-      end
-
-      # Handle version flags - show both Shakapacker and bundler versions
-      if argv.include?("--version") || argv.include?("-v")
+      elsif argv.include?("--version") || argv.include?("-v")
+        # Handle version flags - show both Shakapacker and bundler versions
         print_version
         puts "\nDev server version:"
         # Continue to show bundler version by not exiting

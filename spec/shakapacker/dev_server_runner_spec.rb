@@ -1,4 +1,5 @@
 require_relative "spec_helper_initializer"
+require_relative "shared/help_and_version_examples"
 require "shakapacker/dev_server_runner"
 
 describe "DevServerRunner" do
@@ -117,55 +118,19 @@ describe "DevServerRunner" do
     end
   end
 
-  describe "help and version flags" do
+  include_examples "help and version flags",
+                   Shakapacker::DevServerRunner,
+                   "SHAKAPACKER DEV SERVER"
+
+  describe "help and version flags - dev server specific" do
     before do
       allow(Shakapacker::Utils::Manager).to receive(:error_unless_package_manager_is_obvious!)
       allow(Kernel).to receive(:exec)
     end
 
-    it "prints custom help message for --help flag" do
-      expect { Shakapacker::DevServerRunner.run(["--help"]) }
-        .to output(/SHAKAPACKER DEV SERVER/).to_stdout
-    end
-
-    it "prints custom help message for -h flag" do
-      expect { Shakapacker::DevServerRunner.run(["-h"]) }
-        .to output(/SHAKAPACKER DEV SERVER/).to_stdout
-    end
-
-    it "includes Shakapacker-specific options in help" do
-      expect { Shakapacker::DevServerRunner.run(["--help"]) }
-        .to output(/--debug-shakapacker/).to_stdout
-    end
-
     it "mentions configuration in help" do
       expect { Shakapacker::DevServerRunner.run(["--help"]) }
         .to output(/config\/shakapacker\.yml/).to_stdout
-    end
-
-    it "shows separator before bundler options" do
-      expect { Shakapacker::DevServerRunner.run(["--help"]) }
-        .to output(/WEBPACK\/RSPACK DEV SERVER OPTIONS/).to_stdout
-    end
-
-    it "continues to pass --help through to bundler after showing Shakapacker help" do
-      Shakapacker::DevServerRunner.run(["--help"])
-      expect(Kernel).to have_received(:exec)
-    end
-
-    it "prints version for --version flag" do
-      expect { Shakapacker::DevServerRunner.run(["--version"]) }
-        .to output(/Shakapacker #{Shakapacker::VERSION}/).to_stdout
-    end
-
-    it "prints version for -v flag" do
-      expect { Shakapacker::DevServerRunner.run(["-v"]) }
-        .to output(/Shakapacker #{Shakapacker::VERSION}/).to_stdout
-    end
-
-    it "continues to pass --version through to bundler after showing Shakapacker version" do
-      Shakapacker::DevServerRunner.run(["--version"])
-      expect(Kernel).to have_received(:exec)
     end
   end
 
