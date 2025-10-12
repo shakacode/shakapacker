@@ -144,14 +144,11 @@ module Shakapacker
         Usage: bin/shakapacker [options]
 
         Shakapacker-specific options:
+          -h, --help                Show this help message
+          -v, --version             Show Shakapacker version
           --debug-shakapacker       Enable Node.js debugging (--inspect-brk)
           --trace-deprecation       Show stack traces for deprecations
           --no-deprecation          Silence deprecation warnings
-
-        Options managed by Shakapacker (configured via config files):
-          --config                  Set automatically to config/webpack/webpack.config.js
-                                    or config/rspack/rspack.config.js
-          --node-env                Set from RAILS_ENV or NODE_ENV
 
         Examples:
           bin/shakapacker                              # Build for production
@@ -163,6 +160,14 @@ module Shakapacker
         HELP
 
         print_bundler_help
+
+        puts <<~HELP
+
+        Options managed by Shakapacker (configured via config files):
+          --config                  Set automatically to config/webpack/webpack.config.js
+                                    or config/rspack/rspack.config.js
+          --node-env                Set from RAILS_ENV or NODE_ENV
+        HELP
       end
 
       def self.print_bundler_help
@@ -250,11 +255,13 @@ module Shakapacker
             end
           end
 
-          # Skip config-related options
+          # Skip config-related options and help/version (shown in Shakapacker section)
           if line.match?(/^\s*(-c,\s*)?--config\b/) ||
              line.match?(/^\s*--configName\b/) ||
              line.match?(/^\s*--configLoader\b/) ||
-             line.match?(/^\s*--nodeEnv\b/)
+             line.match?(/^\s*--nodeEnv\b/) ||
+             line.match?(/^\s*(-h,\s*)?--help\b/) ||
+             line.match?(/^\s*(-v,\s*)?--version\b/)
             skip_until_blank = true
             next
           end

@@ -30,18 +30,9 @@ module Shakapacker
         Usage: bin/shakapacker-dev-server [options]
 
         Shakapacker-specific options:
+          -h, --help              Show this help message
+          -v, --version           Show Shakapacker version
           --debug-shakapacker     Enable Node.js debugging (--inspect-brk)
-
-        Options managed by Shakapacker (configured in config/shakapacker.yml):
-          --host                  Set from dev_server.host (default: localhost)
-          --port                  Set from dev_server.port (default: 3035)
-          --https                 Set from dev_server.server (http or https)
-          --config                Set automatically to config/webpack/webpack.config.js
-                                  or config/rspack/rspack.config.js
-
-        Configuration:
-          Host, port, and HTTPS are set in config/shakapacker.yml under 'dev_server'.
-          CLI flags for these options are NOT supported - use the config file.
 
         Examples:
           bin/shakapacker-dev-server                    # Start dev server
@@ -52,6 +43,19 @@ module Shakapacker
       HELP
 
       print_dev_server_help
+
+      puts <<~HELP
+
+        Options managed by Shakapacker (configured in config/shakapacker.yml):
+          --host                  Set from dev_server.host (default: localhost)
+          --port                  Set from dev_server.port (default: 3035)
+          --https                 Set from dev_server.server (http or https)
+          --config                Set automatically to config/webpack/webpack.config.js
+                                  or config/rspack/rspack.config.js
+
+        Note: CLI flags for --host, --port, and --https are NOT supported.
+        Configure these in config/shakapacker.yml instead.
+      HELP
     end
 
     def self.print_dev_server_help
@@ -123,13 +127,15 @@ module Shakapacker
       skip_until_blank = false
 
       lines.each do |line|
-        # Skip managed options
+        # Skip managed options and help/version (shown in Shakapacker section)
         if line.match?(/^\s*(-c,\s*)?--config\b/) ||
            line.match?(/^\s*--configName\b/) ||
            line.match?(/^\s*--configLoader\b/) ||
            line.match?(/^\s*--nodeEnv\b/) ||
            line.match?(/^\s*--host\b/) ||
-           line.match?(/^\s*--port\b/)
+           line.match?(/^\s*--port\b/) ||
+           line.match?(/^\s*(-h,\s*)?--help\b/) ||
+           line.match?(/^\s*(-v,\s*)?--version\b/)
           skip_until_blank = true
           next
         end
