@@ -5,6 +5,7 @@ require_relative "version"
 
 require "package_json"
 require "pathname"
+require "stringio"
 
 module Shakapacker
   class Runner
@@ -152,15 +153,6 @@ module Shakapacker
                                     or config/rspack/rspack.config.js
           --node-env                Set from RAILS_ENV or NODE_ENV
 
-        Common webpack/rspack options you can use:
-          -m, --mode MODE           Set mode: development, production, or none
-          -w, --watch               Watch for file changes and rebuild
-          --analyze                 Analyze bundle size (if plugin configured)
-          --json                    Emit stats as JSON
-          --profile                 Capture timing information
-          -d, --devtool TOOL        Set source map type (e.g., source-map, eval)
-          --env KEY=VALUE           Pass environment variables to config
-
         Examples:
           bin/shakapacker                              # Build for production
           bin/shakapacker --mode development           # Build for development
@@ -168,10 +160,94 @@ module Shakapacker
           bin/shakapacker --mode development --analyze # Development build with analysis
           bin/shakapacker --debug-shakapacker          # Debug with Node inspector
 
-        For complete webpack/rspack CLI documentation:
-          Webpack: https://webpack.js.org/api/cli/
-          Rspack:  https://rspack.dev/api/cli
-      HELP
+        HELP
+
+        print_bundler_help
+      end
+
+      def self.print_bundler_help
+        bundler_help = get_bundler_help
+
+        if bundler_help
+          puts "=" * 80
+          puts "AVAILABLE WEBPACK/RSPACK OPTIONS"
+          puts "=" * 80
+          puts
+          puts filter_managed_options(bundler_help)
+          puts
+        end
+
+        puts "For complete documentation:"
+        puts "  Webpack: https://webpack.js.org/api/cli/"
+        puts "  Rspack:  https://rspack.dev/api/cli"
+      end
+
+      def self.get_bundler_help
+        # Check if we're in a Rails project with necessary files
+        app_path = File.expand_path(".", Dir.pwd)
+        config_path = ENV["SHAKAPACKER_CONFIG"] || File.join(app_path, "config/shakapacker.yml")
+        return nil unless File.exist?(config_path)
+
+        # Suppress any output during config loading
+        original_stdout = $stdout
+        original_stderr = $stderr
+        $stdout = StringIO.new
+        $stderr = StringIO.new
+
+        # Try to detect bundler and get help
+        runner = new([])
+        return nil unless runner.config
+
+        cmd = if runner.config.rspack?
+                runner.package_json.manager.native_exec_command("rspack", ["--help"])
+              else
+                runner.package_json.manager.native_exec_command("webpack", ["--help"])
+              end
+
+        # Restore output before running command
+        $stdout = original_stdout
+        $stderr = original_stderr
+
+        # Capture help output
+        require "open3"
+        stdout, _stderr, status = Open3.capture3(*cmd)
+        status.success? ? stdout : nil
+      rescue StandardError => e
+        # Restore output if error occurs
+        $stdout = original_stdout if $stdout != original_stdout
+        $stderr = original_stderr if $stderr != original_stderr
+        nil
+      end
+
+      def self.filter_managed_options(help_text)
+        # Remove options that Shakapacker manages
+        lines = help_text.lines
+        filtered_lines = []
+        skip_until_blank = false
+
+        lines.each do |line|
+          # Skip config-related options
+          if line.match?(/^\s*(-c,\s*)?--config\b/) ||
+             line.match?(/^\s*--configName\b/) ||
+             line.match?(/^\s*--configLoader\b/) ||
+             line.match?(/^\s*--nodeEnv\b/)
+            skip_until_blank = true
+            next
+          end
+
+          # Reset skip flag on blank line or new option
+          if skip_until_blank
+            if line.strip.empty? || line.match?(/^\s*-/)
+              skip_until_blank = false
+            else
+              next
+            end
+          end
+
+          filtered_lines << line
+        end
+
+        filtered_lines.join
       end
 
       def self.print_version

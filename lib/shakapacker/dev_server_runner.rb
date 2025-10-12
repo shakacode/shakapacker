@@ -39,12 +39,9 @@ module Shakapacker
           --config                Set automatically to config/webpack/webpack.config.js
                                   or config/rspack/rspack.config.js
 
-        Common dev server options you can use:
-          --hot                   Enable hot module replacement (default: true)
-          --no-hot                Disable hot module replacement
-          --live-reload           Enable live reload
-          --open                  Open browser on start
-          --client-logging LEVEL  Set client log level (none, error, warn, info, log, verbose)
+        Configuration:
+          Host, port, and HTTPS are set in config/shakapacker.yml under 'dev_server'.
+          CLI flags for these options are NOT supported - use the config file.
 
         Examples:
           bin/shakapacker-dev-server                    # Start dev server
@@ -52,14 +49,96 @@ module Shakapacker
           bin/shakapacker-dev-server --open             # Open browser automatically
           bin/shakapacker-dev-server --debug-shakapacker # Debug with Node inspector
 
-        Configuration:
-          Host, port, and HTTPS are set in config/shakapacker.yml under 'dev_server'.
-          CLI flags for these options are NOT supported - use the config file.
-
-        For complete dev server documentation:
-          Webpack: https://webpack.js.org/configuration/dev-server/
-          Rspack:  https://rspack.dev/config/dev-server
       HELP
+
+      print_dev_server_help
+    end
+
+    def self.print_dev_server_help
+      bundler_help = get_dev_server_help
+
+      if bundler_help
+        puts "=" * 80
+        puts "AVAILABLE DEV SERVER OPTIONS"
+        puts "=" * 80
+        puts
+        puts filter_managed_options(bundler_help)
+        puts
+      end
+
+      puts "For complete documentation:"
+      puts "  Webpack: https://webpack.js.org/configuration/dev-server/"
+      puts "  Rspack:  https://rspack.dev/config/dev-server"
+    end
+
+    def self.get_dev_server_help
+      # Check if we're in a Rails project with necessary files
+      app_path = File.expand_path(".", Dir.pwd)
+      config_path = ENV["SHAKAPACKER_CONFIG"] || File.join(app_path, "config/shakapacker.yml")
+      return nil unless File.exist?(config_path)
+
+      # Suppress any output during config loading
+      original_stdout = $stdout
+      original_stderr = $stderr
+      $stdout = StringIO.new
+      $stderr = StringIO.new
+
+      # Try to get dev server help
+      runner = new([])
+      return nil unless runner.config
+
+      cmd = if runner.config.rspack?
+              runner.package_json.manager.native_exec_command("rspack", ["serve", "--help"])
+            else
+              runner.package_json.manager.native_exec_command("webpack", ["serve", "--help"])
+            end
+
+      # Restore output before running command
+      $stdout = original_stdout
+      $stderr = original_stderr
+
+      # Capture help output
+      require "open3"
+      stdout, _stderr, status = Open3.capture3(*cmd)
+      status.success? ? stdout : nil
+    rescue StandardError => e
+      # Restore output if error occurs
+      $stdout = original_stdout if $stdout != original_stdout
+      $stderr = original_stderr if $stderr != original_stderr
+      nil
+    end
+
+    def self.filter_managed_options(help_text)
+      # Remove options that Shakapacker manages
+      lines = help_text.lines
+      filtered_lines = []
+      skip_until_blank = false
+
+      lines.each do |line|
+        # Skip managed options
+        if line.match?(/^\s*(-c,\s*)?--config\b/) ||
+           line.match?(/^\s*--configName\b/) ||
+           line.match?(/^\s*--configLoader\b/) ||
+           line.match?(/^\s*--nodeEnv\b/) ||
+           line.match?(/^\s*--host\b/) ||
+           line.match?(/^\s*--port\b/)
+          skip_until_blank = true
+          next
+        end
+
+        # Reset skip flag on blank line or new option
+        if skip_until_blank
+          if line.strip.empty? || line.match?(/^\s*-/)
+            skip_until_blank = false
+          else
+            next
+          end
+        end
+
+        filtered_lines << line
+      end
+
+      filtered_lines.join
     end
 
     def self.print_version

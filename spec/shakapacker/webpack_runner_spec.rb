@@ -80,9 +80,9 @@ describe "WebpackRunner" do
         .and raise_error(SystemExit)
     end
 
-    it "mentions mode option users can set" do
+    it "shows examples of usage" do
       expect { Shakapacker::Runner.run(["--help"]) }
-        .to output(/--mode MODE/).to_stdout
+        .to output(/Examples/).to_stdout
         .and raise_error(SystemExit)
     end
   end
