@@ -46,21 +46,26 @@ export class FileWriter {
 
   /**
    * Generate filename for a config export
-   * Format: {bundler}-{env}-{type}.{ext}
+   * Format without build: {bundler}-{env}-{type}.{ext}
+   * Format with build: {bundler}-{build}-{type}.{ext}
    * Examples:
    *   webpack-development-client.yaml
    *   rspack-production-server.yaml
    *   webpack-test-all.json
    *   webpack-development-client-hmr.yaml
+   *   webpack-dev-client.yaml (with build name)
+   *   rspack-cypress-dev-server.yaml (with build name)
    */
   generateFilename(
     bundler: string,
     env: string,
     configType: "client" | "server" | "all" | "client-hmr",
-    format: "yaml" | "json" | "inspect"
+    format: "yaml" | "json" | "inspect",
+    buildName?: string
   ): string {
     const ext = format === "yaml" ? "yaml" : format === "json" ? "json" : "txt"
-    return `${bundler}-${env}-${configType}.${ext}`
+    const name = buildName || env
+    return `${bundler}-${name}-${configType}.${ext}`
   }
 
   private writeFile(filePath: string, content: string): void {

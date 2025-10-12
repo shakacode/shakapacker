@@ -1,7 +1,7 @@
 // This will be a substantial file - the main CLI entry point
 // Migrating from bin/export-bundler-config but streamlined for TypeScript
 
-import { existsSync, readFileSync } from "fs"
+import { existsSync, readFileSync, writeFileSync } from "fs"
 import { resolve, dirname, sep, delimiter, basename } from "path"
 import { inspect } from "util"
 import { load as loadYaml } from "js-yaml"
@@ -9,6 +9,7 @@ import yargs from "yargs"
 import { ExportOptions, ConfigMetadata, FileOutput } from "./types"
 import { YamlSerializer } from "./yamlSerializer"
 import { FileWriter } from "./fileWriter"
+import { ConfigFileLoader, generateSampleConfigFile } from "./configFile"
 
 // Read version from package.json
 const packageJson = JSON.parse(
@@ -16,10 +17,77 @@ const packageJson = JSON.parse(
 )
 const VERSION = packageJson.version
 
+/**
+ * Environment variable names that can be set by build configurations
+ */
+const BUILD_ENV_VARS = [
+  "NODE_ENV",
+  "RAILS_ENV",
+  "NODE_OPTIONS",
+  "BABEL_ENV",
+  "WEBPACK_SERVE",
+  "CLIENT_BUNDLE_ONLY",
+  "SERVER_BUNDLE_ONLY"
+] as const
+
+/**
+ * Saves current values of build environment variables for later restoration
+ * @returns Object mapping variable names to their current values (or undefined)
+ */
+function saveBuildEnvironmentVariables(): Record<string, string | undefined> {
+  const saved: Record<string, string | undefined> = {}
+  BUILD_ENV_VARS.forEach((varName) => {
+    saved[varName] = process.env[varName]
+  })
+  return saved
+}
+
+/**
+ * Restores previously saved environment variable values
+ * @param saved - Object mapping variable names to their original values
+ */
+function restoreBuildEnvironmentVariables(
+  saved: Record<string, string | undefined>
+): void {
+  BUILD_ENV_VARS.forEach((varName) => {
+    const originalValue = saved[varName]
+    if (originalValue === undefined) {
+      delete process.env[varName]
+    } else {
+      process.env[varName] = originalValue
+    }
+  })
+}
+
+/**
+ * Clears all whitelisted build environment variables from process.env
+ * to prevent environment variable leakage between builds
+ */
+function clearBuildEnvironmentVariables(): void {
+  BUILD_ENV_VARS.forEach((varName) => {
+    delete process.env[varName]
+  })
+}
+
 // Main CLI entry point
 export async function run(args: string[]): Promise<number> {
   try {
     const options = parseArguments(args)
+
+    // Handle --init command
+    if (options.init) {
+      return runInitCommand(options)
+    }
+
+    // Handle --list-builds command
+    if (options.listBuilds) {
+      return runListBuildsCommand(options)
+    }
+
+    // Handle --all-builds command
+    if (options.allBuilds) {
+      return runAllBuildsCommand(options)
+    }
 
     // Set up environment
     const appRoot = findAppRoot()
@@ -36,13 +104,26 @@ export async function run(args: string[]): Promise<number> {
       )
     }
 
+    // Validate --build requires config file
+    if (options.build) {
+      const loader = new ConfigFileLoader(options.configFile)
+      if (!loader.exists()) {
+        const configPath = options.configFile || ".bundler-config.yml"
+        throw new Error(
+          `--build requires a config file but ${configPath} not found. Run --init to create it.`
+        )
+      }
+    }
+
     // Execute based on mode
     if (options.doctor) {
       await runDoctorMode(options, appRoot)
-    } else if (options.save) {
-      await runSaveMode(options, appRoot)
-    } else {
+    } else if (options.stdout || options.output) {
+      // Explicit stdout mode or single file output
       await runStdoutMode(options, appRoot)
+    } else {
+      // Default: save to directory
+      await runSaveMode(options, appRoot)
     }
 
     return 0
@@ -65,7 +146,7 @@ QUICK START (for troubleshooting):
   bin/export-bundler-config --doctor
 
   Exports annotated YAML configs for both development and production.
-  Creates separate files for client, server, and HMR client bundles.
+  Creates separate files for client and server bundles.
   Best for debugging, AI analysis, and comparing configurations.`
     )
     .option("doctor", {
@@ -74,14 +155,15 @@ QUICK START (for troubleshooting):
       description:
         "Export all configs for troubleshooting (dev + prod, annotated YAML)"
     })
-    .option("save", {
-      type: "boolean",
-      default: false,
-      description: "Save to auto-generated file(s) (default: YAML format)"
-    })
     .option("save-dir", {
       type: "string",
-      description: "Directory for output files (requires --save)"
+      description:
+        "Directory for output files (default: shakapacker-config-exports)"
+    })
+    .option("stdout", {
+      type: "boolean",
+      default: false,
+      description: "Output to stdout instead of saving to files"
     })
     .option("bundler", {
       type: "string",
@@ -91,8 +173,8 @@ QUICK START (for troubleshooting):
     .option("env", {
       type: "string",
       choices: ["development", "production", "test"] as const,
-      default: "development" as const,
-      description: "Node environment (ignored with --doctor)"
+      description:
+        "Node environment (default: development, ignored with --doctor or --build)"
     })
     .option("client-only", {
       type: "boolean",
@@ -106,7 +188,7 @@ QUICK START (for troubleshooting):
     })
     .option("output", {
       type: "string",
-      description: "Output to specific file (default: stdout)"
+      description: "Output to specific file instead of directory"
     })
     .option("depth", {
       type: "number",
@@ -120,31 +202,75 @@ QUICK START (for troubleshooting):
     .option("format", {
       type: "string",
       choices: ["yaml", "json", "inspect"] as const,
-      description:
-        "Output format (default: inspect for stdout, yaml for --save/--doctor)"
+      description: "Output format (default: yaml for files, inspect for stdout)"
     })
     .option("annotate", {
       type: "boolean",
       description:
-        "Enable inline documentation (YAML only, default with --save/--doctor)"
+        "Enable inline documentation (YAML only, default with --doctor or file output)"
     })
     .option("verbose", {
       type: "boolean",
       default: false,
       description: "Show full output without compact mode"
     })
+    .option("init", {
+      type: "boolean",
+      default: false,
+      description: "Generate sample .bundler-config.yml with examples"
+    })
+    .option("config-file", {
+      type: "string",
+      description: "Path to config file (default: .bundler-config.yml)"
+    })
+    .option("build", {
+      type: "string",
+      description: "Export config for specific build from config file"
+    })
+    .option("list-builds", {
+      type: "boolean",
+      default: false,
+      description: "List all available builds from config file"
+    })
+    .option("all-builds", {
+      type: "boolean",
+      default: false,
+      description: "Export all builds from config file"
+    })
+    .option("webpack", {
+      type: "boolean",
+      default: false,
+      description: "Use webpack (overrides config file)"
+    })
+    .option("rspack", {
+      type: "boolean",
+      default: false,
+      description: "Use rspack (overrides config file)"
+    })
     .check((argv) => {
+      if (argv.webpack && argv.rspack) {
+        throw new Error(
+          "--webpack and --rspack are mutually exclusive. Please specify only one."
+        )
+      }
       if (argv["client-only"] && argv["server-only"]) {
         throw new Error(
           "--client-only and --server-only are mutually exclusive. Please specify only one."
         )
       }
-      if (argv["save-dir"] && !argv.save && !argv.doctor) {
-        throw new Error("--save-dir requires --save or --doctor flag.")
-      }
       if (argv.output && argv["save-dir"]) {
         throw new Error(
           "--output and --save-dir are mutually exclusive. Use one or the other."
+        )
+      }
+      if (argv.stdout && argv["save-dir"]) {
+        throw new Error(
+          "--stdout and --save-dir are mutually exclusive. Use one or the other."
+        )
+      }
+      if (argv.build && argv["all-builds"]) {
+        throw new Error(
+          "--build and --all-builds are mutually exclusive. Use one or the other."
         )
       }
       return true
@@ -153,33 +279,43 @@ QUICK START (for troubleshooting):
     .alias("help", "h")
     .epilogue(
       `Examples:
-  # RECOMMENDED: Export everything for troubleshooting
+
+  # Config File Workflow
+  bin/export-bundler-config --init
+  bin/export-bundler-config --list-builds
+  bin/export-bundler-config --build=dev
+  bin/export-bundler-config --all-builds --save-dir=./configs
+  bin/export-bundler-config --build=dev --rspack
+
+  # Traditional Workflow (without config file)
   bin/export-bundler-config --doctor
   # Creates: webpack-development-client-hmr.yaml, webpack-development-client.yaml,
   #          webpack-development-server.yaml, webpack-production-client.yaml,
   #          webpack-production-server.yaml
 
-  # Save current environment configs
-  bin/export-bundler-config --save
-  # Creates: webpack-development-client.yaml, webpack-development-server.yaml
-
-  # Save to specific directory
-  bin/export-bundler-config --save --save-dir=./debug
-
-  # Export only client config for production
-  bin/export-bundler-config --save --env=production --client-only
-  # Creates: webpack-production-client.yaml
+  bin/export-bundler-config --env=production --client-only
+  bin/export-bundler-config --save-dir=./debug
+  bin/export-bundler-config                               # Saves to shakapacker-config-exports/
 
   # View config in terminal (stdout)
-  bin/export-bundler-config`
+  bin/export-bundler-config --stdout
+  bin/export-bundler-config --output=config.yaml          # Save to specific file`
     )
     .strict()
     .parseSync()
 
   // Type assertions are safe here because yargs validates choices at runtime
+  // Handle --webpack and --rspack flags
+  let bundler: "webpack" | "rspack" | undefined = argv.bundler as
+    | "webpack"
+    | "rspack"
+    | undefined
+  if (argv.webpack) bundler = "webpack"
+  if (argv.rspack) bundler = "rspack"
+
   return {
-    bundler: argv.bundler as "webpack" | "rspack" | undefined,
-    env: argv.env as "development" | "production" | "test",
+    bundler,
+    env: argv.env as "development" | "production" | "test" | undefined,
     clientOnly: argv["client-only"],
     serverOnly: argv["server-only"],
     output: argv.output,
@@ -188,23 +324,145 @@ QUICK START (for troubleshooting):
     help: false, // yargs handles help internally
     verbose: argv.verbose,
     doctor: argv.doctor,
-    save: argv.save,
     saveDir: argv["save-dir"],
-    annotate: argv.annotate
+    stdout: argv.stdout,
+    annotate: argv.annotate,
+    init: argv.init,
+    configFile: argv["config-file"],
+    build: argv.build,
+    listBuilds: argv["list-builds"],
+    allBuilds: argv["all-builds"]
   }
 }
 
 function applyDefaults(options: ExportOptions): void {
   if (options.doctor) {
-    options.save = true
     if (options.format === undefined) options.format = "yaml"
     if (options.annotate === undefined) options.annotate = true
-  } else if (options.save) {
+  } else if (!options.stdout && !options.output) {
+    // Default mode: save to directory
     if (options.format === undefined) options.format = "yaml"
     if (options.annotate === undefined) options.annotate = true
   } else {
     if (options.format === undefined) options.format = "inspect"
     if (options.annotate === undefined) options.annotate = false
+  }
+}
+
+function runInitCommand(options: ExportOptions): number {
+  const configPath = options.configFile || ".bundler-config.yml"
+  const fullPath = resolve(process.cwd(), configPath)
+
+  if (existsSync(fullPath)) {
+    console.error(
+      `[Config Exporter] Error: Config file already exists: ${fullPath}`
+    )
+    console.error(
+      `Remove it first or use --config-file=<path> for a different location.`
+    )
+    return 1
+  }
+
+  const sampleConfig = generateSampleConfigFile()
+  writeFileSync(fullPath, sampleConfig, "utf8")
+
+  console.log(`[Config Exporter] ✅ Created config file: ${fullPath}`)
+  console.log(`\nNext steps:`)
+  console.log(`  1. Edit the config file to match your build setup`)
+  console.log(
+    `  2. List available builds: bin/export-bundler-config --list-builds`
+  )
+  console.log(
+    `  3. Export a build: bin/export-bundler-config --build=<name> --save\n`
+  )
+
+  return 0
+}
+
+function runListBuildsCommand(options: ExportOptions): number {
+  try {
+    const loader = new ConfigFileLoader(options.configFile)
+    loader.listBuilds()
+    return 0
+  } catch (error: any) {
+    console.error(`[Config Exporter] Error: ${error.message}`)
+    return 1
+  }
+}
+
+async function runAllBuildsCommand(options: ExportOptions): Promise<number> {
+  try {
+    // Set up environment
+    const appRoot = findAppRoot()
+    process.chdir(appRoot)
+    setupNodePath(appRoot)
+
+    // Apply defaults
+    applyDefaults(options)
+
+    const loader = new ConfigFileLoader(options.configFile)
+    if (!loader.exists()) {
+      const configPath = options.configFile || ".bundler-config.yml"
+      throw new Error(
+        `Config file ${configPath} not found. Run --init to create it.`
+      )
+    }
+
+    const config = loader.load()
+    const buildNames = Object.keys(config.builds)
+
+    console.log(
+      `\n📦 Exporting ${buildNames.length} builds from config file...\n`
+    )
+
+    const fileWriter = new FileWriter()
+    const defaultDir = resolve(process.cwd(), "shakapacker-config-exports")
+    const targetDir = options.saveDir || defaultDir
+    const createdFiles: string[] = []
+
+    // Export each build
+    for (const buildName of buildNames) {
+      console.log(`\n📦 Exporting build: ${buildName}`)
+
+      // Clear environment variables to prevent leakage between builds
+      clearBuildEnvironmentVariables()
+
+      // Create a modified options object for this build
+      const buildOptions = { ...options, build: buildName }
+      const configs = await loadConfigsForEnv(undefined, buildOptions, appRoot)
+
+      for (const { config: cfg, metadata } of configs) {
+        const output = formatConfig(cfg, metadata, options, appRoot)
+        const filename = fileWriter.generateFilename(
+          metadata.bundler,
+          metadata.environment,
+          metadata.configType,
+          options.format!,
+          metadata.buildName
+        )
+
+        const fullPath = resolve(targetDir, filename)
+        fileWriter.writeSingleFile(fullPath, output, true) // quiet mode
+        createdFiles.push(fullPath)
+      }
+    }
+
+    // Print summary
+    console.log("\n" + "=".repeat(80))
+    console.log("✅ All Builds Exported!")
+    console.log("=".repeat(80))
+    console.log(`\nCreated ${createdFiles.length} configuration file(s) in:`)
+    console.log(`  ${targetDir}\n`)
+    console.log("Files:")
+    createdFiles.forEach((file) => {
+      console.log(`  ✓ ${basename(file)}`)
+    })
+    console.log("\n" + "=".repeat(80) + "\n")
+
+    return 0
+  } catch (error: any) {
+    console.error(`[Config Exporter] Error: ${error.message}`)
+    return 1
   }
 }
 
@@ -215,84 +473,129 @@ async function runDoctorMode(
   console.log("\n" + "=".repeat(80))
   console.log("🔍 Config Exporter - Doctor Mode")
   console.log("=".repeat(80))
-  console.log("\nExporting development AND production configs...")
-  console.log("")
 
-  const environments: Array<"development" | "production"> = [
-    "development",
-    "production"
-  ]
   const fileWriter = new FileWriter()
   const defaultDir = resolve(process.cwd(), "shakapacker-config-exports")
   const targetDir = options.saveDir || defaultDir
 
   const createdFiles: string[] = []
 
-  for (const env of environments) {
-    console.log(`\n📦 Loading ${env} configuration...`)
+  // Check if config file exists with shakapacker_default_builds flag
+  const configFilePath = options.configFile || ".bundler-config.yml"
+  const loader = new ConfigFileLoader(configFilePath)
 
-    // For development, also load the HMR client config and server watch config
-    if (env === "development") {
-      // Save original env vars
-      const originalWebpackServe = process.env.WEBPACK_SERVE
-      const originalClientBundleOnly = process.env.CLIENT_BUNDLE_ONLY
-      const originalServerBundleOnly = process.env.SERVER_BUNDLE_ONLY
-
-      // 1. Generate HMR client config (WEBPACK_SERVE=true + CLIENT_BUNDLE_ONLY=yes)
-      process.env.WEBPACK_SERVE = "true"
-      process.env.CLIENT_BUNDLE_ONLY = "yes"
-      delete process.env.SERVER_BUNDLE_ONLY
-
-      const hmrConfigs = await loadConfigsForEnv(env, options, appRoot)
-
-      for (const { config, metadata } of hmrConfigs) {
-        // Update configType to indicate this is the HMR variant
-        const hmrMetadata: ConfigMetadata = {
-          ...metadata,
-          configType: "client-hmr"
-        }
-        const output = formatConfig(config, hmrMetadata, options, appRoot)
-        const filename = fileWriter.generateFilename(
-          metadata.bundler,
-          metadata.environment,
-          "client-hmr",
-          options.format!
+  if (loader.exists()) {
+    try {
+      const configData = loader.load()
+      if (configData.shakapacker_default_builds) {
+        console.log(
+          "\nUsing builds from config file (shakapacker_default_builds: true)...\n"
         )
+        // Use config file builds
+        const buildNames = Object.keys(configData.builds)
 
-        const fullPath = resolve(targetDir, filename)
-        fileWriter.writeSingleFile(fullPath, output, true) // quiet mode
-        createdFiles.push(fullPath)
+        for (const buildName of buildNames) {
+          console.log(`\n📦 Loading build: ${buildName}`)
+
+          // Clear environment variables to prevent leakage between builds
+          clearBuildEnvironmentVariables()
+
+          const configs = await loadConfigsForEnv(
+            undefined,
+            { ...options, build: buildName },
+            appRoot
+          )
+
+          for (const { config, metadata } of configs) {
+            const output = formatConfig(config, metadata, options, appRoot)
+            const filename = fileWriter.generateFilename(
+              metadata.bundler,
+              metadata.environment,
+              metadata.configType,
+              options.format!,
+              metadata.buildName
+            )
+            const fullPath = resolve(targetDir, filename)
+            fileWriter.writeSingleFile(fullPath, output, true) // quiet mode
+            createdFiles.push(fullPath)
+          }
+        }
+
+        // Print summary and exit early
+        printDoctorSummary(createdFiles, targetDir)
+        return
       }
+    } catch (error: any) {
+      // If config file exists but is invalid, warn and fall through to default behavior
+      console.log(`\n⚠️  Config file found but invalid: ${error.message}`)
+      console.log("Falling back to default doctor mode...\n")
+    }
+  }
 
-      // Restore original env vars
-      if (originalWebpackServe === undefined) {
-        delete process.env.WEBPACK_SERVE
-      } else {
+  // Default behavior: hardcoded configs
+  console.log("\nExporting all development and production configs...")
+  console.log("")
+
+  const configsToExport = [
+    { label: "development (HMR)", env: "development" as const, hmr: true },
+    { label: "development", env: "development" as const, hmr: false },
+    { label: "production", env: "production" as const, hmr: false }
+  ]
+
+  for (const { label, env, hmr } of configsToExport) {
+    console.log(`\n📦 Loading ${label} configuration...`)
+
+    // Set WEBPACK_SERVE for HMR config
+    const originalWebpackServe = process.env.WEBPACK_SERVE
+    if (hmr) {
+      process.env.WEBPACK_SERVE = "true"
+    }
+
+    const configs = await loadConfigsForEnv(env, options, appRoot)
+
+    // Restore original WEBPACK_SERVE
+    if (hmr) {
+      if (originalWebpackServe) {
         process.env.WEBPACK_SERVE = originalWebpackServe
-      }
-      if (originalClientBundleOnly === undefined) {
-        delete process.env.CLIENT_BUNDLE_ONLY
       } else {
-        process.env.CLIENT_BUNDLE_ONLY = originalClientBundleOnly
-      }
-      if (originalServerBundleOnly === undefined) {
-        delete process.env.SERVER_BUNDLE_ONLY
-      } else {
-        process.env.SERVER_BUNDLE_ONLY = originalServerBundleOnly
+        delete process.env.WEBPACK_SERVE
       }
     }
 
-    // Load standard configs (no CLIENT_BUNDLE_ONLY or SERVER_BUNDLE_ONLY)
-    const configs = await loadConfigsForEnv(env, options, appRoot)
-
     for (const { config, metadata } of configs) {
       const output = formatConfig(config, metadata, options, appRoot)
-      const filename = fileWriter.generateFilename(
-        metadata.bundler,
-        metadata.environment,
-        metadata.configType,
-        options.format!
-      )
+
+      // Adjust filename for HMR config
+      let filename: string
+      if (
+        hmr &&
+        (metadata.configType === "client" || metadata.configType === "all")
+      ) {
+        /**
+         * HMR Mode Filename Logic:
+         * - When WEBPACK_SERVE=true, webpack-dev-server runs and HMR is enabled
+         * - HMR only applies to client bundles (server bundles don't use HMR)
+         * - If configType is "all", we still only generate client file for HMR
+         *   because the server bundle is identical to non-HMR development
+         * - Filename uses "client" type and "development-hmr" build name to
+         *   distinguish it from regular development client bundle
+         */
+        filename = fileWriter.generateFilename(
+          metadata.bundler,
+          metadata.environment,
+          "client",
+          options.format!,
+          "development-hmr"
+        )
+      } else {
+        filename = fileWriter.generateFilename(
+          metadata.bundler,
+          metadata.environment,
+          metadata.configType,
+          options.format!,
+          metadata.buildName
+        )
+      }
 
       const fullPath = resolve(targetDir, filename)
       const fileOutput: FileOutput = { filename, content: output, metadata }
@@ -301,6 +604,10 @@ async function runDoctorMode(
     }
   }
 
+  printDoctorSummary(createdFiles, targetDir)
+}
+
+function printDoctorSummary(createdFiles: string[], targetDir: string): void {
   // Print summary
   console.log("\n" + "=".repeat(80))
   console.log("✅ Export Complete!")
@@ -339,11 +646,13 @@ async function runSaveMode(
   options: ExportOptions,
   appRoot: string
 ): Promise<void> {
-  console.log(`[Config Exporter] Save mode: Exporting ${options.env} configs`)
+  const env = options.env || "development"
+  console.log(`[Config Exporter] Exporting ${env} configs`)
 
   const fileWriter = new FileWriter()
-  const targetDir = options.saveDir || process.cwd()
-  const configs = await loadConfigsForEnv(options.env!, options, appRoot)
+  const defaultDir = resolve(process.cwd(), "shakapacker-config-exports")
+  const targetDir = options.saveDir || defaultDir
+  const configs = await loadConfigsForEnv(options.env, options, appRoot)
 
   if (options.output) {
     // Single file output
@@ -366,7 +675,8 @@ async function runSaveMode(
         metadata.bundler,
         metadata.environment,
         metadata.configType,
-        options.format!
+        options.format!,
+        metadata.buildName
       )
       fileWriter.writeSingleFile(resolve(targetDir, filename), output)
     }
@@ -390,16 +700,105 @@ async function runStdoutMode(
 }
 
 async function loadConfigsForEnv(
-  env: "development" | "production" | "test",
+  env: "development" | "production" | "test" | undefined,
   options: ExportOptions,
   appRoot: string
 ): Promise<Array<{ config: any; metadata: ConfigMetadata }>> {
-  // Auto-detect bundler if not specified
-  const bundler = options.bundler || (await autoDetectBundler(env, appRoot))
+  let bundler: "webpack" | "rspack"
+  let buildName: string | undefined
+  let buildOutputs: string[] = []
+  let customConfigFile: string | undefined
+  let finalEnv: "development" | "production" | "test"
 
-  // Set environment variables
-  process.env.NODE_ENV = env
-  process.env.RAILS_ENV = env
+  // If using config file build
+  if (options.build) {
+    // Use a temporary env for auto-detection, will be overridden by build config
+    const tempEnv = env || "development"
+    const loader = new ConfigFileLoader(options.configFile)
+    const defaultBundler = await autoDetectBundler(tempEnv, appRoot)
+    const resolvedBuild = loader.resolveBuild(
+      options.build,
+      options,
+      defaultBundler
+    )
+
+    bundler = resolvedBuild.bundler
+    buildName = resolvedBuild.name
+    buildOutputs = resolvedBuild.outputs
+    customConfigFile = resolvedBuild.configFile
+
+    // Set environment variables from config
+    // Security: Only allow specific environment variables to prevent malicious configs
+    const ALLOWED_ENV_VARS = [
+      "NODE_ENV",
+      "RAILS_ENV",
+      "NODE_OPTIONS",
+      "BABEL_ENV",
+      "WEBPACK_SERVE",
+      "CLIENT_BUNDLE_ONLY",
+      "SERVER_BUNDLE_ONLY"
+    ]
+    const DANGEROUS_ENV_VARS = [
+      "PATH",
+      "HOME",
+      "LD_PRELOAD",
+      "LD_LIBRARY_PATH",
+      "DYLD_LIBRARY_PATH",
+      "DYLD_INSERT_LIBRARIES"
+    ]
+
+    for (const [key, value] of Object.entries(resolvedBuild.environment)) {
+      if (DANGEROUS_ENV_VARS.includes(key)) {
+        console.warn(
+          `[Config Exporter] Warning: Skipping dangerous environment variable: ${key}`
+        )
+        continue
+      }
+      if (!ALLOWED_ENV_VARS.includes(key)) {
+        console.warn(
+          `[Config Exporter] Warning: Skipping non-whitelisted environment variable: ${key}. ` +
+            `Allowed variables are: ${ALLOWED_ENV_VARS.join(", ")}`
+        )
+        continue
+      }
+      process.env[key] = value
+    }
+
+    // Determine final env: CLI flag > build config NODE_ENV > default
+    if (options.env) {
+      finalEnv = options.env
+    } else if (resolvedBuild.environment.NODE_ENV) {
+      const nodeEnv = resolvedBuild.environment.NODE_ENV
+      const allowedEnvs = ["development", "production", "test"]
+      if (allowedEnvs.includes(nodeEnv)) {
+        finalEnv = nodeEnv as "development" | "production" | "test"
+      } else {
+        throw new Error(
+          `Invalid NODE_ENV value in config: "${nodeEnv}". ` +
+            `Allowed values are: ${allowedEnvs.join(", ")}.`
+        )
+      }
+    } else {
+      finalEnv = "development"
+    }
+
+    // Sync process.env to reflect resolved environment
+    process.env.NODE_ENV = finalEnv
+    // Determine RAILS_ENV: CLI env option > build config RAILS_ENV > finalEnv
+    const railsEnv =
+      options.env || resolvedBuild.environment.RAILS_ENV || finalEnv
+    process.env.RAILS_ENV = railsEnv
+  } else {
+    // No build config - use CLI env or default
+    finalEnv = env || "development"
+
+    // Auto-detect bundler if not specified
+    bundler = options.bundler || (await autoDetectBundler(finalEnv, appRoot))
+
+    // Set environment variables
+    process.env.NODE_ENV = finalEnv
+    process.env.RAILS_ENV = finalEnv
+  }
 
   if (options.clientOnly) {
     process.env.CLIENT_BUNDLE_ONLY = "yes"
@@ -408,12 +807,15 @@ async function loadConfigsForEnv(
   }
 
   // Find and load config file
-  const configFile = findConfigFile(bundler, appRoot)
+  const configFile = customConfigFile || findConfigFile(bundler, appRoot)
   // Quiet mode for cleaner output - only show if verbose or errors
   if (process.env.VERBOSE) {
     console.log(`[Config Exporter] Loading config: ${configFile}`)
-    console.log(`[Config Exporter] Environment: ${env}`)
+    console.log(`[Config Exporter] Environment: ${finalEnv}`)
     console.log(`[Config Exporter] Bundler: ${bundler}`)
+    if (buildName) {
+      console.log(`[Config Exporter] Build: ${buildName}`)
+    }
   }
 
   // Load the config
@@ -431,8 +833,26 @@ async function loadConfigsForEnv(
   }
 
   // Clear require cache for config file and all related modules
-  // This is critical for loading different environments in the same process
-  // MUST clear shakapacker env module cache so env.nodeEnv is re-read!
+  /**
+   * AGGRESSIVE REQUIRE CACHE CLEARING
+   *
+   * Why: This tool can load multiple environments (dev/prod) and builds in a
+   * single process. Node's require cache prevents modules from re-evaluating,
+   * which causes stale environment values (NODE_ENV, etc.) to persist.
+   *
+   * What: Clears cache for:
+   * - Webpack/rspack config files (they read process.env)
+   * - Shakapacker modules (env detection, config loading)
+   * - Config directory files (custom helpers that may read env)
+   *
+   * Trade-offs:
+   * - More reliable: Ensures each build gets fresh environment
+   * - Potentially brittle: String matching on paths (but comprehensive)
+   * - Performance: Minimal impact since this runs per-build, not per-file
+   *
+   * Maintenance: If adding new shakapacker modules that read env vars,
+   * ensure their paths are covered by the patterns below.
+   */
   const configDir = dirname(configFile)
   Object.keys(require.cache).forEach((key) => {
     if (
@@ -468,13 +888,29 @@ async function loadConfigsForEnv(
   configs.forEach((cfg, index) => {
     let configType: "client" | "server" | "all" = "all"
 
-    // Try to infer config type from the config itself
-    if (configs.length === 2) {
+    // Use outputs from build config if available
+    if (
+      buildOutputs.length > 0 &&
+      index < buildOutputs.length &&
+      buildOutputs[index]
+    ) {
+      const outputValue = buildOutputs[index]
+      // Validate the output value is a valid config type
+      if (
+        outputValue === "client" ||
+        outputValue === "server" ||
+        outputValue === "all"
+      ) {
+        configType = outputValue
+      } else {
+        throw new Error(
+          `Invalid output type '${outputValue}' at index ${index} in build '${buildName}'. ` +
+            `Allowed values are: client, server, all`
+        )
+      }
+    } else if (configs.length === 2) {
       // Likely client and server configs
       configType = index === 0 ? "client" : "server"
-    } else if (configs.length === 1 && process.env.WEBPACK_SERVE === "true") {
-      // WEBPACK_SERVE returns single client config for HMR
-      configType = "client"
     } else if (options.clientOnly) {
       configType = "client"
     } else if (options.serverOnly) {
@@ -484,10 +920,11 @@ async function loadConfigsForEnv(
     const metadata: ConfigMetadata = {
       exportedAt: new Date().toISOString(),
       bundler,
-      environment: env,
+      environment: finalEnv,
       configFile,
       configType,
       configCount: configs.length,
+      buildName,
       environmentVariables: {
         NODE_ENV: process.env.NODE_ENV,
         RAILS_ENV: process.env.RAILS_ENV,
@@ -630,6 +1067,19 @@ function cleanConfig(obj: any, rootPath: string): any {
   return clean(obj)
 }
 
+/**
+ * Auto-detects bundler from shakapacker.yml
+ *
+ * Error Handling Strategy:
+ * - Invalid bundler → warns and defaults to webpack (graceful fallback)
+ * - Config read errors → warns and defaults to webpack (graceful fallback)
+ *
+ * Rationale for warnings vs errors:
+ * - This reads shakapacker.yml (infrastructure config), not user build config
+ * - Failures here should not block the tool; defaulting to webpack is safe
+ * - Contrast with NODE_ENV validation in build configs, which throws errors
+ *   because invalid NODE_ENV would produce incorrect builds
+ */
 async function autoDetectBundler(
   env: string,
   appRoot: string
