@@ -83,51 +83,30 @@ module Shakapacker
     end
 
     def self.get_dev_server_help
-      # Check if we're in a Rails project with necessary files
-      app_path = File.expand_path(".", Dir.pwd)
-      config_path = ENV["SHAKAPACKER_CONFIG"] || File.join(app_path, "config/shakapacker.yml")
-      return [nil, nil] unless File.exist?(config_path)
-
-      # Suppress any output during config loading
-      original_stdout = $stdout
-      original_stderr = $stderr
-      $stdout = StringIO.new
-      $stderr = StringIO.new
-
-      # Try to get dev server help
-      runner = new([])
-      return [nil, nil] unless runner.config
-
-      bundler_type = runner.config.rspack? ? :rspack : :webpack
-      cmd = if bundler_type == :rspack
-        runner.package_json.manager.native_exec_command("rspack", ["serve", "--help"])
-            else
-              runner.package_json.manager.native_exec_command("webpack", ["serve", "--help"])
-      end
-
-      # Restore output before running command
-      $stdout = original_stdout
-      $stderr = original_stderr
-
-      # Capture help output
-      require "open3"
-      stdout, _stderr, status = Open3.capture3(*cmd)
-      [bundler_type, (status.success? ? stdout : nil)]
-    rescue StandardError => e
-      # Restore output if error occurs
-      $stdout = original_stdout if $stdout != original_stdout
-      $stderr = original_stderr if $stderr != original_stderr
-      [nil, nil]
+      Runner.execute_bundler_command("serve", "--help") { |stdout| stdout }
     end
 
+    # Filter dev server help output to remove Shakapacker-managed options
+    #
+    # This method processes the raw help output from webpack-dev-server/rspack serve
+    # and removes options that Shakapacker manages automatically:
+    # - --config (set from config/webpack or config/rspack)
+    # - --host, --port (set from config/shakapacker.yml dev_server settings)
+    # - --help, --version (shown separately in Shakapacker's help)
+    #
+    # The filtering uses skip_until_blank to track multi-line option descriptions
+    # and skip them entirely when the option header matches a managed option.
+    #
+    # Note: This relies on dev server help format conventions. If webpack-dev-server
+    # or rspack significantly changes their help output format, this may need adjustment.
     def self.filter_managed_options(help_text)
-      # Remove options that Shakapacker manages
       lines = help_text.lines
       filtered_lines = []
       skip_until_blank = false
 
       lines.each do |line|
-        # Skip managed options and help/version (shown in Shakapacker section)
+        # Skip options that Shakapacker manages and their descriptions
+        # These options are shown in the "Options managed by Shakapacker" section
         if line.match?(/^\s*(-c,\s*)?--config\b/) ||
            line.match?(/^\s*--configName\b/) ||
            line.match?(/^\s*--configLoader\b/) ||
@@ -140,7 +119,8 @@ module Shakapacker
           next
         end
 
-        # Reset skip flag on blank line or new option
+        # Continue skipping lines that are part of a filtered option's description
+        # Reset when we hit a blank line or the start of a new option (starts with -)
         if skip_until_blank
           if line.strip.empty? || line.match?(/^\s*-/)
             skip_until_blank = false

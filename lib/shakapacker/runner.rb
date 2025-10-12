@@ -195,58 +195,38 @@ module Shakapacker
       end
 
       def self.get_bundler_help
-        # Check if we're in a Rails project with necessary files
-        app_path = File.expand_path(".", Dir.pwd)
-        config_path = ENV["SHAKAPACKER_CONFIG"] || File.join(app_path, "config/shakapacker.yml")
-        return [nil, nil] unless File.exist?(config_path)
-
-        # Suppress any output during config loading
-        original_stdout = $stdout
-        original_stderr = $stderr
-        $stdout = StringIO.new
-        $stderr = StringIO.new
-
-        # Try to detect bundler and get help
-        runner = new([])
-        return [nil, nil] unless runner.config
-
-        bundler_type = runner.config.rspack? ? :rspack : :webpack
-        cmd = if bundler_type == :rspack
-          runner.package_json.manager.native_exec_command("rspack", ["--help"])
-              else
-                runner.package_json.manager.native_exec_command("webpack", ["--help"])
-        end
-
-        # Restore output before running command
-        $stdout = original_stdout
-        $stderr = original_stderr
-
-        # Capture help output
-        require "open3"
-        stdout, _stderr, status = Open3.capture3(*cmd)
-        [bundler_type, (status.success? ? stdout : nil)]
-      rescue StandardError => e
-        # Restore output if error occurs
-        $stdout = original_stdout if $stdout != original_stdout
-        $stderr = original_stderr if $stderr != original_stderr
-        [nil, nil]
+        execute_bundler_command("--help") { |stdout| stdout }
       end
 
+      # Filter bundler help output to remove Shakapacker-managed options
+      #
+      # This method processes the raw help output from webpack/rspack and removes:
+      # 1. Command sections (e.g., "Commands: webpack build")
+      # 2. Options that Shakapacker manages automatically (--config, --nodeEnv, etc.)
+      # 3. Help/version flags (shown separately in Shakapacker's help)
+      #
+      # The filtering uses stateful line-by-line processing:
+      # - in_commands_section: tracks when we're inside a Commands: block
+      # - skip_until_blank: tracks multi-line option descriptions to skip entirely
+      #
+      # Note: This relies on bundler help format conventions. If webpack/rspack
+      # significantly changes their help output format, this may need adjustment.
       def self.filter_managed_options(help_text)
-        # Remove options that Shakapacker manages and command sections
         lines = help_text.lines
         filtered_lines = []
         skip_until_blank = false
         in_commands_section = false
 
         lines.each do |line|
-          # Skip the [options] line and Commands section
+          # Skip the [options] line and Commands section headers
+          # These appear in formats like "[options]" or "Commands:"
           if line.match?(/^\[options\]/) || line.match?(/^Commands:/)
             in_commands_section = true
             next
           end
 
-          # Skip until we hit Options: section or blank line after commands
+          # Continue skipping until we exit the commands section
+          # Exit when we hit "Options:" header or double blank lines
           if in_commands_section
             if line.match?(/^Options:/) || (line.strip.empty? && filtered_lines.last&.strip&.empty?)
               in_commands_section = false
@@ -255,7 +235,8 @@ module Shakapacker
             end
           end
 
-          # Skip config-related options and help/version (shown in Shakapacker section)
+          # Skip options that Shakapacker manages and their descriptions
+          # These options are shown in the "Options managed by Shakapacker" section
           if line.match?(/^\s*(-c,\s*)?--config\b/) ||
              line.match?(/^\s*--configName\b/) ||
              line.match?(/^\s*--configLoader\b/) ||
@@ -266,7 +247,8 @@ module Shakapacker
             next
           end
 
-          # Reset skip flag on blank line or new option
+          # Continue skipping lines that are part of a filtered option's description
+          # Reset when we hit a blank line or the start of a new option (starts with -)
           if skip_until_blank
             if line.strip.empty? || line.match?(/^\s*-/)
               skip_until_blank = false
@@ -294,41 +276,57 @@ module Shakapacker
       end
 
       def self.get_bundler_version
+        execute_bundler_command("--version") { |stdout| stdout.strip }
+      end
+
+      # Shared helper to execute bundler commands with output suppression
+      # Returns [bundler_type, processed_output] or [nil, nil] on error
+      #
+      # @param bundler_args [String, Array<String>] Arguments to pass to bundler command
+      # @yield [stdout] Block to process the command output
+      # @yieldparam stdout [String] The raw stdout from the bundler command
+      # @yieldreturn [Object] The processed output to return
+      def self.execute_bundler_command(*bundler_args)
         # Check if we're in a Rails project with necessary files
         app_path = File.expand_path(".", Dir.pwd)
         config_path = ENV["SHAKAPACKER_CONFIG"] || File.join(app_path, "config/shakapacker.yml")
         return [nil, nil] unless File.exist?(config_path)
 
-        # Suppress any output during config loading
         original_stdout = $stdout
         original_stderr = $stderr
-        $stdout = StringIO.new
-        $stderr = StringIO.new
 
-        # Try to detect bundler and get version
-        runner = new([])
-        return [nil, nil] unless runner.config
+        begin
+          # Suppress any output during config loading
+          $stdout = StringIO.new
+          $stderr = StringIO.new
 
-        bundler_type = runner.config.rspack? ? :rspack : :webpack
-        cmd = if bundler_type == :rspack
-          runner.package_json.manager.native_exec_command("rspack", ["--version"])
-              else
-                runner.package_json.manager.native_exec_command("webpack", ["--version"])
+          # Try to detect bundler type
+          runner = new([])
+          return [nil, nil] unless runner.config
+
+          bundler_type = runner.config.rspack? ? :rspack : :webpack
+          bundler_name = bundler_type == :rspack ? "rspack" : "webpack"
+          cmd = runner.package_json.manager.native_exec_command(bundler_name, bundler_args.flatten)
+
+          # Restore output before running command
+          $stdout = original_stdout
+          $stderr = original_stderr
+
+          # Capture command output
+          require "open3"
+          stdout, _stderr, status = Open3.capture3(*cmd)
+          return [nil, nil] unless status.success?
+
+          # Process output using the provided block
+          processed_output = yield(stdout)
+          [bundler_type, processed_output]
+        rescue StandardError => e
+          [nil, nil]
+        ensure
+          # Always restore output streams
+          $stdout = original_stdout
+          $stderr = original_stderr
         end
-
-        # Restore output before running command
-        $stdout = original_stdout
-        $stderr = original_stderr
-
-        # Capture version output
-        require "open3"
-        stdout, _stderr, status = Open3.capture3(*cmd)
-        [bundler_type, (status.success? ? stdout.strip : nil)]
-      rescue StandardError => e
-        # Restore output if error occurs
-        $stdout = original_stdout if $stdout != original_stdout
-        $stderr = original_stderr if $stderr != original_stderr
-        [nil, nil]
       end
 
     private
