@@ -151,10 +151,10 @@ module.exports = [
   // 2. Potential breaking changes (module system)
   // 3. Significant code restructuring
   //
-  // GitHub Issues:
-  // TODO: Create issue for type safety refactoring
-  // TODO: Create issue for module system modernization
-  // TODO: Create issue for code style improvements
+  // GitHub Issues tracking this technical debt:
+  // - #707: TypeScript: Refactor configExporter module for type safety
+  // - #708: Module System: Modernize to ES6 modules with codemod
+  // - #709: Code Style: Fix remaining ESLint style issues
   {
     files: ["package/configExporter/**/*.ts"],
     rules: {
