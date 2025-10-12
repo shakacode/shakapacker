@@ -144,7 +144,17 @@ module.exports = [
   },
 
   // Temporary overrides for files with remaining errors
-  // TODO: Remove these overrides incrementally as errors are fixed
+  // See ESLINT_TECHNICAL_DEBT.md for detailed documentation
+  //
+  // These overrides suppress ~172 errors that require either:
+  // 1. Major type refactoring (any/unsafe-* rules)
+  // 2. Potential breaking changes (module system)
+  // 3. Significant code restructuring
+  //
+  // GitHub Issues:
+  // TODO: Create issue for type safety refactoring
+  // TODO: Create issue for module system modernization
+  // TODO: Create issue for code style improvements
   {
     files: ["package/configExporter/**/*.ts"],
     rules: {
