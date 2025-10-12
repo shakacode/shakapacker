@@ -25,10 +25,10 @@ const getStyleRule = (
 
     const extractionPlugin =
       config.assets_bundler === "rspack"
-        ? (requireOrError("@rspack/core")).CssExtractRspackPlugin
-            .loader
-        : (requireOrError("mini-css-extract-plugin"))
-            .loader
+        ? requireOrError<{
+            CssExtractRspackPlugin: { loader: string }
+          }>("@rspack/core").CssExtractRspackPlugin.loader
+        : requireOrError<{ loader: string }>("mini-css-extract-plugin").loader
 
     const use = [
       inliningCss ? "style-loader" : extractionPlugin,
