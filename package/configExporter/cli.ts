@@ -103,13 +103,6 @@ QUICK START (for troubleshooting):
       description:
         "Export all configs for troubleshooting (dev + prod, annotated YAML)"
     })
-    .option("save", {
-      type: "boolean",
-      default: false,
-      deprecated:
-        "No longer needed - saving is now the default behavior. Use --stdout for terminal output.",
-      hidden: true
-    })
     .option("save-dir", {
       type: "string",
       description:
@@ -280,7 +273,6 @@ QUICK START (for troubleshooting):
     help: false, // yargs handles help internally
     verbose: argv.verbose,
     doctor: argv.doctor,
-    save: argv.save,
     saveDir: argv["save-dir"],
     stdout: argv.stdout,
     annotate: argv.annotate,

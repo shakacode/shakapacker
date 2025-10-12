@@ -1,6 +1,5 @@
 export interface ExportOptions {
   doctor?: boolean
-  save?: boolean
   saveDir?: string
   stdout?: boolean
   bundler?: "webpack" | "rspack"
