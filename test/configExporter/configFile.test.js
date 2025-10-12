@@ -298,15 +298,16 @@ builds:
       const loader = new ConfigFileLoader(configPath)
       const resolved = loader.resolveBuild("test", {}, "webpack")
 
-      // Actual behavior: All values become strings via YAML->JS->string conversion
-      // Expected format: ['--env', 'target=modern', '--env', 'instrumented=true', '--env', 'disabled=false']
+      // YAML parses booleans as true/false, or as strings "true"/"false"
+      // The code handles both cases: true or "true" becomes a flag, false/"false" is ignored
+      // Expected format: ['--env', 'target=modern', '--env', 'instrumented']
       expect(resolved.bundlerEnvArgs).toContain("--env")
       expect(resolved.bundlerEnvArgs).toContain("target=modern")
 
-      // Boolean values become "key=true" or "key=false" strings
+      // Boolean true becomes a flag (--env key), false is ignored
       const argsString = resolved.bundlerEnvArgs.join(" ")
-      expect(argsString).toContain("--env instrumented=true")
-      expect(argsString).toContain("--env disabled=false")
+      expect(argsString).toContain("--env instrumented")
+      expect(argsString).not.toContain("disabled")
     })
   })
 })

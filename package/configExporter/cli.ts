@@ -361,6 +361,11 @@ function applyDefaults(options: ExportOptions): void {
     if (options.format === undefined) options.format = "inspect"
     if (options.annotate === undefined) options.annotate = false
   }
+
+  // Set default save directory for file output modes
+  if (!options.stdout && !options.output && !options.saveDir) {
+    options.saveDir = resolve(process.cwd(), "shakapacker-config-exports")
+  }
 }
 
 function runInitCommand(options: ExportOptions): number {
@@ -405,6 +410,9 @@ function runListBuildsCommand(options: ExportOptions): number {
 }
 
 async function runAllBuildsCommand(options: ExportOptions): Promise<number> {
+  // Save original environment to restore after all builds
+  const savedEnv = saveBuildEnvironmentVariables()
+
   try {
     // Set up environment
     const appRoot = findAppRoot()
@@ -430,16 +438,16 @@ async function runAllBuildsCommand(options: ExportOptions): Promise<number> {
     )
 
     const fileWriter = new FileWriter()
-    const defaultDir = resolve(process.cwd(), "shakapacker-config-exports")
-    const targetDir = options.saveDir || defaultDir
+    const targetDir = options.saveDir! // Set by applyDefaults
     const createdFiles: string[] = []
 
     // Export each build
     for (const buildName of buildNames) {
       console.log(`\n📦 Exporting build: ${buildName}`)
 
-      // Clear environment variables to prevent leakage between builds
+      // Clear and restore environment to prevent leakage between builds
       clearBuildEnvironmentVariables()
+      restoreBuildEnvironmentVariables(savedEnv)
 
       // Create a modified options object for this build
       const buildOptions = { ...options, build: buildName }
@@ -477,6 +485,9 @@ async function runAllBuildsCommand(options: ExportOptions): Promise<number> {
   } catch (error: any) {
     console.error(`[Config Exporter] Error: ${error.message}`)
     return 1
+  } finally {
+    // Restore original environment
+    restoreBuildEnvironmentVariables(savedEnv)
   }
 }
 
@@ -484,141 +495,143 @@ async function runDoctorMode(
   options: ExportOptions,
   appRoot: string
 ): Promise<void> {
-  console.log("\n" + "=".repeat(80))
-  console.log("🔍 Config Exporter - Doctor Mode")
-  console.log("=".repeat(80))
+  // Save original environment to restore after all builds
+  const savedEnv = saveBuildEnvironmentVariables()
 
-  const fileWriter = new FileWriter()
-  const defaultDir = resolve(process.cwd(), "shakapacker-config-exports")
-  const targetDir = options.saveDir || defaultDir
+  try {
+    console.log("\n" + "=".repeat(80))
+    console.log("🔍 Config Exporter - Doctor Mode")
+    console.log("=".repeat(80))
 
-  const createdFiles: string[] = []
+    const fileWriter = new FileWriter()
+    const targetDir = options.saveDir! // Set by applyDefaults
 
-  // Check if config file exists with shakapacker_doctor_default_builds_here flag
-  const configFilePath = options.configFile || ".bundler-config.yml"
-  const loader = new ConfigFileLoader(configFilePath)
+    const createdFiles: string[] = []
 
-  if (loader.exists()) {
-    try {
-      const configData = loader.load()
-      if (configData.shakapacker_doctor_default_builds_here) {
-        console.log(
-          "\nUsing builds from config file (shakapacker_doctor_default_builds_here: true)...\n"
-        )
-        // Use config file builds
-        const buildNames = Object.keys(configData.builds)
+    // Check if config file exists with shakapacker_doctor_default_builds_here flag
+    const configFilePath = options.configFile || ".bundler-config.yml"
+    const loader = new ConfigFileLoader(configFilePath)
 
-        for (const buildName of buildNames) {
-          console.log(`\n📦 Loading build: ${buildName}`)
-
-          // Clear environment variables to prevent leakage between builds
-          clearBuildEnvironmentVariables()
-
-          const configs = await loadConfigsForEnv(
-            undefined,
-            { ...options, build: buildName },
-            appRoot
+    if (loader.exists()) {
+      try {
+        const configData = loader.load()
+        if (configData.shakapacker_doctor_default_builds_here) {
+          console.log(
+            "\nUsing builds from config file (shakapacker_doctor_default_builds_here: true)...\n"
           )
+          // Use config file builds
+          const buildNames = Object.keys(configData.builds)
 
-          for (const { config, metadata } of configs) {
-            const output = formatConfig(config, metadata, options, appRoot)
-            const filename = fileWriter.generateFilename(
-              metadata.bundler,
-              metadata.environment,
-              metadata.configType,
-              options.format!,
-              metadata.buildName
+          for (const buildName of buildNames) {
+            console.log(`\n📦 Loading build: ${buildName}`)
+
+            // Clear and restore environment to prevent leakage between builds
+            clearBuildEnvironmentVariables()
+            restoreBuildEnvironmentVariables(savedEnv)
+
+            const configs = await loadConfigsForEnv(
+              undefined,
+              { ...options, build: buildName },
+              appRoot
             )
-            const fullPath = resolve(targetDir, filename)
-            fileWriter.writeSingleFile(fullPath, output)
-            createdFiles.push(fullPath)
+
+            for (const { config, metadata } of configs) {
+              const output = formatConfig(config, metadata, options, appRoot)
+              const filename = fileWriter.generateFilename(
+                metadata.bundler,
+                metadata.environment,
+                metadata.configType,
+                options.format!,
+                metadata.buildName
+              )
+              const fullPath = resolve(targetDir, filename)
+              fileWriter.writeSingleFile(fullPath, output)
+              createdFiles.push(fullPath)
+            }
           }
+
+          // Print summary and exit early
+          printDoctorSummary(createdFiles, targetDir)
+          return
+        }
+      } catch (error: any) {
+        // If config file exists but is invalid, warn and fall through to default behavior
+        console.log(`\n⚠️  Config file found but invalid: ${error.message}`)
+        console.log("Falling back to default doctor mode...\n")
+      }
+    }
+
+    // Default behavior: hardcoded configs
+    console.log("\nExporting all development and production configs...")
+    console.log("")
+
+    const configsToExport = [
+      { label: "development (HMR)", env: "development" as const, hmr: true },
+      { label: "development", env: "development" as const, hmr: false },
+      { label: "production", env: "production" as const, hmr: false }
+    ]
+
+    for (const { label, env, hmr } of configsToExport) {
+      console.log(`\n📦 Loading ${label} configuration...`)
+
+      // Clear and restore environment to prevent leakage between builds
+      clearBuildEnvironmentVariables()
+      restoreBuildEnvironmentVariables(savedEnv)
+
+      // Set WEBPACK_SERVE for HMR config
+      if (hmr) {
+        process.env.WEBPACK_SERVE = "true"
+      }
+
+      const configs = await loadConfigsForEnv(env, options, appRoot)
+
+      for (const { config, metadata } of configs) {
+        const output = formatConfig(config, metadata, options, appRoot)
+
+        // Adjust filename for HMR config
+        let filename: string
+        if (
+          hmr &&
+          (metadata.configType === "client" || metadata.configType === "all")
+        ) {
+          /**
+           * HMR Mode Filename Logic:
+           * - When WEBPACK_SERVE=true, webpack-dev-server runs and HMR is enabled
+           * - HMR only applies to client bundles (server bundles don't use HMR)
+           * - If configType is "all", we still only generate client file for HMR
+           *   because the server bundle is identical to non-HMR development
+           * - Filename uses "client" type and "development-hmr" build name to
+           *   distinguish it from regular development client bundle
+           */
+          filename = fileWriter.generateFilename(
+            metadata.bundler,
+            metadata.environment,
+            "client",
+            options.format!,
+            "development-hmr"
+          )
+        } else {
+          filename = fileWriter.generateFilename(
+            metadata.bundler,
+            metadata.environment,
+            metadata.configType,
+            options.format!,
+            metadata.buildName
+          )
         }
 
-        // Print summary and exit early
-        printDoctorSummary(createdFiles, targetDir)
-        return
+        const fullPath = resolve(targetDir, filename)
+        const fileOutput: FileOutput = { filename, content: output, metadata }
+        fileWriter.writeSingleFile(fullPath, output)
+        createdFiles.push(fullPath)
       }
-    } catch (error: any) {
-      // If config file exists but is invalid, warn and fall through to default behavior
-      console.log(`\n⚠️  Config file found but invalid: ${error.message}`)
-      console.log("Falling back to default doctor mode...\n")
     }
+
+    printDoctorSummary(createdFiles, targetDir)
+  } finally {
+    // Restore original environment
+    restoreBuildEnvironmentVariables(savedEnv)
   }
-
-  // Default behavior: hardcoded configs
-  console.log("\nExporting all development and production configs...")
-  console.log("")
-
-  const configsToExport = [
-    { label: "development (HMR)", env: "development" as const, hmr: true },
-    { label: "development", env: "development" as const, hmr: false },
-    { label: "production", env: "production" as const, hmr: false }
-  ]
-
-  for (const { label, env, hmr } of configsToExport) {
-    console.log(`\n📦 Loading ${label} configuration...`)
-
-    // Set WEBPACK_SERVE for HMR config
-    const originalWebpackServe = process.env.WEBPACK_SERVE
-    if (hmr) {
-      process.env.WEBPACK_SERVE = "true"
-    }
-
-    const configs = await loadConfigsForEnv(env, options, appRoot)
-
-    // Restore original WEBPACK_SERVE
-    if (hmr) {
-      if (originalWebpackServe) {
-        process.env.WEBPACK_SERVE = originalWebpackServe
-      } else {
-        delete process.env.WEBPACK_SERVE
-      }
-    }
-
-    for (const { config, metadata } of configs) {
-      const output = formatConfig(config, metadata, options, appRoot)
-
-      // Adjust filename for HMR config
-      let filename: string
-      if (
-        hmr &&
-        (metadata.configType === "client" || metadata.configType === "all")
-      ) {
-        /**
-         * HMR Mode Filename Logic:
-         * - When WEBPACK_SERVE=true, webpack-dev-server runs and HMR is enabled
-         * - HMR only applies to client bundles (server bundles don't use HMR)
-         * - If configType is "all", we still only generate client file for HMR
-         *   because the server bundle is identical to non-HMR development
-         * - Filename uses "client" type and "development-hmr" build name to
-         *   distinguish it from regular development client bundle
-         */
-        filename = fileWriter.generateFilename(
-          metadata.bundler,
-          metadata.environment,
-          "client",
-          options.format!,
-          "development-hmr"
-        )
-      } else {
-        filename = fileWriter.generateFilename(
-          metadata.bundler,
-          metadata.environment,
-          metadata.configType,
-          options.format!,
-          metadata.buildName
-        )
-      }
-
-      const fullPath = resolve(targetDir, filename)
-      const fileOutput: FileOutput = { filename, content: output, metadata }
-      fileWriter.writeSingleFile(fullPath, output)
-      createdFiles.push(fullPath)
-    }
-  }
-
-  printDoctorSummary(createdFiles, targetDir)
 }
 
 function printDoctorSummary(createdFiles: string[], targetDir: string): void {
@@ -664,8 +677,7 @@ async function runSaveMode(
   console.log(`[Config Exporter] Exporting ${env} configs`)
 
   const fileWriter = new FileWriter()
-  const defaultDir = resolve(process.cwd(), "shakapacker-config-exports")
-  const targetDir = options.saveDir || defaultDir
+  const targetDir = options.saveDir! // Set by applyDefaults
   const configs = await loadConfigsForEnv(options.env, options, appRoot)
   const createdFiles: string[] = []
 
@@ -754,15 +766,6 @@ async function loadConfigsForEnv(
 
     // Set environment variables from config
     // Security: Only allow specific environment variables to prevent malicious configs
-    const ALLOWED_ENV_VARS = [
-      "NODE_ENV",
-      "RAILS_ENV",
-      "NODE_OPTIONS",
-      "BABEL_ENV",
-      "WEBPACK_SERVE",
-      "CLIENT_BUNDLE_ONLY",
-      "SERVER_BUNDLE_ONLY"
-    ]
     const DANGEROUS_ENV_VARS = [
       "PATH",
       "HOME",
@@ -779,10 +782,10 @@ async function loadConfigsForEnv(
         )
         continue
       }
-      if (!ALLOWED_ENV_VARS.includes(key)) {
+      if (!(BUILD_ENV_VARS as readonly string[]).includes(key)) {
         console.warn(
           `[Config Exporter] Warning: Skipping non-whitelisted environment variable: ${key}. ` +
-            `Allowed variables are: ${ALLOWED_ENV_VARS.join(", ")}`
+            `Allowed variables are: ${BUILD_ENV_VARS.join(", ")}`
         )
         continue
       }

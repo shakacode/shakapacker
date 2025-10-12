@@ -309,14 +309,15 @@ export class ConfigFileLoader {
     const args: string[] = []
 
     for (const [key, value] of Object.entries(bundlerEnv)) {
-      if (value === true) {
+      // YAML parser converts boolean true to string "true", so check both
+      if (value === true || value === "true") {
         // Boolean true becomes --env key
         args.push("--env", key)
-      } else if (typeof value === "string") {
-        // String value becomes --env key=value
+      } else if (typeof value === "string" && value !== "false") {
+        // String value becomes --env key=value (skip "false" strings)
         args.push("--env", `${key}=${value}`)
       }
-      // false or other values are ignored
+      // false or "false" are ignored
     }
 
     return args
