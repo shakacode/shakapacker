@@ -113,6 +113,7 @@ module Shakapacker
            line.match?(/^\s*--nodeEnv\b/) ||
            line.match?(/^\s*--host\b/) ||
            line.match?(/^\s*--port\b/) ||
+           line.match?(/^\s*--https\b/) ||
            line.match?(/^\s*(-h,\s*)?--help\b/) ||
            line.match?(/^\s*(-v,\s*)?--version\b/)
           skip_until_blank = true
