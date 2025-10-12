@@ -1,4 +1,5 @@
 require_relative "spec_helper_initializer"
+require_relative "shared/help_and_version_examples"
 require "shakapacker/webpack_runner"
 
 describe "WebpackRunner" do
@@ -65,6 +66,24 @@ describe "WebpackRunner" do
       ensure
         FileUtils.rm(ts_config)
       end
+    end
+  end
+
+  include_examples "help and version flags",
+                   Shakapacker::Runner,
+                   "SHAKAPACKER - Rails Webpack/Rspack Integration"
+
+  describe "help and version flags - runner specific" do
+    it "mentions trace-deprecation option in help and exits" do
+      expect { Shakapacker::Runner.run(["--help"]) }
+        .to output(/--trace-deprecation/).to_stdout
+        .and raise_error(SystemExit)
+    end
+
+    it "shows examples of usage" do
+      expect { Shakapacker::Runner.run(["--help"]) }
+        .to output(/Examples/).to_stdout
+        .and raise_error(SystemExit)
     end
   end
 

@@ -1,4 +1,5 @@
 require_relative "spec_helper_initializer"
+require_relative "shared/help_and_version_examples"
 require "shakapacker/dev_server_runner"
 
 describe "DevServerRunner" do
@@ -114,6 +115,24 @@ describe "DevServerRunner" do
 
         verify_command(cmd, env: env)
       end
+    end
+  end
+
+  include_examples "help and version flags",
+                   Shakapacker::DevServerRunner,
+                   "SHAKAPACKER DEV SERVER"
+
+  describe "help and version flags - dev server specific" do
+    it "mentions configuration in help and exits" do
+      expect { Shakapacker::DevServerRunner.run(["--help"]) }
+        .to output(/config\/shakapacker\.yml/).to_stdout
+        .and raise_error(SystemExit)
+    end
+
+    it "mentions host/port are managed by config" do
+      expect { Shakapacker::DevServerRunner.run(["--help"]) }
+        .to output(/--host.*Set from dev_server\.host/).to_stdout
+        .and raise_error(SystemExit)
     end
   end
 
