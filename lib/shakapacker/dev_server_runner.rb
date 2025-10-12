@@ -64,7 +64,7 @@ module Shakapacker
       if bundler_help
         bundler_name = bundler_type == :rspack ? "RSPACK" : "WEBPACK"
         puts "=" * 80
-        puts "AVAILABLE #{bundler_name} DEV SERVER OPTIONS"
+        puts "AVAILABLE #{bundler_name} DEV SERVER OPTIONS (Passed directly to #{bundler_name.downcase})"
         puts "=" * 80
         puts
         puts filter_managed_options(bundler_help)
@@ -100,10 +100,10 @@ module Shakapacker
 
       bundler_type = runner.config.rspack? ? :rspack : :webpack
       cmd = if bundler_type == :rspack
-              runner.package_json.manager.native_exec_command("rspack", ["serve", "--help"])
+        runner.package_json.manager.native_exec_command("rspack", ["serve", "--help"])
             else
               runner.package_json.manager.native_exec_command("webpack", ["serve", "--help"])
-            end
+      end
 
       # Restore output before running command
       $stdout = original_stdout
@@ -157,7 +157,14 @@ module Shakapacker
 
     def self.print_version
       puts "Shakapacker #{Shakapacker::VERSION}"
-      puts "Framework: Rails #{defined?(Rails) ? Rails.version : "N/A"}"
+      puts "Framework: Rails #{Rails.version}" if defined?(Rails)
+
+      # Try to get bundler version
+      bundler_type, bundler_version = Runner.get_bundler_version
+      if bundler_version
+        bundler_name = bundler_type == :rspack ? "Rspack" : "Webpack"
+        puts "Bundler: #{bundler_name} #{bundler_version}"
+      end
     end
 
     def run

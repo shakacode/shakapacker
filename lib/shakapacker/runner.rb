@@ -176,7 +176,7 @@ module Shakapacker
         if bundler_help
           bundler_name = bundler_type == :rspack ? "RSPACK" : "WEBPACK"
           puts "=" * 80
-          puts "AVAILABLE #{bundler_name} OPTIONS"
+          puts "AVAILABLE #{bundler_name} OPTIONS (Passed directly to #{bundler_name.downcase})"
           puts "=" * 80
           puts
           puts filter_managed_options(bundler_help)
@@ -212,10 +212,10 @@ module Shakapacker
 
         bundler_type = runner.config.rspack? ? :rspack : :webpack
         cmd = if bundler_type == :rspack
-                runner.package_json.manager.native_exec_command("rspack", ["--help"])
+          runner.package_json.manager.native_exec_command("rspack", ["--help"])
               else
                 runner.package_json.manager.native_exec_command("webpack", ["--help"])
-              end
+        end
 
         # Restore output before running command
         $stdout = original_stdout
@@ -283,7 +283,52 @@ module Shakapacker
 
       def self.print_version
         puts "Shakapacker #{Shakapacker::VERSION}"
-        puts "Framework: Rails #{defined?(Rails) ? Rails.version : "N/A"}"
+        puts "Framework: Rails #{Rails.version}" if defined?(Rails)
+
+        # Try to get bundler version
+        bundler_type, bundler_version = get_bundler_version
+        if bundler_version
+          bundler_name = bundler_type == :rspack ? "Rspack" : "Webpack"
+          puts "Bundler: #{bundler_name} #{bundler_version}"
+        end
+      end
+
+      def self.get_bundler_version
+        # Check if we're in a Rails project with necessary files
+        app_path = File.expand_path(".", Dir.pwd)
+        config_path = ENV["SHAKAPACKER_CONFIG"] || File.join(app_path, "config/shakapacker.yml")
+        return [nil, nil] unless File.exist?(config_path)
+
+        # Suppress any output during config loading
+        original_stdout = $stdout
+        original_stderr = $stderr
+        $stdout = StringIO.new
+        $stderr = StringIO.new
+
+        # Try to detect bundler and get version
+        runner = new([])
+        return [nil, nil] unless runner.config
+
+        bundler_type = runner.config.rspack? ? :rspack : :webpack
+        cmd = if bundler_type == :rspack
+          runner.package_json.manager.native_exec_command("rspack", ["--version"])
+              else
+                runner.package_json.manager.native_exec_command("webpack", ["--version"])
+        end
+
+        # Restore output before running command
+        $stdout = original_stdout
+        $stderr = original_stderr
+
+        # Capture version output
+        require "open3"
+        stdout, _stderr, status = Open3.capture3(*cmd)
+        [bundler_type, (status.success? ? stdout.strip : nil)]
+      rescue StandardError => e
+        # Restore output if error occurs
+        $stdout = original_stdout if $stdout != original_stdout
+        $stderr = original_stderr if $stderr != original_stderr
+        [nil, nil]
       end
 
     private
