@@ -16,6 +16,9 @@ gemfiles/*.lock
 .yalc
 yalc.lock
 
+# npm pack tarballs
+*.tgz
+
 # Config exporter output directory
 shakapacker-config-exports/
 
