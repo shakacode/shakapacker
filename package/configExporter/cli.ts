@@ -65,7 +65,7 @@ QUICK START (for troubleshooting):
   bin/export-bundler-config --doctor
 
   Exports annotated YAML configs for both development and production.
-  Creates separate files for client and server bundles.
+  Creates separate files for client, server, and HMR client bundles.
   Best for debugging, AI analysis, and comparing configurations.`
     )
     .option("doctor", {
@@ -155,8 +155,9 @@ QUICK START (for troubleshooting):
       `Examples:
   # RECOMMENDED: Export everything for troubleshooting
   bin/export-bundler-config --doctor
-  # Creates: webpack-development-client.yaml, webpack-development-server.yaml,
-  #          webpack-production-client.yaml, webpack-production-server.yaml
+  # Creates: webpack-development-client-hmr.yaml, webpack-development-client.yaml,
+  #          webpack-development-server.yaml, webpack-production-client.yaml,
+  #          webpack-production-server.yaml
 
   # Save current environment configs
   bin/export-bundler-config --save
@@ -229,6 +230,59 @@ async function runDoctorMode(
 
   for (const env of environments) {
     console.log(`\n📦 Loading ${env} configuration...`)
+
+    // For development, also load the HMR client config and server watch config
+    if (env === "development") {
+      // Save original env vars
+      const originalWebpackServe = process.env.WEBPACK_SERVE
+      const originalClientBundleOnly = process.env.CLIENT_BUNDLE_ONLY
+      const originalServerBundleOnly = process.env.SERVER_BUNDLE_ONLY
+
+      // 1. Generate HMR client config (WEBPACK_SERVE=true + CLIENT_BUNDLE_ONLY=yes)
+      process.env.WEBPACK_SERVE = "true"
+      process.env.CLIENT_BUNDLE_ONLY = "yes"
+      delete process.env.SERVER_BUNDLE_ONLY
+
+      const hmrConfigs = await loadConfigsForEnv(env, options, appRoot)
+
+      for (const { config, metadata } of hmrConfigs) {
+        // Update configType to indicate this is the HMR variant
+        const hmrMetadata: ConfigMetadata = {
+          ...metadata,
+          configType: "client-hmr"
+        }
+        const output = formatConfig(config, hmrMetadata, options, appRoot)
+        const filename = fileWriter.generateFilename(
+          metadata.bundler,
+          metadata.environment,
+          "client-hmr",
+          options.format!
+        )
+
+        const fullPath = resolve(targetDir, filename)
+        fileWriter.writeSingleFile(fullPath, output, true) // quiet mode
+        createdFiles.push(fullPath)
+      }
+
+      // Restore original env vars
+      if (originalWebpackServe === undefined) {
+        delete process.env.WEBPACK_SERVE
+      } else {
+        process.env.WEBPACK_SERVE = originalWebpackServe
+      }
+      if (originalClientBundleOnly === undefined) {
+        delete process.env.CLIENT_BUNDLE_ONLY
+      } else {
+        process.env.CLIENT_BUNDLE_ONLY = originalClientBundleOnly
+      }
+      if (originalServerBundleOnly === undefined) {
+        delete process.env.SERVER_BUNDLE_ONLY
+      } else {
+        process.env.SERVER_BUNDLE_ONLY = originalServerBundleOnly
+      }
+    }
+
+    // Load standard configs (no CLIENT_BUNDLE_ONLY or SERVER_BUNDLE_ONLY)
     const configs = await loadConfigsForEnv(env, options, appRoot)
 
     for (const { config, metadata } of configs) {
@@ -418,6 +472,9 @@ async function loadConfigsForEnv(
     if (configs.length === 2) {
       // Likely client and server configs
       configType = index === 0 ? "client" : "server"
+    } else if (configs.length === 1 && process.env.WEBPACK_SERVE === "true") {
+      // WEBPACK_SERVE returns single client config for HMR
+      configType = "client"
     } else if (options.clientOnly) {
       configType = "client"
     } else if (options.serverOnly) {
@@ -435,7 +492,8 @@ async function loadConfigsForEnv(
         NODE_ENV: process.env.NODE_ENV,
         RAILS_ENV: process.env.RAILS_ENV,
         CLIENT_BUNDLE_ONLY: process.env.CLIENT_BUNDLE_ONLY,
-        SERVER_BUNDLE_ONLY: process.env.SERVER_BUNDLE_ONLY
+        SERVER_BUNDLE_ONLY: process.env.SERVER_BUNDLE_ONLY,
+        WEBPACK_SERVE: process.env.WEBPACK_SERVE
       }
     }
 
