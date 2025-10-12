@@ -123,14 +123,16 @@ describe "DevServerRunner" do
                    "SHAKAPACKER DEV SERVER"
 
   describe "help and version flags - dev server specific" do
-    before do
-      allow(Shakapacker::Utils::Manager).to receive(:error_unless_package_manager_is_obvious!)
-      allow(Kernel).to receive(:exec)
-    end
-
-    it "mentions configuration in help" do
+    it "mentions configuration in help and exits" do
       expect { Shakapacker::DevServerRunner.run(["--help"]) }
         .to output(/config\/shakapacker\.yml/).to_stdout
+        .and raise_error(SystemExit)
+    end
+
+    it "mentions host/port are managed by config" do
+      expect { Shakapacker::DevServerRunner.run(["--help"]) }
+        .to output(/--host.*Set from dev_server\.host/).to_stdout
+        .and raise_error(SystemExit)
     end
   end
 

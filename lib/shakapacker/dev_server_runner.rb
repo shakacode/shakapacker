@@ -9,19 +9,13 @@ require_relative "version"
 module Shakapacker
   class DevServerRunner < Shakapacker::Runner
     def self.run(argv)
-      # Show Shakapacker help before webpack/rspack dev server help
+      # Show Shakapacker help and exit (don't call bundler)
       if argv.include?("--help") || argv.include?("-h")
         print_help
-        puts "\n" + "=" * 80
-        puts "WEBPACK/RSPACK DEV SERVER OPTIONS"
-        puts "=" * 80
-        puts "The following options are passed through to webpack-dev-server/rspack-dev-server:\n\n"
-        # Continue to show bundler help by not exiting
+        exit(0)
       elsif argv.include?("--version") || argv.include?("-v")
-        # Handle version flags - show both Shakapacker and bundler versions
         print_version
-        puts "\nDev server version:"
-        # Continue to show bundler version by not exiting
+        exit(0)
       end
 
       new(argv).run
@@ -38,19 +32,31 @@ module Shakapacker
         Shakapacker-specific options:
           --debug-shakapacker     Enable Node.js debugging (--inspect-brk)
 
-        Configuration:
-          Host, port, and HTTPS settings are configured in config/shakapacker.yml
-          under the 'dev_server' section.
+        Options managed by Shakapacker (configured in config/shakapacker.yml):
+          --host                  Set from dev_server.host (default: localhost)
+          --port                  Set from dev_server.port (default: 3035)
+          --https                 Set from dev_server.server (http or https)
+          --config                Set automatically to config/webpack/webpack.config.js
+                                  or config/rspack/rspack.config.js
 
-        Note: --host and --port CLI flags are NOT supported by Shakapacker.
-        Please configure these in config/shakapacker.yml instead.
+        Common dev server options you can use:
+          --hot                   Enable hot module replacement (default: true)
+          --no-hot                Disable hot module replacement
+          --live-reload           Enable live reload
+          --open                  Open browser on start
+          --client-logging LEVEL  Set client log level (none, error, warn, info, log, verbose)
 
         Examples:
-          bin/shakapacker-dev-server                # Start dev server
+          bin/shakapacker-dev-server                    # Start dev server
+          bin/shakapacker-dev-server --no-hot           # Disable HMR
+          bin/shakapacker-dev-server --open             # Open browser automatically
           bin/shakapacker-dev-server --debug-shakapacker # Debug with Node inspector
 
-        All other options are passed through to webpack-dev-server or rspack-dev-server.
-        See their documentation for details:
+        Configuration:
+          Host, port, and HTTPS are set in config/shakapacker.yml under 'dev_server'.
+          CLI flags for these options are NOT supported - use the config file.
+
+        For complete dev server documentation:
           Webpack: https://webpack.js.org/configuration/dev-server/
           Rspack:  https://rspack.dev/config/dev-server
       HELP

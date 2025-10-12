@@ -21,18 +21,19 @@ interface ShakapackerExports {
   devServer: DevServerConfig
   /** Base webpack/rspack configuration */
   baseConfig: Configuration
-  /** Environment configuration (railsEnv, nodeEnv, etc.) */
-  env: Env
-  /** Array of webpack/rspack loader rules */
-  rules: RuleSetRule[]
-  /** Check if a module exists in node_modules */
+  env: {
+    railsEnv: any
+    nodeEnv: any
+    isProduction: boolean
+    isDevelopment: boolean
+    runningWebpackDevServer: boolean
+  }
+  rules: any
   moduleExists: (packageName: string) => boolean
-  /** Process a file if a specific loader is available */
   canProcess: <T = unknown>(
     rule: string,
     fn: (modulePath: string) => T
   ) => T | null
-  /** Whether CSS should be inlined (dev server with HMR) */
   inliningCss: boolean
   /** Generate webpack configuration with optional custom config */
   generateWebpackConfig: (extraConfig?: Configuration) => Configuration

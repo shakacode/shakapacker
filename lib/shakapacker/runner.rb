@@ -26,19 +26,13 @@ module Shakapacker
     def self.run(argv)
       $stdout.sync = true
 
-      # Show Shakapacker help before webpack/rspack help
+      # Show Shakapacker help and exit (don't call bundler)
       if argv.include?("--help") || argv.include?("-h")
         print_help
-        puts "\n" + "=" * 80
-        puts "WEBPACK/RSPACK OPTIONS"
-        puts "=" * 80
-        puts "The following options are passed through to webpack/rspack:\n\n"
-        # Continue to show bundler help by not exiting
+        exit(0)
       elsif argv.include?("--version") || argv.include?("-v")
-        # Handle version flags - show both Shakapacker and bundler versions
         print_version
-        puts "\nBundler version:"
-        # Continue to show bundler version by not exiting
+        exit(0)
       end
 
       Shakapacker.ensure_node_env!
@@ -153,14 +147,28 @@ module Shakapacker
           --trace-deprecation       Show stack traces for deprecations
           --no-deprecation          Silence deprecation warnings
 
-        Examples:
-          bin/shakapacker                    # Build for production
-          bin/shakapacker --mode development # Build for development
-          bin/shakapacker --watch            # Watch mode
-          bin/shakapacker --debug-shakapacker # Debug with Node inspector
+        Options managed by Shakapacker (configured via config files):
+          --config                  Set automatically to config/webpack/webpack.config.js
+                                    or config/rspack/rspack.config.js
+          --node-env                Set from RAILS_ENV or NODE_ENV
 
-        All other options (--mode, --watch, --config, etc.) are passed through
-        to webpack or rspack. See their documentation for details:
+        Common webpack/rspack options you can use:
+          -m, --mode MODE           Set mode: development, production, or none
+          -w, --watch               Watch for file changes and rebuild
+          --analyze                 Analyze bundle size (if plugin configured)
+          --json                    Emit stats as JSON
+          --profile                 Capture timing information
+          -d, --devtool TOOL        Set source map type (e.g., source-map, eval)
+          --env KEY=VALUE           Pass environment variables to config
+
+        Examples:
+          bin/shakapacker                              # Build for production
+          bin/shakapacker --mode development           # Build for development
+          bin/shakapacker --watch                      # Watch mode
+          bin/shakapacker --mode development --analyze # Development build with analysis
+          bin/shakapacker --debug-shakapacker          # Debug with Node inspector
+
+        For complete webpack/rspack CLI documentation:
           Webpack: https://webpack.js.org/api/cli/
           Rspack:  https://rspack.dev/api/cli
       HELP

@@ -75,14 +75,16 @@ describe "RspackRunner" do
                    "SHAKAPACKER - Rails Webpack/Rspack Integration"
 
   describe "help and version flags - runner specific" do
-    before do
-      allow(Shakapacker::Utils::Manager).to receive(:error_unless_package_manager_is_obvious!)
-      allow(Kernel).to receive(:exec)
-    end
-
-    it "mentions trace-deprecation option in help" do
+    it "mentions trace-deprecation option in help and exits" do
       expect { Shakapacker::Runner.run(["--help"]) }
         .to output(/--trace-deprecation/).to_stdout
+        .and raise_error(SystemExit)
+    end
+
+    it "mentions mode option users can set" do
+      expect { Shakapacker::Runner.run(["--help"]) }
+        .to output(/--mode MODE/).to_stdout
+        .and raise_error(SystemExit)
     end
   end
 

@@ -1,54 +1,57 @@
 RSpec.shared_examples "help and version flags" do |runner_class, help_header_text|
   describe "help and version flags" do
-    before do
-      allow(Shakapacker::Utils::Manager).to receive(:error_unless_package_manager_is_obvious!)
-      allow(Kernel).to receive(:exec)
-    end
-
-    it "prints custom help message for --help flag" do
+    it "prints custom help message for --help flag and exits" do
       expect { runner_class.run(["--help"]) }
         .to output(/#{Regexp.escape(help_header_text)}/).to_stdout
+        .and raise_error(SystemExit)
     end
 
-    it "prints custom help message for -h flag" do
+    it "prints custom help message for -h flag and exits" do
       expect { runner_class.run(["-h"]) }
         .to output(/#{Regexp.escape(help_header_text)}/).to_stdout
+        .and raise_error(SystemExit)
     end
 
     it "includes Shakapacker-specific options in help" do
       expect { runner_class.run(["--help"]) }
         .to output(/--debug-shakapacker/).to_stdout
+        .and raise_error(SystemExit)
     end
 
-    it "shows separator before bundler options" do
+    it "shows options managed by Shakapacker" do
       expect { runner_class.run(["--help"]) }
-        .to output(/OPTIONS/).to_stdout
+        .to output(/Options managed by Shakapacker/).to_stdout
+        .and raise_error(SystemExit)
     end
 
-    it "continues to pass --help through to bundler after showing Shakapacker help" do
-      runner_class.run(["--help"])
-      expect(Kernel).to have_received(:exec)
+    it "shows common bundler options users can use" do
+      expect { runner_class.run(["--help"]) }
+        .to output(/options you can use/).to_stdout
+        .and raise_error(SystemExit)
     end
 
-    it "prints version for --version flag" do
+    it "mentions config option is managed automatically" do
+      expect { runner_class.run(["--help"]) }
+        .to output(/--config.*Set automatically/).to_stdout
+        .and raise_error(SystemExit)
+    end
+
+    it "prints version for --version flag and exits" do
       expect { runner_class.run(["--version"]) }
         .to output(/Shakapacker #{Shakapacker::VERSION}/).to_stdout
+        .and raise_error(SystemExit)
     end
 
-    it "prints version for -v flag" do
+    it "prints version for -v flag and exits" do
       expect { runner_class.run(["-v"]) }
         .to output(/Shakapacker #{Shakapacker::VERSION}/).to_stdout
-    end
-
-    it "continues to pass --version through to bundler after showing Shakapacker version" do
-      runner_class.run(["--version"])
-      expect(Kernel).to have_received(:exec)
+        .and raise_error(SystemExit)
     end
 
     it "prioritizes help over version when both flags are present" do
       expect { runner_class.run(["--help", "--version"]) }
         .to output(/#{Regexp.escape(help_header_text)}/).to_stdout
-      expect(Kernel).to have_received(:exec)
+        .and raise_error(SystemExit)
     end
   end
 end
