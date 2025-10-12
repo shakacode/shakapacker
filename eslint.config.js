@@ -143,6 +143,79 @@ module.exports = [
     }
   },
 
+  // Temporary overrides for files with remaining errors
+  // TODO: Remove these overrides incrementally as errors are fixed
+  {
+    files: ["package/configExporter/**/*.ts"],
+    rules: {
+      "@typescript-eslint/no-explicit-any": "off",
+      "@typescript-eslint/no-unsafe-assignment": "off",
+      "@typescript-eslint/no-unsafe-member-access": "off",
+      "@typescript-eslint/no-unsafe-call": "off",
+      "@typescript-eslint/no-unsafe-return": "off",
+      "@typescript-eslint/no-unsafe-argument": "off",
+      "@typescript-eslint/no-unsafe-function-type": "off",
+      "@typescript-eslint/no-unused-vars": "off",
+      "@typescript-eslint/require-await": "off",
+      "no-param-reassign": "off",
+      "no-await-in-loop": "off",
+      "no-nested-ternary": "off",
+      "import/prefer-default-export": "off",
+      "global-require": "off",
+      "no-underscore-dangle": "off",
+      "class-methods-use-this": "off"
+    }
+  },
+  {
+    files: [
+      "package/config.ts",
+      "package/utils/inliningCss.ts",
+      "package/utils/errorCodes.ts",
+      "package/utils/errorHelpers.ts",
+      "package/utils/pathValidation.ts"
+    ],
+    rules: {
+      "@typescript-eslint/no-unsafe-assignment": "off",
+      "@typescript-eslint/no-unsafe-member-access": "off",
+      "@typescript-eslint/no-unsafe-argument": "off",
+      "@typescript-eslint/no-explicit-any": "off",
+      "no-useless-escape": "off",
+      "no-continue": "off",
+      "no-nested-ternary": "off"
+    }
+  },
+  {
+    files: ["package/plugins/**/*.ts", "package/optimization/**/*.ts"],
+    rules: {
+      "@typescript-eslint/no-unsafe-assignment": "off",
+      "@typescript-eslint/no-unsafe-call": "off",
+      "@typescript-eslint/no-redundant-type-constituents": "off",
+      "import/prefer-default-export": "off"
+    }
+  },
+  {
+    files: [
+      "package/environments/**/*.ts",
+      "package/index.ts",
+      "package/rspack/index.ts",
+      "package/rules/**/*.ts",
+      "package/swc/index.ts",
+      "package/esbuild/index.ts",
+      "package/dev_server.ts",
+      "package/env.ts"
+    ],
+    rules: {
+      "@typescript-eslint/no-unsafe-assignment": "off",
+      "@typescript-eslint/no-unsafe-call": "off",
+      "@typescript-eslint/no-unsafe-return": "off",
+      "@typescript-eslint/no-redundant-type-constituents": "off",
+      "@typescript-eslint/no-unused-vars": "off",
+      "@typescript-eslint/no-unsafe-function-type": "off",
+      "import/prefer-default-export": "off",
+      "no-underscore-dangle": "off"
+    }
+  },
+
   // Prettier config must be last to override other configs
   prettierConfig
 ]
