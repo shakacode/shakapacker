@@ -1,6 +1,13 @@
 /* eslint-disable no-template-curly-in-string */
-const { writeFileSync, mkdirSync, rmSync, existsSync } = require("fs")
+const {
+  writeFileSync,
+  mkdirSync,
+  rmSync,
+  existsSync,
+  symlinkSync
+} = require("fs")
 const { resolve, join } = require("path")
+const { tmpdir } = require("os")
 const {
   ConfigFileLoader,
   generateSampleConfigFile
@@ -33,6 +40,53 @@ describe("ConfigFileLoader", () => {
         // eslint-disable-next-line no-new
         new ConfigFileLoader(maliciousPath)
       }).toThrow(/Config file must be within project directory/)
+    })
+
+    it("should reject symlink traversal to files outside project", async () => {
+      const outsideFile = join(tmpdir(), `test-outside-${Date.now()}.yml`)
+      const symlinkPath = join(testDir, "symlink-config.yml")
+
+      const cleanup = () => {
+        try {
+          rmSync(symlinkPath, { force: true })
+          // eslint-disable-next-line no-empty
+        } catch {}
+        try {
+          rmSync(outsideFile, { force: true })
+          // eslint-disable-next-line no-empty
+        } catch {}
+      }
+
+      try {
+        // Create a real file outside the project (in system temp dir)
+        writeFileSync(
+          outsideFile,
+          "builds:\n  test:\n    outputs:\n      - client\n"
+        )
+
+        // Attempt to create symlink
+        try {
+          symlinkSync(outsideFile, symlinkPath)
+        } catch (error) {
+          // Skip test if symlinks aren't supported or require elevated permissions
+          const skipCodes = ["EPERM", "ENOSYS", "EACCES"]
+          cleanup()
+          // eslint-disable-next-line jest/no-conditional-expect
+          expect(skipCodes).toContain(error.code)
+          return
+        }
+
+        // Verify that loading via symlink is rejected
+        expect(() => {
+          // eslint-disable-next-line no-new
+          new ConfigFileLoader(symlinkPath)
+        }).toThrow(/Config file must be within project directory/)
+
+        cleanup()
+      } catch (error) {
+        cleanup()
+        throw error
+      }
     })
 
     it("should accept paths within the project directory", () => {

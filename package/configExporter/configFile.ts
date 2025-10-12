@@ -1,4 +1,4 @@
-import { existsSync, readFileSync } from "fs"
+import { existsSync, readFileSync, realpathSync } from "fs"
 import { resolve, relative, isAbsolute } from "path"
 import { load as loadYaml, FAILSAFE_SCHEMA } from "js-yaml"
 import {
@@ -29,15 +29,34 @@ export class ConfigFileLoader {
 
   /**
    * Validates that the config file path is within the project directory
-   * to prevent path traversal attacks
+   * to prevent path traversal attacks (including symlink traversal)
    * @throws Error if path traversal is detected
    */
   private validateConfigPath(): void {
     const absPath = resolve(this.configFilePath)
     const cwd = process.cwd()
-    const rel = relative(cwd, absPath)
 
-    if (rel.startsWith("..") || (isAbsolute(rel) && !absPath.startsWith(cwd))) {
+    // Resolve symlinks to get the real path
+    let realPath: string
+    try {
+      // Only resolve symlinks if the file exists
+      if (existsSync(absPath)) {
+        realPath = realpathSync(absPath)
+      } else {
+        // If file doesn't exist yet, just use the resolved path
+        realPath = absPath
+      }
+    } catch (error) {
+      // If we can't resolve the path, use the original
+      realPath = absPath
+    }
+
+    const rel = relative(cwd, realPath)
+
+    if (
+      rel.startsWith("..") ||
+      (isAbsolute(rel) && !realPath.startsWith(cwd))
+    ) {
       throw new Error(
         `Config file must be within project directory. Attempted path: ${this.configFilePath}`
       )
