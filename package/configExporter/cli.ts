@@ -18,20 +18,52 @@ const packageJson = JSON.parse(
 const VERSION = packageJson.version
 
 /**
+ * Environment variable names that can be set by build configurations
+ */
+const BUILD_ENV_VARS = [
+  "NODE_ENV",
+  "RAILS_ENV",
+  "NODE_OPTIONS",
+  "BABEL_ENV",
+  "WEBPACK_SERVE",
+  "CLIENT_BUNDLE_ONLY",
+  "SERVER_BUNDLE_ONLY"
+] as const
+
+/**
+ * Saves current values of build environment variables for later restoration
+ * @returns Object mapping variable names to their current values (or undefined)
+ */
+function saveBuildEnvironmentVariables(): Record<string, string | undefined> {
+  const saved: Record<string, string | undefined> = {}
+  BUILD_ENV_VARS.forEach((varName) => {
+    saved[varName] = process.env[varName]
+  })
+  return saved
+}
+
+/**
+ * Restores previously saved environment variable values
+ * @param saved - Object mapping variable names to their original values
+ */
+function restoreBuildEnvironmentVariables(
+  saved: Record<string, string | undefined>
+): void {
+  BUILD_ENV_VARS.forEach((varName) => {
+    const originalValue = saved[varName]
+    if (originalValue === undefined) {
+      delete process.env[varName]
+    } else {
+      process.env[varName] = originalValue
+    }
+  })
+}
+
+/**
  * Clears all whitelisted build environment variables from process.env
  * to prevent environment variable leakage between builds
  */
 function clearBuildEnvironmentVariables(): void {
-  const BUILD_ENV_VARS = [
-    "NODE_ENV",
-    "RAILS_ENV",
-    "NODE_OPTIONS",
-    "BABEL_ENV",
-    "WEBPACK_SERVE",
-    "CLIENT_BUNDLE_ONLY",
-    "SERVER_BUNDLE_ONLY"
-  ]
-
   BUILD_ENV_VARS.forEach((varName) => {
     delete process.env[varName]
   })
@@ -535,7 +567,15 @@ async function runDoctorMode(
         hmr &&
         (metadata.configType === "client" || metadata.configType === "all")
       ) {
-        // HMR produces only client bundle, use "client" type with "development-hmr" build name
+        /**
+         * HMR Mode Filename Logic:
+         * - When WEBPACK_SERVE=true, webpack-dev-server runs and HMR is enabled
+         * - HMR only applies to client bundles (server bundles don't use HMR)
+         * - If configType is "all", we still only generate client file for HMR
+         *   because the server bundle is identical to non-HMR development
+         * - Filename uses "client" type and "development-hmr" build name to
+         *   distinguish it from regular development client bundle
+         */
         filename = fileWriter.generateFilename(
           metadata.bundler,
           metadata.environment,
@@ -789,8 +829,26 @@ async function loadConfigsForEnv(
   }
 
   // Clear require cache for config file and all related modules
-  // This is critical for loading different environments in the same process
-  // MUST clear shakapacker env module cache so env.nodeEnv is re-read!
+  /**
+   * AGGRESSIVE REQUIRE CACHE CLEARING
+   *
+   * Why: This tool can load multiple environments (dev/prod) and builds in a
+   * single process. Node's require cache prevents modules from re-evaluating,
+   * which causes stale environment values (NODE_ENV, etc.) to persist.
+   *
+   * What: Clears cache for:
+   * - Webpack/rspack config files (they read process.env)
+   * - Shakapacker modules (env detection, config loading)
+   * - Config directory files (custom helpers that may read env)
+   *
+   * Trade-offs:
+   * - More reliable: Ensures each build gets fresh environment
+   * - Potentially brittle: String matching on paths (but comprehensive)
+   * - Performance: Minimal impact since this runs per-build, not per-file
+   *
+   * Maintenance: If adding new shakapacker modules that read env vars,
+   * ensure their paths are covered by the patterns below.
+   */
   const configDir = dirname(configFile)
   Object.keys(require.cache).forEach((key) => {
     if (
@@ -1004,6 +1062,19 @@ function cleanConfig(obj: any, rootPath: string): any {
   return clean(obj)
 }
 
+/**
+ * Auto-detects bundler from shakapacker.yml
+ *
+ * Error Handling Strategy:
+ * - Invalid bundler → warns and defaults to webpack (graceful fallback)
+ * - Config read errors → warns and defaults to webpack (graceful fallback)
+ *
+ * Rationale for warnings vs errors:
+ * - This reads shakapacker.yml (infrastructure config), not user build config
+ * - Failures here should not block the tool; defaulting to webpack is safe
+ * - Contrast with NODE_ENV validation in build configs, which throws errors
+ *   because invalid NODE_ENV would produce incorrect builds
+ */
 async function autoDetectBundler(
   env: string,
   appRoot: string

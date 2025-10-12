@@ -21,37 +21,29 @@ interface ShakapackerExports {
   devServer: DevServerConfig
   /** Base webpack/rspack configuration */
   baseConfig: Configuration
-  /** Environment helpers */
+  /** Environment configuration (railsEnv, nodeEnv, etc.) */
   env: Env
-  /** webpack rules (loaders) configuration */
+  /** Array of webpack/rspack loader rules */
   rules: RuleSetRule[]
-  /** Check if a Node module exists */
+  /** Check if a module exists in node_modules */
   moduleExists: (packageName: string) => boolean
-  /** Process files with a loader if available */
+  /** Process a file if a specific loader is available */
   canProcess: <T = unknown>(
     rule: string,
     fn: (modulePath: string) => T
   ) => T | null
-  /** Whether CSS is being inlined (vs extracted) */
+  /** Whether CSS should be inlined (dev server with HMR) */
   inliningCss: boolean
   /** Generate webpack configuration with optional custom config */
   generateWebpackConfig: (extraConfig?: Configuration) => Configuration
   /** webpack-merge's merge function */
-  merge: (typeof import("webpack-merge"))["merge"]
+  merge: typeof import("webpack-merge").merge
   /** webpack-merge's mergeWithCustomize function */
   mergeWithCustomize: typeof import("webpack-merge").mergeWithCustomize
   /** webpack-merge's mergeWithRules function */
   mergeWithRules: typeof import("webpack-merge").mergeWithRules
   /** webpack-merge's unique function */
   unique: typeof import("webpack-merge").unique
-  /** webpack-merge's customizeArray function */
-  customizeArray: typeof import("webpack-merge").customizeArray
-  /** webpack-merge's customizeObject function */
-  customizeObject: typeof import("webpack-merge").customizeObject
-  /** webpack-merge's CustomizeRule enum */
-  CustomizeRule: typeof import("webpack-merge").CustomizeRule
-  /** webpack-merge's default export (alias for merge) */
-  default: typeof import("webpack-merge").merge
 }
 
 declare const shakapacker: ShakapackerExports
