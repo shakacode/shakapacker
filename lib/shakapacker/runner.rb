@@ -124,9 +124,16 @@ module Shakapacker
       puts "[Shakapacker] Final command: #{cmd.join(" ")}"
       puts "[Shakapacker] Working directory: #{@app_path}"
 
+      bundler_name = @config.rspack? ? "rspack" : "webpack"
+      start_time = Time.now
+
       Dir.chdir(@app_path) do
-        Kernel.exec env, *cmd
+        system(env, *cmd)
       end
+
+      elapsed_time = Time.now - start_time
+      puts "[Shakapacker] Completed #{bundler_name} build in #{elapsed_time.round(2)}s"
+      exit($?.exitstatus || 1) unless $?.success?
     end
 
     protected

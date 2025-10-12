@@ -232,9 +232,16 @@ module Shakapacker
 
         cmd += @argv
 
+        bundler_name = @config.rspack? ? "rspack" : "webpack"
+        start_time = Time.now
+
         Dir.chdir(@app_path) do
-          Kernel.exec env, *cmd
+          system(env, *cmd)
         end
+
+        elapsed_time = Time.now - start_time
+        puts "[Shakapacker] #{bundler_name} dev server ran for #{elapsed_time.round(2)}s"
+        exit($?.exitstatus || 1) unless $?.success?
       end
 
       def build_cmd
