@@ -124,18 +124,16 @@ module Shakapacker
       puts "[Shakapacker] Final command: #{cmd.join(" ")}"
       puts "[Shakapacker] Working directory: #{@app_path}"
 
-      bundler_name = @config.rspack? ? "rspack" : "webpack"
       watch_mode = @argv.include?("--watch") || @argv.include?("-w")
-      start_time = Time.now
+      start_time = Time.now unless watch_mode
 
       Dir.chdir(@app_path) do
         system(env, *cmd)
       end
 
-      elapsed_time = Time.now - start_time
-      if watch_mode
-        puts "[Shakapacker] #{bundler_name} watch mode ran for #{elapsed_time.round(2)}s"
-      else
+      if !watch_mode && start_time
+        bundler_name = @config.rspack? ? "rspack" : "webpack"
+        elapsed_time = Time.now - start_time
         puts "[Shakapacker] Completed #{bundler_name} build in #{elapsed_time.round(2)}s"
       end
       exit($?.exitstatus || 1) unless $?.success?

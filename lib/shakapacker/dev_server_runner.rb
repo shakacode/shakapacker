@@ -232,15 +232,10 @@ module Shakapacker
 
         cmd += @argv
 
-        bundler_name = @config.rspack? ? "rspack" : "webpack"
-        start_time = Time.now
-
         Dir.chdir(@app_path) do
           system(env, *cmd)
         end
 
-        elapsed_time = Time.now - start_time
-        puts "[Shakapacker] #{bundler_name} dev server stopped after #{elapsed_time.round(2)}s"
         exit($?.exitstatus || 1) unless $?.success?
       end
 
