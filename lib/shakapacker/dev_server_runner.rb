@@ -55,27 +55,34 @@ module Shakapacker
     end
 
     def self.print_dev_server_help
-      bundler_help = get_dev_server_help
+      bundler_type, bundler_help = get_dev_server_help
 
       if bundler_help
+        bundler_name = bundler_type == :rspack ? "RSPACK" : "WEBPACK"
         puts "=" * 80
-        puts "AVAILABLE DEV SERVER OPTIONS"
+        puts "AVAILABLE #{bundler_name} DEV SERVER OPTIONS"
         puts "=" * 80
         puts
         puts filter_managed_options(bundler_help)
         puts
+        puts "For complete documentation:"
+        if bundler_type == :rspack
+          puts "  https://rspack.dev/config/dev-server"
+        else
+          puts "  https://webpack.js.org/configuration/dev-server/"
+        end
+      else
+        puts "For complete documentation:"
+        puts "  Webpack: https://webpack.js.org/configuration/dev-server/"
+        puts "  Rspack:  https://rspack.dev/config/dev-server"
       end
-
-      puts "For complete documentation:"
-      puts "  Webpack: https://webpack.js.org/configuration/dev-server/"
-      puts "  Rspack:  https://rspack.dev/config/dev-server"
     end
 
     def self.get_dev_server_help
       # Check if we're in a Rails project with necessary files
       app_path = File.expand_path(".", Dir.pwd)
       config_path = ENV["SHAKAPACKER_CONFIG"] || File.join(app_path, "config/shakapacker.yml")
-      return nil unless File.exist?(config_path)
+      return [nil, nil] unless File.exist?(config_path)
 
       # Suppress any output during config loading
       original_stdout = $stdout
@@ -85,9 +92,10 @@ module Shakapacker
 
       # Try to get dev server help
       runner = new([])
-      return nil unless runner.config
+      return [nil, nil] unless runner.config
 
-      cmd = if runner.config.rspack?
+      bundler_type = runner.config.rspack? ? :rspack : :webpack
+      cmd = if bundler_type == :rspack
               runner.package_json.manager.native_exec_command("rspack", ["serve", "--help"])
             else
               runner.package_json.manager.native_exec_command("webpack", ["serve", "--help"])
@@ -100,12 +108,12 @@ module Shakapacker
       # Capture help output
       require "open3"
       stdout, _stderr, status = Open3.capture3(*cmd)
-      status.success? ? stdout : nil
+      [bundler_type, (status.success? ? stdout : nil)]
     rescue StandardError => e
       # Restore output if error occurs
       $stdout = original_stdout if $stdout != original_stdout
       $stderr = original_stderr if $stderr != original_stderr
-      nil
+      [nil, nil]
     end
 
     def self.filter_managed_options(help_text)
