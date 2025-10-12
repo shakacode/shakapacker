@@ -103,6 +103,13 @@ export class ConfigFileLoader {
 
     // Validate each build
     for (const [name, build] of Object.entries(config.builds)) {
+      // Guard: ensure build is a non-null plain object
+      if (build == null || typeof build !== "object" || Array.isArray(build)) {
+        throw new Error(
+          `Invalid build '${name}': must be an object, got ${build === null ? "null" : Array.isArray(build) ? "array" : typeof build}`
+        )
+      }
+
       if (
         build.bundler &&
         build.bundler !== "webpack" &&
@@ -204,14 +211,18 @@ export class ConfigFileLoader {
       ).config
 
       // Validate config file path (prevent path traversal)
-      if (
-        configFile &&
-        (configFile.includes("..") || !configFile.startsWith("config/"))
-      ) {
-        throw new Error(
-          `Invalid config file path in build '${buildName}': "${configFile}". ` +
-            `Config files must be within the config/ directory.`
-        )
+      if (configFile) {
+        // Normalize Windows backslashes for validation
+        const configFileNormalized = configFile.replace(/\\/g, "/")
+        if (
+          configFileNormalized.includes("..") ||
+          !configFileNormalized.startsWith("config/")
+        ) {
+          throw new Error(
+            `Invalid config file path in build '${buildName}': "${configFile}". ` +
+              `Config files must be within the config/ directory.`
+          )
+        }
       }
     }
 

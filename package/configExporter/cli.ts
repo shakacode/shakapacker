@@ -730,6 +730,13 @@ async function loadConfigsForEnv(
     } else {
       finalEnv = "development"
     }
+
+    // Sync process.env to reflect resolved environment
+    process.env.NODE_ENV = finalEnv
+    // Determine RAILS_ENV: CLI env option > build config RAILS_ENV > finalEnv
+    const railsEnv =
+      options.env || resolvedBuild.environment.RAILS_ENV || finalEnv
+    process.env.RAILS_ENV = railsEnv
   } else {
     // No build config - use CLI env or default
     finalEnv = env || "development"
