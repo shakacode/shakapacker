@@ -144,11 +144,15 @@ describe "DevServerRunner" do
         instance = klass.new(argv)
 
         allow(klass).to receive(:new).and_return(instance)
-        allow(Kernel).to receive(:exec).with(env, *cmd)
+        # Stub system to set $? to successful status
+        allow(instance).to receive(:system) do |*args|
+          system("true")  # Sets $? to successful status
+          true
+        end
 
         klass.run(argv)
 
-        expect(Kernel).to have_received(:exec).with(env, *cmd)
+        expect(instance).to have_received(:system).with(env, *cmd)
         expect(Shakapacker::Utils::Manager).to have_received(:error_unless_package_manager_is_obvious!)
       end
     end
