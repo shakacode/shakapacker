@@ -17,6 +17,26 @@ const packageJson = JSON.parse(
 )
 const VERSION = packageJson.version
 
+/**
+ * Clears all whitelisted build environment variables from process.env
+ * to prevent environment variable leakage between builds
+ */
+function clearBuildEnvironmentVariables(): void {
+  const BUILD_ENV_VARS = [
+    "NODE_ENV",
+    "RAILS_ENV",
+    "NODE_OPTIONS",
+    "BABEL_ENV",
+    "WEBPACK_SERVE",
+    "CLIENT_BUNDLE_ONLY",
+    "SERVER_BUNDLE_ONLY"
+  ]
+
+  BUILD_ENV_VARS.forEach((varName) => {
+    delete process.env[varName]
+  })
+}
+
 // Main CLI entry point
 export async function run(args: string[]): Promise<number> {
   try {
@@ -221,11 +241,6 @@ QUICK START (for troubleshooting):
           "--build and --all-builds are mutually exclusive. Use one or the other."
         )
       }
-      if (argv["all-builds"] && !argv["save-dir"]) {
-        throw new Error(
-          "--all-builds requires --save-dir flag to specify output directory."
-        )
-      }
       return true
     })
     .help("help")
@@ -373,10 +388,8 @@ async function runAllBuildsCommand(options: ExportOptions): Promise<number> {
     for (const buildName of buildNames) {
       console.log(`\n📦 Exporting build: ${buildName}`)
 
-      // Clear environment variables that might affect the build
-      delete process.env.WEBPACK_SERVE
-      delete process.env.CLIENT_BUNDLE_ONLY
-      delete process.env.SERVER_BUNDLE_ONLY
+      // Clear environment variables to prevent leakage between builds
+      clearBuildEnvironmentVariables()
 
       // Create a modified options object for this build
       const buildOptions = { ...options, build: buildName }
@@ -448,10 +461,8 @@ async function runDoctorMode(
         for (const buildName of buildNames) {
           console.log(`\n📦 Loading build: ${buildName}`)
 
-          // Clear environment variables before each build
-          delete process.env.WEBPACK_SERVE
-          delete process.env.CLIENT_BUNDLE_ONLY
-          delete process.env.SERVER_BUNDLE_ONLY
+          // Clear environment variables to prevent leakage between builds
+          clearBuildEnvironmentVariables()
 
           const configs = await loadConfigsForEnv(
             undefined,
