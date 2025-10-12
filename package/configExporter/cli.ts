@@ -94,6 +94,20 @@ export async function run(args: string[]): Promise<number> {
     process.chdir(appRoot)
     setupNodePath(appRoot)
 
+    // Check if any action was specified
+    const hasAction =
+      options.doctor ||
+      options.stdout ||
+      options.output ||
+      options.build ||
+      options.env
+
+    if (!hasAction) {
+      // No action specified - show help
+      yargs(args).showHelp()
+      return 0
+    }
+
     // Apply defaults
     applyDefaults(options)
 
@@ -442,7 +456,7 @@ async function runAllBuildsCommand(options: ExportOptions): Promise<number> {
         )
 
         const fullPath = resolve(targetDir, filename)
-        fileWriter.writeSingleFile(fullPath, output, true) // quiet mode
+        fileWriter.writeSingleFile(fullPath, output)
         createdFiles.push(fullPath)
       }
     }
@@ -516,7 +530,7 @@ async function runDoctorMode(
               metadata.buildName
             )
             const fullPath = resolve(targetDir, filename)
-            fileWriter.writeSingleFile(fullPath, output, true) // quiet mode
+            fileWriter.writeSingleFile(fullPath, output)
             createdFiles.push(fullPath)
           }
         }
@@ -599,7 +613,7 @@ async function runDoctorMode(
 
       const fullPath = resolve(targetDir, filename)
       const fileOutput: FileOutput = { filename, content: output, metadata }
-      fileWriter.writeSingleFile(fullPath, output, true) // quiet mode
+      fileWriter.writeSingleFile(fullPath, output)
       createdFiles.push(fullPath)
     }
   }
@@ -653,6 +667,7 @@ async function runSaveMode(
   const defaultDir = resolve(process.cwd(), "shakapacker-config-exports")
   const targetDir = options.saveDir || defaultDir
   const configs = await loadConfigsForEnv(options.env, options, appRoot)
+  const createdFiles: string[] = []
 
   if (options.output) {
     // Single file output
@@ -666,7 +681,9 @@ async function runSaveMode(
       options,
       appRoot
     )
-    fileWriter.writeSingleFile(resolve(options.output), output)
+    const fullPath = resolve(options.output)
+    fileWriter.writeSingleFile(fullPath, output)
+    createdFiles.push(fullPath)
   } else {
     // Multi-file output (one per config)
     for (const { config, metadata } of configs) {
@@ -678,9 +695,17 @@ async function runSaveMode(
         options.format!,
         metadata.buildName
       )
-      fileWriter.writeSingleFile(resolve(targetDir, filename), output)
+      const fullPath = resolve(targetDir, filename)
+      fileWriter.writeSingleFile(fullPath, output)
+      createdFiles.push(fullPath)
     }
   }
+
+  // Log all created files
+  console.log(`\n[Config Exporter] Created ${createdFiles.length} file(s):`)
+  createdFiles.forEach((file) => {
+    console.log(`  ✓ ${file}`)
+  })
 }
 
 async function runStdoutMode(
