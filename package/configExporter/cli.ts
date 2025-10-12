@@ -106,7 +106,9 @@ QUICK START (for troubleshooting):
     .option("save", {
       type: "boolean",
       default: false,
-      description: "Save to auto-generated file(s) (default: YAML format)"
+      deprecated:
+        "No longer needed - saving is now the default behavior. Use --stdout for terminal output.",
+      hidden: true
     })
     .option("save-dir", {
       type: "string",
@@ -141,7 +143,7 @@ QUICK START (for troubleshooting):
     })
     .option("output", {
       type: "string",
-      description: "Output to specific file (default: stdout)"
+      description: "Output to specific file instead of directory"
     })
     .option("depth", {
       type: "number",
@@ -155,13 +157,12 @@ QUICK START (for troubleshooting):
     .option("format", {
       type: "string",
       choices: ["yaml", "json", "inspect"] as const,
-      description:
-        "Output format (default: inspect for stdout, yaml for --save/--doctor)"
+      description: "Output format (default: yaml for files, inspect for stdout)"
     })
     .option("annotate", {
       type: "boolean",
       description:
-        "Enable inline documentation (YAML only, default with --save/--doctor)"
+        "Enable inline documentation (YAML only, default with --doctor or file output)"
     })
     .option("verbose", {
       type: "boolean",
@@ -242,17 +243,19 @@ QUICK START (for troubleshooting):
   # Config File Workflow
   bin/export-bundler-config --init
   bin/export-bundler-config --list-builds
-  bin/export-bundler-config --build=dev --save
-  bin/export-bundler-config --all-builds --save           # Export ALL builds
-  bin/export-bundler-config --build=dev --save --rspack
+  bin/export-bundler-config --build=dev
+  bin/export-bundler-config --all-builds --save-dir=./configs
+  bin/export-bundler-config --build=dev --rspack
 
   # Traditional Workflow (without config file)
   bin/export-bundler-config --doctor
-  bin/export-bundler-config --save --env=production --client-only
-  bin/export-bundler-config --save --save-dir=./debug
+  bin/export-bundler-config --env=production --client-only
+  bin/export-bundler-config --save-dir=./debug
+  bin/export-bundler-config                               # Saves to shakapacker-config-exports/
 
   # View config in terminal (stdout)
-  bin/export-bundler-config`
+  bin/export-bundler-config --stdout
+  bin/export-bundler-config --output=config.yaml          # Save to specific file`
     )
     .strict()
     .parseSync()
@@ -596,12 +599,13 @@ async function runSaveMode(
   options: ExportOptions,
   appRoot: string
 ): Promise<void> {
-  console.log(`[Config Exporter] Save mode: Exporting ${options.env} configs`)
+  const env = options.env || "development"
+  console.log(`[Config Exporter] Exporting ${env} configs`)
 
   const fileWriter = new FileWriter()
   const defaultDir = resolve(process.cwd(), "shakapacker-config-exports")
   const targetDir = options.saveDir || defaultDir
-  const configs = await loadConfigsForEnv(options.env!, options, appRoot)
+  const configs = await loadConfigsForEnv(options.env, options, appRoot)
 
   if (options.output) {
     // Single file output
