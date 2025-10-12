@@ -361,12 +361,12 @@ export function generateSampleConfigFile(): string {
 # This file defines build configurations for exporting bundler configs.
 # You can define multiple builds with different environments and settings.
 
-# Default bundler for all builds (can be overridden per-build or with --webpack/--rspack flags)
-default_bundler: rspack  # Options: webpack | rspack
-
 # Use these builds as defaults for --doctor mode (optional)
 # When set to true, --doctor will export ALL builds defined below instead of hardcoded defaults
-# shakapacker_default_builds: true
+# shakapacker_doctor_default_builds_here: true
+
+# Default bundler for all builds (can be overridden per-build or with --webpack/--rspack flags)
+default_bundler: rspack  # Options: webpack | rspack
 
 builds:
   # ============================================================================

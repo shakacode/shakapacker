@@ -46,7 +46,7 @@ export interface FileOutput {
 // Config file schema types
 export interface BundlerConfigFile {
   default_bundler?: "webpack" | "rspack"
-  shakapacker_default_builds?: boolean
+  shakapacker_doctor_default_builds_here?: boolean
   builds: Record<string, BuildConfig>
 }
 

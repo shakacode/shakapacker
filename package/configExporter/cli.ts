@@ -494,16 +494,16 @@ async function runDoctorMode(
 
   const createdFiles: string[] = []
 
-  // Check if config file exists with shakapacker_default_builds flag
+  // Check if config file exists with shakapacker_doctor_default_builds_here flag
   const configFilePath = options.configFile || ".bundler-config.yml"
   const loader = new ConfigFileLoader(configFilePath)
 
   if (loader.exists()) {
     try {
       const configData = loader.load()
-      if (configData.shakapacker_default_builds) {
+      if (configData.shakapacker_doctor_default_builds_here) {
         console.log(
-          "\nUsing builds from config file (shakapacker_default_builds: true)...\n"
+          "\nUsing builds from config file (shakapacker_doctor_default_builds_here: true)...\n"
         )
         // Use config file builds
         const buildNames = Object.keys(configData.builds)
