@@ -240,7 +240,7 @@ module Shakapacker
         end
 
         elapsed_time = Time.now - start_time
-        puts "[Shakapacker] #{bundler_name} dev server ran for #{elapsed_time.round(2)}s"
+        puts "[Shakapacker] #{bundler_name} dev server stopped after #{elapsed_time.round(2)}s"
         exit($?.exitstatus || 1) unless $?.success?
       end
 
