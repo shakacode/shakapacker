@@ -6,15 +6,32 @@ This is a Rails test application used for testing Shakapacker with both Webpack 
 
 This application supports testing with both **Webpack** and **RSpack** bundlers, allowing us to ensure Shakapacker works correctly with either bundler.
 
+## Setup
+
+The dummy app needs to link to the local shakapacker gem for development:
+
+```bash
+# From the repository root, publish shakapacker via yalc
+yalc publish
+
+# In spec/dummy, link to the local shakapacker
+cd spec/dummy
+yalc link shakapacker
+npm install
+```
+
+Now you're ready to use the dummy app!
+
 ## Quick Start
 
 ### Using Webpack (Default)
 
 ```bash
-# Ensure webpack configuration is active
-bin/test-bundler webpack
+# The bin scripts auto-configure with webpack if no config exists
+bin/shakapacker
 
-# Run the bundler
+# Or explicitly switch to webpack
+bin/test-bundler webpack
 bin/shakapacker
 
 # Start dev server
