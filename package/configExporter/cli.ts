@@ -94,20 +94,6 @@ export async function run(args: string[]): Promise<number> {
     process.chdir(appRoot)
     setupNodePath(appRoot)
 
-    // Check if any action was specified
-    const hasAction =
-      options.doctor ||
-      options.stdout ||
-      options.output ||
-      options.build ||
-      options.env
-
-    if (!hasAction) {
-      // No action specified - show help
-      yargs(args).showHelp()
-      return 0
-    }
-
     // Apply defaults
     applyDefaults(options)
 
@@ -132,9 +118,12 @@ export async function run(args: string[]): Promise<number> {
     // Execute based on mode
     if (options.doctor) {
       await runDoctorMode(options, appRoot)
-    } else if (options.stdout || options.output) {
-      // Explicit stdout mode or single file output
+    } else if (options.stdout) {
+      // Explicit stdout mode
       await runStdoutMode(options, appRoot)
+    } else if (options.output) {
+      // Save to single file
+      await runSingleFileMode(options, appRoot)
     } else {
       // Default: save to directory
       await runSaveMode(options, appRoot)
@@ -734,6 +723,23 @@ async function runStdoutMode(
 
   console.log("\n" + "=".repeat(80) + "\n")
   console.log(output)
+}
+
+async function runSingleFileMode(
+  options: ExportOptions,
+  appRoot: string
+): Promise<void> {
+  const configs = await loadConfigsForEnv(options.env!, options, appRoot)
+  const combined = configs.map((c) => c.config)
+  const metadata = configs[0].metadata
+  metadata.configCount = combined.length
+
+  const config = combined.length === 1 ? combined[0] : combined
+  const output = formatConfig(config, metadata, options, appRoot)
+
+  const fileWriter = new FileWriter()
+  const filePath = resolve(process.cwd(), options.output!)
+  fileWriter.writeSingleFile(filePath, output)
 }
 
 async function loadConfigsForEnv(
