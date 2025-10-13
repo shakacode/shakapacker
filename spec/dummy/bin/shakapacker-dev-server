@@ -3,11 +3,27 @@
 ENV["RAILS_ENV"] ||= "development"
 ENV["BUNDLE_GEMFILE"] ||= File.expand_path("../Gemfile", __dir__)
 
+APP_ROOT = File.expand_path("..", __dir__)
+
+# Auto-setup: If shakapacker.yml doesn't exist, use webpack config as default
+config_dir = File.join(APP_ROOT, "config")
+shakapacker_config = File.join(config_dir, "shakapacker.yml")
+webpack_config = File.join(config_dir, "shakapacker-webpack.yml")
+
+unless File.exist?(shakapacker_config)
+  if File.exist?(webpack_config)
+    require "fileutils"
+    FileUtils.cp(webpack_config, shakapacker_config)
+    puts "📦 Auto-configured with webpack (copied shakapacker-webpack.yml → shakapacker.yml)"
+    puts "💡 To switch bundlers, use: bin/test-bundler [webpack|rspack]"
+    puts ""
+  end
+end
+
 require "bundler/setup"
 require "shakapacker"
 require "shakapacker/dev_server_runner"
 
-APP_ROOT = File.expand_path("..", __dir__)
 Dir.chdir(APP_ROOT) do
   Shakapacker::DevServerRunner.run(ARGV)
 end

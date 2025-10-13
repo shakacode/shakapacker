@@ -87,7 +87,119 @@ describe "WebpackRunner" do
     end
   end
 
+  describe "exit code handling" do
+    it "exits with failure code when build fails" do
+      Dir.chdir(test_app_path) do
+        klass = Shakapacker::WebpackRunner
+        instance = klass.new([])
+
+        allow(klass).to receive(:new).and_return(instance)
+        allow(Shakapacker::Utils::Manager).to receive(:error_unless_package_manager_is_obvious!)
+
+        # Stub system to simulate failure
+        allow(instance).to receive(:system) do |*args|
+          system("exit 5")  # Sets $? to exit code 5
+          false
+        end
+
+        expect { klass.run([]) }.to raise_error(SystemExit) do |error|
+          expect(error.status).to eq(5)
+        end
+      end
+    end
+
+    it "does not exit when build succeeds" do
+      Dir.chdir(test_app_path) do
+        klass = Shakapacker::WebpackRunner
+        instance = klass.new([])
+
+        allow(klass).to receive(:new).and_return(instance)
+        allow(Shakapacker::Utils::Manager).to receive(:error_unless_package_manager_is_obvious!)
+
+        # Stub system to simulate success
+        allow(instance).to receive(:system) do |*args|
+          system("true")  # Sets $? to successful status
+          true
+        end
+
+        expect { klass.run([]) }.not_to raise_error
+      end
+    end
+  end
+
+  describe "timing output" do
+    it "shows timing for static builds" do
+      Dir.chdir(test_app_path) do
+        klass = Shakapacker::WebpackRunner
+        instance = klass.new([])
+
+        allow(klass).to receive(:new).and_return(instance)
+        allow(Shakapacker::Utils::Manager).to receive(:error_unless_package_manager_is_obvious!)
+
+        allow(instance).to receive(:system) do |*args|
+          sleep(0.1)  # Simulate build time
+          system("true")
+          true
+        end
+
+        output = capture_stdout { klass.run([]) }
+
+        # Time format can be either "X.XXs" or "M:SS.SSs" for the display, always "X.XXs" in parentheses
+        expect(output).to match(/\[Shakapacker\] Completed webpack build in (\d+:\d+\.\d+s|\d+\.\d+s) \(\d+\.\d+s\)/)
+      end
+    end
+
+    it "does not show timing for watch mode" do
+      Dir.chdir(test_app_path) do
+        klass = Shakapacker::WebpackRunner
+        instance = klass.new(["--watch"])
+
+        allow(klass).to receive(:new).and_return(instance)
+        allow(Shakapacker::Utils::Manager).to receive(:error_unless_package_manager_is_obvious!)
+
+        allow(instance).to receive(:system) do |*args|
+          system("true")
+          true
+        end
+
+        output = capture_stdout { klass.run(["--watch"]) }
+
+        expect(output).not_to match(/Completed webpack build/)
+      end
+    end
+
+    it "formats time correctly for builds under 1 minute" do
+      Dir.chdir(test_app_path) do
+        klass = Shakapacker::WebpackRunner
+        instance = klass.new([])
+
+        allow(klass).to receive(:new).and_return(instance)
+        allow(Shakapacker::Utils::Manager).to receive(:error_unless_package_manager_is_obvious!)
+
+        allow(instance).to receive(:system) do |*args|
+          system("true")
+          true
+        end
+
+        output = capture_stdout { klass.run([]) }
+
+        # Should show format like "3.29s (3.29s)" without minutes
+        expect(output).to match(/\[Shakapacker\] Completed webpack build in \d+\.\d+s \(\d+\.\d+s\)/)
+        expect(output).not_to match(/\d+:\d+\.\d+s/)
+      end
+    end
+  end
+
   private
+
+    def capture_stdout
+      old_stdout = $stdout
+      $stdout = StringIO.new
+      yield
+      $stdout.string
+    ensure
+      $stdout = old_stdout
+    end
 
     def verify_command(cmd, argv: [])
       Dir.chdir(test_app_path) do
@@ -95,11 +207,15 @@ describe "WebpackRunner" do
         instance = klass.new(argv)
 
         allow(klass).to receive(:new).and_return(instance)
-        allow(Kernel).to receive(:exec)
+        # Stub system to set $? to successful status
+        allow(instance).to receive(:system) do |*args|
+          system("true")  # Sets $? to successful status
+          true
+        end
 
         klass.run(argv)
 
-        expect(Kernel).to have_received(:exec).with(Shakapacker::Compiler.env, *cmd)
+        expect(instance).to have_received(:system).with(Shakapacker::Compiler.env, *cmd)
         expect(Shakapacker::Utils::Manager).to have_received(:error_unless_package_manager_is_obvious!)
       end
     end

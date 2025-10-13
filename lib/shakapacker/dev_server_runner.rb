@@ -233,8 +233,10 @@ module Shakapacker
         cmd += @argv
 
         Dir.chdir(@app_path) do
-          Kernel.exec env, *cmd
+          system(env, *cmd)
         end
+
+        exit($?.exitstatus || 1) unless $?.success?
       end
 
       def build_cmd
