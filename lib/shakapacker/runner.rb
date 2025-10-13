@@ -164,8 +164,8 @@ module Shakapacker
         puts <<~HELP
 
         Options managed by Shakapacker (configured via config files):
-          --config                  Set automatically to config/webpack/webpack.config.js
-                                    or config/rspack/rspack.config.js
+          --config                  Set automatically based on assets_bundler_config_path
+                                    (defaults to config/webpack or config/rspack)
           --node-env                Set from RAILS_ENV or NODE_ENV
         HELP
       end
@@ -339,9 +339,11 @@ module Shakapacker
       end
 
       def find_rspack_config_with_fallback
-        # First try rspack-specific paths
+        config_dir = @config.assets_bundler_config_path
+
+        # First try rspack-specific paths in the configured directory
         rspack_paths = %w[ts js].map do |ext|
-          File.join(@app_path, "config/rspack/rspack.config.#{ext}")
+          File.join(@app_path, config_dir, "rspack.config.#{ext}")
         end
 
         puts "[Shakapacker] Looking for Rspack config in: #{rspack_paths.join(", ")}"
@@ -353,14 +355,14 @@ module Shakapacker
 
         # Fallback to webpack config with deprecation warning
         webpack_paths = %w[ts js].map do |ext|
-          File.join(@app_path, "config/webpack/webpack.config.#{ext}")
+          File.join(@app_path, config_dir, "webpack.config.#{ext}")
         end
 
         puts "[Shakapacker] Rspack config not found, checking for webpack config fallback..."
         webpack_path = webpack_paths.find { |f| File.exist?(f) }
         if webpack_path
           $stderr.puts "⚠️  DEPRECATION WARNING: Using webpack config file for Rspack assets bundler."
-          $stderr.puts "   Please create config/rspack/rspack.config.js and migrate your configuration."
+          $stderr.puts "   Please create #{config_dir}/rspack.config.js and migrate your configuration."
           $stderr.puts "   Using: #{webpack_path}"
           return webpack_path
         end
@@ -371,8 +373,10 @@ module Shakapacker
       end
 
       def find_webpack_config
+        config_dir = @config.assets_bundler_config_path
+
         possible_paths = %w[ts js].map do |ext|
-          File.join(@app_path, "config/webpack/webpack.config.#{ext}")
+          File.join(@app_path, config_dir, "webpack.config.#{ext}")
         end
         puts "[Shakapacker] Looking for Webpack config in: #{possible_paths.join(", ")}"
         path = possible_paths.find { |f| File.exist?(f) }

@@ -148,6 +148,14 @@ class Shakapacker::Configuration
     javascript_transpiler
   end
 
+  def assets_bundler_config_path
+    custom_path = fetch(:assets_bundler_config_path)
+    return custom_path if custom_path
+
+    # Default paths based on bundler type
+    rspack? ? "config/rspack" : "config/webpack"
+  end
+
   private
 
     def default_javascript_transpiler
