@@ -134,7 +134,10 @@ module Shakapacker
       if !watch_mode && start_time
         bundler_name = @config.rspack? ? "rspack" : "webpack"
         elapsed_time = Time.now - start_time
-        puts "[Shakapacker] Completed #{bundler_name} build in #{elapsed_time.round(2)}s"
+        minutes = (elapsed_time / 60).floor
+        seconds = (elapsed_time % 60).round(2)
+        time_display = minutes > 0 ? "#{minutes}:#{format('%05.2f', seconds)}s" : "#{elapsed_time.round(2)}s"
+        puts "[Shakapacker] Completed #{bundler_name} build in #{time_display} (#{elapsed_time.round(2)}s)"
       end
       exit($?.exitstatus || 1) unless $?.success?
     end
