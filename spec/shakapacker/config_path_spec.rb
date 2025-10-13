@@ -36,8 +36,15 @@ describe "Config Path Resolution" do
 
     context "with no config files present" do
       before do
+        @backup_js = File.read("config/webpack/webpack.config.js") if File.exist?("config/webpack/webpack.config.js")
+        @backup_ts = File.read("config/webpack/webpack.config.ts") if File.exist?("config/webpack/webpack.config.ts")
         FileUtils.rm_f("config/webpack/webpack.config.js")
         FileUtils.rm_f("config/webpack/webpack.config.ts")
+      end
+
+      after do
+        File.write("config/webpack/webpack.config.js", @backup_js) if @backup_js
+        File.write("config/webpack/webpack.config.ts", @backup_ts) if @backup_ts
       end
 
       it "exits with helpful error message suggesting assets_bundler_config_path" do
@@ -47,8 +54,11 @@ describe "Config Path Resolution" do
         expect { Shakapacker::WebpackRunner.new([]) }.to raise_error(SystemExit)
 
         stderr_output = $stderr.string
-        expect(stderr_output).to match(/assets_bundler_config_path/)
-        expect(stderr_output).to match(/Current configured path/)
+        expect(stderr_output).to include("ERROR: webpack config")
+        expect(stderr_output).to include("not found")
+        expect(stderr_output).to include("assets_bundler_config_path: your/custom/path")
+        expect(stderr_output).to include("Current configured path: config/webpack")
+        expect(stderr_output).to include("bundle exec rails shakapacker:install")
       ensure
         $stderr = old_stderr
       end
@@ -96,7 +106,15 @@ describe "Config Path Resolution" do
 
     context "with no config files present" do
       before do
+        @backup_js = File.read("config/webpack/webpack.config.js") if File.exist?("config/webpack/webpack.config.js")
+        @backup_ts = File.read("config/webpack/webpack.config.ts") if File.exist?("config/webpack/webpack.config.ts")
         FileUtils.rm_f("config/webpack/webpack.config.js")
+        FileUtils.rm_f("config/webpack/webpack.config.ts")
+      end
+
+      after do
+        File.write("config/webpack/webpack.config.js", @backup_js) if @backup_js
+        File.write("config/webpack/webpack.config.ts", @backup_ts) if @backup_ts
       end
 
       it "exits with helpful error message suggesting assets_bundler_config_path" do
@@ -106,8 +124,11 @@ describe "Config Path Resolution" do
         expect { Shakapacker::RspackRunner.new([]) }.to raise_error(SystemExit)
 
         stderr_output = $stderr.string
-        expect(stderr_output).to match(/assets_bundler_config_path/)
-        expect(stderr_output).to match(/Current configured path/)
+        expect(stderr_output).to include("ERROR: rspack config")
+        expect(stderr_output).to include("not found")
+        expect(stderr_output).to include("assets_bundler_config_path: your/custom/path")
+        expect(stderr_output).to include("Current configured path: config/rspack")
+        expect(stderr_output).to include("bundle exec rails shakapacker:install")
       ensure
         $stderr = old_stderr
       end
