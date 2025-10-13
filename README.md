@@ -351,28 +351,20 @@ public/packs                # webpack output
 
 Webpack intelligently includes only necessary files. In this example, the file `packs/application.js` would reference `../src/my_component.js`
 
-`nested_entries` allows you to have webpack entry points nested in subdirectories. This defaults to true as of shakapacker v7. With `nested_entries: false`, you can have your entire `source_path` used for your source (using the `source_entry_path: /`) and you place files at the top level that you want as entry points. `nested_entries: true` allows you to have entries that are in subdirectories. This is useful if you have entries that are generated, so you can have a `generated` subdirectory and easily separate generated files from the rest of your codebase.
+The `nested_entries` option allows webpack entry points in subdirectories (defaults to `true`). See the [Configuration Guide](./docs/configuration.md#nested_entries) for details.
 
-To enable/disable the usage of contentHash in any node environment (specified using the `NODE_ENV` environment variable), add/modify `useContentHash` with a boolean value in `config/shakapacker.yml`. This feature is disabled for all environments except production by default. You may not disable the content hash for a `NODE_ENV` of production as that would break the browser caching of assets. Notice that despite the possibility of enabling this option for the development environment, [it is not recommended](https://webpack.js.org/guides/build-performance/#avoid-production-specific-tooling).
+The `useContentHash` option enables content-based cache busting. It's disabled by default (except in production) to speed up development builds. See the [Configuration Guide](./docs/configuration.md#usecontenthash) for details.
 
 #### Precompile Hook
 
-Shakapacker supports running a custom command before webpack compilation via the `precompile_hook` configuration option. This is useful for:
+Shakapacker supports running custom commands before compilation via the `precompile_hook` configuration option.
 
-- Dynamically generating entry points (e.g., React on Rails `generate_packs`)
-- Running preparatory tasks before asset compilation in both development and production
-
-```yaml
-# Works in all environments (development, production)
-default: &default
-  precompile_hook: "bin/rails react_on_rails:generate_packs"
-```
-
-For complete documentation including React on Rails integration, security features, and troubleshooting, see the [Precompile Hook Guide](docs/precompile_hook.md).
+For configuration details, see [precompile_hook in the Configuration Guide](./docs/configuration.md#precompile_hook).
+For complete usage guide, see the [Precompile Hook Guide](./docs/precompile_hook.md).
 
 #### Setting custom config path
 
-You can use the environment variable `SHAKAPACKER_CONFIG` to enforce a particular path to the config file rather than the default `config/shakapacker.yml`.
+You can use the `SHAKAPACKER_CONFIG` environment variable to specify a custom config file path. See [Environment Variables in the Configuration Guide](./docs/configuration.md#environment-variables) for this and other configuration options.
 
 ### View Helpers
 
@@ -601,11 +593,7 @@ Shakapacker ships with two different strategies that are used to determine wheth
 - `digest` - This strategy calculates SHA1 digest of files in your watched paths (see below). The calculated digest is then stored in a temp file. To check whether the assets need to be recompiled, Shakapacker calculates the SHA1 of the watched files and compares it with the one stored. If the digests are equal, no recompilation occurs. If the digests are different or the temp file is missing, files are recompiled.
 - `mtime` - This strategy looks at the last "modified at" timestamps of both files AND directories in your watched paths. The timestamp of the most recent file or directory is then compared with the timestamp of `manifest.json` file generated. If the manifest file timestamp is newer than one of the most recently modified files or directories in the watched paths, no recompilation occurs. If the manifest file is older, files are recompiled.
 
-The `mtime` strategy is generally faster than the `digest` one, but it requires stable timestamps, this makes it perfect for a development environment, such as needing to rebuild bundles for tests, or if you're not changing frontend assets much.
-
-In production or CI environments, the `digest` strategy is more suitable, unless you are using incremental builds or caching and can guarantee that the timestamps will not change after e.g. cache restore. However, many production or CI environments will explicitly compile assets, so `compile: false` is more appropriate. Otherwise, you'll waste time either checking file timestamps or computing digests.
-
-You can control what strategy is used by the `compiler_strategy` option in `shakapacker.yml` config file. By default `mtime` strategy is used in development environment, `digest` is used elsewhere.
+The `compiler_strategy` option determines how Shakapacker checks if assets need recompilation (`mtime` for development, `digest` for production). See the [Configuration Guide](./docs/configuration.md#compiler_strategy) for detailed comparison and recommendations.
 
 > [!NOTE]
 >
