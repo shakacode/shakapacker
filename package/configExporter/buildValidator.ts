@@ -1,4 +1,4 @@
-import { spawn, ChildProcess } from "child_process"
+import { spawn } from "child_process"
 import { existsSync } from "fs"
 import { resolve } from "path"
 import { ResolvedBuildConfig, BuildValidationResult } from "./types"
@@ -74,6 +74,12 @@ export class BuildValidator {
     // Add config file if specified
     if (build.configFile) {
       const configPath = resolve(appRoot, build.configFile)
+      if (!existsSync(configPath)) {
+        result.errors.push(
+          `Config file not found: ${configPath}. Check the 'config' setting in your build configuration.`
+        )
+        return result
+      }
       args.push("--config", configPath)
     } else {
       // Use default config path
@@ -103,17 +109,30 @@ export class BuildValidator {
 
       let hasCompiled = false
       let hasError = false
+      let resolved = false
+
+      const resolveOnce = (res: BuildValidationResult) => {
+        if (!resolved) {
+          resolved = true
+          resolve(res)
+        }
+      }
+
       const timeoutId = setTimeout(() => {
-        if (!hasCompiled && !hasError) {
+        if (!hasCompiled && !hasError && !resolved) {
           result.errors.push(
-            `Timeout: webpack-dev-server did not compile within ${this.options.timeout}ms`
+            `Timeout: webpack-dev-server did not compile within ${this.options.timeout}ms.`
           )
           child.kill("SIGTERM")
-          resolve(result)
+          // Remove listeners to prevent further callbacks
+          child.stdout?.removeAllListeners()
+          child.stderr?.removeAllListeners()
+          child.removeAllListeners()
+          resolveOnce(result)
         }
       }, this.options.timeout)
 
-      const processOutput = (data: Buffer, isStderr: boolean) => {
+      const processOutput = (data: Buffer) => {
         const lines = data.toString().split("\n")
         lines.forEach((line) => {
           if (!line.trim()) return
@@ -132,7 +151,11 @@ export class BuildValidator {
             result.success = true
             clearTimeout(timeoutId)
             child.kill("SIGTERM")
-            resolve(result)
+            // Remove listeners to prevent further callbacks
+            child.stdout?.removeAllListeners()
+            child.stderr?.removeAllListeners()
+            child.removeAllListeners()
+            resolveOnce(result)
           }
 
           // Check for errors
@@ -163,26 +186,28 @@ export class BuildValidator {
         })
       }
 
-      child.stdout?.on("data", (data) => processOutput(data, false))
-      child.stderr?.on("data", (data) => processOutput(data, true))
+      child.stdout?.on("data", (data) => processOutput(data))
+      child.stderr?.on("data", (data) => processOutput(data))
 
       child.on("exit", (code) => {
         clearTimeout(timeoutId)
-        if (!hasCompiled && !hasError) {
-          if (code !== 0 && code !== null && code !== 143) {
-            // 143 = SIGTERM
+        if (!hasCompiled && !hasError && !resolved) {
+          const SIGTERM_EXIT_CODE = 143
+          if (code !== 0 && code !== null && code !== SIGTERM_EXIT_CODE) {
             result.errors.push(
-              `webpack-dev-server exited with code ${code} before compilation completed`
+              `webpack-dev-server exited with code ${code} before compilation completed.`
             )
           }
         }
-        resolve(result)
+        resolveOnce(result)
       })
 
       child.on("error", (err) => {
         clearTimeout(timeoutId)
-        result.errors.push(`Failed to start webpack-dev-server: ${err.message}`)
-        resolve(result)
+        result.errors.push(
+          `Failed to start webpack-dev-server: ${err.message}.`
+        )
+        resolveOnce(result)
       })
     })
   }
@@ -219,6 +244,12 @@ export class BuildValidator {
     // Add config file if specified
     if (build.configFile) {
       const configPath = resolve(appRoot, build.configFile)
+      if (!existsSync(configPath)) {
+        result.errors.push(
+          `Config file not found: ${configPath}. Check the 'config' setting in your build configuration.`
+        )
+        return result
+      }
       args.push("--config", configPath)
     } else {
       // Use default config path
@@ -254,7 +285,7 @@ export class BuildValidator {
 
       const timeoutId = setTimeout(() => {
         result.errors.push(
-          `Timeout: ${bundler} did not complete within ${this.options.timeout}ms`
+          `Timeout: ${bundler} did not complete within ${this.options.timeout}ms.`
         )
         child.kill("SIGTERM")
         resolve(result)
@@ -321,7 +352,7 @@ export class BuildValidator {
           }
 
           if (code !== 0) {
-            result.errors.push(`${bundler} exited with code ${code}`)
+            result.errors.push(`${bundler} exited with code ${code}.`)
           }
 
           result.success = code === 0 && result.errors.length === 0
@@ -337,7 +368,7 @@ export class BuildValidator {
 
       child.on("error", (err) => {
         clearTimeout(timeoutId)
-        result.errors.push(`Failed to start ${bundler}: ${err.message}`)
+        result.errors.push(`Failed to start ${bundler}: ${err.message}.`)
         resolve(result)
       })
     })

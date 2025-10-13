@@ -484,8 +484,21 @@ async function runValidateCommand(options: ExportOptions): Promise<number> {
       clearBuildEnvironmentVariables()
       restoreBuildEnvironmentVariables(savedEnv)
 
-      // Resolve build config
-      const defaultBundler = await autoDetectBundler("development", appRoot)
+      // Get the build's environment to use for auto-detection
+      const buildConfig = config.builds[buildName]
+      const buildEnv =
+        buildConfig.environment?.NODE_ENV ||
+        (buildConfig.environment?.RAILS_ENV as
+          | "development"
+          | "production"
+          | "test"
+          | undefined) ||
+        "development"
+
+      // Auto-detect bundler using the build's environment
+      const defaultBundler = await autoDetectBundler(buildEnv, appRoot)
+
+      // Resolve build config with the correct default bundler
       const resolvedBuild = loader.resolveBuild(
         buildName,
         options,
