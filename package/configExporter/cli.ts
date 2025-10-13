@@ -745,6 +745,7 @@ async function loadConfigsForEnv(
   let buildName: string | undefined
   let buildOutputs: string[] = []
   let customConfigFile: string | undefined
+  let bundlerEnvArgs: string[] = []
   let finalEnv: "development" | "production" | "test"
 
   // If using config file build
@@ -763,6 +764,7 @@ async function loadConfigsForEnv(
     buildName = resolvedBuild.name
     buildOutputs = resolvedBuild.outputs
     customConfigFile = resolvedBuild.configFile
+    bundlerEnvArgs = resolvedBuild.bundlerEnvArgs
 
     // Set environment variables from config
     // Security: Only allow specific environment variables to prevent malicious configs
@@ -906,6 +908,38 @@ async function loadConfigsForEnv(
   // Handle ES module default export
   if (typeof loadedConfig === "object" && "default" in loadedConfig) {
     loadedConfig = loadedConfig.default
+  }
+
+  // Handle function exports (webpack config functions)
+  if (typeof loadedConfig === "function") {
+    // Webpack config functions receive (env, argv) parameters
+    // Build env object from bundler_env args if available
+    const envObject: Record<string, any> = {}
+    if (bundlerEnvArgs && bundlerEnvArgs.length > 0) {
+      // Parse --env key=value or --env key into object
+      for (let i = 0; i < bundlerEnvArgs.length; i += 2) {
+        if (bundlerEnvArgs[i] === "--env") {
+          const envArg = bundlerEnvArgs[i + 1]
+          if (envArg.includes("=")) {
+            const [key, value] = envArg.split("=")
+            envObject[key] = value
+          } else {
+            envObject[envArg] = true
+          }
+        }
+      }
+    }
+
+    const argv = { mode: finalEnv }
+    try {
+      loadedConfig = loadedConfig(envObject, argv)
+    } catch (error: any) {
+      throw new Error(
+        `Failed to execute config function: ${error.message}\n` +
+          `Config file: ${configFile}\n` +
+          `Environment: ${JSON.stringify(envObject)}`
+      )
+    }
   }
 
   // Determine config type and split if array
