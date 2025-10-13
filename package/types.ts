@@ -1,5 +1,13 @@
 import * as https from "node:https"
 
+// Common constructor types for plugins/loaders
+export type PluginConstructor<O = unknown> = new (options: O) => unknown
+export type LoaderModule<T = unknown> = {
+  default?: T
+  loader?: string
+  [key: string]: unknown
+}
+
 // Type for the raw YAML config file
 export interface YamlConfig {
   [environment: string]: Partial<Config>

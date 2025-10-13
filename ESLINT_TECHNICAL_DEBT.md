@@ -2,12 +2,29 @@
 
 This document tracks the ESLint errors currently suppressed in the codebase and outlines the plan to address them.
 
-## Summary
+## Summary (as of 2025-10-13)
 
-Total suppressed errors: ~172
+**Total suppressed errors: ~172**
 
-- TypeScript type-safety issues: ~130
-- Style/convention issues: ~42
+- TypeScript type-safety issues: ~130 (75%)
+- Style/convention issues: ~42 (25%)
+
+**Target**: Reduce by 50% within Q1 2025
+**Last Updated**: October 13, 2025
+
+## Priority Matrix
+
+| Category                             | Impact | Effort | Priority | Count |
+| ------------------------------------ | ------ | ------ | -------- | ----- |
+| `@typescript-eslint/no-explicit-any` | High   | High   | P1       | 22    |
+| `@typescript-eslint/no-unsafe-*`     | High   | High   | P1       | 85    |
+| `config.ts` type safety              | High   | Medium | P1       | 7     |
+| `no-param-reassign`                  | Medium | Low    | P2       | 7     |
+| `class-methods-use-this`             | Low    | Low    | P3       | 5     |
+| `no-nested-ternary`                  | Low    | Low    | P3       | 3     |
+| `import/prefer-default-export`       | Low    | Medium | P3       | 9     |
+| `global-require`                     | Medium | High   | P2       | 3     |
+| Other style issues                   | Low    | Low    | P3       | 31    |
 
 ## Categories of Suppressed Errors
 

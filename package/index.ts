@@ -12,9 +12,11 @@ import devServer from "./dev_server"
 import { moduleExists, canProcess } from "./utils/helpers"
 import inliningCss from "./utils/inliningCss"
 
-// eslint-disable-next-line @typescript-eslint/no-require-imports
+// Must use require() because env.ts exports via `export =` for CommonJS compatibility
+
 const env = require("./env")
 
+// Dynamic require needed - path is constructed at runtime based on bundler config
 const rulesPath = resolve(__dirname, "rules", `${config.assets_bundler}.js`)
 const rules = require(rulesPath)
 
@@ -38,7 +40,7 @@ const generateWebpackConfig = (
 
   const { nodeEnv } = env
   const path = resolve(__dirname, "environments", `${nodeEnv}.js`)
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
+
   const environmentConfig = existsSync(path) ? require(path) : baseConfig
 
   return webpackMerge.merge({}, environmentConfig, extraConfig)

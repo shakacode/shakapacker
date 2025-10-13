@@ -7,9 +7,11 @@ import { basename, dirname, join, relative, resolve } from "path"
 import extname from "path-complete-extname"
 import type { Configuration, Entry } from "webpack"
 import config from "../config"
-// eslint-disable-next-line @typescript-eslint/no-require-imports
+// Must use require() because env.ts exports via `export =` for CommonJS compatibility
+
 const { isProduction } = require("../env")
 
+// Dynamic require - path is constructed at runtime based on bundler config (webpack or rspack)
 const pluginsPath = resolve(
   __dirname,
   "..",
@@ -17,6 +19,9 @@ const pluginsPath = resolve(
   `${config.assets_bundler}.js`
 )
 const { getPlugins } = require(pluginsPath)
+
+// Dynamic require - loads webpack.js or rspack.js based on config
+// These modules use `export =` to return arrays directly
 const rulesPath = resolve(
   __dirname,
   "..",
