@@ -34,6 +34,26 @@ describe "Config Path Resolution" do
       expect(runner.instance_variable_get(:@webpack_config)).to match(/webpack\.config\.js$/)
     end
 
+    context "with no config files present" do
+      before do
+        FileUtils.rm_f("config/webpack/webpack.config.js")
+        FileUtils.rm_f("config/webpack/webpack.config.ts")
+      end
+
+      it "exits with helpful error message suggesting assets_bundler_config_path" do
+        old_stderr = $stderr
+        $stderr = StringIO.new
+
+        expect { Shakapacker::WebpackRunner.new([]) }.to raise_error(SystemExit)
+
+        stderr_output = $stderr.string
+        expect(stderr_output).to match(/assets_bundler_config_path/)
+        expect(stderr_output).to match(/Current configured path/)
+      ensure
+        $stderr = old_stderr
+      end
+    end
+
     context "with custom assets_bundler_config_path" do
       before do
         # Create a custom config directory
@@ -79,8 +99,17 @@ describe "Config Path Resolution" do
         FileUtils.rm_f("config/webpack/webpack.config.js")
       end
 
-      it "exits with error message" do
+      it "exits with helpful error message suggesting assets_bundler_config_path" do
+        old_stderr = $stderr
+        $stderr = StringIO.new
+
         expect { Shakapacker::RspackRunner.new([]) }.to raise_error(SystemExit)
+
+        stderr_output = $stderr.string
+        expect(stderr_output).to match(/assets_bundler_config_path/)
+        expect(stderr_output).to match(/Current configured path/)
+      ensure
+        $stderr = old_stderr
       end
     end
   end

@@ -368,7 +368,16 @@ module Shakapacker
         end
 
         # No config found
-        $stderr.puts "[Shakapacker] ERROR: rspack config #{rspack_paths.last} not found, please run 'bundle exec rails shakapacker:install' to install Shakapacker with default configs or create the missing config file."
+        $stderr.puts "[Shakapacker] ERROR: rspack config #{rspack_paths.last} not found."
+        $stderr.puts ""
+        $stderr.puts "Please run 'bundle exec rails shakapacker:install' to install Shakapacker with default configs,"
+        $stderr.puts "or create the missing config file."
+        $stderr.puts ""
+        $stderr.puts "If your config file is in a different location, you can configure it in config/shakapacker.yml:"
+        $stderr.puts ""
+        $stderr.puts "  assets_bundler_config_path: your/custom/path"
+        $stderr.puts ""
+        $stderr.puts "Current configured path: #{config_dir}"
         exit(1)
       end
 
@@ -381,7 +390,16 @@ module Shakapacker
         puts "[Shakapacker] Looking for Webpack config in: #{possible_paths.join(", ")}"
         path = possible_paths.find { |f| File.exist?(f) }
         unless path
-          $stderr.puts "[Shakapacker] ERROR: webpack config #{possible_paths.last} not found, please run 'bundle exec rails shakapacker:install' to install Shakapacker with default configs or add the missing config file for your custom environment."
+          $stderr.puts "[Shakapacker] ERROR: webpack config #{possible_paths.last} not found."
+          $stderr.puts ""
+          $stderr.puts "Please run 'bundle exec rails shakapacker:install' to install Shakapacker with default configs,"
+          $stderr.puts "or add the missing config file for your custom environment."
+          $stderr.puts ""
+          $stderr.puts "If your config file is in a different location, you can configure it in config/shakapacker.yml:"
+          $stderr.puts ""
+          $stderr.puts "  assets_bundler_config_path: your/custom/path"
+          $stderr.puts ""
+          $stderr.puts "Current configured path: #{config_dir}"
           exit(1)
         end
         puts "[Shakapacker] Found Webpack config: #{path}"
