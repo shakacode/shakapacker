@@ -2,6 +2,8 @@
 
 This guide outlines new features, breaking changes, and migration steps for upgrading from Shakapacker v8 to v9.
 
+**📖 For detailed configuration options, see the [Configuration Guide](./configuration.md)**
+
 > **⚠️ Important for v9.1.0 Users:** If you're upgrading to v9.1.0 or later, please note the [SWC Configuration Breaking Change](#swc-loose-mode-breaking-change-v910) below. This affects users who previously configured SWC in v9.0.0.
 
 ## New Features

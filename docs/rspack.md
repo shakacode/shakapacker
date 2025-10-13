@@ -2,6 +2,8 @@
 
 Shakapacker supports [Rspack](https://rspack.rs) as an alternative assets bundler to Webpack. Rspack is a fast Rust-based web bundler with webpack-compatible API that can significantly speed up your build times.
 
+**📖 For configuration options, see the [Configuration Guide](./configuration.md)**
+
 ## Installation
 
 First, install the required Rspack dependencies:

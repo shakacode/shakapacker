@@ -1,6 +1,10 @@
 # Precompile Hook
 
-The `precompile_hook` configuration option allows you to run a custom command before asset compilation. This is useful for:
+The `precompile_hook` configuration option allows you to run a custom command before asset compilation.
+
+**📖 For other configuration options, see the [Configuration Guide](./configuration.md)**
+
+This is useful for:
 
 - Dynamically generating entry points (e.g., from database records)
 - Running preparatory tasks before bundling

@@ -70,6 +70,7 @@ Read the [full review here](https://clutch.co/profile/shakacode#reviews?sort_by=
 - [Concepts](#concepts)
 - [Usage](#usage)
   - [Configuration and Code](#configuration-and-code)
+    - [Configuration Guide](./docs/configuration.md)
   - [View Helpers](#view-helpers)
     - [View Helpers `javascript_pack_tag` and `stylesheet_pack_tag`](#view-helpers-javascript_pack_tag-and-stylesheet_pack_tag)
     - [View Helpers `append_javascript_pack_tag`, `prepend_javascript_pack_tag` and `append_stylesheet_pack_tag`](#view-helper-append_javascript_pack_tag-prepend_javascript_pack_tag-and-append_stylesheet_pack_tag)
@@ -313,6 +314,8 @@ At its core, Shakapacker's essential function is to:
 ## Usage
 
 ### Configuration and Code
+
+**📖 For a comprehensive guide to all configuration options, see [Configuration Guide](./docs/configuration.md)**
 
 You will need your file system to correspond to the setup of your `config/shakapacker.yml` file.
 
