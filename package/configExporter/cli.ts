@@ -835,7 +835,8 @@ async function loadConfigsForEnv(
   }
 
   // Find and load config file
-  const configFile = customConfigFile || findConfigFile(bundler, appRoot)
+  const configFile =
+    customConfigFile || findConfigFile(bundler, appRoot, finalEnv)
   // Quiet mode for cleaner output - only show if verbose or errors
   if (process.env.VERBOSE) {
     console.log(`[Config Exporter] Loading config: ${configFile}`)
@@ -1096,6 +1097,54 @@ function cleanConfig(obj: any, rootPath: string): any {
 }
 
 /**
+ * Loads and returns shakapacker.yml configuration
+ */
+function loadShakapackerConfig(
+  env: string,
+  appRoot: string
+): { bundler: "webpack" | "rspack"; configPath: string } {
+  try {
+    const configFilePath =
+      process.env.SHAKAPACKER_CONFIG ||
+      resolve(appRoot, "config/shakapacker.yml")
+
+    if (existsSync(configFilePath)) {
+      const config: any = loadYaml(readFileSync(configFilePath, "utf8"))
+      const envConfig = config[env] || config.default || {}
+
+      // Get bundler
+      const bundler = envConfig.assets_bundler || "webpack"
+      if (bundler !== "webpack" && bundler !== "rspack") {
+        console.warn(
+          `[Config Exporter] Invalid bundler '${bundler}' in shakapacker.yml, defaulting to webpack`
+        )
+        return {
+          bundler: "webpack",
+          configPath: bundler === "rspack" ? "config/rspack" : "config/webpack"
+        }
+      }
+
+      // Get config path
+      const customConfigPath = envConfig.assets_bundler_config_path
+      const configPath =
+        customConfigPath ||
+        (bundler === "rspack" ? "config/rspack" : "config/webpack")
+
+      console.log(
+        `[Config Exporter] Auto-detected bundler: ${bundler}, config path: ${configPath}`
+      )
+      return { bundler, configPath }
+    }
+  } catch (error: any) {
+    console.warn(
+      `[Config Exporter] Error loading shakapacker config, defaulting to webpack`
+    )
+  }
+
+  return { bundler: "webpack", configPath: "config/webpack" }
+}
+
+/**
  * Auto-detects bundler from shakapacker.yml
  *
  * Error Handling Strategy:
@@ -1112,42 +1161,21 @@ async function autoDetectBundler(
   env: string,
   appRoot: string
 ): Promise<"webpack" | "rspack"> {
-  try {
-    const configPath =
-      process.env.SHAKAPACKER_CONFIG ||
-      resolve(appRoot, "config/shakapacker.yml")
-
-    if (existsSync(configPath)) {
-      const config: any = loadYaml(readFileSync(configPath, "utf8"))
-      const envConfig = config[env] || config.default || {}
-      const bundler = envConfig.assets_bundler || "webpack"
-      if (bundler !== "webpack" && bundler !== "rspack") {
-        console.warn(
-          `[Config Exporter] Invalid bundler '${bundler}' in shakapacker.yml, defaulting to webpack`
-        )
-        return "webpack"
-      }
-      console.log(`[Config Exporter] Auto-detected bundler: ${bundler}`)
-      return bundler
-    }
-  } catch (error: any) {
-    console.warn(
-      `[Config Exporter] Error detecting bundler, defaulting to webpack`
-    )
-  }
-
-  return "webpack"
+  const { bundler } = loadShakapackerConfig(env, appRoot)
+  return bundler
 }
 
 function findConfigFile(
   bundler: "webpack" | "rspack",
-  appRoot: string
+  appRoot: string,
+  env: string
 ): string {
+  const { configPath } = loadShakapackerConfig(env, appRoot)
   const extensions = ["ts", "js"]
 
   if (bundler === "rspack") {
     for (const ext of extensions) {
-      const rspackPath = resolve(appRoot, `config/rspack/rspack.config.${ext}`)
+      const rspackPath = resolve(appRoot, configPath, `rspack.config.${ext}`)
       if (existsSync(rspackPath)) {
         return rspackPath
       }
@@ -1156,14 +1184,14 @@ function findConfigFile(
 
   // Fall back to webpack config
   for (const ext of extensions) {
-    const webpackPath = resolve(appRoot, `config/webpack/webpack.config.${ext}`)
+    const webpackPath = resolve(appRoot, configPath, `webpack.config.${ext}`)
     if (existsSync(webpackPath)) {
       return webpackPath
     }
   }
 
   throw new Error(
-    `Could not find ${bundler} config file. Expected: config/${bundler}/${bundler}.config.{js,ts}`
+    `Could not find ${bundler} config file. Expected: ${configPath}/${bundler}.config.{js,ts}`
   )
 }
 
