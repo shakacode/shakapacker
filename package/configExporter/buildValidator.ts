@@ -363,12 +363,16 @@ export class BuildValidator {
 
       child.stdout?.on("data", (data) => {
         stdoutData += data.toString()
+        // In verbose mode, also show stdout (JSON output will be parsed later)
+        if (this.options.verbose) {
+          result.output.push(`[stdout] ${data.toString()}`)
+        }
       })
 
       child.stderr?.on("data", (data) => {
         stderrData += data.toString()
         if (this.options.verbose) {
-          result.output.push(data.toString())
+          result.output.push(`[stderr] ${data.toString()}`)
         }
       })
 
@@ -387,6 +391,10 @@ export class BuildValidator {
                   ? error
                   : error.message || String(error)
               result.errors.push(errorMsg)
+              // Also add to output for visibility
+              if (!this.options.verbose) {
+                result.output.push(errorMsg)
+              }
             })
           }
 
@@ -403,6 +411,14 @@ export class BuildValidator {
 
           result.success =
             code === 0 && (!jsonOutput.errors || jsonOutput.errors.length === 0)
+
+          // If build failed but no errors were captured, add helpful message
+          if (code !== 0 && result.errors.length === 0) {
+            result.errors.push(
+              `${bundler} exited with code ${code} but no errors were captured. ` +
+                `This may indicate a configuration issue. Run with --verbose for full output.`
+            )
+          }
         } catch (err) {
           // If JSON parsing fails, fall back to stderr analysis
           if (stderrData) {
@@ -495,7 +511,11 @@ export class BuildValidator {
         })
       }
 
-      if (this.options.verbose && result.output.length > 0) {
+      // Always show output if there are errors (unless verbose already showing it)
+      if (
+        result.output.length > 0 &&
+        (this.options.verbose || result.errors.length > 0)
+      ) {
         lines.push("\n   Full Output:")
         result.output.forEach((line) => {
           lines.push(`   ${line}`)
