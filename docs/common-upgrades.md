@@ -2,6 +2,8 @@
 
 This document provides step-by-step instructions for the most common upgrade scenarios in Shakapacker projects.
 
+**📖 For configuration options, see the [Configuration Guide](./configuration.md)**
+
 ## Table of Contents
 
 - [Migrating Package Managers](#migrating-package-managers)
