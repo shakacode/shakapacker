@@ -160,21 +160,35 @@ export class YamlSerializer {
       if (typeof item === "object" && !Array.isArray(item) && item !== null) {
         // For objects in arrays, emit marker on its own line and indent content
         lines.push(`${itemIndent}-`)
-        serialized
+        const nonEmptyLines = serialized
           .split("\n")
           .filter((line: string) => line.trim().length > 0)
-          .forEach((line: string) => {
-            lines.push(contentIndent + line)
-          })
+        // Compute minimum leading whitespace to preserve relative indentation
+        const minIndent = Math.min(
+          ...nonEmptyLines.map(
+            (line: string) => line.match(/^\s*/)?.[0].length || 0
+          )
+        )
+        nonEmptyLines.forEach((line: string) => {
+          // Remove only the common indent, preserving relative indentation
+          lines.push(contentIndent + line.substring(minIndent))
+        })
       } else if (serialized.includes("\n")) {
         // For multiline values, emit marker on its own line and indent content
         lines.push(`${itemIndent}-`)
-        serialized
+        const nonEmptyLines = serialized
           .split("\n")
           .filter((line: string) => line.trim().length > 0)
-          .forEach((line: string) => {
-            lines.push(contentIndent + line)
-          })
+        // Compute minimum leading whitespace to preserve relative indentation
+        const minIndent = Math.min(
+          ...nonEmptyLines.map(
+            (line: string) => line.match(/^\s*/)?.[0].length || 0
+          )
+        )
+        nonEmptyLines.forEach((line: string) => {
+          // Remove only the common indent, preserving relative indentation
+          lines.push(contentIndent + line.substring(minIndent))
+        })
       } else {
         // For simple values, keep on same line
         lines.push(`${itemIndent}- ${serialized}`)

@@ -5,6 +5,7 @@
 node_modules
 .byebug_history
 /spec/test_app/tmp
+/test/tmp
 yarn-debug.log*
 yarn-error.log*
 .yarn-integrity
