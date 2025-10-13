@@ -84,7 +84,7 @@ function setupNodePath(appRoot: string): void {
       ? `${nodePaths.join(delimiter)}${delimiter}${existingNodePath}`
       : nodePaths.join(delimiter)
 
-    // eslint-disable-next-line @typescript-eslint/no-var-requires, @typescript-eslint/no-require-imports
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
     require("module").Module._initPaths()
   }
 }
@@ -316,7 +316,7 @@ async function loadConfigsForEnv(
   // Register ts-node for TypeScript config files
   if (configFile.endsWith(".ts")) {
     try {
-      // eslint-disable-next-line @typescript-eslint/no-var-requires, @typescript-eslint/no-require-imports
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
       require("ts-node/register/transpile-only")
     } catch (error) {
       throw new Error(
@@ -347,7 +347,7 @@ async function loadConfigsForEnv(
     }
   })
 
-  // eslint-disable-next-line @typescript-eslint/no-var-requires, import/no-dynamic-require, @typescript-eslint/no-require-imports
+  // eslint-disable-next-line import/no-dynamic-require, @typescript-eslint/no-require-imports
   let loadedConfig = require(configFile)
 
   // Handle ES module default export
@@ -490,7 +490,7 @@ async function runDoctorMode(
 
       const fullPath = resolve(targetDir, filename)
       const fileOutput: FileOutput = { filename, content: output, metadata }
-      fileWriter.writeSingleFile(fullPath, output, true) // quiet mode
+      fileWriter.writeSingleFile(fullPath, output)
       createdFiles.push(fullPath)
     }
   }
