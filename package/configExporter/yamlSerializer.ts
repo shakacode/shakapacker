@@ -164,7 +164,8 @@ export class YamlSerializer {
           .split("\n")
           .filter((line: string) => line.trim().length > 0)
           .forEach((line: string) => {
-            lines.push(contentIndent + line)
+            // Trim existing indentation before adding our own
+            lines.push(contentIndent + line.trimStart())
           })
       } else if (serialized.includes("\n")) {
         // For multiline values, emit marker on its own line and indent content
@@ -173,7 +174,8 @@ export class YamlSerializer {
           .split("\n")
           .filter((line: string) => line.trim().length > 0)
           .forEach((line: string) => {
-            lines.push(contentIndent + line)
+            // Trim existing indentation before adding our own
+            lines.push(contentIndent + line.trimStart())
           })
       } else {
         // For simple values, keep on same line
