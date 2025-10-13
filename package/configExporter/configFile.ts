@@ -116,7 +116,7 @@ export class ConfigFileLoader {
       config.default_bundler !== "rspack"
     ) {
       throw new Error(
-        `Invalid default_bundler '${config.default_bundler}'. Must be 'webpack' or 'rspack'.`
+        `Invalid default_bundler '${config.default_bundler as string}'. Must be 'webpack' or 'rspack'.`
       )
     }
 
@@ -135,7 +135,7 @@ export class ConfigFileLoader {
         build.bundler !== "rspack"
       ) {
         throw new Error(
-          `Invalid bundler '${build.bundler}' in build '${name}'. Must be 'webpack' or 'rspack'.`
+          `Invalid bundler '${build.bundler as string}' in build '${name}'. Must be 'webpack' or 'rspack'.`
         )
       }
 
@@ -349,7 +349,7 @@ export class ConfigFileLoader {
    */
   listBuilds(): void {
     const config = this.load()
-    const builds = config.builds
+    const { builds } = config
 
     console.log(`\nAvailable builds in ${this.configFilePath}:\n`)
 

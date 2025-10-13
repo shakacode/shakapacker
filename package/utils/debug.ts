@@ -18,24 +18,20 @@ const isDebugMode = (): boolean => {
 
 const debug = (message: string, ...args: unknown[]): void => {
   if (isDebugMode()) {
-    // eslint-disable-next-line no-console
     console.log(`[Shakapacker] ${message}`, ...args)
   }
 }
 
 const warn = (message: string, ...args: unknown[]): void => {
-  // eslint-disable-next-line no-console
   console.warn(`[Shakapacker] WARNING: ${message}`, ...args)
 }
 
 const error = (message: string, ...args: unknown[]): void => {
-  // eslint-disable-next-line no-console
   console.error(`[Shakapacker] ERROR: ${message}`, ...args)
 }
 
 const info = (message: string, ...args: unknown[]): void => {
   if (isDebugMode()) {
-    // eslint-disable-next-line no-console
     console.info(`[Shakapacker] INFO: ${message}`, ...args)
   }
 }

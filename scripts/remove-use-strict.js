@@ -41,5 +41,4 @@ files.forEach((file) => {
   fs.writeFileSync(file, content, "utf8")
 })
 
-// eslint-disable-next-line no-console
 console.log(`Removed "use strict" from ${files.length} files`)

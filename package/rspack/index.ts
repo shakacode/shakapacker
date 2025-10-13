@@ -18,7 +18,6 @@ import { getPlugins } from "../plugins/rspack"
 import { getOptimization } from "../optimization/rspack"
 import { validateRspackDependencies } from "../utils/validateDependencies"
 
-// eslint-disable-next-line @typescript-eslint/no-require-imports
 const env = require("../env")
 
 const rulesPath = resolve(__dirname, "../rules", "rspack.js")

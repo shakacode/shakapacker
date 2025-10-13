@@ -28,7 +28,6 @@ const { getOptimization } = require(optimizationPath)
 
 let CompressionPlugin: CompressionPluginConstructor | null = null
 if (moduleExists("compression-webpack-plugin")) {
-  // eslint-disable-next-line global-require, @typescript-eslint/no-require-imports
   CompressionPlugin = require("compression-webpack-plugin")
 }
 
@@ -74,7 +73,6 @@ const productionConfig: Partial<WebpackConfiguration> = {
 }
 
 if (config.useContentHash === false) {
-  // eslint-disable-next-line no-console
   console.warn(`⚠️ WARNING
 Setting 'useContentHash' to 'false' in the production environment (specified by NODE_ENV environment variable) is not allowed!
 Content hashes get added to the filenames regardless of setting useContentHash in 'shakapacker.yml' to false.
