@@ -18,6 +18,9 @@ export interface ExportOptions {
   build?: string
   listBuilds?: boolean
   allBuilds?: boolean
+  // Validation options
+  validate?: boolean
+  validateBuild?: string
 }
 
 export interface ConfigMetadata {
@@ -67,4 +70,12 @@ export interface ResolvedBuildConfig {
   bundlerEnvArgs: string[] // Converted bundler_env to CLI args
   outputs: string[]
   configFile?: string
+}
+
+export interface BuildValidationResult {
+  buildName: string
+  success: boolean
+  errors: string[]
+  warnings: string[]
+  output: string[]
 }

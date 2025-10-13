@@ -71,7 +71,64 @@
 
    See `bin/export-bundler-config --help` for all available options.
 
-6. Generate webpack stats for build analysis (useful for bundle size optimization):
+6. **Validate your webpack/rspack builds**: Use `bin/export-bundler-config --validate` to test that all your build configurations compile successfully. This is especially useful for:
+   - **CI/CD pipelines**: Catch configuration errors before deployment
+   - **Migration testing**: Verify builds work after upgrading webpack, rspack, or Shakapacker
+   - **Multi-environment testing**: Ensure all build configurations (dev, prod, HMR) compile correctly
+
+   **Quick validation:**
+
+   ```bash
+   # Validate all builds defined in .bundler-config.yml
+   bin/export-bundler-config --validate
+
+   # Validate with full output logs
+   bin/export-bundler-config --validate --verbose
+
+   # Validate a specific build
+   bin/export-bundler-config --validate-build=dev-hmr
+   ```
+
+   **Setting up build configurations:**
+
+   ```bash
+   # Create a .bundler-config.yml file with example builds
+   bin/export-bundler-config --init
+
+   # List all available builds
+   bin/export-bundler-config --list-builds
+
+   # Validate all builds
+   bin/export-bundler-config --validate
+   ```
+
+   The validator will:
+   - For HMR builds (with `WEBPACK_SERVE=true`): Start webpack-dev-server, wait for successful compilation, then shut down
+   - For static builds: Run webpack/rspack and check for compilation errors
+   - Report all errors and warnings with clear output
+   - Exit with code 1 if any build fails (perfect for CI)
+
+   **Example output:**
+
+   ```
+   🔍 Validating Builds
+   ================================================================================
+
+   📦 Validating build: dev-hmr
+      ✅ Build passed
+
+   📦 Validating build: dev
+      ✅ Build passed
+
+   📦 Validating build: prod
+      ❌ Build failed with 2 error(s)
+
+   ================================================================================
+   Summary: 2/3 builds passed, 1 failed
+   ================================================================================
+   ```
+
+7. Generate webpack stats for build analysis (useful for bundle size optimization):
 
    ```bash
    NODE_ENV=development bin/shakapacker --profile --json > /tmp/webpack-stats.json

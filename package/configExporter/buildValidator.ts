@@ -1,0 +1,419 @@
+import { spawn, ChildProcess } from "child_process"
+import { existsSync } from "fs"
+import { resolve } from "path"
+import { ResolvedBuildConfig, BuildValidationResult } from "./types"
+
+export interface ValidatorOptions {
+  verbose: boolean
+  timeout?: number // milliseconds
+}
+
+/**
+ * Validates webpack/rspack builds by running them and checking for errors
+ * For HMR builds, starts webpack-dev-server and shuts down after successful start
+ */
+export class BuildValidator {
+  private options: ValidatorOptions
+
+  constructor(options: ValidatorOptions) {
+    this.options = {
+      verbose: options.verbose,
+      timeout: options.timeout || 120000 // 2 minutes default
+    }
+  }
+
+  /**
+   * Validates a single build configuration
+   */
+  async validateBuild(
+    build: ResolvedBuildConfig,
+    appRoot: string
+  ): Promise<BuildValidationResult> {
+    const isHMR = build.environment.WEBPACK_SERVE === "true"
+    const bundler = build.bundler
+
+    if (isHMR) {
+      return this.validateHMRBuild(build, appRoot, bundler)
+    } else {
+      return this.validateStaticBuild(build, appRoot, bundler)
+    }
+  }
+
+  /**
+   * Validates an HMR build by starting webpack-dev-server
+   * Waits for successful compilation, then shuts down
+   */
+  private async validateHMRBuild(
+    build: ResolvedBuildConfig,
+    appRoot: string,
+    bundler: "webpack" | "rspack"
+  ): Promise<BuildValidationResult> {
+    const result: BuildValidationResult = {
+      buildName: build.name,
+      success: false,
+      errors: [],
+      warnings: [],
+      output: []
+    }
+
+    // Determine the dev server command
+    const devServerCmd =
+      bundler === "rspack" ? "rspack-dev-server" : "webpack-dev-server"
+    const devServerBin = this.findBinary(devServerCmd, appRoot)
+
+    if (!devServerBin) {
+      result.errors.push(
+        `Could not find ${devServerCmd} binary. Please install ${bundler}-dev-server.`
+      )
+      return result
+    }
+
+    // Build arguments
+    const args: string[] = []
+
+    // Add config file if specified
+    if (build.configFile) {
+      const configPath = resolve(appRoot, build.configFile)
+      args.push("--config", configPath)
+    } else {
+      // Use default config path
+      const defaultConfig = resolve(
+        appRoot,
+        `config/${bundler}/${bundler}.config.js`
+      )
+      if (existsSync(defaultConfig)) {
+        args.push("--config", defaultConfig)
+      }
+    }
+
+    // Add bundler env args (--env flags)
+    if (build.bundlerEnvArgs && build.bundlerEnvArgs.length > 0) {
+      args.push(...build.bundlerEnvArgs)
+    }
+
+    return new Promise((resolve) => {
+      const child = spawn(devServerBin, args, {
+        cwd: appRoot,
+        env: {
+          ...process.env,
+          ...build.environment
+        },
+        stdio: ["ignore", "pipe", "pipe"]
+      })
+
+      let hasCompiled = false
+      let hasError = false
+      const timeoutId = setTimeout(() => {
+        if (!hasCompiled && !hasError) {
+          result.errors.push(
+            `Timeout: webpack-dev-server did not compile within ${this.options.timeout}ms`
+          )
+          child.kill("SIGTERM")
+          resolve(result)
+        }
+      }, this.options.timeout)
+
+      const processOutput = (data: Buffer, isStderr: boolean) => {
+        const lines = data.toString().split("\n")
+        lines.forEach((line) => {
+          if (!line.trim()) return
+
+          if (this.options.verbose) {
+            result.output.push(line)
+          }
+
+          // Check for successful compilation
+          if (
+            line.includes("webpack compiled") ||
+            line.includes("Compiled successfully") ||
+            line.includes("rspack compiled successfully")
+          ) {
+            hasCompiled = true
+            result.success = true
+            clearTimeout(timeoutId)
+            child.kill("SIGTERM")
+            resolve(result)
+          }
+
+          // Check for errors
+          if (
+            line.includes("ERROR") ||
+            line.includes("Error:") ||
+            line.includes("Failed to compile")
+          ) {
+            hasError = true
+            result.errors.push(line)
+          }
+
+          // Check for warnings
+          if (line.includes("WARNING") || line.includes("Warning:")) {
+            result.warnings.push(line)
+          }
+
+          // Capture important error details even in non-verbose mode
+          if (
+            !this.options.verbose &&
+            (hasError ||
+              line.includes("Module not found") ||
+              line.includes("Can't resolve") ||
+              line.includes("SyntaxError"))
+          ) {
+            result.output.push(line)
+          }
+        })
+      }
+
+      child.stdout?.on("data", (data) => processOutput(data, false))
+      child.stderr?.on("data", (data) => processOutput(data, true))
+
+      child.on("exit", (code) => {
+        clearTimeout(timeoutId)
+        if (!hasCompiled && !hasError) {
+          if (code !== 0 && code !== null && code !== 143) {
+            // 143 = SIGTERM
+            result.errors.push(
+              `webpack-dev-server exited with code ${code} before compilation completed`
+            )
+          }
+        }
+        resolve(result)
+      })
+
+      child.on("error", (err) => {
+        clearTimeout(timeoutId)
+        result.errors.push(`Failed to start webpack-dev-server: ${err.message}`)
+        resolve(result)
+      })
+    })
+  }
+
+  /**
+   * Validates a static build by running webpack/rspack in production mode
+   * Uses --json flag to get structured output
+   */
+  private async validateStaticBuild(
+    build: ResolvedBuildConfig,
+    appRoot: string,
+    bundler: "webpack" | "rspack"
+  ): Promise<BuildValidationResult> {
+    const result: BuildValidationResult = {
+      buildName: build.name,
+      success: false,
+      errors: [],
+      warnings: [],
+      output: []
+    }
+
+    const bundlerBin = this.findBinary(bundler, appRoot)
+
+    if (!bundlerBin) {
+      result.errors.push(
+        `Could not find ${bundler} binary. Please install ${bundler}.`
+      )
+      return result
+    }
+
+    // Build arguments - use --dry-run if available, otherwise just build
+    const args: string[] = []
+
+    // Add config file if specified
+    if (build.configFile) {
+      const configPath = resolve(appRoot, build.configFile)
+      args.push("--config", configPath)
+    } else {
+      // Use default config path
+      const defaultConfig = resolve(
+        appRoot,
+        `config/${bundler}/${bundler}.config.js`
+      )
+      if (existsSync(defaultConfig)) {
+        args.push("--config", defaultConfig)
+      }
+    }
+
+    // Add bundler env args (--env flags)
+    if (build.bundlerEnvArgs && build.bundlerEnvArgs.length > 0) {
+      args.push(...build.bundlerEnvArgs)
+    }
+
+    // Add --json for structured output (helps parse errors)
+    args.push("--json")
+
+    return new Promise((resolve) => {
+      const child = spawn(bundlerBin, args, {
+        cwd: appRoot,
+        env: {
+          ...process.env,
+          ...build.environment
+        },
+        stdio: ["ignore", "pipe", "pipe"]
+      })
+
+      let stdoutData = ""
+      let stderrData = ""
+
+      const timeoutId = setTimeout(() => {
+        result.errors.push(
+          `Timeout: ${bundler} did not complete within ${this.options.timeout}ms`
+        )
+        child.kill("SIGTERM")
+        resolve(result)
+      }, this.options.timeout)
+
+      child.stdout?.on("data", (data) => {
+        stdoutData += data.toString()
+      })
+
+      child.stderr?.on("data", (data) => {
+        stderrData += data.toString()
+        if (this.options.verbose) {
+          result.output.push(data.toString())
+        }
+      })
+
+      child.on("exit", (code) => {
+        clearTimeout(timeoutId)
+
+        // Parse JSON output
+        try {
+          const jsonOutput = JSON.parse(stdoutData)
+
+          // Check for errors in webpack/rspack JSON output
+          if (jsonOutput.errors && jsonOutput.errors.length > 0) {
+            jsonOutput.errors.forEach((error: any) => {
+              const errorMsg =
+                typeof error === "string"
+                  ? error
+                  : error.message || String(error)
+              result.errors.push(errorMsg)
+            })
+          }
+
+          // Check for warnings
+          if (jsonOutput.warnings && jsonOutput.warnings.length > 0) {
+            jsonOutput.warnings.forEach((warning: any) => {
+              const warningMsg =
+                typeof warning === "string"
+                  ? warning
+                  : warning.message || String(warning)
+              result.warnings.push(warningMsg)
+            })
+          }
+
+          result.success =
+            code === 0 && (!jsonOutput.errors || jsonOutput.errors.length === 0)
+        } catch (err) {
+          // If JSON parsing fails, fall back to stderr analysis
+          if (stderrData) {
+            const lines = stderrData.split("\n")
+            lines.forEach((line) => {
+              if (
+                line.includes("ERROR") ||
+                line.includes("Error:") ||
+                line.includes("Failed")
+              ) {
+                result.errors.push(line)
+              }
+              if (line.includes("WARNING") || line.includes("Warning:")) {
+                result.warnings.push(line)
+              }
+            })
+          }
+
+          if (code !== 0) {
+            result.errors.push(`${bundler} exited with code ${code}`)
+          }
+
+          result.success = code === 0 && result.errors.length === 0
+        }
+
+        // Add stderr to output if there were errors and not verbose
+        if (!this.options.verbose && result.errors.length > 0 && stderrData) {
+          result.output.push(stderrData)
+        }
+
+        resolve(result)
+      })
+
+      child.on("error", (err) => {
+        clearTimeout(timeoutId)
+        result.errors.push(`Failed to start ${bundler}: ${err.message}`)
+        resolve(result)
+      })
+    })
+  }
+
+  /**
+   * Finds the binary for webpack, rspack, or dev servers
+   */
+  private findBinary(name: string, appRoot: string): string | null {
+    // Try node_modules/.bin
+    const nodeModulesBin = resolve(appRoot, "node_modules", ".bin", name)
+    if (existsSync(nodeModulesBin)) {
+      return nodeModulesBin
+    }
+
+    // Try global
+    const globalBin = resolve("/usr/local/bin", name)
+    if (existsSync(globalBin)) {
+      return globalBin
+    }
+
+    // Try npx (will use PATH)
+    return name
+  }
+
+  /**
+   * Formats validation results for display
+   */
+  formatResults(results: BuildValidationResult[]): string {
+    const lines: string[] = []
+
+    lines.push("\n" + "=".repeat(80))
+    lines.push("🔍 Build Validation Results")
+    lines.push("=".repeat(80) + "\n")
+
+    let totalBuilds = results.length
+    let successCount = 0
+    let failureCount = 0
+
+    results.forEach((result) => {
+      if (result.success) {
+        successCount++
+      } else {
+        failureCount++
+      }
+
+      const icon = result.success ? "✅" : "❌"
+      lines.push(`${icon} Build: ${result.buildName}`)
+
+      if (result.warnings.length > 0) {
+        lines.push(`   ⚠️  ${result.warnings.length} warning(s)`)
+      }
+
+      if (result.errors.length > 0) {
+        lines.push(`   ❌ ${result.errors.length} error(s)`)
+        result.errors.forEach((error) => {
+          lines.push(`      ${error}`)
+        })
+      }
+
+      if (this.options.verbose && result.output.length > 0) {
+        lines.push("\n   Full Output:")
+        result.output.forEach((line) => {
+          lines.push(`   ${line}`)
+        })
+      }
+
+      lines.push("")
+    })
+
+    lines.push("=".repeat(80))
+    lines.push(
+      `Summary: ${successCount}/${totalBuilds} builds passed, ${failureCount} failed`
+    )
+    lines.push("=".repeat(80) + "\n")
+
+    return lines.join("\n")
+  }
+}
