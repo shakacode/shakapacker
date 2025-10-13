@@ -12,7 +12,7 @@ describe("raw", () => {
     })
 
     test("uses resourceQuery for any file with ?raw", () => {
-      const raw = require("../../../package/rules/raw")
+      const raw = require("../../../package/rules/raw").default
       expect(raw.resourceQuery).toStrictEqual(/raw/)
       expect(raw.type).toBe("asset/source")
     })
@@ -31,7 +31,7 @@ describe("raw", () => {
     })
 
     test("supports ?raw query and .html fallback with oneOf", () => {
-      const raw = require("../../../package/rules/raw")
+      const raw = require("../../../package/rules/raw").default
       expect(raw.oneOf).toHaveLength(2)
       // First rule: any file with ?raw
       expect(raw.oneOf[0].resourceQuery).toStrictEqual(/raw/)

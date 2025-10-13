@@ -5,7 +5,7 @@ const {
   createTestCompiler,
   createTrackLoader
 } = require("../../helpers")
-const babelConfig = require("../../../package/rules/babel")
+const babelConfig = require("../../../package/rules/babel").default
 
 jest.mock("../../../package/config", () => {
   const original = jest.requireActual("../../../package/config")

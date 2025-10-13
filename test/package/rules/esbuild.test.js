@@ -5,7 +5,7 @@ const {
   createTestCompiler,
   createTrackLoader
 } = require("../../helpers")
-const esbuildConfig = require("../../../package/rules/esbuild")
+const esbuildConfig = require("../../../package/rules/esbuild").default
 
 jest.mock("../../../package/config", () => {
   const original = jest.requireActual("../../../package/config")

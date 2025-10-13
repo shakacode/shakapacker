@@ -1,4 +1,4 @@
-const sass = require("../../../package/rules/sass")
+const sass = require("../../../package/rules/sass").default
 
 jest.mock("../../../package/utils/helpers", () => {
   const original = jest.requireActual("../../../package/utils/helpers")

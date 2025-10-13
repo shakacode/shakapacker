@@ -1,4 +1,4 @@
-const file = require("../../../package/rules/file")
+const file = require("../../../package/rules/file").default
 
 jest.mock("../../../package/config", () => {
   const original = jest.requireActual("../../../package/config")

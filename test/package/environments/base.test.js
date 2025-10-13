@@ -11,7 +11,7 @@ chdirTestApp()
 // Base config tests expect production-like behavior with contenthash
 process.env.NODE_ENV = "production"
 
-const baseConfig = require("../../../package/environments/base")
+const baseConfig = require("../../../package/environments/base").default
 const config = require("../../../package/config")
 
 jest.mock("../../../package/utils/helpers", () => {
@@ -59,7 +59,7 @@ describe("Base config", () => {
     test("should returns top level and nested entry points with config.nested_entries == true", () => {
       process.env.SHAKAPACKER_CONFIG = "config/shakapacker_nested_entries.yml"
       const config2 = require("../../../package/config")
-      const baseConfig2 = require("../../../package/environments/base")
+      const baseConfig2 = require("../../../package/environments/base").default
 
       expect(config2.nested_entries).toBe(true)
 

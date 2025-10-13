@@ -5,7 +5,7 @@ const {
   createTestCompiler,
   createTrackLoader
 } = require("../../helpers")
-const swcConfig = require("../../../package/rules/swc")
+const swcConfig = require("../../../package/rules/swc").default
 
 jest.mock("../../../package/config", () => {
   const original = jest.requireActual("../../../package/config")
