@@ -144,7 +144,8 @@ describe "WebpackRunner" do
 
         output = capture_stdout { klass.run([]) }
 
-        expect(output).to match(/\[Shakapacker\] Completed webpack build in \d+\.\d+s \(\d+\.\d+s\)/)
+        # Time format can be either "X.XXs" or "M:SS.SSs" for the display, always "X.XXs" in parentheses
+        expect(output).to match(/\[Shakapacker\] Completed webpack build in (\d+:\d+\.\d+s|\d+\.\d+s) \(\d+\.\d+s\)/)
       end
     end
 

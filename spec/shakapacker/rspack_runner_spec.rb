@@ -146,7 +146,8 @@ describe "RspackRunner" do
         output = capture_stdout { klass.run([]) }
 
         # The test app may have webpack config, so bundler name could be either
-        expect(output).to match(/\[Shakapacker\] Completed (webpack|rspack) build in \d+\.\d+s \(\d+\.\d+s\)/)
+        # Time format can be either "X.XXs" or "M:SS.SSs" for the display, always "X.XXs" in parentheses
+        expect(output).to match(/\[Shakapacker\] Completed (webpack|rspack) build in (\d+:\d+\.\d+s|\d+\.\d+s) \(\d+\.\d+s\)/)
       end
     end
 
