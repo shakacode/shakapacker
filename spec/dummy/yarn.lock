@@ -4052,13 +4052,8 @@ setprototypeof@1.2.0:
   resolved "https://registry.npmjs.org/setprototypeof/-/setprototypeof-1.2.0.tgz"
   integrity sha512-E5LDX7Wrp85Kil5bhZv46j8jOeboKq5JMmYM3gVGdGH8xFpPWXUMsNrlODCrkoxMEeNi/XZIwuRvY4XNwYMJpw==
 
-shakapacker@../../:
-  version "9.2.0"
-  resolved "file:../.."
-  dependencies:
-    js-yaml "^4.1.0"
-    path-complete-extname "^1.0.0"
-    webpack-merge "^5.8.0"
+"shakapacker@file:.yalc/shakapacker":
+  resolved "file:.yalc/shakapacker"
 
 shallow-clone@^3.0.0:
   version "3.0.1"
