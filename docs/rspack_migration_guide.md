@@ -2,9 +2,66 @@
 
 > 💡 **Quick Start**: For a step-by-step migration guide from Webpack to Rspack, see [Common Upgrades Guide - Webpack to Rspack](./common-upgrades.md#migrating-from-webpack-to-rspack).
 
+## Table of Contents
+
+- [Overview](#overview)
+- [Before You Migrate](#before-you-migrate)
+  - [Migration Timeline Expectations](#migration-timeline-expectations)
+  - [Testing Strategy](#testing-strategy)
+  - [Server-Side Rendering (SSR) Considerations](#server-side-rendering-ssr-considerations)
+- [Key Differences from Webpack](#key-differences-from-webpack)
+- [Migration Steps](#migration-steps)
+- [Configuration Best Practices](#configuration-best-practices)
+- [Common Issues and Solutions](#common-issues-and-solutions)
+- [Performance Tips](#performance-tips)
+- [Debugging Configuration](#debugging-configuration)
+- [Resources](#resources)
+
 ## Overview
 
 This guide documents the differences between webpack and Rspack configurations in Shakapacker, and provides migration guidance for users switching to Rspack.
+
+[Rspack](https://rspack.rs/) is a high-performance bundler written in Rust, offering 5-10x faster build times than webpack with excellent webpack compatibility.
+
+## Before You Migrate
+
+### Migration Timeline Expectations
+
+Based on real-world migrations, plan your migration time accordingly:
+
+- **Simple projects** (no SSR, no CSS modules, no custom config): 1-2 hours
+- **Standard projects** (CSS modules, basic SSR): 4-8 hours
+- **Complex projects** (CSS modules, SSR, ReScript, custom config): 2-3 days
+
+**Without good documentation**: A complex migration can take 3+ days with 11+ commits to resolve all issues.
+
+**With this documentation**: Most issues can be resolved in 2-3 commits.
+
+### Testing Strategy
+
+When migrating from webpack to Rspack, follow this testing strategy to minimize issues:
+
+1. **Test locally first**: Ensure you can run the full test suite locally before pushing
+2. **Incremental migration**: Consider migrating to SWC first (while on webpack), test thoroughly, then migrate to Rspack
+3. **Watch for test flakiness**: SSR-related issues (especially CSS extraction) can cause non-deterministic test failures
+4. **Run full test suite**: Don't rely solely on CI - run tests locally to catch issues faster
+
+### Server-Side Rendering (SSR) Considerations
+
+⚠️ **If your application uses SSR**, be aware of these critical issues before migrating:
+
+1. **CSS Extraction Differences**: Rspack uses different loader paths than webpack for CSS extraction
+2. **CSS Modules Breaking Change**: Shakapacker 9 changed from default exports to named exports
+3. **React Runtime Compatibility**: SWC's automatic runtime may not work with React on Rails SSR detection
+
+**SSR Migration Checklist** (complete before migrating):
+
+- [ ] Understand how your server bundle filters CSS extraction loaders
+- [ ] Know whether you're using CSS modules and how they're imported
+- [ ] Check if you're using React on Rails SSR (may need classic React runtime)
+- [ ] Plan for potential configuration changes to handle both webpack and Rspack paths
+
+**Detailed SSR solutions** are provided in the [Common Issues](#common-issues-and-solutions) section below.
 
 ## Key Differences from Webpack
 
@@ -145,7 +202,7 @@ devServer: {
 }
 ```
 
-## Migration Checklist
+## Migration Steps
 
 ### Quick Start: Using the Switch Bundler Task
 
@@ -194,7 +251,7 @@ rails shakapacker:switch_bundler --init-config
 
 If you prefer to migrate manually or need more control:
 
-### Step 1: Update Dependencies
+#### Step 1: Update Dependencies
 
 ```bash
 # Remove webpack dependencies
@@ -204,7 +261,7 @@ npm uninstall webpack webpack-cli webpack-dev-server
 npm install --save-dev @rspack/core @rspack/cli
 ```
 
-### Step 2: Update Configuration Files
+#### Step 2: Update Configuration Files
 
 1. Create `config/rspack/rspack.config.js` based on your webpack config
 2. Update `config/shakapacker.yml`:
@@ -213,24 +270,24 @@ npm install --save-dev @rspack/core @rspack/cli
 assets_bundler: "rspack"
 ```
 
-### Step 3: Replace Loaders
+#### Step 3: Replace Loaders
 
 - Replace `babel-loader` with `builtin:swc-loader`
 - Remove `file-loader`, `url-loader`, `raw-loader` - use asset modules
 - Update CSS loaders to use Rspack's built-in support
 
-### Step 4: Update Plugins
+#### Step 4: Update Plugins
 
 - Replace plugins with Rspack alternatives (see table above)
 - Remove incompatible plugins
 - Add Rspack-specific plugins as needed
 
-### Step 5: TypeScript Setup
+#### Step 5: TypeScript Setup
 
 1. Add `isolatedModules: true` to `tsconfig.json`
 2. Optional: Add `ts-checker-rspack-plugin` for type checking
 
-### Step 6: Test Your Build
+#### Step 6: Test Your Build
 
 ```bash
 # Development build
@@ -239,6 +296,99 @@ bin/shakapacker
 # Production build
 bin/shakapacker --mode production
 ```
+
+#### Step 7: Review Migration Checklist
+
+- [ ] Install Rspack dependencies
+- [ ] Update `config/shakapacker.yml`
+- [ ] Create `config/rspack/rspack.config.js`
+- [ ] Replace incompatible plugins
+- [ ] Update TypeScript config (add `isolatedModules: true`)
+- [ ] Convert file loaders to asset modules
+- [ ] Test development build
+- [ ] Test production build
+- [ ] Run test suite
+- [ ] Update CI/CD pipelines
+- [ ] Deploy to staging
+- [ ] Monitor performance improvements
+
+## Configuration Best Practices
+
+### Configuration Organization
+
+**Recommended approach**: Keep webpack and rspack configs in the same directory with conditional logic:
+
+```javascript
+// config/webpack/webpack.config.js (works for both bundlers)
+const { config } = require("shakapacker")
+const bundler =
+  config.assets_bundler === "rspack"
+    ? require("@rspack/core")
+    : require("webpack")
+
+// Use for plugins
+clientConfig.plugins.push(
+  new bundler.ProvidePlugin({
+    /* ... */
+  })
+)
+
+serverConfig.plugins.unshift(
+  new bundler.optimize.LimitChunkCountPlugin({ maxChunks: 1 })
+)
+```
+
+**Avoid**: Creating separate `config/rspack/` directory unless configs diverge significantly.
+
+**Benefits**:
+
+- Smaller diff when comparing configurations
+- Easy to see what's different between bundlers
+- Single source of truth for webpack/rspack config
+- Easier maintenance and debugging
+
+### CSS Modules Configuration Placement
+
+**Critical**: CSS modules configuration overrides must be inside the config function:
+
+```javascript
+// ✅ CORRECT - Inside function (applied fresh each time)
+const commonWebpackConfig = () => {
+  const baseConfig = generateWebpackConfig()
+
+  baseConfig.module.rules.forEach((rule) => {
+    // Override CSS modules here
+  })
+
+  return merge({}, baseConfig, commonOptions)
+}
+
+// ❌ INCORRECT - Outside function (may not apply consistently)
+const baseConfig = generateWebpackConfig()
+baseConfig.module.rules.forEach((rule) => {
+  // This may not work correctly
+})
+```
+
+### Handling Breaking Changes
+
+When upgrading to Shakapacker 9 with Rspack:
+
+1. **CSS Modules default exports → named exports**: This is a breaking change. Either:
+   - Update your code to use named imports (recommended for new projects)
+   - Override the configuration to keep default exports (easier for existing large codebases)
+
+2. **Document your decisions**: Add comments explaining why you chose a particular configuration approach
+
+3. **Create patches for broken dependencies**: If ReScript or other compiled-to-JS dependencies are missing build configs, use `patch-package` and file upstream issues
+
+### Common Pitfalls to Avoid
+
+1. **Don't commit generated files**: Check your `.gitignore` for files that should not be committed (e.g., `i18n/translations.js`)
+2. **Update lockfiles**: Always run your package manager after adding dependencies (especially `patch-package`)
+3. **Test with frozen lockfile**: Ensure your CI runs with `--frozen-lockfile` or equivalent to catch lockfile issues
+4. **Check Node version compatibility**: Verify your Node version meets all dependency requirements
+5. **Don't make empty commits**: If CI fails but local passes, investigate the root cause - don't try to "trigger CI re-run" with empty commits
 
 ## Common Issues and Solutions
 
@@ -404,155 +554,29 @@ npx patch-package @package/name
 
 5. Consider filing an issue with the upstream package maintainer.
 
-### Issue: Bundler Auto-Detection Pattern
-
-**Best Practice:** Instead of creating separate `config/rspack/` and `config/webpack/` directories, use conditional logic to support both bundlers in the same files:
-
-```javascript
-const { config } = require("shakapacker")
-
-// Auto-detect bundler from shakapacker config
-const bundler =
-  config.assets_bundler === "rspack"
-    ? require("@rspack/core")
-    : require("webpack")
-
-// Use for plugins
-clientConfig.plugins.push(
-  new bundler.ProvidePlugin({
-    /* ... */
-  })
-)
-
-serverConfig.plugins.unshift(
-  new bundler.optimize.LimitChunkCountPlugin({ maxChunks: 1 })
-)
-```
-
-**Benefits:**
-
-- Smaller diff when comparing configurations
-- Easy to see what's different between bundlers
-- Single source of truth for webpack/rspack config
-- Easier maintenance and debugging
-
 ### Issue: LimitChunkCountPlugin Error
 
 **Error:** `Cannot read properties of undefined (reading 'tap')`
+
 **Solution:** Remove `webpack.optimize.LimitChunkCountPlugin` and use `splitChunks` configuration instead.
 
 ### Issue: Missing Loaders
 
 **Error:** Module parse errors
+
 **Solution:** Check console logs for skipped loaders and install missing dependencies.
 
 ### Issue: CSS Extraction
 
 **Error:** CSS not being extracted properly
+
 **Solution:** Use `rspack.CssExtractRspackPlugin` instead of `mini-css-extract-plugin`.
 
 ### Issue: TypeScript Errors
 
 **Error:** TypeScript compilation errors
+
 **Solution:** Ensure `isolatedModules: true` is set in `tsconfig.json`.
-
-## Migration Best Practices
-
-### Testing Strategy
-
-When migrating from webpack to Rspack, follow this testing strategy to minimize issues:
-
-1. **Test locally first**: Ensure you can run the full test suite locally before pushing
-2. **Incremental migration**: Consider migrating to SWC first (while on webpack), test thoroughly, then migrate to Rspack
-3. **Watch for test flakiness**: SSR-related issues (especially CSS extraction) can cause non-deterministic test failures
-4. **Run full test suite**: Don't rely solely on CI - run tests locally to catch issues faster
-
-### Configuration Organization
-
-**Recommended approach**: Keep webpack and rspack configs in the same directory with conditional logic:
-
-```javascript
-// config/webpack/webpack.config.js (works for both bundlers)
-const { config } = require("shakapacker")
-const bundler =
-  config.assets_bundler === "rspack"
-    ? require("@rspack/core")
-    : require("webpack")
-```
-
-**Avoid**: Creating separate `config/rspack/` directory unless configs diverge significantly.
-
-**Benefits**:
-
-- Easier to compare and maintain
-- Smaller diffs when reviewing changes
-- Single source of truth
-- Clear visibility of bundler-specific differences
-
-### CSS Modules Configuration Placement
-
-**Critical**: CSS modules configuration overrides must be inside the config function:
-
-```javascript
-// ✅ CORRECT - Inside function (applied fresh each time)
-const commonWebpackConfig = () => {
-  const baseConfig = generateWebpackConfig()
-
-  baseConfig.module.rules.forEach((rule) => {
-    // Override CSS modules here
-  })
-
-  return merge({}, baseConfig, commonOptions)
-}
-
-// ❌ INCORRECT - Outside function (may not apply consistently)
-const baseConfig = generateWebpackConfig()
-baseConfig.module.rules.forEach((rule) => {
-  // This may not work correctly
-})
-```
-
-### Server-Side Rendering (SSR) Checklist
-
-If your application uses SSR, ensure you:
-
-- [ ] Update CSS extraction loader filtering to handle both webpack and Rspack paths
-- [ ] Use spread operator when modifying CSS modules options to preserve common config
-- [ ] Consider using classic React runtime if using React on Rails SSR
-- [ ] Test SSR rendering thoroughly (both success cases and error handling)
-- [ ] Watch for intermittent test failures that may indicate CSS extraction issues
-
-### Handling Breaking Changes
-
-When upgrading to Shakapacker 9 with Rspack:
-
-1. **CSS Modules default exports → named exports**: This is a breaking change. Either:
-   - Update your code to use named imports (recommended for new projects)
-   - Override the configuration to keep default exports (easier for existing large codebases)
-
-2. **Document your decisions**: Add comments explaining why you chose a particular configuration approach
-
-3. **Create patches for broken dependencies**: If ReScript or other compiled-to-JS dependencies are missing build configs, use `patch-package` and file upstream issues
-
-### Migration Timeline Expectations
-
-Based on real-world migrations:
-
-- **Simple projects** (no SSR, no CSS modules, no custom config): 1-2 hours
-- **Standard projects** (CSS modules, basic SSR): 4-8 hours
-- **Complex projects** (CSS modules, SSR, ReScript, custom config): 2-3 days
-
-**Without good documentation**: A complex migration can take 3+ days with 11+ commits to resolve all issues.
-
-**With this documentation**: Most issues can be resolved in 2-3 commits.
-
-### Common Pitfalls to Avoid
-
-1. **Don't commit generated files**: Check your `.gitignore` for files that should not be committed (e.g., `i18n/translations.js`)
-2. **Update lockfiles**: Always run your package manager after adding dependencies (especially `patch-package`)
-3. **Test with frozen lockfile**: Ensure your CI runs with `--frozen-lockfile` or equivalent to catch lockfile issues
-4. **Check Node version compatibility**: Verify your Node version meets all dependency requirements
-5. **Don't make empty commits**: If CI fails but local passes, investigate the root cause - don't try to "trigger CI re-run" with empty commits
 
 ## Performance Tips
 
@@ -560,6 +584,16 @@ Based on real-world migrations:
 2. **Minimize Plugins:** Use only necessary plugins as each adds overhead
 3. **Enable Caching:** Rspack has built-in persistent caching
 4. **Use SWC:** The built-in SWC loader is significantly faster than Babel
+
+**Expected Performance Improvements:**
+
+| Build Type       | Webpack | Rspack | Improvement |
+| ---------------- | ------- | ------ | ----------- |
+| Cold build       | 60s     | 8s     | 7.5x faster |
+| Hot reload       | 3s      | 0.5s   | 6x faster   |
+| Production build | 120s    | 15s    | 8x faster   |
+
+**Note:** Actual improvements vary based on project size, configuration, and hardware. Rspack's Rust-based architecture provides consistent 5-10x performance gains across most scenarios.
 
 ## Debugging Configuration
 
