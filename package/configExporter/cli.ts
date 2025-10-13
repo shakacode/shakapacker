@@ -467,6 +467,13 @@ async function runValidateCommand(options: ExportOptions): Promise<number> {
     } else {
       // Validate all builds
       buildsToValidate = Object.keys(config.builds)
+
+      // Handle empty builds edge case
+      if (buildsToValidate.length === 0) {
+        throw new Error(
+          `No builds found in config file. Add at least one build to .bundler-config.yml or run --init to see examples.`
+        )
+      }
     }
 
     console.log("\n" + "=".repeat(80))

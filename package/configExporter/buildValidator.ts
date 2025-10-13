@@ -9,6 +9,62 @@ export interface ValidatorOptions {
 }
 
 /**
+ * TypeScript interface for webpack/rspack JSON output structure
+ */
+interface WebpackJsonOutput {
+  errors?: Array<string | { message: string }>
+  warnings?: Array<string | { message: string }>
+  hash?: string
+  time?: number
+  builtAt?: number
+}
+
+/**
+ * Whitelisted environment variables that are safe to pass to build processes.
+ * This prevents arbitrary environment variable injection from config files.
+ */
+const SAFE_ENV_VARS = [
+  "NODE_ENV",
+  "RAILS_ENV",
+  "NODE_OPTIONS",
+  "BABEL_ENV",
+  "WEBPACK_SERVE",
+  "CLIENT_BUNDLE_ONLY",
+  "SERVER_BUNDLE_ONLY",
+  "PUBLIC_URL",
+  "ASSET_HOST",
+  "CDN_HOST"
+] as const
+
+/**
+ * Success patterns for detecting successful compilation in webpack/rspack output
+ */
+const SUCCESS_PATTERNS = [
+  "webpack compiled",
+  "Compiled successfully",
+  "rspack compiled successfully"
+]
+
+/**
+ * Error patterns for detecting compilation errors in webpack/rspack output
+ */
+const ERROR_PATTERNS = ["ERROR", "Error:", "Failed to compile"]
+
+/**
+ * Warning patterns for detecting compilation warnings in webpack/rspack output
+ */
+const WARNING_PATTERNS = ["WARNING", "Warning:"]
+
+/**
+ * Important error details to capture even in non-verbose mode
+ */
+const IMPORTANT_ERROR_PATTERNS = [
+  "Module not found",
+  "Can't resolve",
+  "SyntaxError"
+]
+
+/**
  * Validates webpack/rspack builds by running them and checking for errors
  * For HMR builds, starts webpack-dev-server and shuts down after successful start
  */
@@ -20,6 +76,32 @@ export class BuildValidator {
       verbose: options.verbose,
       timeout: options.timeout || 120000 // 2 minutes default
     }
+  }
+
+  /**
+   * Filters environment variables to only include whitelisted safe variables.
+   * This prevents command injection and limits exposure of sensitive data.
+   */
+  private filterEnvironment(
+    buildEnv: Record<string, string>
+  ): Record<string, string> {
+    const filtered: Record<string, string> = {}
+
+    // Start with current process.env but only whitelisted vars
+    SAFE_ENV_VARS.forEach((key) => {
+      if (process.env[key]) {
+        filtered[key] = process.env[key]!
+      }
+    })
+
+    // Override with build-specific env vars (also filtered)
+    Object.entries(buildEnv).forEach(([key, value]) => {
+      if ((SAFE_ENV_VARS as readonly string[]).includes(key)) {
+        filtered[key] = value
+      }
+    })
+
+    return filtered
   }
 
   /**
@@ -100,10 +182,7 @@ export class BuildValidator {
     return new Promise((resolve) => {
       const child = spawn(devServerBin, args, {
         cwd: appRoot,
-        env: {
-          ...process.env,
-          ...build.environment
-        },
+        env: this.filterEnvironment(build.environment),
         stdio: ["ignore", "pipe", "pipe"]
       })
 
@@ -142,34 +221,28 @@ export class BuildValidator {
           }
 
           // Check for successful compilation
-          if (
-            line.includes("webpack compiled") ||
-            line.includes("Compiled successfully") ||
-            line.includes("rspack compiled successfully")
-          ) {
+          if (SUCCESS_PATTERNS.some((pattern) => line.includes(pattern))) {
             hasCompiled = true
             result.success = true
             clearTimeout(timeoutId)
             child.kill("SIGTERM")
-            // Remove listeners to prevent further callbacks
-            child.stdout?.removeAllListeners()
-            child.stderr?.removeAllListeners()
-            child.removeAllListeners()
+            // Small delay to allow process to clean up before removing listeners
+            setTimeout(() => {
+              child.stdout?.removeAllListeners()
+              child.stderr?.removeAllListeners()
+              child.removeAllListeners()
+            }, 100)
             resolveOnce(result)
           }
 
           // Check for errors
-          if (
-            line.includes("ERROR") ||
-            line.includes("Error:") ||
-            line.includes("Failed to compile")
-          ) {
+          if (ERROR_PATTERNS.some((pattern) => line.includes(pattern))) {
             hasError = true
             result.errors.push(line)
           }
 
           // Check for warnings
-          if (line.includes("WARNING") || line.includes("Warning:")) {
+          if (WARNING_PATTERNS.some((pattern) => line.includes(pattern))) {
             result.warnings.push(line)
           }
 
@@ -177,9 +250,9 @@ export class BuildValidator {
           if (
             !this.options.verbose &&
             (hasError ||
-              line.includes("Module not found") ||
-              line.includes("Can't resolve") ||
-              line.includes("SyntaxError"))
+              IMPORTANT_ERROR_PATTERNS.some((pattern) =>
+                line.includes(pattern)
+              ))
           ) {
             result.output.push(line)
           }
@@ -273,10 +346,7 @@ export class BuildValidator {
     return new Promise((resolve) => {
       const child = spawn(bundlerBin, args, {
         cwd: appRoot,
-        env: {
-          ...process.env,
-          ...build.environment
-        },
+        env: this.filterEnvironment(build.environment),
         stdio: ["ignore", "pipe", "pipe"]
       })
 
@@ -307,11 +377,11 @@ export class BuildValidator {
 
         // Parse JSON output
         try {
-          const jsonOutput = JSON.parse(stdoutData)
+          const jsonOutput: WebpackJsonOutput = JSON.parse(stdoutData)
 
           // Check for errors in webpack/rspack JSON output
           if (jsonOutput.errors && jsonOutput.errors.length > 0) {
-            jsonOutput.errors.forEach((error: any) => {
+            jsonOutput.errors.forEach((error) => {
               const errorMsg =
                 typeof error === "string"
                   ? error
@@ -322,7 +392,7 @@ export class BuildValidator {
 
           // Check for warnings
           if (jsonOutput.warnings && jsonOutput.warnings.length > 0) {
-            jsonOutput.warnings.forEach((warning: any) => {
+            jsonOutput.warnings.forEach((warning) => {
               const warningMsg =
                 typeof warning === "string"
                   ? warning
@@ -338,14 +408,10 @@ export class BuildValidator {
           if (stderrData) {
             const lines = stderrData.split("\n")
             lines.forEach((line) => {
-              if (
-                line.includes("ERROR") ||
-                line.includes("Error:") ||
-                line.includes("Failed")
-              ) {
+              if (ERROR_PATTERNS.some((pattern) => line.includes(pattern))) {
                 result.errors.push(line)
               }
-              if (line.includes("WARNING") || line.includes("Warning:")) {
+              if (WARNING_PATTERNS.some((pattern) => line.includes(pattern))) {
                 result.warnings.push(line)
               }
             })
