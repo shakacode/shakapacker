@@ -27,7 +27,9 @@ describe("typescript build", () => {
         // Verify JS file contains CommonJS exports (has been compiled)
         const jsContent = readFileSync(jsPath, "utf8")
         expect(jsContent).toContain("require(")
-        expect(jsContent).toContain("module.exports")
+        // Files can use module.exports (export =), exports.default (export default),
+        // or exports.something (named exports) - just check that exports exists
+        expect(jsContent).toMatch(/module\.exports|exports\./)
       })
     })
 
