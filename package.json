@@ -45,8 +45,7 @@
   "dependencies": {
     "js-yaml": "^4.1.0",
     "path-complete-extname": "^1.0.0",
-    "webpack-merge": "^5.8.0",
-    "yargs": "^17.7.2"
+    "webpack-merge": "^5.8.0"
   },
   "devDependencies": {
     "@rspack/cli": "^1.5.8",
@@ -73,7 +72,6 @@
     "@types/webpack": "^5.28.5",
     "@types/webpack-dev-server": "^4.7.2",
     "@types/webpack-merge": "^5.0.0",
-    "@types/yargs": "^17.0.33",
     "@typescript-eslint/eslint-plugin": "^8.46.0",
     "@typescript-eslint/parser": "^8.46.0",
     "eslint": "^9.37.0",
