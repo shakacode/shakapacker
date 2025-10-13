@@ -171,4 +171,4 @@ debug("Successfully added raw file rule")
 rules.push(raw)
 
 debug(`Rspack rules configuration complete. Total rules: ${rules.length}`)
-export default rules
+export = rules
