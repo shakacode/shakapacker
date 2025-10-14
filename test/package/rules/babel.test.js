@@ -5,8 +5,7 @@ const {
   createTestCompiler,
   createTrackLoader
 } = require("../../helpers")
-const babelConfig = require("../../../package/rules/babel")
-
+// Mock config before importing babel rule
 jest.mock("../../../package/config", () => {
   const original = jest.requireActual("../../../package/config")
   return {
@@ -15,6 +14,8 @@ jest.mock("../../../package/config", () => {
     additional_paths: [...original.additional_paths, "node_modules/included"]
   }
 })
+
+const babelConfig = require("../../../package/rules/babel").default
 
 const createWebpackConfig = (file, use) => ({
   entry: { file },
