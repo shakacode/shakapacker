@@ -313,13 +313,8 @@ export class BuildValidator {
             hasCompiled = true
             result.success = true
             clearTimeout(timeoutId)
-            // Wait for process to exit before removing listeners
-            child.once("exit", () => {
-              child.stdout?.removeAllListeners()
-              child.stderr?.removeAllListeners()
-              child.removeAllListeners()
-            })
             child.kill("SIGTERM")
+            // Cleanup will happen in the exit handler
             resolveOnce(result)
           }
 
@@ -341,6 +336,11 @@ export class BuildValidator {
 
       child.on("exit", (code) => {
         clearTimeout(timeoutId)
+        // Clean up listeners after exit
+        child.stdout?.removeAllListeners()
+        child.stderr?.removeAllListeners()
+        child.removeAllListeners()
+
         if (!hasCompiled && !hasError && !resolved) {
           const SIGTERM_EXIT_CODE = 143
           if (code !== 0 && code !== null && code !== SIGTERM_EXIT_CODE) {

@@ -47,6 +47,7 @@ describe("BuildValidator", () => {
         stdout: { on: jest.fn(), removeAllListeners: jest.fn() },
         stderr: { on: jest.fn(), removeAllListeners: jest.fn() },
         on: jest.fn(),
+        once: jest.fn(),
         kill: jest.fn(),
         removeAllListeners: jest.fn()
       }
@@ -95,6 +96,7 @@ describe("BuildValidator", () => {
         stdout: { on: jest.fn(), removeAllListeners: jest.fn() },
         stderr: { on: jest.fn(), removeAllListeners: jest.fn() },
         on: jest.fn(),
+        once: jest.fn(),
         kill: jest.fn(),
         removeAllListeners: jest.fn()
       }
@@ -135,6 +137,7 @@ describe("BuildValidator", () => {
         stdout: { on: jest.fn(), removeAllListeners: jest.fn() },
         stderr: { on: jest.fn(), removeAllListeners: jest.fn() },
         on: jest.fn(),
+        once: jest.fn(),
         kill: jest.fn(),
         removeAllListeners: jest.fn()
       }
@@ -180,6 +183,7 @@ describe("BuildValidator", () => {
         stdout: { on: jest.fn(), removeAllListeners: jest.fn() },
         stderr: { on: jest.fn(), removeAllListeners: jest.fn() },
         on: jest.fn(),
+        once: jest.fn(),
         kill: jest.fn(),
         removeAllListeners: jest.fn()
       }
@@ -231,6 +235,7 @@ describe("BuildValidator", () => {
         stdout: { on: jest.fn(), removeAllListeners: jest.fn() },
         stderr: { on: jest.fn(), removeAllListeners: jest.fn() },
         on: jest.fn(),
+        once: jest.fn(),
         kill: jest.fn(),
         removeAllListeners: jest.fn()
       }
@@ -283,6 +288,7 @@ describe("BuildValidator", () => {
         stdout: { on: jest.fn(), removeAllListeners: jest.fn() },
         stderr: { on: jest.fn(), removeAllListeners: jest.fn() },
         on: jest.fn(),
+        once: jest.fn(),
         kill: jest.fn(),
         removeAllListeners: jest.fn()
       }
@@ -329,6 +335,7 @@ describe("BuildValidator", () => {
         stdout: { on: jest.fn(), removeAllListeners: jest.fn() },
         stderr: { on: jest.fn(), removeAllListeners: jest.fn() },
         on: jest.fn(),
+        once: jest.fn(),
         kill: jest.fn(),
         removeAllListeners: jest.fn()
       }
@@ -399,6 +406,7 @@ describe("BuildValidator", () => {
         stdout: { on: jest.fn(), removeAllListeners: jest.fn() },
         stderr: { on: jest.fn(), removeAllListeners: jest.fn() },
         on: jest.fn(),
+        once: jest.fn(),
         kill: jest.fn(),
         removeAllListeners: jest.fn()
       }
@@ -444,6 +452,7 @@ describe("BuildValidator", () => {
         stdout: { on: jest.fn(), removeAllListeners: jest.fn() },
         stderr: { on: jest.fn(), removeAllListeners: jest.fn() },
         on: jest.fn(),
+        once: jest.fn(),
         kill: jest.fn(),
         removeAllListeners: jest.fn()
       }
@@ -486,6 +495,7 @@ describe("BuildValidator", () => {
         stdout: { on: jest.fn(), removeAllListeners: jest.fn() },
         stderr: { on: jest.fn(), removeAllListeners: jest.fn() },
         on: jest.fn(),
+        once: jest.fn(),
         kill: jest.fn(),
         removeAllListeners: jest.fn()
       }
@@ -537,6 +547,7 @@ describe("BuildValidator", () => {
         stdout: { on: jest.fn(), removeAllListeners: jest.fn() },
         stderr: { on: jest.fn(), removeAllListeners: jest.fn() },
         on: jest.fn(),
+        once: jest.fn(),
         kill: jest.fn(),
         removeAllListeners: jest.fn()
       }
@@ -587,6 +598,7 @@ describe("BuildValidator", () => {
         stdout: { on: jest.fn(), removeAllListeners: jest.fn() },
         stderr: { on: jest.fn(), removeAllListeners: jest.fn() },
         on: jest.fn(),
+        once: jest.fn(),
         kill: jest.fn(),
         removeAllListeners: jest.fn()
       }
@@ -757,6 +769,7 @@ describe("BuildValidator", () => {
         stdout: { on: jest.fn(), removeAllListeners: jest.fn() },
         stderr: { on: jest.fn(), removeAllListeners: jest.fn() },
         on: jest.fn(),
+        once: jest.fn(),
         kill: jest.fn(),
         removeAllListeners: jest.fn()
       }
@@ -809,6 +822,7 @@ describe("BuildValidator", () => {
         stdout: { on: jest.fn(), removeAllListeners: jest.fn() },
         stderr: { on: jest.fn(), removeAllListeners: jest.fn() },
         on: jest.fn(),
+        once: jest.fn(),
         kill: jest.fn(),
         removeAllListeners: jest.fn()
       }
