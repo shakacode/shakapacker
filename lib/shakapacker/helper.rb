@@ -143,12 +143,29 @@ module Shakapacker::Helper
   # critical assets while Rails is still rendering the response.
   # This can significantly improve perceived page load performance.
   #
-  # Requires Rails 7.1+ and server support (e.g., Puma 5+).
-  # Gracefully degrades if not supported.
+  # HTTP 103 Early Hints is a status code that allows the server to send preliminary
+  # responses with Link headers before the final HTTP 200 response. This enables
+  # browsers to start downloading critical assets during the server's "think time"
+  # while Rails is still rendering views and processing the request.
+  #
+  # Timeline:
+  #   1. Browser requests page
+  #   2. Server sends HTTP 103 with Link: headers (this helper)
+  #   3. Browser starts downloading assets in parallel
+  #   4. Server finishes rendering and sends HTTP 200 with full HTML
+  #   5. Assets arrive faster because browser started downloading earlier
+  #
+  # Requires Rails 5.2+ (for request.send_early_hints) and server support (e.g., Puma 5+, nginx 1.13+).
+  # Gracefully degrades if not supported - no errors will occur.
   #
   # Important: Call this helper as early as possible in your layout for optimal performance.
   # The earlier it's called, the sooner the browser can start downloading assets while
   # Rails is still rendering the rest of the page.
+  #
+  # References:
+  # - Rails API: https://api.rubyonrails.org/classes/ActionDispatch/Request.html#method-i-send_early_hints
+  # - Eileen Codes: https://eileencodes.com/posts/http2-early-hints/
+  # - HTTP 103 Spec: https://datatracker.ietf.org/doc/html/rfc8297
   #
   # Example:
   #
