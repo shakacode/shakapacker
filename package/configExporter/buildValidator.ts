@@ -22,8 +22,13 @@ interface WebpackJsonOutput {
 /**
  * Whitelisted environment variables that are safe to pass to build processes.
  * This prevents arbitrary environment variable injection from config files.
+ *
+ * Note: PATH is essential for webpack/rspack to find node and other binaries.
+ * HOME is needed for tools that read user config (e.g., .npmrc, .yarnrc).
  */
 const SAFE_ENV_VARS = [
+  "PATH",
+  "HOME",
   "NODE_ENV",
   "RAILS_ENV",
   "NODE_OPTIONS",
@@ -33,7 +38,10 @@ const SAFE_ENV_VARS = [
   "SERVER_BUNDLE_ONLY",
   "PUBLIC_URL",
   "ASSET_HOST",
-  "CDN_HOST"
+  "CDN_HOST",
+  "TMPDIR",
+  "TEMP",
+  "TMP"
 ] as const
 
 /**
