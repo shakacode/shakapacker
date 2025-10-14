@@ -60,6 +60,9 @@ const SAFE_ENV_VARS = [
  * Success patterns for detecting successful compilation in webpack/rspack output.
  * These patterns are used to determine when webpack-dev-server has successfully
  * compiled and is ready to serve, or when a static build has completed.
+ *
+ * Note: Patterns use substring matching, not exact matching, to support version variations.
+ * For example, "webpack 5." matches "webpack 5.95.0 compiled successfully"
  */
 const SUCCESS_PATTERNS = [
   "webpack compiled",
@@ -71,9 +74,9 @@ const SUCCESS_PATTERNS = [
   "wds: Compiled successfully", // webpack-dev-server 4.x
   "webpack-dev-server: Compiled", // webpack-dev-server 5.x
   "[webpack-dev-server] Compiled successfully", // webpack-dev-server 5.x alternative format
-  "webpack 5.", // matches "webpack 5.x.x compiled"
-  "rspack 0.", // matches "rspack 0.x.x compiled"
-  "rspack-dev-server:" // rspack-dev-server output
+  "webpack 5.", // matches "webpack 5.95.0 compiled successfully" (any 5.x.x version)
+  "rspack 0.", // matches "rspack 0.7.5 compiled successfully" (any 0.x.x version)
+  "rspack-dev-server: Compiled" // rspack-dev-server output
 ]
 
 /**
@@ -278,6 +281,7 @@ export class BuildValidator {
       let hasCompiled = false
       let hasError = false
       let resolved = false
+      let processKilled = false
 
       const resolveOnce = (res: BuildValidationResult) => {
         if (!resolved) {
@@ -287,10 +291,11 @@ export class BuildValidator {
       }
 
       const timeoutId = setTimeout(() => {
-        if (!hasCompiled && !hasError && !resolved) {
+        if (!hasCompiled && !resolved && !processKilled) {
           result.errors.push(
             `Timeout: webpack-dev-server did not compile within ${this.options.timeout}ms.`
           )
+          processKilled = true
           child.kill("SIGTERM")
           // Remove listeners to prevent further callbacks
           child.stdout?.removeAllListeners()
@@ -314,10 +319,18 @@ export class BuildValidator {
           result.output.push(line)
 
           // Check for successful compilation
-          if (SUCCESS_PATTERNS.some((pattern) => line.includes(pattern))) {
+          // Only match success patterns if the line doesn't start with ERROR: or WARNING:
+          const isErrorOrWarning =
+            line.trim().startsWith("ERROR") || line.trim().startsWith("WARNING")
+          if (
+            !processKilled &&
+            !isErrorOrWarning &&
+            SUCCESS_PATTERNS.some((pattern) => line.includes(pattern))
+          ) {
             hasCompiled = true
             result.success = true
             clearTimeout(timeoutId)
+            processKilled = true
             child.kill("SIGTERM")
             // Don't call resolveOnce here - let the exit handler do it
             // This ensures proper cleanup order and avoids race conditions

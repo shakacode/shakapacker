@@ -676,6 +676,115 @@ describe("BuildValidator", () => {
       expect(mockChild.removeAllListeners).toHaveBeenCalledWith()
     })
 
+    it("should handle delayed exit after SIGTERM gracefully", async () => {
+      const configPath = join(testDir, "webpack.config.js")
+      writeFileSync(configPath, "module.exports = {}")
+
+      const mockChild = {
+        stdout: { on: jest.fn(), removeAllListeners: jest.fn() },
+        stderr: { on: jest.fn(), removeAllListeners: jest.fn() },
+        on: jest.fn(),
+        once: jest.fn(),
+        kill: jest.fn(),
+        removeAllListeners: jest.fn()
+      }
+
+      spawn.mockReturnValue(mockChild)
+
+      const build = {
+        name: "dev-hmr",
+        bundler: "webpack",
+        environment: {
+          NODE_ENV: "development",
+          WEBPACK_SERVE: "true"
+        },
+        configFile: configPath,
+        outputs: ["client"]
+      }
+
+      const validationPromise = validator.validateBuild(build, testDir)
+
+      // Simulate success pattern
+      const stdoutHandler = mockChild.stdout.on.mock.calls.find(
+        ([event]) => event === "data"
+      )[1]
+      stdoutHandler(Buffer.from("webpack compiled successfully\n"))
+
+      // Wait for kill to be called
+      await new Promise((r) => {
+        setTimeout(r, 50)
+      })
+      expect(mockChild.kill).toHaveBeenCalledWith("SIGTERM")
+
+      // Simulate delayed exit (process takes time to clean up)
+      await new Promise((r) => {
+        setTimeout(r, 200)
+      })
+
+      const exitHandler = mockChild.on.mock.calls.find(
+        ([event]) => event === "exit"
+      )[1]
+      exitHandler(143) // SIGTERM exit code
+
+      const result = await validationPromise
+
+      // Should still successfully complete
+      expect(result.success).toBe(true)
+      expect(result.buildName).toBe("dev-hmr")
+    })
+
+    it("should handle multiple rapid success patterns without duplicate resolution", async () => {
+      const configPath = join(testDir, "webpack.config.js")
+      writeFileSync(configPath, "module.exports = {}")
+
+      const mockChild = {
+        stdout: { on: jest.fn(), removeAllListeners: jest.fn() },
+        stderr: { on: jest.fn(), removeAllListeners: jest.fn() },
+        on: jest.fn(),
+        once: jest.fn(),
+        kill: jest.fn(),
+        removeAllListeners: jest.fn()
+      }
+
+      spawn.mockReturnValue(mockChild)
+
+      const build = {
+        name: "dev-hmr",
+        bundler: "webpack",
+        environment: {
+          NODE_ENV: "development",
+          WEBPACK_SERVE: "true"
+        },
+        configFile: configPath,
+        outputs: ["client"]
+      }
+
+      const validationPromise = validator.validateBuild(build, testDir)
+
+      // Simulate multiple success patterns in rapid succession
+      const stdoutHandler = mockChild.stdout.on.mock.calls.find(
+        ([event]) => event === "data"
+      )[1]
+      stdoutHandler(Buffer.from("webpack compiled successfully\n"))
+      stdoutHandler(Buffer.from("Compiled successfully\n"))
+      stdoutHandler(Buffer.from("webpack: Compiled successfully\n"))
+
+      await new Promise((r) => {
+        setTimeout(r, 50)
+      })
+
+      // Should only kill once
+      expect(mockChild.kill).toHaveBeenCalledTimes(1)
+
+      const exitHandler = mockChild.on.mock.calls.find(
+        ([event]) => event === "exit"
+      )[1]
+      exitHandler(143)
+
+      const result = await validationPromise
+      expect(result.success).toBe(true)
+    })
+
     it("should return error if webpack-dev-server binary not found", async () => {
       // Create a validator that will fail to find binary
       const build = {
@@ -849,6 +958,166 @@ describe("BuildValidator", () => {
 
       // Should recognize as error, not success
       expect(result.errors.length).toBeGreaterThan(0)
+    })
+
+    it("should detect modern webpack 5.x compiled messages", async () => {
+      const configPath = join(testDir, "webpack.config.js")
+      writeFileSync(configPath, "module.exports = {}")
+
+      const mockChild = {
+        stdout: { on: jest.fn(), removeAllListeners: jest.fn() },
+        stderr: { on: jest.fn(), removeAllListeners: jest.fn() },
+        on: jest.fn(),
+        once: jest.fn(),
+        kill: jest.fn(),
+        removeAllListeners: jest.fn()
+      }
+
+      spawn.mockReturnValue(mockChild)
+
+      const build = {
+        name: "dev-hmr",
+        bundler: "webpack",
+        environment: {
+          NODE_ENV: "development",
+          WEBPACK_SERVE: "true"
+        },
+        configFile: configPath,
+        outputs: ["client"]
+      }
+
+      const validationPromise = validator.validateBuild(build, testDir)
+
+      const stdoutHandler = mockChild.stdout.on.mock.calls.find(
+        ([event]) => event === "data"
+      )[1]
+      // Simulate webpack 5.x.x compiled message
+      stdoutHandler(Buffer.from("webpack 5.95.0 compiled successfully\n"))
+
+      await new Promise((r) => {
+        setTimeout(r, 50)
+      })
+
+      const exitHandler = mockChild.on.mock.calls.find(
+        ([event]) => event === "exit"
+      )[1]
+      exitHandler(143)
+
+      const result = await validationPromise
+      expect(result.success).toBe(true)
+    })
+
+    it("should detect modern rspack 0.x compiled messages", async () => {
+      const configPath = join(testDir, "rspack.config.js")
+      writeFileSync(configPath, "module.exports = {}")
+
+      const mockChild = {
+        stdout: { on: jest.fn(), removeAllListeners: jest.fn() },
+        stderr: { on: jest.fn(), removeAllListeners: jest.fn() },
+        on: jest.fn(),
+        once: jest.fn(),
+        kill: jest.fn(),
+        removeAllListeners: jest.fn()
+      }
+
+      spawn.mockReturnValue(mockChild)
+
+      const build = {
+        name: "dev-hmr",
+        bundler: "rspack",
+        environment: {
+          NODE_ENV: "development",
+          HMR: "true"
+        },
+        configFile: configPath,
+        outputs: ["client"]
+      }
+
+      const validationPromise = validator.validateBuild(build, testDir)
+
+      const stdoutHandler = mockChild.stdout.on.mock.calls.find(
+        ([event]) => event === "data"
+      )[1]
+      // Simulate rspack 0.x.x compiled message
+      stdoutHandler(Buffer.from("rspack 0.7.5 compiled successfully\n"))
+
+      await new Promise((r) => {
+        setTimeout(r, 50)
+      })
+
+      const exitHandler = mockChild.on.mock.calls.find(
+        ([event]) => event === "exit"
+      )[1]
+      exitHandler(143)
+
+      const result = await validationPromise
+      expect(result.success).toBe(true)
+    })
+
+    it("should not match incomplete version patterns", async () => {
+      const configPath = join(testDir, "webpack.config.js")
+      writeFileSync(configPath, "module.exports = {}")
+
+      const mockChild = {
+        stdout: { on: jest.fn(), removeAllListeners: jest.fn() },
+        stderr: { on: jest.fn(), removeAllListeners: jest.fn() },
+        on: jest.fn(),
+        once: jest.fn(),
+        kill: jest.fn(),
+        removeAllListeners: jest.fn()
+      }
+
+      spawn.mockReturnValue(mockChild)
+
+      const build = {
+        name: "dev-hmr",
+        bundler: "webpack",
+        environment: {
+          NODE_ENV: "development",
+          WEBPACK_SERVE: "true"
+        },
+        configFile: configPath,
+        outputs: ["client"]
+      }
+
+      const shortTimeoutValidator = new BuildValidator({
+        verbose: false,
+        timeout: 100
+      })
+
+      const validationPromise = shortTimeoutValidator.validateBuild(
+        build,
+        testDir
+      )
+
+      const stdoutHandler = mockChild.stdout.on.mock.calls.find(
+        ([event]) => event === "data"
+      )[1]
+      // These should NOT match the success patterns - they're warnings/errors about versions
+      stdoutHandler(Buffer.from("WARNING: webpack 5.x may have issues\n"))
+      stdoutHandler(Buffer.from("ERROR: rspack 0.x requires node 18+\n"))
+
+      // Wait for timeout (since no success pattern was matched)
+      await new Promise((r) => {
+        setTimeout(r, 150)
+      })
+
+      expect(mockChild.kill).toHaveBeenCalledWith("SIGTERM")
+
+      const exitHandler = mockChild.on.mock.calls.find(
+        ([event]) => event === "exit"
+      )[1]
+      exitHandler(143) // SIGTERM exit
+
+      const result = await validationPromise
+
+      // Should have timed out, not succeeded
+      expect(result.success).toBe(false)
+      // Should have captured the warning and error
+      expect(result.warnings.some((w) => w.includes("webpack 5.x"))).toBe(true)
+      expect(result.errors.some((e) => e.includes("rspack 0.x"))).toBe(true)
+      // Should have timeout error
+      expect(result.errors.some((e) => e.includes("Timeout"))).toBe(true)
     })
   })
 
