@@ -146,10 +146,29 @@ module Shakapacker::Helper
   # Requires Rails 7.1+ and server support (e.g., Puma 5+).
   # Gracefully degrades if not supported.
   #
+  # Important: Call this helper as early as possible in your layout for optimal performance.
+  # The earlier it's called, the sooner the browser can start downloading assets while
+  # Rails is still rendering the rest of the page.
+  #
   # Example:
   #
-  #   # In layout, before rendering body
+  #   # Option 1: At the very top of layout (optimal performance)
   #   <% send_pack_early_hints 'application' %>
+  #   <!DOCTYPE html>
+  #   <html>
+  #     <head>
+  #       <%= stylesheet_pack_tag 'application' %>
+  #     </head>
+  #   </html>
+  #
+  #   # Option 2: Inside <head> (still good performance)
+  #   <!DOCTYPE html>
+  #   <html>
+  #     <head>
+  #       <% send_pack_early_hints 'application' %>
+  #       <%= stylesheet_pack_tag 'application' %>
+  #     </head>
+  #   </html>
   #
   #   # With options
   #   <% send_pack_early_hints 'application', 'bootstrap',
