@@ -483,11 +483,26 @@ async function runValidateCommand(options: ExportOptions): Promise<number> {
     console.log("=".repeat(80))
     console.log(`\nValidating ${buildsToValidate.length} build(s)...\n`)
 
+    if (options.verbose) {
+      console.log("⚡ VERBOSE MODE ENABLED - Full build output will be shown")
+      console.log(
+        "   This includes all webpack/rspack compilation logs, warnings, and progress messages"
+      )
+      console.log("   Use without --verbose to see only errors and summaries\n")
+      console.log("=".repeat(80) + "\n")
+    }
+
     const results = []
 
     // Validate each build
     for (const buildName of buildsToValidate) {
-      console.log(`\n📦 Validating build: ${buildName}`)
+      if (options.verbose) {
+        console.log("\n" + "=".repeat(80))
+        console.log(`📦 VALIDATING BUILD: ${buildName}`)
+        console.log("=".repeat(80))
+      } else {
+        console.log(`\n📦 Validating build: ${buildName}`)
+      }
 
       // Clear and restore environment to prevent leakage between builds
       clearBuildEnvironmentVariables()
@@ -519,10 +534,16 @@ async function runValidateCommand(options: ExportOptions): Promise<number> {
       results.push(result)
 
       // Show immediate feedback
+      if (options.verbose) {
+        console.log("=".repeat(80))
+      }
       if (result.success) {
         console.log(`   ✅ Build passed`)
       } else {
         console.log(`   ❌ Build failed with ${result.errors.length} error(s)`)
+      }
+      if (options.verbose) {
+        console.log("")
       }
     }
 

@@ -82,12 +82,23 @@
    # Validate all builds defined in .bundler-config.yml
    bin/export-bundler-config --validate
 
-   # Validate with full output logs
+   # Validate with full output logs (shows all webpack/rspack compilation output)
    bin/export-bundler-config --validate --verbose
 
    # Validate a specific build
    bin/export-bundler-config --validate-build=dev-hmr
    ```
+
+   **Verbose Mode:**
+
+   When using `--verbose`, you'll see:
+   - A clear header indicating verbose mode is enabled
+   - Full real-time compilation output from webpack/rspack
+   - All warnings and progress messages
+   - Detailed error traces
+   - Separators between builds for clarity
+
+   This is useful for debugging compilation issues or understanding build performance.
 
    **Setting up build configurations:**
 
