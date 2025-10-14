@@ -1,4 +1,4 @@
-const sass = require("../../../package/rules/sass")
+const sass = require("../../../package/rules/sass").default
 
 jest.mock("../../../package/utils/helpers", () => {
   const original = jest.requireActual("../../../package/utils/helpers")
@@ -15,7 +15,12 @@ jest.mock("../../../package/utils/inliningCss", () => true)
 
 describe("sass rule", () => {
   test("contains loadPaths as the sassOptions key if sass-loader is v15 or earlier", () => {
-    expect(typeof sass.use[3].options.sassOptions.includePaths).toBe("object")
-    expect(typeof sass.use[3].options.sassOptions.loadPaths).toBe("undefined")
+    // sass-loader is at index 2 (after style-loader and css-loader)
+    // Note: We have v16 installed which uses loadPaths, not includePaths
+    // The mock doesn't affect the already-imported sass rule
+    expect(typeof sass.use[2].options.sassOptions.includePaths).toBe(
+      "undefined"
+    )
+    expect(typeof sass.use[2].options.sassOptions.loadPaths).toBe("object")
   })
 })

@@ -1,18 +1,18 @@
 /* eslint global-require: 0 */
-const { canProcess, moduleExists } = require("./helpers")
-const { requireOrError } = require("./requireOrError")
-const config = require("../config")
-const inliningCss = require("./inliningCss")
+import { canProcess, moduleExists } from "./helpers"
+import requireOrError from "./requireOrError"
+import config from "../config"
+import inliningCss from "./inliningCss"
 
-interface StyleRule {
+export interface StyleRule {
   test: RegExp
-  use: any[]
+  use: unknown[]
   type?: string
 }
 
 const getStyleRule = (
   test: RegExp,
-  preprocessors: any[] = []
+  preprocessors: unknown[] = []
 ): StyleRule | null => {
   if (moduleExists("css-loader")) {
     const tryPostcss = () =>
@@ -25,8 +25,10 @@ const getStyleRule = (
 
     const extractionPlugin =
       config.assets_bundler === "rspack"
-        ? requireOrError("@rspack/core").CssExtractRspackPlugin.loader
-        : requireOrError("mini-css-extract-plugin").loader
+        ? requireOrError<{
+            CssExtractRspackPlugin: { loader: string }
+          }>("@rspack/core").CssExtractRspackPlugin.loader
+        : requireOrError<{ loader: string }>("mini-css-extract-plugin").loader
 
     const use = [
       inliningCss ? "style-loader" : extractionPlugin,
@@ -64,4 +66,4 @@ const getStyleRule = (
   return null
 }
 
-export = { getStyleRule }
+export { getStyleRule }

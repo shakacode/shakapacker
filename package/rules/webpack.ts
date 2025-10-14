@@ -1,16 +1,25 @@
-/* eslint global-require: 0 */
-/* eslint import/no-dynamic-require: 0 */
+import raw from "./raw"
+import file from "./file"
+import css from "./css"
+import sass from "./sass"
+import babel from "./babel"
+import swc from "./swc"
+import esbuild from "./esbuild"
+import erb from "./erb"
+import coffee from "./coffee"
+import less from "./less"
+import stylus from "./stylus"
 
 export = [
-  require("./raw"),
-  require("./file"),
-  require("./css"),
-  require("./sass"),
-  require("./babel"),
-  require("./swc"),
-  require("./esbuild"),
-  require("./erb"),
-  require("./coffee"),
-  require("./less"),
-  require("./stylus")
+  raw,
+  file,
+  css,
+  sass,
+  babel,
+  swc,
+  esbuild,
+  erb,
+  coffee,
+  less,
+  stylus
 ].filter(Boolean)

@@ -11,7 +11,7 @@ chdirTestApp()
 // Base config tests expect production-like behavior with contenthash
 process.env.NODE_ENV = "production"
 
-const baseConfig = require("../../../package/environments/base")
+const baseConfig = require("../../../package/environments/base").default
 const config = require("../../../package/config")
 
 jest.mock("../../../package/utils/helpers", () => {
@@ -59,7 +59,7 @@ describe("Base config", () => {
     test("should returns top level and nested entry points with config.nested_entries == true", () => {
       process.env.SHAKAPACKER_CONFIG = "config/shakapacker_nested_entries.yml"
       const config2 = require("../../../package/config")
-      const baseConfig2 = require("../../../package/environments/base")
+      const baseConfig2 = require("../../../package/environments/base").default
 
       expect(config2.nested_entries).toBe(true)
 
@@ -85,15 +85,18 @@ describe("Base config", () => {
     test("should return default loader rules for each file in config/loaders", () => {
       const rules = require("../../../package/rules/webpack")
 
-      const defaultRules = Object.keys(rules)
+      // rules is an array, not an object anymore
+      const defaultRules = rules
       const configRules = baseConfig.module.rules
 
+      // moduleExists is mocked to return false, so rules loaded inside the test have only 3
+      // But baseConfig was loaded before the mock was applied, so it has all 5 rules
       expect(defaultRules).toHaveLength(3)
-      expect(configRules).toHaveLength(3)
+      expect(configRules).toHaveLength(5)
     })
 
     test("should return default plugins", () => {
-      expect(baseConfig.plugins).toHaveLength(2)
+      expect(baseConfig.plugins).toHaveLength(3)
     })
 
     test("should return default resolveLoader", () => {

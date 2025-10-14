@@ -1,7 +1,8 @@
 import { resolve } from "path"
 
-const path: string = resolve(
+const defaultConfigPath: string = resolve(
   __dirname,
   "../../lib/install/config/shakapacker.yml"
 )
-export = path
+
+export default defaultConfigPath

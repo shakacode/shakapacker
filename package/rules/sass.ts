@@ -1,10 +1,12 @@
 /* eslint global-require: 0 */
 
-const { getStyleRule } = require("../utils/getStyleRule")
-const { canProcess, packageMajorVersion } = require("../utils/helpers")
-const { additional_paths: extraPaths } = require("../config")
+import { getStyleRule } from "../utils/getStyleRule"
+import { canProcess, packageMajorVersion } from "../utils/helpers"
+import config from "../config"
 
-export = canProcess("sass-loader", (resolvedPath: string) => {
+const { additional_paths: extraPaths } = config
+
+export default canProcess("sass-loader", (resolvedPath: string) => {
   const optionKey =
     packageMajorVersion("sass-loader") >= 16 ? "loadPaths" : "includePaths"
   return getStyleRule(/\.(scss|sass)(\.erb)?$/i, [

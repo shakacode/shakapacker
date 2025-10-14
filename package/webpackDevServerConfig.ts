@@ -1,12 +1,9 @@
 import { DevServerConfig } from "./types"
-const snakeToCamelCase = require("./utils/snakeToCamelCase")
+import snakeToCamelCase from "./utils/snakeToCamelCase"
+import shakapackerDevServerYamlConfig from "./dev_server"
+import config from "./config"
 
-const shakapackerDevServerYamlConfig =
-  require("./dev_server") as DevServerConfig
-const { outputPath: contentBase, publicPath } = require("./config") as {
-  outputPath: string
-  publicPath: string
-}
+const { outputPath: contentBase, publicPath } = config
 
 interface WebpackDevServerConfig {
   devMiddleware?: {
@@ -24,11 +21,11 @@ interface WebpackDevServerConfig {
     [key: string]: unknown
   }
   client?: Record<string, unknown>
-  allowedHosts?: "all" | "auto" | string | string[]
+  allowedHosts?: "all" | "auto" | (string & {}) | string[]
   bonjour?: boolean | Record<string, unknown>
   compress?: boolean
   headers?: Record<string, unknown> | (() => Record<string, unknown>)
-  host?: "local-ip" | "local-ipv4" | "local-ipv6" | string
+  host?: "local-ip" | "local-ipv4" | "local-ipv6" | (string & {})
   http2?: boolean
   https?: boolean | Record<string, unknown>
   ipc?: boolean | string
@@ -41,13 +38,14 @@ interface WebpackDevServerConfig {
     | string[]
     | Record<string, unknown>
     | Record<string, unknown>[]
-  port?: "auto" | string | number
+  port?: "auto" | (string & {}) | number
   proxy?: unknown
-  server?: string | boolean | Record<string, unknown>
+  server?: (string & {}) | boolean | Record<string, unknown>
   setupExitSignals?: boolean
   setupMiddlewares?: (middlewares: unknown[], devServer: unknown) => unknown[]
+  // eslint-disable-next-line @typescript-eslint/no-redundant-type-constituents
   watchFiles?: string | string[] | unknown
-  webSocketServer?: string | boolean | Record<string, unknown>
+  webSocketServer?: (string & {}) | boolean | Record<string, unknown>
   [key: string]: unknown
 }
 
@@ -86,7 +84,7 @@ function createDevServerConfig(): WebpackDevServerConfig {
       : !devServerYamlConfig.hmr
   delete devServerYamlConfig.live_reload
 
-  const config: WebpackDevServerConfig = {
+  const devServerConfig: WebpackDevServerConfig = {
     devMiddleware: {
       publicPath
     },
@@ -102,8 +100,8 @@ function createDevServerConfig(): WebpackDevServerConfig {
   delete devServerYamlConfig.hmr
 
   if (devServerYamlConfig.static) {
-    config.static = {
-      ...config.static,
+    devServerConfig.static = {
+      ...devServerConfig.static,
       ...(typeof devServerYamlConfig.static === "object"
         ? (devServerYamlConfig.static as Record<string, unknown>)
         : {})
@@ -112,18 +110,18 @@ function createDevServerConfig(): WebpackDevServerConfig {
   }
 
   if (devServerYamlConfig.client) {
-    config.client = devServerYamlConfig.client
+    devServerConfig.client = devServerYamlConfig.client
     delete devServerYamlConfig.client
   }
 
   Object.keys(devServerYamlConfig).forEach((yamlKey) => {
     const camelYamlKey = snakeToCamelCase(yamlKey)
     if (webpackDevServerMappedKeys.has(camelYamlKey)) {
-      config[camelYamlKey] = devServerYamlConfig[yamlKey]
+      devServerConfig[camelYamlKey] = devServerYamlConfig[yamlKey]
     }
   })
 
-  return config
+  return devServerConfig
 }
 
-export = createDevServerConfig
+export default createDevServerConfig

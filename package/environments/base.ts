@@ -1,15 +1,17 @@
 /* eslint global-require: 0 */
 /* eslint import/no-dynamic-require: 0 */
+/* eslint @typescript-eslint/no-require-imports: 0 */
 
-const { basename, dirname, join, relative, resolve } = require("path")
-const { existsSync, readdirSync } = require("fs")
-import { Dirent } from "fs"
-const extname = require("path-complete-extname")
-// @ts-ignore: webpack is an optional peer dependency (using type-only import)
+import { Dirent, existsSync, readdirSync } from "fs"
+import { basename, dirname, join, relative, resolve } from "path"
+import extname from "path-complete-extname"
 import type { Configuration, Entry } from "webpack"
-const config = require("../config")
+import config from "../config"
+// Must use require() because env.ts exports via `export =` for CommonJS compatibility
+
 const { isProduction } = require("../env")
 
+// Dynamic require - path is constructed at runtime based on bundler config (webpack or rspack)
 const pluginsPath = resolve(
   __dirname,
   "..",
@@ -17,6 +19,9 @@ const pluginsPath = resolve(
   `${config.assets_bundler}.js`
 )
 const { getPlugins } = require(pluginsPath)
+
+// Dynamic require - loads webpack.js or rspack.js based on config
+// These modules use `export =` to return arrays directly
 const rulesPath = resolve(
   __dirname,
   "..",
@@ -73,7 +78,7 @@ const getEntryObject = (): Entry => {
     const previousPaths = entries[name]
     if (previousPaths) {
       const pathArray = Array.isArray(previousPaths)
-        ? (previousPaths as string[])
+        ? previousPaths
         : [previousPaths as string]
       pathArray.push(assetPath)
       entries[name] = pathArray
@@ -140,4 +145,4 @@ const baseConfig: Configuration = {
   }
 }
 
-export = baseConfig
+export default baseConfig

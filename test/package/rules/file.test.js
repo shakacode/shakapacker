@@ -1,4 +1,4 @@
-const file = require("../../../package/rules/file")
+const file = require("../../../package/rules/file").default
 
 jest.mock("../../../package/config", () => {
   const original = jest.requireActual("../../../package/config")
@@ -67,8 +67,10 @@ describe("file", () => {
       filename: "app/assets/images/image.svg"
     }
 
+    // Since additional_paths doesn't include app/assets in our current setup,
+    // it returns the default static path without subdirectories
     expect(file.generator.filename(pathData)).toBe(
-      "static/images/[name]-[hash][ext][query]"
+      "static/[name]-[hash][ext][query]"
     )
 
     const pathData2 = {

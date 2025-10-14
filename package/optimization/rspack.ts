@@ -1,7 +1,10 @@
-const { requireOrError } = require("../utils/requireOrError")
-const { error: logError } = require("../utils/debug")
+import requireOrError from "../utils/requireOrError"
+import { error as logError } from "../utils/debug"
 
-const rspack = requireOrError("@rspack/core")
+const rspack = requireOrError<{
+  SwcJsMinimizerRspackPlugin: new () => unknown
+  LightningCssMinimizerRspackPlugin: new () => unknown
+}>("@rspack/core")
 
 interface OptimizationConfig {
   minimize: boolean
@@ -31,6 +34,5 @@ const getOptimization = (): OptimizationConfig => {
   return result
 }
 
-export = {
-  getOptimization
-}
+export { getOptimization }
+export default getOptimization
