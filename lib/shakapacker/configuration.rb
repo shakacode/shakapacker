@@ -231,6 +231,10 @@ class Shakapacker::Configuration
     fetch(:integrity)
   end
 
+  def early_hints
+    fetch(:early_hints)
+  end
+
   private
     def validate_output_paths!
       # Skip validation if already validated to avoid redundant checks

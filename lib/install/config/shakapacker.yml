@@ -86,6 +86,16 @@ default: &default
     # https://developer.mozilla.org/en-US/docs/Web/Security/Subresource_Integrity#cross-origin_resource_sharing_and_subresource_integrity
     cross_origin: "anonymous"
 
+  # HTTP 103 Early Hints support for faster asset loading
+  # Sends Link headers to browsers so they can preload assets while Rails is rendering
+  # Requires Rails 7.1+ and server support (e.g., Puma 5+)
+  # https://guides.rubyonrails.org/action_controller_overview.html#early-hints
+  early_hints:
+    enabled: false
+    include_css: true
+    include_js: true
+    include_fonts: false
+
 development:
   <<: *default
   compile: true

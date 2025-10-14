@@ -95,10 +95,16 @@ module Shakapacker::Helper
   #
   #   <%= javascript_pack_tag 'calendar' %>
   #   <%= javascript_pack_tag 'map' %>
-  def javascript_pack_tag(*names, defer: true, async: false, **options)
+  def javascript_pack_tag(*names, defer: true, async: false, early_hints: false, **options)
     if @javascript_pack_tag_loaded
       raise "To prevent duplicated chunks on the page, you should call javascript_pack_tag only once on the page. " \
       "Please refer to https://github.com/shakacode/shakapacker/blob/main/README.md#view-helpers-javascript_pack_tag-and-stylesheet_pack_tag for the usage guide"
+    end
+
+    # Send early hints if requested
+    if early_hints
+      early_hints_options = early_hints.is_a?(Hash) ? early_hints : {}
+      send_pack_early_hints(*names, **early_hints_options)
     end
 
     append_javascript_pack_tag(*names, defer: defer, async: async)
@@ -131,6 +137,34 @@ module Shakapacker::Helper
     else
       raise "You need Rails >= 5.2 to use this tag."
     end
+  end
+
+  # Sends HTTP 103 Early Hints for the specified packs to enable browsers to preload
+  # critical assets while Rails is still rendering the response.
+  # This can significantly improve perceived page load performance.
+  #
+  # Requires Rails 7.1+ and server support (e.g., Puma 5+).
+  # Gracefully degrades if not supported.
+  #
+  # Example:
+  #
+  #   # In layout, before rendering body
+  #   <% send_pack_early_hints 'application' %>
+  #
+  #   # With options
+  #   <% send_pack_early_hints 'application', 'bootstrap',
+  #        include_css: true,   # default: from config
+  #        include_js: true,    # default: from config
+  #        include_fonts: false # default: from config
+  #   %>
+  def send_pack_early_hints(*names, **options)
+    return unless early_hints_supported? && early_hints_enabled?
+
+    links = build_early_hints_links(names, **options)
+    request.send_early_hints(links) if links.any?
+
+    # Return nil to avoid rendering output with <%= %>
+    nil
   end
 
   # Creates link tags that reference the css chunks from entrypoints when using split chunks API,
@@ -273,5 +307,70 @@ module Shakapacker::Helper
 
         concat "\n" unless index == sources.size - 1
       end
+    end
+
+    # Check if early hints are supported by Rails and the request object
+    def early_hints_supported?
+      request.respond_to?(:send_early_hints)
+    end
+
+    # Check if early hints are enabled in configuration
+    def early_hints_enabled?
+      config = current_shakapacker_instance.config.early_hints
+      return false unless config
+      config[:enabled] == true
+    end
+
+    # Build early hints Link headers for the specified packs
+    def build_early_hints_links(names, **options)
+      config = current_shakapacker_instance.config.early_hints
+      links = {}
+
+      names.each do |name|
+        # Collect JavaScript chunks
+        if options.fetch(:include_js, config[:include_js])
+          begin
+            sources = available_sources_from_manifest_entrypoints([name], type: :javascript)
+            sources.each do |source|
+              source_path = lookup_source(source)
+              links[source_path] = build_link_header(source, as: "script")
+            end
+          rescue
+            # Gracefully handle missing entries
+          end
+        end
+
+        # Collect CSS chunks
+        if options.fetch(:include_css, config[:include_css])
+          begin
+            sources = available_sources_from_manifest_entrypoints([name], type: :stylesheet)
+            sources.each do |source|
+              source_path = lookup_source(source)
+              links[source_path] = build_link_header(source, as: "style")
+            end
+          rescue
+            # Gracefully handle missing entries
+          end
+        end
+      end
+
+      links
+    end
+
+    # Build a Link header value for early hints
+    def build_link_header(source, as:)
+      source_path = lookup_source(source)
+      parts = ["<#{source_path}>", "rel=preload", "as=#{as}"]
+
+      # Add crossorigin for scripts and styles
+      parts << "crossorigin=anonymous" if ["script", "style"].include?(as)
+
+      # Add integrity if enabled
+      if current_shakapacker_instance.config.integrity[:enabled]
+        integrity = lookup_integrity(source)
+        parts << "integrity=#{integrity}" if integrity.present?
+      end
+
+      parts.join("; ")
     end
 end

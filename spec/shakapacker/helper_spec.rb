@@ -288,6 +288,96 @@ module ActionView::TestCase::Behavior
         expect(app_style_with_media).to eq application_stylesheet_chunks.map { |chunk| stylesheet_link_tag(chunk, media: "print") }.join("\n")
         expect(hello_stimulus_style_with_media).to eq hello_stimulus_stylesheet_chunks.map { |chunk| stylesheet_link_tag(chunk, media: "all") }.join("\n")
       end
+
+      describe "#send_pack_early_hints" do
+        it "returns nil to avoid rendering output" do
+          allow(Shakapacker.config).to receive(:early_hints).and_return({ enabled: true, include_css: true, include_js: true })
+          expect(send_pack_early_hints("application")).to be_nil
+        end
+
+        it "does not call send_early_hints when early hints are disabled" do
+          allow(Shakapacker.config).to receive(:early_hints).and_return({ enabled: false, include_css: true, include_js: true })
+          expect(@request).not_to receive(:send_early_hints)
+          send_pack_early_hints("application")
+        end
+
+        it "does not call send_early_hints when request does not support it" do
+          # Create a request object without send_early_hints method
+          @request = Class.new do
+            def base_url
+              "https://example.com"
+            end
+          end.new
+
+          allow(Shakapacker.config).to receive(:early_hints).and_return({ enabled: true, include_css: true, include_js: true })
+          # Should not raise an error and should not call send_early_hints
+          expect { send_pack_early_hints("application") }.not_to raise_error
+        end
+
+        it "sends early hints for JavaScript and CSS when enabled" do
+          allow(Shakapacker.config).to receive(:early_hints).and_return({ enabled: true, include_css: true, include_js: true })
+          expect(@request).to receive(:send_early_hints).with(hash_including(
+            "/packs/vendors~application~bootstrap-c20632e7baf2c81200d3.chunk.js",
+            "/packs/vendors~application-e55f2aae30c07fb6d82a.chunk.js",
+            "/packs/application-k344a6d59eef8632c9d1.js",
+            "/packs/1-c20632e7baf2c81200d3.chunk.css",
+            "/packs/application-k344a6d59eef8632c9d1.chunk.css"
+          ))
+          send_pack_early_hints("application")
+        end
+
+        it "sends early hints only for JavaScript when CSS is disabled" do
+          allow(Shakapacker.config).to receive(:early_hints).and_return({ enabled: true, include_css: false, include_js: true })
+          expect(@request).to receive(:send_early_hints).with(hash_including(
+            "/packs/vendors~application~bootstrap-c20632e7baf2c81200d3.chunk.js"
+          ))
+          send_pack_early_hints("application")
+        end
+
+        it "sends early hints only for CSS when JavaScript is disabled" do
+          allow(Shakapacker.config).to receive(:early_hints).and_return({ enabled: true, include_css: true, include_js: false })
+          expect(@request).to receive(:send_early_hints).with(hash_including(
+            "/packs/1-c20632e7baf2c81200d3.chunk.css"
+          ))
+          send_pack_early_hints("application")
+        end
+
+        it "allows per-call options to override config" do
+          allow(Shakapacker.config).to receive(:early_hints).and_return({ enabled: true, include_css: false, include_js: true })
+          expect(@request).to receive(:send_early_hints).with(hash_including(
+            "/packs/1-c20632e7baf2c81200d3.chunk.css"
+          ))
+          send_pack_early_hints("application", include_css: true)
+        end
+
+        it "gracefully handles missing entries" do
+          allow(Shakapacker.config).to receive(:early_hints).and_return({ enabled: true, include_css: true, include_js: true })
+          expect(@request).not_to receive(:send_early_hints)
+          send_pack_early_hints("nonexistent_pack")
+        end
+      end
+
+      describe "#javascript_pack_tag with early_hints option" do
+        it "sends early hints when early_hints: true" do
+          allow(Shakapacker.config).to receive(:early_hints).and_return({ enabled: true, include_css: true, include_js: true })
+          expect(@request).to receive(:send_early_hints)
+          javascript_pack_tag("application", early_hints: true)
+        end
+
+        it "sends early hints with custom options when early_hints is a hash" do
+          allow(Shakapacker.config).to receive(:early_hints).and_return({ enabled: true, include_css: false, include_js: true })
+          expect(@request).to receive(:send_early_hints).with(hash_including(
+            "/packs/1-c20632e7baf2c81200d3.chunk.css"
+          ))
+          javascript_pack_tag("application", early_hints: { include_css: true })
+        end
+
+        it "does not send early hints when early_hints: false" do
+          allow(Shakapacker.config).to receive(:early_hints).and_return({ enabled: true, include_css: true, include_js: true })
+          expect(@request).not_to receive(:send_early_hints)
+          javascript_pack_tag("application", early_hints: false)
+        end
+      end
     end
 
     context "with integrity hashes" do
