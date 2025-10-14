@@ -395,6 +395,25 @@ describe("BuildValidator", () => {
       expect(result.errors.length).toBeGreaterThan(0)
       expect(result.errors[0]).toContain("Config file not found")
     })
+
+    it("should reject path traversal attacks in config path", async () => {
+      // Attempt to access a file outside the appRoot using path traversal
+      const maliciousPath = "../../../etc/passwd"
+
+      const build = {
+        name: "malicious",
+        bundler: "webpack",
+        environment: { NODE_ENV: "production" },
+        configFile: maliciousPath,
+        outputs: ["client"]
+      }
+
+      const result = await validator.validateBuild(build, testDir)
+
+      expect(result.success).toBe(false)
+      expect(result.errors.length).toBeGreaterThan(0)
+      expect(result.errors[0]).toContain("Path traversal detected")
+    })
   })
 
   describe("validateBuild - HMR builds", () => {
@@ -432,16 +451,24 @@ describe("BuildValidator", () => {
       )[1]
       stdoutHandler(Buffer.from("webpack compiled successfully\n"))
 
-      // Wait for the success handler to process
+      // Wait for the success handler to process and kill the child
       await new Promise((r) => {
         setTimeout(r, 50)
       })
+
+      // Verify kill was called
+      expect(mockChild.kill).toHaveBeenCalledWith("SIGTERM")
+
+      // Now simulate exit event (which the success handler triggers via kill)
+      const exitHandler = mockChild.on.mock.calls.find(
+        ([event]) => event === "exit"
+      )[1]
+      exitHandler(143) // SIGTERM exit code
 
       const result = await validationPromise
 
       expect(result.success).toBe(true)
       expect(result.buildName).toBe("dev-hmr")
-      expect(mockChild.kill).toHaveBeenCalledWith("SIGTERM")
     })
 
     it("should detect HMR from HMR environment variable", async () => {
@@ -481,6 +508,12 @@ describe("BuildValidator", () => {
       await new Promise((r) => {
         setTimeout(r, 50)
       })
+
+      // Simulate exit event after kill
+      const exitHandler = mockChild.on.mock.calls.find(
+        ([event]) => event === "exit"
+      )[1]
+      exitHandler(143) // SIGTERM exit code
 
       const result = await validationPromise
 
@@ -626,12 +659,18 @@ describe("BuildValidator", () => {
 
       // Wait for cleanup
       await new Promise((r) => {
-        setTimeout(r, 150)
+        setTimeout(r, 50)
       })
+
+      // Simulate exit event after kill
+      const exitHandler = mockChild.on.mock.calls.find(
+        ([event]) => event === "exit"
+      )[1]
+      exitHandler(143) // SIGTERM exit code
 
       await validationPromise
 
-      // Verify cleanup was called
+      // Verify cleanup was called after exit
       expect(mockChild.stdout.removeAllListeners).toHaveBeenCalledWith()
       expect(mockChild.stderr.removeAllListeners).toHaveBeenCalledWith()
       expect(mockChild.removeAllListeners).toHaveBeenCalledWith()

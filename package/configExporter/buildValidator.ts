@@ -19,12 +19,6 @@ const MAX_BUFFER_SIZE = 10 * 1024 * 1024 // 10MB
 const DEFAULT_TIMEOUT_MS = 120000 // 2 minutes
 
 /**
- * Delay in milliseconds to wait before removing listeners after killing a process
- * This allows the process to clean up gracefully
- */
-const PROCESS_CLEANUP_DELAY_MS = 100
-
-/**
  * TypeScript interface for webpack/rspack JSON output structure
  */
 interface WebpackJsonOutput {
@@ -87,15 +81,6 @@ const ERROR_PATTERNS = ["ERROR", "Error:", "Failed to compile"]
 const WARNING_PATTERNS = ["WARNING", "Warning:"]
 
 /**
- * Important error details to capture even in non-verbose mode
- */
-const IMPORTANT_ERROR_PATTERNS = [
-  "Module not found",
-  "Can't resolve",
-  "SyntaxError"
-]
-
-/**
  * Validates webpack/rspack builds by running them and checking for errors
  * For HMR builds, starts webpack-dev-server and shuts down after successful start
  */
@@ -137,26 +122,36 @@ export class BuildValidator {
 
   /**
    * Validates that a config file exists and returns the resolved path.
-   * Throws an error if the config file is not found.
+   * Throws an error if the config file is not found or attempts path traversal.
    *
    * @param configFile - The config file path from the build configuration
    * @param appRoot - The application root directory
    * @param buildName - The name of the build (for error messages)
    * @returns The resolved absolute path to the config file
-   * @throws Error if the config file does not exist
+   * @throws Error if the config file does not exist or is outside appRoot
    */
   private validateConfigPath(
     configFile: string,
     appRoot: string,
     buildName: string
   ): string {
-    const configPath = resolve(appRoot, configFile)
-
-    // Security: Ensure config path is within appRoot to prevent path traversal
-    if (!configPath.startsWith(appRoot)) {
+    // Security: Check for path traversal attempts before resolving
+    // This catches "../../../" patterns that try to escape the project directory
+    if (configFile.includes("..")) {
       throw new Error(
         `Invalid config file path for build '${buildName}': Path traversal detected. ` +
-          `Config file must be within project directory.`
+          `Config file must be a relative path within the project directory, not: ${configFile}`
+      )
+    }
+
+    const configPath = resolve(appRoot, configFile)
+
+    // Additional security check: Ensure resolved path is within appRoot
+    // This catches edge cases where resolve() might produce an absolute path outside appRoot
+    if (!configPath.startsWith(appRoot + "/") && configPath !== appRoot) {
+      throw new Error(
+        `Invalid config file path for build '${buildName}': Path must be within project directory. ` +
+          `Resolved path: ${configPath}, Project root: ${appRoot}`
       )
     }
 
@@ -314,8 +309,8 @@ export class BuildValidator {
             result.success = true
             clearTimeout(timeoutId)
             child.kill("SIGTERM")
-            // Cleanup will happen in the exit handler
-            resolveOnce(result)
+            // Don't call resolveOnce here - let the exit handler do it
+            // This ensures proper cleanup order and avoids race conditions
           }
 
           // Check for errors
@@ -596,9 +591,16 @@ export class BuildValidator {
    * Prefers local node_modules/.bin installation for security.
    * Falls back to global installation and PATH resolution with a warning in verbose mode.
    *
+   * SECURITY NOTE: The PATH fallback allows resolving binaries from the system PATH,
+   * which could be a security risk in untrusted environments where an attacker could
+   * manipulate the PATH environment variable. This fallback is included for flexibility
+   * and backward compatibility with systems that use npx or have binaries installed in
+   * non-standard locations. In production CI/CD environments, ensure binaries are
+   * installed locally in node_modules to avoid PATH resolution.
+   *
    * @param name - The binary name to find (e.g., "webpack", "webpack-dev-server")
    * @param appRoot - The application root directory
-   * @returns The path to the binary, or null if not found
+   * @returns The path to the binary, or the bare name for PATH resolution
    */
   private findBinary(name: string, appRoot: string): string | null {
     // Try node_modules/.bin (preferred for security)
@@ -607,28 +609,30 @@ export class BuildValidator {
       return nodeModulesBin
     }
 
-    // Try global
+    // Try global installation
     const globalBin = resolve("/usr/local/bin", name)
     if (existsSync(globalBin)) {
       if (this.options.verbose) {
         console.log(
-          `   [Warning] Using global ${name} from /usr/local/bin. Consider installing locally.`
+          `   [Security Warning] Using global ${name} from /usr/local/bin. ` +
+            `Consider installing locally: npm install -D ${name}`
         )
       }
       return globalBin
     }
 
     // Fall back to PATH resolution (least secure but most flexible)
-    // This allows the binary to be found via npx or other PATH locations
+    // SECURITY: This allows the binary to be found via PATH, which could be
+    // exploited if an attacker controls the PATH environment variable.
     if (this.options.verbose) {
       console.log(
-        `   [Warning] Binary '${name}' not found in node_modules/.bin or /usr/local/bin. ` +
-          `Falling back to PATH resolution. Ensure your PATH is trusted.`
+        `   [Security Warning] Binary '${name}' not found locally. ` +
+          `Falling back to PATH resolution. In production, install locally: npm install -D ${name}`
       )
     }
 
-    // Return the bare binary name to use PATH, or null if we want to be strict
-    // For now, we return the name to maintain backward compatibility
+    // Return the bare binary name to use PATH resolution
+    // This maintains backward compatibility with npx and non-standard installations
     return name
   }
 
