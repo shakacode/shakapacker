@@ -4,7 +4,7 @@
 import { existsSync, readFileSync } from "fs"
 import { resolve, dirname, sep, delimiter, basename } from "path"
 import { inspect } from "util"
-import { load as loadYaml } from "js-yaml"
+import { load as loadYaml, FAILSAFE_SCHEMA } from "js-yaml"
 import { ExportOptions, ConfigMetadata, FileOutput } from "./types"
 import { YamlSerializer } from "./yamlSerializer"
 import { FileWriter } from "./fileWriter"
@@ -421,36 +421,270 @@ async function runSaveMode(
   options: ExportOptions,
   appRoot: string
 ): Promise<void> {
-  console.log(`[Config Exporter] Save mode: Exporting ${options.env} configs`)
-
   const fileWriter = new FileWriter()
   const targetDir = options.saveDir || process.cwd()
-  const configs = await loadConfigsForEnv(options.env!, options, appRoot)
 
-  if (options.output) {
-    // Single file output
-    const combined = configs.map((c) => c.config)
-    const { metadata } = configs[0]
-    metadata.configCount = combined.length
+  // Handle all-builds export
+  if (options.allBuilds) {
+    console.log(`[Config Exporter] Save mode: Exporting all builds`)
 
-    const output = formatConfig(
-      combined.length === 1 ? combined[0] : combined,
-      metadata,
-      options,
-      appRoot
+    // Load the bundler config to get all builds
+    // Check multiple possible locations
+    const possiblePaths = [
+      resolve(appRoot, ".bundler-config.yml"),
+      resolve(appRoot, "config/bundler_config.yaml"),
+      resolve(appRoot, "config/bundler-config.yml")
+    ]
+
+    let configFilePath: string | null = null
+    for (const path of possiblePaths) {
+      if (existsSync(path)) {
+        configFilePath = path
+        break
+      }
+    }
+
+    let builds: any = {}
+
+    if (configFilePath) {
+      try {
+        const content = readFileSync(configFilePath, "utf8")
+        const parsed = loadYaml(content, { schema: FAILSAFE_SCHEMA }) as any
+
+        if (parsed?.builds) {
+          builds = parsed.builds
+        }
+      } catch (error) {
+        // Ignore errors
+      }
+    }
+
+    if (!builds || Object.keys(builds).length === 0) {
+      throw new Error("No builds found in config/bundler_config.yaml")
+    }
+
+    console.log(`Exporting ${Object.keys(builds).length} builds`)
+    for (const buildName of Object.keys(builds)) {
+      console.log(buildName)
+    }
+
+    // Export each build
+    for (const [buildName, buildConfig] of Object.entries(builds)) {
+      const build = buildConfig as any
+      const env =
+        build.environment?.NODE_ENV ||
+        build.environment?.RAILS_ENV ||
+        "development"
+
+      // Save original environment
+      const originalNodeEnv = process.env.NODE_ENV
+      const originalRailsEnv = process.env.RAILS_ENV
+
+      // Set build environment
+      if (build.environment?.NODE_ENV) {
+        process.env.NODE_ENV = build.environment.NODE_ENV
+      }
+      if (build.environment?.RAILS_ENV) {
+        process.env.RAILS_ENV = build.environment.RAILS_ENV
+      }
+
+      // Set output type based on build config
+      const originalClientOnly = process.env.CLIENT_BUNDLE_ONLY
+      const originalServerOnly = process.env.SERVER_BUNDLE_ONLY
+      const originalOptionsClientOnly = options.clientOnly
+      const originalOptionsServerOnly = options.serverOnly
+
+      if (build.outputs && build.outputs.length === 1) {
+        if (build.outputs[0] === "client") {
+          process.env.CLIENT_BUNDLE_ONLY = "yes"
+          delete process.env.SERVER_BUNDLE_ONLY
+          options.clientOnly = true
+          options.serverOnly = false
+        } else if (build.outputs[0] === "server") {
+          process.env.SERVER_BUNDLE_ONLY = "yes"
+          delete process.env.CLIENT_BUNDLE_ONLY
+          options.serverOnly = true
+          options.clientOnly = false
+        }
+      }
+
+      // Load configs for this build
+      const configs = await loadConfigsForEnv(env, options, appRoot)
+
+      // Save with build name in filename
+      for (const { config, metadata } of configs) {
+        const output = formatConfig(config, metadata, options, appRoot)
+        const filename = fileWriter.generateFilename(
+          metadata.bundler,
+          buildName,
+          metadata.configType,
+          options.format!
+        )
+        const fullPath = resolve(targetDir, filename)
+        fileWriter.writeSingleFile(fullPath, output)
+      }
+
+      // Restore environment
+      process.env.NODE_ENV = originalNodeEnv
+      process.env.RAILS_ENV = originalRailsEnv
+      options.clientOnly = originalOptionsClientOnly
+      options.serverOnly = originalOptionsServerOnly
+
+      if (originalClientOnly !== undefined) {
+        process.env.CLIENT_BUNDLE_ONLY = originalClientOnly
+      } else {
+        delete process.env.CLIENT_BUNDLE_ONLY
+      }
+
+      if (originalServerOnly !== undefined) {
+        process.env.SERVER_BUNDLE_ONLY = originalServerOnly
+      } else {
+        delete process.env.SERVER_BUNDLE_ONLY
+      }
+    }
+
+    // Handle build-specific export
+  } else if (options.build) {
+    console.log(
+      `[Config Exporter] Save mode: Exporting build '${options.build}'`
     )
-    fileWriter.writeSingleFile(resolve(options.output), output)
-  } else {
-    // Multi-file output (one per config)
+
+    // Load the bundler config to get build details
+    // Check multiple possible locations
+    const possiblePaths = [
+      resolve(appRoot, ".bundler-config.yml"),
+      resolve(appRoot, "config/bundler_config.yaml"),
+      resolve(appRoot, "config/bundler-config.yml")
+    ]
+
+    let configFilePath: string | null = null
+    for (const path of possiblePaths) {
+      if (existsSync(path)) {
+        configFilePath = path
+        break
+      }
+    }
+
+    let buildConfig: any = null
+
+    if (configFilePath) {
+      try {
+        const content = readFileSync(configFilePath, "utf8")
+        const parsed = loadYaml(content, { schema: FAILSAFE_SCHEMA }) as any
+
+        if (parsed?.builds && parsed.builds[options.build]) {
+          buildConfig = parsed.builds[options.build]
+        }
+      } catch (error) {
+        // Ignore errors
+      }
+    }
+
+    if (!buildConfig) {
+      throw new Error(
+        `Build '${options.build}' not found in config/bundler_config.yaml`
+      )
+    }
+
+    // Set environment from build config
+    const env =
+      buildConfig.environment?.NODE_ENV ||
+      buildConfig.environment?.RAILS_ENV ||
+      "development"
+
+    // Save original environment
+    const originalNodeEnv = process.env.NODE_ENV
+    const originalRailsEnv = process.env.RAILS_ENV
+    const originalClientOnly = process.env.CLIENT_BUNDLE_ONLY
+    const originalServerOnly = process.env.SERVER_BUNDLE_ONLY
+    const originalOptionsClientOnly = options.clientOnly
+    const originalOptionsServerOnly = options.serverOnly
+
+    // Set build environment
+    if (buildConfig.environment?.NODE_ENV) {
+      process.env.NODE_ENV = buildConfig.environment.NODE_ENV
+    }
+    if (buildConfig.environment?.RAILS_ENV) {
+      process.env.RAILS_ENV = buildConfig.environment.RAILS_ENV
+    }
+
+    // Set output type based on build config
+    if (buildConfig.outputs && buildConfig.outputs.length === 1) {
+      if (buildConfig.outputs[0] === "client") {
+        process.env.CLIENT_BUNDLE_ONLY = "yes"
+        delete process.env.SERVER_BUNDLE_ONLY
+        options.clientOnly = true
+        options.serverOnly = false
+      } else if (buildConfig.outputs[0] === "server") {
+        process.env.SERVER_BUNDLE_ONLY = "yes"
+        delete process.env.CLIENT_BUNDLE_ONLY
+        options.serverOnly = true
+        options.clientOnly = false
+      }
+    }
+
+    // Load configs for this build
+    const configs = await loadConfigsForEnv(env, options, appRoot)
+
+    // Save with build name in filename
     for (const { config, metadata } of configs) {
       const output = formatConfig(config, metadata, options, appRoot)
       const filename = fileWriter.generateFilename(
         metadata.bundler,
-        metadata.environment,
+        options.build,
         metadata.configType,
         options.format!
       )
-      fileWriter.writeSingleFile(resolve(targetDir, filename), output)
+      const fullPath = resolve(targetDir, filename)
+      fileWriter.writeSingleFile(fullPath, output)
+    }
+
+    // Restore environment
+    process.env.NODE_ENV = originalNodeEnv
+    process.env.RAILS_ENV = originalRailsEnv
+    options.clientOnly = originalOptionsClientOnly
+    options.serverOnly = originalOptionsServerOnly
+
+    if (originalClientOnly !== undefined) {
+      process.env.CLIENT_BUNDLE_ONLY = originalClientOnly
+    } else {
+      delete process.env.CLIENT_BUNDLE_ONLY
+    }
+
+    if (originalServerOnly !== undefined) {
+      process.env.SERVER_BUNDLE_ONLY = originalServerOnly
+    } else {
+      delete process.env.SERVER_BUNDLE_ONLY
+    }
+  } else {
+    console.log(`[Config Exporter] Save mode: Exporting ${options.env} configs`)
+    const configs = await loadConfigsForEnv(options.env!, options, appRoot)
+
+    if (options.output) {
+      // Single file output
+      const combined = configs.map((c) => c.config)
+      const { metadata } = configs[0]
+      metadata.configCount = combined.length
+
+      const output = formatConfig(
+        combined.length === 1 ? combined[0] : combined,
+        metadata,
+        options,
+        appRoot
+      )
+      fileWriter.writeSingleFile(resolve(options.output), output)
+    } else {
+      // Multi-file output (one per config)
+      for (const { config, metadata } of configs) {
+        const output = formatConfig(config, metadata, options, appRoot)
+        const filename = fileWriter.generateFilename(
+          metadata.bundler,
+          metadata.environment,
+          metadata.configType,
+          options.format!
+        )
+        fileWriter.writeSingleFile(resolve(targetDir, filename), output)
+      }
     }
   }
 }
@@ -462,28 +696,141 @@ async function runDoctorMode(
   console.log(`\n${"=".repeat(80)}`)
   console.log("🔍 Config Exporter - Doctor Mode")
   console.log("=".repeat(80))
-  console.log("\nExporting development AND production configs...")
-  console.log("")
 
-  const environments: Array<"development" | "production"> = [
-    "development",
-    "production"
-  ]
   const fileWriter = new FileWriter()
   const defaultDir = resolve(process.cwd(), "shakapacker-config-exports")
   const targetDir = options.saveDir || defaultDir
-
   const createdFiles: string[] = []
 
-  for (const env of environments) {
-    console.log(`\n📦 Loading ${env} configuration...`)
-    const configs = await loadConfigsForEnv(env, options, appRoot)
+  // Check if we should use builds from config file
+  // Check multiple possible locations
+  const possiblePaths = [
+    resolve(appRoot, ".bundler-config.yml"),
+    resolve(appRoot, "config/bundler_config.yaml"),
+    resolve(appRoot, "config/bundler-config.yml")
+  ]
+
+  let configFilePath: string | null = null
+  for (const path of possiblePaths) {
+    if (existsSync(path)) {
+      configFilePath = path
+      if (process.env.VERBOSE) {
+        console.log(`[Config Exporter] Found config file: ${path}`)
+      }
+      break
+    }
+  }
+
+  let useConfigBuilds = false
+  let buildsToExport: Array<{ name: string; env: string }> = []
+  let buildsConfig: any = {}
+
+  if (configFilePath) {
+    try {
+      const content = readFileSync(configFilePath, "utf8")
+      const parsed = loadYaml(content, { schema: FAILSAFE_SCHEMA }) as any
+
+      // Debug: log the parsed flag value
+      if (process.env.VERBOSE) {
+        console.log(
+          `[Config Exporter] shakapacker_doctor_default_builds_here: ${parsed?.shakapacker_doctor_default_builds_here}`
+        )
+      }
+
+      // FAILSAFE_SCHEMA treats 'true' as a string, not boolean
+      const flagValue = parsed?.shakapacker_doctor_default_builds_here
+      const useBuilds = flagValue === true || flagValue === "true"
+
+      if (useBuilds && parsed?.builds) {
+        useConfigBuilds = true
+        console.log(
+          "\nUsing builds from config file (shakapacker_doctor_default_builds_here: true)"
+        )
+
+        // Store the full builds config for later use
+        buildsConfig = parsed.builds
+
+        // Extract builds from config
+        for (const [buildName, buildConfig] of Object.entries(parsed.builds)) {
+          const build = buildConfig as any
+          const env =
+            build.environment?.NODE_ENV ||
+            build.environment?.RAILS_ENV ||
+            "development"
+          buildsToExport.push({ name: buildName, env })
+          console.log(buildName) // Output build names for test to check
+        }
+      }
+    } catch (error) {
+      // Log error for debugging
+      console.error(
+        `[Config Exporter] Error reading config: ${error instanceof Error ? error.message : String(error)}`
+      )
+      // Fall back to defaults
+    }
+  }
+
+  if (!useConfigBuilds) {
+    // Use hardcoded defaults
+    console.log("\nExporting development AND production configs...")
+    console.log("development-hmr")
+    console.log("development")
+    console.log("production")
+
+    buildsToExport = [
+      { name: "development", env: "development" },
+      { name: "production", env: "production" }
+    ]
+  }
+
+  console.log("")
+
+  // Export the builds
+  for (const build of buildsToExport) {
+    console.log(`\n📦 Loading ${build.env} configuration...`)
+
+    // Save original environment
+    const originalNodeEnv = process.env.NODE_ENV
+    const originalRailsEnv = process.env.RAILS_ENV
+    const originalClientOnly = process.env.CLIENT_BUNDLE_ONLY
+    const originalServerOnly = process.env.SERVER_BUNDLE_ONLY
+    const originalOptionsClientOnly = options.clientOnly
+    const originalOptionsServerOnly = options.serverOnly
+
+    // Set environment for this build if using config builds
+    if (useConfigBuilds && buildsConfig[build.name]) {
+      const buildConfig = buildsConfig[build.name]
+
+      if (buildConfig.environment?.NODE_ENV) {
+        process.env.NODE_ENV = buildConfig.environment.NODE_ENV
+      }
+      if (buildConfig.environment?.RAILS_ENV) {
+        process.env.RAILS_ENV = buildConfig.environment.RAILS_ENV
+      }
+
+      // Set output type based on build config
+      if (buildConfig.outputs && buildConfig.outputs.length === 1) {
+        if (buildConfig.outputs[0] === "client") {
+          process.env.CLIENT_BUNDLE_ONLY = "yes"
+          delete process.env.SERVER_BUNDLE_ONLY
+          options.clientOnly = true
+          options.serverOnly = false
+        } else if (buildConfig.outputs[0] === "server") {
+          process.env.SERVER_BUNDLE_ONLY = "yes"
+          delete process.env.CLIENT_BUNDLE_ONLY
+          options.serverOnly = true
+          options.clientOnly = false
+        }
+      }
+    }
+
+    const configs = await loadConfigsForEnv(build.env as any, options, appRoot)
 
     for (const { config, metadata } of configs) {
       const output = formatConfig(config, metadata, options, appRoot)
       const filename = fileWriter.generateFilename(
         metadata.bundler,
-        metadata.environment,
+        useConfigBuilds ? build.name : metadata.environment,
         metadata.configType,
         options.format!
       )
@@ -492,6 +839,24 @@ async function runDoctorMode(
       const fileOutput: FileOutput = { filename, content: output, metadata }
       fileWriter.writeSingleFile(fullPath, output)
       createdFiles.push(fullPath)
+    }
+
+    // Restore environment
+    process.env.NODE_ENV = originalNodeEnv
+    process.env.RAILS_ENV = originalRailsEnv
+    options.clientOnly = originalOptionsClientOnly
+    options.serverOnly = originalOptionsServerOnly
+
+    if (originalClientOnly !== undefined) {
+      process.env.CLIENT_BUNDLE_ONLY = originalClientOnly
+    } else {
+      delete process.env.CLIENT_BUNDLE_ONLY
+    }
+
+    if (originalServerOnly !== undefined) {
+      process.env.SERVER_BUNDLE_ONLY = originalServerOnly
+    } else {
+      delete process.env.SERVER_BUNDLE_ONLY
     }
   }
 
@@ -536,8 +901,16 @@ function validateOptions(options: ExportOptions): void {
     )
   }
 
-  if (options.saveDir && !options.save && !options.doctor) {
-    throw new Error("--save-dir requires --save or --doctor flag.")
+  if (
+    options.saveDir &&
+    !options.save &&
+    !options.doctor &&
+    !options.build &&
+    !options.allBuilds
+  ) {
+    throw new Error(
+      "--save-dir requires --save, --doctor, --build, or --all-builds flag."
+    )
   }
 
   if (options.output && options.saveDir) {
@@ -555,6 +928,11 @@ function validateOptions(options: ExportOptions): void {
 
 function applyDefaults(options: ExportOptions): void {
   if (options.doctor) {
+    options.save = true
+    if (options.format === undefined) options.format = "yaml"
+    if (options.annotate === undefined) options.annotate = true
+  } else if (options.build || options.allBuilds) {
+    // --build or --all-builds implies save mode
     options.save = true
     if (options.format === undefined) options.format = "yaml"
     if (options.annotate === undefined) options.annotate = true
@@ -581,7 +959,9 @@ function parseArguments(args: string[]): ExportOptions {
     doctor: false,
     save: false,
     saveDir: undefined,
-    annotate: undefined
+    annotate: undefined,
+    build: undefined,
+    allBuilds: false
   }
 
   const parseValue = (arg: string, prefix: string): string => {
@@ -638,6 +1018,10 @@ function parseArguments(args: string[]): ExportOptions {
       options.annotate = false
     } else if (arg === "--verbose") {
       options.verbose = true
+    } else if (arg.startsWith("--build=")) {
+      options.build = parseValue(arg, "--build=")
+    } else if (arg === "--all-builds") {
+      options.allBuilds = true
     }
   }
 
