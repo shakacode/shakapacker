@@ -169,7 +169,47 @@
    ================================================================================
    Summary: 2/3 builds passed, 1 failed (Total: 10.02s)
    ================================================================================
+
+   💡 Debugging Tips:
+      To get more details, run individual builds with --verbose:
+
+      bin/export-bundler-config --validate-build prod --verbose
+
+      Or validate all builds with full output: bin/export-bundler-config --validate --verbose
+   ================================================================================
    ```
+
+   **Debugging Failed Builds:**
+
+   When builds fail, the validator automatically provides debugging commands. You can:
+   1. **Run a specific build with verbose output** to see full webpack/rspack logs:
+
+      ```bash
+      bin/export-bundler-config --validate-build prod --verbose
+      ```
+
+   2. **Validate all builds with verbose output** to see everything:
+
+      ```bash
+      bin/export-bundler-config --validate --verbose
+      ```
+
+   3. **Test individual builds manually** using the same configuration:
+
+      ```bash
+      # For static builds
+      NODE_ENV=production RAILS_ENV=production bundle exec webpack --config config/webpack/webpack.config.js
+
+      # For HMR/dev-server builds
+      NODE_ENV=development WEBPACK_SERVE=true bundle exec webpack serve --config config/webpack/webpack.config.js
+      ```
+
+   The verbose mode shows:
+   - Full real-time compilation output
+   - All webpack/rspack warnings and progress messages
+   - Detailed stack traces for errors
+   - Timing information for each build phase
+   - Clear separators between different builds
 
 7. Generate webpack stats for build analysis (useful for bundle size optimization):
 

@@ -855,7 +855,31 @@ export class BuildValidator {
     lines.push(
       `Summary: ${successCount}/${totalBuilds} builds passed, ${failureCount} failed (Total: ${totalSeconds}s)`
     )
-    lines.push("=".repeat(80) + "\n")
+    lines.push("=".repeat(80))
+
+    // Add debugging guidance if there are failures
+    if (failureCount > 0) {
+      lines.push("\n💡 Debugging Tips:")
+      lines.push(
+        "   To get more details, run individual builds with --verbose:"
+      )
+      lines.push("")
+
+      const failedBuilds = results.filter((r) => !r.success)
+      failedBuilds.forEach((result) => {
+        lines.push(
+          `   bin/export-bundler-config --validate-build ${result.buildName} --verbose`
+        )
+      })
+
+      lines.push("")
+      lines.push(
+        "   Or validate all builds with full output: bin/export-bundler-config --validate --verbose"
+      )
+      lines.push("=".repeat(80))
+    }
+
+    lines.push("")
 
     return lines.join("\n")
   }
