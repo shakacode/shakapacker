@@ -836,7 +836,6 @@ async function runDoctorMode(
       )
 
       const fullPath = resolve(targetDir, filename)
-      const fileOutput: FileOutput = { filename, content: output, metadata }
       fileWriter.writeSingleFile(fullPath, output)
       createdFiles.push(fullPath)
     }
