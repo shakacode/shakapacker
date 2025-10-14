@@ -136,8 +136,9 @@ export async function run(args: string[]): Promise<number> {
     }
 
     return 0
-  } catch (error: any) {
-    console.error(`[Config Exporter] Error: ${error.message}`)
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : String(error)
+    console.error(`[Config Exporter] Error: ${errorMessage}`)
     return 1
   }
 }
@@ -425,8 +426,9 @@ function runListBuildsCommand(options: ExportOptions): number {
     const loader = new ConfigFileLoader(options.configFile)
     loader.listBuilds()
     return 0
-  } catch (error: any) {
-    console.error(`[Config Exporter] Error: ${error.message}`)
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : String(error)
+    console.error(`[Config Exporter] Error: ${errorMessage}`)
     return 1
   }
 }
@@ -531,8 +533,9 @@ async function runValidateCommand(options: ExportOptions): Promise<number> {
     // Return exit code based on results
     const hasFailures = results.some((r) => !r.success)
     return hasFailures ? 1 : 0
-  } catch (error: any) {
-    console.error(`[Config Exporter] Error: ${error.message}`)
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : String(error)
+    console.error(`[Config Exporter] Error: ${errorMessage}`)
     return 1
   } finally {
     // Restore original environment
@@ -613,8 +616,9 @@ async function runAllBuildsCommand(options: ExportOptions): Promise<number> {
     console.log("\n" + "=".repeat(80) + "\n")
 
     return 0
-  } catch (error: any) {
-    console.error(`[Config Exporter] Error: ${error.message}`)
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : String(error)
+    console.error(`[Config Exporter] Error: ${errorMessage}`)
     return 1
   } finally {
     // Restore original environment
@@ -685,9 +689,11 @@ async function runDoctorMode(
           printDoctorSummary(createdFiles, targetDir)
           return
         }
-      } catch (error: any) {
+      } catch (error: unknown) {
         // If config file exists but is invalid, warn and fall through to default behavior
-        console.log(`\n⚠️  Config file found but invalid: ${error.message}`)
+        const errorMessage =
+          error instanceof Error ? error.message : String(error)
+        console.log(`\n⚠️  Config file found but invalid: ${errorMessage}`)
         console.log("Falling back to default doctor mode...\n")
       }
     }
@@ -1081,9 +1087,11 @@ async function loadConfigsForEnv(
     const argv = { mode: finalEnv }
     try {
       loadedConfig = loadedConfig(envObject, argv)
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const errorMessage =
+        error instanceof Error ? error.message : String(error)
       throw new Error(
-        `Failed to execute config function: ${error.message}\n` +
+        `Failed to execute config function: ${errorMessage}\n` +
           `Config file: ${configFile}\n` +
           `Environment: ${JSON.stringify(envObject)}`
       )
@@ -1317,7 +1325,7 @@ function loadShakapackerConfig(
       )
       return { bundler, configPath }
     }
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.warn(
       `[Config Exporter] Error loading shakapacker config, defaulting to webpack`
     )

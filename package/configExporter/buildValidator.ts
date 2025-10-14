@@ -9,6 +9,22 @@ export interface ValidatorOptions {
 }
 
 /**
+ * Maximum buffer size for stdout/stderr to prevent memory exhaustion
+ */
+const MAX_BUFFER_SIZE = 10 * 1024 * 1024 // 10MB
+
+/**
+ * Default timeout for build validation in milliseconds
+ */
+const DEFAULT_TIMEOUT_MS = 120000 // 2 minutes
+
+/**
+ * Delay in milliseconds to wait before removing listeners after killing a process
+ * This allows the process to clean up gracefully
+ */
+const PROCESS_CLEANUP_DELAY_MS = 100
+
+/**
  * TypeScript interface for webpack/rspack JSON output structure
  */
 interface WebpackJsonOutput {
@@ -89,7 +105,7 @@ export class BuildValidator {
   constructor(options: ValidatorOptions) {
     this.options = {
       verbose: options.verbose,
-      timeout: options.timeout || 120000 // 2 minutes default
+      timeout: options.timeout || DEFAULT_TIMEOUT_MS
     }
   }
 
@@ -120,7 +136,48 @@ export class BuildValidator {
   }
 
   /**
-   * Validates a single build configuration
+   * Validates that a config file exists and returns the resolved path.
+   * Throws an error if the config file is not found.
+   *
+   * @param configFile - The config file path from the build configuration
+   * @param appRoot - The application root directory
+   * @param buildName - The name of the build (for error messages)
+   * @returns The resolved absolute path to the config file
+   * @throws Error if the config file does not exist
+   */
+  private validateConfigPath(
+    configFile: string,
+    appRoot: string,
+    buildName: string
+  ): string {
+    const configPath = resolve(appRoot, configFile)
+
+    // Security: Ensure config path is within appRoot to prevent path traversal
+    if (!configPath.startsWith(appRoot)) {
+      throw new Error(
+        `Invalid config file path for build '${buildName}': Path traversal detected. ` +
+          `Config file must be within project directory.`
+      )
+    }
+
+    if (!existsSync(configPath)) {
+      throw new Error(
+        `Config file not found for build '${buildName}': ${configPath}. ` +
+          `Check the 'config' setting in your build configuration.`
+      )
+    }
+
+    return configPath
+  }
+
+  /**
+   * Validates a single build configuration by running the appropriate bundler command.
+   * For HMR builds, starts webpack-dev-server and validates successful compilation.
+   * For static builds, runs a full build and validates the output.
+   *
+   * @param build - The resolved build configuration to validate
+   * @param appRoot - The application root directory
+   * @returns A promise that resolves to the build validation result
    */
   async validateBuild(
     build: ResolvedBuildConfig,
@@ -162,8 +219,12 @@ export class BuildValidator {
     const devServerBin = this.findBinary(devServerCmd, appRoot)
 
     if (!devServerBin) {
+      const packageManager = existsSync(resolve(appRoot, "yarn.lock"))
+        ? "yarn add"
+        : "npm install"
       result.errors.push(
-        `Could not find ${devServerCmd} binary. Please install ${bundler}-dev-server.`
+        `Could not find ${devServerCmd} binary. Please install it:\n` +
+          `   ${packageManager} -D ${bundler}-dev-server`
       )
       return result
     }
@@ -173,14 +234,19 @@ export class BuildValidator {
 
     // Add config file if specified
     if (build.configFile) {
-      const configPath = resolve(appRoot, build.configFile)
-      if (!existsSync(configPath)) {
-        result.errors.push(
-          `Config file not found: ${configPath}. Check the 'config' setting in your build configuration.`
+      try {
+        const configPath = this.validateConfigPath(
+          build.configFile,
+          appRoot,
+          build.name
         )
+        args.push("--config", configPath)
+      } catch (error) {
+        const errorMessage =
+          error instanceof Error ? error.message : String(error)
+        result.errors.push(errorMessage)
         return result
       }
-      args.push("--config", configPath)
     } else {
       // Use default config path
       const defaultConfig = resolve(
@@ -247,13 +313,13 @@ export class BuildValidator {
             hasCompiled = true
             result.success = true
             clearTimeout(timeoutId)
-            child.kill("SIGTERM")
-            // Small delay to allow process to clean up before removing listeners
-            setTimeout(() => {
+            // Wait for process to exit before removing listeners
+            child.once("exit", () => {
               child.stdout?.removeAllListeners()
               child.stderr?.removeAllListeners()
               child.removeAllListeners()
-            }, 100)
+            })
+            child.kill("SIGTERM")
             resolveOnce(result)
           }
 
@@ -316,8 +382,12 @@ export class BuildValidator {
     const bundlerBin = this.findBinary(bundler, appRoot)
 
     if (!bundlerBin) {
+      const packageManager = existsSync(resolve(appRoot, "yarn.lock"))
+        ? "yarn add"
+        : "npm install"
       result.errors.push(
-        `Could not find ${bundler} binary. Please install ${bundler}.`
+        `Could not find ${bundler} binary. Please install it:\n` +
+          `   ${packageManager} -D ${bundler}`
       )
       return result
     }
@@ -327,14 +397,19 @@ export class BuildValidator {
 
     // Add config file if specified
     if (build.configFile) {
-      const configPath = resolve(appRoot, build.configFile)
-      if (!existsSync(configPath)) {
-        result.errors.push(
-          `Config file not found: ${configPath}. Check the 'config' setting in your build configuration.`
+      try {
+        const configPath = this.validateConfigPath(
+          build.configFile,
+          appRoot,
+          build.name
         )
+        args.push("--config", configPath)
+      } catch (error) {
+        const errorMessage =
+          error instanceof Error ? error.message : String(error)
+        result.errors.push(errorMessage)
         return result
       }
-      args.push("--config", configPath)
     } else {
       // Use default config path
       const defaultConfig = resolve(
@@ -363,7 +438,6 @@ export class BuildValidator {
 
       const stdoutChunks: Buffer[] = []
       const stderrChunks: Buffer[] = []
-      const MAX_BUFFER_SIZE = 10 * 1024 * 1024 // 10MB limit to prevent memory issues
 
       let stdoutSize = 0
       let stderrSize = 0
@@ -470,7 +544,13 @@ export class BuildValidator {
             )
           }
         } catch (err) {
-          // If JSON parsing fails, fall back to stderr analysis
+          // If JSON parsing fails, log the parsing error in verbose mode
+          if (this.options.verbose) {
+            const parseError = err instanceof Error ? err.message : String(err)
+            console.log(`   [Debug] Failed to parse JSON output: ${parseError}`)
+          }
+
+          // Fall back to stderr analysis
           if (stderrData && stderrData.length > 0) {
             const lines = stderrData.split("\n")
             lines.forEach((line) => {
@@ -512,10 +592,16 @@ export class BuildValidator {
   }
 
   /**
-   * Finds the binary for webpack, rspack, or dev servers
+   * Finds the binary for webpack, rspack, or dev servers.
+   * Prefers local node_modules/.bin installation for security.
+   * Falls back to global installation and PATH resolution with a warning in verbose mode.
+   *
+   * @param name - The binary name to find (e.g., "webpack", "webpack-dev-server")
+   * @param appRoot - The application root directory
+   * @returns The path to the binary, or null if not found
    */
   private findBinary(name: string, appRoot: string): string | null {
-    // Try node_modules/.bin
+    // Try node_modules/.bin (preferred for security)
     const nodeModulesBin = resolve(appRoot, "node_modules", ".bin", name)
     if (existsSync(nodeModulesBin)) {
       return nodeModulesBin
@@ -524,15 +610,35 @@ export class BuildValidator {
     // Try global
     const globalBin = resolve("/usr/local/bin", name)
     if (existsSync(globalBin)) {
+      if (this.options.verbose) {
+        console.log(
+          `   [Warning] Using global ${name} from /usr/local/bin. Consider installing locally.`
+        )
+      }
       return globalBin
     }
 
-    // Try npx (will use PATH)
+    // Fall back to PATH resolution (least secure but most flexible)
+    // This allows the binary to be found via npx or other PATH locations
+    if (this.options.verbose) {
+      console.log(
+        `   [Warning] Binary '${name}' not found in node_modules/.bin or /usr/local/bin. ` +
+          `Falling back to PATH resolution. Ensure your PATH is trusted.`
+      )
+    }
+
+    // Return the bare binary name to use PATH, or null if we want to be strict
+    // For now, we return the name to maintain backward compatibility
     return name
   }
 
   /**
-   * Formats validation results for display
+   * Formats validation results for display in the terminal.
+   * Shows a summary of all builds with success/failure status,
+   * error messages, warnings, and optional output logs.
+   *
+   * @param results - Array of validation results from all builds
+   * @returns Formatted string ready for console output
    */
   formatResults(results: BuildValidationResult[]): string {
     const lines: string[] = []

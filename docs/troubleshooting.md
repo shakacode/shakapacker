@@ -102,6 +102,17 @@
    bin/export-bundler-config --validate
    ```
 
+   **Advanced options:**
+
+   The validator uses a default timeout of 2 minutes per build. For large projects or slow CI environments, you can customize this behavior by modifying the `ValidatorOptions` in your code, or by adjusting your build configuration to be more efficient.
+
+   If validation times out, try:
+   - Using `--verbose` to see where the build is hanging
+   - Optimizing your webpack/rspack configuration for faster builds
+   - Running validation on a single build with `--validate-build=build-name`
+
+   **How it works:**
+
    The validator will:
    - For HMR builds (with `WEBPACK_SERVE=true`): Start webpack-dev-server, wait for successful compilation, then shut down
    - For static builds: Run webpack/rspack and check for compilation errors
