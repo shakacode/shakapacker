@@ -15,7 +15,7 @@ jest.mock("../../../package/config", () => {
   }
 })
 
-const esbuildConfig = require("../../../package/rules/esbuild").default
+const esbuildConfig = require("../../../package/rules/esbuild")
 
 const createWebpackConfig = (file, use) => ({
   entry: { file },

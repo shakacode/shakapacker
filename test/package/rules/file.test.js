@@ -67,8 +67,8 @@ describe("file", () => {
       filename: "app/assets/images/image.svg"
     }
 
-    // Since additional_paths doesn't include app/assets in our current setup,
-    // it returns the default static path without subdirectories
+    // The mock adds app/assets to additional_paths, but since the file rule
+    // was imported before the mock was applied, it doesn't see the change
     expect(file.generator.filename(pathData)).toBe(
       "static/[name]-[hash][ext][query]"
     )
