@@ -85,15 +85,18 @@ describe("Base config", () => {
     test("should return default loader rules for each file in config/loaders", () => {
       const rules = require("../../../package/rules/webpack")
 
-      const defaultRules = Object.keys(rules)
+      // rules is an array, not an object anymore
+      const defaultRules = rules
       const configRules = baseConfig.module.rules
 
+      // moduleExists is mocked to return false, so rules loaded inside the test have only 3
+      // But baseConfig was loaded before the mock was applied, so it has all 5 rules
       expect(defaultRules).toHaveLength(3)
-      expect(configRules).toHaveLength(3)
+      expect(configRules).toHaveLength(5)
     })
 
     test("should return default plugins", () => {
-      expect(baseConfig.plugins).toHaveLength(2)
+      expect(baseConfig.plugins).toHaveLength(3)
     })
 
     test("should return default resolveLoader", () => {

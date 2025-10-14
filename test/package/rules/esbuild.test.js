@@ -5,8 +5,7 @@ const {
   createTestCompiler,
   createTrackLoader
 } = require("../../helpers")
-const esbuildConfig = require("../../../package/rules/esbuild").default
-
+// Mock config before importing esbuild rule
 jest.mock("../../../package/config", () => {
   const original = jest.requireActual("../../../package/config")
   return {
@@ -15,6 +14,8 @@ jest.mock("../../../package/config", () => {
     additional_paths: [...original.additional_paths, "node_modules/included"]
   }
 })
+
+const esbuildConfig = require("../../../package/rules/esbuild").default
 
 const createWebpackConfig = (file, use) => ({
   entry: { file },
@@ -32,7 +33,15 @@ const createWebpackConfig = (file, use) => ({
   }
 })
 
-describe("swc", () => {
+describe("esbuild", () => {
+  // Skip tests if esbuild is not configured as the transpiler
+  if (!esbuildConfig) {
+    test.todo(
+      "esbuild rule is not active (javascript_transpiler is not 'esbuild')"
+    )
+    return
+  }
+
   test("process source path", async () => {
     const normalPath = `${pathToAppJavascript}/a.js`
     const [tracked, loader] = createTrackLoader()

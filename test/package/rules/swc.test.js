@@ -5,8 +5,7 @@ const {
   createTestCompiler,
   createTrackLoader
 } = require("../../helpers")
-const swcConfig = require("../../../package/rules/swc").default
-
+// Mock config before importing swc rule
 jest.mock("../../../package/config", () => {
   const original = jest.requireActual("../../../package/config")
   return {
@@ -15,6 +14,8 @@ jest.mock("../../../package/config", () => {
     additional_paths: [...original.additional_paths, "node_modules/included"]
   }
 })
+
+const swcConfig = require("../../../package/rules/swc").default
 
 const createWebpackConfig = (file, use) => ({
   entry: { file },
