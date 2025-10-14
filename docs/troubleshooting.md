@@ -145,10 +145,12 @@
    ✅ Build: dev (3.12s)
       📦 Outputs: client, server
       ⚙️  Config: config/webpack/webpack.config.js
+      📁 Output: /app/public/packs
 
    ❌ Build: prod (4.56s)
       📦 Outputs: client, server
       ⚙️  Config: config/webpack/webpack.config.js
+      📁 Output: /app/public/packs
       ❌ 2 error(s)
          Module not found: Error: Can't resolve './missing'
          SyntaxError: Unexpected token

@@ -27,6 +27,7 @@ interface WebpackJsonOutput {
   hash?: string
   time?: number
   builtAt?: number
+  outputPath?: string
 }
 
 /**
@@ -523,6 +524,11 @@ export class BuildValidator {
         try {
           const jsonOutput: WebpackJsonOutput = JSON.parse(stdoutData)
 
+          // Extract output path if available
+          if (jsonOutput.outputPath) {
+            result.outputPath = jsonOutput.outputPath
+          }
+
           // Check for errors in webpack/rspack JSON output
           if (jsonOutput.errors && jsonOutput.errors.length > 0) {
             jsonOutput.errors.forEach((error) => {
@@ -702,6 +708,11 @@ export class BuildValidator {
       // Show config file if specified
       if (result.configFile) {
         lines.push(`   ⚙️  Config: ${result.configFile}`)
+      }
+
+      // Show output directory if available
+      if (result.outputPath) {
+        lines.push(`   📁 Output: ${result.outputPath}`)
       }
 
       if (result.warnings.length > 0) {
