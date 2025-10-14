@@ -295,6 +295,32 @@ module ActionView::TestCase::Behavior
           expect(send_pack_early_hints("application")).to be_nil
         end
 
+        it "uses default_packs from config when called without arguments" do
+          allow(Shakapacker.config).to receive(:early_hints).and_return({ enabled: true, include_css: true, include_js: true, default_packs: ["application"] })
+          expect(@request).to receive(:send_early_hints).with(hash_including(
+            "/packs/vendors~application~bootstrap-c20632e7baf2c81200d3.chunk.js",
+            "/packs/application-k344a6d59eef8632c9d1.js"
+          ))
+          send_pack_early_hints  # No arguments!
+        end
+
+        it "defaults to 'application' pack when no default_packs configured" do
+          allow(Shakapacker.config).to receive(:early_hints).and_return({ enabled: true, include_css: true, include_js: true })
+          expect(@request).to receive(:send_early_hints).with(hash_including(
+            "/packs/vendors~application~bootstrap-c20632e7baf2c81200d3.chunk.js"
+          ))
+          send_pack_early_hints  # No arguments, no default_packs config
+        end
+
+        it "uses multiple default_packs when configured" do
+          allow(Shakapacker.config).to receive(:early_hints).and_return({ enabled: true, include_css: true, include_js: true, default_packs: ["application", "bootstrap"] })
+          expect(@request).to receive(:send_early_hints) do |links|
+            expect(links).to include("/packs/application-k344a6d59eef8632c9d1.js")
+            expect(links).to include("/packs/bootstrap-300631c4f0e0f9c865bc.js")
+          end
+          send_pack_early_hints  # Uses both packs from config
+        end
+
         it "does not call send_early_hints when early hints are disabled" do
           allow(Shakapacker.config).to receive(:early_hints).and_return({ enabled: false, include_css: true, include_js: true })
           expect(@request).not_to receive(:send_early_hints)

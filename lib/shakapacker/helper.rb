@@ -169,32 +169,50 @@ module Shakapacker::Helper
   #
   # Example:
   #
-  #   # Option 1: At the very top of layout (optimal performance)
-  #   <% send_pack_early_hints 'application' %>
+  #   # Option 1: No arguments - uses default packs from config (recommended for easy upgrades)
+  #   <% send_pack_early_hints %>
   #   <!DOCTYPE html>
   #   <html>
   #     <head>
   #       <%= stylesheet_pack_tag 'application' %>
   #     </head>
+  #     <body>
+  #       <%= javascript_pack_tag 'application' %>
+  #     </body>
   #   </html>
   #
-  #   # Option 2: Inside <head> (still good performance)
-  #   <!DOCTYPE html>
-  #   <html>
-  #     <head>
-  #       <% send_pack_early_hints 'application' %>
-  #       <%= stylesheet_pack_tag 'application' %>
-  #     </head>
-  #   </html>
+  #   # Configure default packs in shakapacker.yml:
+  #   production:
+  #     early_hints:
+  #       enabled: true
+  #       default_packs: ['application']  # Packs to preload by default
   #
-  #   # With options
-  #   <% send_pack_early_hints 'application', 'bootstrap',
+  #   # Option 2: Explicit pack names (when you need different packs)
+  #   <% send_pack_early_hints 'application', 'admin' %>
+  #
+  #   # Option 3: With options
+  #   <% send_pack_early_hints 'application',
   #        include_css: true,   # default: from config
   #        include_js: true,    # default: from config
   #        include_fonts: false # default: from config
   #   %>
+  #
+  #   # Option 4: In controller before_action (best for expensive queries)
+  #   class ApplicationController < ActionController::Base
+  #     before_action :send_early_hints
+  #
+  #     def send_early_hints
+  #       view_context.send_pack_early_hints  # Uses default_packs from config
+  #     end
+  #   end
   def send_pack_early_hints(*names, **options)
     return unless early_hints_supported? && early_hints_enabled?
+
+    # If no pack names provided, use default packs from configuration
+    if names.empty?
+      config = current_shakapacker_instance.config.early_hints || {}
+      names = Array(config[:default_packs] || config[:default_pack] || "application")
+    end
 
     links = build_early_hints_links(names, **options)
     request.send_early_hints(links) if links.any?

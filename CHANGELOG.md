@@ -15,11 +15,15 @@ Changes since the last non-beta release.
 
 - **HTTP 103 Early Hints support** for faster asset loading. [PR #722](https://github.com/shakacode/shakapacker/pull/722) by [justin808](https://github.com/justin808). Fixes [#721](https://github.com/shakacode/shakapacker/issues/721).
   - New `send_pack_early_hints` helper method to send HTTP 103 Early Hints for pack assets
+  - **Zero-config upgrade**: Call `<% send_pack_early_hints %>` without arguments - uses `default_packs` from config
+  - `default_packs` configuration makes upgrading existing projects trivial (no pack name duplication)
   - Added `early_hints:` option to `javascript_pack_tag` for automatic early hints
   - New `early_hints` configuration in `shakapacker.yml` with per-environment settings
+  - Controller `before_action` support for sending hints before expensive queries
   - Requires Rails 5.2+ and server support (e.g., Puma 5+)
   - Gracefully degrades if not supported
   - Can significantly improve perceived page load performance by preloading critical assets
+  - See [Early Hints Upgrade Guide](docs/EARLY_HINTS_UPGRADE.md) for easy migration path
 
 ## [v9.3.0-beta.0] - October 13, 2025
 

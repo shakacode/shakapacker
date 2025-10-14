@@ -92,6 +92,9 @@ default: &default
   # https://api.rubyonrails.org/classes/ActionDispatch/Request.html#method-i-send_early_hints
   early_hints:
     enabled: false
+    # Default packs to preload when send_pack_early_hints is called without arguments
+    # This makes upgrading existing projects easier - just add <% send_pack_early_hints %> to your layout
+    default_packs: ["application"]
     include_css: true
     include_js: true
     include_fonts: false # Reserved for future implementation
