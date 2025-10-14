@@ -79,4 +79,7 @@ export interface BuildValidationResult {
   errors: string[]
   warnings: string[]
   output: string[]
+  startTime?: number // Unix timestamp in milliseconds
+  endTime?: number // Unix timestamp in milliseconds
+  duration?: number // Duration in milliseconds
 }

@@ -56,7 +56,9 @@ const SAFE_ENV_VARS = [
 ] as const
 
 /**
- * Success patterns for detecting successful compilation in webpack/rspack output
+ * Success patterns for detecting successful compilation in webpack/rspack output.
+ * These patterns are used to determine when webpack-dev-server has successfully
+ * compiled and is ready to serve, or when a static build has completed.
  */
 const SUCCESS_PATTERNS = [
   "webpack compiled",
@@ -65,9 +67,12 @@ const SUCCESS_PATTERNS = [
   "webpack: Compiled successfully",
   "Compilation completed",
   "Built at:",
-  "wds: Compiled successfully", // webpack-dev-server specific
+  "wds: Compiled successfully", // webpack-dev-server 4.x
+  "webpack-dev-server: Compiled", // webpack-dev-server 5.x
+  "[webpack-dev-server] Compiled successfully", // webpack-dev-server 5.x alternative format
   "webpack 5.", // matches "webpack 5.x.x compiled"
-  "rspack 0." // matches "rspack 0.x.x compiled"
+  "rspack 0.", // matches "rspack 0.x.x compiled"
+  "rspack-dev-server:" // rspack-dev-server output
 ]
 
 /**
@@ -200,12 +205,14 @@ export class BuildValidator {
     appRoot: string,
     bundler: "webpack" | "rspack"
   ): Promise<BuildValidationResult> {
+    const startTime = Date.now()
     const result: BuildValidationResult = {
       buildName: build.name,
       success: false,
       errors: [],
       warnings: [],
-      output: []
+      output: [],
+      startTime
     }
 
     // Determine the dev server command
@@ -336,6 +343,10 @@ export class BuildValidator {
         child.stderr?.removeAllListeners()
         child.removeAllListeners()
 
+        // Record timing
+        result.endTime = Date.now()
+        result.duration = result.endTime - (result.startTime || result.endTime)
+
         if (!hasCompiled && !hasError && !resolved) {
           const SIGTERM_EXIT_CODE = 143
           if (code !== 0 && code !== null && code !== SIGTERM_EXIT_CODE) {
@@ -366,12 +377,14 @@ export class BuildValidator {
     appRoot: string,
     bundler: "webpack" | "rspack"
   ): Promise<BuildValidationResult> {
+    const startTime = Date.now()
     const result: BuildValidationResult = {
       buildName: build.name,
       success: false,
       errors: [],
       warnings: [],
-      output: []
+      output: [],
+      startTime
     }
 
     const bundlerBin = this.findBinary(bundler, appRoot)
@@ -493,6 +506,10 @@ export class BuildValidator {
 
       child.on("exit", (code) => {
         clearTimeout(timeoutId)
+
+        // Record timing
+        result.endTime = Date.now()
+        result.duration = result.endTime - (result.startTime || result.endTime)
 
         // Combine chunks into strings
         const stdoutData = Buffer.concat(stdoutChunks).toString()
@@ -663,7 +680,15 @@ export class BuildValidator {
       }
 
       const icon = result.success ? "✅" : "❌"
-      lines.push(`${icon} Build: ${result.buildName}`)
+
+      // Format timing information
+      let timingInfo = ""
+      if (result.duration !== undefined) {
+        const seconds = (result.duration / 1000).toFixed(2)
+        timingInfo = ` (${seconds}s)`
+      }
+
+      lines.push(`${icon} Build: ${result.buildName}${timingInfo}`)
 
       if (result.warnings.length > 0) {
         lines.push(`   ⚠️  ${result.warnings.length} warning(s)`)
@@ -691,8 +716,13 @@ export class BuildValidator {
     })
 
     lines.push("=".repeat(80))
+
+    // Calculate total time
+    const totalDuration = results.reduce((sum, r) => sum + (r.duration || 0), 0)
+    const totalSeconds = (totalDuration / 1000).toFixed(2)
+
     lines.push(
-      `Summary: ${successCount}/${totalBuilds} builds passed, ${failureCount} failed`
+      `Summary: ${successCount}/${totalBuilds} builds passed, ${failureCount} failed (Total: ${totalSeconds}s)`
     )
     lines.push("=".repeat(80) + "\n")
 

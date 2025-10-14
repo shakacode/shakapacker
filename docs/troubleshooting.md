@@ -135,7 +135,20 @@
       ❌ Build failed with 2 error(s)
 
    ================================================================================
-   Summary: 2/3 builds passed, 1 failed
+   🔍 Build Validation Results
+   ================================================================================
+
+   ✅ Build: dev-hmr (2.34s)
+
+   ✅ Build: dev (3.12s)
+
+   ❌ Build: prod (4.56s)
+      ❌ 2 error(s)
+         Module not found: Error: Can't resolve './missing'
+         SyntaxError: Unexpected token
+
+   ================================================================================
+   Summary: 2/3 builds passed, 1 failed (Total: 10.02s)
    ================================================================================
    ```
 
