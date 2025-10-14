@@ -350,6 +350,19 @@ module ActionView::TestCase::Behavior
           send_pack_early_hints("application", include_css: true)
         end
 
+        it "sends early hints for multiple packs" do
+          allow(Shakapacker.config).to receive(:early_hints).and_return({ enabled: true, include_css: true, include_js: true })
+          expect(@request).to receive(:send_early_hints) do |links|
+            # Verify assets from both application and bootstrap packs are included
+            expect(links).to include("/packs/vendors~application~bootstrap-c20632e7baf2c81200d3.chunk.js")
+            expect(links).to include("/packs/application-k344a6d59eef8632c9d1.js")
+            expect(links).to include("/packs/bootstrap-300631c4f0e0f9c865bc.js")
+            expect(links).to include("/packs/1-c20632e7baf2c81200d3.chunk.css")
+            expect(links).to include("/packs/application-k344a6d59eef8632c9d1.chunk.css")
+          end
+          send_pack_early_hints("application", "bootstrap")
+        end
+
         it "gracefully handles missing entries" do
           allow(Shakapacker.config).to receive(:early_hints).and_return({ enabled: true, include_css: true, include_js: true })
           expect(@request).not_to receive(:send_early_hints)

@@ -88,13 +88,13 @@ default: &default
 
   # HTTP 103 Early Hints support for faster asset loading
   # Sends Link headers to browsers so they can preload assets while Rails is rendering
-  # Requires Rails 7.1+ and server support (e.g., Puma 5+)
-  # https://guides.rubyonrails.org/action_controller_overview.html#early-hints
+  # Requires Rails 5.2+ and server support (e.g., Puma 5+)
+  # https://api.rubyonrails.org/classes/ActionDispatch/Request.html#method-i-send_early_hints
   early_hints:
     enabled: false
     include_css: true
     include_js: true
-    include_fonts: false
+    include_fonts: false # Reserved for future implementation
 
 development:
   <<: *default

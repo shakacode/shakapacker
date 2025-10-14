@@ -398,13 +398,18 @@ module Shakapacker::Helper
     def build_link_header(source_path, source, as:)
       parts = ["<#{source_path}>", "rel=preload", "as=#{as}"]
 
-      # Add crossorigin for scripts and styles
-      parts << "crossorigin=anonymous" if ["script", "style"].include?(as)
-
-      # Add integrity if enabled
+      # Add crossorigin and integrity if enabled (consistent with render_tags)
       if current_shakapacker_instance.config.integrity[:enabled]
         integrity = lookup_integrity(source)
-        parts << "integrity=#{integrity}" if integrity.present?
+        if integrity.present?
+          parts << "integrity=#{integrity}"
+          # Use configured cross_origin value, consistent with render_tags
+          cross_origin = current_shakapacker_instance.config.integrity[:cross_origin]
+          parts << "crossorigin=#{cross_origin}"
+        end
+      elsif ["script", "style"].include?(as)
+        # When integrity not enabled, scripts and styles still need crossorigin for CORS
+        parts << "crossorigin=anonymous"
       end
 
       parts.join("; ")
