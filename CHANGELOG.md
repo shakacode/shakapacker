@@ -11,9 +11,56 @@
 
 Changes since the last non-beta release.
 
+## [v9.3.0-beta.0] - October 13, 2025
+
+### Added
+
+- **New `precompile_hook` configuration option** to run custom commands during asset precompilation. [PR #678](https://github.com/shakacode/shakapacker/pull/678) by [justin808](https://github.com/justin808).
+  - Allows executing custom scripts or tasks during the precompile process
+  - Configure in `shakapacker.yml` with `precompile_hook: "command to run"`
+- **New `assets_bundler_config_path` configuration option** for custom bundler config locations. [PR #710](https://github.com/shakacode/shakapacker/pull/710) by [justin808](https://github.com/justin808).
+  - Allows specifying a custom path for webpack/rspack configuration files
+  - Useful for complex project structures or shared configurations
+- **YAML output format support for `bin/export-bundler-config`**. [PR #704](https://github.com/shakacode/shakapacker/pull/704) by [justin808](https://github.com/justin808).
+  - New `--format yaml` option exports bundler configuration as YAML
+  - Easier to read than JSON for debugging and documentation
+- **Custom help messages for `bin/shakapacker` commands**. [PR #702](https://github.com/shakacode/shakapacker/pull/702) by [justin808](https://github.com/justin808).
+  - Improved help output for better command discoverability
+  - Clear usage examples and option descriptions
+- **HMR client config export in doctor mode**. [PR #701](https://github.com/shakacode/shakapacker/pull/701) by [justin808](https://github.com/justin808).
+  - `bin/export-bundler-config --doctor` now includes HMR client configuration
+  - Helps debug Hot Module Replacement issues
+- **Build timing logs** for webpack and rspack. [PR #706](https://github.com/shakacode/shakapacker/pull/706) by [justin808](https://github.com/justin808).
+  - Shows duration of build operations
+  - Helps identify performance bottlenecks
+- Added Knip for detecting dead code to CI. [PR #675](https://github.com/shakacode/shakapacker/pull/675) by [justin808](https://github.com/justin808).
+
 ### Changed
 
-- Allow ESLint v9 and migrated to flat config format. [PR #677](https://github.com/shakacode/shakapacker/pull/677) by [justin808](https://github.com/justin808).
+- **Migrated to ESLint v9 with flat config format**. [PR #677](https://github.com/shakacode/shakapacker/pull/677) by [justin808](https://github.com/justin808).
+  - Updated all ESLint plugins to latest versions
+  - Uses new flat config format for better maintainability
+- **Replaced custom argument parser with yargs**. [PR #692](https://github.com/shakacode/shakapacker/pull/692) by [justin808](https://github.com/justin808).
+  - More robust command-line argument parsing
+  - Better error messages and help output
+- Replaced `require` with `import` in package/index.ts. [PR #674](https://github.com/shakacode/shakapacker/pull/674) by [justin808](https://github.com/justin808).
+- Updated @rspack dependencies to 1.5.8. [PR #700](https://github.com/shakacode/shakapacker/pull/700) by [justin808](https://github.com/justin808).
+
+### Improved
+
+- **Enhanced rspack migration documentation** with real-world lessons. [PR #713](https://github.com/shakacode/shakapacker/pull/713) by [justin808](https://github.com/justin808).
+  - Added practical migration guidance based on actual project experiences
+  - Common pitfalls and solutions documented
+- **Consolidated duplicate configuration documentation**. [PR #714](https://github.com/shakacode/shakapacker/pull/714) by [justin808](https://github.com/justin808).
+  - Removed redundant documentation
+  - Single source of truth for configuration options
+- **Improved error messages** to suggest `assets_bundler_config_path`. [PR #712](https://github.com/shakacode/shakapacker/pull/712) by [justin808](https://github.com/justin808).
+  - More helpful error messages when bundler config is not found
+  - Suggests using `assets_bundler_config_path` for custom locations
+- **Improved doctor command output** clarity and accuracy. [PR #682](https://github.com/shakacode/shakapacker/pull/682) by [justin808](https://github.com/justin808).
+  - Better formatting and organization of diagnostic information
+  - More actionable recommendations
+- Formatted all markdown files with prettier. [PR #673](https://github.com/shakacode/shakapacker/pull/673) by [justin808](https://github.com/justin808).
 
 ### Fixed
 
@@ -26,6 +73,12 @@ Changes since the last non-beta release.
 - Fixed TypeScript type definitions to export proper types instead of `any`. [PR #684](https://github.com/shakacode/shakapacker/pull/684) by [justin808](https://github.com/justin808).
   - Previously `package/index.d.ts` was exporting all types as `any`, breaking IDE autocomplete
   - Now properly exports typed interfaces for `WebpackConfig`, `RspackConfig`, etc.
+- Fixed integrity config handling and sass-loader version check. [PR #688](https://github.com/shakacode/shakapacker/pull/688) by [justin808](https://github.com/justin808).
+  - Properly handles subresource integrity configuration
+  - Correctly detects sass-loader version for conditional logic
+- Prevented index.d.ts confusion in build process. [PR #698](https://github.com/shakacode/shakapacker/pull/698) by [justin808](https://github.com/justin808).
+  - TypeScript declaration files no longer interfere with build output
+- Fixed yarn.lock formatting changes in Conductor setup. [PR #683](https://github.com/shakacode/shakapacker/pull/683) by [justin808](https://github.com/justin808).
 
 ## [v9.2.0] - October 9, 2025
 
@@ -679,7 +732,8 @@ Note: [Rubygem is 6.3.0.pre.rc.1](https://rubygems.org/gems/shakapacker/versions
 
 See [CHANGELOG.md in rails/webpacker (up to v5.4.3)](https://github.com/rails/webpacker/blob/master/CHANGELOG.md)
 
-[Unreleased]: https://github.com/shakacode/shakapacker/compare/v9.0.0...main
+[Unreleased]: https://github.com/shakacode/shakapacker/compare/v9.3.0-beta.0...main
+[v9.3.0-beta.0]: https://github.com/shakacode/shakapacker/compare/v9.2.0...v9.3.0-beta.0
 [v9.2.0]: https://github.com/shakacode/shakapacker/compare/v9.1.0...v9.2.0
 [v9.1.0]: https://github.com/shakacode/shakapacker/compare/v9.0.0...v9.1.0
 [v9.0.0]: https://github.com/shakacode/shakapacker/compare/v8.4.0...v9.0.0
