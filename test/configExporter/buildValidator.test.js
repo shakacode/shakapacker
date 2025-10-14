@@ -459,7 +459,9 @@ describe("BuildValidator", () => {
 
       expect(result.success).toBe(false)
       expect(result.errors.length).toBeGreaterThan(0)
-      expect(result.errors[0]).toContain("Path traversal detected")
+      expect(result.errors[0]).toContain(
+        "Path must be within project directory"
+      )
     })
   })
 

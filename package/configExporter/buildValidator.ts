@@ -1,6 +1,6 @@
 import { spawn } from "child_process"
 import { existsSync } from "fs"
-import { resolve } from "path"
+import { resolve, relative, sep } from "path"
 import { ResolvedBuildConfig, BuildValidationResult } from "./types"
 
 export interface ValidatorOptions {
@@ -178,23 +178,20 @@ export class BuildValidator {
     appRoot: string,
     buildName: string
   ): string {
-    // Security: Check for path traversal attempts before resolving
-    // This catches "../../../" patterns that try to escape the project directory
-    if (configFile.includes("..")) {
-      throw new Error(
-        `Invalid config file path for build '${buildName}': Path traversal detected. ` +
-          `Config file must be a relative path within the project directory, not: ${configFile}`
-      )
-    }
-
     const configPath = resolve(appRoot, configFile)
 
-    // Additional security check: Ensure resolved path is within appRoot
-    // This catches edge cases where resolve() might produce an absolute path outside appRoot
-    if (!configPath.startsWith(appRoot + "/") && configPath !== appRoot) {
+    // Security: Ensure resolved path is within appRoot using path.relative
+    // This works cross-platform (Windows/Unix) and prevents path traversal attacks
+    const rel = relative(appRoot, configPath)
+
+    // Path is valid if:
+    // 1. rel === "" (same as appRoot) OR
+    // 2. rel doesn't start with ".." (not outside appRoot)
+    // Note: On Windows, ".." will be used for parent dir regardless of path separator
+    if (rel !== "" && rel.startsWith("..")) {
       throw new Error(
         `Invalid config file path for build '${buildName}': Path must be within project directory. ` +
-          `Resolved path: ${configPath}, Project root: ${appRoot}`
+          `Config file: ${configFile}, Resolved path: ${configPath}, Project root: ${appRoot}`
       )
     }
 
@@ -418,7 +415,7 @@ export class BuildValidator {
         if (!hasCompiled && !hasError && !resolved) {
           if (code !== 0 && code !== null && code !== SIGTERM_EXIT_CODE) {
             result.errors.push(
-              `webpack-dev-server exited with code ${code} before compilation completed.`
+              `${devServerCmd} exited with code ${code} before compilation completed.`
             )
           }
         }
@@ -428,13 +425,13 @@ export class BuildValidator {
       child.on("error", (err) => {
         clearTimeout(timeoutId)
         // Provide more helpful error messages for common spawn failures
-        let errorMessage = `Failed to start webpack-dev-server: ${err.message}`
+        let errorMessage = `Failed to start ${devServerCmd}: ${err.message}`
 
         // Check for specific error codes and provide actionable guidance
         if ("code" in err) {
           const code = (err as NodeJS.ErrnoException).code
           if (code === "ENOENT") {
-            errorMessage += `. Binary not found. Install with: npm install -D webpack-dev-server`
+            errorMessage += `. Binary not found. Install with: npm install -D ${devServerCmd}`
           } else if (code === "EMFILE" || code === "ENFILE") {
             errorMessage += `. Too many open files. Increase system file descriptor limit or reduce concurrent builds`
           } else if (code === "EACCES") {
