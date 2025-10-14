@@ -385,10 +385,8 @@ export class BuildValidator {
           stdoutSize += data.length
         }
 
-        // In verbose mode, show stdout in real-time
-        if (this.options.verbose) {
-          console.log(`   [stdout] ${data.toString()}`)
-        }
+        // Don't output JSON in verbose mode - it's too large and not useful
+        // JSON is for parsing errors, not for human consumption
       })
 
       child.stderr?.on("data", (data: Buffer) => {
@@ -405,9 +403,16 @@ export class BuildValidator {
           stderrSize += data.length
         }
 
-        // In verbose mode, show stderr in real-time
+        // In verbose mode, show useful stderr output (warnings, progress, etc.)
         if (this.options.verbose) {
-          console.log(`   [stderr] ${data.toString()}`)
+          const output = data.toString()
+          // Only show meaningful output, not just noise
+          const lines = output.split("\n")
+          lines.forEach((line) => {
+            if (line.trim()) {
+              console.log(`   ${line}`)
+            }
+          })
         }
       })
 
