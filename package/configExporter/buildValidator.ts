@@ -6,6 +6,8 @@ import { ResolvedBuildConfig, BuildValidationResult } from "./types"
 export interface ValidatorOptions {
   verbose: boolean
   timeout?: number // milliseconds
+  strictBinaryResolution?: boolean // If true, fail if binaries not found locally (recommended for CI)
+  maxConcurrentBuilds?: number // Maximum number of builds to validate concurrently
 }
 
 /**
@@ -90,6 +92,12 @@ const ERROR_PATTERNS = ["ERROR", "Error:", "Failed to compile"]
 const WARNING_PATTERNS = ["WARNING", "Warning:"]
 
 /**
+ * Pattern to detect suspicious characters in environment variable values
+ * that could indicate command injection attempts
+ */
+const SUSPICIOUS_ENV_PATTERN = /[;&|`$()]/
+
+/**
  * Validates webpack/rspack builds by running them and checking for errors
  * For HMR builds, starts webpack-dev-server and shuts down after successful start
  */
@@ -99,13 +107,19 @@ export class BuildValidator {
   constructor(options: ValidatorOptions) {
     this.options = {
       verbose: options.verbose,
-      timeout: options.timeout || DEFAULT_TIMEOUT_MS
+      timeout: options.timeout || DEFAULT_TIMEOUT_MS,
+      strictBinaryResolution:
+        options.strictBinaryResolution ||
+        process.env.CI === "true" ||
+        process.env.GITHUB_ACTIONS === "true",
+      maxConcurrentBuilds: options.maxConcurrentBuilds || 3
     }
   }
 
   /**
    * Filters environment variables to only include whitelisted safe variables.
    * This prevents command injection and limits exposure of sensitive data.
+   * Also validates environment variable values for suspicious patterns.
    */
   private filterEnvironment(
     buildEnv: Record<string, string>
@@ -122,6 +136,14 @@ export class BuildValidator {
     // Override with build-specific env vars (also filtered)
     Object.entries(buildEnv).forEach(([key, value]) => {
       if ((SAFE_ENV_VARS as readonly string[]).includes(key)) {
+        // Validate for suspicious patterns that could indicate command injection
+        if (SUSPICIOUS_ENV_PATTERN.test(value)) {
+          if (this.options.verbose) {
+            console.warn(
+              `   [Security Warning] Suspicious pattern detected in environment variable ${key}: ${value}`
+            )
+          }
+        }
         filtered[key] = value
       }
     })
@@ -334,6 +356,22 @@ export class BuildValidator {
             child.kill("SIGTERM")
             // Don't call resolveOnce here - let the exit handler do it
             // This ensures proper cleanup order and avoids race conditions
+
+            // Safety timeout: if process doesn't exit within 5 seconds, force resolve
+            // This prevents hanging if kill() fails or process is unresponsive
+            setTimeout(() => {
+              if (!resolved) {
+                if (this.options.verbose) {
+                  console.warn(
+                    `   [Warning] Process did not exit after SIGTERM, forcing resolution`
+                  )
+                }
+                child.stdout?.removeAllListeners()
+                child.stderr?.removeAllListeners()
+                child.removeAllListeners()
+                resolveOnce(result)
+              }
+            }, 5000)
           }
 
           // Check for errors
@@ -376,9 +414,22 @@ export class BuildValidator {
 
       child.on("error", (err) => {
         clearTimeout(timeoutId)
-        result.errors.push(
-          `Failed to start webpack-dev-server: ${err.message}.`
-        )
+        // Provide more helpful error messages for common spawn failures
+        let errorMessage = `Failed to start webpack-dev-server: ${err.message}`
+
+        // Check for specific error codes and provide actionable guidance
+        if ("code" in err) {
+          const code = (err as NodeJS.ErrnoException).code
+          if (code === "ENOENT") {
+            errorMessage += `. Binary not found. Install with: npm install -D webpack-dev-server`
+          } else if (code === "EMFILE" || code === "ENFILE") {
+            errorMessage += `. Too many open files. Increase system file descriptor limit or reduce concurrent builds`
+          } else if (code === "EACCES") {
+            errorMessage += `. Permission denied. Check file permissions for the binary`
+          }
+        }
+
+        result.errors.push(errorMessage)
         resolveOnce(result)
       })
     })
@@ -620,7 +671,22 @@ export class BuildValidator {
 
       child.on("error", (err) => {
         clearTimeout(timeoutId)
-        result.errors.push(`Failed to start ${bundler}: ${err.message}.`)
+        // Provide more helpful error messages for common spawn failures
+        let errorMessage = `Failed to start ${bundler}: ${err.message}`
+
+        // Check for specific error codes and provide actionable guidance
+        if ("code" in err) {
+          const code = (err as NodeJS.ErrnoException).code
+          if (code === "ENOENT") {
+            errorMessage += `. Binary not found. Install with: npm install -D ${bundler}`
+          } else if (code === "EMFILE" || code === "ENFILE") {
+            errorMessage += `. Too many open files. Increase system file descriptor limit or reduce concurrent builds`
+          } else if (code === "EACCES") {
+            errorMessage += `. Permission denied. Check file permissions for the binary`
+          }
+        }
+
+        result.errors.push(errorMessage)
         resolve(result)
       })
     })
@@ -664,6 +730,12 @@ export class BuildValidator {
     // Fall back to PATH resolution (least secure but most flexible)
     // SECURITY: This allows the binary to be found via PATH, which could be
     // exploited if an attacker controls the PATH environment variable.
+
+    // In strict mode (CI environments), fail instead of falling back to PATH
+    if (this.options.strictBinaryResolution) {
+      return null // Caller will handle the error
+    }
+
     if (this.options.verbose) {
       console.log(
         `   [Security Warning] Binary '${name}' not found locally. ` +

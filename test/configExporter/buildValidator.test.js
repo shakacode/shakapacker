@@ -85,6 +85,53 @@ describe("BuildValidator", () => {
       expect(env.MALICIOUS_VAR).toBeUndefined()
     })
 
+    it("should warn about suspicious patterns in environment variables", async () => {
+      const configPath = join(testDir, "webpack.config.js")
+      writeFileSync(configPath, "module.exports = {}")
+
+      const mockChild = {
+        stdout: { on: jest.fn(), removeAllListeners: jest.fn() },
+        stderr: { on: jest.fn(), removeAllListeners: jest.fn() },
+        on: jest.fn(),
+        once: jest.fn(),
+        kill: jest.fn(),
+        removeAllListeners: jest.fn()
+      }
+
+      spawn.mockReturnValue(mockChild)
+
+      // Use verbose validator to see security warnings
+      const verboseValidator = new BuildValidator({ verbose: true })
+      const consoleWarnSpy = jest.spyOn(console, "warn").mockImplementation()
+
+      const build = {
+        name: "test",
+        bundler: "webpack",
+        environment: {
+          NODE_ENV: "production; echo hacked",
+          PATH: "/usr/bin"
+        },
+        configFile: configPath,
+        outputs: ["client"]
+      }
+
+      const validationPromise = verboseValidator.validateBuild(build, testDir)
+
+      const exitHandler = mockChild.on.mock.calls.find(
+        ([event]) => event === "exit"
+      )[1]
+      exitHandler(0)
+
+      await validationPromise
+
+      // Should have warned about suspicious pattern
+      expect(consoleWarnSpy).toHaveBeenCalledWith(
+        expect.stringContaining("Suspicious pattern")
+      )
+
+      consoleWarnSpy.mockRestore()
+    })
+
     it("should include PATH from process.env for binary resolution", async () => {
       const configPath = join(testDir, "webpack.config.js")
       writeFileSync(configPath, "module.exports = {}")
@@ -814,6 +861,44 @@ describe("BuildValidator", () => {
 
       // Restore
       BuildValidator.prototype.findBinary = originalFindBinary
+    })
+
+    it("should use strict binary resolution in CI environments", async () => {
+      // Save original env
+      const originalCI = process.env.CI
+
+      // Set CI=true
+      process.env.CI = "true"
+
+      // Create validator (should auto-enable strict mode)
+      const ciValidator = new BuildValidator({ verbose: false })
+
+      const build = {
+        name: "dev-hmr",
+        bundler: "webpack",
+        environment: {
+          NODE_ENV: "development",
+          WEBPACK_SERVE: "true"
+        },
+        configFile: join(testDir, "webpack.config.js"),
+        outputs: ["client"]
+      }
+
+      // Mock findBinary to simulate not finding binary locally
+      const originalFindBinary = BuildValidator.prototype.findBinary
+      jest
+        .spyOn(BuildValidator.prototype, "findBinary")
+        .mockImplementation()
+        .mockReturnValue(null)
+
+      const result = await ciValidator.validateBuild(build, testDir)
+
+      expect(result.success).toBe(false)
+      expect(result.errors[0]).toContain("Could not find")
+
+      // Restore
+      BuildValidator.prototype.findBinary = originalFindBinary
+      process.env.CI = originalCI
     })
   })
 
