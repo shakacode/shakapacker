@@ -79,6 +79,8 @@ export interface BuildValidationResult {
   errors: string[]
   warnings: string[]
   output: string[]
+  outputs?: string[] // Build outputs (e.g., ["client", "server"])
+  configFile?: string // Config file path if specified
   startTime?: number // Unix timestamp in milliseconds
   endTime?: number // Unix timestamp in milliseconds
   duration?: number // Duration in milliseconds

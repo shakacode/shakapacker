@@ -212,6 +212,8 @@ export class BuildValidator {
       errors: [],
       warnings: [],
       output: [],
+      outputs: build.outputs,
+      configFile: build.configFile,
       startTime
     }
 
@@ -384,6 +386,8 @@ export class BuildValidator {
       errors: [],
       warnings: [],
       output: [],
+      outputs: build.outputs,
+      configFile: build.configFile,
       startTime
     }
 
@@ -689,6 +693,16 @@ export class BuildValidator {
       }
 
       lines.push(`${icon} Build: ${result.buildName}${timingInfo}`)
+
+      // Show outputs (client/server bundles)
+      if (result.outputs && result.outputs.length > 0) {
+        lines.push(`   📦 Outputs: ${result.outputs.join(", ")}`)
+      }
+
+      // Show config file if specified
+      if (result.configFile) {
+        lines.push(`   ⚙️  Config: ${result.configFile}`)
+      }
 
       if (result.warnings.length > 0) {
         lines.push(`   ⚠️  ${result.warnings.length} warning(s)`)
