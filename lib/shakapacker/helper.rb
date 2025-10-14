@@ -359,7 +359,7 @@ module Shakapacker::Helper
 
     # Build early hints Link headers for the specified packs
     def build_early_hints_links(names, **options)
-      config = current_shakapacker_instance.config.early_hints
+      config = current_shakapacker_instance.config.early_hints || {}
       links = {}
 
       names.each do |name|
@@ -369,10 +369,10 @@ module Shakapacker::Helper
             sources = available_sources_from_manifest_entrypoints([name], type: :javascript)
             sources.each do |source|
               source_path = lookup_source(source)
-              links[source_path] = build_link_header(source, as: "script")
+              links[source_path] = build_link_header(source_path, source, as: "script")
             end
-          rescue
-            # Gracefully handle missing entries
+          rescue Shakapacker::Manifest::MissingEntryError, NoMethodError
+            # Gracefully handle missing entries or nil manifest responses
           end
         end
 
@@ -382,10 +382,10 @@ module Shakapacker::Helper
             sources = available_sources_from_manifest_entrypoints([name], type: :stylesheet)
             sources.each do |source|
               source_path = lookup_source(source)
-              links[source_path] = build_link_header(source, as: "style")
+              links[source_path] = build_link_header(source_path, source, as: "style")
             end
-          rescue
-            # Gracefully handle missing entries
+          rescue Shakapacker::Manifest::MissingEntryError, NoMethodError
+            # Gracefully handle missing entries or nil manifest responses
           end
         end
       end
@@ -394,8 +394,8 @@ module Shakapacker::Helper
     end
 
     # Build a Link header value for early hints
-    def build_link_header(source, as:)
-      source_path = lookup_source(source)
+    # Takes the already-resolved source_path to avoid duplicate lookup_source calls
+    def build_link_header(source_path, source, as:)
       parts = ["<#{source_path}>", "rel=preload", "as=#{as}"]
 
       # Add crossorigin for scripts and styles

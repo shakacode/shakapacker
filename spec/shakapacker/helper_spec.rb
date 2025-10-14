@@ -666,6 +666,69 @@ module ActionView::TestCase::Behavior
         expect_stylesheet_link_tags_match(app_style_with_media, application_stylesheet_chunks.map { |chunk| stylesheet_link_tag(chunk, media: "print", crossorigin: "anonymous", integrity: "sha384-hash") }.join("\n"))
         expect_stylesheet_link_tags_match(hello_stimulus_style_with_media, hello_stimulus_stylesheet_chunks.map { |chunk| stylesheet_link_tag(chunk, media: "all", crossorigin: "anonymous", integrity: "sha384-hash") }.join("\n"))
       end
+
+      describe "#send_pack_early_hints with integrity hashes" do
+        it "returns nil to avoid rendering output" do
+          allow(Shakapacker.config).to receive(:early_hints).and_return({ enabled: true, include_css: true, include_js: true })
+          expect(send_pack_early_hints("application_with_integrity")).to be_nil
+        end
+
+        it "does not call send_early_hints when early hints are disabled" do
+          allow(Shakapacker.config).to receive(:early_hints).and_return({ enabled: false, include_css: true, include_js: true })
+          expect(@request).not_to receive(:send_early_hints)
+          send_pack_early_hints("application_with_integrity")
+        end
+
+        it "sends early hints with integrity hashes when enabled" do
+          allow(Shakapacker.config).to receive(:early_hints).and_return({ enabled: true, include_css: true, include_js: true })
+          expect(@request).to receive(:send_early_hints) do |links|
+            # Verify that integrity hashes are included in the Link headers
+            expect(links.values.any? { |link| link.include?("integrity=") }).to be true
+            expect(links).to include("/packs/vendors~application~bootstrap-c20632e7baf2c81200d3.chunk.js")
+            expect(links).to include("/packs/application-k344a6d59eef8632c9d1.js")
+          end
+          send_pack_early_hints("application_with_integrity")
+        end
+
+        it "sends early hints only for JavaScript when CSS is disabled" do
+          allow(Shakapacker.config).to receive(:early_hints).and_return({ enabled: true, include_css: false, include_js: true })
+          expect(@request).to receive(:send_early_hints) do |links|
+            expect(links).to include("/packs/vendors~application~bootstrap-c20632e7baf2c81200d3.chunk.js")
+            expect(links.values.any? { |link| link.include?("as=script") }).to be true
+          end
+          send_pack_early_hints("application_with_integrity")
+        end
+
+        it "allows per-call options to override config" do
+          allow(Shakapacker.config).to receive(:early_hints).and_return({ enabled: true, include_css: false, include_js: true })
+          expect(@request).to receive(:send_early_hints) do |links|
+            expect(links).to include("/packs/1-c20632e7baf2c81200d3.chunk.css")
+          end
+          send_pack_early_hints("application_with_integrity", include_css: true)
+        end
+
+        it "gracefully handles missing entries" do
+          allow(Shakapacker.config).to receive(:early_hints).and_return({ enabled: true, include_css: true, include_js: true })
+          expect(@request).not_to receive(:send_early_hints)
+          send_pack_early_hints("nonexistent_pack")
+        end
+      end
+
+      describe "#javascript_pack_tag with early_hints option and integrity hashes" do
+        it "sends early hints with integrity when early_hints: true" do
+          allow(Shakapacker.config).to receive(:early_hints).and_return({ enabled: true, include_css: true, include_js: true })
+          expect(@request).to receive(:send_early_hints) do |links|
+            expect(links.values.any? { |link| link.include?("integrity=") }).to be true
+          end
+          javascript_pack_tag("application_with_integrity", early_hints: true)
+        end
+
+        it "does not send early hints when early_hints: false" do
+          allow(Shakapacker.config).to receive(:early_hints).and_return({ enabled: true, include_css: true, include_js: true })
+          expect(@request).not_to receive(:send_early_hints)
+          javascript_pack_tag("application_with_integrity", early_hints: false)
+        end
+      end
     end
   end
 end

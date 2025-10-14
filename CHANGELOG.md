@@ -13,11 +13,11 @@ Changes since the last non-beta release.
 
 ### Added
 
-- **HTTP 103 Early Hints support** for faster asset loading. [PR #TBD](https://github.com/shakacode/shakapacker/pull/TBD) by [justin808](https://github.com/justin808). Fixes [#721](https://github.com/shakacode/shakapacker/issues/721).
+- **HTTP 103 Early Hints support** for faster asset loading. [PR #722](https://github.com/shakacode/shakapacker/pull/722) by [justin808](https://github.com/justin808). Fixes [#721](https://github.com/shakacode/shakapacker/issues/721).
   - New `send_pack_early_hints` helper method to send HTTP 103 Early Hints for pack assets
   - Added `early_hints:` option to `javascript_pack_tag` for automatic early hints
   - New `early_hints` configuration in `shakapacker.yml` with per-environment settings
-  - Requires Rails 7.1+ and server support (e.g., Puma 5+)
+  - Requires Rails 5.2+ and server support (e.g., Puma 5+)
   - Gracefully degrades if not supported
   - Can significantly improve perceived page load performance by preloading critical assets
 
