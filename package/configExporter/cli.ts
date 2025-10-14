@@ -85,8 +85,8 @@ export async function run(args: string[]): Promise<number> {
       return runListBuildsCommand(options)
     }
 
-    // Handle --validate command
-    if (options.validate) {
+    // Handle --validate or --validate-build command
+    if (options.validate || options.validateBuild) {
       return await runValidateCommand(options)
     }
 

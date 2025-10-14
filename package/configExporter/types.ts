@@ -37,6 +37,7 @@ export interface ConfigMetadata {
     CLIENT_BUNDLE_ONLY?: string
     SERVER_BUNDLE_ONLY?: string
     WEBPACK_SERVE?: string
+    HMR?: string
   }
 }
 

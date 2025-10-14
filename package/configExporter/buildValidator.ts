@@ -34,6 +34,7 @@ const SAFE_ENV_VARS = [
   "NODE_OPTIONS",
   "BABEL_ENV",
   "WEBPACK_SERVE",
+  "HMR",
   "CLIENT_BUNDLE_ONLY",
   "SERVER_BUNDLE_ONLY",
   "PUBLIC_URL",
@@ -54,7 +55,9 @@ const SUCCESS_PATTERNS = [
   "webpack: Compiled successfully",
   "Compilation completed",
   "Built at:",
-  "wds: Compiled successfully" // webpack-dev-server specific
+  "wds: Compiled successfully", // webpack-dev-server specific
+  "webpack 5.", // matches "webpack 5.x.x compiled"
+  "rspack 0." // matches "rspack 0.x.x compiled"
 ]
 
 /**
@@ -123,7 +126,10 @@ export class BuildValidator {
     build: ResolvedBuildConfig,
     appRoot: string
   ): Promise<BuildValidationResult> {
-    const isHMR = build.environment.WEBPACK_SERVE === "true"
+    // Detect HMR builds by checking for WEBPACK_SERVE or HMR environment variables
+    const isHMR =
+      build.environment.WEBPACK_SERVE === "true" ||
+      build.environment.HMR === "true"
     const bundler = build.bundler
 
     if (isHMR) {
