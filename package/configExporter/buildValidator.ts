@@ -21,6 +21,16 @@ const MAX_BUFFER_SIZE = 10 * 1024 * 1024 // 10MB
 const DEFAULT_TIMEOUT_MS = 120000 // 2 minutes
 
 /**
+ * Safety timeout after SIGTERM before forcing resolution (milliseconds)
+ */
+const KILL_SAFETY_TIMEOUT_MS = 5000 // 5 seconds
+
+/**
+ * Exit code for SIGTERM signal
+ */
+const SIGTERM_EXIT_CODE = 143
+
+/**
  * TypeScript interface for webpack/rspack JSON output structure
  */
 interface WebpackJsonOutput {
@@ -65,6 +75,9 @@ const SAFE_ENV_VARS = [
  *
  * Note: Patterns use substring matching, not exact matching, to support version variations.
  * For example, "webpack 5." matches "webpack 5.95.0 compiled successfully"
+ *
+ * Patterns are checked after excluding lines starting with ERROR: or WARNING:
+ * to prevent false positives in error messages.
  */
 const SUCCESS_PATTERNS = [
   "webpack compiled",
@@ -72,7 +85,6 @@ const SUCCESS_PATTERNS = [
   "rspack compiled successfully",
   "webpack: Compiled successfully",
   "Compilation completed",
-  "Built at:",
   "wds: Compiled successfully", // webpack-dev-server 4.x
   "webpack-dev-server: Compiled", // webpack-dev-server 5.x
   "[webpack-dev-server] Compiled successfully", // webpack-dev-server 5.x alternative format
@@ -351,8 +363,10 @@ export class BuildValidator {
           ) {
             hasCompiled = true
             result.success = true
-            clearTimeout(timeoutId)
+            // Set processKilled BEFORE clearing timeout to prevent race condition
+            // where timeout could fire between clearTimeout and setting the flag
             processKilled = true
+            clearTimeout(timeoutId)
             child.kill("SIGTERM")
             // Don't call resolveOnce here - let the exit handler do it
             // This ensures proper cleanup order and avoids race conditions
@@ -363,7 +377,7 @@ export class BuildValidator {
               if (!resolved) {
                 if (this.options.verbose) {
                   console.warn(
-                    `   [Warning] Process did not exit after SIGTERM, forcing resolution`
+                    `   [Warning] Process did not exit after SIGTERM, forcing resolution.`
                   )
                 }
                 child.stdout?.removeAllListeners()
@@ -371,7 +385,7 @@ export class BuildValidator {
                 child.removeAllListeners()
                 resolveOnce(result)
               }
-            }, 5000)
+            }, KILL_SAFETY_TIMEOUT_MS)
           }
 
           // Check for errors
@@ -402,7 +416,6 @@ export class BuildValidator {
         result.duration = result.endTime - (result.startTime || result.endTime)
 
         if (!hasCompiled && !hasError && !resolved) {
-          const SIGTERM_EXIT_CODE = 143
           if (code !== 0 && code !== null && code !== SIGTERM_EXIT_CODE) {
             result.errors.push(
               `webpack-dev-server exited with code ${code} before compilation completed.`
@@ -533,14 +546,18 @@ export class BuildValidator {
         if (stdoutSize + data.length > MAX_BUFFER_SIZE) {
           if (!bufferOverflow) {
             bufferOverflow = true
-            result.warnings.push(
-              `Output buffer limit exceeded (${MAX_BUFFER_SIZE} bytes). Some output may be truncated.`
-            )
+            const warning = `Output buffer limit exceeded (${MAX_BUFFER_SIZE / 1024 / 1024}MB). Build output is too large - data will be truncated.`
+            result.warnings.push(warning)
+            if (this.options.verbose) {
+              console.warn(`   [Warning] ${warning}`)
+            }
           }
-        } else {
-          stdoutChunks.push(data)
-          stdoutSize += data.length
+          // Explicitly skip this chunk - don't silently drop
+          return
         }
+
+        stdoutChunks.push(data)
+        stdoutSize += data.length
 
         // Don't output JSON in verbose mode - it's too large and not useful
         // JSON is for parsing errors, not for human consumption
@@ -551,14 +568,18 @@ export class BuildValidator {
         if (stderrSize + data.length > MAX_BUFFER_SIZE) {
           if (!bufferOverflow) {
             bufferOverflow = true
-            result.warnings.push(
-              `Output buffer limit exceeded (${MAX_BUFFER_SIZE} bytes). Some output may be truncated.`
-            )
+            const warning = `Error output buffer limit exceeded (${MAX_BUFFER_SIZE / 1024 / 1024}MB). Build errors are too large - data will be truncated.`
+            result.warnings.push(warning)
+            if (this.options.verbose) {
+              console.warn(`   [Warning] ${warning}`)
+            }
           }
-        } else {
-          stderrChunks.push(data)
-          stderrSize += data.length
+          // Explicitly skip this chunk - don't silently drop
+          return
         }
+
+        stderrChunks.push(data)
+        stderrSize += data.length
 
         // In verbose mode, show useful stderr output (warnings, progress, etc.)
         if (this.options.verbose) {
