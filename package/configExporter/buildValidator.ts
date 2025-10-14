@@ -355,8 +355,13 @@ export class BuildValidator {
         stdio: ["ignore", "pipe", "pipe"]
       })
 
-      let stdoutData = ""
-      let stderrData = ""
+      const stdoutChunks: Buffer[] = []
+      const stderrChunks: Buffer[] = []
+      const MAX_BUFFER_SIZE = 10 * 1024 * 1024 // 10MB limit to prevent memory issues
+
+      let stdoutSize = 0
+      let stderrSize = 0
+      let bufferOverflow = false
 
       const timeoutId = setTimeout(() => {
         result.errors.push(
@@ -366,23 +371,52 @@ export class BuildValidator {
         resolve(result)
       }, this.options.timeout)
 
-      child.stdout?.on("data", (data) => {
-        stdoutData += data.toString()
-        // In verbose mode, also show stdout (JSON output will be parsed later)
+      child.stdout?.on("data", (data: Buffer) => {
+        // Check buffer size to prevent memory issues
+        if (stdoutSize + data.length > MAX_BUFFER_SIZE) {
+          if (!bufferOverflow) {
+            bufferOverflow = true
+            result.warnings.push(
+              `Output buffer limit exceeded (${MAX_BUFFER_SIZE} bytes). Some output may be truncated.`
+            )
+          }
+        } else {
+          stdoutChunks.push(data)
+          stdoutSize += data.length
+        }
+
+        // In verbose mode, show stdout in real-time
         if (this.options.verbose) {
-          result.output.push(`[stdout] ${data.toString()}`)
+          console.log(`   [stdout] ${data.toString()}`)
         }
       })
 
-      child.stderr?.on("data", (data) => {
-        stderrData += data.toString()
+      child.stderr?.on("data", (data: Buffer) => {
+        // Check buffer size
+        if (stderrSize + data.length > MAX_BUFFER_SIZE) {
+          if (!bufferOverflow) {
+            bufferOverflow = true
+            result.warnings.push(
+              `Output buffer limit exceeded (${MAX_BUFFER_SIZE} bytes). Some output may be truncated.`
+            )
+          }
+        } else {
+          stderrChunks.push(data)
+          stderrSize += data.length
+        }
+
+        // In verbose mode, show stderr in real-time
         if (this.options.verbose) {
-          result.output.push(`[stderr] ${data.toString()}`)
+          console.log(`   [stderr] ${data.toString()}`)
         }
       })
 
       child.on("exit", (code) => {
         clearTimeout(timeoutId)
+
+        // Combine chunks into strings
+        const stdoutData = Buffer.concat(stdoutChunks).toString()
+        const stderrData = Buffer.concat(stderrChunks).toString()
 
         // Parse JSON output
         try {
@@ -426,7 +460,7 @@ export class BuildValidator {
           }
         } catch (err) {
           // If JSON parsing fails, fall back to stderr analysis
-          if (stderrData) {
+          if (stderrData && stderrData.length > 0) {
             const lines = stderrData.split("\n")
             lines.forEach((line) => {
               if (ERROR_PATTERNS.some((pattern) => line.includes(pattern))) {
@@ -446,7 +480,12 @@ export class BuildValidator {
         }
 
         // Add stderr to output if there were errors and not verbose
-        if (!this.options.verbose && result.errors.length > 0 && stderrData) {
+        if (
+          !this.options.verbose &&
+          result.errors.length > 0 &&
+          stderrData &&
+          stderrData.length > 0
+        ) {
           result.output.push(stderrData)
         }
 
