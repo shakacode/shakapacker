@@ -50,7 +50,11 @@ const SAFE_ENV_VARS = [
 const SUCCESS_PATTERNS = [
   "webpack compiled",
   "Compiled successfully",
-  "rspack compiled successfully"
+  "rspack compiled successfully",
+  "webpack: Compiled successfully",
+  "Compilation completed",
+  "Built at:",
+  "wds: Compiled successfully" // webpack-dev-server specific
 ]
 
 /**
@@ -224,9 +228,13 @@ export class BuildValidator {
         lines.forEach((line) => {
           if (!line.trim()) return
 
+          // Always output in real-time in verbose mode so user sees progress
           if (this.options.verbose) {
-            result.output.push(line)
+            console.log(`   ${line}`)
           }
+
+          // Store all output
+          result.output.push(line)
 
           // Check for successful compilation
           if (SUCCESS_PATTERNS.some((pattern) => line.includes(pattern))) {
@@ -252,17 +260,6 @@ export class BuildValidator {
           // Check for warnings
           if (WARNING_PATTERNS.some((pattern) => line.includes(pattern))) {
             result.warnings.push(line)
-          }
-
-          // Capture important error details even in non-verbose mode
-          if (
-            !this.options.verbose &&
-            (hasError ||
-              IMPORTANT_ERROR_PATTERNS.some((pattern) =>
-                line.includes(pattern)
-              ))
-          ) {
-            result.output.push(line)
           }
         })
       }
