@@ -52,10 +52,12 @@ class Shakapacker::Engine < ::Rails::Engine
         private
 
           def send_pack_early_hints_automatically
-            # Only send for HTML responses
+            # Only send for HTML responses in actual controller rendering context
             return unless response&.content_type&.include?("text/html")
             return unless respond_to?(:view_context)
             return unless view_context.respond_to?(:send_pack_early_hints)
+            # Don't send if headers already sent or response already committed
+            return if response.committed? || response.sent?
 
             view_context.send_pack_early_hints
           rescue => e
