@@ -154,41 +154,44 @@ describe("BuildValidator", () => {
       writeFileSync(configPath, "module.exports = {}")
 
       const originalPath = process.env.PATH
-      process.env.PATH = "/test/path"
 
-      const mockChild = {
-        stdout: { on: jest.fn(), removeAllListeners: jest.fn() },
-        stderr: { on: jest.fn(), removeAllListeners: jest.fn() },
-        on: jest.fn(),
-        once: jest.fn(),
-        kill: jest.fn(),
-        removeAllListeners: jest.fn()
+      try {
+        process.env.PATH = "/test/path"
+
+        const mockChild = {
+          stdout: { on: jest.fn(), removeAllListeners: jest.fn() },
+          stderr: { on: jest.fn(), removeAllListeners: jest.fn() },
+          on: jest.fn(),
+          once: jest.fn(),
+          kill: jest.fn(),
+          removeAllListeners: jest.fn()
+        }
+
+        mockSpawn.mockReturnValue(mockChild)
+
+        const build = {
+          name: "test",
+          bundler: "webpack",
+          environment: { NODE_ENV: "production" },
+          configFile: configPath,
+          outputs: ["client"]
+        }
+
+        const validationPromise = validator.validateBuild(build, testDir)
+
+        const exitHandler = mockChild.on.mock.calls.find(
+          ([event]) => event === "exit"
+        )[1]
+        exitHandler(0)
+
+        await validationPromise
+
+        const spawnCall = mockSpawn.mock.calls[0]
+        const { env } = spawnCall[2]
+        expect(env.PATH).toBe("/test/path")
+      } finally {
+        process.env.PATH = originalPath
       }
-
-      mockSpawn.mockReturnValue(mockChild)
-
-      const build = {
-        name: "test",
-        bundler: "webpack",
-        environment: { NODE_ENV: "production" },
-        configFile: configPath,
-        outputs: ["client"]
-      }
-
-      const validationPromise = validator.validateBuild(build, testDir)
-
-      const exitHandler = mockChild.on.mock.calls.find(
-        ([event]) => event === "exit"
-      )[1]
-      exitHandler(0)
-
-      await validationPromise
-
-      const spawnCall = mockSpawn.mock.calls[0]
-      const { env } = spawnCall[2]
-      expect(env.PATH).toBe("/test/path")
-
-      process.env.PATH = originalPath
     })
   })
 
