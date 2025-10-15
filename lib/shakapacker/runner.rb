@@ -35,6 +35,12 @@ module Shakapacker
       elsif argv.include?("--version") || argv.include?("-v")
         print_version
         exit(0)
+      elsif argv.include?("--init")
+        init_config_file
+        exit(0)
+      elsif argv.include?("--list-builds")
+        list_builds
+        exit(0)
       end
 
       # Check if first argument is a build name from .bundler-config.yml
@@ -116,6 +122,7 @@ module Shakapacker
       puts "[Shakapacker] Running build: #{build_config[:name]}"
       puts "[Shakapacker] Description: #{build_config[:description]}" if build_config[:description]
       puts "[Shakapacker] Bundler: #{build_config[:bundler]}"
+      puts "[Shakapacker] Config file: #{build_config[:config_file]}" if build_config[:config_file]
 
       # Create runner with modified argv
       runner = new(argv, build_config)
@@ -251,18 +258,16 @@ module Shakapacker
           --debug-shakapacker       Enable Node.js debugging (--inspect-brk)
           --trace-deprecation       Show stack traces for deprecations
           --no-deprecation          Silence deprecation warnings
+          --init                    Create a .bundler-config.yml file
+          --list-builds             List available builds from .bundler-config.yml
 
         Build configurations (.bundler-config.yml):
           If you have a .bundler-config.yml file, you can run predefined builds:
 
+          bin/shakapacker --init                       # Create config file
+          bin/shakapacker --list-builds                # Show available builds
           bin/shakapacker dev-hmr                      # Run the 'dev-hmr' build
           bin/shakapacker prod                         # Run the 'prod' build
-
-          To see available builds:
-          bin/export-bundler-config --list-builds
-
-          To create a config file:
-          bin/export-bundler-config --init
 
           Note: If a build has WEBPACK_SERVE=true in its environment, it will
           automatically use bin/shakapacker-dev-server instead.
@@ -389,6 +394,46 @@ module Shakapacker
         if bundler_version
           bundler_name = bundler_type == :rspack ? "Rspack" : "Webpack"
           puts "Bundler: #{bundler_name} #{bundler_version}"
+        end
+      end
+
+      def self.init_config_file
+        loader = BuildConfigLoader.new
+        config_path = loader.config_file_path
+
+        if loader.exists?
+          puts "[Shakapacker] Config file already exists: #{config_path}"
+          puts "Use --list-builds to see available builds"
+          return
+        end
+
+        # Use the export-bundler-config command to generate the file
+        app_path = File.expand_path(".", Dir.pwd)
+        export_config_path = File.join(app_path, "bin", "export-bundler-config")
+
+        if File.exist?(export_config_path)
+          system(export_config_path, "--init")
+        else
+          $stderr.puts "[Shakapacker] Error: bin/export-bundler-config not found"
+          $stderr.puts "Please ensure Shakapacker is properly installed"
+          exit(1)
+        end
+      end
+
+      def self.list_builds
+        loader = BuildConfigLoader.new
+
+        unless loader.exists?
+          puts "[Shakapacker] No config file found: #{loader.config_file_path}"
+          puts "Run 'bin/shakapacker --init' to create one"
+          return
+        end
+
+        begin
+          loader.list_builds
+        rescue ArgumentError => e
+          $stderr.puts "[Shakapacker] Error: #{e.message}"
+          exit(1)
         end
       end
 

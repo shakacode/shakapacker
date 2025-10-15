@@ -12,6 +12,7 @@ This guide covers all configuration options available in `config/shakapacker.yml
 - [Compilation Options](#compilation-options)
 - [Advanced Options](#advanced-options)
 - [Environment-Specific Configuration](#environment-specific-configuration)
+- [Build Configurations (.bundler-config.yml)](#build-configurations-bundler-configyml)
 
 ## Basic Configuration
 
@@ -607,6 +608,102 @@ default: &default
     - packages/shared
     - packages/ui-components
 ```
+
+## Build Configurations (.bundler-config.yml)
+
+Shakapacker supports defining reusable build configurations in a `.bundler-config.yml` file. This allows you to run predefined builds with a simple command, making it easy to switch between different build scenarios.
+
+### Creating a Build Configuration File
+
+Create a `.bundler-config.yml` file in your project root:
+
+```bash
+bin/shakapacker --init
+```
+
+This generates a file with example builds for common scenarios (HMR development, standard development, and production).
+
+### Running Builds by Name
+
+Once you have a `.bundler-config.yml` file, you can run builds by name:
+
+```bash
+# List available builds
+bin/shakapacker --list-builds
+
+# Run a specific build
+bin/shakapacker dev-hmr    # Runs dev-hmr build (automatically uses dev server if WEBPACK_SERVE=true)
+bin/shakapacker prod        # Runs production build
+bin/shakapacker dev         # Runs development build
+```
+
+### Build Configuration Format
+
+Example `.bundler-config.yml`:
+
+```yaml
+default_bundler: rspack # Options: webpack | rspack
+
+builds:
+  dev-hmr:
+    description: Client bundle with HMR (React Fast Refresh)
+    bundler: rspack # Optional: override default_bundler
+    environment:
+      NODE_ENV: development
+      RAILS_ENV: development
+      WEBPACK_SERVE: "true" # Automatically uses bin/shakapacker-dev-server
+    outputs:
+      - client
+    config: config/rspack/custom.config.js # Optional: custom config file
+
+  prod:
+    description: Production client and server bundles
+    environment:
+      NODE_ENV: production
+      RAILS_ENV: production
+    outputs:
+      - client
+      - server
+```
+
+### Build Configuration Options
+
+- **`description`** (optional): Human-readable description of the build
+- **`bundler`** (optional): Override the default bundler (`webpack` or `rspack`)
+- **`environment`**: Environment variables to set when running the build
+- **`outputs`**: Array of output types (`client`, `server`, or both)
+- **`config`** (optional): Custom config file path (supports `${BUNDLER}` variable substitution)
+- **`bundler_env`** (optional): Webpack/rspack `--env` flags
+
+### Automatic Dev Server Detection
+
+If a build has `WEBPACK_SERVE=true` or `HMR=true` in its environment, Shakapacker automatically uses `bin/shakapacker-dev-server` instead of the regular build command:
+
+```bash
+# These are equivalent:
+bin/shakapacker dev-hmr
+WEBPACK_SERVE=true bin/shakapacker-dev-server  # (with dev-hmr environment vars)
+```
+
+### Variable Substitution
+
+The `config` field supports `${BUNDLER}` substitution:
+
+```yaml
+builds:
+  custom:
+    bundler: rspack
+    config: config/${BUNDLER}/custom.config.js # Becomes: config/rspack/custom.config.js
+```
+
+### When to Use Build Configurations
+
+Build configurations are useful for:
+
+- **Multiple build scenarios**: Different builds for HMR development, standard development, and production
+- **CI/CD pipelines**: Predefined builds that can be easily referenced in deployment scripts
+- **Team consistency**: Ensure all developers use the same build configurations
+- **Complex setups**: Manage different bundler configs or environment variables for different scenarios
 
 ## Troubleshooting
 

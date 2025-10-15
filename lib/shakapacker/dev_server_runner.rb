@@ -55,6 +55,7 @@ module Shakapacker
       puts "[Shakapacker] Running dev server for build: #{build_config[:name]}"
       puts "[Shakapacker] Description: #{build_config[:description]}" if build_config[:description]
       puts "[Shakapacker] Bundler: #{build_config[:bundler]}"
+      puts "[Shakapacker] Config file: #{build_config[:config_file]}" if build_config[:config_file]
 
       new(argv, build_config).run
     end

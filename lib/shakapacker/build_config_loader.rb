@@ -84,5 +84,23 @@ module Shakapacker
       env = build_config[:environment]
       env["WEBPACK_SERVE"] == "true" || env["HMR"] == "true"
     end
+
+    def list_builds
+      config = YAML.load_file(@config_file_path)
+      builds = config["builds"]
+
+      puts "\nAvailable builds in #{@config_file_path}:\n\n"
+
+      builds.each do |name, build|
+        bundler = build["bundler"] || config["default_bundler"] || "webpack (default)"
+        outputs = build["outputs"] ? build["outputs"].join(", ") : "auto-detect"
+
+        puts "  #{name}"
+        puts "    Description: #{build["description"]}" if build["description"]
+        puts "    Bundler: #{bundler}"
+        puts "    Outputs: #{outputs}"
+        puts ""
+      end
+    end
   end
 end
