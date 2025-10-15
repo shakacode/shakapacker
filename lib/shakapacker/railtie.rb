@@ -52,7 +52,8 @@ class Shakapacker::Engine < ::Rails::Engine
         private
 
           def send_pack_early_hints_automatically
-            return unless defined?(view_context)
+            return unless respond_to?(:view_context, true)
+            return unless view_context
             view_context.send_pack_early_hints
           rescue => e
             # Silently fail if early hints can't be sent (e.g., headers already sent)
