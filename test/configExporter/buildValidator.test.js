@@ -505,6 +505,25 @@ describe("BuildValidator", () => {
       // Wait for spawn to be called
       await waitForAsync()
 
+      // Debug: Check if spawn was called
+      // eslint-disable-next-line jest/no-conditional-in-test
+      if (mockSpawn.mock.calls.length === 0) {
+        throw new Error(
+          "spawn was never called - check if validateHMRBuild is returning early"
+        )
+      }
+
+      // Debug: Check if handlers were registered
+      const dataHandlers = mockChild.stdout.on.mock.calls.filter(
+        ([event]) => event === "data"
+      )
+      // eslint-disable-next-line jest/no-conditional-in-test
+      if (dataHandlers.length === 0) {
+        throw new Error(
+          `stdout.on was called ${mockChild.stdout.on.mock.calls.length} times, but no 'data' handler. Events: ${mockChild.stdout.on.mock.calls.map(([e]) => e).join(", ")}`
+        )
+      }
+
       // Simulate stdout with success pattern
       const stdoutHandler = mockChild.stdout.on.mock.calls.find(
         ([event]) => event === "data"
