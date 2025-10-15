@@ -35,6 +35,9 @@ describe("BuildValidator", () => {
   })
 
   afterEach(() => {
+    // Restore all mocks to prevent test pollution
+    jest.restoreAllMocks()
+
     if (existsSync(testDir)) {
       rmSync(testDir, { recursive: true, force: true })
     }
