@@ -1,14 +1,13 @@
 const { existsSync, writeFileSync, mkdirSync, rmSync } = require("fs")
 const { resolve, join } = require("path")
-const { BuildValidator } = require("../../package/configExporter")
 
-// Mock child_process.spawn
+// Mock child_process.spawn before importing BuildValidator
+const mockSpawn = jest.fn()
 jest.mock("child_process", () => ({
-  spawn: jest.fn()
+  spawn: mockSpawn
 }))
 
-// eslint-disable-next-line import/order
-const { spawn } = require("child_process")
+const { BuildValidator } = require("../../package/configExporter")
 
 describe("BuildValidator", () => {
   const testDir = resolve(__dirname, "../tmp/build-validator-test")
@@ -16,6 +15,7 @@ describe("BuildValidator", () => {
 
   beforeEach(() => {
     jest.clearAllMocks()
+    mockSpawn.mockClear()
     if (!existsSync(testDir)) {
       mkdirSync(testDir, { recursive: true })
     }
@@ -54,7 +54,7 @@ describe("BuildValidator", () => {
         removeAllListeners: jest.fn()
       }
 
-      spawn.mockReturnValue(mockChild)
+      mockSpawn.mockReturnValue(mockChild)
 
       const build = {
         name: "test",
@@ -80,7 +80,7 @@ describe("BuildValidator", () => {
       await validationPromise
 
       // Verify spawn was called with filtered environment
-      const spawnCall = spawn.mock.calls[0]
+      const spawnCall = mockSpawn.mock.calls[0]
       const { env } = spawnCall[2]
       expect(env.NODE_ENV).toBe("production")
       expect(env.PATH).toBe("/usr/bin")
@@ -100,7 +100,7 @@ describe("BuildValidator", () => {
         removeAllListeners: jest.fn()
       }
 
-      spawn.mockReturnValue(mockChild)
+      mockSpawn.mockReturnValue(mockChild)
 
       // Use verbose validator to see security warnings
       const verboseValidator = new BuildValidator({ verbose: true })
@@ -150,7 +150,7 @@ describe("BuildValidator", () => {
         removeAllListeners: jest.fn()
       }
 
-      spawn.mockReturnValue(mockChild)
+      mockSpawn.mockReturnValue(mockChild)
 
       const build = {
         name: "test",
@@ -169,7 +169,7 @@ describe("BuildValidator", () => {
 
       await validationPromise
 
-      const spawnCall = spawn.mock.calls[0]
+      const spawnCall = mockSpawn.mock.calls[0]
       const { env } = spawnCall[2]
       expect(env.PATH).toBe("/test/path")
 
@@ -191,7 +191,7 @@ describe("BuildValidator", () => {
         removeAllListeners: jest.fn()
       }
 
-      spawn.mockReturnValue(mockChild)
+      mockSpawn.mockReturnValue(mockChild)
 
       const build = {
         name: "prod",
@@ -237,7 +237,7 @@ describe("BuildValidator", () => {
         removeAllListeners: jest.fn()
       }
 
-      spawn.mockReturnValue(mockChild)
+      mockSpawn.mockReturnValue(mockChild)
 
       const build = {
         name: "prod",
@@ -289,7 +289,7 @@ describe("BuildValidator", () => {
         removeAllListeners: jest.fn()
       }
 
-      spawn.mockReturnValue(mockChild)
+      mockSpawn.mockReturnValue(mockChild)
 
       const build = {
         name: "prod",
@@ -342,7 +342,7 @@ describe("BuildValidator", () => {
         removeAllListeners: jest.fn()
       }
 
-      spawn.mockReturnValue(mockChild)
+      mockSpawn.mockReturnValue(mockChild)
 
       const build = {
         name: "prod",
@@ -389,7 +389,7 @@ describe("BuildValidator", () => {
         removeAllListeners: jest.fn()
       }
 
-      spawn.mockReturnValue(mockChild)
+      mockSpawn.mockReturnValue(mockChild)
 
       const build = {
         name: "prod",
@@ -481,7 +481,7 @@ describe("BuildValidator", () => {
         removeAllListeners: jest.fn()
       }
 
-      spawn.mockReturnValue(mockChild)
+      mockSpawn.mockReturnValue(mockChild)
 
       const build = {
         name: "dev-hmr",
@@ -535,7 +535,7 @@ describe("BuildValidator", () => {
         removeAllListeners: jest.fn()
       }
 
-      spawn.mockReturnValue(mockChild)
+      mockSpawn.mockReturnValue(mockChild)
 
       const build = {
         name: "dev-hmr",
@@ -584,7 +584,7 @@ describe("BuildValidator", () => {
         removeAllListeners: jest.fn()
       }
 
-      spawn.mockReturnValue(mockChild)
+      mockSpawn.mockReturnValue(mockChild)
 
       const build = {
         name: "dev-hmr",
@@ -636,7 +636,7 @@ describe("BuildValidator", () => {
         removeAllListeners: jest.fn()
       }
 
-      spawn.mockReturnValue(mockChild)
+      mockSpawn.mockReturnValue(mockChild)
 
       const build = {
         name: "dev-hmr",
@@ -687,7 +687,7 @@ describe("BuildValidator", () => {
         removeAllListeners: jest.fn()
       }
 
-      spawn.mockReturnValue(mockChild)
+      mockSpawn.mockReturnValue(mockChild)
 
       const build = {
         name: "dev-hmr",
@@ -740,7 +740,7 @@ describe("BuildValidator", () => {
         removeAllListeners: jest.fn()
       }
 
-      spawn.mockReturnValue(mockChild)
+      mockSpawn.mockReturnValue(mockChild)
 
       const build = {
         name: "dev-hmr",
@@ -797,7 +797,7 @@ describe("BuildValidator", () => {
         removeAllListeners: jest.fn()
       }
 
-      spawn.mockReturnValue(mockChild)
+      mockSpawn.mockReturnValue(mockChild)
 
       const build = {
         name: "dev-hmr",
@@ -1011,7 +1011,7 @@ describe("BuildValidator", () => {
         removeAllListeners: jest.fn()
       }
 
-      spawn.mockReturnValue(mockChild)
+      mockSpawn.mockReturnValue(mockChild)
 
       const build = {
         name: "dev-hmr",
@@ -1062,7 +1062,7 @@ describe("BuildValidator", () => {
         removeAllListeners: jest.fn()
       }
 
-      spawn.mockReturnValue(mockChild)
+      mockSpawn.mockReturnValue(mockChild)
 
       const build = {
         name: "dev-hmr",
@@ -1109,7 +1109,7 @@ describe("BuildValidator", () => {
         removeAllListeners: jest.fn()
       }
 
-      spawn.mockReturnValue(mockChild)
+      mockSpawn.mockReturnValue(mockChild)
 
       const build = {
         name: "dev-hmr",
@@ -1156,7 +1156,7 @@ describe("BuildValidator", () => {
         removeAllListeners: jest.fn()
       }
 
-      spawn.mockReturnValue(mockChild)
+      mockSpawn.mockReturnValue(mockChild)
 
       const build = {
         name: "dev-hmr",
@@ -1224,7 +1224,7 @@ describe("BuildValidator", () => {
         removeAllListeners: jest.fn()
       }
 
-      spawn.mockReturnValue(mockChild)
+      mockSpawn.mockReturnValue(mockChild)
 
       const build = {
         name: "prod",
