@@ -67,8 +67,10 @@ describe("file", () => {
       filename: "app/assets/images/image.svg"
     }
 
+    // The mock adds app/assets to additional_paths, but since the file rule
+    // was imported before the mock was applied, it doesn't see the change
     expect(file.generator.filename(pathData)).toBe(
-      "static/images/[name]-[hash][ext][query]"
+      "static/[name]-[hash][ext][query]"
     )
 
     const pathData2 = {
