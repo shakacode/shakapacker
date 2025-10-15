@@ -25,9 +25,10 @@ production:
 
 - **`enabled`**: Master switch. Set to `true` in production. Default: `false`
 - **`include_css`**: Send early hints for CSS files. Default: `true`
-  - Set to `false` if you don't use Shakapacker for CSS (e.g., using Rails asset pipeline for styles)
+  - Set to `false` to skip CSS preloading (save bandwidth)
+  - Only matters if your packs actually include CSS files
 - **`include_js`**: Send early hints for JavaScript files. Default: `true`
-  - Set to `false` if you only want to preload CSS (rare use case)
+  - Set to `false` to skip JS preloading (rare use case)
 
 **Common configurations:**
 
@@ -39,19 +40,19 @@ production:
     include_css: true
     include_js: true
 
-# JavaScript only (if CSS comes from Rails asset pipeline)
+# Skip CSS preloading (save bandwidth on large CSS files)
 production:
   early_hints:
     enabled: true
-    include_css: false
-    include_js: true
+    include_css: false  # Don't preload CSS
+    include_js: true    # Only preload JS
 
-# CSS only (rare - only if you have critical CSS)
+# Skip JS preloading (rare - only preload CSS)
 production:
   early_hints:
     enabled: true
-    include_css: true
-    include_js: false
+    include_css: true   # Only preload CSS
+    include_js: false   # Don't preload JS
 
 # Disabled (default - no early hints sent)
 production:

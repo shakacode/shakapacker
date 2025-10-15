@@ -510,10 +510,11 @@ Browser starts downloading assets while Rails is still rendering, improving perc
   - Set to `true` in production for faster page loads
   - Keep `false` in development (minimal benefit, adds noise to logs)
 - **`include_css`**: Preload CSS assets (default: `true` when enabled)
-  - Set to `false` if you don't use Shakapacker for CSS
-  - Example: Using Rails asset pipeline or ImportMaps for styles
+  - Set to `false` to skip CSS early hints (save bandwidth)
+  - Only has effect if your packs actually include CSS files
+  - If no CSS in manifest, this setting doesn't matter
 - **`include_js`**: Preload JavaScript assets (default: `true` when enabled)
-  - Set to `false` to only preload CSS (rare use case)
+  - Set to `false` to skip JS early hints (rare use case)
   - Most apps should keep this `true`
 
 **Common configurations:**
@@ -531,13 +532,16 @@ development:
   early_hints:
     enabled: false
 
-# Mixed asset sources: Only JS from Shakapacker
+# Mixed asset sources: Shakapacker has both JS and CSS
+# But you only want early hints for JS (save bandwidth)
 production:
   early_hints:
     enabled: true
-    include_css: false  # CSS comes from Rails asset pipeline
-    include_js: true
+    include_css: false  # Skip CSS early hints
+    include_js: true    # Only preload JS
 ```
+
+**Note:** If your Shakapacker packs have no CSS at all, setting `include_css: false` has no effect (nothing to skip). This is only useful if you have CSS in Shakapacker but choose not to preload it.
 
 **Requirements:**
 
