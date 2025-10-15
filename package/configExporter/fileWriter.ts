@@ -79,7 +79,7 @@ export class FileWriter {
   /**
    * Validate output path and warn if writing outside cwd
    */
-  static validateOutputPath(outputPath: string): void {
+  private static validateOutputPath(outputPath: string): void {
     const absPath = resolve(outputPath)
     const cwd = process.cwd()
 
