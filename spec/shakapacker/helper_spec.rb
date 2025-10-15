@@ -299,10 +299,12 @@ module ActionView::TestCase::Behavior
           allow(Shakapacker.config).to receive(:early_hints).and_return({ enabled: true, include_css: true, include_js: true })
           # Simulate append_javascript_pack_tag being called in views
           append_javascript_pack_tag("application")
-          expect(@request).to receive(:send_early_hints).with(hash_including(
-            "/packs/vendors~application~bootstrap-c20632e7baf2c81200d3.chunk.js",
-            "/packs/application-k344a6d59eef8632c9d1.js"
-          ))
+          expect(@request).to receive(:send_early_hints) do |headers|
+            expect(headers).to have_key("Link")
+            link_headers = headers["Link"]
+            expect(link_headers).to include(match(%r{</packs/vendors~application~bootstrap-c20632e7baf2c81200d3\.chunk\.js>}))
+            expect(link_headers).to include(match(%r{</packs/application-k344a6d59eef8632c9d1\.js>}))
+          end
           send_pack_early_hints  # No arguments - reads from queue!
         end
 
@@ -311,9 +313,11 @@ module ActionView::TestCase::Behavior
           # Simulate multiple append calls from different partials
           append_javascript_pack_tag("application")
           append_javascript_pack_tag("bootstrap")
-          expect(@request).to receive(:send_early_hints) do |links|
-            expect(links).to include("/packs/application-k344a6d59eef8632c9d1.js")
-            expect(links).to include("/packs/bootstrap-300631c4f0e0f9c865bc.js")
+          expect(@request).to receive(:send_early_hints) do |headers|
+            expect(headers).to have_key("Link")
+            link_headers = headers["Link"]
+            expect(link_headers).to include(match(%r{</packs/application-k344a6d59eef8632c9d1\.js>}))
+            expect(link_headers).to include(match(%r{</packs/bootstrap-300631c4f0e0f9c865bc\.js>}))
           end
           send_pack_early_hints  # Reads both from queue
         end
@@ -322,6 +326,37 @@ module ActionView::TestCase::Behavior
           allow(Shakapacker.config).to receive(:early_hints).and_return({ enabled: true, include_css: true, include_js: true })
           expect(@request).not_to receive(:send_early_hints)
           expect(send_pack_early_hints).to be_nil  # Empty queues, nothing to send
+        end
+
+        it "collects packs from both append_javascript_pack_tag and append_stylesheet_pack_tag" do
+          allow(Shakapacker.config).to receive(:early_hints).and_return({ enabled: true, include_css: true, include_js: true })
+          # Simulate append calls from different partials
+          append_javascript_pack_tag("application")
+          append_stylesheet_pack_tag("hello_stimulus")
+          expect(@request).to receive(:send_early_hints) do |headers|
+            expect(headers).to have_key("Link")
+            link_headers = headers["Link"]
+            # Should include JS from application pack
+            expect(link_headers).to include(match(%r{</packs/application-k344a6d59eef8632c9d1\.js>}))
+            # Should include CSS from hello_stimulus pack
+            expect(link_headers).to include(match(%r{</packs/hello_stimulus-.*\.chunk\.css>}))
+          end
+          send_pack_early_hints  # Reads from both queues
+        end
+
+        it "collects packs from prepend_javascript_pack_tag" do
+          allow(Shakapacker.config).to receive(:early_hints).and_return({ enabled: true, include_css: true, include_js: true })
+          # Simulate prepend call from a partial
+          prepend_javascript_pack_tag("bootstrap")
+          append_javascript_pack_tag("application")
+          expect(@request).to receive(:send_early_hints) do |headers|
+            expect(headers).to have_key("Link")
+            link_headers = headers["Link"]
+            # Should include both packs
+            expect(link_headers).to include(match(%r{</packs/bootstrap-300631c4f0e0f9c865bc\.js>}))
+            expect(link_headers).to include(match(%r{</packs/application-k344a6d59eef8632c9d1\.js>}))
+          end
+          send_pack_early_hints
         end
 
         it "does not call send_early_hints when early hints are disabled" do
@@ -345,49 +380,61 @@ module ActionView::TestCase::Behavior
 
         it "sends early hints for JavaScript and CSS when enabled" do
           allow(Shakapacker.config).to receive(:early_hints).and_return({ enabled: true, include_css: true, include_js: true })
-          expect(@request).to receive(:send_early_hints).with(hash_including(
-            "/packs/vendors~application~bootstrap-c20632e7baf2c81200d3.chunk.js",
-            "/packs/vendors~application-e55f2aae30c07fb6d82a.chunk.js",
-            "/packs/application-k344a6d59eef8632c9d1.js",
-            "/packs/1-c20632e7baf2c81200d3.chunk.css",
-            "/packs/application-k344a6d59eef8632c9d1.chunk.css"
-          ))
+          expect(@request).to receive(:send_early_hints) do |headers|
+            expect(headers).to have_key("Link")
+            link_headers = headers["Link"]
+            expect(link_headers).to include(match(%r{</packs/vendors~application~bootstrap-c20632e7baf2c81200d3\.chunk\.js>}))
+            expect(link_headers).to include(match(%r{</packs/vendors~application-e55f2aae30c07fb6d82a\.chunk\.js>}))
+            expect(link_headers).to include(match(%r{</packs/application-k344a6d59eef8632c9d1\.js>}))
+            expect(link_headers).to include(match(%r{</packs/1-c20632e7baf2c81200d3\.chunk\.css>}))
+            expect(link_headers).to include(match(%r{</packs/application-k344a6d59eef8632c9d1\.chunk\.css>}))
+          end
           send_pack_early_hints("application")
         end
 
         it "sends early hints only for JavaScript when CSS is disabled" do
           allow(Shakapacker.config).to receive(:early_hints).and_return({ enabled: true, include_css: false, include_js: true })
-          expect(@request).to receive(:send_early_hints).with(hash_including(
-            "/packs/vendors~application~bootstrap-c20632e7baf2c81200d3.chunk.js"
-          ))
+          expect(@request).to receive(:send_early_hints) do |headers|
+            expect(headers).to have_key("Link")
+            link_headers = headers["Link"]
+            expect(link_headers).to include(match(%r{</packs/vendors~application~bootstrap-c20632e7baf2c81200d3\.chunk\.js>}))
+            expect(link_headers).not_to include(match(/\.css>/))
+          end
           send_pack_early_hints("application")
         end
 
         it "sends early hints only for CSS when JavaScript is disabled" do
           allow(Shakapacker.config).to receive(:early_hints).and_return({ enabled: true, include_css: true, include_js: false })
-          expect(@request).to receive(:send_early_hints).with(hash_including(
-            "/packs/1-c20632e7baf2c81200d3.chunk.css"
-          ))
+          expect(@request).to receive(:send_early_hints) do |headers|
+            expect(headers).to have_key("Link")
+            link_headers = headers["Link"]
+            expect(link_headers).to include(match(%r{</packs/1-c20632e7baf2c81200d3\.chunk\.css>}))
+            expect(link_headers).not_to include(match(/\.js>/))
+          end
           send_pack_early_hints("application")
         end
 
         it "allows per-call options to override config" do
           allow(Shakapacker.config).to receive(:early_hints).and_return({ enabled: true, include_css: false, include_js: true })
-          expect(@request).to receive(:send_early_hints).with(hash_including(
-            "/packs/1-c20632e7baf2c81200d3.chunk.css"
-          ))
+          expect(@request).to receive(:send_early_hints) do |headers|
+            expect(headers).to have_key("Link")
+            link_headers = headers["Link"]
+            expect(link_headers).to include(match(%r{</packs/1-c20632e7baf2c81200d3\.chunk\.css>}))
+          end
           send_pack_early_hints("application", include_css: true)
         end
 
         it "sends early hints for multiple packs" do
           allow(Shakapacker.config).to receive(:early_hints).and_return({ enabled: true, include_css: true, include_js: true })
-          expect(@request).to receive(:send_early_hints) do |links|
+          expect(@request).to receive(:send_early_hints) do |headers|
+            expect(headers).to have_key("Link")
+            link_headers = headers["Link"]
             # Verify assets from both application and bootstrap packs are included
-            expect(links).to include("/packs/vendors~application~bootstrap-c20632e7baf2c81200d3.chunk.js")
-            expect(links).to include("/packs/application-k344a6d59eef8632c9d1.js")
-            expect(links).to include("/packs/bootstrap-300631c4f0e0f9c865bc.js")
-            expect(links).to include("/packs/1-c20632e7baf2c81200d3.chunk.css")
-            expect(links).to include("/packs/application-k344a6d59eef8632c9d1.chunk.css")
+            expect(link_headers).to include(match(%r{</packs/vendors~application~bootstrap-c20632e7baf2c81200d3\.chunk\.js>}))
+            expect(link_headers).to include(match(%r{</packs/application-k344a6d59eef8632c9d1\.js>}))
+            expect(link_headers).to include(match(%r{</packs/bootstrap-300631c4f0e0f9c865bc\.js>}))
+            expect(link_headers).to include(match(%r{</packs/1-c20632e7baf2c81200d3\.chunk\.css>}))
+            expect(link_headers).to include(match(%r{</packs/application-k344a6d59eef8632c9d1\.chunk\.css>}))
           end
           send_pack_early_hints("application", "bootstrap")
         end
@@ -396,6 +443,22 @@ module ActionView::TestCase::Behavior
           allow(Shakapacker.config).to receive(:early_hints).and_return({ enabled: true, include_css: true, include_js: true })
           expect(@request).not_to receive(:send_early_hints)
           send_pack_early_hints("nonexistent_pack")
+        end
+
+        it "sends headers in correct Rails format with Link key and array value" do
+          allow(Shakapacker.config).to receive(:early_hints).and_return({ enabled: true, include_css: true, include_js: true })
+          expect(@request).to receive(:send_early_hints) do |headers|
+            # Verify the structure matches Rails expectations: {"Link" => [array of link strings]}
+            expect(headers).to be_a(Hash)
+            expect(headers.keys).to eq(["Link"])
+            expect(headers["Link"]).to be_an(Array)
+            expect(headers["Link"].length).to be > 0
+            # Each array element should be a properly formatted Link header
+            headers["Link"].each do |link|
+              expect(link).to match(/^<[^>]+>;\s*rel=preload/)
+            end
+          end
+          send_pack_early_hints("application")
         end
       end
 
@@ -408,9 +471,11 @@ module ActionView::TestCase::Behavior
 
         it "sends early hints with custom options when early_hints is a hash" do
           allow(Shakapacker.config).to receive(:early_hints).and_return({ enabled: true, include_css: false, include_js: true })
-          expect(@request).to receive(:send_early_hints).with(hash_including(
-            "/packs/1-c20632e7baf2c81200d3.chunk.css"
-          ))
+          expect(@request).to receive(:send_early_hints) do |headers|
+            expect(headers).to have_key("Link")
+            link_headers = headers["Link"]
+            expect(link_headers).to include(match(%r{</packs/1-c20632e7baf2c81200d3\.chunk\.css>}))
+          end
           javascript_pack_tag("application", early_hints: { include_css: true })
         end
 
@@ -723,28 +788,34 @@ module ActionView::TestCase::Behavior
 
         it "sends early hints with integrity hashes when enabled" do
           allow(Shakapacker.config).to receive(:early_hints).and_return({ enabled: true, include_css: true, include_js: true })
-          expect(@request).to receive(:send_early_hints) do |links|
+          expect(@request).to receive(:send_early_hints) do |headers|
+            expect(headers).to have_key("Link")
+            link_headers = headers["Link"]
             # Verify that integrity hashes are included in the Link headers
-            expect(links.values.any? { |link| link.include?("integrity=") }).to be true
-            expect(links).to include("/packs/vendors~application~bootstrap-c20632e7baf2c81200d3.chunk.js")
-            expect(links).to include("/packs/application-k344a6d59eef8632c9d1.js")
+            expect(link_headers.any? { |link| link.include?("integrity=") }).to be true
+            expect(link_headers).to include(match(%r{</packs/vendors~application~bootstrap-c20632e7baf2c81200d3\.chunk\.js>}))
+            expect(link_headers).to include(match(%r{</packs/application-k344a6d59eef8632c9d1\.js>}))
           end
           send_pack_early_hints("application_with_integrity")
         end
 
         it "sends early hints only for JavaScript when CSS is disabled" do
           allow(Shakapacker.config).to receive(:early_hints).and_return({ enabled: true, include_css: false, include_js: true })
-          expect(@request).to receive(:send_early_hints) do |links|
-            expect(links).to include("/packs/vendors~application~bootstrap-c20632e7baf2c81200d3.chunk.js")
-            expect(links.values.any? { |link| link.include?("as=script") }).to be true
+          expect(@request).to receive(:send_early_hints) do |headers|
+            expect(headers).to have_key("Link")
+            link_headers = headers["Link"]
+            expect(link_headers).to include(match(%r{</packs/vendors~application~bootstrap-c20632e7baf2c81200d3\.chunk\.js>}))
+            expect(link_headers.any? { |link| link.include?("as=script") }).to be true
           end
           send_pack_early_hints("application_with_integrity")
         end
 
         it "allows per-call options to override config" do
           allow(Shakapacker.config).to receive(:early_hints).and_return({ enabled: true, include_css: false, include_js: true })
-          expect(@request).to receive(:send_early_hints) do |links|
-            expect(links).to include("/packs/1-c20632e7baf2c81200d3.chunk.css")
+          expect(@request).to receive(:send_early_hints) do |headers|
+            expect(headers).to have_key("Link")
+            link_headers = headers["Link"]
+            expect(link_headers).to include(match(%r{</packs/1-c20632e7baf2c81200d3\.chunk\.css>}))
           end
           send_pack_early_hints("application_with_integrity", include_css: true)
         end
@@ -759,8 +830,10 @@ module ActionView::TestCase::Behavior
       describe "#javascript_pack_tag with early_hints option and integrity hashes" do
         it "sends early hints with integrity when early_hints: true" do
           allow(Shakapacker.config).to receive(:early_hints).and_return({ enabled: true, include_css: true, include_js: true })
-          expect(@request).to receive(:send_early_hints) do |links|
-            expect(links.values.any? { |link| link.include?("integrity=") }).to be true
+          expect(@request).to receive(:send_early_hints) do |headers|
+            expect(headers).to have_key("Link")
+            link_headers = headers["Link"]
+            expect(link_headers.any? { |link| link.include?("integrity=") }).to be true
           end
           javascript_pack_tag("application_with_integrity", early_hints: true)
         end

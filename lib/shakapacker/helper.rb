@@ -219,8 +219,8 @@ module Shakapacker::Helper
       return nil if names.empty?
     end
 
-    links = build_early_hints_links(names, **options)
-    request.send_early_hints(links) if links.any?
+    headers = build_early_hints_links(names, **options)
+    request.send_early_hints(headers) unless headers.empty?
 
     # Return nil to avoid rendering output with <%= %>
     nil
@@ -399,9 +399,10 @@ module Shakapacker::Helper
     end
 
     # Build early hints Link headers for the specified packs
+    # Returns a headers hash in the format expected by Rails: {"Link" => [array of link strings]}
     def build_early_hints_links(names, **options)
       config = current_shakapacker_instance.config.early_hints || {}
-      links = {}
+      link_headers = []
 
       names.each do |name|
         # Collect JavaScript chunks
@@ -410,7 +411,7 @@ module Shakapacker::Helper
             sources = available_sources_from_manifest_entrypoints([name], type: :javascript)
             sources.each do |source|
               source_path = lookup_source(source)
-              links[source_path] = build_link_header(source_path, source, as: "script")
+              link_headers << build_link_header(source_path, source, as: "script")
             end
           rescue Shakapacker::Manifest::MissingEntryError, NoMethodError
             # Gracefully handle missing entries or nil manifest responses
@@ -423,7 +424,7 @@ module Shakapacker::Helper
             sources = available_sources_from_manifest_entrypoints([name], type: :stylesheet)
             sources.each do |source|
               source_path = lookup_source(source)
-              links[source_path] = build_link_header(source_path, source, as: "style")
+              link_headers << build_link_header(source_path, source, as: "style")
             end
           rescue Shakapacker::Manifest::MissingEntryError, NoMethodError
             # Gracefully handle missing entries or nil manifest responses
@@ -431,7 +432,7 @@ module Shakapacker::Helper
         end
       end
 
-      links
+      link_headers.any? ? { "Link" => link_headers } : {}
     end
 
     # Build a Link header value for early hints

@@ -16,9 +16,9 @@ The easiest way to enable early hints - **no changes to your existing views need
 # config/shakapacker.yml
 production:
   early_hints:
-    enabled: true
-    include_css: true
-    include_js: true
+    enabled: true # default: false - must be explicitly enabled
+    include_css: true # default: true - send Link headers for CSS assets
+    include_js: true # default: true - send Link headers for JS assets
 ```
 
 ### 2. Add One Line to Your Layout
@@ -89,45 +89,15 @@ Just add **one line** at the top of your layout:
 
 ## Advanced: Explicit Pack Names
 
-If you know your pack names upfront (not using append/prepend pattern):
+If you need to selectively send hints for only certain packs (e.g., only send hints for critical assets but not all packs in your queues):
 
 ```erb
-<% send_pack_early_hints 'application', 'admin' %>
+<% send_pack_early_hints 'application' %>  <%# Only send hints for 'application' pack %>
 <!DOCTYPE html>
 ...
 ```
 
-## Advanced: Controller-Level (Before Expensive Queries)
-
-For maximum performance, send hints **before** expensive queries:
-
-```ruby
-# app/controllers/application_controller.rb
-class ApplicationController < ActionController::Base
-  before_action :send_early_hints
-
-  private
-
-  def send_early_hints
-    # Must specify packs - views haven't rendered yet!
-    view_context.send_pack_early_hints('application')
-  end
-end
-```
-
-Or per-controller:
-
-```ruby
-class AdminController < ApplicationController
-  before_action :send_admin_early_hints
-
-  private
-
-  def send_admin_early_hints
-    view_context.send_pack_early_hints('admin')
-  end
-end
-```
+**Note:** Most apps should use the zero-argument form (`send_pack_early_hints`) which automatically discovers all packs from your existing `append_javascript_pack_tag` and `append_stylesheet_pack_tag` calls.
 
 ## Requirements
 

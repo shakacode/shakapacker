@@ -4,11 +4,11 @@ Complete test coverage for HTTP 103 Early Hints feature.
 
 ## Test Summary
 
-**Total: 77 helper specs, 0 failures** ✅
+**Total: 80 helper specs, 0 failures** ✅
 
-**Early Hints Specific: 19 tests**
+**Early Hints Specific: 22 tests**
 
-- Without integrity hashes: 12 tests
+- Without integrity hashes: 15 tests
 - With integrity hashes: 7 tests
 
 ## Test Coverage Breakdown
@@ -20,13 +20,16 @@ Complete test coverage for HTTP 103 Early Hints feature.
 - ✅ Returns nil to avoid rendering output
 - ✅ Returns nil to avoid rendering output (with integrity)
 
-#### 2. Queue-Based Pack Discovery (3 tests)
+#### 2. Queue-Based Pack Discovery (6 tests)
 
 - ✅ Uses packs from queues when called without arguments
 - ✅ Uses multiple packs from queues when multiple were appended
 - ✅ Returns nil when called without arguments and queues are empty
+- ✅ Collects packs from both append_javascript_pack_tag and append_stylesheet_pack_tag
+- ✅ Collects packs from prepend_javascript_pack_tag
+- ✅ Sends headers in correct Rails format with Link key and array value
 
-**Coverage:** Validates the core feature - automatic pack discovery from queues populated by `append_*` helpers.
+**Coverage:** Validates the core feature - automatic pack discovery from queues populated by `append_*` and `prepend_*` helpers, including cross-queue discovery (JS + CSS) and correct header format for Rails.
 
 #### 3. Configuration & Enablement (2 tests)
 
