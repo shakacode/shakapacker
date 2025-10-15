@@ -14,7 +14,7 @@ This document tracks the ESLint errors currently suppressed in the codebase and 
 - Style/convention issues: ~42 (25%)
 
 **Target**: Reduce by 50% within Q1 2025
-**Last Updated**: October 14, 2025
+**Last Updated**: 2025-10-14
 
 ## Priority Matrix
 
@@ -55,7 +55,7 @@ This document tracks the ESLint errors currently suppressed in the codebase and 
 #### `global-require` (3 instances)
 
 **Files affected:** `configExporter/cli.ts`
-**Why suppressed:** Dynamic requires needed for conditional module loading
+**Why suppressed:** Dynamic require calls are needed for conditional module loading
 **Fix strategy:** Would require converting to ES modules with dynamic imports
 
 #### `import/prefer-default-export` (9 instances)
