@@ -218,25 +218,6 @@ module Shakapacker::Helper
     nil
   end
 
-  # Skips automatic early hints sending for the current request
-  #
-  # By default, early hints are sent automatically when early_hints: enabled: true
-  # is set in shakapacker.yml. Use this helper in controllers to opt-out for specific
-  # actions where early hints are not desired (e.g., JSON API endpoints, redirects).
-  #
-  # Example:
-  #
-  #   class ApiController < ApplicationController
-  #     skip_send_pack_early_hints
-  #   end
-  #
-  #   class PostsController < ApplicationController
-  #     skip_send_pack_early_hints only: [:index, :show]
-  #   end
-  def skip_send_pack_early_hints(**options)
-    before_action(**options) { @skip_send_pack_early_hints = true }
-  end
-
   # Creates link tags that reference the css chunks from entrypoints when using split chunks API,
   # as compiled by webpack per the entries list in package/environments/base.js.
   # By default, this list is auto-generated to match everything in
@@ -445,7 +426,7 @@ module Shakapacker::Helper
         end
       end
 
-      link_headers.any? ? { "Link" => link_headers } : {}
+      link_headers.any? ? { "Link" => link_headers.join(", ") } : {}
     end
 
     # Build a Link header value for early hints

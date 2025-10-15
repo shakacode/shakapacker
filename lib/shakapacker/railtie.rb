@@ -42,6 +42,11 @@ class Shakapacker::Engine < ::Rails::Engine
   initializer "shakapacker.early_hints" do
     ActiveSupport.on_load :action_controller do
       ActionController::Base.class_eval do
+        # Class method to skip automatic early hints sending
+        def self.skip_send_pack_early_hints(**options)
+          before_action(**options) { @skip_send_pack_early_hints = true }
+        end
+
         after_action :send_pack_early_hints_automatically, if: :should_send_early_hints?
 
         private

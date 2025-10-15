@@ -304,8 +304,8 @@ module ActionView::TestCase::Behavior
           expect(@request).to receive(:send_early_hints) do |headers|
             expect(headers).to have_key("Link")
             link_headers = headers["Link"]
-            expect(link_headers).to include(match(%r{</packs/vendors~application~bootstrap-c20632e7baf2c81200d3\.chunk\.js>}))
-            expect(link_headers).to include(match(%r{</packs/application-k344a6d59eef8632c9d1\.js>}))
+            expect(link_headers).to match(%r{</packs/vendors~application~bootstrap-c20632e7baf2c81200d3\.chunk\.js>})
+            expect(link_headers).to match(%r{</packs/application-k344a6d59eef8632c9d1\.js>})
           end
           send_pack_early_hints  # No arguments - reads from queue!
         end
@@ -318,8 +318,8 @@ module ActionView::TestCase::Behavior
           expect(@request).to receive(:send_early_hints) do |headers|
             expect(headers).to have_key("Link")
             link_headers = headers["Link"]
-            expect(link_headers).to include(match(%r{</packs/application-k344a6d59eef8632c9d1\.js>}))
-            expect(link_headers).to include(match(%r{</packs/bootstrap-300631c4f0e0f9c865bc\.js>}))
+            expect(link_headers).to match(%r{</packs/application-k344a6d59eef8632c9d1\.js>})
+            expect(link_headers).to match(%r{</packs/bootstrap-300631c4f0e0f9c865bc\.js>})
           end
           send_pack_early_hints  # Reads both from queue
         end
@@ -339,9 +339,9 @@ module ActionView::TestCase::Behavior
             expect(headers).to have_key("Link")
             link_headers = headers["Link"]
             # Should include JS from application pack
-            expect(link_headers).to include(match(%r{</packs/application-k344a6d59eef8632c9d1\.js>}))
+            expect(link_headers).to match(%r{</packs/application-k344a6d59eef8632c9d1\.js>})
             # Should include CSS from hello_stimulus pack
-            expect(link_headers).to include(match(%r{</packs/hello_stimulus-.*\.chunk\.css>}))
+            expect(link_headers).to match(%r{</packs/hello_stimulus-.*\.chunk\.css>})
           end
           send_pack_early_hints  # Reads from both queues
         end
@@ -355,8 +355,8 @@ module ActionView::TestCase::Behavior
             expect(headers).to have_key("Link")
             link_headers = headers["Link"]
             # Should include both packs
-            expect(link_headers).to include(match(%r{</packs/bootstrap-300631c4f0e0f9c865bc\.js>}))
-            expect(link_headers).to include(match(%r{</packs/application-k344a6d59eef8632c9d1\.js>}))
+            expect(link_headers).to match(%r{</packs/bootstrap-300631c4f0e0f9c865bc\.js>})
+            expect(link_headers).to match(%r{</packs/application-k344a6d59eef8632c9d1\.js>})
           end
           send_pack_early_hints
         end
@@ -385,11 +385,11 @@ module ActionView::TestCase::Behavior
           expect(@request).to receive(:send_early_hints) do |headers|
             expect(headers).to have_key("Link")
             link_headers = headers["Link"]
-            expect(link_headers).to include(match(%r{</packs/vendors~application~bootstrap-c20632e7baf2c81200d3\.chunk\.js>}))
-            expect(link_headers).to include(match(%r{</packs/vendors~application-e55f2aae30c07fb6d82a\.chunk\.js>}))
-            expect(link_headers).to include(match(%r{</packs/application-k344a6d59eef8632c9d1\.js>}))
-            expect(link_headers).to include(match(%r{</packs/1-c20632e7baf2c81200d3\.chunk\.css>}))
-            expect(link_headers).to include(match(%r{</packs/application-k344a6d59eef8632c9d1\.chunk\.css>}))
+            expect(link_headers).to match(%r{</packs/vendors~application~bootstrap-c20632e7baf2c81200d3\.chunk\.js>})
+            expect(link_headers).to match(%r{</packs/vendors~application-e55f2aae30c07fb6d82a\.chunk\.js>})
+            expect(link_headers).to match(%r{</packs/application-k344a6d59eef8632c9d1\.js>})
+            expect(link_headers).to match(%r{</packs/1-c20632e7baf2c81200d3\.chunk\.css>})
+            expect(link_headers).to match(%r{</packs/application-k344a6d59eef8632c9d1\.chunk\.css>})
           end
           send_pack_early_hints("application")
         end
@@ -399,8 +399,8 @@ module ActionView::TestCase::Behavior
           expect(@request).to receive(:send_early_hints) do |headers|
             expect(headers).to have_key("Link")
             link_headers = headers["Link"]
-            expect(link_headers).to include(match(%r{</packs/vendors~application~bootstrap-c20632e7baf2c81200d3\.chunk\.js>}))
-            expect(link_headers).not_to include(match(/\.css>/))
+            expect(link_headers).to match(%r{</packs/vendors~application~bootstrap-c20632e7baf2c81200d3\.chunk\.js>})
+            expect(link_headers).not_to match(/\.css>/)
           end
           send_pack_early_hints("application")
         end
@@ -410,8 +410,8 @@ module ActionView::TestCase::Behavior
           expect(@request).to receive(:send_early_hints) do |headers|
             expect(headers).to have_key("Link")
             link_headers = headers["Link"]
-            expect(link_headers).to include(match(%r{</packs/1-c20632e7baf2c81200d3\.chunk\.css>}))
-            expect(link_headers).not_to include(match(/\.js>/))
+            expect(link_headers).to match(%r{</packs/1-c20632e7baf2c81200d3\.chunk\.css>})
+            expect(link_headers).not_to match(/\.js>/)
           end
           send_pack_early_hints("application")
         end
@@ -421,7 +421,7 @@ module ActionView::TestCase::Behavior
           expect(@request).to receive(:send_early_hints) do |headers|
             expect(headers).to have_key("Link")
             link_headers = headers["Link"]
-            expect(link_headers).to include(match(%r{</packs/1-c20632e7baf2c81200d3\.chunk\.css>}))
+            expect(link_headers).to match(%r{</packs/1-c20632e7baf2c81200d3\.chunk\.css>})
           end
           send_pack_early_hints("application", include_css: true)
         end
@@ -432,11 +432,11 @@ module ActionView::TestCase::Behavior
             expect(headers).to have_key("Link")
             link_headers = headers["Link"]
             # Verify assets from both application and bootstrap packs are included
-            expect(link_headers).to include(match(%r{</packs/vendors~application~bootstrap-c20632e7baf2c81200d3\.chunk\.js>}))
-            expect(link_headers).to include(match(%r{</packs/application-k344a6d59eef8632c9d1\.js>}))
-            expect(link_headers).to include(match(%r{</packs/bootstrap-300631c4f0e0f9c865bc\.js>}))
-            expect(link_headers).to include(match(%r{</packs/1-c20632e7baf2c81200d3\.chunk\.css>}))
-            expect(link_headers).to include(match(%r{</packs/application-k344a6d59eef8632c9d1\.chunk\.css>}))
+            expect(link_headers).to match(%r{</packs/vendors~application~bootstrap-c20632e7baf2c81200d3\.chunk\.js>})
+            expect(link_headers).to match(%r{</packs/application-k344a6d59eef8632c9d1\.js>})
+            expect(link_headers).to match(%r{</packs/bootstrap-300631c4f0e0f9c865bc\.js>})
+            expect(link_headers).to match(%r{</packs/1-c20632e7baf2c81200d3\.chunk\.css>})
+            expect(link_headers).to match(%r{</packs/application-k344a6d59eef8632c9d1\.chunk\.css>})
           end
           send_pack_early_hints("application", "bootstrap")
         end
@@ -447,16 +447,19 @@ module ActionView::TestCase::Behavior
           send_pack_early_hints("nonexistent_pack")
         end
 
-        it "sends headers in correct Rails format with Link key and array value" do
+        it "sends headers in correct Rails format with Link key and comma-delimited string value" do
           allow(Shakapacker.config).to receive(:early_hints).and_return({ enabled: true, include_css: true, include_js: true })
           expect(@request).to receive(:send_early_hints) do |headers|
-            # Verify the structure matches Rails expectations: {"Link" => [array of link strings]}
+            # Verify the structure matches Rails/Puma expectations: {"Link" => "comma, delimited, string"}
             expect(headers).to be_a(Hash)
             expect(headers.keys).to eq(["Link"])
-            expect(headers["Link"]).to be_an(Array)
-            expect(headers["Link"].length).to be > 0
-            # Each array element should be a properly formatted Link header
-            headers["Link"].each do |link|
+            expect(headers["Link"]).to be_a(String)
+            expect(headers["Link"]).not_to be_empty
+            # Should contain multiple comma-separated Link headers
+            links = headers["Link"].split(", ")
+            expect(links.length).to be > 0
+            # Each link should be a properly formatted Link header
+            links.each do |link|
               expect(link).to match(/^<[^>]+>;\s*rel=preload/)
             end
           end
@@ -476,7 +479,7 @@ module ActionView::TestCase::Behavior
           expect(@request).to receive(:send_early_hints) do |headers|
             expect(headers).to have_key("Link")
             link_headers = headers["Link"]
-            expect(link_headers).to include(match(%r{</packs/1-c20632e7baf2c81200d3\.chunk\.css>}))
+            expect(link_headers).to match(%r{</packs/1-c20632e7baf2c81200d3\.chunk\.css>})
           end
           javascript_pack_tag("application", early_hints: { include_css: true })
         end
@@ -796,9 +799,9 @@ module ActionView::TestCase::Behavior
             expect(headers).to have_key("Link")
             link_headers = headers["Link"]
             # Verify that integrity hashes are included in the Link headers
-            expect(link_headers.any? { |link| link.include?("integrity=") }).to be true
-            expect(link_headers).to include(match(%r{</packs/vendors~application~bootstrap-c20632e7baf2c81200d3\.chunk\.js>}))
-            expect(link_headers).to include(match(%r{</packs/application-k344a6d59eef8632c9d1\.js>}))
+            expect(link_headers).to include("integrity=")
+            expect(link_headers).to match(%r{</packs/vendors~application~bootstrap-c20632e7baf2c81200d3\.chunk\.js>})
+            expect(link_headers).to match(%r{</packs/application-k344a6d59eef8632c9d1\.js>})
           end
           send_pack_early_hints("application_with_integrity")
         end
@@ -808,8 +811,8 @@ module ActionView::TestCase::Behavior
           expect(@request).to receive(:send_early_hints) do |headers|
             expect(headers).to have_key("Link")
             link_headers = headers["Link"]
-            expect(link_headers).to include(match(%r{</packs/vendors~application~bootstrap-c20632e7baf2c81200d3\.chunk\.js>}))
-            expect(link_headers.any? { |link| link.include?("as=script") }).to be true
+            expect(link_headers).to match(%r{</packs/vendors~application~bootstrap-c20632e7baf2c81200d3\.chunk\.js>})
+            expect(link_headers).to include("as=script")
           end
           send_pack_early_hints("application_with_integrity")
         end
@@ -819,7 +822,7 @@ module ActionView::TestCase::Behavior
           expect(@request).to receive(:send_early_hints) do |headers|
             expect(headers).to have_key("Link")
             link_headers = headers["Link"]
-            expect(link_headers).to include(match(%r{</packs/1-c20632e7baf2c81200d3\.chunk\.css>}))
+            expect(link_headers).to match(%r{</packs/1-c20632e7baf2c81200d3\.chunk\.css>})
           end
           send_pack_early_hints("application_with_integrity", include_css: true)
         end
@@ -837,7 +840,7 @@ module ActionView::TestCase::Behavior
           expect(@request).to receive(:send_early_hints) do |headers|
             expect(headers).to have_key("Link")
             link_headers = headers["Link"]
-            expect(link_headers.any? { |link| link.include?("integrity=") }).to be true
+            expect(link_headers).to include("integrity=")
           end
           javascript_pack_tag("application_with_integrity", early_hints: true)
         end
@@ -850,44 +853,7 @@ module ActionView::TestCase::Behavior
       end
     end
 
-    describe "#skip_send_pack_early_hints" do
-      it "sets the skip flag when called" do
-        # Create a mock controller context
-        controller = Class.new do
-          include Shakapacker::Helper
-          attr_accessor :skip_flag
-
-          def before_action(**_options)
-            yield  # Execute the block to set the flag
-          end
-        end.new
-
-        # Call skip_send_pack_early_hints which should invoke before_action
-        controller.instance_eval do
-          skip_send_pack_early_hints
-        end
-
-        # Verify the flag was set
-        expect(controller.instance_variable_get(:@skip_send_pack_early_hints)).to be true
-      end
-
-      it "accepts standard before_action options" do
-        controller = Class.new do
-          include Shakapacker::Helper
-          attr_reader :options_received
-
-          def before_action(**options)
-            @options_received = options
-            yield
-          end
-        end.new
-
-        controller.instance_eval do
-          skip_send_pack_early_hints only: [:index, :show]
-        end
-
-        expect(controller.options_received).to eq({ only: [:index, :show] })
-      end
-    end
+    # Note: skip_send_pack_early_hints is a class method added to ActionController::Base
+    # in the railtie, so it's tested via integration tests rather than unit tests here.
   end
 end
