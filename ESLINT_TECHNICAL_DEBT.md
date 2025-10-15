@@ -8,14 +8,14 @@ This document tracks the ESLint errors currently suppressed in the codebase and 
 
 ## Current Linting Status
 
-**Files currently linted (test/**/_.js, scripts/_.js):\*\*
+**Files currently linted** (`test/**/*.js`, `scripts/*.js`):
 
 - ✅ **0 errors** (CI passing)
 - ⚠️ **3 warnings** (acceptable, won't block CI)
-  - 1x unused eslint-disable directive in scripts/remove-use-strict.js
+  - 1x unused eslint-disable directive in `scripts/remove-use-strict.js`
   - 2x jest/no-disabled-tests in test files (expected for conditional test skipping)
 
-**TypeScript files (currently ignored via package/**/\*.ts):\*\*
+**TypeScript files** (currently ignored via `package/**/*.ts`):
 
 - **Estimated suppressed errors: ~172** (from sample analysis)
   - TypeScript type-safety issues: ~130 (75%)
