@@ -19,7 +19,11 @@ module Shakapacker
                             "Run 'bin/export-bundler-config --init' to generate a sample config file."
       end
 
-      config = YAML.load_file(@config_file_path)
+      begin
+        config = YAML.load_file(@config_file_path)
+      rescue Psych::SyntaxError => e
+        raise ArgumentError, "Invalid YAML in config file: #{e.message}"
+      end
 
       unless config["builds"]&.is_a?(Hash)
         raise ArgumentError, "Config file must contain a 'builds' object"
@@ -58,6 +62,12 @@ module Shakapacker
 
       # Get outputs
       outputs = build["outputs"] || []
+
+      # Validate outputs
+      if outputs.empty?
+        raise ArgumentError, "Build '#{build_name}' has empty outputs array. " \
+                            "Please specify at least one output type (client, server, or all)."
+      end
 
       {
         name: build_name,
