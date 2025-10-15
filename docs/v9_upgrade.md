@@ -6,12 +6,12 @@ This guide outlines new features, breaking changes, and migration steps for upgr
 
 > **⚠️ Important:** Shakapacker is both a Ruby gem AND an npm package. **You must update BOTH**:
 >
-> 1. Update the version in `Gemfile`
-> 2. Update the version in `package.json`
-> 3. Run `bundle update shakapacker`
-> 4. Run your package manager install command (`yarn install`, `npm install`, or `pnpm install`)
+> - Update the version in `Gemfile`
+> - Update the version in `package.json`
+> - Run `bundle update shakapacker`
+> - Run your package manager install command (`yarn install`, `npm install`, or `pnpm install`)
 >
-> See the [Migration Steps](#migration-steps) section below for complete instructions.
+> See [Migration Steps](#migration-steps) below for detailed instructions including version format differences and testing.
 
 > **⚠️ Important for v9.1.0 Users:** If you're upgrading to v9.1.0 or later, please note the [SWC Configuration Breaking Change](#swc-loose-mode-breaking-change-v910) below. This affects users who previously configured SWC in v9.0.0.
 
@@ -273,6 +273,8 @@ You won't get warnings about missing Babel, Rspack, or esbuild packages.
 
 ## Migration Steps
 
+> **💡 Tip:** For general upgrade instructions applicable to all Shakapacker versions, see [Upgrading Shakapacker](./common-upgrades.md#upgrading-shakapacker) in the Common Upgrades guide.
+
 ### Step 1: Update Gemfile
 
 Update the shakapacker version in your `Gemfile`:
@@ -424,12 +426,22 @@ gem "shakapacker", "9.3.0"         # stable
 gem "shakapacker", "9.3.0.beta.1"  # pre-release
 ```
 
+Stable version in package.json:
+
 ```json
-// package.json - uses hyphens for pre-release versions
 {
   "dependencies": {
-    "shakapacker": "9.3.0"         // stable
-    "shakapacker": "9.3.0-beta.1"  // pre-release
+    "shakapacker": "9.3.0"
+  }
+}
+```
+
+Pre-release version in package.json:
+
+```json
+{
+  "dependencies": {
+    "shakapacker": "9.3.0-beta.1"
   }
 }
 ```

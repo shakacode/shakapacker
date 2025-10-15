@@ -84,12 +84,14 @@ Note that pre-release versions use different formats:
 
 ### Major Version Upgrades
 
-For major version upgrades, always check the version-specific upgrade guides:
+For major version upgrades, always consult the version-specific upgrade guides for breaking changes and new features:
 
-- [V9 Upgrade Guide](./v9_upgrade.md) - Upgrading from v8 to v9
+- [V9 Upgrade Guide](./v9_upgrade.md) - Upgrading from v8 to v9 (includes CSS Modules changes, SWC defaults, and more)
 - [V8 Upgrade Guide](./v8_upgrade.md) - Upgrading from v7 to v8
 - [V7 Upgrade Guide](./v7_upgrade.md) - Upgrading from v6 to v7
 - [V6 Upgrade Guide](./v6_upgrade.md) - Upgrading from v5 to v6
+
+> **💡 Note:** Major version upgrades may include breaking changes. The steps above cover the basic gem/package updates that apply to all versions, but you should always review the version-specific guide for additional migration steps.
 
 ---
 
