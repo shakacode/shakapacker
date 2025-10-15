@@ -874,21 +874,22 @@ describe("BuildValidator", () => {
       }
 
       // Override findBinary to return null
-      const originalFindBinary = BuildValidator.prototype.findBinary
-      jest
+      const findBinarySpy = jest
         .spyOn(BuildValidator.prototype, "findBinary")
         .mockImplementation()
         .mockReturnValue(null)
 
-      const result = await validator.validateBuild(build, testDir)
+      try {
+        const result = await validator.validateBuild(build, testDir)
 
-      expect(result.success).toBe(false)
-      expect(result.errors.length).toBeGreaterThan(0)
-      expect(result.errors[0]).toContain("Could not find")
-      expect(result.errors[0]).toContain("webpack-dev-server")
-
-      // Restore
-      BuildValidator.prototype.findBinary = originalFindBinary
+        expect(result.success).toBe(false)
+        expect(result.errors.length).toBeGreaterThan(0)
+        expect(result.errors[0]).toContain("Could not find")
+        expect(result.errors[0]).toContain("webpack-dev-server")
+      } finally {
+        // Always restore the spy
+        findBinarySpy.mockRestore()
+      }
     })
 
     it("should use strict binary resolution in CI environments", async () => {
@@ -898,35 +899,36 @@ describe("BuildValidator", () => {
       // Set CI=true
       process.env.CI = "true"
 
-      // Create validator (should auto-enable strict mode)
-      const ciValidator = new BuildValidator({ verbose: false })
-
-      const build = {
-        name: "dev-hmr",
-        bundler: "webpack",
-        environment: {
-          NODE_ENV: "development",
-          WEBPACK_SERVE: "true"
-        },
-        configFile: join(testDir, "webpack.config.js"),
-        outputs: ["client"]
-      }
-
       // Mock findBinary to simulate not finding binary locally
-      const originalFindBinary = BuildValidator.prototype.findBinary
-      jest
+      const findBinarySpy = jest
         .spyOn(BuildValidator.prototype, "findBinary")
         .mockImplementation()
         .mockReturnValue(null)
 
-      const result = await ciValidator.validateBuild(build, testDir)
+      try {
+        // Create validator (should auto-enable strict mode)
+        const ciValidator = new BuildValidator({ verbose: false })
 
-      expect(result.success).toBe(false)
-      expect(result.errors[0]).toContain("Could not find")
+        const build = {
+          name: "dev-hmr",
+          bundler: "webpack",
+          environment: {
+            NODE_ENV: "development",
+            WEBPACK_SERVE: "true"
+          },
+          configFile: join(testDir, "webpack.config.js"),
+          outputs: ["client"]
+        }
 
-      // Restore
-      BuildValidator.prototype.findBinary = originalFindBinary
-      process.env.CI = originalCI
+        const result = await ciValidator.validateBuild(build, testDir)
+
+        expect(result.success).toBe(false)
+        expect(result.errors[0]).toContain("Could not find")
+      } finally {
+        // Always restore the spy and env var
+        findBinarySpy.mockRestore()
+        process.env.CI = originalCI
+      }
     })
   })
 
