@@ -632,9 +632,9 @@ Once you have `config/shakapacker-builds.yml`, you can run builds by name:
 bin/shakapacker --list-builds
 
 # Run a specific build
-bin/shakapacker --build dev-hmr    # Runs dev-hmr build (automatically uses dev server if WEBPACK_SERVE=true)
-bin/shakapacker --build prod        # Runs production build
-bin/shakapacker --build dev         # Runs development build
+bin/shakapacker --build dev-hmr    # Client bundle with HMR (automatically uses dev server)
+bin/shakapacker --build prod        # Client and server bundles for production
+bin/shakapacker --build dev         # Client bundle for development
 ```
 
 ### Build Configuration Format
@@ -642,19 +642,17 @@ bin/shakapacker --build dev         # Runs development build
 Example `config/shakapacker-builds.yml`:
 
 ```yaml
-default_bundler: rspack # Options: webpack | rspack
-
 builds:
   dev-hmr:
     description: Client bundle with HMR (React Fast Refresh)
-    bundler: rspack # Optional: override default_bundler
+    bundler: rspack # Optional: override assets_bundler from config/shakapacker.yml
     environment:
       NODE_ENV: development
       RAILS_ENV: development
       WEBPACK_SERVE: "true" # Automatically uses bin/shakapacker-dev-server
     outputs:
       - client
-    config: config/rspack/custom.config.js # Optional: custom config file
+    config: config/${BUNDLER}/custom.config.js # Optional: custom config file with variable substitution
 
   prod:
     description: Production client and server bundles
@@ -662,16 +660,16 @@ builds:
       NODE_ENV: production
       RAILS_ENV: production
     outputs:
-      - client
+      - client # Multiple outputs - builds both client and server bundles
       - server
 ```
 
 ### Build Configuration Options
 
 - **`description`** (optional): Human-readable description of the build
-- **`bundler`** (optional): Override the default bundler (`webpack` or `rspack`)
+- **`bundler`** (optional): Override the default bundler from `config/shakapacker.yml` (`webpack` or `rspack`)
 - **`environment`**: Environment variables to set when running the build
-- **`outputs`**: Array of output types (`client`, `server`, or both)
+- **`outputs`**: Array of output types - can include `client`, `server`, or both for multiple bundles in a single build
 - **`config`** (optional): Custom config file path (supports `${BUNDLER}` variable substitution)
 - **`bundler_env`** (optional): Webpack/rspack `--env` flags
 
