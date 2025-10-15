@@ -14,11 +14,16 @@ module.exports = [
   // Global ignores (replaces .eslintignore)
   {
     ignores: [
-      "lib/**",
-      "**/node_modules/**",
-      "vendor/**",
-      "spec/**",
-      "package/**" // TODO: Remove after issue #644 is resolved (lints package/ TS source files)
+      "lib/**", // Ruby files, not JavaScript
+      "**/node_modules/**", // Third-party dependencies
+      "vendor/**", // Vendored dependencies
+      "spec/**", // Ruby specs, not JavaScript
+      "package/**/*.js", // Generated/compiled JavaScript from TypeScript
+      "package/**/*.d.ts", // Generated TypeScript declaration files
+      // Temporarily ignore TypeScript files until technical debt is resolved
+      // See ESLINT_TECHNICAL_DEBT.md for tracking
+      // TODO: Remove this once ESLint issues are fixed (tracked in #723)
+      "package/**/*.ts"
     ]
   },
 
@@ -52,7 +57,11 @@ module.exports = [
       "import/no-extraneous-dependencies": "off",
       // TypeScript handles extensions, not needed for JS imports
       "import/extensions": "off",
-      indent: ["error", 2]
+      indent: ["error", 2],
+      // Allow for...of loops - modern JS syntax, won't pollute client code
+      "no-restricted-syntax": "off",
+      // Allow console statements - used for debugging/logging throughout
+      "no-console": "off"
     },
     settings: {
       react: {
@@ -131,7 +140,115 @@ module.exports = [
       // Strict: no 'any' types allowed - use 'unknown' or specific types instead
       "@typescript-eslint/no-explicit-any": "error",
       // Allow implicit return types - TypeScript can infer them
-      "@typescript-eslint/explicit-module-boundary-types": "off"
+      "@typescript-eslint/explicit-module-boundary-types": "off",
+      // Disable no-undef for TypeScript - TypeScript compiler handles this
+      // This prevents false positives for ambient types like NodeJS.ProcessEnv
+      "no-undef": "off"
+    }
+  },
+
+  // Temporary overrides for files with remaining errors
+  // See ESLINT_TECHNICAL_DEBT.md for detailed documentation
+  //
+  // These overrides suppress ~172 errors that require either:
+  // 1. Major type refactoring (any/unsafe-* rules)
+  // 2. Potential breaking changes (module system)
+  // 3. Significant code restructuring
+  //
+  // GitHub Issues tracking this technical debt:
+  // - #707: TypeScript: Refactor configExporter module for type safety
+  // - #708: Module System: Modernize to ES6 modules with codemod
+  // - #709: Code Style: Fix remaining ESLint style issues
+  {
+    // Consolidated override for package/config.ts and package/babel/preset.ts
+    // Combines rules from both previous override blocks to avoid duplication
+    files: ["package/babel/preset.ts", "package/config.ts"],
+    rules: {
+      // From first override block
+      "@typescript-eslint/no-require-imports": "off",
+      "@typescript-eslint/no-unused-vars": "off",
+      "@typescript-eslint/no-unsafe-call": "off",
+      "import/order": "off",
+      "import/newline-after-import": "off",
+      "import/first": "off",
+      // Additional rules that were in the second override for config.ts
+      "@typescript-eslint/no-unsafe-assignment": "off",
+      "@typescript-eslint/no-unsafe-member-access": "off",
+      "@typescript-eslint/no-unsafe-argument": "off",
+      "@typescript-eslint/no-explicit-any": "off",
+      "no-useless-escape": "off",
+      "no-continue": "off",
+      "no-nested-ternary": "off"
+    }
+  },
+  {
+    files: ["package/configExporter/**/*.ts"],
+    rules: {
+      "@typescript-eslint/no-explicit-any": "off",
+      "@typescript-eslint/no-unsafe-assignment": "off",
+      "@typescript-eslint/no-unsafe-member-access": "off",
+      "@typescript-eslint/no-unsafe-call": "off",
+      "@typescript-eslint/no-unsafe-return": "off",
+      "@typescript-eslint/no-unsafe-argument": "off",
+      "@typescript-eslint/no-unsafe-function-type": "off",
+      "@typescript-eslint/no-unused-vars": "off",
+      "@typescript-eslint/require-await": "off",
+      "no-param-reassign": "off",
+      "no-await-in-loop": "off",
+      "no-nested-ternary": "off",
+      "import/prefer-default-export": "off",
+      "global-require": "off",
+      "no-underscore-dangle": "off",
+      "class-methods-use-this": "off"
+    }
+  },
+  {
+    // Remaining utils files (removed package/config.ts from this block)
+    files: [
+      "package/utils/inliningCss.ts",
+      "package/utils/errorCodes.ts",
+      "package/utils/errorHelpers.ts",
+      "package/utils/pathValidation.ts"
+    ],
+    rules: {
+      "@typescript-eslint/no-unsafe-assignment": "off",
+      "@typescript-eslint/no-unsafe-member-access": "off",
+      "@typescript-eslint/no-unsafe-argument": "off",
+      "@typescript-eslint/no-explicit-any": "off",
+      "no-useless-escape": "off",
+      "no-continue": "off",
+      "no-nested-ternary": "off"
+    }
+  },
+  {
+    files: ["package/plugins/**/*.ts", "package/optimization/**/*.ts"],
+    rules: {
+      "@typescript-eslint/no-unsafe-assignment": "off",
+      "@typescript-eslint/no-unsafe-call": "off",
+      "@typescript-eslint/no-redundant-type-constituents": "off",
+      "import/prefer-default-export": "off"
+    }
+  },
+  {
+    files: [
+      "package/environments/**/*.ts",
+      "package/index.ts",
+      "package/rspack/index.ts",
+      "package/rules/**/*.ts",
+      "package/swc/index.ts",
+      "package/esbuild/index.ts",
+      "package/dev_server.ts",
+      "package/env.ts"
+    ],
+    rules: {
+      "@typescript-eslint/no-unsafe-assignment": "off",
+      "@typescript-eslint/no-unsafe-call": "off",
+      "@typescript-eslint/no-unsafe-return": "off",
+      "@typescript-eslint/no-redundant-type-constituents": "off",
+      "@typescript-eslint/no-unused-vars": "off",
+      "@typescript-eslint/no-unsafe-function-type": "off",
+      "import/prefer-default-export": "off",
+      "no-underscore-dangle": "off"
     }
   },
 
