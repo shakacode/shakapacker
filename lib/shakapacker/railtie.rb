@@ -52,11 +52,13 @@ class Shakapacker::Engine < ::Rails::Engine
         private
 
           def send_pack_early_hints_automatically
-            return unless respond_to?(:view_context, true)
-            return unless view_context
+            # Only send for HTML responses
+            return unless response.content_type&.include?('text/html')
+            return unless respond_to?(:view_context)
+
             view_context.send_pack_early_hints
           rescue => e
-            # Silently fail if early hints can't be sent (e.g., headers already sent)
+            # Silently fail if early hints can't be sent (e.g., headers already sent, no view context)
             Rails.logger.debug { "Early hints: automatic sending failed - #{e.class}: #{e.message}" }
           end
 
