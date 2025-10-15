@@ -12,7 +12,7 @@ describe("Config Exporter Integration Tests", () => {
   const testDir = resolve(__dirname, "../tmp/integration-test")
   const configPath = join(testDir, "config/shakapacker-builds.yml")
   const outputDir = join(testDir, "output")
-  const binPath = resolve(__dirname, "../../bin/export-bundler-config")
+  const binPath = resolve(__dirname, "../../bin/shakapacker-config")
 
   beforeEach(() => {
     // Create test directory
