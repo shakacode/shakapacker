@@ -6,9 +6,9 @@ This guide helps you add HTTP 103 Early Hints support to your existing Shakapack
 
 HTTP 103 Early Hints allows browsers to start downloading critical assets (JS, CSS) **while** Rails is still rendering your views. This can significantly improve page load performance, especially if you have expensive database queries or complex view rendering.
 
-## Quick Start (Zero Configuration)
+## Quick Start - Works with Existing Code!
 
-The easiest way to enable early hints:
+The easiest way to enable early hints - **no changes to your existing views needed**:
 
 ### 1. Enable in Configuration
 
@@ -17,80 +17,105 @@ The easiest way to enable early hints:
 production:
   early_hints:
     enabled: true
-    default_packs: ["application"] # Your main pack(s)
     include_css: true
     include_js: true
 ```
 
 ### 2. Add One Line to Your Layout
 
-**Option A: At the very top (optimal performance)**
-
 ```erb
-<% send_pack_early_hints %>
+<%# app/views/layouts/application.html.erb %>
+<% send_pack_early_hints %>  <%# That's it! %>
 <!DOCTYPE html>
 <html>
   <head>
     <%= stylesheet_pack_tag 'application' %>
   </head>
   <body>
+    <%= yield %>
     <%= javascript_pack_tag 'application' %>
   </body>
 </html>
 ```
 
-**Option B: Inside `<head>` (still good performance)**
+**Done!** No pack names needed, works with your existing `append_javascript_pack_tag` calls.
+
+## How It Works
+
+The magic is in Rails' rendering order:
+
+```
+1. Views render     → append_javascript_pack_tag('admin')  [queues populate]
+2. Layout renders   → send_pack_early_hints()              [reads queues!]
+3. HTTP 103 sent    → Browser starts downloading
+4. HTML renders     → javascript_pack_tag renders tags
+```
+
+When the layout starts rendering, your views have **already rendered**, so the pack queues are populated! `send_pack_early_hints()` with no arguments automatically discovers all packs.
+
+## Example: Multi-Pack App
+
+Your existing code probably looks like this:
 
 ```erb
+<%# app/views/admin/dashboard.html.erb %>
+<% append_javascript_pack_tag 'admin' %>
+<% append_stylesheet_pack_tag 'admin' %>
+
+<div class="admin-dashboard">
+  ...
+</div>
+```
+
+```erb
+<%# app/views/layouts/application.html.erb %>
 <!DOCTYPE html>
 <html>
-  <head>
-    <% send_pack_early_hints %>
-    <%= stylesheet_pack_tag 'application' %>
-  </head>
   <body>
+    <%= yield %>
     <%= javascript_pack_tag 'application' %>
+    <%= stylesheet_pack_tag 'application' %>
   </body>
 </html>
 ```
 
-That's it! No need to duplicate pack names - `send_pack_early_hints` uses `default_packs` from your config.
+Just add **one line** at the top of your layout:
 
-## Advanced: Controller-Level Early Hints
+```erb
+<% send_pack_early_hints %>  <%# Automatically includes 'application' AND 'admin'! %>
+<!DOCTYPE html>
+...
+```
 
-For maximum performance benefit (sending hints **before** expensive queries), add a `before_action`:
+## Advanced: Explicit Pack Names
+
+If you know your pack names upfront (not using append/prepend pattern):
+
+```erb
+<% send_pack_early_hints 'application', 'admin' %>
+<!DOCTYPE html>
+...
+```
+
+## Advanced: Controller-Level (Before Expensive Queries)
+
+For maximum performance, send hints **before** expensive queries:
 
 ```ruby
 # app/controllers/application_controller.rb
 class ApplicationController < ActionController::Base
-  before_action :send_early_hints_for_assets
+  before_action :send_early_hints
 
   private
 
-  def send_early_hints_for_assets
-    # Sends early hints BEFORE any view rendering or database queries
-    view_context.send_pack_early_hints
+  def send_early_hints
+    # Must specify packs - views haven't rendered yet!
+    view_context.send_pack_early_hints('application')
   end
 end
 ```
 
-This is especially beneficial if your views make expensive database queries.
-
-## Multiple Packs
-
-If different controllers use different packs:
-
-### Configuration Approach
-
-```yaml
-# config/shakapacker.yml
-production:
-  early_hints:
-    enabled: true
-    default_packs: ["application", "admin", "marketing"] # All packs you use
-```
-
-### Per-Controller Approach
+Or per-controller:
 
 ```ruby
 class AdminController < ApplicationController
@@ -104,15 +129,6 @@ class AdminController < ApplicationController
 end
 ```
 
-### Per-Layout Approach
-
-```erb
-<%# layouts/admin.html.erb %>
-<% send_pack_early_hints 'admin' %>
-<!DOCTYPE html>
-...
-```
-
 ## Requirements
 
 - **Rails 5.2+** (for `request.send_early_hints` support)
@@ -121,127 +137,68 @@ end
   - nginx 1.13+ with ngx_http_v2_module ✅
   - Other HTTP/2 servers with early hints support
 
-## Verification
-
-To verify early hints are working:
-
-1. **Check server logs** - Should see HTTP 103 responses
-2. **Chrome DevTools** - Network tab shows requests starting earlier
-3. **WebPageTest** - Shows assets downloading during "server think time"
-
-## Rollback
-
-If you need to disable:
-
-```yaml
-# config/shakapacker.yml
-production:
-  early_hints:
-    enabled: false
-```
-
-Or simply remove `<% send_pack_early_hints %>` from your layout.
-
-## Performance Tips
-
-1. **Enable in production only** - Development doesn't benefit much
-2. **Place helper at top of layout** - Sends hints as early as possible
-3. **Use controller before_action** - Sends hints before expensive queries
-4. **Monitor performance** - Use APM to measure impact
-
 ## Troubleshooting
 
-**Early hints not being sent?**
+**Early hints not working?**
 
-- Check Rails version >= 5.2
-- Verify server supports HTTP/2 and early hints
+- Verify Rails 5.2+ and server supports HTTP/2 + early hints
+- Check `early_hints: enabled: true` in config
 - Check logs for HTTP 103 responses
-- Ensure `enabled: true` in config
 
-**Wrong assets being preloaded?**
+**Wrong assets preloaded?**
 
-- Review `default_packs` configuration
-- Or explicitly specify packs: `<% send_pack_early_hints 'your-pack' %>`
+- If using zero-arg `send_pack_early_hints`, check what's in queues
+- Or explicitly specify: `<% send_pack_early_hints 'your-pack' %>`
 
 **No performance improvement?**
 
-- Early hints work best with:
+- Early hints help most with:
   - Slow server responses (expensive queries/rendering)
   - Large assets
   - High network latency
 - May not help much with very fast responses
 
-## Examples
+## Comparison: Before vs After
 
-### Standard Rails App
-
-```yaml
-# config/shakapacker.yml
-production:
-  early_hints:
-    enabled: true
-    default_packs: ["application"]
-```
+### Before
 
 ```erb
-<%# app/views/layouts/application.html.erb %>
-<% send_pack_early_hints %>
 <!DOCTYPE html>
 <html>
-  <head>
-    <%= stylesheet_pack_tag 'application' %>
-  </head>
   <body>
+    <%= yield %>
     <%= javascript_pack_tag 'application' %>
   </body>
 </html>
 ```
 
-### Multi-Pack App
+Timeline:
 
-```yaml
-# config/shakapacker.yml
-production:
-  early_hints:
-    enabled: true
-    default_packs: ["application", "admin"]
+```
+Request → Rails renders (3s) → Browser gets HTML → Browser downloads JS (2s) → Total: 5s
 ```
 
-```ruby
-# app/controllers/application_controller.rb
-class ApplicationController < ActionController::Base
-  before_action :send_early_hints
+### After
 
-  private
-
-  def send_early_hints
-    view_context.send_pack_early_hints
-  end
-end
+```erb
+<% send_pack_early_hints %>
+<!DOCTYPE html>
+<html>
+  <body>
+    <%= yield %>
+    <%= javascript_pack_tag 'application' %>
+  </body>
+</html>
 ```
 
-### App with Expensive Queries
+Timeline:
 
-```ruby
-# app/controllers/dashboard_controller.rb
-class DashboardController < ApplicationController
-  before_action :send_early_hints
-
-  def show
-    # Expensive query - but browser is already downloading assets!
-    @data = User.includes(:posts, :comments, :likes)
-                .where(active: true)
-                .order(created_at: :desc)
-                .limit(100)
-  end
-
-  private
-
-  def send_early_hints
-    view_context.send_pack_early_hints
-  end
-end
 ```
+Request → HTTP 103 sent → Browser downloads JS (2s running in parallel!)
+       → Rails renders (3s) → Browser gets HTML → JS already downloaded! → Total: 3s
+```
+
+**2 second improvement!** Browser downloads assets **during** server think time.
 
 ## Further Reading
 

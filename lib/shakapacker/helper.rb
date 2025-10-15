@@ -169,7 +169,8 @@ module Shakapacker::Helper
   #
   # Example:
   #
-  #   # Option 1: No arguments - uses default packs from config (recommended for easy upgrades)
+  #   # Option 1: No arguments - reads from pack queues (recommended)
+  #   # Queues are populated by append_javascript_pack_tag / append_stylesheet_pack_tag in views
   #   <% send_pack_early_hints %>
   #   <!DOCTYPE html>
   #   <html>
@@ -177,17 +178,18 @@ module Shakapacker::Helper
   #       <%= stylesheet_pack_tag 'application' %>
   #     </head>
   #     <body>
+  #       <%= yield %>  <%# Views already rendered, queues populated! %>
   #       <%= javascript_pack_tag 'application' %>
   #     </body>
   #   </html>
   #
-  #   # Configure default packs in shakapacker.yml:
-  #   production:
-  #     early_hints:
-  #       enabled: true
-  #       default_packs: ['application']  # Packs to preload by default
+  #   # How it works:
+  #   # 1. Views/partials render and call append_javascript_pack_tag('foo')
+  #   # 2. Layout renders (views already done!)
+  #   # 3. send_pack_early_hints() reads pack names from queues
+  #   # 4. Early hints sent with all packs that will be used
   #
-  #   # Option 2: Explicit pack names (when you need different packs)
+  #   # Option 2: Explicit pack names (when you know them upfront)
   #   <% send_pack_early_hints 'application', 'admin' %>
   #
   #   # Option 3: With options
@@ -197,21 +199,24 @@ module Shakapacker::Helper
   #        include_fonts: false # default: from config
   #   %>
   #
-  #   # Option 4: In controller before_action (best for expensive queries)
+  #   # Option 4: In controller before_action (for expensive queries)
+  #   # Must specify pack names since queues aren't populated yet
   #   class ApplicationController < ActionController::Base
   #     before_action :send_early_hints
   #
   #     def send_early_hints
-  #       view_context.send_pack_early_hints  # Uses default_packs from config
+  #       view_context.send_pack_early_hints('application')
   #     end
   #   end
   def send_pack_early_hints(*names, **options)
     return unless early_hints_supported? && early_hints_enabled?
 
-    # If no pack names provided, use default packs from configuration
+    # If no pack names provided, collect from queues populated by append/prepend helpers
+    # This allows zero-config usage: views call append_*, then layout calls send_pack_early_hints
     if names.empty?
-      config = current_shakapacker_instance.config.early_hints || {}
-      names = Array(config[:default_packs] || config[:default_pack] || "application")
+      names = collect_pack_names_from_queues
+      # If queues are empty, nothing to send
+      return nil if names.empty?
     end
 
     links = build_early_hints_links(names, **options)
@@ -373,6 +378,24 @@ module Shakapacker::Helper
       config = current_shakapacker_instance.config.early_hints
       return false unless config
       config[:enabled] == true
+    end
+
+    # Collect pack names from queues populated by append/prepend helpers
+    # This allows send_pack_early_hints to work without arguments
+    def collect_pack_names_from_queues
+      names = []
+
+      # Collect from javascript pack queue (all async/deferred/sync)
+      if defined?(@javascript_pack_tag_queue) && @javascript_pack_tag_queue
+        names.concat(@javascript_pack_tag_queue.values.flatten)
+      end
+
+      # Collect from stylesheet pack queue
+      if defined?(@stylesheet_pack_tag_queue) && @stylesheet_pack_tag_queue
+        names.concat(@stylesheet_pack_tag_queue)
+      end
+
+      names.uniq.map(&:to_s)
     end
 
     # Build early hints Link headers for the specified packs
