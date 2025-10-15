@@ -402,8 +402,9 @@ module Shakapacker::Helper
               source_path = lookup_source(source)
               link_headers << build_link_header(source_path, source, as: "script")
             end
-          rescue Shakapacker::Manifest::MissingEntryError, NoMethodError
+          rescue Shakapacker::Manifest::MissingEntryError, NoMethodError => e
             # Gracefully handle missing entries or nil manifest responses
+            Rails.logger.debug { "Early hints: skipping pack '#{name}' JS - #{e.class}: #{e.message}" }
           end
         end
 
@@ -415,8 +416,9 @@ module Shakapacker::Helper
               source_path = lookup_source(source)
               link_headers << build_link_header(source_path, source, as: "style")
             end
-          rescue Shakapacker::Manifest::MissingEntryError, NoMethodError
+          rescue Shakapacker::Manifest::MissingEntryError, NoMethodError => e
             # Gracefully handle missing entries or nil manifest responses
+            Rails.logger.debug { "Early hints: skipping pack '#{name}' CSS - #{e.class}: #{e.message}" }
           end
         end
       end
