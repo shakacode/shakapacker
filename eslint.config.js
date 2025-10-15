@@ -159,14 +159,25 @@ module.exports = [
   // - #708: Module System: Modernize to ES6 modules with codemod
   // - #709: Code Style: Fix remaining ESLint style issues
   {
+    // Consolidated override for package/config.ts and package/babel/preset.ts
+    // Combines rules from both previous override blocks to avoid duplication
     files: ["package/babel/preset.ts", "package/config.ts"],
     rules: {
+      // From first override block
       "@typescript-eslint/no-require-imports": "off",
       "@typescript-eslint/no-unused-vars": "off",
       "@typescript-eslint/no-unsafe-call": "off",
       "import/order": "off",
       "import/newline-after-import": "off",
-      "import/first": "off"
+      "import/first": "off",
+      // Additional rules that were in the second override for config.ts
+      "@typescript-eslint/no-unsafe-assignment": "off",
+      "@typescript-eslint/no-unsafe-member-access": "off",
+      "@typescript-eslint/no-unsafe-argument": "off",
+      "@typescript-eslint/no-explicit-any": "off",
+      "no-useless-escape": "off",
+      "no-continue": "off",
+      "no-nested-ternary": "off"
     }
   },
   {
@@ -191,8 +202,8 @@ module.exports = [
     }
   },
   {
+    // Remaining utils files (removed package/config.ts from this block)
     files: [
-      "package/config.ts",
       "package/utils/inliningCss.ts",
       "package/utils/errorCodes.ts",
       "package/utils/errorHelpers.ts",
