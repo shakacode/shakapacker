@@ -22,6 +22,8 @@ module ActionView::TestCase::Behavior
           end
         end.new
         @javascript_pack_tag_loaded = nil
+        @javascript_pack_tag_queue = nil
+        @stylesheet_pack_tag_queue = nil
       end
 
       it "#asset_pack_path generates the correct path" do
@@ -505,6 +507,8 @@ module ActionView::TestCase::Behavior
           end
         end.new
         @javascript_pack_tag_loaded = nil
+        @javascript_pack_tag_queue = nil
+        @stylesheet_pack_tag_queue = nil
 
         allow(Shakapacker.config).to receive(:integrity).and_return({ enabled: true, cross_origin: "anonymous" })
       end
