@@ -19,15 +19,15 @@ describe "Runner with build configs" do
   after do
     ENV["NODE_ENV"] = @original_node_env
     ENV["RAILS_ENV"] = @original_rails_env
-    File.delete(".bundler-config.yml") if File.exist?(".bundler-config.yml")
+    File.delete("config/shakapacker-builds.yml") if File.exist?("config/shakapacker-builds.yml")
   end
 
   let(:test_app_path) { Dir.pwd }
 
   describe "running build by name" do
-    context "when .bundler-config.yml exists with prod build" do
+    context "when config/shakapacker-builds.yml exists with prod build" do
       before do
-        File.write(".bundler-config.yml", <<~YAML)
+        File.write("config/shakapacker-builds.yml", <<~YAML)
           builds:
             prod:
               description: Production build
@@ -49,7 +49,7 @@ describe "Runner with build configs" do
         allow(instance).to receive(:system).and_return(true)
 
         output = capture_stdout do
-          klass.run(["prod"])
+          klass.run(["--build", "prod"])
         end
 
         expect(output).to include("Running build: prod")
@@ -60,9 +60,9 @@ describe "Runner with build configs" do
       end
     end
 
-    context "when .bundler-config.yml exists with HMR build" do
+    context "when config/shakapacker-builds.yml exists with HMR build" do
       before do
-        File.write(".bundler-config.yml", <<~YAML)
+        File.write("config/shakapacker-builds.yml", <<~YAML)
           builds:
             dev-hmr:
               description: HMR development build
@@ -86,7 +86,7 @@ describe "Runner with build configs" do
         allow(dev_server_instance).to receive(:run).and_return(nil)
 
         output = capture_stdout do
-          klass.run(["dev-hmr"])
+          klass.run(["--build", "dev-hmr"])
         end
 
         expect(dev_server_klass).to have_received(:run_with_build_config)
@@ -98,7 +98,7 @@ describe "Runner with build configs" do
 
     context "when build name not found" do
       before do
-        File.write(".bundler-config.yml", <<~YAML)
+        File.write("config/shakapacker-builds.yml", <<~YAML)
           builds:
             prod:
               description: Production build
@@ -124,7 +124,7 @@ describe "Runner with build configs" do
       end
     end
 
-    context "when .bundler-config.yml does not exist" do
+    context "when config/shakapacker-builds.yml does not exist" do
       it "runs normally without build config" do
         klass = Shakapacker::Runner
         instance = klass.new([], nil)
@@ -143,7 +143,7 @@ describe "Runner with build configs" do
 
     context "with custom config file path" do
       before do
-        File.write(".bundler-config.yml", <<~YAML)
+        File.write("config/shakapacker-builds.yml", <<~YAML)
           builds:
             custom:
               description: Custom config build
@@ -176,7 +176,7 @@ describe "Runner with build configs" do
   describe "DevServerRunner with build configs" do
     context "when running with build name" do
       before do
-        File.write(".bundler-config.yml", <<~YAML)
+        File.write("config/shakapacker-builds.yml", <<~YAML)
           builds:
             dev:
               description: Dev server build
@@ -198,7 +198,7 @@ describe "Runner with build configs" do
         allow(instance).to receive(:run).and_return(nil)
 
         output = capture_stdout do
-          klass.run(["dev"])
+          klass.run(["--build", "dev"])
         end
 
         expect(output).to include("Running dev server for build: dev")

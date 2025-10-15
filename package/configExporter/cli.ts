@@ -114,7 +114,7 @@ export async function run(args: string[]): Promise<number> {
     if (options.build) {
       const loader = new ConfigFileLoader(options.configFile)
       if (!loader.exists()) {
-        const configPath = options.configFile || ".bundler-config.yml"
+        const configPath = options.configFile || "config/shakapacker-builds.yml"
         throw new Error(
           `--build requires a config file but ${configPath} not found. Run --init to create it.`
         )
@@ -227,11 +227,12 @@ QUICK START (for troubleshooting):
     .option("init", {
       type: "boolean",
       default: false,
-      description: "Generate sample .bundler-config.yml with examples"
+      description: "Generate sample config/shakapacker-builds.yml with examples"
     })
     .option("config-file", {
       type: "string",
-      description: "Path to config file (default: .bundler-config.yml)"
+      description:
+        "Path to config file (default: config/shakapacker-builds.yml)"
     })
     .option("build", {
       type: "string",
@@ -392,7 +393,7 @@ function applyDefaults(options: ExportOptions): void {
 }
 
 function runInitCommand(options: ExportOptions): number {
-  const configPath = options.configFile || ".bundler-config.yml"
+  const configPath = options.configFile || "config/shakapacker-builds.yml"
   const fullPath = resolve(process.cwd(), configPath)
 
   if (existsSync(fullPath)) {
@@ -440,7 +441,7 @@ async function runValidateCommand(options: ExportOptions): Promise<number> {
     // Validate that config file exists
     const loader = new ConfigFileLoader(options.configFile)
     if (!loader.exists()) {
-      const configPath = options.configFile || ".bundler-config.yml"
+      const configPath = options.configFile || "config/shakapacker-builds.yml"
       throw new Error(
         `Config file ${configPath} not found. Run --init to create it.`
       )
@@ -473,7 +474,7 @@ async function runValidateCommand(options: ExportOptions): Promise<number> {
       // Handle empty builds edge case
       if (buildsToValidate.length === 0) {
         throw new Error(
-          `No builds found in config file. Add at least one build to .bundler-config.yml or run --init to see examples.`
+          `No builds found in config file. Add at least one build to config/shakapacker-builds.yml or run --init to see examples.`
         )
       }
     }
@@ -579,7 +580,7 @@ async function runAllBuildsCommand(options: ExportOptions): Promise<number> {
 
     const loader = new ConfigFileLoader(options.configFile)
     if (!loader.exists()) {
-      const configPath = options.configFile || ".bundler-config.yml"
+      const configPath = options.configFile || "config/shakapacker-builds.yml"
       throw new Error(
         `Config file ${configPath} not found. Run --init to create it.`
       )
@@ -663,7 +664,7 @@ async function runDoctorMode(
     const createdFiles: string[] = []
 
     // Check if config file exists with shakapacker_doctor_default_builds_here flag
-    const configFilePath = options.configFile || ".bundler-config.yml"
+    const configFilePath = options.configFile || "config/shakapacker-builds.yml"
     const loader = new ConfigFileLoader(configFilePath)
 
     if (loader.exists()) {

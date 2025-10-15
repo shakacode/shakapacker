@@ -12,7 +12,7 @@ This guide covers all configuration options available in `config/shakapacker.yml
 - [Compilation Options](#compilation-options)
 - [Advanced Options](#advanced-options)
 - [Environment-Specific Configuration](#environment-specific-configuration)
-- [Build Configurations (.bundler-config.yml)](#build-configurations-bundler-configyml)
+- [Build Configurations (config/shakapacker-builds.yml)](#build-configurations-configshakapacker-buildsyml)
 
 ## Basic Configuration
 
@@ -609,13 +609,13 @@ default: &default
     - packages/ui-components
 ```
 
-## Build Configurations (.bundler-config.yml)
+## Build Configurations (config/shakapacker-builds.yml)
 
-Shakapacker supports defining reusable build configurations in a `.bundler-config.yml` file. This allows you to run predefined builds with a simple command, making it easy to switch between different build scenarios.
+Shakapacker supports defining reusable build configurations in `config/shakapacker-builds.yml`. This allows you to run predefined builds with a simple command, making it easy to switch between different build scenarios.
 
 ### Creating a Build Configuration File
 
-Create a `.bundler-config.yml` file in your project root:
+Create `config/shakapacker-builds.yml`:
 
 ```bash
 bin/shakapacker --init
@@ -625,21 +625,21 @@ This generates a file with example builds for common scenarios (HMR development,
 
 ### Running Builds by Name
 
-Once you have a `.bundler-config.yml` file, you can run builds by name:
+Once you have `config/shakapacker-builds.yml`, you can run builds by name:
 
 ```bash
 # List available builds
 bin/shakapacker --list-builds
 
 # Run a specific build
-bin/shakapacker dev-hmr    # Runs dev-hmr build (automatically uses dev server if WEBPACK_SERVE=true)
-bin/shakapacker prod        # Runs production build
-bin/shakapacker dev         # Runs development build
+bin/shakapacker --build dev-hmr    # Runs dev-hmr build (automatically uses dev server if WEBPACK_SERVE=true)
+bin/shakapacker --build prod        # Runs production build
+bin/shakapacker --build dev         # Runs development build
 ```
 
 ### Build Configuration Format
 
-Example `.bundler-config.yml`:
+Example `config/shakapacker-builds.yml`:
 
 ```yaml
 default_bundler: rspack # Options: webpack | rspack
@@ -681,7 +681,7 @@ If a build has `WEBPACK_SERVE=true` or `HMR=true` in its environment, Shakapacke
 
 ```bash
 # These are equivalent:
-bin/shakapacker dev-hmr
+bin/shakapacker --build dev-hmr
 WEBPACK_SERVE=true bin/shakapacker-dev-server  # (with dev-hmr environment vars)
 ```
 

@@ -11,19 +11,19 @@ import {
 /**
  * Loads and validates bundler configuration files
  * @example
- * const loader = new ConfigFileLoader('.bundler-config.yml')
+ * const loader = new ConfigFileLoader('config/shakapacker-builds.yml')
  * const config = loader.load()
  */
 export class ConfigFileLoader {
   private configFilePath: string
 
   /**
-   * @param configFilePath - Path to config file (defaults to .bundler-config.yml in cwd)
+   * @param configFilePath - Path to config file (defaults to config/shakapacker-builds.yml in cwd)
    * @throws Error if path is outside project directory
    */
   constructor(configFilePath?: string) {
     this.configFilePath =
-      configFilePath || resolve(process.cwd(), ".bundler-config.yml")
+      configFilePath || resolve(process.cwd(), "config/shakapacker-builds.yml")
     this.validateConfigPath()
   }
 

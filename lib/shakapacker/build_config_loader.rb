@@ -6,7 +6,7 @@ module Shakapacker
     attr_reader :config_file_path
 
     def initialize(config_file_path = nil)
-      @config_file_path = config_file_path || File.join(Dir.pwd, ".bundler-config.yml")
+      @config_file_path = config_file_path || File.join(Dir.pwd, "config", "shakapacker-builds.yml")
     end
 
     def exists?
@@ -16,7 +16,7 @@ module Shakapacker
     def load_build(build_name)
       unless exists?
         raise ArgumentError, "Config file not found: #{@config_file_path}\n" \
-                            "Run 'bin/export-bundler-config --init' to generate a sample config file."
+                            "Run 'bin/shakapacker --init' to generate a sample config file."
       end
 
       begin
@@ -34,7 +34,7 @@ module Shakapacker
         available = config["builds"].keys.join(", ")
         raise ArgumentError, "Build '#{build_name}' not found in config file.\n" \
                             "Available builds: #{available}\n" \
-                            "Use 'bin/export-bundler-config --list-builds' to see all available builds."
+                            "Use 'bin/shakapacker --list-builds' to see all available builds."
       end
 
       build

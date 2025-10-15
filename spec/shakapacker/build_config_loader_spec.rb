@@ -5,8 +5,12 @@ require "tmpdir"
 
 describe Shakapacker::BuildConfigLoader do
   let(:loader) { described_class.new(config_file_path) }
-  let(:config_file_path) { File.join(test_dir, ".bundler-config.yml") }
+  let(:config_file_path) { File.join(test_dir, "config", "shakapacker-builds.yml") }
   let(:test_dir) { Dir.mktmpdir }
+
+  before do
+    FileUtils.mkdir_p(File.join(test_dir, "config"))
+  end
 
   after do
     FileUtils.rm_rf(test_dir)
@@ -35,7 +39,7 @@ describe Shakapacker::BuildConfigLoader do
       it "raises an error with helpful message" do
         expect { loader.load_build("test") }.to raise_error(
           ArgumentError,
-          /Config file not found.*bin\/export-bundler-config --init/m
+          /Config file not found.*bin\/shakapacker --init/m
         )
       end
     end

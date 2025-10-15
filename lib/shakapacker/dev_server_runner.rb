@@ -18,28 +18,38 @@ module Shakapacker
         exit(0)
       end
 
-      # Check if first argument is a build name from .bundler-config.yml
-      if argv.length > 0 && !argv[0].start_with?("-")
-        potential_build_name = argv[0]
+      # Check for --build flag
+      build_index = argv.index("--build")
+      if build_index
+        build_name = argv[build_index + 1]
+
+        unless build_name
+          $stderr.puts "[Shakapacker] Error: --build requires a build name"
+          $stderr.puts "Usage: bin/shakapacker-dev-server --build <name>"
+          exit(1)
+        end
+
         loader = BuildConfigLoader.new
 
-        if loader.exists?
-          begin
-            build_config = loader.resolve_build_config(potential_build_name)
+        unless loader.exists?
+          $stderr.puts "[Shakapacker] Config file not found: #{loader.config_file_path}"
+          $stderr.puts "Run 'bin/shakapacker --init' to create one"
+          exit(1)
+        end
 
-            # Run with this build config
-            run_with_build_config(argv[1..-1] || [], build_config)
-            return
-          rescue ArgumentError => e
-            # If build name not found, treat as regular argv
-            if e.message.include?("Build '#{potential_build_name}' not found")
-              # Continue to normal flow
-            else
-              # Re-raise other errors (like missing config file)
-              $stderr.puts "[Shakapacker] #{e.message}"
-              exit(1)
-            end
-          end
+        begin
+          build_config = loader.resolve_build_config(build_name)
+
+          # Remove --build and build name from argv
+          remaining_argv = argv.dup
+          remaining_argv.delete_at(build_index + 1)
+          remaining_argv.delete_at(build_index)
+
+          run_with_build_config(remaining_argv, build_config)
+          return
+        rescue ArgumentError => e
+          $stderr.puts "[Shakapacker] #{e.message}"
+          exit(1)
         end
       end
 
@@ -66,25 +76,22 @@ module Shakapacker
         SHAKAPACKER DEV SERVER - Development Server with Hot Module Replacement
         ================================================================================
 
-        Usage: bin/shakapacker-dev-server [build-name] [options]
+        Usage: bin/shakapacker-dev-server [options]
 
         Shakapacker-specific options:
           -h, --help              Show this help message
           -v, --version           Show Shakapacker version
           --debug-shakapacker     Enable Node.js debugging (--inspect-brk)
+          --build <name>          Run a specific build configuration
 
-        Build configurations (.bundler-config.yml):
-          If you have a .bundler-config.yml file, you can run predefined builds:
+        Build configurations (config/shakapacker-builds.yml):
+          bin/shakapacker-dev-server --build dev-hmr    # Run the 'dev-hmr' build
 
-          bin/shakapacker-dev-server dev-hmr            # Run the 'dev-hmr' build
+          To manage builds:
+          bin/shakapacker --init                        # Create config file
+          bin/shakapacker --list-builds                 # List available builds
 
-          To see available builds:
-          bin/export-bundler-config --list-builds
-
-          To create a config file:
-          bin/export-bundler-config --init
-
-          Note: You can also use bin/shakapacker with a build name that has
+          Note: You can also use bin/shakapacker --build with a build that has
           WEBPACK_SERVE=true, and it will automatically use the dev server.
 
         Examples:
