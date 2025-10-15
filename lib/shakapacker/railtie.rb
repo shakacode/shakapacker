@@ -53,8 +53,9 @@ class Shakapacker::Engine < ::Rails::Engine
 
           def send_pack_early_hints_automatically
             # Only send for HTML responses
-            return unless response.content_type&.include?('text/html')
+            return unless response&.content_type&.include?("text/html")
             return unless respond_to?(:view_context)
+            return unless view_context.respond_to?(:send_pack_early_hints)
 
             view_context.send_pack_early_hints
           rescue => e
