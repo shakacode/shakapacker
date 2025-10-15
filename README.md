@@ -78,6 +78,7 @@ Read the [full review here](https://clutch.co/profile/shakacode#reviews?sort_by=
     - [View Helper: `image_pack_tag`](#view-helper-image_pack_tag)
     - [View Helper: `favicon_pack_tag`](#view-helper-favicon_pack_tag)
     - [View Helper: `preload_pack_asset`](#view-helper-preload_pack_asset)
+    - [View Helper: `send_pack_early_hints`](#view-helper-send_pack_early_hints)
   - [Images in Stylesheets](#images-in-stylesheets)
   - [Server-Side Rendering (SSR)](#server-side-rendering-ssr)
   - [Development](#development)
@@ -562,6 +563,40 @@ If you want to preload a static asset in your `<head>`, you can use the `preload
 ```erb
 <%= preload_pack_asset 'fonts/fa-regular-400.woff2' %>
 ```
+
+#### View Helper: `send_pack_early_hints`
+
+For even better performance, you can use HTTP 103 Early Hints to tell browsers to start downloading assets **while Rails is still rendering**. This can significantly improve page load times, especially for apps with expensive queries or complex views.
+
+**Zero-config usage** - automatically discovers packs from `append_*` helpers:
+
+```erb
+<%# app/views/layouts/application.html.erb %>
+<% send_pack_early_hints %>  <%# No arguments needed! %>
+<!DOCTYPE html>
+<html>
+  <body>
+    <%= yield %>
+    <%= javascript_pack_tag 'application' %>
+  </body>
+</html>
+```
+
+Enable in `config/shakapacker.yml`:
+
+```yaml
+production:
+  early_hints:
+    enabled: true
+```
+
+How it works: Views render first and populate pack queues with `append_javascript_pack_tag`. When the layout renders, `send_pack_early_hints()` reads those queues and sends HTTP 103 responses. The browser starts downloading assets in parallel while Rails finishes rendering!
+
+**Result:** Browser downloads assets during server "think time" instead of waiting idle.
+
+See the [Early Hints Upgrade Guide](./docs/EARLY_HINTS_UPGRADE.md) for detailed usage, alternative patterns, and performance tips.
+
+**Requirements:** Rails 5.2+ and HTTP/2-capable server (Puma 5+, nginx 1.13+). Gracefully degrades if not supported.
 
 ### Images in Stylesheets
 
