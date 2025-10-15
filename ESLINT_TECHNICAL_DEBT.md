@@ -18,8 +18,8 @@ This document tracks the ESLint errors currently suppressed in the codebase and 
 **TypeScript files** (currently ignored via `package/**/*.ts`):
 
 - **Estimated suppressed errors: ~172** (from sample analysis)
-  - TypeScript type-safety issues: ~130 (75%)
-  - Style/convention issues: ~42 (25%)
+  - TypeScript type-safety issues: ~114 (66%)
+  - Style/convention issues: ~58 (34%)
 
 **Target**: Reduce suppressed errors by 50% within Q1 2025
 **Last Updated**: 2025-10-14
