@@ -9,6 +9,12 @@ jest.mock("child_process", () => ({
 
 const { BuildValidator } = require("../../package/configExporter")
 
+// Helper to wait for async operations to start
+const waitForAsync = () =>
+  new Promise((r) => {
+    setImmediate(r)
+  })
+
 describe("BuildValidator", () => {
   const testDir = resolve(__dirname, "../tmp/build-validator-test")
   let validator
@@ -496,6 +502,9 @@ describe("BuildValidator", () => {
 
       const validationPromise = validator.validateBuild(build, testDir)
 
+      // Wait for spawn to be called
+      await waitForAsync()
+
       // Simulate stdout with success pattern
       const stdoutHandler = mockChild.stdout.on.mock.calls.find(
         ([event]) => event === "data"
@@ -550,6 +559,9 @@ describe("BuildValidator", () => {
 
       const validationPromise = validator.validateBuild(build, testDir)
 
+      // Wait for spawn to be called
+      await waitForAsync()
+
       // Simulate success
       const stdoutHandler = mockChild.stdout.on.mock.calls.find(
         ([event]) => event === "data"
@@ -598,6 +610,9 @@ describe("BuildValidator", () => {
       }
 
       const validationPromise = validator.validateBuild(build, testDir)
+
+      // Wait for spawn to be called
+      await waitForAsync()
 
       // Simulate error output
       const stderrHandler = mockChild.stderr.on.mock.calls.find(
@@ -1027,6 +1042,9 @@ describe("BuildValidator", () => {
       // Start validation (don't await yet)
       const validationPromise = validator.validateBuild(build, testDir)
 
+      // Wait for spawn to be called
+      await waitForAsync()
+
       // Simulate output with success pattern in error context
       const stdoutHandler = mockChild.stdout.on.mock.calls.find(
         ([event]) => event === "data"
@@ -1077,6 +1095,9 @@ describe("BuildValidator", () => {
 
       const validationPromise = validator.validateBuild(build, testDir)
 
+      // Wait for spawn to be called
+      await waitForAsync()
+
       const stdoutHandler = mockChild.stdout.on.mock.calls.find(
         ([event]) => event === "data"
       )[1]
@@ -1123,6 +1144,9 @@ describe("BuildValidator", () => {
       }
 
       const validationPromise = validator.validateBuild(build, testDir)
+
+      // Wait for spawn to be called
+      await waitForAsync()
 
       const stdoutHandler = mockChild.stdout.on.mock.calls.find(
         ([event]) => event === "data"
@@ -1178,6 +1202,9 @@ describe("BuildValidator", () => {
         build,
         testDir
       )
+
+      // Wait for spawn to be called
+      await waitForAsync()
 
       const stdoutHandler = mockChild.stdout.on.mock.calls.find(
         ([event]) => event === "data"
