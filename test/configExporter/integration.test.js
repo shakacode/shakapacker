@@ -10,7 +10,7 @@ const { execSync } = require("child_process")
 
 describe("Config Exporter Integration Tests", () => {
   const testDir = resolve(__dirname, "../tmp/integration-test")
-  const configPath = join(testDir, ".bundler-config.yml")
+  const configPath = join(testDir, "config/shakapacker-builds.yml")
   const outputDir = join(testDir, "output")
   const binPath = resolve(__dirname, "../../bin/export-bundler-config")
 
@@ -20,6 +20,7 @@ describe("Config Exporter Integration Tests", () => {
       rmSync(testDir, { recursive: true, force: true })
     }
     mkdirSync(testDir, { recursive: true })
+    mkdirSync(join(testDir, "config"), { recursive: true })
 
     // Create minimal package.json
     writeFileSync(
