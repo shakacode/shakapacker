@@ -93,7 +93,7 @@ When the layout starts rendering, your views have **already rendered**, so the p
 
 ## Example: Multi-Pack App
 
-Your existing code probably looks like this:
+Your existing view code probably looks like this:
 
 ```erb
 <%# app/views/admin/dashboard.html.erb %>
