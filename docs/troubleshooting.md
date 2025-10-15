@@ -71,7 +71,147 @@
 
    See `bin/export-bundler-config --help` for all available options.
 
-6. Generate webpack stats for build analysis (useful for bundle size optimization):
+6. **Validate your webpack/rspack builds**: Use `bin/export-bundler-config --validate` to test that all your build configurations compile successfully. This is especially useful for:
+   - **CI/CD pipelines**: Catch configuration errors before deployment
+   - **Migration testing**: Verify builds work after upgrading webpack, rspack, or Shakapacker
+   - **Multi-environment testing**: Ensure all build configurations (dev, prod, HMR) compile correctly
+
+   **Quick validation:**
+
+   ```bash
+   # Validate all builds defined in .bundler-config.yml
+   bin/export-bundler-config --validate
+
+   # Validate with full output logs (shows all webpack/rspack compilation output)
+   bin/export-bundler-config --validate --verbose
+
+   # Validate a specific build
+   bin/export-bundler-config --validate-build=dev-hmr
+   ```
+
+   **Verbose Mode:**
+
+   When using `--verbose`, you'll see:
+   - A clear header indicating verbose mode is enabled
+   - Full real-time compilation output from webpack/rspack
+   - All warnings and progress messages
+   - Detailed error traces
+   - Separators between builds for clarity
+
+   This is useful for debugging compilation issues or understanding build performance.
+
+   **Setting up build configurations:**
+
+   ```bash
+   # Create a .bundler-config.yml file with example builds
+   bin/export-bundler-config --init
+
+   # List all available builds
+   bin/export-bundler-config --list-builds
+
+   # Validate all builds
+   bin/export-bundler-config --validate
+   ```
+
+   **Advanced options:**
+
+   The validator uses a default timeout of 2 minutes per build. For large projects or slow CI environments, you can customize this behavior by modifying the `ValidatorOptions` in your code, or by adjusting your build configuration to be more efficient.
+
+   If validation times out, try:
+   - Using `--verbose` to see where the build is hanging
+   - Optimizing your webpack/rspack configuration for faster builds
+   - Running validation on a single build with `--validate-build=build-name`
+
+   **How it works:**
+
+   The validator will:
+   - For HMR builds (with `WEBPACK_SERVE=true`): Start webpack-dev-server, wait for successful compilation, then shut down
+   - For static builds: Run webpack/rspack and check for compilation errors
+   - Report all errors and warnings with clear output
+   - Exit with code 1 if any build fails (perfect for CI)
+
+   **Example output:**
+
+   ```text
+   🔍 Validating Builds
+   ================================================================================
+
+   📦 Validating build: dev-hmr
+      ✅ Build passed
+
+   📦 Validating build: dev
+      ✅ Build passed
+
+   📦 Validating build: prod
+      ❌ Build failed with 2 error(s)
+
+   ================================================================================
+   🔍 Build Validation Results
+   ================================================================================
+
+   ✅ Build: dev-hmr (2.34s)
+      📦 Outputs: client
+      ⚙️  Config: config/webpack/webpack.config.js
+
+   ✅ Build: dev (3.12s)
+      📦 Outputs: client, server
+      ⚙️  Config: config/webpack/webpack.config.js
+      📁 Output: /app/public/packs
+
+   ❌ Build: prod (4.56s)
+      📦 Outputs: client, server
+      ⚙️  Config: config/webpack/webpack.config.js
+      📁 Output: /app/public/packs
+      ❌ 2 error(s)
+         Module not found: Error: Can't resolve './missing'
+         SyntaxError: Unexpected token
+
+   ================================================================================
+   Summary: 2/3 builds passed, 1 failed (Total: 10.02s)
+   ================================================================================
+
+   💡 Debugging Tips:
+      To get more details, run individual builds with --verbose:
+
+      bin/export-bundler-config --validate-build prod --verbose
+
+      Or validate all builds with full output: bin/export-bundler-config --validate --verbose
+   ================================================================================
+   ```
+
+   **Debugging Failed Builds:**
+
+   When builds fail, the validator automatically provides debugging commands. You can:
+   1. **Run a specific build with verbose output** to see full webpack/rspack logs:
+
+      ```bash
+      bin/export-bundler-config --validate-build prod --verbose
+      ```
+
+   2. **Validate all builds with verbose output** to see everything:
+
+      ```bash
+      bin/export-bundler-config --validate --verbose
+      ```
+
+   3. **Test individual builds manually** using the same configuration:
+
+      ```bash
+      # For static builds
+      NODE_ENV=production RAILS_ENV=production bundle exec webpack --config config/webpack/webpack.config.js
+
+      # For HMR/dev-server builds
+      NODE_ENV=development WEBPACK_SERVE=true bundle exec webpack serve --config config/webpack/webpack.config.js
+      ```
+
+   The verbose mode shows:
+   - Full real-time compilation output
+   - All webpack/rspack warnings and progress messages
+   - Detailed stack traces for errors
+   - Timing information for each build phase
+   - Clear separators between different builds
+
+7. Generate webpack stats for build analysis (useful for bundle size optimization):
 
    ```bash
    NODE_ENV=development bin/shakapacker --profile --json > /tmp/webpack-stats.json

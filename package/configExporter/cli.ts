@@ -10,6 +10,7 @@ import { ExportOptions, ConfigMetadata, FileOutput } from "./types"
 import { YamlSerializer } from "./yamlSerializer"
 import { FileWriter } from "./fileWriter"
 import { ConfigFileLoader, generateSampleConfigFile } from "./configFile"
+import { BuildValidator } from "./buildValidator"
 
 // Read version from package.json
 const packageJson = JSON.parse(
@@ -84,6 +85,11 @@ export async function run(args: string[]): Promise<number> {
       return runListBuildsCommand(options)
     }
 
+    // Handle --validate or --validate-build command
+    if (options.validate || options.validateBuild) {
+      return await runValidateCommand(options)
+    }
+
     // Handle --all-builds command
     if (options.allBuilds) {
       return runAllBuildsCommand(options)
@@ -130,8 +136,9 @@ export async function run(args: string[]): Promise<number> {
     }
 
     return 0
-  } catch (error: any) {
-    console.error(`[Config Exporter] Error: ${error.message}`)
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : String(error)
+    console.error(`[Config Exporter] Error: ${errorMessage}`)
     return 1
   }
 }
@@ -240,6 +247,16 @@ QUICK START (for troubleshooting):
       default: false,
       description: "Export all builds from config file"
     })
+    .option("validate", {
+      type: "boolean",
+      default: false,
+      description:
+        "Validate all builds by running webpack/rspack (requires config file)"
+    })
+    .option("validate-build", {
+      type: "string",
+      description: "Validate specific build from config file"
+    })
     .option("webpack", {
       type: "boolean",
       default: false,
@@ -276,6 +293,16 @@ QUICK START (for troubleshooting):
           "--build and --all-builds are mutually exclusive. Use one or the other."
         )
       }
+      if (argv.validate && argv["validate-build"]) {
+        throw new Error(
+          "--validate and --validate-build are mutually exclusive. Use one or the other."
+        )
+      }
+      if (argv.validate && (argv.build || argv["all-builds"])) {
+        throw new Error(
+          "--validate cannot be used with --build or --all-builds."
+        )
+      }
       return true
     })
     .help("help")
@@ -299,6 +326,11 @@ QUICK START (for troubleshooting):
   bin/export-bundler-config --env=production --client-only
   bin/export-bundler-config --save-dir=./debug
   bin/export-bundler-config                               # Saves to shakapacker-config-exports/
+
+  # Validate builds
+  bin/export-bundler-config --validate                    # Validate all builds
+  bin/export-bundler-config --validate-build=dev          # Validate specific build
+  bin/export-bundler-config --validate --verbose          # Validate with full logs
 
   # View config in terminal (stdout)
   bin/export-bundler-config --stdout
@@ -334,7 +366,9 @@ QUICK START (for troubleshooting):
     configFile: argv["config-file"],
     build: argv.build,
     listBuilds: argv["list-builds"],
-    allBuilds: argv["all-builds"]
+    allBuilds: argv["all-builds"],
+    validate: argv.validate,
+    validateBuild: argv["validate-build"]
   }
 }
 
@@ -392,9 +426,141 @@ function runListBuildsCommand(options: ExportOptions): number {
     const loader = new ConfigFileLoader(options.configFile)
     loader.listBuilds()
     return 0
-  } catch (error: any) {
-    console.error(`[Config Exporter] Error: ${error.message}`)
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : String(error)
+    console.error(`[Config Exporter] Error: ${errorMessage}`)
     return 1
+  }
+}
+
+async function runValidateCommand(options: ExportOptions): Promise<number> {
+  const savedEnv = saveBuildEnvironmentVariables()
+
+  try {
+    // Validate that config file exists
+    const loader = new ConfigFileLoader(options.configFile)
+    if (!loader.exists()) {
+      const configPath = options.configFile || ".bundler-config.yml"
+      throw new Error(
+        `Config file ${configPath} not found. Run --init to create it.`
+      )
+    }
+
+    // Set up environment
+    const appRoot = findAppRoot()
+    process.chdir(appRoot)
+    setupNodePath(appRoot)
+
+    const config = loader.load()
+    const validator = new BuildValidator({ verbose: options.verbose || false })
+
+    // Determine which builds to validate
+    let buildsToValidate: string[]
+    if (options.validateBuild) {
+      // Validate specific build
+      if (!config.builds[options.validateBuild]) {
+        const available = Object.keys(config.builds).join(", ")
+        throw new Error(
+          `Build '${options.validateBuild}' not found in config file.\n` +
+            `Available builds: ${available}`
+        )
+      }
+      buildsToValidate = [options.validateBuild]
+    } else {
+      // Validate all builds
+      buildsToValidate = Object.keys(config.builds)
+
+      // Handle empty builds edge case
+      if (buildsToValidate.length === 0) {
+        throw new Error(
+          `No builds found in config file. Add at least one build to .bundler-config.yml or run --init to see examples.`
+        )
+      }
+    }
+
+    console.log("\n" + "=".repeat(80))
+    console.log("🔍 Validating Builds")
+    console.log("=".repeat(80))
+    console.log(`\nValidating ${buildsToValidate.length} build(s)...\n`)
+
+    if (options.verbose) {
+      console.log("⚡ VERBOSE MODE ENABLED - Full build output will be shown")
+      console.log(
+        "   This includes all webpack/rspack compilation logs, warnings, and progress messages"
+      )
+      console.log("   Use without --verbose to see only errors and summaries\n")
+      console.log("=".repeat(80) + "\n")
+    }
+
+    const results = []
+
+    // Validate each build
+    for (const buildName of buildsToValidate) {
+      if (options.verbose) {
+        console.log("\n" + "=".repeat(80))
+        console.log(`📦 VALIDATING BUILD: ${buildName}`)
+        console.log("=".repeat(80))
+      } else {
+        console.log(`\n📦 Validating build: ${buildName}`)
+      }
+
+      // Clear and restore environment to prevent leakage between builds
+      clearBuildEnvironmentVariables()
+      restoreBuildEnvironmentVariables(savedEnv)
+
+      // Get the build's environment to use for auto-detection
+      const buildConfig = config.builds[buildName]
+      const buildEnv =
+        buildConfig.environment?.NODE_ENV ||
+        (buildConfig.environment?.RAILS_ENV as
+          | "development"
+          | "production"
+          | "test"
+          | undefined) ||
+        "development"
+
+      // Auto-detect bundler using the build's environment
+      const defaultBundler = await autoDetectBundler(buildEnv, appRoot)
+
+      // Resolve build config with the correct default bundler
+      const resolvedBuild = loader.resolveBuild(
+        buildName,
+        options,
+        defaultBundler
+      )
+
+      // Validate the build
+      const result = await validator.validateBuild(resolvedBuild, appRoot)
+      results.push(result)
+
+      // Show immediate feedback
+      if (options.verbose) {
+        console.log("=".repeat(80))
+      }
+      if (result.success) {
+        console.log(`   ✅ Build passed`)
+      } else {
+        console.log(`   ❌ Build failed with ${result.errors.length} error(s)`)
+      }
+      if (options.verbose) {
+        console.log("")
+      }
+    }
+
+    // Print formatted results
+    const formattedResults = validator.formatResults(results)
+    console.log(formattedResults)
+
+    // Return exit code based on results
+    const hasFailures = results.some((r) => !r.success)
+    return hasFailures ? 1 : 0
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : String(error)
+    console.error(`[Config Exporter] Error: ${errorMessage}`)
+    return 1
+  } finally {
+    // Restore original environment
+    restoreBuildEnvironmentVariables(savedEnv)
   }
 }
 
@@ -471,8 +637,9 @@ async function runAllBuildsCommand(options: ExportOptions): Promise<number> {
     console.log("\n" + "=".repeat(80) + "\n")
 
     return 0
-  } catch (error: any) {
-    console.error(`[Config Exporter] Error: ${error.message}`)
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : String(error)
+    console.error(`[Config Exporter] Error: ${errorMessage}`)
     return 1
   } finally {
     // Restore original environment
@@ -543,9 +710,11 @@ async function runDoctorMode(
           printDoctorSummary(createdFiles, targetDir)
           return
         }
-      } catch (error: any) {
+      } catch (error: unknown) {
         // If config file exists but is invalid, warn and fall through to default behavior
-        console.log(`\n⚠️  Config file found but invalid: ${error.message}`)
+        const errorMessage =
+          error instanceof Error ? error.message : String(error)
+        console.log(`\n⚠️  Config file found but invalid: ${errorMessage}`)
         console.log("Falling back to default doctor mode...\n")
       }
     }
@@ -939,9 +1108,11 @@ async function loadConfigsForEnv(
     const argv = { mode: finalEnv }
     try {
       loadedConfig = loadedConfig(envObject, argv)
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const errorMessage =
+        error instanceof Error ? error.message : String(error)
       throw new Error(
-        `Failed to execute config function: ${error.message}\n` +
+        `Failed to execute config function: ${errorMessage}\n` +
           `Config file: ${configFile}\n` +
           `Environment: ${JSON.stringify(envObject)}`
       )
@@ -1175,7 +1346,7 @@ function loadShakapackerConfig(
       )
       return { bundler, configPath }
     }
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.warn(
       `[Config Exporter] Error loading shakapacker config, defaulting to webpack`
     )

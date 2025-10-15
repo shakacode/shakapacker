@@ -18,6 +18,9 @@ export interface ExportOptions {
   build?: string
   listBuilds?: boolean
   allBuilds?: boolean
+  // Validation options
+  validate?: boolean
+  validateBuild?: string
 }
 
 export interface ConfigMetadata {
@@ -34,6 +37,7 @@ export interface ConfigMetadata {
     CLIENT_BUNDLE_ONLY?: string
     SERVER_BUNDLE_ONLY?: string
     WEBPACK_SERVE?: string
+    HMR?: string
   }
 }
 
@@ -67,4 +71,18 @@ export interface ResolvedBuildConfig {
   bundlerEnvArgs: string[] // Converted bundler_env to CLI args
   outputs: string[]
   configFile?: string
+}
+
+export interface BuildValidationResult {
+  buildName: string
+  success: boolean
+  errors: string[]
+  warnings: string[]
+  output: string[]
+  outputs?: string[] // Build outputs (e.g., ["client", "server"])
+  configFile?: string // Config file path if specified
+  outputPath?: string // Output directory where files are written
+  startTime?: number // Unix timestamp in milliseconds
+  endTime?: number // Unix timestamp in milliseconds
+  duration?: number // Duration in milliseconds
 }
