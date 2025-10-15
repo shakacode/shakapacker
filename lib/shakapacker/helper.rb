@@ -195,8 +195,7 @@ module Shakapacker::Helper
   #   # Option 3: With options
   #   <% send_pack_early_hints 'application',
   #        include_css: true,   # default: from config
-  #        include_js: true,    # default: from config
-  #        include_fonts: false # default: from config
+  #        include_js: true     # default: from config
   #   %>
   #
   #   # Option 4: In controller before_action (for expensive queries)

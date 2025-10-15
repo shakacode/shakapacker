@@ -94,7 +94,6 @@ default: &default
     enabled: false
     include_css: true
     include_js: true
-    include_fonts: false # Reserved for future implementation
 
 development:
   <<: *default

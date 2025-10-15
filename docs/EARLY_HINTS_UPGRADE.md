@@ -44,7 +44,7 @@ production:
 
 The magic is in Rails' rendering order:
 
-```
+```text
 1. Views render     → append_javascript_pack_tag('admin')  [queues populate]
 2. Layout renders   → send_pack_early_hints()              [reads queues!]
 3. HTTP 103 sent    → Browser starts downloading
@@ -178,7 +178,7 @@ However, if you need to send hints for specific packs only (excluding others), y
 
 Timeline:
 
-```
+```text
 Request → Rails renders (3s) → Browser gets HTML → Browser downloads JS (2s) → Total: 5s
 ```
 
@@ -197,7 +197,7 @@ Request → Rails renders (3s) → Browser gets HTML → Browser downloads JS (2
 
 Timeline:
 
-```
+```text
 Request → HTTP 103 sent → Browser downloads JS (2s running in parallel!)
        → Rails renders (3s) → Browser gets HTML → JS already downloaded! → Total: 3s
 ```
