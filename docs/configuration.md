@@ -497,24 +497,45 @@ Enable HTTP 103 Early Hints for faster asset loading by sending Link headers bef
 ```yaml
 early_hints:
   enabled: true # default: false - must be explicitly enabled
-  include_css: true # default: true - send Link headers for CSS
-  include_js: true # default: true - send Link headers for JS
+  include_css: true # default: true - send Link headers for CSS chunks
+  include_js: true # default: true - send Link headers for JS chunks
 ```
 
 **How it works:**
 Browser starts downloading assets while Rails is still rendering, improving perceived page load performance.
 
-**Configuration by environment:**
+**Configuration options:**
+
+- **`enabled`**: Master switch for early hints feature (default: `false`)
+  - Set to `true` in production for faster page loads
+  - Keep `false` in development (minimal benefit, adds noise to logs)
+- **`include_css`**: Preload CSS assets (default: `true` when enabled)
+  - Set to `false` if you don't use Shakapacker for CSS
+  - Example: Using Rails asset pipeline or ImportMaps for styles
+- **`include_js`**: Preload JavaScript assets (default: `true` when enabled)
+  - Set to `false` to only preload CSS (rare use case)
+  - Most apps should keep this `true`
+
+**Common configurations:**
 
 ```yaml
-development:
-  early_hints:
-    enabled: false # Minimal benefit in dev
-
+# Recommended: Enable for production
 production:
   early_hints:
-    enabled: true # Recommended for production
+    enabled: true
     include_css: true
+    include_js: true
+
+# Development: Disabled (default)
+development:
+  early_hints:
+    enabled: false
+
+# Mixed asset sources: Only JS from Shakapacker
+production:
+  early_hints:
+    enabled: true
+    include_css: false  # CSS comes from Rails asset pipeline
     include_js: true
 ```
 

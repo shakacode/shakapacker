@@ -590,9 +590,11 @@ Enable in `config/shakapacker.yml`:
 production:
   early_hints:
     enabled: true # default: false - must be explicitly enabled
-    include_css: true # default: true - send Link headers for CSS assets
-    include_js: true # default: true - send Link headers for JS assets
+    include_css: true # default: true - preload CSS chunks
+    include_js: true # default: true - preload JS chunks
 ```
+
+**Tip:** Set `include_css: false` if you use Rails asset pipeline for CSS instead of Shakapacker.
 
 How it works: Views render first and populate pack queues with `append_javascript_pack_tag`. When the layout renders, `send_pack_early_hints()` reads those queues and sends HTTP 103 responses. The browser starts downloading assets in parallel while Rails finishes rendering!
 

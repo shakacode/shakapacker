@@ -17,8 +17,46 @@ The easiest way to enable early hints - **no changes to your existing views need
 production:
   early_hints:
     enabled: true # default: false - must be explicitly enabled
-    include_css: true # default: true - send Link headers for CSS assets
-    include_js: true # default: true - send Link headers for JS assets
+    include_css: true # default: true when enabled - preload CSS chunks
+    include_js: true # default: true when enabled - preload JS chunks
+```
+
+**Configuration options explained:**
+
+- **`enabled`**: Master switch. Set to `true` in production. Default: `false`
+- **`include_css`**: Send early hints for CSS files. Default: `true`
+  - Set to `false` if you don't use Shakapacker for CSS (e.g., using Rails asset pipeline for styles)
+- **`include_js`**: Send early hints for JavaScript files. Default: `true`
+  - Set to `false` if you only want to preload CSS (rare use case)
+
+**Common configurations:**
+
+```yaml
+# Most common: Enable everything (recommended)
+production:
+  early_hints:
+    enabled: true
+    include_css: true
+    include_js: true
+
+# JavaScript only (if CSS comes from Rails asset pipeline)
+production:
+  early_hints:
+    enabled: true
+    include_css: false
+    include_js: true
+
+# CSS only (rare - only if you have critical CSS)
+production:
+  early_hints:
+    enabled: true
+    include_css: true
+    include_js: false
+
+# Disabled (default - no early hints sent)
+production:
+  early_hints:
+    enabled: false
 ```
 
 ### 2. Add One Line to Your Layout
