@@ -14,14 +14,15 @@ module.exports = [
   // Global ignores (replaces .eslintignore)
   {
     ignores: [
-      "lib/**",
-      "**/node_modules/**",
-      "vendor/**",
-      "spec/**",
-      "package/**/*.js",
-      "package/**/*.d.ts",
+      "lib/**", // Ruby files, not JavaScript
+      "**/node_modules/**", // Third-party dependencies
+      "vendor/**", // Vendored dependencies
+      "spec/**", // Ruby specs, not JavaScript
+      "package/**/*.js", // Generated/compiled JavaScript from TypeScript
+      "package/**/*.d.ts", // Generated TypeScript declaration files
       // Temporarily ignore TypeScript files until technical debt is resolved
       // See ESLINT_TECHNICAL_DEBT.md for tracking
+      // TODO: Remove this once ESLint issues are fixed (tracked in #723)
       "package/**/*.ts"
     ]
   },

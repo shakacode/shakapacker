@@ -6,14 +6,22 @@ This document tracks the ESLint errors currently suppressed in the codebase and 
 
 **As of 2025-10-14**: All TypeScript files in `package/` directory are temporarily excluded from linting via the ignore pattern `package/**/*.ts` in `eslint.config.js`. This allows the project to adopt ESLint configuration without requiring immediate fixes to all existing issues.
 
-## Summary
+## Current Linting Status
 
-**Total suppressed errors: ~172** (estimated from sample analysis)
+**Files currently linted (test/**/_.js, scripts/_.js):\*\*
 
-- TypeScript type-safety issues: ~130 (75%)
-- Style/convention issues: ~42 (25%)
+- ✅ **0 errors** (CI passing)
+- ⚠️ **3 warnings** (acceptable, won't block CI)
+  - 1x unused eslint-disable directive in scripts/remove-use-strict.js
+  - 2x jest/no-disabled-tests in test files (expected for conditional test skipping)
 
-**Target**: Reduce by 50% within Q1 2025
+**TypeScript files (currently ignored via package/**/\*.ts):\*\*
+
+- **Estimated suppressed errors: ~172** (from sample analysis)
+  - TypeScript type-safety issues: ~130 (75%)
+  - Style/convention issues: ~42 (25%)
+
+**Target**: Reduce suppressed errors by 50% within Q1 2025
 **Last Updated**: 2025-10-14
 
 ## Priority Matrix
