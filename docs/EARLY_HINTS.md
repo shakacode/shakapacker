@@ -1,6 +1,6 @@
-# Upgrading to HTTP 103 Early Hints
+# HTTP 103 Early Hints Guide
 
-This guide helps you add HTTP 103 Early Hints support to your existing Shakapacker project with minimal changes.
+This guide shows you how to use HTTP 103 Early Hints with Shakapacker for faster page loads.
 
 ## What are Early Hints?
 
@@ -64,18 +64,20 @@ production:
 
 ```erb
 <%# app/views/layouts/application.html.erb %>
-<% send_pack_early_hints %>  <%# That's it! %>
 <!DOCTYPE html>
 <html>
   <head>
     <%= stylesheet_pack_tag 'application' %>
   </head>
   <body>
-    <%= yield %>
+    <%= yield %>  <%# Views render and populate queues %>
     <%= javascript_pack_tag 'application' %>
   </body>
 </html>
+<% send_pack_early_hints %>  <%# Call AFTER yield! %>
 ```
+
+**Important:** Must be called AFTER `yield` so views can populate the pack queues first.
 
 **Done!** No pack names needed, works with your existing `append_javascript_pack_tag` calls.
 
@@ -141,7 +143,19 @@ Just add **one line** at the top of your layout:
 <% send_pack_early_hints %>  <%# NOW it can read the queues! %>
 ```
 
-**Why?** Rails renders views first, then the layout. If you call `send_pack_early_hints` before `yield`, the queues will be empty.
+**Why after yield?** Rails renders views first, then the layout. If you call `send_pack_early_hints` before `yield`, the queues will be empty.
+
+**Why at the end of the file?** Even though it appears at the end of the ERB template, `request.send_early_hints()` sends HTTP 103 **immediately** when called - before Rails finishes rendering the HTML. By the time HTTP 200 (with the HTML) is sent, the browser has already started downloading assets thanks to the HTTP 103 sent earlier.
+
+Think of it as: "Render the template to figure out what assets are needed, then send early hints, then send the HTML."
+
+**Alternative:** If you know your pack names upfront (not using queues), you can call it anywhere - even before `<!DOCTYPE html>`:
+
+```erb
+<% send_pack_early_hints 'application', 'shared' %>  <%# Explicit names work anywhere! %>
+<!DOCTYPE html>
+...
+```
 
 ## Advanced: Explicit Pack Names (Rarely Needed)
 

@@ -551,7 +551,7 @@ production:
 
 **Graceful degradation:** Feature automatically disables if server or browser doesn't support it.
 
-See [Early Hints Upgrade Guide](EARLY_HINTS_UPGRADE.md) for implementation and usage examples.
+See [Early Hints Guide](EARLY_HINTS.md) for implementation and usage examples.
 
 ## Environment-Specific Configuration
 
@@ -696,6 +696,6 @@ See [Troubleshooting Guide](troubleshooting.md) for more help.
 - [Deployment Guide](deployment.md)
 - [CDN Setup Guide](cdn_setup.md)
 - [Precompile Hook Guide](precompile_hook.md)
-- [Early Hints Upgrade Guide](EARLY_HINTS_UPGRADE.md)
+- [Early Hints Guide](EARLY_HINTS.md)
 - [Subresource Integrity Guide](subresource_integrity.md)
 - [Troubleshooting Guide](troubleshooting.md)

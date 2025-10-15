@@ -600,7 +600,7 @@ How it works: Views render first and populate pack queues with `append_javascrip
 
 **Result:** Browser downloads assets during server "think time" instead of waiting idle.
 
-See the [Early Hints Upgrade Guide](./docs/EARLY_HINTS_UPGRADE.md) for detailed usage, alternative patterns, and performance tips.
+See the [Early Hints Guide](./docs/EARLY_HINTS.md) for detailed usage, alternative patterns, and performance tips.
 
 **Requirements:** Rails 5.2+, HTTP/2-capable server (Puma 5+, nginx 1.13+), modern browsers (Chrome/Edge/Firefox 103+, Safari 16.4+). Gracefully degrades if not supported.
 

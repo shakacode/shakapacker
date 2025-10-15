@@ -25,7 +25,7 @@ Changes since the last non-beta release.
   - Browser support: All modern browsers (Chrome/Edge/Firefox 103+, Safari 16.4+)
   - Gracefully degrades if not supported
   - Can significantly improve perceived page load performance by preloading critical assets during server processing time
-  - See [Early Hints Upgrade Guide](docs/EARLY_HINTS_UPGRADE.md) for easy migration path
+  - See [Early Hints Guide](docs/EARLY_HINTS.md) for easy migration path
 
 ## [v9.3.0-beta.0] - October 13, 2025
 
