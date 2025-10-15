@@ -142,17 +142,54 @@ Just add **one line** at the top of your layout:
 
 **Why?** Rails renders views first, then the layout. If you call `send_pack_early_hints` before `yield`, the queues will be empty.
 
-## Rarely Needed: Explicit Pack Names
+## Advanced: Explicit Pack Names (Rarely Needed)
 
-In most cases, the zero-argument form (`send_pack_early_hints`) is what you want - it automatically discovers all packs from your `append_*` calls.
+**Most apps should skip this section** - the zero-argument form is recommended.
 
-However, if you need to send hints for specific packs only (excluding others), you can specify them explicitly:
+### When NOT Using Append/Prepend Pattern
+
+If you're **not** using `append_javascript_pack_tag` or `append_stylesheet_pack_tag` (calling `javascript_pack_tag` directly in layout), you can specify pack names explicitly:
 
 ```erb
-<% send_pack_early_hints 'application' %>  <%# Only application, not other queued packs %>
+<%# app/views/layouts/application.html.erb %>
+<% send_pack_early_hints 'application', 'shared' %>  <%# Specify packs explicitly %>
+<!DOCTYPE html>
+<html>
+  <body>
+    <%= yield %>
+    <%= javascript_pack_tag 'application' %>
+    <%= javascript_pack_tag 'shared' %>
+  </body>
+</html>
 ```
 
-**Example use case:** You have a large admin pack queued via `append_javascript_pack_tag('admin')`, but you only want to send early hints for the critical `application` pack to avoid wasting bandwidth on rarely-used admin assets.
+**Important:** When you provide explicit pack names, `send_pack_early_hints` **ignores the queues** and only sends hints for the packs you specify.
+
+### Selective Hints (Override Queue Discovery)
+
+If you're using the append/prepend pattern but want to **exclude some packs** from early hints:
+
+```erb
+<%# View queues both 'application' and 'admin' via append_javascript_pack_tag %>
+<% send_pack_early_hints 'application' %>  <%# Only hint for application, ignore admin %>
+<!DOCTYPE html>
+...
+```
+
+**Use case:** You have a large admin pack (2MB) that's only used by 5% of users. Instead of preloading it for everyone, only send early hints for the critical `application` pack.
+
+**Trade-off:** Saves bandwidth for most users, but admin users won't get the early hints benefit.
+
+### Per-Call Configuration Override
+
+You can also override the global `include_css`/`include_js` settings per call:
+
+```erb
+<%# Only send hints for JavaScript, not CSS (overrides config) %>
+<% send_pack_early_hints 'application', include_css: false, include_js: true %>
+```
+
+**When to use:** Rarely needed, but useful if you want different behavior for different packs.
 
 ## Requirements
 
