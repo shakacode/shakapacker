@@ -87,25 +87,59 @@ Just add **one line** at the top of your layout:
 ...
 ```
 
-## Advanced: Explicit Pack Names
+## Placement Matters!
 
-If you need to selectively send hints for only certain packs (e.g., only send hints for critical assets but not all packs in your queues):
+`send_pack_early_hints` must be called **AFTER** `yield` in your layout (or at the very end, after all pack helpers):
 
 ```erb
-<% send_pack_early_hints 'application' %>  <%# Only send hints for 'application' pack %>
+<%# app/views/layouts/application.html.erb %>
 <!DOCTYPE html>
-...
+<html>
+  <body>
+    <%= yield %>  <%# Views render first and populate queues %>
+  </body>
+</html>
+<% send_pack_early_hints %>  <%# NOW it can read the queues! %>
 ```
 
-**Note:** Most apps should use the zero-argument form (`send_pack_early_hints`) which automatically discovers all packs from your existing `append_javascript_pack_tag` and `append_stylesheet_pack_tag` calls.
+**Why?** Rails renders views first, then the layout. If you call `send_pack_early_hints` before `yield`, the queues will be empty.
+
+## Rarely Needed: Explicit Pack Names
+
+In most cases, the zero-argument form (`send_pack_early_hints`) is what you want - it automatically discovers all packs from your `append_*` calls.
+
+However, if you need to send hints for specific packs only (excluding others), you can specify them explicitly:
+
+```erb
+<% send_pack_early_hints 'application' %>  <%# Only application, not other queued packs %>
+```
+
+**Example use case:** You have a large admin pack queued via `append_javascript_pack_tag('admin')`, but you only want to send early hints for the critical `application` pack to avoid wasting bandwidth on rarely-used admin assets.
 
 ## Requirements
 
 - **Rails 5.2+** (for `request.send_early_hints` support)
-- **Web server with HTTP/2 and early hints:**
+- **Web server with HTTP/2 and early hints support:**
   - Puma 5+ ✅
   - nginx 1.13+ with ngx_http_v2_module ✅
-  - Other HTTP/2 servers with early hints support
+  - Other HTTP/2-capable servers with early hints support
+- **Browser support:** All modern browsers (Chrome 103+, Firefox 103+, Safari 16.4+, Edge 103+)
+
+## Should I Enable This in Production?
+
+**Yes, for most production apps!** Early hints provide:
+
+- ✅ Faster page loads (browser downloads assets during server processing)
+- ✅ Graceful degradation (disabled automatically if server/browser doesn't support it)
+- ✅ Minimal overhead (tiny HTTP 103 response, ~1KB)
+- ✅ No code changes needed (works with existing `append_*` pattern)
+
+**Downsides:**
+
+- Negligible bandwidth for HTTP 103 response
+- Requires HTTP/2-capable infrastructure
+
+**Default is `false`** to avoid surprises during upgrades, but we recommend enabling it in production once you've verified your infrastructure supports HTTP/2.
 
 ## Troubleshooting
 

@@ -572,15 +572,17 @@ For even better performance, you can use HTTP 103 Early Hints to tell browsers t
 
 ```erb
 <%# app/views/layouts/application.html.erb %>
-<% send_pack_early_hints %>  <%# No arguments needed! %>
 <!DOCTYPE html>
 <html>
   <body>
-    <%= yield %>
+    <%= yield %>  <%# Views render first and populate pack queues %>
     <%= javascript_pack_tag 'application' %>
   </body>
 </html>
+<% send_pack_early_hints %>  <%# Call AFTER yield to read queues! %>
 ```
+
+**Important:** Must be called AFTER `yield` (views must render first to populate queues).
 
 Enable in `config/shakapacker.yml`:
 
@@ -598,7 +600,7 @@ How it works: Views render first and populate pack queues with `append_javascrip
 
 See the [Early Hints Upgrade Guide](./docs/EARLY_HINTS_UPGRADE.md) for detailed usage, alternative patterns, and performance tips.
 
-**Requirements:** Rails 5.2+ and HTTP/2-capable server (Puma 5+, nginx 1.13+). Gracefully degrades if not supported.
+**Requirements:** Rails 5.2+, HTTP/2-capable server (Puma 5+, nginx 1.13+), modern browsers (Chrome/Edge/Firefox 103+, Safari 16.4+). Gracefully degrades if not supported.
 
 ### Images in Stylesheets
 
