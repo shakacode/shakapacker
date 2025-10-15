@@ -6,9 +6,9 @@ This guide shows you how to use HTTP 103 Early Hints with Shakapacker for faster
 
 HTTP 103 Early Hints allows browsers to start downloading critical assets (JS, CSS) **while** Rails is still rendering your views. This can significantly improve page load performance, especially if you have expensive database queries or complex view rendering.
 
-## Quick Start - Works with Existing Code!
+## Quick Start - Zero Configuration!
 
-The easiest way to enable early hints - **no changes to your existing views needed**:
+Early hints work automatically once enabled - **no changes to your layouts or views needed**:
 
 ### 1. Enable in Configuration
 
@@ -20,6 +20,8 @@ production:
     include_css: true # default: true when enabled - preload CSS chunks
     include_js: true # default: true when enabled - preload JS chunks
 ```
+
+**That's it!** Early hints will be sent automatically for all HTML responses.
 
 **Configuration options explained:**
 
@@ -60,43 +62,37 @@ production:
     enabled: false
 ```
 
-### 2. Add One Line to Your Layout
+### 2. (Optional) Opt-Out for Specific Controllers
 
-```erb
-<%# app/views/layouts/application.html.erb %>
-<!DOCTYPE html>
-<html>
-  <head>
-    <%= stylesheet_pack_tag 'application' %>
-  </head>
-  <body>
-    <%= yield %>  <%# Views render and populate queues %>
-    <%= javascript_pack_tag 'application' %>
-  </body>
-</html>
-<% send_pack_early_hints %>  <%# Call AFTER yield! %>
+If you need to disable early hints for specific actions (e.g., JSON APIs, redirects):
+
+```ruby
+class ApiController < ApplicationController
+  skip_send_pack_early_hints
+end
+
+class PostsController < ApplicationController
+  skip_send_pack_early_hints only: [:api_endpoint, :json_action]
+end
 ```
-
-**Important:** Must be called AFTER `yield` so views can populate the pack queues first.
-
-**Done!** No pack names needed, works with your existing `append_javascript_pack_tag` calls.
 
 ## How It Works
 
-The magic is in Rails' rendering order:
+Shakapacker automatically sends early hints after your views render, using Rails' built-in lifecycle hooks:
 
 ```text
 1. Views render     → append_javascript_pack_tag('admin')  [queues populate]
-2. Layout renders   → send_pack_early_hints()              [reads queues!]
-3. HTTP 103 sent    → Browser starts downloading
-4. HTML renders     → javascript_pack_tag renders tags
+2. Layout renders   → javascript_pack_tag, stylesheet_pack_tag, etc.
+3. after_action     → Automatic send_pack_early_hints()    [reads queues!]
+4. HTTP 103 sent    → Browser starts downloading
+5. HTTP 200 sent    → Full HTML response
 ```
 
-When the layout starts rendering, your views have **already rendered**, so the pack queues are populated! `send_pack_early_hints()` with no arguments automatically discovers all packs.
+By the time the `after_action` hook runs, your views and layout have **already rendered**, so all pack queues are populated! The automatic behavior discovers all packs without any manual intervention.
 
 ## Example: Multi-Pack App
 
-Your existing view code probably looks like this:
+Your existing view code works automatically:
 
 ```erb
 <%# app/views/admin/dashboard.html.erb %>
@@ -120,54 +116,38 @@ Your existing view code probably looks like this:
 </html>
 ```
 
-Just add **one line** at the top of your layout:
+That's it! With `enabled: true`, early hints are automatically sent for **both** 'application' and 'admin' packs.
 
-```erb
-<% send_pack_early_hints %>  <%# Automatically includes 'application' AND 'admin'! %>
-<!DOCTYPE html>
-...
-```
+## Advanced: Manual Control (Rarely Needed)
 
-## Placement Matters!
+**Most apps don't need manual control** - the automatic behavior works great. But if you need fine-grained control, you can manually call `send_pack_early_hints` in your layout.
 
-`send_pack_early_hints` must be called **AFTER** `yield` in your layout (or at the very end, after all pack helpers):
+### Manual Invocation in Layout
+
+You can still call `send_pack_early_hints` manually in your layout. When you do, it overrides the automatic behavior for that request:
 
 ```erb
 <%# app/views/layouts/application.html.erb %>
 <!DOCTYPE html>
 <html>
   <body>
-    <%= yield %>  <%# Views render first and populate queues %>
+    <%= yield %>
+    <%= javascript_pack_tag 'application' %>
   </body>
 </html>
-<% send_pack_early_hints %>  <%# NOW it can read the queues! %>
+<% send_pack_early_hints %>  <%# Manual call - disables automatic behavior %>
 ```
 
-**Why after yield?** Rails renders views first, then the layout. If you call `send_pack_early_hints` before `yield`, the queues will be empty.
+**Important:** Manual calls must be placed **after** `yield` so pack queues are populated.
 
-**Why at the end of the file?** Even though it appears at the end of the ERB template, `request.send_early_hints()` sends HTTP 103 **immediately** when called - before Rails finishes rendering the HTML. By the time HTTP 200 (with the HTML) is sent, the browser has already started downloading assets thanks to the HTTP 103 sent earlier.
+**Why at the end?** Even though it appears at the end of the ERB template, `request.send_early_hints()` sends HTTP 103 **immediately** when called - before Rails finishes rendering the HTML. By the time HTTP 200 (with the HTML) is sent, the browser has already started downloading assets thanks to the HTTP 103 sent earlier.
 
-Think of it as: "Render the template to figure out what assets are needed, then send early hints, then send the HTML."
+### Explicit Pack Names (Bypass Queue Discovery)
 
-**Alternative:** If you know your pack names upfront (not using queues), you can call it anywhere - even before `<!DOCTYPE html>`:
+If you know your pack names upfront, you can specify them explicitly:
 
 ```erb
 <% send_pack_early_hints 'application', 'shared' %>  <%# Explicit names work anywhere! %>
-<!DOCTYPE html>
-...
-```
-
-## Advanced: Explicit Pack Names (Rarely Needed)
-
-**Most apps should skip this section** - the zero-argument form is recommended.
-
-### When NOT Using Append/Prepend Pattern
-
-If you're **not** using `append_javascript_pack_tag` or `append_stylesheet_pack_tag` (calling `javascript_pack_tag` directly in layout), you can specify pack names explicitly:
-
-```erb
-<%# app/views/layouts/application.html.erb %>
-<% send_pack_early_hints 'application', 'shared' %>  <%# Specify packs explicitly %>
 <!DOCTYPE html>
 <html>
   <body>
@@ -180,7 +160,7 @@ If you're **not** using `append_javascript_pack_tag` or `append_stylesheet_pack_
 
 **Important:** When you provide explicit pack names, `send_pack_early_hints` **ignores the queues** and only sends hints for the packs you specify.
 
-### Selective Hints (Override Queue Discovery)
+### Selective Hints (Exclude Some Packs)
 
 If you're using the append/prepend pattern but want to **exclude some packs** from early hints:
 

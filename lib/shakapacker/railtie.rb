@@ -39,6 +39,32 @@ class Shakapacker::Engine < ::Rails::Engine
     end
   end
 
+  initializer "shakapacker.early_hints" do
+    ActiveSupport.on_load :action_controller do
+      ActionController::Base.class_eval do
+        after_action :send_pack_early_hints_automatically, if: :should_send_early_hints?
+
+        private
+
+          def send_pack_early_hints_automatically
+            return unless defined?(view_context)
+            view_context.send_pack_early_hints
+          rescue => e
+            # Silently fail if early hints can't be sent (e.g., headers already sent)
+            Rails.logger.debug { "Early hints: automatic sending failed - #{e.class}: #{e.message}" }
+          end
+
+          def should_send_early_hints?
+            return false unless response.is_a?(ActionDispatch::Response)
+            return false if @skip_send_pack_early_hints
+
+            config = Shakapacker.config.early_hints rescue nil
+            config && config[:enabled]
+          end
+      end
+    end
+  end
+
   initializer "shakapacker.logger" do
     config.after_initialize do
       if ::Rails.logger.respond_to?(:tagged)

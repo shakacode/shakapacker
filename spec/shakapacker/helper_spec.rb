@@ -849,5 +849,45 @@ module ActionView::TestCase::Behavior
         end
       end
     end
+
+    describe "#skip_send_pack_early_hints" do
+      it "sets the skip flag when called" do
+        # Create a mock controller context
+        controller = Class.new do
+          include Shakapacker::Helper
+          attr_accessor :skip_flag
+
+          def before_action(**_options)
+            yield  # Execute the block to set the flag
+          end
+        end.new
+
+        # Call skip_send_pack_early_hints which should invoke before_action
+        controller.instance_eval do
+          skip_send_pack_early_hints
+        end
+
+        # Verify the flag was set
+        expect(controller.instance_variable_get(:@skip_send_pack_early_hints)).to be true
+      end
+
+      it "accepts standard before_action options" do
+        controller = Class.new do
+          include Shakapacker::Helper
+          attr_reader :options_received
+
+          def before_action(**options)
+            @options_received = options
+            yield
+          end
+        end.new
+
+        controller.instance_eval do
+          skip_send_pack_early_hints only: [:index, :show]
+        end
+
+        expect(controller.options_received).to eq({ only: [:index, :show] })
+      end
+    end
   end
 end

@@ -564,27 +564,11 @@ If you want to preload a static asset in your `<head>`, you can use the `preload
 <%= preload_pack_asset 'fonts/fa-regular-400.woff2' %>
 ```
 
-#### View Helper: `send_pack_early_hints`
+#### HTTP 103 Early Hints (Automatic)
 
-For even better performance, you can use HTTP 103 Early Hints to tell browsers to start downloading assets **while Rails is still rendering**. This can significantly improve page load times, especially for apps with expensive queries or complex views.
+For even better performance, Shakapacker supports HTTP 103 Early Hints to tell browsers to start downloading assets **while Rails is still rendering**. This can significantly improve page load times, especially for apps with expensive queries or complex views.
 
-**Zero-config usage** - automatically discovers packs from `append_*` helpers:
-
-```erb
-<%# app/views/layouts/application.html.erb %>
-<!DOCTYPE html>
-<html>
-  <body>
-    <%= yield %>  <%# Views render first and populate pack queues %>
-    <%= javascript_pack_tag 'application' %>
-  </body>
-</html>
-<% send_pack_early_hints %>  <%# Call AFTER yield to read queues! %>
-```
-
-**Important:** Must be called AFTER `yield` (views must render first to populate queues).
-
-Enable in `config/shakapacker.yml`:
+**Zero-config setup** - just enable in `config/shakapacker.yml`:
 
 ```yaml
 production:
@@ -594,9 +578,19 @@ production:
     include_js: true # default: true - preload JS chunks
 ```
 
+**That's it!** Early hints are sent automatically for all HTML responses. No changes to your layouts or views needed.
+
 **Tip:** Set `include_css: false` if you use Rails asset pipeline for CSS instead of Shakapacker.
 
-How it works: Views render first and populate pack queues with `append_javascript_pack_tag`. When the layout renders, `send_pack_early_hints()` reads those queues and sends HTTP 103 responses. The browser starts downloading assets in parallel while Rails finishes rendering!
+**Optional:** Skip early hints for specific controllers (e.g., JSON APIs):
+
+```ruby
+class ApiController < ApplicationController
+  skip_send_pack_early_hints
+end
+```
+
+How it works: After views and layouts render, Shakapacker automatically reads pack queues (populated by `append_javascript_pack_tag`) and sends HTTP 103 responses. The browser starts downloading assets in parallel while Rails finishes processing!
 
 **Result:** Browser downloads assets during server "think time" instead of waiting idle.
 
