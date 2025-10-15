@@ -11,6 +11,8 @@ This guide covers all configuration options available in `config/shakapacker.yml
 - [Development Server](#development-server)
 - [Compilation Options](#compilation-options)
 - [Advanced Options](#advanced-options)
+  - [Subresource Integrity](#integrity)
+  - [Early Hints](#early_hints)
 - [Environment-Specific Configuration](#environment-specific-configuration)
 
 ## Basic Configuration
@@ -484,6 +486,48 @@ integrity:
 
 See [Subresource Integrity Guide](subresource_integrity.md) for details.
 
+### `early_hints`
+
+**Type:** `object`
+**Default:** `{ enabled: false, include_css: true, include_js: true }`
+**Requires:** Rails 5.2+, HTTP/2-capable server (Puma 5+, nginx 1.13+)
+
+Enable HTTP 103 Early Hints for faster asset loading by sending Link headers before the final response.
+
+```yaml
+early_hints:
+  enabled: true # default: false - must be explicitly enabled
+  include_css: true # default: true - send Link headers for CSS
+  include_js: true # default: true - send Link headers for JS
+```
+
+**How it works:**
+Browser starts downloading assets while Rails is still rendering, improving perceived page load performance.
+
+**Configuration by environment:**
+
+```yaml
+development:
+  early_hints:
+    enabled: false # Minimal benefit in dev
+
+production:
+  early_hints:
+    enabled: true # Recommended for production
+    include_css: true
+    include_js: true
+```
+
+**Requirements:**
+
+- Rails 5.2+ (for `request.send_early_hints` support)
+- HTTP/2-capable web server (Puma 5+, nginx 1.13+)
+- Modern browser (Chrome/Edge/Firefox 103+, Safari 16.4+)
+
+**Graceful degradation:** Feature automatically disables if server or browser doesn't support it.
+
+See [Early Hints Upgrade Guide](EARLY_HINTS_UPGRADE.md) for implementation and usage examples.
+
 ## Environment-Specific Configuration
 
 Shakapacker supports per-environment configuration with fallback logic:
@@ -627,4 +671,6 @@ See [Troubleshooting Guide](troubleshooting.md) for more help.
 - [Deployment Guide](deployment.md)
 - [CDN Setup Guide](cdn_setup.md)
 - [Precompile Hook Guide](precompile_hook.md)
+- [Early Hints Upgrade Guide](EARLY_HINTS_UPGRADE.md)
+- [Subresource Integrity Guide](subresource_integrity.md)
 - [Troubleshooting Guide](troubleshooting.md)
