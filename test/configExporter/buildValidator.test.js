@@ -26,6 +26,12 @@ describe("BuildValidator", () => {
       mkdirSync(testDir, { recursive: true })
     }
     validator = new BuildValidator({ verbose: false, timeout: 5000 })
+
+    // Mock findBinary to return a path (prevents early return in validateHMRBuild)
+    // This will be overridden by tests that specifically test findBinary behavior
+    jest
+      .spyOn(BuildValidator.prototype, "findBinary")
+      .mockReturnValue("/usr/local/bin/webpack")
   })
 
   afterEach(() => {
@@ -504,25 +510,6 @@ describe("BuildValidator", () => {
 
       // Wait for spawn to be called
       await waitForAsync()
-
-      // Debug: Check if spawn was called
-      // eslint-disable-next-line jest/no-conditional-in-test
-      if (mockSpawn.mock.calls.length === 0) {
-        throw new Error(
-          "spawn was never called - check if validateHMRBuild is returning early"
-        )
-      }
-
-      // Debug: Check if handlers were registered
-      const dataHandlers = mockChild.stdout.on.mock.calls.filter(
-        ([event]) => event === "data"
-      )
-      // eslint-disable-next-line jest/no-conditional-in-test
-      if (dataHandlers.length === 0) {
-        throw new Error(
-          `stdout.on was called ${mockChild.stdout.on.mock.calls.length} times, but no 'data' handler. Events: ${mockChild.stdout.on.mock.calls.map(([e]) => e).join(", ")}`
-        )
-      }
 
       // Simulate stdout with success pattern
       const stdoutHandler = mockChild.stdout.on.mock.calls.find(
