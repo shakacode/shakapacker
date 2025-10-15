@@ -18,7 +18,45 @@ module Shakapacker
         exit(0)
       end
 
+      # Check if first argument is a build name from .bundler-config.yml
+      if argv.length > 0 && !argv[0].start_with?("-")
+        potential_build_name = argv[0]
+        loader = BuildConfigLoader.new
+
+        if loader.exists?
+          begin
+            build_config = loader.resolve_build_config(potential_build_name)
+
+            # Run with this build config
+            run_with_build_config(argv[1..-1] || [], build_config)
+            return
+          rescue ArgumentError => e
+            # If build name not found, treat as regular argv
+            if e.message.include?("Build '#{potential_build_name}' not found")
+              # Continue to normal flow
+            else
+              # Re-raise other errors (like missing config file)
+              $stderr.puts "[Shakapacker] #{e.message}"
+              exit(1)
+            end
+          end
+        end
+      end
+
       new(argv).run
+    end
+
+    def self.run_with_build_config(argv, build_config)
+      # Apply build config environment variables
+      build_config[:environment].each do |key, value|
+        ENV[key] = value.to_s
+      end
+
+      puts "[Shakapacker] Running dev server for build: #{build_config[:name]}"
+      puts "[Shakapacker] Description: #{build_config[:description]}" if build_config[:description]
+      puts "[Shakapacker] Bundler: #{build_config[:bundler]}"
+
+      new(argv, build_config).run
     end
 
     def self.print_help
@@ -27,12 +65,26 @@ module Shakapacker
         SHAKAPACKER DEV SERVER - Development Server with Hot Module Replacement
         ================================================================================
 
-        Usage: bin/shakapacker-dev-server [options]
+        Usage: bin/shakapacker-dev-server [build-name] [options]
 
         Shakapacker-specific options:
           -h, --help              Show this help message
           -v, --version           Show Shakapacker version
           --debug-shakapacker     Enable Node.js debugging (--inspect-brk)
+
+        Build configurations (.bundler-config.yml):
+          If you have a .bundler-config.yml file, you can run predefined builds:
+
+          bin/shakapacker-dev-server dev-hmr            # Run the 'dev-hmr' build
+
+          To see available builds:
+          bin/export-bundler-config --list-builds
+
+          To create a config file:
+          bin/export-bundler-config --init
+
+          Note: You can also use bin/shakapacker with a build name that has
+          WEBPACK_SERVE=true, and it will automatically use the dev server.
 
         Examples:
           bin/shakapacker-dev-server                    # Start dev server

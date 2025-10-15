@@ -2,6 +2,7 @@ require_relative "utils/misc"
 require_relative "utils/manager"
 require_relative "configuration"
 require_relative "version"
+require_relative "build_config_loader"
 
 require "package_json"
 require "pathname"
@@ -34,6 +35,40 @@ module Shakapacker
       elsif argv.include?("--version") || argv.include?("-v")
         print_version
         exit(0)
+      end
+
+      # Check if first argument is a build name from .bundler-config.yml
+      if argv.length > 0 && !argv[0].start_with?("-")
+        potential_build_name = argv[0]
+        loader = BuildConfigLoader.new
+
+        if loader.exists?
+          begin
+            build_config = loader.resolve_build_config(potential_build_name)
+
+            # If this build uses dev server (WEBPACK_SERVE=true), delegate to DevServerRunner
+            if loader.uses_dev_server?(build_config)
+              require_relative "dev_server_runner"
+              # Remove build name from argv and pass rest to dev server
+              DevServerRunner.run_with_build_config(argv[1..-1] || [], build_config)
+              return
+            end
+
+            # Otherwise run with this build config
+            run_with_build_config(argv[1..-1] || [], build_config)
+            return
+          rescue ArgumentError => e
+            # If build name not found or other error, treat as regular argv
+            # (could be a bundler command like "build" or "watch")
+            if e.message.include?("Build '#{potential_build_name}' not found")
+              # Continue to normal flow
+            else
+              # Re-raise other errors (like missing config file)
+              $stderr.puts "[Shakapacker] #{e.message}"
+              exit(1)
+            end
+          end
+        end
       end
 
       Shakapacker.ensure_node_env!
@@ -69,17 +104,58 @@ module Shakapacker
       end
     end
 
-    def initialize(argv)
-      @argv = argv
+    def self.run_with_build_config(argv, build_config)
+      $stdout.sync = true
+      Shakapacker.ensure_node_env!
 
-      @app_path              = File.expand_path(".", Dir.pwd)
-      @shakapacker_config    = ENV["SHAKAPACKER_CONFIG"] || File.join(@app_path, "config/shakapacker.yml")
-      @config                = Configuration.new(
+      # Apply build config environment variables
+      build_config[:environment].each do |key, value|
+        ENV[key] = value.to_s
+      end
+
+      puts "[Shakapacker] Running build: #{build_config[:name]}"
+      puts "[Shakapacker] Description: #{build_config[:description]}" if build_config[:description]
+      puts "[Shakapacker] Bundler: #{build_config[:bundler]}"
+
+      # Create runner with modified argv
+      runner = new(argv, build_config)
+
+      if runner.config.rspack?
+        require_relative "rspack_runner"
+        runner.extend(Module.new do
+          def build_cmd
+            package_json.manager.native_exec_command("rspack")
+          end
+
+          def assets_bundler_commands
+            BASE_COMMANDS + %w[build watch]
+          end
+        end)
+        runner.run
+      else
+        require_relative "webpack_runner"
+        runner.extend(Module.new do
+          def build_cmd
+            package_json.manager.native_exec_command("webpack")
+          end
+        end)
+        runner.run
+      end
+    end
+
+    def initialize(argv, build_config = nil)
+      @argv = argv
+      @build_config = build_config
+
+      @app_path           = File.expand_path(".", Dir.pwd)
+      @shakapacker_config = ENV["SHAKAPACKER_CONFIG"] || File.join(@app_path, "config/shakapacker.yml")
+      @config             = Configuration.new(
         root_path: Pathname.new(@app_path),
         config_path: Pathname.new(@shakapacker_config),
         env: ENV["RAILS_ENV"] || ENV["NODE_ENV"] || "development"
       )
-      @webpack_config        = find_assets_bundler_config
+
+      @webpack_config = find_webpack_config_from_build_or_default
 
       Shakapacker::Utils::Manager.error_unless_package_manager_is_obvious!
     end
@@ -167,7 +243,7 @@ module Shakapacker
         SHAKAPACKER - Rails Webpack/Rspack Integration
         ================================================================================
 
-        Usage: bin/shakapacker [options]
+        Usage: bin/shakapacker [build-name] [options]
 
         Shakapacker-specific options:
           -h, --help                Show this help message
@@ -175,6 +251,21 @@ module Shakapacker
           --debug-shakapacker       Enable Node.js debugging (--inspect-brk)
           --trace-deprecation       Show stack traces for deprecations
           --no-deprecation          Silence deprecation warnings
+
+        Build configurations (.bundler-config.yml):
+          If you have a .bundler-config.yml file, you can run predefined builds:
+
+          bin/shakapacker dev-hmr                      # Run the 'dev-hmr' build
+          bin/shakapacker prod                         # Run the 'prod' build
+
+          To see available builds:
+          bin/export-bundler-config --list-builds
+
+          To create a config file:
+          bin/export-bundler-config --init
+
+          Note: If a build has WEBPACK_SERVE=true in its environment, it will
+          automatically use bin/shakapacker-dev-server instead.
 
         Examples:
           bin/shakapacker                              # Build for production
@@ -356,6 +447,15 @@ module Shakapacker
       end
 
     private
+
+      def find_webpack_config_from_build_or_default
+        if @build_config && @build_config[:config_file]
+          File.join(@app_path, @build_config[:config_file])
+        else
+          find_assets_bundler_config
+        end
+      end
+
       def find_assets_bundler_config
         if @config.rspack?
           find_rspack_config_with_fallback
