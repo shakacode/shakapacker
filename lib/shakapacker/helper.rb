@@ -439,14 +439,14 @@ module Shakapacker::Helper
       if current_shakapacker_instance.config.integrity[:enabled]
         integrity = lookup_integrity(source)
         if integrity.present?
-          parts << "integrity=#{integrity}"
+          parts << "integrity=\"#{integrity}\""
           # Use configured cross_origin value, consistent with render_tags
           cross_origin = current_shakapacker_instance.config.integrity[:cross_origin]
-          parts << "crossorigin=#{cross_origin}"
+          parts << "crossorigin=\"#{cross_origin}\""
         end
-      elsif ["script", "style"].include?(as)
-        # When integrity not enabled, scripts and styles still need crossorigin for CORS
-        parts << "crossorigin=anonymous"
+      elsif ["script", "style", "font"].include?(as)
+        # When integrity not enabled, scripts, styles, and fonts still need crossorigin for CORS
+        parts << "crossorigin=\"anonymous\""
       end
 
       parts.join("; ")

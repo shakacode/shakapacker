@@ -4,7 +4,16 @@ This guide shows you how to use HTTP 103 Early Hints with Shakapacker for faster
 
 ## What are Early Hints?
 
-HTTP 103 Early Hints allows browsers to start downloading critical assets (JS, CSS) **while** Rails is still rendering your views. This can significantly improve page load performance, especially if you have expensive database queries or complex view rendering.
+HTTP 103 Early Hints allows browsers to start downloading critical assets (JS, CSS) **while** Rails is still rendering your views. This may significantly improve page load performance or cause an equally significant regression, depending on the page's content. For example, preloading JavaScript may hurt your LCP (Largest Contentful Paint) metric unless you also preload the largest image. **Careful experimentation and performance measurement is advised.**
+
+### Performance Considerations
+
+⚠️ **Important**: Preloading assets without measuring performance can hurt key metrics:
+
+- **LCP Impact**: Preloading JS/CSS competes for bandwidth with images, potentially delaying LCP
+- **Not Always Faster**: Pages with large hero images may perform worse with JS/CSS preloading
+- **SSR Pages**: Server-rendered pages may not benefit as much from preloading
+- **Recommendation**: Test with and without early hints, measure real-world performance metrics
 
 ## Quick Start - Zero Configuration!
 
@@ -81,12 +90,20 @@ end
 Shakapacker automatically sends early hints after your views render, using Rails' built-in lifecycle hooks:
 
 ```text
-1. Views render     → append_javascript_pack_tag('admin')  [queues populate]
-2. Layout renders   → javascript_pack_tag, stylesheet_pack_tag, etc.
-3. after_action     → Automatic send_pack_early_hints()    [reads queues!]
-4. HTTP 103 sent    → Browser starts downloading
-5. HTTP 200 sent    → Full HTML response
+1. Request arrives
+2. Controller action runs  → Database queries, business logic
+3. Views render           → append_javascript_pack_tag('admin')  [queues populate]
+4. Layout renders         → javascript_pack_tag, stylesheet_pack_tag, etc.
+5. after_action hook      → Automatic send_pack_early_hints()    [reads queues!]
+6. HTTP 103 sent          → Browser starts downloading assets
+7. HTTP 200 sent          → Full HTML response sent to browser
 ```
+
+**Important timing note**: With automatic early hints, the HTTP 103 response is sent AFTER rendering completes. This means:
+
+- ✅ **Benefits**: Browser starts downloading JS/CSS before parsing HTML, parallel to network transmission
+- ❌ **Limitations**: Does NOT help during database queries or view rendering time
+- 💡 **Best for**: Pages where asset download time is the bottleneck, not server processing time
 
 By the time the `after_action` hook runs, your views and layout have **already rendered**, so all pack queues are populated! The automatic behavior discovers all packs without any manual intervention.
 

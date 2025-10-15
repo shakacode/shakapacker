@@ -566,7 +566,9 @@ If you want to preload a static asset in your `<head>`, you can use the `preload
 
 #### HTTP 103 Early Hints (Automatic)
 
-For even better performance, Shakapacker supports HTTP 103 Early Hints to tell browsers to start downloading assets **while Rails is still rendering**. This can significantly improve page load times, especially for apps with expensive queries or complex views.
+Shakapacker supports HTTP 103 Early Hints to tell browsers to start downloading assets. This may improve page load performance or cause regressions depending on your page content. **Careful testing and performance measurement is advised.**
+
+⚠️ **Performance Note**: Preloading JS/CSS may hurt LCP if you have large images. Test before deploying to production.
 
 **Zero-config setup** - just enable in `config/shakapacker.yml`:
 
@@ -590,9 +592,7 @@ class ApiController < ApplicationController
 end
 ```
 
-How it works: After views and layouts render, Shakapacker automatically reads pack queues (populated by `append_javascript_pack_tag`) and sends HTTP 103 responses. The browser starts downloading assets in parallel while Rails finishes processing!
-
-**Result:** Browser downloads assets during server "think time" instead of waiting idle.
+How it works: After views and layouts render, Shakapacker automatically reads pack queues (populated by `append_javascript_pack_tag`) and sends HTTP 103 responses. The browser starts downloading assets before parsing the HTML.
 
 See the [Early Hints Guide](./docs/EARLY_HINTS.md) for detailed usage, alternative patterns, and performance tips.
 
