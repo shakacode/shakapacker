@@ -216,16 +216,134 @@ You can also override the global `include_css`/`include_js` settings per call:
 
 **Default is `false`** to avoid surprises during upgrades, but we recommend enabling it in production once you've verified your infrastructure supports HTTP/2.
 
+## Testing & Verification
+
+### How to Verify Early Hints Are Working
+
+**1. Check Browser DevTools (Easiest Method)**
+
+Open Chrome DevTools → Network tab:
+
+1. Load your page in production (or staging with early hints enabled)
+2. Look at the **Protocol** column (may need to right-click headers to enable it)
+3. Find your asset files (JS/CSS from Shakapacker)
+4. Check the **Initiator** column - should show `Early Hints` or `103`
+
+**Example:**
+
+```
+Name                    Protocol  Initiator
+application-abc123.js   h2        Early Hints
+application-abc123.css  h2        Early Hints
+```
+
+**2. Check Response Headers (More Detail)**
+
+Using `curl` in terminal:
+
+```bash
+# Use --http2 flag and look for HTTP/103 response
+curl -I --http2 https://your-app.com/some-page
+
+# You should see output like:
+HTTP/2 103
+link: </packs/application-k344a6d59eef8632c9d1.js>; rel=preload; as=script
+link: </packs/application-k344a6d59eef8632c9d1.css>; rel=preload; as=style
+
+HTTP/2 200
+...
+```
+
+The `HTTP/2 103` response comes first, followed by the final `HTTP/2 200`.
+
+**3. Check Rails Logs**
+
+In development, you can add debugging to see what's being sent:
+
+```ruby
+# Temporarily add to lib/shakapacker/helper.rb after line 222
+Rails.logger.info("🚀 Early Hints: #{headers.inspect}")
+```
+
+Look for log output like:
+
+```
+🚀 Early Hints: {"Link"=>["</packs/application.js>; rel=preload; as=script", ...]}
+```
+
+**4. Network Timing Analysis**
+
+In Chrome DevTools → Network → Timing tab:
+
+- **Without early hints**: "Waiting (TTFB)" is long, then "Content Download" starts
+- **With early hints**: Assets show "Stalled" time reduced (started downloading earlier)
+
+### Common Issues & Solutions
+
+**Issue: No HTTP 103 responses visible**
+
+Possible causes:
+
+- ✅ **Check config**: `early_hints: enabled: true` in `config/shakapacker.yml`
+- ✅ **Check server**: Puma 5+? Run `puma --version` to verify
+- ✅ **Check HTTP/2**: Server must support HTTP/2 (HTTPS required)
+- ✅ **Check placement**: `send_pack_early_hints` must be AFTER `yield` in layout
+- ✅ **Check Rails version**: Need Rails 5.2+
+
+**Issue: "Wrong" assets preloaded**
+
+Debug what packs are queued:
+
+```ruby
+# Temporarily add before send_pack_early_hints in layout:
+<% Rails.logger.info("JS Queue: #{@javascript_pack_tag_queue.inspect}") %>
+<% Rails.logger.info("CSS Queue: #{@stylesheet_pack_tag_queue.inspect}") %>
+<% send_pack_early_hints %>
+```
+
+Solution: Either fix your `append_*` calls or use explicit pack names.
+
+**Issue: Works in production but not development**
+
+This is **expected behavior**:
+
+- Development has `early_hints: enabled: false` by default
+- Minimal benefit in dev (fast local responses)
+- To test in dev, temporarily set `enabled: true` in `config/shakapacker.yml`
+
+**Issue: No performance improvement**
+
+Early hints help most when:
+
+- ✅ Server response time is slow (>500ms)
+- ✅ Assets are large (>100KB)
+- ✅ Network latency is high (mobile, slow connections)
+
+If your server responds in <100ms with small assets, the benefit will be minimal.
+
+### Production Verification Checklist
+
+Before deploying to production:
+
+- [ ] Verified HTTP/2 is enabled on server
+- [ ] Puma 5+ or equivalent server with early hints support
+- [ ] `early_hints: enabled: true` in production config
+- [ ] `send_pack_early_hints` called AFTER `yield` in layout
+- [ ] Tested in staging environment with production-like server
+- [ ] Checked DevTools Network tab shows "Early Hints" initiator
+- [ ] Verified correct assets are being preloaded (not too many/few)
+
 ## Troubleshooting
 
 **Early hints not working?**
 
 - Verify Rails 5.2+ and server supports HTTP/2 + early hints
 - Check `early_hints: enabled: true` in config
-- Check logs for HTTP 103 responses
+- Use curl to check for HTTP 103 responses (see Testing section above)
 
 **Wrong assets preloaded?**
 
+- Add debug logging to see what's in queues (see Testing section)
 - If using zero-arg `send_pack_early_hints`, check what's in queues
 - Or explicitly specify: `<% send_pack_early_hints 'your-pack' %>`
 
