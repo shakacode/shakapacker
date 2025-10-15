@@ -44,7 +44,7 @@ class Shakapacker::Engine < ::Rails::Engine
       ActionController::Base.class_eval do
         # Class method to skip automatic early hints sending
         def self.skip_send_pack_early_hints(**options)
-          before_action(**options) { @skip_send_pack_early_hints = true }
+          before_action(**options) { request.env["shakapacker.skip_early_hints"] = true }
         end
 
         after_action :send_pack_early_hints_automatically, if: :should_send_early_hints?
@@ -65,7 +65,7 @@ class Shakapacker::Engine < ::Rails::Engine
 
           def should_send_early_hints?
             return false unless response.is_a?(ActionDispatch::Response)
-            return false if @skip_send_pack_early_hints
+            return false if request.env["shakapacker.skip_early_hints"]
 
             config = Shakapacker.config.early_hints rescue nil
             config && config[:enabled]

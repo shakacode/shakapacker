@@ -201,7 +201,8 @@ module Shakapacker::Helper
     return unless early_hints_supported? && early_hints_enabled?
 
     # Mark that we've manually sent early hints to prevent automatic sending
-    @skip_send_pack_early_hints = true
+    # Use request.env for shared storage between view context and controller
+    request.env["shakapacker.skip_early_hints"] = true if request.respond_to?(:env)
 
     # If no pack names provided, collect from queues populated by append/prepend helpers
     # This allows zero-config usage: views call append_*, then layout calls send_pack_early_hints
