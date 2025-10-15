@@ -6,6 +6,8 @@ This document tracks the ESLint errors currently suppressed in the codebase and 
 
 **As of 2025-10-14**: All TypeScript files in `package/` directory are temporarily excluded from linting via the ignore pattern `package/**/*.ts` in `eslint.config.js`. This allows the project to adopt ESLint configuration without requiring immediate fixes to all existing issues.
 
+**Latest Update**: Fixed all `class-methods-use-this` violations by converting FileWriter methods to static methods (4 violations resolved).
+
 ## Current Linting Status
 
 **Files currently linted** (`test/**/*.js`, `scripts/*.js`):
@@ -32,7 +34,7 @@ This document tracks the ESLint errors currently suppressed in the codebase and 
 | `@typescript-eslint/no-unsafe-*`     | High   | High   | P1       | 85    |
 | `config.ts` type safety              | High   | Medium | P1       | 7     |
 | `no-param-reassign`                  | Medium | Low    | P2       | 7     |
-| `class-methods-use-this`             | Low    | Low    | P3       | 5     |
+| `class-methods-use-this`             | Low    | Low    | P3       | 0     |
 | `no-nested-ternary`                  | Low    | Low    | P3       | 3     |
 | `import/prefer-default-export`       | Low    | Medium | P3       | 9     |
 | `global-require`                     | Medium | High   | P2       | 3     |
@@ -74,10 +76,9 @@ This document tracks the ESLint errors currently suppressed in the codebase and 
 
 ### 3. Code Style (Can Be Fixed)
 
-#### `class-methods-use-this` (5 instances)
+#### `class-methods-use-this` (0 instances)
 
-**Files affected:** `configExporter/fileWriter.ts`, `configExporter/yamlSerializer.ts`
-**Fix strategy:** Convert to static methods or standalone functions
+✅ **FIXED** - All FileWriter methods that didn't use instance state have been converted to static methods
 
 #### `no-nested-ternary` (3 instances)
 
@@ -105,18 +106,18 @@ This document tracks the ESLint errors currently suppressed in the codebase and 
 
 ## Recommended Approach
 
-### Phase 1: This PR (Non-Breaking)
+### Phase 1: Non-Breaking Fixes
 
-✅ Already completed:
+✅ Completed:
 
 - Fixed `no-use-before-define` by reordering functions
 - Fixed redundant type constituents with `string & {}` pattern
 - Added proper type annotations for `requireOrError` calls
 - Configured appropriate global rule disables (`no-console`, `no-restricted-syntax`)
+- ✅ **Fixed `class-methods-use-this`** - Converted FileWriter methods to static methods
 
 🔧 Could still fix (low risk):
 
-- `class-methods-use-this` - Convert to static methods
 - `no-nested-ternary` - Refactor conditionals
 - `no-useless-escape` - Remove unnecessary escapes
 - Unused variables - Remove or prefix with underscore

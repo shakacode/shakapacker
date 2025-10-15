@@ -198,8 +198,7 @@ module.exports = [
       "no-nested-ternary": "off",
       "import/prefer-default-export": "off",
       "global-require": "off",
-      "no-underscore-dangle": "off",
-      "class-methods-use-this": "off"
+      "no-underscore-dangle": "off"
     }
   },
   {

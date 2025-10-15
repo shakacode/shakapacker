@@ -592,7 +592,6 @@ async function runAllBuildsCommand(options: ExportOptions): Promise<number> {
       `\n📦 Exporting ${buildNames.length} builds from config file...\n`
     )
 
-    const fileWriter = new FileWriter()
     const targetDir = options.saveDir! // Set by applyDefaults
     const createdFiles: string[] = []
 
@@ -610,7 +609,7 @@ async function runAllBuildsCommand(options: ExportOptions): Promise<number> {
 
       for (const { config: cfg, metadata } of configs) {
         const output = formatConfig(cfg, metadata, options, appRoot)
-        const filename = fileWriter.generateFilename(
+        const filename = FileWriter.generateFilename(
           metadata.bundler,
           metadata.environment,
           metadata.configType,
@@ -619,7 +618,7 @@ async function runAllBuildsCommand(options: ExportOptions): Promise<number> {
         )
 
         const fullPath = resolve(targetDir, filename)
-        fileWriter.writeSingleFile(fullPath, output)
+        FileWriter.writeSingleFile(fullPath, output)
         createdFiles.push(fullPath)
       }
     }
@@ -659,7 +658,6 @@ async function runDoctorMode(
     console.log("🔍 Config Exporter - Doctor Mode")
     console.log("=".repeat(80))
 
-    const fileWriter = new FileWriter()
     const targetDir = options.saveDir! // Set by applyDefaults
 
     const createdFiles: string[] = []
@@ -693,7 +691,7 @@ async function runDoctorMode(
 
             for (const { config, metadata } of configs) {
               const output = formatConfig(config, metadata, options, appRoot)
-              const filename = fileWriter.generateFilename(
+              const filename = FileWriter.generateFilename(
                 metadata.bundler,
                 metadata.environment,
                 metadata.configType,
@@ -701,7 +699,7 @@ async function runDoctorMode(
                 metadata.buildName
               )
               const fullPath = resolve(targetDir, filename)
-              fileWriter.writeSingleFile(fullPath, output)
+              FileWriter.writeSingleFile(fullPath, output)
               createdFiles.push(fullPath)
             }
           }
@@ -761,7 +759,7 @@ async function runDoctorMode(
            * - Filename uses "client" type and "development-hmr" build name to
            *   distinguish it from regular development client bundle
            */
-          filename = fileWriter.generateFilename(
+          filename = FileWriter.generateFilename(
             metadata.bundler,
             metadata.environment,
             "client",
@@ -769,7 +767,7 @@ async function runDoctorMode(
             "development-hmr"
           )
         } else {
-          filename = fileWriter.generateFilename(
+          filename = FileWriter.generateFilename(
             metadata.bundler,
             metadata.environment,
             metadata.configType,
@@ -780,7 +778,7 @@ async function runDoctorMode(
 
         const fullPath = resolve(targetDir, filename)
         const fileOutput: FileOutput = { filename, content: output, metadata }
-        fileWriter.writeSingleFile(fullPath, output)
+        FileWriter.writeSingleFile(fullPath, output)
         createdFiles.push(fullPath)
       }
     }
@@ -834,7 +832,6 @@ async function runSaveMode(
   const env = options.env || "development"
   console.log(`[Config Exporter] Exporting ${env} configs`)
 
-  const fileWriter = new FileWriter()
   const targetDir = options.saveDir! // Set by applyDefaults
   const configs = await loadConfigsForEnv(options.env, options, appRoot)
   const createdFiles: string[] = []
@@ -852,13 +849,13 @@ async function runSaveMode(
       appRoot
     )
     const fullPath = resolve(options.output)
-    fileWriter.writeSingleFile(fullPath, output)
+    FileWriter.writeSingleFile(fullPath, output)
     createdFiles.push(fullPath)
   } else {
     // Multi-file output (one per config)
     for (const { config, metadata } of configs) {
       const output = formatConfig(config, metadata, options, appRoot)
-      const filename = fileWriter.generateFilename(
+      const filename = FileWriter.generateFilename(
         metadata.bundler,
         metadata.environment,
         metadata.configType,
@@ -866,7 +863,7 @@ async function runSaveMode(
         metadata.buildName
       )
       const fullPath = resolve(targetDir, filename)
-      fileWriter.writeSingleFile(fullPath, output)
+      FileWriter.writeSingleFile(fullPath, output)
       createdFiles.push(fullPath)
     }
   }
@@ -906,9 +903,8 @@ async function runSingleFileMode(
   const config = combined.length === 1 ? combined[0] : combined
   const output = formatConfig(config, metadata, options, appRoot)
 
-  const fileWriter = new FileWriter()
   const filePath = resolve(process.cwd(), options.output!)
-  fileWriter.writeSingleFile(filePath, output)
+  FileWriter.writeSingleFile(filePath, output)
 }
 
 async function loadConfigsForEnv(
