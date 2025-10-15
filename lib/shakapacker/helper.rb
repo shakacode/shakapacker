@@ -192,21 +192,11 @@ module Shakapacker::Helper
   #   # Option 2: Explicit pack names (when you know them upfront)
   #   <% send_pack_early_hints 'application', 'admin' %>
   #
-  #   # Option 3: With options
+  #   # Option 3: With options (rarely needed)
   #   <% send_pack_early_hints 'application',
   #        include_css: true,   # default: from config
   #        include_js: true     # default: from config
   #   %>
-  #
-  #   # Option 4: In controller before_action (for expensive queries)
-  #   # Must specify pack names since queues aren't populated yet
-  #   class ApplicationController < ActionController::Base
-  #     before_action :send_early_hints
-  #
-  #     def send_early_hints
-  #       view_context.send_pack_early_hints('application')
-  #     end
-  #   end
   def send_pack_early_hints(*names, **options)
     return unless early_hints_supported? && early_hints_enabled?
 
