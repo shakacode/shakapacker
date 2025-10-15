@@ -1,4 +1,3 @@
-const { spawn } = require("child_process")
 const { existsSync, writeFileSync, mkdirSync, rmSync } = require("fs")
 const { resolve, join } = require("path")
 const { BuildValidator } = require("../../package/configExporter")
@@ -7,6 +6,9 @@ const { BuildValidator } = require("../../package/configExporter")
 jest.mock("child_process", () => ({
   spawn: jest.fn()
 }))
+
+// eslint-disable-next-line import/order
+const { spawn } = require("child_process")
 
 describe("BuildValidator", () => {
   const testDir = resolve(__dirname, "../tmp/build-validator-test")
