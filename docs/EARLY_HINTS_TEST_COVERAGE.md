@@ -23,13 +23,24 @@ Complete test coverage for HTTP 103 Early Hints feature.
 #### 2. Queue-Based Pack Discovery (6 tests)
 
 - ✅ Uses packs from queues when called without arguments
+  - Simulates `append_javascript_pack_tag("application")` in view
+  - Verifies `send_pack_early_hints` (zero-arg) discovers the pack
 - ✅ Uses multiple packs from queues when multiple were appended
+  - Simulates multiple `append_javascript_pack_tag` calls from different partials
+  - Verifies all queued packs are discovered
 - ✅ Returns nil when called without arguments and queues are empty
+  - Ensures graceful handling when no packs have been queued
 - ✅ Collects packs from both append_javascript_pack_tag and append_stylesheet_pack_tag
+  - Tests cross-queue discovery (JavaScript queue + Stylesheet queue)
+  - Verifies both JS and CSS assets are included in early hints
 - ✅ Collects packs from prepend_javascript_pack_tag
+  - Simulates `prepend_javascript_pack_tag` alongside `append_javascript_pack_tag`
+  - Verifies prepended packs are also discovered
 - ✅ Sends headers in correct Rails format with Link key and array value
+  - Validates structure: `{"Link" => [array of link strings]}`
+  - Ensures each link is properly formatted: `<path>; rel=preload; as=...`
 
-**Coverage:** Validates the core feature - automatic pack discovery from queues populated by `append_*` and `prepend_*` helpers, including cross-queue discovery (JS + CSS) and correct header format for Rails.
+**Coverage:** Validates the core feature - automatic pack discovery from queues populated by `append_javascript_pack_tag`, `append_stylesheet_pack_tag`, and `prepend_javascript_pack_tag` helpers. Tests ensure cross-queue discovery (JS + CSS) works correctly and headers are in the exact format Rails expects.
 
 #### 3. Configuration & Enablement (2 tests)
 
