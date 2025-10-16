@@ -3,7 +3,7 @@ import type { Configuration } from "webpack"
 declare const _default: {
   customizeArray: typeof webpackMerge.customizeArray
   customizeObject: typeof webpackMerge.customizeObject
-  CustomizeRule: typeof webpackMerge.CustomizeRule
+  CustomizeRule: webpackMerge.CustomizeRule
   merge: typeof webpackMerge.merge
   default: typeof webpackMerge.merge
   mergeWithCustomize: typeof webpackMerge.mergeWithCustomize

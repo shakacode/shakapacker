@@ -668,6 +668,7 @@ builds:
 
 - **`description`** (optional): Human-readable description of the build
 - **`bundler`** (optional): Override the default bundler from `config/shakapacker.yml` (`webpack` or `rspack`)
+- **`dev_server`** (optional): Boolean flag to force routing to dev server (overrides environment variable detection)
 - **`environment`**: Environment variables to set when running the build
 - **`outputs`**: Array of output types - can include `client`, `server`, or both for multiple bundles in a single build
 - **`config`** (optional): Custom config file path (supports `${BUNDLER}` variable substitution)
@@ -675,7 +676,12 @@ builds:
 
 ### Automatic Dev Server Detection
 
-If a build has `WEBPACK_SERVE=true` or `HMR=true` in its environment, Shakapacker automatically uses `bin/shakapacker-dev-server` instead of the regular build command:
+Shakapacker automatically uses `bin/shakapacker-dev-server` instead of the regular build command when:
+
+1. The build has `dev_server: true` explicitly set (preferred method), OR
+2. The build has `WEBPACK_SERVE=true` or `HMR=true` in its environment variables (fallback for backward compatibility)
+
+Example:
 
 ```bash
 # These are equivalent:
