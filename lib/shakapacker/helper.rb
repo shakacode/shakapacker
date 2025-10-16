@@ -433,7 +433,7 @@ module Shakapacker::Helper
 
     # Build a Link header value for early hints
     # Takes the already-resolved source_path to avoid duplicate lookup_source calls
-    def build_link_header(source_path, source, as:, rel: 'preload')
+    def build_link_header(source_path, source, as:, rel: "preload")
       parts = ["<#{source_path}>", "rel=#{rel}", "as=#{as}"]
 
       # Add crossorigin and integrity if enabled (consistent with render_tags)
@@ -480,7 +480,12 @@ module Shakapacker::Helper
     # Returns 'preload', 'prefetch', or 'none'
     def resolve_hint_type(asset_type, **options)
       # Check explicit option passed to method (highest priority)
-      return normalize_hint_value(options[asset_type]) if options.key?(asset_type)
+      # Support both new format (css:/js:) and old format (include_css:/include_js:)
+      if options.key?(asset_type)
+        return normalize_hint_value(options[asset_type])
+      elsif options.key?("include_#{asset_type}".to_sym)
+        return normalize_hint_value(options["include_#{asset_type}".to_sym])
+      end
 
       # Check request.env for per-request configuration
       if request.respond_to?(:env)
@@ -492,8 +497,16 @@ module Shakapacker::Helper
       config = current_shakapacker_instance.config.early_hints || {}
 
       # Try new format first (css/js), then old format (include_css/include_js) for backward compat
-      value = config[asset_type] || config[asset_type.to_s] ||
-              config["include_#{asset_type}".to_sym] || config["include_#{asset_type}"]
+      # Use has_key? to distinguish between false and nil
+      value = if config.key?(asset_type)
+        config[asset_type]
+              elsif config.key?(asset_type.to_s)
+                config[asset_type.to_s]
+              elsif config.key?("include_#{asset_type}".to_sym)
+                config["include_#{asset_type}".to_sym]
+              elsif config.key?("include_#{asset_type}")
+                config["include_#{asset_type}"]
+      end
 
       normalize_hint_value(value)
     end
@@ -503,14 +516,14 @@ module Shakapacker::Helper
     # Returns 'preload', 'prefetch', or 'none'
     def normalize_hint_value(value)
       case value
-      when true, 'preload', :preload
-        'preload'
-      when false, 'none', :none
-        'none'
-      when 'prefetch', :prefetch
-        'prefetch'
+      when true, "preload", :preload
+        "preload"
+      when false, "none", :none
+        "none"
+      when "prefetch", :prefetch
+        "prefetch"
       else
-        'preload' # default
+        "preload" # default
       end
     end
 
@@ -519,12 +532,12 @@ module Shakapacker::Helper
     def should_include_hint?(asset_type, **options)
       hint_type = resolve_hint_type(asset_type, **options)
       case hint_type
-      when 'none'
+      when "none"
         [false, nil]
-      when 'prefetch'
-        [true, 'prefetch']
+      when "prefetch"
+        [true, "prefetch"]
       else # 'preload'
-        [true, 'preload']
+        [true, "preload"]
       end
     end
 end
