@@ -47,6 +47,19 @@ class Shakapacker::Engine < ::Rails::Engine
           before_action(**options) { request.env["shakapacker.skip_early_hints"] = true }
         end
 
+        # Class method to configure early hints per action
+        # Supports 'all' shortcut and specific css/js configuration
+        #
+        # Examples:
+        #   configure_pack_early_hints only: [:show], css: 'prefetch', js: 'preload'
+        #   configure_pack_early_hints only: [:gallery], all: 'none'
+        #   configure_pack_early_hints all: 'prefetch', css: 'preload'
+        def self.configure_pack_early_hints(all: nil, css: nil, js: nil, **options)
+          before_action(**options) do
+            view_context.configure_early_hints(all: all, css: css, js: js)
+          end
+        end
+
         after_action :send_pack_early_hints_automatically, if: :should_send_early_hints?
 
         private

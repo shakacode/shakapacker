@@ -394,17 +394,17 @@ module Shakapacker::Helper
     # Build early hints Link headers for the specified packs
     # Returns a headers hash in the format expected by Rails: {"Link" => [array of link strings]}
     def build_early_hints_links(names, **options)
-      config = current_shakapacker_instance.config.early_hints || {}
       link_headers = []
 
       names.each do |name|
         # Collect JavaScript chunks
-        if options.fetch(:include_js, config[:include_js])
+        include_js, js_rel = should_include_hint?(:js, **options)
+        if include_js
           begin
             sources = available_sources_from_manifest_entrypoints([name], type: :javascript)
             sources.each do |source|
               source_path = lookup_source(source)
-              link_headers << build_link_header(source_path, source, as: "script")
+              link_headers << build_link_header(source_path, source, as: "script", rel: js_rel)
             end
           rescue Shakapacker::Manifest::MissingEntryError, NoMethodError => e
             # Gracefully handle missing entries or nil manifest responses
@@ -413,12 +413,13 @@ module Shakapacker::Helper
         end
 
         # Collect CSS chunks
-        if options.fetch(:include_css, config[:include_css])
+        include_css, css_rel = should_include_hint?(:css, **options)
+        if include_css
           begin
             sources = available_sources_from_manifest_entrypoints([name], type: :stylesheet)
             sources.each do |source|
               source_path = lookup_source(source)
-              link_headers << build_link_header(source_path, source, as: "style")
+              link_headers << build_link_header(source_path, source, as: "style", rel: css_rel)
             end
           rescue Shakapacker::Manifest::MissingEntryError, NoMethodError => e
             # Gracefully handle missing entries or nil manifest responses
@@ -432,8 +433,8 @@ module Shakapacker::Helper
 
     # Build a Link header value for early hints
     # Takes the already-resolved source_path to avoid duplicate lookup_source calls
-    def build_link_header(source_path, source, as:)
-      parts = ["<#{source_path}>", "rel=preload", "as=#{as}"]
+    def build_link_header(source_path, source, as:, rel: 'preload')
+      parts = ["<#{source_path}>", "rel=#{rel}", "as=#{as}"]
 
       # Add crossorigin and integrity if enabled (consistent with render_tags)
       if current_shakapacker_instance.config.integrity[:enabled]
@@ -450,5 +451,80 @@ module Shakapacker::Helper
       end
 
       parts.join("; ")
+    end
+
+    # Configure early hints for the current request
+    # Can be called from controller actions or before_action
+    # Supports 'all' shortcut and specific css/js configuration
+    #
+    # Examples:
+    #   configure_early_hints css: 'prefetch', js: 'preload'
+    #   configure_early_hints all: 'none'
+    #   configure_early_hints all: 'prefetch', js: 'preload'
+    def configure_early_hints(all: nil, css: nil, js: nil)
+      return unless request.respond_to?(:env)
+
+      # Apply 'all' shortcut first
+      if all
+        request.env["shakapacker.css_hint"] = normalize_hint_value(all)
+        request.env["shakapacker.js_hint"] = normalize_hint_value(all)
+      end
+
+      # Specific values override 'all'
+      request.env["shakapacker.css_hint"] = normalize_hint_value(css) if css
+      request.env["shakapacker.js_hint"] = normalize_hint_value(js) if js
+    end
+
+    # Resolve hint type for a given asset type (css or js)
+    # Checks request.env first (per-request config), then falls back to global config
+    # Returns 'preload', 'prefetch', or 'none'
+    def resolve_hint_type(asset_type, **options)
+      # Check explicit option passed to method (highest priority)
+      return normalize_hint_value(options[asset_type]) if options.key?(asset_type)
+
+      # Check request.env for per-request configuration
+      if request.respond_to?(:env)
+        env_key = "shakapacker.#{asset_type}_hint"
+        return request.env[env_key] if request.env[env_key]
+      end
+
+      # Fall back to global config
+      config = current_shakapacker_instance.config.early_hints || {}
+
+      # Try new format first (css/js), then old format (include_css/include_js) for backward compat
+      value = config[asset_type] || config[asset_type.to_s] ||
+              config["include_#{asset_type}".to_sym] || config["include_#{asset_type}"]
+
+      normalize_hint_value(value)
+    end
+
+    # Normalize hint value to standard string
+    # Handles backward compatibility: true -> 'preload', false -> 'none'
+    # Returns 'preload', 'prefetch', or 'none'
+    def normalize_hint_value(value)
+      case value
+      when true, 'preload', :preload
+        'preload'
+      when false, 'none', :none
+        'none'
+      when 'prefetch', :prefetch
+        'prefetch'
+      else
+        'preload' # default
+      end
+    end
+
+    # Check if hints should be included for a given asset type
+    # Returns: [should_include?, rel_value]
+    def should_include_hint?(asset_type, **options)
+      hint_type = resolve_hint_type(asset_type, **options)
+      case hint_type
+      when 'none'
+        [false, nil]
+      when 'prefetch'
+        [true, 'prefetch']
+      else # 'preload'
+        [true, 'preload']
+      end
     end
 end
