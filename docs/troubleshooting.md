@@ -1,5 +1,9 @@
 # Troubleshooting
 
+## Flash of Unstyled Content (FOUC)
+
+If you're experiencing FOUC where content briefly appears unstyled before CSS loads, see the [Preventing FOUC guide](./preventing_fouc.md) for solutions including proper `stylesheet_pack_tag` placement and `content_for` patterns for dynamic pack loading.
+
 ## Debugging your webpack config
 
 1. Read the error message carefully. The error message will tell you the precise key value

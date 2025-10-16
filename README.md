@@ -527,6 +527,8 @@ is the same as using this in the main layout:
 
 For alternative options for setting the additional packs, [see this discussion](https://github.com/shakacode/shakapacker/issues/39).
 
+**Important:** To prevent FOUC (Flash of Unstyled Content), always place `stylesheet_pack_tag` in the `<head>` section of your layout. When using `append_*` helpers with dynamic pack loading (e.g., React on Rails), use the `content_for` pattern to control execution order. See the [Preventing FOUC guide](./docs/preventing_fouc.md) for detailed examples.
+
 #### View Helper: `asset_pack_path`
 
 If you want to link a static asset for `<img />` tag, you can use the `asset_pack_path` helper:
