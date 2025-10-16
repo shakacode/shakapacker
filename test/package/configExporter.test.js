@@ -17,8 +17,7 @@ describe("configExporter", () => {
   describe("fileWriter", () => {
     test("generates correct filename for client config", () => {
       const { FileWriter } = require("../../package/configExporter/fileWriter")
-      const writer = new FileWriter()
-      const filename = writer.generateFilename(
+      const filename = FileWriter.generateFilename(
         "webpack",
         "development",
         "client",
@@ -29,8 +28,7 @@ describe("configExporter", () => {
 
     test("generates correct filename for server config", () => {
       const { FileWriter } = require("../../package/configExporter/fileWriter")
-      const writer = new FileWriter()
-      const filename = writer.generateFilename(
+      const filename = FileWriter.generateFilename(
         "webpack",
         "production",
         "server",
@@ -41,8 +39,7 @@ describe("configExporter", () => {
 
     test("generates correct filename for client-hmr config", () => {
       const { FileWriter } = require("../../package/configExporter/fileWriter")
-      const writer = new FileWriter()
-      const filename = writer.generateFilename(
+      const filename = FileWriter.generateFilename(
         "webpack",
         "development",
         "client-hmr",
@@ -53,8 +50,7 @@ describe("configExporter", () => {
 
     test("generates correct filename for json format", () => {
       const { FileWriter } = require("../../package/configExporter/fileWriter")
-      const writer = new FileWriter()
-      const filename = writer.generateFilename(
+      const filename = FileWriter.generateFilename(
         "rspack",
         "production",
         "client",

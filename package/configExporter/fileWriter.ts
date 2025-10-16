@@ -11,16 +11,16 @@ export class FileWriter {
   /**
    * Write multiple config files (one per config in array)
    */
-  writeMultipleFiles(outputs: FileOutput[], targetDir: string): void {
+  static writeMultipleFiles(outputs: FileOutput[], targetDir: string): void {
     // Ensure directory exists
-    this.ensureDirectory(targetDir)
+    FileWriter.ensureDirectory(targetDir)
 
     // Write each file
     outputs.forEach((output) => {
       const safeName = basename(output.filename)
       const filePath = resolve(targetDir, safeName)
-      this.validateOutputPath(filePath)
-      this.writeFile(filePath, output.content)
+      FileWriter.validateOutputPath(filePath)
+      FileWriter.writeFile(filePath, output.content)
       console.log(`[Config Exporter] Created: ${filePath}`)
     })
 
@@ -32,13 +32,13 @@ export class FileWriter {
   /**
    * Write a single file
    */
-  writeSingleFile(filePath: string, content: string): void {
+  static writeSingleFile(filePath: string, content: string): void {
     // Ensure parent directory exists
     const dir = dirname(filePath)
-    this.ensureDirectory(dir)
+    FileWriter.ensureDirectory(dir)
 
-    this.validateOutputPath(filePath)
-    this.writeFile(filePath, content)
+    FileWriter.validateOutputPath(filePath)
+    FileWriter.writeFile(filePath, content)
     console.log(`[Config Exporter] Created: ${filePath}`)
   }
 
@@ -54,7 +54,7 @@ export class FileWriter {
    *   webpack-dev-client.yaml (with build name)
    *   rspack-cypress-dev-server.yaml (with build name)
    */
-  generateFilename(
+  static generateFilename(
     bundler: string,
     env: string,
     configType: "client" | "server" | "all" | "client-hmr",
@@ -66,11 +66,11 @@ export class FileWriter {
     return `${bundler}-${name}-${configType}.${ext}`
   }
 
-  private writeFile(filePath: string, content: string): void {
+  private static writeFile(filePath: string, content: string): void {
     writeFileSync(filePath, content, "utf8")
   }
 
-  private ensureDirectory(dir: string): void {
+  private static ensureDirectory(dir: string): void {
     if (!existsSync(dir)) {
       mkdirSync(dir, { recursive: true })
     }
@@ -79,7 +79,7 @@ export class FileWriter {
   /**
    * Validate output path and warn if writing outside cwd
    */
-  validateOutputPath(outputPath: string): void {
+  private static validateOutputPath(outputPath: string): void {
     const absPath = resolve(outputPath)
     const cwd = process.cwd()
 
