@@ -485,12 +485,18 @@ module Shakapacker
         app_path = File.expand_path(".", Dir.pwd)
         shakapacker_config_path = File.join(app_path, "bin", "shakapacker-config")
 
-        if File.exist?(shakapacker_config_path)
-          system(shakapacker_config_path, "--init")
-        else
+        unless File.exist?(shakapacker_config_path)
           $stderr.puts "[Shakapacker] Error: bin/shakapacker-config not found"
           $stderr.puts "Please ensure Shakapacker is properly installed"
           exit(1)
+        end
+
+        # Run the init command and check if it succeeded
+        unless system(shakapacker_config_path, "--init")
+          exit_code = $?.exitstatus || 1
+          $stderr.puts "[Shakapacker] Error: Failed to run: #{shakapacker_config_path} --init"
+          $stderr.puts "[Shakapacker] Command exited with status: #{exit_code}"
+          exit(exit_code)
         end
       end
 
