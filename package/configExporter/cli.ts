@@ -749,7 +749,7 @@ async function runDoctorMode(
 
           for (const { config, metadata } of configs) {
             const output = formatConfig(config, metadata, options, appRoot)
-            const filename = fileWriter.generateFilename(
+            const filename = FileWriter.generateFilename(
               metadata.bundler,
               metadata.environment,
               metadata.configType,
@@ -757,7 +757,7 @@ async function runDoctorMode(
               metadata.buildName
             )
             const fullPath = resolve(targetDir, filename)
-            fileWriter.writeSingleFile(fullPath, output)
+            FileWriter.writeSingleFile(fullPath, output)
             createdFiles.push(fullPath)
           }
         }
