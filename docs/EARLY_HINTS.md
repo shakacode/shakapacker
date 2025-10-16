@@ -79,25 +79,7 @@ class PostsController < ApplicationController
 end
 ```
 
-## Configuration Reference
-
-### Global Configuration (shakapacker.yml)
-
-```yaml
-production:
-  early_hints:
-    enabled: true # Required - master switch
-    css: "preload" # Optional - default: 'preload'
-    js: "preload" # Optional - default: 'preload'
-```
-
-**Options:**
-
-- `'preload'` - High priority (rel=preload)
-- `'prefetch'` - Low priority (rel=prefetch)
-- `'none'` - Disabled
-
-### Controller Configuration
+## Controller Configuration
 
 #### Skip Early Hints Entirely
 
@@ -157,30 +139,6 @@ class PostsController < ApplicationController
     configure_pack_early_hints css: 'prefetch', js: 'prefetch'
   end
 end
-```
-
-### Manual Override (Views/Layouts)
-
-```erb
-<%# app/views/layouts/application.html.erb %>
-<!DOCTYPE html>
-<html>
-  <body>
-    <%= yield %>
-    <%= javascript_pack_tag 'application' %>
-  </body>
-</html>
-
-<%# Override for this specific request %>
-<% send_pack_early_hints css: 'prefetch', js: 'none' %>
-```
-
-### Per-Tag Override
-
-```erb
-<%# In view - override just for this tag %>
-<%= javascript_pack_tag 'application',
-    early_hints: { css: 'preload', js: 'prefetch' } %>
 ```
 
 ## Configuration Precedence
@@ -284,44 +242,6 @@ end
 
 **Why**: Shopping vs checkout have different needs
 
-## Performance Decision Guide
-
-### When to use `preload`
-
-✅ **Use for critical assets:**
-
-- CSS for above-the-fold content on text-heavy pages
-- JavaScript required for initial interactivity
-- Pages with no large images or videos
-- SPAs where JS loads everything
-
-### When to use `prefetch`
-
-✅ **Use for non-critical assets:**
-
-- CSS for below-the-fold content
-- Enhancement JavaScript (analytics, widgets)
-- Pages with large LCP images
-- Content that works without JS initially
-
-### When to use `none`
-
-✅ **Use when hints hurt performance:**
-
-- Image-heavy pages (hero images, galleries)
-- Video landing pages
-- SSR pages that work without JS
-- API endpoints
-- Pages optimized for LCP over interactivity
-
-### Testing Recommendations
-
-1. **Measure LCP**: Use Chrome DevTools Performance tab
-2. **Test Real Devices**: Mobile performance differs significantly
-3. **A/B Test**: Compare configurations with real user data
-4. **Monitor Field Data**: Use RUM (Real User Monitoring)
-5. **Test Per Page Type**: Don't assume one config fits all
-
 ## How It Works
 
 Shakapacker automatically sends early hints after your views render:
@@ -344,10 +264,12 @@ Shakapacker automatically sends early hints after your views render:
 
 ## Advanced: Manual Control
 
-Most apps should use automatic configuration. Manual control is for special cases:
+Most apps should use controller configuration. Use manual control for view-specific logic:
 
 ```erb
 <%# app/views/layouts/application.html.erb %>
+<% send_pack_early_hints css: 'prefetch', js: 'preload' %>
+
 <!DOCTYPE html>
 <html>
   <body>
@@ -355,16 +277,16 @@ Most apps should use automatic configuration. Manual control is for special case
     <%= javascript_pack_tag 'application' %>
   </body>
 </html>
-
-<%# Manual call - overrides automatic behavior %>
-<% send_pack_early_hints css: 'prefetch', js: 'preload' %>
 ```
 
-**When to use manual control:**
+**Per-tag override:**
 
-- Layout-specific optimizations
-- Conditional hints based on view variables
-- A/B testing different configurations
+```erb
+<%= javascript_pack_tag 'application',
+    early_hints: { css: 'preload', js: 'prefetch' } %>
+```
+
+**Use cases:** Layout-specific optimizations, conditional hints based on view variables, A/B testing
 
 ## Requirements
 
@@ -379,27 +301,41 @@ Most apps should use automatic configuration. Manual control is for special case
 
 If requirements not met, feature gracefully degrades with no errors.
 
+## Quick Reference
+
+### When to use each option:
+
+- **`preload`**: Critical assets on text-heavy pages, SPAs, pages without large images
+- **`prefetch`**: Non-critical assets, pages with large LCP images/videos
+- **`none`**: Image/video-heavy pages, API endpoints, SSR pages
+
+### Testing checklist:
+
+1. Measure LCP with Chrome DevTools Performance tab
+2. Test on real mobile devices
+3. A/B test configurations with real user data
+4. Monitor field data with RUM tools
+5. Test each page type separately
+
 ## Troubleshooting
 
-### Early hints not appearing in DevTools
+**Early hints not appearing:**
 
-1. Check `early_hints: enabled: true` in shakapacker.yml
-2. Verify server supports HTTP/2 and early hints (Puma 5+)
-3. Check browser DevTools → Network → Protocol column shows "h2"
-4. Look for 103 status code before main response
+- Check `early_hints: enabled: true` in shakapacker.yml
+- Verify HTTP/2 server (Puma 5+, nginx 1.13+)
+- Check Network tab shows "h2" protocol and 103 status
 
-### Performance got worse
+**Performance got worse:**
 
-1. Check if page has large images/videos (likely LCP elements)
-2. Try `css: 'prefetch', js: 'prefetch'` or `all: 'none'`
-3. Measure LCP before and after with Chrome DevTools
-4. Consider configuring per-page instead of globally
+- Page likely has large images/videos as LCP
+- Try `css: 'prefetch', js: 'prefetch'` or `all: 'none'`
+- Measure LCP before and after changes
 
-### Hints sent for wrong asset type
+**Wrong hints sent:**
 
-1. Check controller configuration precedence
-2. Verify `css:` and `js:` values are strings: `'preload'` not `:preload`
-3. Check for typos: `'preload'`, `'prefetch'`, `'none'` (case-sensitive)
+- Check configuration precedence (global → controller → manual)
+- Verify values are strings: `'preload'` not `:preload`
+- Check for typos (case-sensitive)
 
 ## References
 
