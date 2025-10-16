@@ -115,22 +115,20 @@ module Shakapacker
 
     private
 
-      # Load YAML config file with Ruby version compatibility
-      # Ruby 3.1+ supports aliases: keyword, older versions need YAML.safe_load
+      # Load YAML config file safely with Ruby version compatibility
+      # Ruby 3.1+ supports safe_load_file with aliases, older versions need safe_load
       def load_config
-        begin
-          config = if YAML.respond_to?(:unsafe_load_file)
-            # Ruby 3.1+: Use unsafe_load_file to support aliases/anchors
-            YAML.unsafe_load_file(@config_file_path)
-                   else
-                     # Ruby 2.7-3.0: Use safe_load with aliases enabled
-                     YAML.safe_load(File.read(@config_file_path), permitted_classes: [], permitted_symbols: [], aliases: true)
-          end
-        rescue ArgumentError
-          # Ruby 2.7 doesn't support aliases keyword - fall back to YAML.load
-          config = YAML.load(File.read(@config_file_path)) # rubocop:disable Security/YAMLLoad
-        rescue Psych::SyntaxError => e
-          raise ArgumentError, "Invalid YAML in config file: #{e.message}"
+        config = if YAML.respond_to?(:safe_load_file)
+          # Ruby 3.1+: Use safe_load_file with aliases enabled
+          YAML.safe_load_file(@config_file_path, aliases: true)
+        else
+          # Ruby 2.7-3.0: Use safe_load with aliases enabled
+          YAML.safe_load(
+            File.read(@config_file_path),
+            permitted_classes: [],
+            permitted_symbols: [],
+            aliases: true
+          )
         end
 
         unless config["builds"]&.is_a?(Hash)
@@ -138,6 +136,8 @@ module Shakapacker
         end
 
         config
+      rescue Psych::SyntaxError => e
+        raise ArgumentError, "Invalid YAML in config file: #{e.message}"
       end
   end
 end
