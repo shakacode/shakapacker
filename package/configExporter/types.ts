@@ -14,6 +14,7 @@ export interface ExportOptions {
   help?: boolean
   // New config file options
   init?: boolean
+  ssr?: boolean
   configFile?: string
   build?: string
   listBuilds?: boolean

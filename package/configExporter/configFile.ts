@@ -80,7 +80,7 @@ export class ConfigFileLoader {
     if (!this.exists()) {
       throw new Error(
         `Config file not found: ${this.configFilePath}\n` +
-          `Run 'bin/export-bundler-config --init' to generate a sample config file.`
+          `Run 'bin/shakapacker-config --init' to generate a sample config file.`
       )
     }
 
@@ -403,7 +403,7 @@ builds:
     environment:
       NODE_ENV: development
       RAILS_ENV: development
-      WEBPACK_SERVE: "true"
+      WEBPACK_SERVE: true
     outputs:
       - client
 
@@ -525,34 +525,34 @@ builds:
 # ============================================================================
 #
 # Initialize this config file:
-#   bin/export-bundler-config --init
+#   bin/shakapacker-config --init
 #
 # List all available builds:
-#   bin/export-bundler-config --list-builds
+#   bin/shakapacker-config --list-builds
 #
 # Export development build configs:
-#   bin/export-bundler-config --build=dev-hmr --save
+#   bin/shakapacker-config --build=dev-hmr
 #   Creates: rspack-dev-hmr-client.yml
 #
-#   bin/export-bundler-config --build=dev --save
+#   bin/shakapacker-config --build=dev
 #   Creates: rspack-dev-client.yml, rspack-dev-server.yml
 #
 # Export production build:
-#   bin/export-bundler-config --build=prod --save
+#   bin/shakapacker-config --build=prod
 #   Creates: rspack-prod-client.yml, rspack-prod-server.yml
 #
 # Use webpack instead of default rspack:
-#   bin/export-bundler-config --build=prod --save --webpack
+#   bin/shakapacker-config --build=prod --webpack
 #   Creates: webpack-prod-client.yml, webpack-prod-server.yml
 #
 # Export to stdout for inspection (no files created):
-#   bin/export-bundler-config --build=dev
+#   bin/shakapacker-config --build=dev --stdout
 #
 # Export to custom directory:
-#   bin/export-bundler-config --build=prod --save-dir=./debug
+#   bin/shakapacker-config --build=prod --save-dir=./debug
 #
 # Doctor mode (comprehensive troubleshooting):
-#   bin/export-bundler-config --doctor
+#   bin/shakapacker-config --doctor
 #   Creates files in: shakapacker-config-exports/
 #
 `
@@ -580,7 +580,7 @@ builds:
     environment:
       NODE_ENV: development
       RAILS_ENV: development
-      WEBPACK_SERVE: "true"
+      WEBPACK_SERVE: true
       CLIENT_BUNDLE_ONLY: "yes"
     outputs:
       - client

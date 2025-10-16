@@ -1,5 +1,4 @@
 require "yaml"
-require "pathname"
 
 module Shakapacker
   class BuildConfigLoader
@@ -82,13 +81,18 @@ module Shakapacker
 
     def uses_dev_server?(build_config)
       # Check explicit dev_server flag first (preferred)
-      return build_config[:dev_server] if build_config.key?(:dev_server)
+      # Only return early if the value is explicitly set (not nil)
+      return build_config[:dev_server] unless build_config[:dev_server].nil?
 
       # Fallback: check environment variables for backward compatibility
       env = build_config[:environment]
       return false unless env
 
-      env["WEBPACK_SERVE"] == "true" || env["HMR"] == "true"
+      # Handle both string "true" and boolean true from YAML
+      %w[WEBPACK_SERVE HMR].any? do |key|
+        value = env[key]
+        value.to_s.strip.casecmp("true").zero?
+      end
     end
 
     def list_builds

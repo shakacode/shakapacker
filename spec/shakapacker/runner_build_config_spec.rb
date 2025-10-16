@@ -268,7 +268,7 @@ describe "Runner with build configs" do
           klass.run(["--build", "dev-hmr"])
         end
 
-        expect(output).to include("Build 'dev-hmr' requires dev server (dev_server: true)")
+        expect(output).to include("Build 'dev-hmr' requires dev server")
         expect(output).to include("Running: bin/shakapacker-dev-server --build dev-hmr")
         expect(dev_server_klass).to have_received(:run_with_build_config)
       end

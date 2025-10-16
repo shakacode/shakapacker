@@ -8,12 +8,13 @@ class Shakapacker::Configuration
     attr_accessor :installing
   end
 
-  attr_reader :root_path, :config_path, :env
+  attr_reader :root_path, :config_path, :env, :bundler_override
 
-  def initialize(root_path:, config_path:, env:)
+  def initialize(root_path:, config_path:, env:, bundler_override: nil)
     @root_path = root_path
     @env = env
     @config_path = config_path
+    @bundler_override = bundler_override
   end
 
   def dev_server
@@ -97,6 +98,9 @@ class Shakapacker::Configuration
   end
 
   def assets_bundler
+    # CLI --bundler flag takes highest precedence
+    return @bundler_override if @bundler_override
+
     # Show deprecation warning if using old 'bundler' key
     if data.has_key?(:bundler) && !data.has_key?(:assets_bundler)
       $stderr.puts "⚠️  DEPRECATION WARNING: The 'bundler' configuration option is deprecated. Please use 'assets_bundler' instead to avoid confusion with Ruby's Bundler gem manager."

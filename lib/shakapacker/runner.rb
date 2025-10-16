@@ -43,6 +43,19 @@ module Shakapacker
         exit(0)
       end
 
+      # Check for --bundler flag
+      bundler_override = nil
+      bundler_index = argv.index("--bundler")
+      if bundler_index
+        bundler_value = argv[bundler_index + 1]
+        unless bundler_value && %w[webpack rspack].include?(bundler_value)
+          $stderr.puts "[Shakapacker] Error: --bundler requires 'webpack' or 'rspack'"
+          $stderr.puts "Usage: bin/shakapacker --bundler <webpack|rspack>"
+          exit(1)
+        end
+        bundler_override = bundler_value
+      end
+
       # Check for --build flag
       build_index = argv.index("--build")
       if build_index
@@ -63,16 +76,28 @@ module Shakapacker
         end
 
         begin
-          build_config = loader.resolve_build_config(build_name)
+          # Pass bundler override to resolve_build_config
+          resolve_opts = {}
+          resolve_opts[:default_bundler] = bundler_override if bundler_override
+          build_config = loader.resolve_build_config(build_name, **resolve_opts)
 
           # Remove --build and build name from argv
           remaining_argv = argv.dup
           remaining_argv.delete_at(build_index + 1)
           remaining_argv.delete_at(build_index)
 
-          # If this build uses dev server (dev_server: true), delegate to DevServerRunner
+          # Remove --bundler and bundler value from argv if present
+          if bundler_index
+            bundler_idx_in_remaining = remaining_argv.index("--bundler")
+            if bundler_idx_in_remaining
+              remaining_argv.delete_at(bundler_idx_in_remaining + 1)
+              remaining_argv.delete_at(bundler_idx_in_remaining)
+            end
+          end
+
+          # If this build uses dev server, delegate to DevServerRunner
           if loader.uses_dev_server?(build_config)
-            $stdout.puts "[Shakapacker] Build '#{build_name}' requires dev server (dev_server: true)"
+            $stdout.puts "[Shakapacker] Build '#{build_name}' requires dev server"
             $stdout.puts "[Shakapacker] Running: bin/shakapacker-dev-server --build #{build_name}"
             $stdout.puts ""
             require_relative "dev_server_runner"
@@ -91,11 +116,28 @@ module Shakapacker
 
       Shakapacker.ensure_node_env!
 
+      # Remove --bundler flag from argv if present (not using --build)
+      remaining_argv = argv.dup
+      if bundler_index
+        bundler_idx = remaining_argv.index("--bundler")
+        if bundler_idx
+          remaining_argv.delete_at(bundler_idx + 1)
+          remaining_argv.delete_at(bundler_idx)
+        end
+      end
+
+      # Set SHAKAPACKER_ASSETS_BUNDLER if bundler override is specified
+      # This ensures JS/TS config files use the correct bundler
+      ENV["SHAKAPACKER_ASSETS_BUNDLER"] = bundler_override if bundler_override
+
       # Create a single runner instance to avoid loading configuration twice.
       # We extend it with the appropriate build command based on the bundler type.
-      runner = new(argv)
+      runner = new(remaining_argv, nil, bundler_override)
 
-      if runner.config.rspack?
+      # Determine which bundler to use (override takes precedence)
+      use_rspack = bundler_override ? (bundler_override == "rspack") : runner.config.rspack?
+
+      if use_rspack
         require_relative "rspack_runner"
         # Extend the runner instance with rspack-specific methods
         # This avoids creating a new RspackRunner which would reload the configuration
@@ -131,15 +173,21 @@ module Shakapacker
         ENV[key] = value.to_s
       end
 
+      # Set SHAKAPACKER_ASSETS_BUNDLER so JS/TS config files use the correct bundler
+      # This ensures the bundler override (from --bundler or build config) is respected
+      ENV["SHAKAPACKER_ASSETS_BUNDLER"] = build_config[:bundler]
+
       puts "[Shakapacker] Running build: #{build_config[:name]}"
       puts "[Shakapacker] Description: #{build_config[:description]}" if build_config[:description]
       puts "[Shakapacker] Bundler: #{build_config[:bundler]}"
       puts "[Shakapacker] Config file: #{build_config[:config_file]}" if build_config[:config_file]
 
-      # Create runner with modified argv
-      runner = new(argv, build_config)
+      # Create runner with modified argv and bundler from build_config
+      # The build_config[:bundler] already has any CLI --bundler override applied
+      runner = new(argv, build_config, build_config[:bundler])
 
-      if runner.config.rspack?
+      # Use bundler from build_config (which includes CLI override)
+      if build_config[:bundler] == "rspack"
         require_relative "rspack_runner"
         runner.extend(Module.new do
           def build_cmd
@@ -162,17 +210,23 @@ module Shakapacker
       end
     end
 
-    def initialize(argv, build_config = nil)
+    def initialize(argv, build_config = nil, bundler_override = nil)
       @argv = argv
       @build_config = build_config
+      @bundler_override = bundler_override
 
       @app_path           = File.expand_path(".", Dir.pwd)
       @shakapacker_config = ENV["SHAKAPACKER_CONFIG"] || File.join(@app_path, "config/shakapacker.yml")
-      @config             = Configuration.new(
+
+      # Create config with bundler override if provided
+      config_opts = {
         root_path: Pathname.new(@app_path),
         config_path: Pathname.new(@shakapacker_config),
         env: ENV["RAILS_ENV"] || ENV["NODE_ENV"] || "development"
-      )
+      }
+      config_opts[:bundler_override] = bundler_override if bundler_override
+
+      @config = Configuration.new(**config_opts)
 
       @webpack_config = find_webpack_config_from_build_or_default
 
@@ -270,35 +324,40 @@ module Shakapacker
           --debug-shakapacker       Enable Node.js debugging (--inspect-brk)
           --trace-deprecation       Show stack traces for deprecations
           --no-deprecation          Silence deprecation warnings
+          --bundler <webpack|rspack>
+                                    Override bundler (defaults to shakapacker.yml)
 
         Build configurations (config/shakapacker-builds.yml):
           --init                    Create config/shakapacker-builds.yml
           --list-builds             List available builds
           --build <name>            Run a specific build configuration
 
+        Examples (build configs):
           bin/shakapacker --init                       # Create config file
           bin/shakapacker --list-builds                # Show available builds
           bin/shakapacker --build dev-hmr              # Run the 'dev-hmr' build
           bin/shakapacker --build prod                 # Run the 'prod' build
+          bin/shakapacker --build prod --bundler rspack # Override to use rspack
 
-          Note: If a build has WEBPACK_SERVE=true in its environment, it will
+          Note: If a build has dev_server: true in its config, it will
           automatically use bin/shakapacker-dev-server instead.
 
           Advanced: Use bin/shakapacker-config for more config management options
           (validate builds, export configs, etc.)
-
-        Examples:
-          bin/shakapacker                              # Build for production
-          bin/shakapacker --mode development           # Build for development
-          bin/shakapacker --watch                      # Watch mode
-          bin/shakapacker --mode development --analyze # Development build with analysis
-          bin/shakapacker --debug-shakapacker          # Debug with Node inspector
 
         HELP
 
         print_bundler_help
 
         puts <<~HELP
+
+        Examples (passing options to webpack/rspack):
+          bin/shakapacker                              # Build for production
+          bin/shakapacker --bundler rspack             # Build with rspack instead of webpack
+          bin/shakapacker --mode development           # Build for development
+          bin/shakapacker --watch                      # Watch mode
+          bin/shakapacker --mode development --analyze # Development build with analysis
+          bin/shakapacker --debug-shakapacker          # Debug with Node inspector
 
         Options managed by Shakapacker (configured via config files):
           --config                  Set automatically based on assets_bundler_config_path
