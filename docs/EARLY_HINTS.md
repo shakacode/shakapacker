@@ -336,11 +336,11 @@ Shakapacker automatically sends early hints after your views render:
 7. HTTP 200 sent              → Full HTML response
 ```
 
-**Important timing note**: HTTP 103 is sent AFTER rendering completes. This means:
+**Important timing note**: HTTP 103 is sent after rendering completes but before the final HTTP 200 response. This means:
 
-- ✅ **Benefits**: Browser starts downloading before parsing HTML
-- ❌ **Limitations**: Does NOT help during database queries or view rendering
-- 💡 **Best for**: Pages where asset download time is the bottleneck, not server processing
+- ✅ **Benefits**: Browser starts downloading assets while the server transmits the final HTML response
+- ❌ **Limitations**: Does NOT help during database queries or view rendering—only helps with network transfer time
+- 💡 **Best for**: Pages with large HTML responses where asset downloads can happen in parallel with HTML transmission
 
 ## Advanced: Manual Control
 
