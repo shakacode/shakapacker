@@ -477,8 +477,8 @@ And the main layout has:
 is the same as using this in the main layout:
 
 ```erb
-<%= javascript_pack_tag 'calendar', 'map', application' %>
-<%= stylesheet_pack_tag 'calendar', 'map', application' %>
+<%= javascript_pack_tag 'calendar', 'map', 'application' %>
+<%= stylesheet_pack_tag 'calendar', 'map', 'application' %>
 ```
 
 However, you typically can't do that in the main layout, as the view and partial codes will depend on the route.
@@ -490,12 +490,13 @@ Thus, you can distribute the logic of what packs are needed for any route. All t
 The typical issue is that your layout might reference some partials that need to configure packs. A good way to solve this problem is to use `content_for` to ensure that the code to render your partial comes before the call to `javascript_pack_tag`.
 
 ```erb
-<% content_for :footer do
-   render 'shared/footer' %>
+<% content_for :footer do %>
+  <%= render 'shared/footer' %>
+<% end %>
 
 <%= javascript_pack_tag %>
 
-<%= content_for :footer %>
+<%= yield :footer %>
 ```
 
 There is also `prepend_javascript_pack_tag` that will put the entry at the front of the queue. This is handy when you want an entry in the main layout to go before the partial and main layout `append_javascript_pack_tag` entries.
@@ -522,7 +523,7 @@ And the main layout has:
 is the same as using this in the main layout:
 
 ```erb
-<%= javascript_pack_tag 'main', 'calendar', 'map', application' %>
+<%= javascript_pack_tag 'main', 'calendar', 'map', 'application' %>
 ```
 
 For alternative options for setting the additional packs, [see this discussion](https://github.com/shakacode/shakapacker/issues/39).
