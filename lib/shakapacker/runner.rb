@@ -379,7 +379,7 @@ module Shakapacker
           return rspack_path
         end
 
-        # Fallback to webpack config with deprecation warning
+        # Fallback to webpack config in the configured directory
         webpack_paths = %w[ts js].map do |ext|
           File.join(@app_path, config_dir, "webpack.config.#{ext}")
         end
@@ -391,6 +391,29 @@ module Shakapacker
           $stderr.puts "   Please create #{config_dir}/rspack.config.js and migrate your configuration."
           $stderr.puts "   Using: #{webpack_path}"
           return webpack_path
+        end
+
+        # Backward compatibility: Check config/webpack/ if we were looking in config/rspack/
+        # This supports upgrades from versions where rspack used config/webpack/
+        if config_dir == "config/rspack"
+          webpack_dir_paths = %w[ts js].map do |ext|
+            File.join(@app_path, "config/webpack", "webpack.config.#{ext}")
+          end
+
+          puts "[Shakapacker] Checking config/webpack/ for backward compatibility..."
+          webpack_dir_path = webpack_dir_paths.find { |f| File.exist?(f) }
+          if webpack_dir_path
+            $stderr.puts "⚠️  DEPRECATION WARNING: Found webpack config in config/webpack/ but assets_bundler is set to 'rspack'."
+            $stderr.puts "   For rspack, configs should be in config/rspack/ directory."
+            $stderr.puts "   "
+            $stderr.puts "   To fix this, either:"
+            $stderr.puts "   1. Move your config: mv config/webpack config/rspack"
+            $stderr.puts "   2. Set assets_bundler_config_path in config/shakapacker.yml:"
+            $stderr.puts "      assets_bundler_config_path: config/webpack"
+            $stderr.puts "   "
+            $stderr.puts "   Using: #{webpack_dir_path}"
+            return webpack_dir_path
+          end
         end
 
         # No config found

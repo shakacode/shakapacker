@@ -133,6 +133,70 @@ describe "Config Path Resolution" do
         $stderr = old_stderr
       end
     end
+
+    context "with webpack config in config/webpack/ directory (backward compatibility)" do
+      before do
+        # Ensure config/webpack exists with webpack.config.js
+        FileUtils.mkdir_p("config/webpack")
+        unless File.exist?("config/webpack/webpack.config.js")
+          File.write("config/webpack/webpack.config.js", "module.exports = {};")
+        end
+
+        # Ensure config/rspack does NOT exist
+        FileUtils.rm_rf("config/rspack")
+      end
+
+      after do
+        FileUtils.rm_rf("config/rspack")
+      end
+
+      it "falls back to config/webpack/ with deprecation warning" do
+        old_stderr = $stderr
+        $stderr = StringIO.new
+
+        runner = Shakapacker::RspackRunner.new([])
+
+        stderr_output = $stderr.string
+        expect(stderr_output).to include("DEPRECATION WARNING")
+        expect(stderr_output).to include("Found webpack config in config/webpack/")
+        expect(stderr_output).to include("assets_bundler is set to 'rspack'")
+        expect(stderr_output).to include("mv config/webpack config/rspack")
+        expect(stderr_output).to include("assets_bundler_config_path: config/webpack")
+
+        expect(runner.instance_variable_get(:@webpack_config)).to match(%r{config/webpack/webpack\.config\.js$})
+      ensure
+        $stderr = old_stderr
+      end
+    end
+
+    context "with custom assets_bundler_config_path" do
+      before do
+        # Create a custom config directory with rspack config
+        FileUtils.mkdir_p("custom_rspack")
+        FileUtils.cp("config/webpack/webpack.config.js", "custom_rspack/rspack.config.js") if File.exist?("config/webpack/webpack.config.js")
+
+        # Set custom config path
+        config_path = File.join(Dir.pwd, "config/shakapacker.yml")
+        config = begin
+          YAML.load_file(config_path, aliases: true)
+        rescue ArgumentError
+          YAML.load_file(config_path)
+        end
+        config["development"] ||= {}
+        config["development"]["assets_bundler"] = "rspack"
+        config["development"]["assets_bundler_config_path"] = "custom_rspack"
+        File.write(config_path, YAML.dump(config))
+      end
+
+      after do
+        FileUtils.rm_rf("custom_rspack")
+      end
+
+      it "uses custom config path" do
+        runner = Shakapacker::RspackRunner.new([])
+        expect(runner.instance_variable_get(:@webpack_config)).to match(%r{custom_rspack/rspack\.config\.js$})
+      end
+    end
   end
 
   describe "Configuration#assets_bundler_config_path" do
