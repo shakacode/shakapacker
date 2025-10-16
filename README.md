@@ -564,37 +564,49 @@ If you want to preload a static asset in your `<head>`, you can use the `preload
 <%= preload_pack_asset 'fonts/fa-regular-400.woff2' %>
 ```
 
-#### HTTP 103 Early Hints (Automatic)
+#### HTTP 103 Early Hints
 
-Shakapacker supports HTTP 103 Early Hints to tell browsers to start downloading assets. This may improve page load performance or cause regressions depending on your page content. **Careful testing and performance measurement is advised.**
+Shakapacker supports HTTP 103 Early Hints with `preload` and `prefetch` to optimize asset loading per-page.
 
-⚠️ **Performance Note**: Preloading JS/CSS may hurt LCP if you have large images. Test before deploying to production.
+⚠️ **Critical**: JS/CSS hints may improve or hurt performance depending on content. Configure per-page for best results.
 
-**Zero-config setup** - just enable in `config/shakapacker.yml`:
+**Quick Setup:**
 
 ```yaml
+# config/shakapacker.yml
 production:
   early_hints:
-    enabled: true # default: false - must be explicitly enabled
-    include_css: true # default: true - preload CSS chunks
-    include_js: true # default: true - preload JS chunks
+    enabled: true
+    css: "preload" # 'preload' | 'prefetch' | 'none'
+    js: "preload" # 'preload' | 'prefetch' | 'none'
 ```
 
-**That's it!** Early hints are sent automatically for all HTML responses. No changes to your layouts or views needed.
-
-**Tip:** Set `include_css: false` if you use Rails asset pipeline for CSS instead of Shakapacker.
-
-**Optional:** Skip early hints for specific controllers (e.g., JSON APIs):
+**Per-Page Configuration (Recommended):**
 
 ```ruby
-class ApiController < ApplicationController
-  skip_send_pack_early_hints
+class PostsController < ApplicationController
+  # Image-heavy page - don't compete with images
+  configure_pack_early_hints only: [:index], css: 'none', js: 'prefetch'
+
+  # Interactive editor - JS is critical
+  configure_pack_early_hints only: [:edit], all: 'preload'
+
+  # API endpoints
+  skip_send_pack_early_hints only: [:api]
 end
 ```
 
-How it works: After views and layouts render, Shakapacker automatically reads pack queues (populated by `append_javascript_pack_tag`) and sends HTTP 103 responses. The browser starts downloading assets before parsing the HTML.
+**Dynamic Configuration:**
 
-See the [Early Hints Guide](./docs/EARLY_HINTS.md) for detailed usage, alternative patterns, and performance tips.
+```ruby
+def show
+  if @post.has_hero_image?
+    configure_pack_early_hints css: 'none', js: 'prefetch'
+  end
+end
+```
+
+See the [Early Hints Guide](./docs/EARLY_HINTS.md) for complete documentation, performance guidance, and examples.
 
 **Requirements:** Rails 5.2+, HTTP/2-capable server (Puma 5+, nginx 1.13+), modern browsers (Chrome/Edge/Firefox 103+, Safari 16.4+). Gracefully degrades if not supported.
 
