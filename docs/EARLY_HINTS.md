@@ -4,7 +4,7 @@ This guide shows you how to use HTTP 103 Early Hints with Shakapacker to optimiz
 
 ## What are Early Hints?
 
-HTTP 103 Early Hints allows browsers to start downloading assets (JS, CSS) **while** Rails is still rendering your views. This may significantly improve page load performance or cause an equally significant regression, depending on the page's content.
+HTTP 103 Early Hints is emitted **after** Rails has finished rendering but **before** the final response is sent, allowing browsers to begin fetching resources (JS, CSS) prior to receiving the full HTML response. This may significantly improve page load performance or cause an equally significant regression, depending on the page's content.
 
 ⚠️ **Critical**: Preloading JavaScript may hurt your LCP (Largest Contentful Paint) metric if you have large images, videos, or other content that should load first. **Careful experimentation and performance measurement is required.**
 
