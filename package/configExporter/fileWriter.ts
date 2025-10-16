@@ -61,7 +61,14 @@ export class FileWriter {
     format: "yaml" | "json" | "inspect",
     buildName?: string
   ): string {
-    const ext = format === "yaml" ? "yaml" : format === "json" ? "json" : "txt"
+    let ext: string
+    if (format === "yaml") {
+      ext = "yaml"
+    } else if (format === "json") {
+      ext = "json"
+    } else {
+      ext = "txt"
+    }
     const name = buildName || env
     return `${bundler}-${name}-${configType}.${ext}`
   }
