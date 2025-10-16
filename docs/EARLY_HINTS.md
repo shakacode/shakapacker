@@ -79,6 +79,58 @@ class PostsController < ApplicationController
 end
 ```
 
+### 4. Preloading Hero Images and Videos
+
+Preload hero images or video fragments to improve LCP:
+
+```ruby
+class LandingController < ApplicationController
+  configure_pack_early_hints only: [:index],
+    css: 'prefetch',
+    js: 'prefetch',
+    links: [
+      { href: '/images/hero.jpg', as: 'image', type: 'image/jpeg' }
+    ]
+end
+```
+
+**Dynamic hero preloading:**
+
+```ruby
+class PostsController < ApplicationController
+  def show
+    @post = Post.find(params[:id])
+
+    # Preload hero image dynamically
+    configure_early_hints(
+      css: 'prefetch',
+      js: 'prefetch',
+      links: [
+        { href: @post.hero_image_url, as: 'image', type: @post.hero_image_type }
+      ]
+    )
+  end
+end
+```
+
+**View-level preloading:**
+
+```erb
+<%# app/views/posts/show.html.erb %>
+<% configure_early_hints links: [
+  { href: image_path('hero.jpg'), as: 'image' },
+  { href: video_path('intro.mp4'), as: 'video', type: 'video/mp4' }
+] %>
+```
+
+**Custom link options:**
+
+- `href`: Resource URL (required)
+- `as`: Resource type (`'image'`, `'video'`, `'font'`, etc.) (required)
+- `type`: MIME type (e.g., `'image/jpeg'`, `'video/mp4'`) (optional)
+- `rel`: `'preload'` (default) or `'prefetch'` (optional)
+- `crossorigin`: `'anonymous'` or `'use-credentials'` for CORS (optional)
+
 ## Controller Configuration
 
 #### Skip Early Hints Entirely

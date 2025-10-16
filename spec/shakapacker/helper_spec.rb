@@ -20,6 +20,14 @@ module ActionView::TestCase::Behavior
           def base_url
             "https://example.com"
           end
+
+          def env
+            @env ||= {}
+          end
+
+          def respond_to?(method_name, include_private = false)
+            method_name == :env || super
+          end
         end.new
         @javascript_pack_tag_loaded = nil
         @javascript_pack_tag_queue = nil
@@ -465,6 +473,59 @@ module ActionView::TestCase::Behavior
           end
           send_pack_early_hints("application")
         end
+
+        it "includes custom links from configure_early_hints" do
+          allow(Shakapacker.config).to receive(:early_hints).and_return({ enabled: true, css: "preload", js: "preload" })
+          configure_early_hints links: [
+            { href: "/images/hero.jpg", as: "image", type: "image/jpeg" },
+            { href: "/videos/intro.mp4", as: "video", type: "video/mp4" }
+          ]
+          expect(@request).to receive(:send_early_hints) do |headers|
+            expect(headers).to have_key("Link")
+            link_headers = headers["Link"]
+            expect(link_headers).to include("</images/hero.jpg>; rel=preload; as=image; type=\"image/jpeg\"")
+            expect(link_headers).to include("</videos/intro.mp4>; rel=preload; as=video; type=\"video/mp4\"")
+          end
+          send_pack_early_hints("application")
+        end
+
+        it "includes custom links with crossorigin attribute" do
+          allow(Shakapacker.config).to receive(:early_hints).and_return({ enabled: true, css: "preload", js: "preload" })
+          configure_early_hints links: [
+            { href: "https://cdn.example.com/hero.jpg", as: "image", crossorigin: "anonymous" }
+          ]
+          expect(@request).to receive(:send_early_hints) do |headers|
+            link_headers = headers["Link"]
+            expect(link_headers).to include("<https://cdn.example.com/hero.jpg>; rel=preload; as=image; crossorigin=\"anonymous\"")
+          end
+          send_pack_early_hints("application")
+        end
+
+        it "allows custom rel value in links" do
+          allow(Shakapacker.config).to receive(:early_hints).and_return({ enabled: true, css: "preload", js: "preload" })
+          configure_early_hints links: [
+            { href: "/images/next-page.jpg", as: "image", rel: "prefetch" }
+          ]
+          expect(@request).to receive(:send_early_hints) do |headers|
+            link_headers = headers["Link"]
+            expect(link_headers).to include("</images/next-page.jpg>; rel=prefetch; as=image")
+          end
+          send_pack_early_hints("application")
+        end
+
+        it "ignores custom links missing required fields" do
+          allow(Shakapacker.config).to receive(:early_hints).and_return({ enabled: true, css: "preload", js: "preload" })
+          configure_early_hints links: [
+            { href: "/images/hero.jpg" }, # missing 'as'
+            { as: "image" } # missing 'href'
+          ]
+          expect(@request).to receive(:send_early_hints) do |headers|
+            link_headers = headers["Link"]
+            # Should not include the malformed links
+            expect(link_headers).not_to include("</images/hero.jpg>")
+          end
+          send_pack_early_hints("application")
+        end
       end
 
       describe "#javascript_pack_tag with early_hints option" do
@@ -507,6 +568,14 @@ module ActionView::TestCase::Behavior
 
           def base_url
             "https://example.com"
+          end
+
+          def env
+            @env ||= {}
+          end
+
+          def respond_to?(method_name, include_private = false)
+            method_name == :env || super
           end
         end.new
         @javascript_pack_tag_loaded = nil

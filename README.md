@@ -606,6 +606,15 @@ def show
 end
 ```
 
+**Hero Image/Video Preloading:**
+
+```ruby
+configure_pack_early_hints only: [:landing],
+  css: 'prefetch',
+  js: 'prefetch',
+  links: [{ href: '/images/hero.jpg', as: 'image' }]
+```
+
 See the [Early Hints Guide](./docs/EARLY_HINTS.md) for complete documentation, performance guidance, and examples.
 
 **Requirements:** Rails 5.2+, HTTP/2-capable server (Puma 5+, nginx 1.13+), modern browsers (Chrome/Edge/Firefox 103+, Safari 16.4+). Gracefully degrades if not supported.
