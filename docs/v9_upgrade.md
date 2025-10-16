@@ -4,6 +4,15 @@ This guide outlines new features, breaking changes, and migration steps for upgr
 
 **📖 For detailed configuration options, see the [Configuration Guide](./configuration.md)**
 
+> **⚠️ Important:** Shakapacker is both a Ruby gem AND an npm package. **You must update BOTH**:
+>
+> - Update the version in `Gemfile`
+> - Update the version in `package.json`
+> - Run `bundle update shakapacker`
+> - Run your package manager install command (`yarn install`, `npm install`, or `pnpm install`)
+>
+> See [Migration Steps](#migration-steps) below for detailed instructions including version format differences and testing.
+
 > **⚠️ Important for v9.1.0 Users:** If you're upgrading to v9.1.0 or later, please note the [SWC Configuration Breaking Change](#swc-loose-mode-breaking-change-v910) below. This affects users who previously configured SWC in v9.0.0.
 
 ## New Features
@@ -264,15 +273,49 @@ You won't get warnings about missing Babel, Rspack, or esbuild packages.
 
 ## Migration Steps
 
-### Step 1: Update Dependencies
+> **💡 Tip:** For general upgrade instructions applicable to all Shakapacker versions, see [Upgrading Shakapacker](./common-upgrades.md#upgrading-shakapacker) in the Common Upgrades guide.
 
-```bash
-npm update shakapacker@^9.0.0
-# or
-yarn upgrade shakapacker@^9.0.0
+### Step 1: Update Gemfile
+
+Update the shakapacker version in your `Gemfile`:
+
+```ruby
+# Gemfile
+gem "shakapacker", "9.3.0"  # or latest version
 ```
 
-### Step 2: Update CSS Module Imports
+**Note:** Ruby gems use dot notation for pre-release versions (e.g., `9.3.0.beta.1`), while npm uses hyphen notation (e.g., `9.3.0-beta.1`). See [Version Format Differences](#version-format-differences) below.
+
+### Step 2: Update package.json
+
+Update the shakapacker version in your `package.json`:
+
+```json
+{
+  "dependencies": {
+    "shakapacker": "9.3.0"
+  }
+}
+```
+
+**Note:** For pre-release versions, npm uses hyphen notation (e.g., `"shakapacker": "9.3.0-beta.1"`).
+
+### Step 3: Install Updates
+
+Run both bundler and your package manager:
+
+```bash
+# Update Ruby gem
+bundle update shakapacker
+
+# Update npm package (choose one based on your package manager)
+yarn install      # if using Yarn
+npm install       # if using npm
+pnpm install      # if using pnpm
+bun install       # if using Bun
+```
+
+### Step 4: Update CSS Module Imports
 
 #### For each CSS module import:
 
@@ -299,7 +342,7 @@ declare module "*.module.css" {
 }
 ```
 
-### Step 3: Handle Kebab-Case Class Names
+### Step 5: Handle Kebab-Case Class Names
 
 v9 automatically converts kebab-case to camelCase with `exportLocalsConvention: 'camelCaseOnly'`:
 
@@ -340,7 +383,7 @@ const buttonClass = styles['my-button'];
 
 **Note:** With `'camelCaseOnly'` (default) or `'dashesOnly'`, only one version is exported. If you need both the original and camelCase versions, you would need to use `'camelCase'` instead, but this requires `namedExport: false` (v8 behavior). See the [CSS Modules Export Mode documentation](./css-modules-export-mode.md) for details on reverting to v8 behavior.
 
-### Step 4: Update Configuration Files
+### Step 6: Update Configuration Files
 
 If you have `webpack_loader` in your configuration:
 
@@ -353,7 +396,7 @@ If you have `webpack_loader` in your configuration:
 javascript_transpiler: "babel"
 ```
 
-### Step 5: Run Tests
+### Step 7: Run Tests
 
 ```bash
 # Run your test suite
@@ -365,6 +408,45 @@ bin/shakapacker
 # Test in development
 bin/shakapacker-dev-server
 ```
+
+## Version Format Differences
+
+Shakapacker version numbers differ between the Ruby gem and npm package for pre-release versions:
+
+| Version Type | Ruby Gem (Gemfile) | npm Package (package.json) |
+| ------------ | ------------------ | -------------------------- |
+| Stable       | `"9.3.0"`          | `"9.3.0"`                  |
+| Pre-release  | `"9.3.0.beta.1"`   | `"9.3.0-beta.1"`           |
+
+**Examples:**
+
+```ruby
+# Gemfile - uses dots for pre-release versions
+gem "shakapacker", "9.3.0"         # stable
+gem "shakapacker", "9.3.0.beta.1"  # pre-release
+```
+
+Stable version in package.json:
+
+```json
+{
+  "dependencies": {
+    "shakapacker": "9.3.0"
+  }
+}
+```
+
+Pre-release version in package.json:
+
+```json
+{
+  "dependencies": {
+    "shakapacker": "9.3.0-beta.1"
+  }
+}
+```
+
+This is due to different versioning conventions between RubyGems (which uses dots) and npm (which follows semantic versioning with hyphens for pre-release identifiers).
 
 ## Troubleshooting
 
