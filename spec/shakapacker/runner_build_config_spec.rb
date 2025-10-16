@@ -181,6 +181,7 @@ describe "Runner with build configs" do
             dev:
               description: Dev server build
               bundler: webpack
+              dev_server: true
               environment:
                 NODE_ENV: development
                 RAILS_ENV: development
@@ -207,6 +208,71 @@ describe "Runner with build configs" do
         expect(ENV["WEBPACK_SERVE"]).to eq("true")
       end
     end
+
+    context "when running with non-dev-server build" do
+      before do
+        File.write("config/shakapacker-builds.yml", <<~YAML)
+          builds:
+            prod:
+              description: Production build
+              bundler: webpack
+              dev_server: false
+              environment:
+                NODE_ENV: production
+                RAILS_ENV: production
+              outputs:
+                - client
+        YAML
+      end
+
+      it "errors with helpful message" do
+        klass = Shakapacker::DevServerRunner
+
+        expect do
+          capture_stderr do
+            klass.run(["--build", "prod"])
+          end
+        end.to raise_error(SystemExit)
+      end
+    end
+  end
+
+  describe "delegation behavior with dev_server flag" do
+    context "when Runner gets build with dev_server: true" do
+      before do
+        File.write("config/shakapacker-builds.yml", <<~YAML)
+          builds:
+            dev-hmr:
+              description: HMR build with explicit flag
+              bundler: webpack
+              dev_server: true
+              environment:
+                NODE_ENV: development
+                RAILS_ENV: development
+                WEBPACK_SERVE: "true"
+              outputs:
+                - client
+        YAML
+      end
+
+      it "delegates to DevServerRunner with message" do
+        klass = Shakapacker::Runner
+        dev_server_klass = Shakapacker::DevServerRunner
+        dev_server_instance = dev_server_klass.new([], nil)
+
+        allow(dev_server_klass).to receive(:run_with_build_config).and_call_original
+        allow(dev_server_klass).to receive(:new).and_return(dev_server_instance)
+        allow(dev_server_instance).to receive(:run).and_return(nil)
+
+        output = capture_stdout do
+          klass.run(["--build", "dev-hmr"])
+        end
+
+        expect(output).to include("Build 'dev-hmr' requires dev server (dev_server: true)")
+        expect(output).to include("Running: bin/shakapacker-dev-server --build dev-hmr")
+        expect(dev_server_klass).to have_received(:run_with_build_config)
+      end
+    end
   end
 
   private
@@ -218,5 +284,14 @@ describe "Runner with build configs" do
       $stdout.string
     ensure
       $stdout = old_stdout
+    end
+
+    def capture_stderr
+      old_stderr = $stderr
+      $stderr = StringIO.new
+      yield
+      $stderr.string
+    ensure
+      $stderr = old_stderr
     end
 end

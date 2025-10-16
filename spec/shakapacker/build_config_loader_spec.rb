@@ -215,51 +215,79 @@ describe Shakapacker::BuildConfigLoader do
   end
 
   describe "#uses_dev_server?" do
-    context "when WEBPACK_SERVE is true" do
+    context "when dev_server flag is explicitly true" do
       let(:build_config) do
         {
+          dev_server: true,
+          environment: { "NODE_ENV" => "development" }
+        }
+      end
+
+      it "returns true" do
+        expect(loader.uses_dev_server?(build_config)).to be true
+      end
+    end
+
+    context "when dev_server flag is explicitly false" do
+      let(:build_config) do
+        {
+          dev_server: false,
           environment: { "WEBPACK_SERVE" => "true" }
         }
       end
 
-      it "returns true" do
-        expect(loader.uses_dev_server?(build_config)).to be true
-      end
-    end
-
-    context "when HMR is true" do
-      let(:build_config) do
-        {
-          environment: { "HMR" => "true" }
-        }
-      end
-
-      it "returns true" do
-        expect(loader.uses_dev_server?(build_config)).to be true
-      end
-    end
-
-    context "when neither WEBPACK_SERVE nor HMR is set" do
-      let(:build_config) do
-        {
-          environment: { "NODE_ENV" => "production" }
-        }
-      end
-
-      it "returns false" do
+      it "returns false (explicit flag takes precedence)" do
         expect(loader.uses_dev_server?(build_config)).to be false
       end
     end
 
-    context "when WEBPACK_SERVE is false" do
-      let(:build_config) do
-        {
-          environment: { "WEBPACK_SERVE" => "false" }
-        }
+    context "when dev_server flag is not set (fallback to environment)" do
+      context "when WEBPACK_SERVE is true" do
+        let(:build_config) do
+          {
+            environment: { "WEBPACK_SERVE" => "true" }
+          }
+        end
+
+        it "returns true" do
+          expect(loader.uses_dev_server?(build_config)).to be true
+        end
       end
 
-      it "returns false" do
-        expect(loader.uses_dev_server?(build_config)).to be false
+      context "when HMR is true" do
+        let(:build_config) do
+          {
+            environment: { "HMR" => "true" }
+          }
+        end
+
+        it "returns true" do
+          expect(loader.uses_dev_server?(build_config)).to be true
+        end
+      end
+
+      context "when neither WEBPACK_SERVE nor HMR is set" do
+        let(:build_config) do
+          {
+            environment: { "NODE_ENV" => "production" }
+          }
+        end
+
+        it "returns false" do
+          expect(loader.uses_dev_server?(build_config)).to be false
+        end
+      end
+
+      context "when WEBPACK_SERVE is false" do
+        let(:build_config) do
+          {
+            environment: { "WEBPACK_SERVE" => "false" }
+          }
+        end
+
+        it "returns false" do
+          expect(loader.uses_dev_server?(build_config)).to be false
+        end
       end
     end
   end
