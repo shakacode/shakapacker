@@ -6,7 +6,7 @@ This document tracks the ESLint errors currently suppressed in the codebase and 
 
 **As of 2025-10-14**: All TypeScript files in `package/` directory are temporarily excluded from linting via the ignore pattern `package/**/*.ts` in `eslint.config.js`. This allows the project to adopt ESLint configuration without requiring immediate fixes to all existing issues.
 
-**Latest Update**: Fixed all `no-nested-ternary` violations by refactoring to if-else statements (2 violations resolved).
+**Latest Update**: Fixed all `no-param-reassign` violations by refactoring to create new objects instead of mutating parameters (7 violations resolved).
 
 ## Current Linting Status
 
@@ -19,9 +19,9 @@ This document tracks the ESLint errors currently suppressed in the codebase and 
 
 **TypeScript files** (currently ignored via `package/**/*.ts`):
 
-- **Estimated suppressed errors: ~170** (from sample analysis)
-  - TypeScript type-safety issues: ~114 (67%)
-  - Style/convention issues: ~56 (33%)
+- **Estimated suppressed errors: ~163** (from sample analysis)
+  - TypeScript type-safety issues: ~114 (70%)
+  - Style/convention issues: ~49 (30%)
 
 **Target**: Reduce suppressed errors by 50% within Q1 2025
 **Last Updated**: 2025-10-15
@@ -33,7 +33,7 @@ This document tracks the ESLint errors currently suppressed in the codebase and 
 | `@typescript-eslint/no-explicit-any` | High   | High   | P1       | 22    |
 | `@typescript-eslint/no-unsafe-*`     | High   | High   | P1       | 85    |
 | `config.ts` type safety              | High   | Medium | P1       | 7     |
-| `no-param-reassign`                  | Medium | Low    | P2       | 7     |
+| `no-param-reassign`                  | Medium | Low    | P2       | 0     |
 | `class-methods-use-this`             | Low    | Low    | P3       | 0     |
 | `no-nested-ternary`                  | Low    | Low    | P3       | 0     |
 | `import/prefer-default-export`       | Low    | Medium | P3       | 9     |
@@ -84,11 +84,9 @@ This document tracks the ESLint errors currently suppressed in the codebase and 
 
 ✅ **FIXED** - All nested ternary expressions have been refactored to if-else statements for better readability
 
-#### `no-param-reassign` (7 instances)
+#### `no-param-reassign` (0 instances)
 
-**Files affected:** `configExporter/cli.ts`
-**Why suppressed:** Common pattern for option objects
-**Fix strategy:** Create new objects instead of mutating parameters
+✅ **FIXED** - Refactored `applyDefaults` function to return new objects instead of mutating parameters
 
 #### `no-underscore-dangle` (2 instances)
 
@@ -116,6 +114,7 @@ This document tracks the ESLint errors currently suppressed in the codebase and 
 - Configured appropriate global rule disables (`no-console`, `no-restricted-syntax`)
 - ✅ **Fixed `class-methods-use-this`** - Converted FileWriter methods to static methods
 - ✅ **Fixed `no-nested-ternary`** - Refactored to if-else statements for better readability
+- ✅ **Fixed `no-param-reassign`** - Refactored `applyDefaults` to return new objects instead of mutating parameters
 
 🔧 Could still fix (low risk):
 
