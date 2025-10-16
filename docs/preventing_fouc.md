@@ -73,11 +73,12 @@ This pattern renders the body content first, allowing all append calls to regist
 - ✅ All appends (explicit + auto) happen before pack tags
 - ✅ Stylesheets load in head, eliminating FOUC
 - ✅ Works with `auto_load_bundle` and similar features
-- ✅ All tests pass
 
 ### Alternative: Using `yield :head` for Explicit Appends
 
-For simpler cases where you know which packs you need upfront and can explicitly specify them:
+For simpler cases where you know which packs you need upfront and can explicitly specify them, you can use `content_for :head` in your views and yield it in your layout.
+
+**Layout (app/views/layouts/application.html.erb):**
 
 ```erb
 <!DOCTYPE html>
@@ -92,20 +93,27 @@ For simpler cases where you know which packs you need upfront and can explicitly
   <%= javascript_pack_tag 'application', defer: true %>
 </head>
 <body>
-  <% content_for :head do %>
-    <%= append_stylesheet_pack_tag 'my-component' %>
-    <%= append_javascript_pack_tag 'my-component' %>
-  <% end %>
-
   <%= yield %>
 </body>
 </html>
 ```
 
+**View (app/views/pages/show.html.erb):**
+
+```erb
+<% content_for :head do %>
+  <%= append_stylesheet_pack_tag 'my-component' %>
+  <%= append_javascript_pack_tag 'my-component' %>
+<% end %>
+
+<h1>My Page</h1>
+<p>Content goes here...</p>
+```
+
 This approach works when:
 
 - You're not using auto-appending libraries
-- You can explicitly list all required packs in the view
+- You can explicitly list all required packs in each view
 - You don't need dynamic pack determination
 
 ## Key Takeaways
