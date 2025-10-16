@@ -57,6 +57,7 @@ export interface BundlerConfigFile {
 export interface BuildConfig {
   description?: string
   bundler?: "webpack" | "rspack"
+  dev_server?: boolean
   environment?: Record<string, string>
   bundler_env?: Record<string, string | boolean>
   outputs?: string[]

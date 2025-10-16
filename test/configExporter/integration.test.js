@@ -156,13 +156,10 @@ builds:
     })
   })
 
-  describe("--doctor mode with shakapacker_doctor_default_builds_here", () => {
-    it("should use config file builds when flag is set", () => {
-      // Create config with custom builds and the flag
+  describe("--doctor mode with config file", () => {
+    it("should always use config file builds when config exists", () => {
+      // Create config with custom builds
       const configContent = `
-shakapacker_doctor_default_builds_here: true
-default_bundler: webpack
-
 builds:
   custom-dev:
     description: Custom development
@@ -188,9 +185,9 @@ builds:
         { encoding: "utf8" }
       )
 
-      // Verify it used config builds, not hardcoded ones
+      // Verify it used config builds
       expect(result).toContain(
-        "Using builds from config file (shakapacker_doctor_default_builds_here: true)"
+        "Using builds from config/shakapacker-builds.yml"
       )
       expect(result).toContain("custom-dev")
       expect(result).toContain("custom-prod")
@@ -202,20 +199,8 @@ builds:
       expect(files).toContain("webpack-custom-prod-client.yaml")
     })
 
-    it("should use hardcoded builds when flag is not set", () => {
-      // Create config WITHOUT the flag
-      const configContent = `
-default_bundler: webpack
-
-builds:
-  custom-dev:
-    description: Custom development
-    environment:
-      NODE_ENV: development
-    outputs:
-      - client
-`
-      writeFileSync(configPath, configContent)
+    it("should use fallback builds when no config file exists", () => {
+      // Don't create config file
 
       // Run --doctor command
       const result = execSync(
@@ -223,11 +208,12 @@ builds:
         { encoding: "utf8" }
       )
 
-      // Verify it used hardcoded builds (development-hmr, development, production)
-      expect(result).toContain("development-hmr")
+      // Verify it warns and uses hardcoded fallback builds
+      expect(result).toContain("No build config file found")
+      expect(result).toContain("bin/shakapacker-config --init")
+      expect(result).toContain("development (HMR)")
       expect(result).toContain("development")
       expect(result).toContain("production")
-      expect(result).not.toContain("custom-dev")
     })
   })
 

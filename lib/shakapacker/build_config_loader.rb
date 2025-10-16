@@ -72,6 +72,7 @@ module Shakapacker
         name: build_name,
         description: build["description"],
         bundler: bundler,
+        dev_server: build["dev_server"],
         environment: environment,
         bundler_env: bundler_env,
         outputs: outputs,
@@ -80,6 +81,10 @@ module Shakapacker
     end
 
     def uses_dev_server?(build_config)
+      # Check explicit dev_server flag first (preferred)
+      return build_config[:dev_server] if build_config.key?(:dev_server)
+
+      # Fallback: check environment variables for backward compatibility
       env = build_config[:environment]
       return false unless env
 

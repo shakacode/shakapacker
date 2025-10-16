@@ -40,6 +40,14 @@ module Shakapacker
         begin
           build_config = loader.resolve_build_config(build_name)
 
+          # Check if this build is meant for dev server
+          unless loader.uses_dev_server?(build_config)
+            $stderr.puts "[Shakapacker] Error: Build '#{build_name}' is not configured for dev server (dev_server: false)"
+            $stderr.puts "[Shakapacker] Use this command instead:"
+            $stderr.puts "  bin/shakapacker --build #{build_name}"
+            exit(1)
+          end
+
           # Remove --build and build name from argv
           remaining_argv = argv.dup
           remaining_argv.delete_at(build_index + 1)

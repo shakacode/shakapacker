@@ -370,9 +370,9 @@ builds:
 describe("generateSampleConfigFile", () => {
   it("should generate valid YAML string", () => {
     const content = generateSampleConfigFile()
-    expect(content).toContain("default_bundler:")
     expect(content).toContain("builds:")
     expect(content).toContain("dev-hmr:")
+    expect(content).toContain("dev_server: true")
     expect(content).toContain("dev:")
     expect(content).toContain("prod:")
   })

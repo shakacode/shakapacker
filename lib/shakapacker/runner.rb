@@ -70,8 +70,11 @@ module Shakapacker
           remaining_argv.delete_at(build_index + 1)
           remaining_argv.delete_at(build_index)
 
-          # If this build uses dev server (WEBPACK_SERVE=true), delegate to DevServerRunner
+          # If this build uses dev server (dev_server: true), delegate to DevServerRunner
           if loader.uses_dev_server?(build_config)
+            $stdout.puts "[Shakapacker] Build '#{build_name}' requires dev server (dev_server: true)"
+            $stdout.puts "[Shakapacker] Running: bin/shakapacker-dev-server --build #{build_name}"
+            $stdout.puts ""
             require_relative "dev_server_runner"
             DevServerRunner.run_with_build_config(remaining_argv, build_config)
             return

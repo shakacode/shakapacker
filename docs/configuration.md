@@ -615,10 +615,10 @@ Shakapacker supports defining reusable build configurations in `config/shakapack
 
 ### Creating a Build Configuration File
 
-Create `config/shakapacker-builds.yml`:
+Generate `config/shakapacker-builds.yml` with example builds:
 
 ```bash
-bin/shakapacker --init
+bin/shakapacker --init  # Creates config/shakapacker-builds.yml
 ```
 
 This generates a file with example builds for common scenarios (HMR development, standard development, and production).
