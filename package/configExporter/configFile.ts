@@ -124,8 +124,16 @@ export class ConfigFileLoader {
     for (const [name, build] of Object.entries(config.builds)) {
       // Guard: ensure build is a non-null plain object
       if (build == null || typeof build !== "object" || Array.isArray(build)) {
+        let buildType: string
+        if (build === null) {
+          buildType = "null"
+        } else if (Array.isArray(build)) {
+          buildType = "array"
+        } else {
+          buildType = typeof build
+        }
         throw new Error(
-          `Invalid build '${name}': must be an object, got ${build === null ? "null" : Array.isArray(build) ? "array" : typeof build}`
+          `Invalid build '${name}': must be an object, got ${buildType}`
         )
       }
 

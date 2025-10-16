@@ -177,8 +177,7 @@ module.exports = [
       "@typescript-eslint/no-unsafe-argument": "off",
       "@typescript-eslint/no-explicit-any": "off",
       "no-useless-escape": "off",
-      "no-continue": "off",
-      "no-nested-ternary": "off"
+      "no-continue": "off"
     }
   },
   {
@@ -195,7 +194,6 @@ module.exports = [
       "@typescript-eslint/require-await": "off",
       "no-param-reassign": "off",
       "no-await-in-loop": "off",
-      "no-nested-ternary": "off",
       "import/prefer-default-export": "off",
       "global-require": "off",
       "no-underscore-dangle": "off"
@@ -215,8 +213,7 @@ module.exports = [
       "@typescript-eslint/no-unsafe-argument": "off",
       "@typescript-eslint/no-explicit-any": "off",
       "no-useless-escape": "off",
-      "no-continue": "off",
-      "no-nested-ternary": "off"
+      "no-continue": "off"
     }
   },
   {
