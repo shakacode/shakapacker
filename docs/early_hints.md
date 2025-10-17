@@ -41,6 +41,8 @@ production:
 
 **Defaults**: When `enabled: true`, both `css` and `js` default to `'preload'` if not specified.
 
+**Testing**: See the [Feature Testing Guide](feature_testing.md#http-103-early-hints) for detailed instructions on verifying early hints are working using browser DevTools or curl.
+
 ### 2. Per-Page Configuration (Recommended)
 
 Configure hints based on your page content:
@@ -369,6 +371,8 @@ If requirements not met, feature gracefully degrades with no errors.
 
 ## Troubleshooting
 
+For comprehensive testing instructions including browser DevTools and curl methods, see the [Feature Testing Guide: HTTP 103 Early Hints](feature_testing.md#http-103-early-hints).
+
 ### Debug Mode
 
 Enable debug mode to see what early hints are being sent (or why they weren't sent):
@@ -411,6 +415,12 @@ View page source and look for `<!-- Shakapacker Early Hints Debug -->` comments.
 - Check for typos (case-sensitive)
 
 ## References
+
+### Shakapacker Documentation
+
+- [Feature Testing Guide: HTTP 103 Early Hints](feature_testing.md#http-103-early-hints) - Detailed testing instructions with browser DevTools and curl
+
+### External Resources
 
 - [Rails API: send_early_hints](https://api.rubyonrails.org/classes/ActionDispatch/Request.html#method-i-send_early_hints)
 - [RFC 8297: HTTP Early Hints](https://datatracker.ietf.org/doc/html/rfc8297)
