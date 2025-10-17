@@ -100,6 +100,12 @@ development:
   compile: true
   compiler_strategy: mtime
 
+  # Enable early hints in development for testing
+  early_hints:
+    enabled: true
+    css: "preload"
+    js: "preload"
+
   # Reference: https://webpack.js.org/configuration/dev-server/
   # Keys not described there are documented inline and in https://github.com/shakacode/shakapacker/
   dev_server:
