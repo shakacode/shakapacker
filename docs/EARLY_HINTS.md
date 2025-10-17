@@ -8,11 +8,13 @@ HTTP 103 Early Hints is emitted **after** Rails has finished rendering but **bef
 
 ⚠️ **Critical**: Preloading JavaScript may hurt your LCP (Largest Contentful Paint) metric if you have large images, videos, or other content that should load first. **Careful experimentation and performance measurement is required.**
 
-### Preload vs Prefetch
+### Priority Levels: Preload vs Prefetch vs None
 
-- **`preload`** - High priority, browser downloads immediately. Use for critical assets needed for initial render.
-- **`prefetch`** - Low priority, browser downloads when idle. Use for non-critical assets or future navigation.
-- **`none`** - Skip hints entirely for this asset type.
+Early hints let you control browser download priority for assets:
+
+- **`preload`** - **Prioritize**: High priority, browser downloads immediately before HTML parsing. Use for critical assets needed for initial render.
+- **`prefetch`** - **De-prioritize**: Low priority, browser downloads when idle (doesn't compete for bandwidth). Use for non-critical assets or future navigation.
+- **`none`** - **Default behavior**: No hint sent. Browser discovers asset when parsing HTML (normal page load behavior).
 
 ### Performance Considerations
 
@@ -199,18 +201,22 @@ Within a single configuration, `all:` is applied first, then specific `css:` and
 
 ### Scenario 1: Image-Heavy Landing Page
 
-**Problem**: Large hero image is LCP, JS/CSS preload delays it
+**Problem**: Large hero image is LCP, JS/CSS hints compete for bandwidth and delay image loading
 
 ```ruby
 class HomeController < ApplicationController
   def index
-    # Don't compete with hero image
+    # Save bandwidth for hero image
     configure_pack_early_hints css: 'none', js: 'prefetch'
   end
 end
 ```
 
-**Why**: Prioritizes image loading for better LCP
+**Why**:
+
+- `css: 'none'` - No hint sent, CSS discovered normally (saves bandwidth)
+- `js: 'prefetch'` - Low priority hint, JS downloads when idle (doesn't compete)
+- **Result**: Hero image gets full bandwidth priority for better LCP
 
 ### Scenario 2: Interactive Dashboard
 
@@ -347,11 +353,11 @@ If requirements not met, feature gracefully degrades with no errors.
 
 ## Quick Reference
 
-### When to use each option:
+### Priority levels and when to use each:
 
-- **`preload`**: Critical assets on text-heavy pages, SPAs, pages without large images
-- **`prefetch`**: Non-critical assets, pages with large LCP images/videos
-- **`none`**: Image/video-heavy pages, API endpoints, SSR pages
+- **`preload`** (Prioritize): Critical assets on text-heavy pages, SPAs, pages without large images
+- **`prefetch`** (De-prioritize): Non-critical assets, pages with large LCP images/videos (downloads when idle)
+- **`none`** (Default behavior): Image/video-heavy pages, API endpoints, SSR pages (no hint sent)
 
 ### Testing checklist:
 
