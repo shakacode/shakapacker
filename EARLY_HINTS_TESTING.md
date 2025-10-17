@@ -2,39 +2,78 @@
 
 ## The Problem We Fixed
 
-The automatic early hints feature was fundamentally broken because it ran in `after_action`, which executes **after** view rendering completes. By that time, it's too late - the whole point of "early" hints is to send them **before** expensive work so assets download in parallel.
+The automatic early hints feature was fundamentally broken because it ran in `after_action`, which executes **after** view rendering completes and the response is ready. By that time, it's too late - the whole point of "early" hints is to send them while Rails is still working (processing or rendering) so the browser can download assets in parallel.
 
 ## Implementation Required
 
-Early hints must be explicitly called in controller actions **before** expensive work:
+Early hints must be explicitly called. **Two patterns** (both work!):
+
+### Pattern 1: In Layout (RECOMMENDED - Simpler)
+
+Add to the **top** of your layout file:
+
+```erb
+<%# app/views/layouts/hello_world.html.erb %>
+<% send_pack_early_hints 'hello-world-bundle' %>
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Hello World</title>
+    <%= csrf_meta_tags %>
+    <%= stylesheet_pack_tag 'hello-world-bundle' %>
+  </head>
+  <body>
+    <%= yield %>  <%# Browser downloads assets while views render %>
+    <%= javascript_pack_tag 'hello-world-bundle' %>
+  </body>
+</html>
+```
+
+**Why this works:**
+
+- Controller finishes first (queries complete)
+- Layout starts rendering, hits `send_pack_early_hints`
+- HTTP 103 sent immediately
+- Browser downloads assets **while Rails renders rest of layout/views**
+- By the time HTML is done, assets are downloaded
+
+**Parallelism:** Browser downloading ↔ Rails rendering views/partials
+
+**When to use:** Most cases. Works well when view rendering takes time (complex partials, lots of helpers).
+
+### Pattern 2: In Controller (For Heavy Queries)
+
+Add to controller before expensive database work:
 
 ```ruby
 class HelloWorldController < ApplicationController
   def index
-    # Send early hints FIRST - before any expensive work
+    # Send hints BEFORE expensive work
     view_context.send_pack_early_hints('hello-world-bundle')
 
-    # Now do work - assets download while Rails works
-    # (In this simple app, there's no expensive work, but in production
-    # this would be database queries, API calls, etc.)
+    # Browser downloads assets while these run
+    @posts = Post.expensive_query      # 200ms
+    @stats = Statistics.calculate      # 150ms
+    # Total: 350ms of parallel download time!
   end
 end
 ```
+
+**Why use this:**
+
+- HTTP 103 sent before controller work
+- Browser downloads assets **while controller runs queries/API calls**
+- When views start rendering, assets may already be downloaded
+
+**Parallelism:** Browser downloading ↔ Controller queries/processing
+
+**When to use:** When controller has significant work (>100ms of queries/processing). Maximizes benefit.
 
 ## How to Test
 
-### 1. Update the Controller
+### 1. Choose Your Pattern
 
-Add early hints call to `app/controllers/hello_world_controller.rb`:
-
-```ruby
-class HelloWorldController < ApplicationController
-  def index
-    # Send early hints for the packs this page uses
-    view_context.send_pack_early_hints('hello-world-bundle')
-  end
-end
-```
+Pick Pattern 1 (layout) OR Pattern 2 (controller) from above. Pattern 1 is simpler for most cases.
 
 ### 2. Enable Debug Mode
 

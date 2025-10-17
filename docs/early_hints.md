@@ -43,30 +43,66 @@ production:
 
 **Testing**: See the [Feature Testing Guide](feature_testing.md#http-103-early-hints) for detailed instructions on verifying early hints are working using browser DevTools or curl.
 
-### 2. Controller Implementation (Required)
+### 2. Call send_pack_early_hints (Required)
 
-**CRITICAL**: Call `send_pack_early_hints` BEFORE expensive work in your controller to allow asset downloads during rendering:
+You must explicitly call `send_pack_early_hints` with your pack names. **Two patterns:**
+
+#### Pattern 1: In Layout (RECOMMENDED - Simpler)
+
+```erb
+<%# app/views/layouts/application.html.erb %>
+<% send_pack_early_hints 'application' %>
+<!DOCTYPE html>
+<html>
+  <head>
+    <%= stylesheet_pack_tag 'application' %>
+  </head>
+  <body>
+    <%= yield %>  <%# Browser downloads assets while views render %>
+    <%= javascript_pack_tag 'application' %>
+  </body>
+</html>
+```
+
+**Timeline:**
+
+1. Controller finishes (queries complete)
+2. Layout starts rendering, hits `send_pack_early_hints`
+3. HTTP 103 sent → Browser starts downloading assets
+4. Rails continues rendering rest of layout/views
+5. Browser downloads assets in parallel with rendering
+6. Rendering finishes → HTTP 200 sent
+
+**Parallelism:** Browser downloading ↔ Rails rendering
+**Use when:** Most cases. Simple and effective.
+
+#### Pattern 2: In Controller (For Heavy Queries)
 
 ```ruby
 class PostsController < ApplicationController
   def index
-    # Send early hints FIRST - browser starts downloading while we work
+    # Send early hints BEFORE expensive work
     view_context.send_pack_early_hints('application', 'posts')
 
-    # Now do expensive work - assets download in parallel
-    @posts = Post.includes(:author, :comments).paginate(page: params[:page])
+    # Browser downloads assets while controller works
+    @posts = Post.expensive_query      # 200ms
+    @stats = Statistics.calculate      # 150ms
+    # Total: 350ms of parallel download time!
   end
 end
 ```
 
-**Why this works:**
+**Timeline:**
 
-1. Browser requests page
-2. `send_pack_early_hints` sends HTTP 103 immediately
-3. Browser starts downloading `application.js`, `application.css`, `posts.js`, `posts.css`
-4. While browser downloads, Rails runs expensive query
-5. By the time HTML arrives, assets are already downloaded
-6. Page renders instantly
+1. Controller starts
+2. `send_pack_early_hints` → HTTP 103 sent
+3. Browser starts downloading assets
+4. Controller runs queries/processing in parallel with downloads
+5. Controller finishes, views render
+6. HTTP 200 sent
+
+**Parallelism:** Browser downloading ↔ Controller queries/processing
+**Use when:** Controller has significant work (>100ms). Maximizes benefit.
 
 ### 3. Per-Page Configuration (Optional)
 

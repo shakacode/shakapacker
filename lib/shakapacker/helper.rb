@@ -145,54 +145,76 @@ module Shakapacker::Helper
   end
 
   # Sends HTTP 103 Early Hints for the specified packs to enable browsers to preload
-  # critical assets while Rails is still rendering the response.
+  # critical assets while Rails is still working (processing or rendering).
   # This can significantly improve perceived page load performance.
   #
   # HTTP 103 Early Hints is a status code that allows the server to send preliminary
   # responses with Link headers before the final HTTP 200 response. This enables
   # browsers to start downloading critical assets during the server's "think time"
-  # while Rails is still rendering views and processing the request.
+  # while Rails is still working.
   #
   # Timeline:
   #   1. Browser requests page
   #   2. Server sends HTTP 103 with Link: headers (this helper)
   #   3. Browser starts downloading assets in parallel
-  #   4. Server finishes rendering and sends HTTP 200 with full HTML
-  #   5. Assets arrive faster because browser started downloading earlier
+  #   4. Server continues processing/rendering
+  #   5. Server sends HTTP 200 with full HTML
+  #   6. Assets arrive faster because browser started downloading earlier
   #
   # Requires Rails 5.2+ (for request.send_early_hints) and server support (e.g., Puma 5+, nginx 1.13+).
   # Gracefully degrades if not supported - no errors will occur.
   #
-  # CRITICAL: Call this method BEFORE expensive work in your controller action, NOT in views/layouts.
-  # Early hints must be sent BEFORE rendering starts to allow parallel asset downloads during rendering.
+  # USAGE: Two common patterns (both work!)
+  #
+  # Pattern 1: At top of layout (RECOMMENDED - simpler, works for most cases)
+  #
+  #   <%# app/views/layouts/application.html.erb %>
+  #   <% send_pack_early_hints 'application' %>
+  #   <!DOCTYPE html>
+  #   <html>
+  #     <head>...</head>
+  #     <body>
+  #       <%= yield %>  <%# Browser downloads assets while views render %>
+  #     </body>
+  #   </html>
+  #
+  #   Why this works:
+  #   - Controller finishes (queries complete)
+  #   - Layout starts rendering, hits send_pack_early_hints
+  #   - HTTP 103 sent immediately
+  #   - Browser downloads assets while Rails renders rest of layout/views
+  #   - Parallelism: Browser downloading ↔ Rails rendering
+  #
+  # Pattern 2: In controller before expensive work (for heavy queries)
+  #
+  #   class PostsController < ApplicationController
+  #     def index
+  #       # Send hints BEFORE expensive queries
+  #       view_context.send_pack_early_hints('application', 'posts')
+  #
+  #       # Browser downloads assets while controller works
+  #       @posts = Post.expensive_query      # 200ms
+  #       @stats = Statistics.calculate      # 150ms
+  #       # Total: 350ms of parallel download time!
+  #     end
+  #   end
+  #
+  #   Why use this:
+  #   - HTTP 103 sent before controller work
+  #   - Browser downloads while controller runs queries/API calls
+  #   - Parallelism: Browser downloading ↔ Controller processing
+  #   - Maximizes benefit when controller has >100ms of work
+  #
+  # WRONG: Do not call at END of layout/views (too late, no benefit)
+  #
+  # Options:
+  #   include_css: true/false  # Include CSS packs (default: from config)
+  #   include_js: true/false   # Include JS packs (default: from config)
   #
   # References:
   # - Rails API: https://api.rubyonrails.org/classes/ActionDispatch/Request.html#method-i-send_early_hints
   # - Eileen Codes: https://eileencodes.com/posts/http2-early-hints/
   # - HTTP 103 Spec: https://datatracker.ietf.org/doc/html/rfc8297
-  #
-  # Example (CORRECT - in controller before expensive work):
-  #
-  #   class PostsController < ApplicationController
-  #     def index
-  #       # Send early hints FIRST - browser starts downloading while we query
-  #       view_context.send_pack_early_hints('application', 'posts')
-  #
-  #       # Now do expensive work - assets download in parallel
-  #       @posts = Post.includes(:author, :comments).limit(50)
-  #     end
-  #   end
-  #
-  # Example (WRONG - do not call in views or layouts):
-  #
-  #   # ❌ WRONG - Too late! Rendering already finished
-  #   <% send_pack_early_hints 'application' %>
-  #   <!DOCTYPE html>
-  #   <html>...</html>
-  #
-  # Options:
-  #   include_css: true/false  # Include CSS packs (default: from config)
-  #   include_js: true/false   # Include JS packs (default: from config)
   def send_pack_early_hints(*names, **options)
     debug_output = []
 
