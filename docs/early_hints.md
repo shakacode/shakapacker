@@ -393,6 +393,7 @@ View page source and look for `<!-- Shakapacker Early Hints Debug -->` comments.
 **Early hints not appearing:**
 
 - **Enable debug mode first** to see what's happening
+- **Check for proxy stripping**: If debug shows hints sent but curl/DevTools don't show `HTTP/2 103`, your reverse proxy or CDN (Control Plane, Cloudflare, AWS ALB/ELB, nginx) is likely stripping 103 responses. This is the **most common cause** of "missing" early hints
 - Check `early_hints: enabled: true` in shakapacker.yml
 - Verify HTTP/2 server (Puma 5+, nginx 1.13+)
 - Check Network tab shows "h2" protocol and 103 status

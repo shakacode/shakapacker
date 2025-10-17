@@ -141,14 +141,27 @@ The asset filenames in early hints should match those in your HTML.
 
    View page source and look for `<!-- Shakapacker Early Hints Debug -->` comments showing what hints were sent or why they were skipped.
 
-2. **Check server supports HTTP/2 and early hints:**
+2. **Reverse proxies and CDNs often strip 103 responses:**
+
+   **Most common cause**: If debug mode shows hints are being sent but you don't see `HTTP/2 103` in curl or DevTools, your reverse proxy or CDN is likely stripping the 103 status code before it reaches the client.
+
+   Common culprits:
+   - Control Plane (cpln.app)
+   - Some Cloudflare configurations
+   - nginx without explicit early hints support
+   - AWS ALB/ELB
+   - Other load balancers and proxies
+
+   **Solution**: Early hints may still be working server-side and providing benefits even if you can't see them in tools. The debug HTML comments will confirm if Rails is sending them. If your proxy strips 103, browsers may still benefit from the Link headers in the final 200 response.
+
+3. **Check server supports HTTP/2 and early hints:**
 
    ```bash
    # Puma version (need 5+)
    bundle exec puma --version
    ```
 
-3. **Verify config is enabled:**
+4. **Verify config is enabled:**
 
    ```bash
    # In Rails console
@@ -156,13 +169,13 @@ The asset filenames in early hints should match those in your HTML.
    # Should return: { enabled: true, css: "preload", js: "preload", debug: false }
    ```
 
-4. **Check Rails log for debug messages:**
+5. **Check Rails log for debug messages:**
 
    ```bash
    tail -f log/production.log | grep -i "early hints"
    ```
 
-5. **Verify your server uses HTTP/2:**
+6. **Verify your server uses HTTP/2:**
    ```bash
    curl -I --http2 https://your-app.com | grep -i "HTTP/2"
    ```
