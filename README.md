@@ -575,7 +575,7 @@ production:
     enabled: true
 ```
 
-⚠️ **Important**: May improve or hurt performance depending on content. See the [Early Hints Guide](./docs/EARLY_HINTS.md) for configuration, performance guidance, and examples.
+⚠️ **Important**: May improve or hurt performance depending on content. See the [Early Hints Guide](./docs/early_hints.md) for configuration, performance guidance, and examples.
 
 **Requirements:** Rails 5.2+, HTTP/2 server, modern browsers. Gracefully degrades if not supported.
 

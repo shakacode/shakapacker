@@ -509,7 +509,7 @@ early_hints:
 
 ⚠️ **Performance note**: May improve or hurt page load depending on content. Configure per-page for best results.
 
-See the [Early Hints Guide](EARLY_HINTS.md) for:
+See the [Early Hints Guide](early_hints.md) for:
 
 - Performance considerations and warnings
 - Per-page configuration (`configure_pack_early_hints`)
@@ -660,6 +660,6 @@ See [Troubleshooting Guide](troubleshooting.md) for more help.
 - [Deployment Guide](deployment.md)
 - [CDN Setup Guide](cdn_setup.md)
 - [Precompile Hook Guide](precompile_hook.md)
-- [Early Hints Guide](EARLY_HINTS.md)
+- [Early Hints Guide](early_hints.md)
 - [Subresource Integrity Guide](subresource_integrity.md)
 - [Troubleshooting Guide](troubleshooting.md)

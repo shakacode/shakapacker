@@ -29,7 +29,7 @@ Changes since the last non-beta release.
   - Browser support: All modern browsers (Chrome/Edge/Firefox 103+, Safari 16.4+)
   - Gracefully degrades if not supported
   - **Performance note**: May improve or hurt page load performance depending on content - careful testing advised
-  - See [Early Hints Guide](docs/EARLY_HINTS.md) for detailed usage and advanced patterns
+  - See [Early Hints Guide](docs/early_hints.md) for detailed usage and advanced patterns
 
 ## [v9.3.0-beta.0] - October 13, 2025
 
