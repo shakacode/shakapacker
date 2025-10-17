@@ -369,8 +369,30 @@ If requirements not met, feature gracefully degrades with no errors.
 
 ## Troubleshooting
 
+### Debug Mode
+
+Enable debug mode to see what early hints are being sent (or why they weren't sent):
+
+```yaml
+# config/shakapacker.yml
+production:
+  early_hints:
+    enabled: true
+    debug: true # Outputs debug info as HTML comments
+```
+
+Debug mode adds HTML comments to your page showing:
+
+- Whether hints were sent or skipped
+- What pack names were processed
+- What Link headers were sent
+- HTTP/2 support status
+
+View page source and look for `<!-- Shakapacker Early Hints Debug -->` comments.
+
 **Early hints not appearing:**
 
+- **Enable debug mode first** to see what's happening
 - Check `early_hints: enabled: true` in shakapacker.yml
 - Verify HTTP/2 server (Puma 5+, nginx 1.13+)
 - Check Network tab shows "h2" protocol and 103 status

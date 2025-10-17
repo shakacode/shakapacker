@@ -72,7 +72,17 @@ class Shakapacker::Engine < ::Rails::Engine
             # Don't send if headers already sent or response already committed
             return if response.committed? || response.sent?
 
-            view_context.send_pack_early_hints
+            debug_output = view_context.send_pack_early_hints
+
+            # If debug mode is enabled and we got debug output, append it to the response body
+            if debug_output.present? && response.body.present?
+              # Insert debug comments right after <head> tag if present, otherwise at the top
+              if response.body.include?("<head>")
+                response.body = response.body.sub("<head>", "<head>\n#{debug_output}")
+              else
+                response.body = "#{debug_output}\n#{response.body}"
+              end
+            end
           rescue => e
             # Silently fail if early hints can't be sent (e.g., headers already sent, no view context)
             Rails.logger.debug { "Early hints: automatic sending failed - #{e.class}: #{e.message}" }

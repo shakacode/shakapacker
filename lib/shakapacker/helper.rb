@@ -203,7 +203,21 @@ module Shakapacker::Helper
   #        include_js: true     # default: from config
   #   %>
   def send_pack_early_hints(*names, **options)
-    return unless early_hints_supported? && early_hints_enabled?
+    debug_output = []
+
+    # Check if debug mode is enabled
+    debug_enabled = early_hints_debug_enabled?
+
+    unless early_hints_supported? && early_hints_enabled?
+      if debug_enabled
+        debug_output << "<!-- Shakapacker Early Hints Debug -->"
+        debug_output << "<!-- Status: SKIPPED -->"
+        debug_output << "<!-- Reason: #{early_hints_skip_reason} -->"
+        debug_output << "<!-- -->"
+        return debug_output.join("\n").html_safe
+      end
+      return nil
+    end
 
     # Mark that we've manually sent early hints to prevent automatic sending
     # Use request.env for shared storage between view context and controller
@@ -214,11 +228,34 @@ module Shakapacker::Helper
     if names.empty?
       names = collect_pack_names_from_queues
       # If queues are empty, nothing to send
-      return nil if names.empty?
+      if names.empty?
+        if debug_enabled
+          debug_output << "<!-- Shakapacker Early Hints Debug -->"
+          debug_output << "<!-- Status: SKIPPED -->"
+          debug_output << "<!-- Reason: No packs in queue (use append_javascript_pack_tag / append_stylesheet_pack_tag) -->"
+          debug_output << "<!-- -->"
+          return debug_output.join("\n").html_safe
+        end
+        return nil
+      end
     end
 
     headers = build_early_hints_links(names, **options)
     request.send_early_hints(headers) unless headers.empty?
+
+    # Output debug information if enabled
+    if debug_enabled
+      debug_output << "<!-- Shakapacker Early Hints Debug -->"
+      debug_output << "<!-- Status: SENT -->"
+      debug_output << "<!-- HTTP/2 Support: #{request.protocol == 'https://' ? 'YES (https)' : 'NO (http - early hints require HTTPS)'} -->"
+      debug_output << "<!-- Packs: #{names.join(', ')} -->"
+      debug_output << "<!-- Links Sent: -->"
+      headers["Link"]&.split(", ")&.each do |link|
+        debug_output << "<!--   #{link} -->"
+      end
+      debug_output << "<!-- -->"
+      return debug_output.join("\n").html_safe
+    end
 
     # Return nil to avoid rendering output with <%= %>
     nil
@@ -405,6 +442,24 @@ module Shakapacker::Helper
       config = current_shakapacker_instance.config.early_hints
       return false unless config
       config[:enabled] == true
+    end
+
+    # Check if early hints debug mode is enabled
+    def early_hints_debug_enabled?
+      config = current_shakapacker_instance.config.early_hints
+      return false unless config
+      config[:debug] == true
+    end
+
+    # Generate reason why early hints were skipped
+    def early_hints_skip_reason
+      unless early_hints_supported?
+        return "Rails request.send_early_hints not available (requires Rails 5.2+)"
+      end
+      unless early_hints_enabled?
+        return "early_hints.enabled is false in config/shakapacker.yml"
+      end
+      "Unknown reason"
     end
 
     # Collect pack names from queues populated by append/prepend helpers

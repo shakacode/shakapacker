@@ -94,6 +94,7 @@ default: &default
     enabled: false # Enable to send HTTP 103 Early Hints
     css: "preload" # 'preload' | 'prefetch' | 'none' - default: 'preload'
     js: "preload" # 'preload' | 'prefetch' | 'none' - default: 'preload'
+    debug: false # Output early hints info as HTML comments for troubleshooting
 
 development:
   <<: *default
@@ -105,6 +106,7 @@ development:
     enabled: true
     css: "preload"
     js: "preload"
+    debug: true # Show early hints debug info as HTML comments
 
   # Reference: https://webpack.js.org/configuration/dev-server/
   # Keys not described there are documented inline and in https://github.com/shakacode/shakapacker/

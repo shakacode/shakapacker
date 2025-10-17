@@ -573,9 +573,12 @@ Automatically send early hints to browsers for faster asset loading. Supports `p
 production:
   early_hints:
     enabled: true
+    debug: false # Enable to see what hints are sent (as HTML comments)
 ```
 
 ⚠️ **Important**: May improve or hurt performance depending on content. See the [Early Hints Guide](./docs/early_hints.md) for configuration, performance guidance, and examples.
+
+**Troubleshooting**: Enable `debug: true` to see HTML comments showing what hints were sent or why they were skipped.
 
 **Requirements:** Rails 5.2+, HTTP/2 server, modern browsers. Gracefully degrades if not supported.
 

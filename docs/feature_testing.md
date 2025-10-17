@@ -30,6 +30,16 @@ This guide shows how to manually verify that Shakapacker features are working co
 - Plain `http://localhost` uses HTTP/1.1
 - Early hints are silently ignored on HTTP/1.1
 
+**Debug Mode:** Enable `debug: true` in config to see HTML comments showing what hints were sent (or why they weren't):
+
+```yaml
+# config/shakapacker.yml
+development:
+  early_hints:
+    enabled: true
+    debug: true # Outputs debug info as HTML comments
+```
+
 **Testing recommendation:** Use Method 1 (Browser DevTools) or Method 2 (curl) on production/staging environments with HTTPS enabled. You should see BOTH `HTTP/2 103` (early hints) and `HTTP/2 200` (final response).
 
 ### Method 1: Browser DevTools (Recommended)
@@ -119,28 +129,40 @@ The asset filenames in early hints should match those in your HTML.
 
 **Not seeing 103 status?**
 
-1. **Check server supports HTTP/2 and early hints:**
+1. **Enable debug mode to see what's happening:**
+
+   ```yaml
+   # config/shakapacker.yml
+   production: # or development
+     early_hints:
+       enabled: true
+       debug: true # Shows debug info as HTML comments
+   ```
+
+   View page source and look for `<!-- Shakapacker Early Hints Debug -->` comments showing what hints were sent or why they were skipped.
+
+2. **Check server supports HTTP/2 and early hints:**
 
    ```bash
    # Puma version (need 5+)
    bundle exec puma --version
    ```
 
-2. **Verify config is enabled:**
+3. **Verify config is enabled:**
 
    ```bash
    # In Rails console
    Shakapacker.config.early_hints
-   # Should return: { enabled: true, css: "preload", js: "preload" }
+   # Should return: { enabled: true, css: "preload", js: "preload", debug: false }
    ```
 
-3. **Check Rails log for debug messages:**
+4. **Check Rails log for debug messages:**
 
    ```bash
    tail -f log/production.log | grep -i "early hints"
    ```
 
-4. **Verify your server uses HTTP/2:**
+5. **Verify your server uses HTTP/2:**
    ```bash
    curl -I --http2 https://your-app.com | grep -i "HTTP/2"
    ```
