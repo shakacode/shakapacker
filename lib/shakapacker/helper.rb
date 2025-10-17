@@ -145,76 +145,63 @@ module Shakapacker::Helper
   end
 
   # Sends HTTP 103 Early Hints for the specified packs to enable browsers to preload
-  # critical assets while Rails is still working (processing or rendering).
+  # critical assets while Rails is still rendering the response.
   # This can significantly improve perceived page load performance.
   #
   # HTTP 103 Early Hints is a status code that allows the server to send preliminary
   # responses with Link headers before the final HTTP 200 response. This enables
   # browsers to start downloading critical assets during the server's "think time"
-  # while Rails is still working.
+  # while Rails is still rendering views and processing the request.
   #
   # Timeline:
   #   1. Browser requests page
   #   2. Server sends HTTP 103 with Link: headers (this helper)
   #   3. Browser starts downloading assets in parallel
-  #   4. Server continues processing/rendering
-  #   5. Server sends HTTP 200 with full HTML
-  #   6. Assets arrive faster because browser started downloading earlier
+  #   4. Server finishes rendering and sends HTTP 200 with full HTML
+  #   5. Assets arrive faster because browser started downloading earlier
   #
   # Requires Rails 5.2+ (for request.send_early_hints) and server support (e.g., Puma 5+, nginx 1.13+).
   # Gracefully degrades if not supported - no errors will occur.
   #
-  # USAGE: Two common patterns (both work!)
-  #
-  # Pattern 1: At top of layout (RECOMMENDED - simpler, works for most cases)
-  #
-  #   <%# app/views/layouts/application.html.erb %>
-  #   <% send_pack_early_hints 'application' %>
-  #   <!DOCTYPE html>
-  #   <html>
-  #     <head>...</head>
-  #     <body>
-  #       <%= yield %>  <%# Browser downloads assets while views render %>
-  #     </body>
-  #   </html>
-  #
-  #   Why this works:
-  #   - Controller finishes (queries complete)
-  #   - Layout starts rendering, hits send_pack_early_hints
-  #   - HTTP 103 sent immediately
-  #   - Browser downloads assets while Rails renders rest of layout/views
-  #   - Parallelism: Browser downloading ↔ Rails rendering
-  #
-  # Pattern 2: In controller before expensive work (for heavy queries)
-  #
-  #   class PostsController < ApplicationController
-  #     def index
-  #       # Send hints BEFORE expensive queries
-  #       view_context.send_pack_early_hints('application', 'posts')
-  #
-  #       # Browser downloads assets while controller works
-  #       @posts = Post.expensive_query      # 200ms
-  #       @stats = Statistics.calculate      # 150ms
-  #       # Total: 350ms of parallel download time!
-  #     end
-  #   end
-  #
-  #   Why use this:
-  #   - HTTP 103 sent before controller work
-  #   - Browser downloads while controller runs queries/API calls
-  #   - Parallelism: Browser downloading ↔ Controller processing
-  #   - Maximizes benefit when controller has >100ms of work
-  #
-  # WRONG: Do not call at END of layout/views (too late, no benefit)
-  #
-  # Options:
-  #   include_css: true/false  # Include CSS packs (default: from config)
-  #   include_js: true/false   # Include JS packs (default: from config)
+  # Important: Call this helper as early as possible in your layout for optimal performance.
+  # The earlier it's called, the sooner the browser can start downloading assets while
+  # Rails is still rendering the rest of the page.
   #
   # References:
   # - Rails API: https://api.rubyonrails.org/classes/ActionDispatch/Request.html#method-i-send_early_hints
   # - Eileen Codes: https://eileencodes.com/posts/http2-early-hints/
   # - HTTP 103 Spec: https://datatracker.ietf.org/doc/html/rfc8297
+  #
+  # Example:
+  #
+  #   # Option 1: No arguments - reads from pack queues (recommended)
+  #   # Queues are populated by append_javascript_pack_tag / append_stylesheet_pack_tag in views
+  #   <% send_pack_early_hints %>
+  #   <!DOCTYPE html>
+  #   <html>
+  #     <head>
+  #       <%= stylesheet_pack_tag 'application' %>
+  #     </head>
+  #     <body>
+  #       <%= yield %>  <%# Views already rendered, queues populated! %>
+  #       <%= javascript_pack_tag 'application' %>
+  #     </body>
+  #   </html>
+  #
+  #   # How it works:
+  #   # 1. Views/partials render and call append_javascript_pack_tag('foo')
+  #   # 2. Layout renders (views already done!)
+  #   # 3. send_pack_early_hints() reads pack names from queues
+  #   # 4. Early hints sent with all packs that will be used
+  #
+  #   # Option 2: Explicit pack names (when you know them upfront)
+  #   <% send_pack_early_hints 'application', 'admin' %>
+  #
+  #   # Option 3: With options (rarely needed)
+  #   <% send_pack_early_hints 'application',
+  #        include_css: true,   # default: from config
+  #        include_js: true     # default: from config
+  #   %>
   def send_pack_early_hints(*names, **options)
     debug_output = []
 
@@ -232,16 +219,25 @@ module Shakapacker::Helper
       return nil
     end
 
-    # Require explicit pack names
+    # Mark that we've manually sent early hints to prevent automatic sending
+    # Use request.env for shared storage between view context and controller
+    request.env["shakapacker.skip_early_hints"] = true if request.respond_to?(:env)
+
+    # If no pack names provided, collect from queues populated by append/prepend helpers
+    # This allows zero-config usage: views call append_*, then layout calls send_pack_early_hints
     if names.empty?
-      if debug_enabled
-        debug_output << "<!-- Shakapacker Early Hints Debug -->"
-        debug_output << "<!-- Status: SKIPPED -->"
-        debug_output << "<!-- Reason: No pack names provided - call send_pack_early_hints('application', 'posts') -->"
-        debug_output << "<!-- -->"
-        return debug_output.join("\n").html_safe
+      names = collect_pack_names_from_queues
+      # If queues are empty, nothing to send
+      if names.empty?
+        if debug_enabled
+          debug_output << "<!-- Shakapacker Early Hints Debug -->"
+          debug_output << "<!-- Status: SKIPPED -->"
+          debug_output << "<!-- Reason: No packs in queue (use append_javascript_pack_tag / append_stylesheet_pack_tag) -->"
+          debug_output << "<!-- -->"
+          return debug_output.join("\n").html_safe
+        end
+        return nil
       end
-      return nil
     end
 
     headers = build_early_hints_links(names, **options)
@@ -464,6 +460,24 @@ module Shakapacker::Helper
         return "early_hints.enabled is false in config/shakapacker.yml"
       end
       "Unknown reason"
+    end
+
+    # Collect pack names from queues populated by append/prepend helpers
+    # This allows send_pack_early_hints to work without arguments
+    def collect_pack_names_from_queues
+      names = []
+
+      # Collect from javascript pack queue (all async/deferred/sync)
+      if defined?(@javascript_pack_tag_queue) && @javascript_pack_tag_queue
+        names.concat(@javascript_pack_tag_queue.values.flatten)
+      end
+
+      # Collect from stylesheet pack queue
+      if defined?(@stylesheet_pack_tag_queue) && @stylesheet_pack_tag_queue
+        names.concat(@stylesheet_pack_tag_queue)
+      end
+
+      names.uniq.map(&:to_s)
     end
 
     # Build early hints Link headers for the specified packs

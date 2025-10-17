@@ -566,9 +566,7 @@ If you want to preload a static asset in your `<head>`, you can use the `preload
 
 #### HTTP 103 Early Hints
 
-Send early hints to browsers for faster asset loading while Rails is processing or rendering.
-
-**Configuration:**
+Automatically send early hints to browsers for faster asset loading. Supports `preload`/`prefetch`/`none` configuration per-page.
 
 ```yaml
 # config/shakapacker.yml
@@ -578,27 +576,7 @@ production:
     debug: false # Enable to see what hints are sent (as HTML comments)
 ```
 
-**Usage (choose one pattern):**
-
-```erb
-<%# Pattern 1: In layout (recommended - simpler) %>
-<%# app/views/layouts/application.html.erb %>
-<% send_pack_early_hints 'application' %>
-<!DOCTYPE html>
-<html>...</html>
-```
-
-```ruby
-# Pattern 2: In controller (for heavy queries)
-class PostsController < ApplicationController
-  def index
-    view_context.send_pack_early_hints('application', 'posts')
-    @posts = Post.expensive_query  # Browser downloads during this
-  end
-end
-```
-
-⚠️ **Important**: May improve or hurt performance depending on content. See the [Early Hints Guide](./docs/early_hints.md) for detailed explanations, performance guidance, and per-page configuration.
+⚠️ **Important**: May improve or hurt performance depending on content. See the [Early Hints Guide](./docs/early_hints.md) for configuration, performance guidance, and examples.
 
 **Troubleshooting**: Enable `debug: true` to see HTML comments showing what hints were sent or why they were skipped.
 

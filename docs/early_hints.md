@@ -43,97 +43,26 @@ production:
 
 **Testing**: See the [Feature Testing Guide](feature_testing.md#http-103-early-hints) for detailed instructions on verifying early hints are working using browser DevTools or curl.
 
-### 2. Call send_pack_early_hints (Required)
+### 2. Per-Page Configuration (Recommended)
 
-You must explicitly call `send_pack_early_hints` with your pack names. **Two patterns:**
-
-#### Pattern 1: In Layout (RECOMMENDED - Simpler)
-
-```erb
-<%# app/views/layouts/application.html.erb %>
-<% send_pack_early_hints 'application' %>
-<!DOCTYPE html>
-<html>
-  <head>
-    <%= stylesheet_pack_tag 'application' %>
-  </head>
-  <body>
-    <%= yield %>  <%# Browser downloads assets while views render %>
-    <%= javascript_pack_tag 'application' %>
-  </body>
-</html>
-```
-
-**Timeline:**
-
-1. Controller finishes (queries complete)
-2. Layout starts rendering, hits `send_pack_early_hints`
-3. HTTP 103 sent → Browser starts downloading assets
-4. Rails continues rendering rest of layout/views
-5. Browser downloads assets in parallel with rendering
-6. Rendering finishes → HTTP 200 sent
-
-**Parallelism:** Browser downloading ↔ Rails rendering
-**Use when:** Most cases. Simple and effective.
-
-#### Pattern 2: In Controller (For Heavy Queries)
+Configure hints based on your page content:
 
 ```ruby
 class PostsController < ApplicationController
-  def index
-    # Send early hints BEFORE expensive work
-    view_context.send_pack_early_hints('application', 'posts')
+  # Image-heavy landing page - don't compete with images
+  configure_pack_early_hints only: [:index], css: 'none', js: 'prefetch'
 
-    # Browser downloads assets while controller works
-    @posts = Post.expensive_query      # 200ms
-    @stats = Statistics.calculate      # 150ms
-    # Total: 350ms of parallel download time!
-  end
+  # Interactive post editor - JS is critical
+  configure_pack_early_hints only: [:edit], css: 'preload', js: 'preload'
+
+  # API endpoints - no hints needed
+  skip_send_pack_early_hints only: [:api_data]
 end
 ```
 
-**Timeline:**
+### 3. Dynamic Configuration
 
-1. Controller starts
-2. `send_pack_early_hints` → HTTP 103 sent
-3. Browser starts downloading assets
-4. Controller runs queries/processing in parallel with downloads
-5. Controller finishes, views render
-6. HTTP 200 sent
-
-**Parallelism:** Browser downloading ↔ Controller queries/processing
-**Use when:** Controller has significant work (>100ms). Maximizes benefit.
-
-### 3. Per-Page Configuration (Optional)
-
-Configure hint priorities based on page content:
-
-```ruby
-class PostsController < ApplicationController
-  # Image-heavy landing page - use low priority hints
-  def index
-    # Configure priorities first
-    view_context.configure_early_hints(css: 'prefetch', js: 'prefetch')
-
-    # Then send hints
-    view_context.send_pack_early_hints('application', 'posts')
-
-    # Finally, expensive work
-    @posts = Post.all
-  end
-
-  # Interactive editor - use high priority hints
-  def edit
-    view_context.configure_early_hints(css: 'preload', js: 'preload')
-    view_context.send_pack_early_hints('application', 'editor')
-    @post = Post.find(params[:id])
-  end
-end
-```
-
-### 4. Dynamic Configuration
-
-Configure hints based on runtime content:
+Configure based on content:
 
 ```ruby
 class PostsController < ApplicationController
@@ -141,23 +70,20 @@ class PostsController < ApplicationController
     @post = Post.find(params[:id])
 
     if @post.has_hero_video?
-      # Video is LCP - don't compete with JS/CSS
-      view_context.configure_early_hints(all: 'none')
+      # Video is LCP - don't compete
+      configure_pack_early_hints all: 'none'
     elsif @post.interactive?
       # JS needed for interactivity
-      view_context.configure_early_hints(css: 'prefetch', js: 'preload')
+      configure_pack_early_hints css: 'prefetch', js: 'preload'
     else
       # Standard blog post
-      view_context.configure_early_hints(css: 'preload', js: 'prefetch')
+      configure_pack_early_hints css: 'preload', js: 'prefetch'
     end
-
-    # Send hints after configuring
-    view_context.send_pack_early_hints('application', 'posts')
   end
 end
 ```
 
-### 5. Preloading Hero Images and Videos
+### 4. Preloading Hero Images and Videos
 
 Use Rails' built-in `preload_link_tag` to preload hero images, videos, and other LCP resources. Rails automatically sends these as early hints:
 
@@ -243,14 +169,8 @@ class PostsController < ApplicationController
 
     # Configure based on runtime logic
     if @post.video_content?
-      view_context.configure_early_hints(css: 'none', js: 'none')
+      configure_pack_early_hints css: 'none', js: 'none'
     end
-
-    # Send hints BEFORE expensive work
-    view_context.send_pack_early_hints('application', 'posts')
-
-    # Expensive work happens while browser downloads
-    # ...
   end
 end
 ```
@@ -261,18 +181,10 @@ end
 class PostsController < ApplicationController
   before_action :optimize_for_images, only: [:gallery, :portfolio]
 
-  def gallery
-    # Send hints early
-    view_context.send_pack_early_hints('application', 'gallery')
-
-    # Expensive work
-    @images = Image.includes(:tags).all
-  end
-
   private
 
   def optimize_for_images
-    view_context.configure_early_hints(css: 'prefetch', js: 'prefetch')
+    configure_pack_early_hints css: 'prefetch', js: 'prefetch'
   end
 end
 ```
@@ -296,14 +208,8 @@ Within a single configuration, `all:` is applied first, then specific `css:` and
 ```ruby
 class HomeController < ApplicationController
   def index
-    # Configure low priority hints to save bandwidth for hero image
-    view_context.configure_early_hints(css: 'none', js: 'prefetch')
-
-    # Send hints
-    view_context.send_pack_early_hints('application')
-
-    # Expensive work
-    @featured_posts = Post.featured.limit(5)
+    # Save bandwidth for hero image
+    configure_pack_early_hints css: 'none', js: 'prefetch'
   end
 end
 ```
@@ -320,14 +226,8 @@ end
 
 ```ruby
 class DashboardController < ApplicationController
-  def index
-    # JS is critical - use high priority hints
-    view_context.configure_early_hints(all: 'preload')
-    view_context.send_pack_early_hints('application', 'dashboard')
-
-    # Expensive analytics query
-    @metrics = Metric.calculate_dashboard_data
-  end
+  # JS is critical for all actions
+  configure_pack_early_hints all: 'preload'
 end
 ```
 
@@ -339,21 +239,11 @@ end
 
 ```ruby
 class ArticlesController < ApplicationController
-  def index
-    # Index: no large images - use high priority hints
-    view_context.configure_early_hints(css: 'preload', js: 'preload')
-    view_context.send_pack_early_hints('application', 'articles')
+  # Index: no large images
+  configure_pack_early_hints only: [:index], css: 'preload', js: 'preload'
 
-    @articles = Article.published.paginate(page: params[:page])
-  end
-
-  def show
-    # Show: featured images - use low priority hints
-    view_context.configure_early_hints(css: 'prefetch', js: 'prefetch')
-    view_context.send_pack_early_hints('application', 'articles')
-
-    @article = Article.find(params[:id])
-  end
+  # Show: featured images
+  configure_pack_early_hints only: [:show], css: 'prefetch', js: 'prefetch'
 end
 ```
 
