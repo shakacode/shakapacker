@@ -104,7 +104,12 @@ module Shakapacker::Helper
     # Send early hints if requested
     if early_hints
       early_hints_options = early_hints.is_a?(Hash) ? early_hints : {}
+      # Wrap request to prevent duplicate sends from Rails' automatic behavior
+      wrap_request_to_prevent_duplicate_early_hints
       send_pack_early_hints(*names, **early_hints_options)
+    else
+      # Block all early hints sends when early_hints: false
+      block_request_early_hints
     end
 
     append_javascript_pack_tag(*names, defer: defer, async: async)
@@ -217,6 +222,35 @@ module Shakapacker::Helper
 
     # Return nil to avoid rendering output with <%= %>
     nil
+  end
+
+  # Wrap request.send_early_hints to allow one call and block subsequent ones
+  # This prevents Rails' automatic preload behavior from sending duplicates
+  def wrap_request_to_prevent_duplicate_early_hints
+    return unless request.respond_to?(:send_early_hints)
+    return if request.instance_variable_get(:@shakapacker_early_hints_wrapped)
+
+    request.instance_variable_set(:@shakapacker_early_hints_wrapped, true)
+    request.instance_variable_set(:@shakapacker_early_hints_sent, false)
+
+    original_send_early_hints = request.method(:send_early_hints)
+    request.define_singleton_method(:send_early_hints) do |*args|
+      unless instance_variable_get(:@shakapacker_early_hints_sent)
+        instance_variable_set(:@shakapacker_early_hints_sent, true)
+        original_send_early_hints.call(*args)
+      end
+    end
+  end
+
+  # Block all early hints sends (for early_hints: false case)
+  def block_request_early_hints
+    return unless request.respond_to?(:send_early_hints)
+    return if request.instance_variable_get(:@shakapacker_early_hints_wrapped)
+
+    request.instance_variable_set(:@shakapacker_early_hints_wrapped, true)
+    request.define_singleton_method(:send_early_hints) do |*args|
+      # Block all calls
+    end
   end
 
   # Creates link tags that reference the css chunks from entrypoints when using split chunks API,
