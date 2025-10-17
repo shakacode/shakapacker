@@ -18,7 +18,69 @@ module Shakapacker
         exit(0)
       end
 
+      # Check for --build flag
+      build_index = argv.index("--build")
+      if build_index
+        build_name = argv[build_index + 1]
+
+        unless build_name
+          $stderr.puts "[Shakapacker] Error: --build requires a build name"
+          $stderr.puts "Usage: bin/shakapacker-dev-server --build <name>"
+          exit(1)
+        end
+
+        loader = BuildConfigLoader.new
+
+        unless loader.exists?
+          $stderr.puts "[Shakapacker] Config file not found: #{loader.config_file_path}"
+          $stderr.puts "Run 'bin/shakapacker --init' to create one"
+          exit(1)
+        end
+
+        begin
+          build_config = loader.resolve_build_config(build_name)
+
+          # Check if this build is meant for dev server
+          unless loader.uses_dev_server?(build_config)
+            $stderr.puts "[Shakapacker] Error: Build '#{build_name}' is not configured for dev server (dev_server: false)"
+            $stderr.puts "[Shakapacker] Use this command instead:"
+            $stderr.puts "  bin/shakapacker --build #{build_name}"
+            exit(1)
+          end
+
+          # Remove --build and build name from argv
+          remaining_argv = argv.dup
+          remaining_argv.delete_at(build_index + 1)
+          remaining_argv.delete_at(build_index)
+
+          run_with_build_config(remaining_argv, build_config)
+          return
+        rescue ArgumentError => e
+          $stderr.puts "[Shakapacker] #{e.message}"
+          exit(1)
+        end
+      end
+
       new(argv).run
+    end
+
+    def self.run_with_build_config(argv, build_config)
+      # Apply build config environment variables
+      build_config[:environment].each do |key, value|
+        ENV[key] = value.to_s
+      end
+
+      # Set SHAKAPACKER_ASSETS_BUNDLER so JS/TS config files use the correct bundler
+      # This ensures the bundler override (from --bundler or build config) is respected
+      ENV["SHAKAPACKER_ASSETS_BUNDLER"] = build_config[:bundler]
+
+      puts "[Shakapacker] Running dev server for build: #{build_config[:name]}"
+      puts "[Shakapacker] Description: #{build_config[:description]}" if build_config[:description]
+      puts "[Shakapacker] Bundler: #{build_config[:bundler]}"
+      puts "[Shakapacker] Config file: #{build_config[:config_file]}" if build_config[:config_file]
+
+      # Pass bundler override so Configuration.assets_bundler reflects the build
+      new(argv, build_config, build_config[:bundler]).run
     end
 
     def self.print_help
@@ -33,6 +95,17 @@ module Shakapacker
           -h, --help              Show this help message
           -v, --version           Show Shakapacker version
           --debug-shakapacker     Enable Node.js debugging (--inspect-brk)
+          --build <name>          Run a specific build configuration
+
+        Build configurations (config/shakapacker-builds.yml):
+          bin/shakapacker-dev-server --build dev-hmr    # Run the 'dev-hmr' build
+
+          To manage builds:
+          bin/shakapacker --init                        # Create config file
+          bin/shakapacker --list-builds                 # List available builds
+
+          Note: You can also use bin/shakapacker --build with a build that has
+          WEBPACK_SERVE=true, and it will automatically use the dev server.
 
         Examples:
           bin/shakapacker-dev-server                    # Start dev server

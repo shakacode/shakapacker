@@ -865,13 +865,13 @@ export class BuildValidator {
       const failedBuilds = results.filter((r) => !r.success)
       failedBuilds.forEach((result) => {
         lines.push(
-          `   bin/export-bundler-config --validate-build ${result.buildName} --verbose`
+          `   bin/shakapacker-config --validate-build ${result.buildName} --verbose`
         )
       })
 
       lines.push("")
       lines.push(
-        "   Or validate all builds with full output: bin/export-bundler-config --validate --verbose"
+        "   Or validate all builds with full output: bin/shakapacker-config --validate --verbose"
       )
       lines.push("=".repeat(80))
     }

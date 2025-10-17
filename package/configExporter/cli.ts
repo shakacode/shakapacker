@@ -114,7 +114,7 @@ export async function run(args: string[]): Promise<number> {
     if (options.build) {
       const loader = new ConfigFileLoader(options.configFile)
       if (!loader.exists()) {
-        const configPath = options.configFile || ".bundler-config.yml"
+        const configPath = options.configFile || "config/shakapacker-builds.yml"
         throw new Error(
           `--build requires a config file but ${configPath} not found. Run --init to create it.`
         )
@@ -153,61 +153,75 @@ Exports webpack or rspack configuration in a verbose, human-readable format
 for comparison and analysis.
 
 QUICK START (for troubleshooting):
-  bin/export-bundler-config --doctor
+  bin/shakapacker-config --doctor
 
   Exports annotated YAML configs for both development and production.
   Creates separate files for client and server bundles.
   Best for debugging, AI analysis, and comparing configurations.`
     )
+    // Build Configuration Options (most important - users interact with these most)
+    .option("init", {
+      type: "boolean",
+      default: false,
+      description:
+        "Generate config/shakapacker-builds.yml (use with --ssr for SSR builds)"
+    })
+    .option("ssr", {
+      type: "boolean",
+      default: false,
+      description: "Include SSR builds when using --init"
+    })
+    .option("list-builds", {
+      type: "boolean",
+      default: false,
+      description: "List all available builds from config file"
+    })
+    .option("build", {
+      type: "string",
+      description: "Export config for specific build from config file"
+    })
+    .option("all-builds", {
+      type: "boolean",
+      default: false,
+      description: "Export all builds from config file"
+    })
+    .option("config-file", {
+      type: "string",
+      description:
+        "Path to config file (default: config/shakapacker-builds.yml)"
+    })
+    // Validation Options
+    .option("validate", {
+      type: "boolean",
+      default: false,
+      description:
+        "Validate all builds by running webpack/rspack (requires config file)"
+    })
+    .option("validate-build", {
+      type: "string",
+      description: "Validate specific build from config file"
+    })
+    // Troubleshooting
     .option("doctor", {
       type: "boolean",
       default: false,
       description:
-        "Export all configs for troubleshooting (dev + prod, annotated YAML)"
+        "Export all configs for troubleshooting (uses config file builds if available)"
     })
+    // Output Options
     .option("save-dir", {
       type: "string",
       description:
         "Directory for output files (default: shakapacker-config-exports)"
     })
-    .option("stdout", {
-      type: "boolean",
-      default: false,
-      description: "Output to stdout instead of saving to files"
-    })
-    .option("bundler", {
-      type: "string",
-      choices: ["webpack", "rspack"] as const,
-      description: "Specify bundler (auto-detected if not provided)"
-    })
-    .option("env", {
-      type: "string",
-      choices: ["development", "production", "test"] as const,
-      description:
-        "Node environment (default: development, ignored with --doctor or --build)"
-    })
-    .option("client-only", {
-      type: "boolean",
-      default: false,
-      description: "Generate only client config (sets CLIENT_BUNDLE_ONLY=yes)"
-    })
-    .option("server-only", {
-      type: "boolean",
-      default: false,
-      description: "Generate only server config (sets SERVER_BUNDLE_ONLY=yes)"
-    })
     .option("output", {
       type: "string",
       description: "Output to specific file instead of directory"
     })
-    .option("depth", {
-      type: "number",
-      default: 20,
-      coerce: (value: number | string) => {
-        if (value === "null" || value === null) return null
-        return typeof value === "number" ? value : parseInt(String(value), 10)
-      },
-      description: "Inspection depth (use 'null' for unlimited)"
+    .option("stdout", {
+      type: "boolean",
+      default: false,
+      description: "Output to stdout instead of saving to files"
     })
     .option("format", {
       type: "string",
@@ -219,43 +233,25 @@ QUICK START (for troubleshooting):
       description:
         "Enable inline documentation (YAML only, default with --doctor or file output)"
     })
+    .option("depth", {
+      type: "number",
+      default: 20,
+      coerce: (value: number | string) => {
+        if (value === "null" || value === null) return null
+        return typeof value === "number" ? value : parseInt(String(value), 10)
+      },
+      description: "Inspection depth (use 'null' for unlimited)"
+    })
     .option("verbose", {
       type: "boolean",
       default: false,
       description: "Show full output without compact mode"
     })
-    .option("init", {
-      type: "boolean",
-      default: false,
-      description: "Generate sample .bundler-config.yml with examples"
-    })
-    .option("config-file", {
+    // Bundler Options
+    .option("bundler", {
       type: "string",
-      description: "Path to config file (default: .bundler-config.yml)"
-    })
-    .option("build", {
-      type: "string",
-      description: "Export config for specific build from config file"
-    })
-    .option("list-builds", {
-      type: "boolean",
-      default: false,
-      description: "List all available builds from config file"
-    })
-    .option("all-builds", {
-      type: "boolean",
-      default: false,
-      description: "Export all builds from config file"
-    })
-    .option("validate", {
-      type: "boolean",
-      default: false,
-      description:
-        "Validate all builds by running webpack/rspack (requires config file)"
-    })
-    .option("validate-build", {
-      type: "string",
-      description: "Validate specific build from config file"
+      choices: ["webpack", "rspack"] as const,
+      description: "Specify bundler (auto-detected if not provided)"
     })
     .option("webpack", {
       type: "boolean",
@@ -266,6 +262,25 @@ QUICK START (for troubleshooting):
       type: "boolean",
       default: false,
       description: "Use rspack (overrides config file)"
+    })
+    // Legacy/Fallback Options (when no config file exists)
+    .option("env", {
+      type: "string",
+      choices: ["development", "production", "test"] as const,
+      description:
+        "Node environment (fallback when no config file exists, ignored with --doctor or --build)"
+    })
+    .option("client-only", {
+      type: "boolean",
+      default: false,
+      description:
+        "Generate only client config (fallback when no config file exists)"
+    })
+    .option("server-only", {
+      type: "boolean",
+      default: false,
+      description:
+        "Generate only server config (fallback when no config file exists)"
     })
     .check((argv) => {
       if (argv.webpack && argv.rspack) {
@@ -303,6 +318,11 @@ QUICK START (for troubleshooting):
           "--validate cannot be used with --build or --all-builds."
         )
       }
+      if (argv.ssr && !argv.init) {
+        throw new Error(
+          "--ssr can only be used with --init. Use: bin/shakapacker-config --init --ssr"
+        )
+      }
       return true
     })
     .help("help")
@@ -310,31 +330,27 @@ QUICK START (for troubleshooting):
     .epilogue(
       `Examples:
 
-  # Config File Workflow
-  bin/export-bundler-config --init
-  bin/export-bundler-config --list-builds
-  bin/export-bundler-config --build=dev
-  bin/export-bundler-config --all-builds --save-dir=./configs
-  bin/export-bundler-config --build=dev --rspack
+  # Config File Workflow (recommended)
+  bin/shakapacker-config --init                           # Create config file
+  bin/shakapacker-config --init --ssr                     # Create config with SSR builds
+  bin/shakapacker-config --list-builds                    # List available builds
+  bin/shakapacker-config --build=dev                      # Export specific build
+  bin/shakapacker-config --all-builds --save-dir=./configs
+  bin/shakapacker-config --build=dev --rspack             # Override bundler
 
-  # Traditional Workflow (without config file)
-  bin/export-bundler-config --doctor
-  # Creates: webpack-development-client-hmr.yaml, webpack-development-client.yaml,
-  #          webpack-development-server.yaml, webpack-production-client.yaml,
-  #          webpack-production-server.yaml
+  # Troubleshooting
+  bin/shakapacker-config --doctor                         # Export all configs for debugging
+  # If config file exists: exports all builds from config
+  # If no config file: exports dev/prod client/server configs
 
-  bin/export-bundler-config --env=production --client-only
-  bin/export-bundler-config --save-dir=./debug
-  bin/export-bundler-config                               # Saves to shakapacker-config-exports/
+  # Validate builds (requires config file)
+  bin/shakapacker-config --validate                       # Validate all builds
+  bin/shakapacker-config --validate-build=dev             # Validate specific build
+  bin/shakapacker-config --validate --verbose             # Validate with full logs
 
-  # Validate builds
-  bin/export-bundler-config --validate                    # Validate all builds
-  bin/export-bundler-config --validate-build=dev          # Validate specific build
-  bin/export-bundler-config --validate --verbose          # Validate with full logs
-
-  # View config in terminal (stdout)
-  bin/export-bundler-config --stdout
-  bin/export-bundler-config --output=config.yaml          # Save to specific file`
+  # Advanced output options
+  bin/shakapacker-config --build=dev --stdout             # View in terminal
+  bin/shakapacker-config --build=dev --output=config.yaml # Save to specific file`
     )
     .strict()
     .parseSync()
@@ -363,6 +379,7 @@ QUICK START (for troubleshooting):
     stdout: argv.stdout,
     annotate: argv.annotate,
     init: argv.init,
+    ssr: argv.ssr,
     configFile: argv["config-file"],
     build: argv.build,
     listBuilds: argv["list-builds"],
@@ -392,8 +409,11 @@ function applyDefaults(options: ExportOptions): void {
 }
 
 function runInitCommand(options: ExportOptions): number {
-  const configPath = options.configFile || ".bundler-config.yml"
+  const configPath = options.configFile || "config/shakapacker-builds.yml"
   const fullPath = resolve(process.cwd(), configPath)
+
+  // Check if SSR variant is requested via --ssr flag
+  const ssrMode = options.ssr || false
 
   if (existsSync(fullPath)) {
     console.error(
@@ -405,20 +425,76 @@ function runInitCommand(options: ExportOptions): number {
     return 1
   }
 
-  const sampleConfig = generateSampleConfigFile()
+  // Create bin stub if it doesn't exist
+  const binStubPath = resolve(process.cwd(), "bin/shakapacker-config")
+  const createdStub = !existsSync(binStubPath)
+  if (createdStub) {
+    createBinStub(binStubPath)
+  }
+
+  const sampleConfig = generateSampleConfigFile(ssrMode)
   writeFileSync(fullPath, sampleConfig, "utf8")
 
   console.log(`[Config Exporter] ✅ Created config file: ${fullPath}`)
+  if (ssrMode) {
+    console.log(
+      `[Config Exporter] ℹ️  Generated SSR build configuration (5 builds)`
+    )
+  } else {
+    console.log(
+      `[Config Exporter] ℹ️  Generated standard build configuration (3 builds)`
+    )
+    console.log(
+      `[Config Exporter] 💡 Uncomment SSR builds in the file if needed, or regenerate with: bin/shakapacker-config --init --ssr`
+    )
+  }
+
+  if (createdStub) {
+    console.log(`[Config Exporter] ✅ Created bin stub: ${binStubPath}`)
+  }
+
   console.log(`\nNext steps:`)
-  console.log(`  1. Edit the config file to match your build setup`)
-  console.log(
-    `  2. List available builds: bin/export-bundler-config --list-builds`
-  )
-  console.log(
-    `  3. Export a build: bin/export-bundler-config --build=<name> --save\n`
-  )
+  console.log(`  1. List available builds: bin/shakapacker --list-builds`)
+  console.log(`  2. Run a build: bin/shakapacker --build <name>\n`)
 
   return 0
+}
+
+function createBinStub(binStubPath: string): void {
+  const binDir = dirname(binStubPath)
+  const { mkdirSync, chmodSync } = require("fs")
+
+  // Ensure bin directory exists
+  if (!existsSync(binDir)) {
+    mkdirSync(binDir, { recursive: true })
+  }
+
+  const stubContent = `#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+ENV["RAILS_ENV"] ||= ENV["RACK_ENV"] || "development"
+ENV["NODE_ENV"] ||= "development"
+
+require "pathname"
+ENV["BUNDLE_GEMFILE"] ||= File.expand_path("../../Gemfile",
+  Pathname.new(__FILE__).realpath)
+
+require "bundler/setup"
+
+APP_ROOT = File.expand_path("..", __dir__)
+Dir.chdir(APP_ROOT) do
+  exec "node", "./node_modules/.bin/shakapacker-config", *ARGV
+end
+`
+
+  writeFileSync(binStubPath, stubContent, { mode: 0o755 })
+
+  // Make executable
+  try {
+    chmodSync(binStubPath, 0o755)
+  } catch (e) {
+    // chmod might fail on some systems, but mode in writeFileSync should handle it
+  }
 }
 
 function runListBuildsCommand(options: ExportOptions): number {
@@ -440,7 +516,7 @@ async function runValidateCommand(options: ExportOptions): Promise<number> {
     // Validate that config file exists
     const loader = new ConfigFileLoader(options.configFile)
     if (!loader.exists()) {
-      const configPath = options.configFile || ".bundler-config.yml"
+      const configPath = options.configFile || "config/shakapacker-builds.yml"
       throw new Error(
         `Config file ${configPath} not found. Run --init to create it.`
       )
@@ -473,7 +549,7 @@ async function runValidateCommand(options: ExportOptions): Promise<number> {
       // Handle empty builds edge case
       if (buildsToValidate.length === 0) {
         throw new Error(
-          `No builds found in config file. Add at least one build to .bundler-config.yml or run --init to see examples.`
+          `No builds found in config file. Add at least one build to config/shakapacker-builds.yml or run --init to see examples.`
         )
       }
     }
@@ -579,7 +655,7 @@ async function runAllBuildsCommand(options: ExportOptions): Promise<number> {
 
     const loader = new ConfigFileLoader(options.configFile)
     if (!loader.exists()) {
-      const configPath = options.configFile || ".bundler-config.yml"
+      const configPath = options.configFile || "config/shakapacker-builds.yml"
       throw new Error(
         `Config file ${configPath} not found. Run --init to create it.`
       )
@@ -662,63 +738,65 @@ async function runDoctorMode(
 
     const createdFiles: string[] = []
 
-    // Check if config file exists with shakapacker_doctor_default_builds_here flag
-    const configFilePath = options.configFile || ".bundler-config.yml"
+    // Check if config file exists - always use it for doctor mode
+    const configFilePath = options.configFile || "config/shakapacker-builds.yml"
     const loader = new ConfigFileLoader(configFilePath)
 
     if (loader.exists()) {
       try {
         const configData = loader.load()
-        if (configData.shakapacker_doctor_default_builds_here) {
-          console.log(
-            "\nUsing builds from config file (shakapacker_doctor_default_builds_here: true)...\n"
+        console.log(`\nUsing builds from ${configFilePath}...\n`)
+
+        // Use config file builds
+        const buildNames = Object.keys(configData.builds)
+
+        for (const buildName of buildNames) {
+          console.log(`\n📦 Loading build: ${buildName}`)
+
+          // Clear and restore environment to prevent leakage between builds
+          clearBuildEnvironmentVariables()
+          restoreBuildEnvironmentVariables(savedEnv)
+
+          const configs = await loadConfigsForEnv(
+            undefined,
+            { ...options, build: buildName },
+            appRoot
           )
-          // Use config file builds
-          const buildNames = Object.keys(configData.builds)
 
-          for (const buildName of buildNames) {
-            console.log(`\n📦 Loading build: ${buildName}`)
-
-            // Clear and restore environment to prevent leakage between builds
-            clearBuildEnvironmentVariables()
-            restoreBuildEnvironmentVariables(savedEnv)
-
-            const configs = await loadConfigsForEnv(
-              undefined,
-              { ...options, build: buildName },
-              appRoot
+          for (const { config, metadata } of configs) {
+            const output = formatConfig(config, metadata, options, appRoot)
+            const filename = FileWriter.generateFilename(
+              metadata.bundler,
+              metadata.environment,
+              metadata.configType,
+              options.format!,
+              metadata.buildName
             )
-
-            for (const { config, metadata } of configs) {
-              const output = formatConfig(config, metadata, options, appRoot)
-              const filename = FileWriter.generateFilename(
-                metadata.bundler,
-                metadata.environment,
-                metadata.configType,
-                options.format!,
-                metadata.buildName
-              )
-              const fullPath = resolve(targetDir, filename)
-              FileWriter.writeSingleFile(fullPath, output)
-              createdFiles.push(fullPath)
-            }
+            const fullPath = resolve(targetDir, filename)
+            FileWriter.writeSingleFile(fullPath, output)
+            createdFiles.push(fullPath)
           }
-
-          // Print summary and exit early
-          printDoctorSummary(createdFiles, targetDir)
-          return
         }
+
+        // Print summary and exit early
+        printDoctorSummary(createdFiles, targetDir)
+        return
       } catch (error: unknown) {
-        // If config file exists but is invalid, warn and fall through to default behavior
+        // If config file exists but is invalid, show error and exit
         const errorMessage =
           error instanceof Error ? error.message : String(error)
-        console.log(`\n⚠️  Config file found but invalid: ${errorMessage}`)
-        console.log("Falling back to default doctor mode...\n")
+        console.error(`\n❌ Config file found but invalid: ${errorMessage}`)
+        console.error(
+          `Fix the config file or run: bin/shakapacker-config --init\n`
+        )
+        throw error
       }
     }
 
-    // Default behavior: hardcoded configs
-    console.log("\nExporting all development and production configs...")
+    // No config file found - suggest creating one
+    console.log(`\n⚠️  No build config file found at ${configFilePath}`)
+    console.log(`Run: bin/shakapacker-config --init to create one.\n`)
+    console.log("Exporting default development and production configs...")
     console.log("")
 
     const configsToExport = [

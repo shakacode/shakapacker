@@ -22,7 +22,8 @@ describe("ConfigFileLoader", () => {
     if (!existsSync(testDir)) {
       mkdirSync(testDir, { recursive: true })
     }
-    configPath = join(testDir, ".bundler-config.yml")
+    mkdirSync(join(testDir, "config"), { recursive: true })
+    configPath = join(testDir, "config/shakapacker-builds.yml")
   })
 
   afterEach(() => {
@@ -369,9 +370,9 @@ builds:
 describe("generateSampleConfigFile", () => {
   it("should generate valid YAML string", () => {
     const content = generateSampleConfigFile()
-    expect(content).toContain("default_bundler:")
     expect(content).toContain("builds:")
     expect(content).toContain("dev-hmr:")
+    expect(content).toContain("dev_server: true")
     expect(content).toContain("dev:")
     expect(content).toContain("prod:")
   })

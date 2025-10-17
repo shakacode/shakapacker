@@ -12,6 +12,7 @@ This guide covers all configuration options available in `config/shakapacker.yml
 - [Compilation Options](#compilation-options)
 - [Advanced Options](#advanced-options)
 - [Environment-Specific Configuration](#environment-specific-configuration)
+- [Build Configurations (config/shakapacker-builds.yml)](#build-configurations-configshakapacker-buildsyml)
 
 ## Basic Configuration
 
@@ -607,6 +608,106 @@ default: &default
     - packages/shared
     - packages/ui-components
 ```
+
+## Build Configurations (config/shakapacker-builds.yml)
+
+Shakapacker supports defining reusable build configurations in `config/shakapacker-builds.yml`. This allows you to run predefined builds with a simple command, making it easy to switch between different build scenarios.
+
+### Creating a Build Configuration File
+
+Generate `config/shakapacker-builds.yml` with example builds:
+
+```bash
+bin/shakapacker --init  # Creates config/shakapacker-builds.yml
+```
+
+This generates a file with example builds for common scenarios (HMR development, standard development, and production).
+
+### Running Builds by Name
+
+Once you have `config/shakapacker-builds.yml`, you can run builds by name:
+
+```bash
+# List available builds
+bin/shakapacker --list-builds
+
+# Run a specific build
+bin/shakapacker --build dev-hmr    # Client bundle with HMR (automatically uses dev server)
+bin/shakapacker --build prod        # Client and server bundles for production
+bin/shakapacker --build dev         # Client bundle for development
+```
+
+### Build Configuration Format
+
+Example `config/shakapacker-builds.yml`:
+
+```yaml
+builds:
+  dev-hmr:
+    description: Client bundle with HMR (React Fast Refresh)
+    bundler: rspack # Optional: override assets_bundler from config/shakapacker.yml
+    environment:
+      NODE_ENV: development
+      RAILS_ENV: development
+      WEBPACK_SERVE: "true" # Automatically uses bin/shakapacker-dev-server
+    outputs:
+      - client
+    config: config/${BUNDLER}/custom.config.js # Optional: custom config file with variable substitution
+
+  prod:
+    description: Production client and server bundles
+    environment:
+      NODE_ENV: production
+      RAILS_ENV: production
+    outputs:
+      - client # Multiple outputs - builds both client and server bundles
+      - server
+```
+
+### Build Configuration Options
+
+- **`description`** (optional): Human-readable description of the build
+- **`bundler`** (optional): Override the default bundler from `config/shakapacker.yml` (`webpack` or `rspack`)
+- **`dev_server`** (optional): Boolean flag to force routing to dev server (overrides environment variable detection)
+- **`environment`**: Environment variables to set when running the build
+- **`outputs`**: Array of output types - can include `client`, `server`, or both for multiple bundles in a single build
+- **`config`** (optional): Custom config file path (supports `${BUNDLER}` variable substitution)
+- **`bundler_env`** (optional): Key-value pairs passed as bundler `--env` flags (e.g., `{ analyze: true }` becomes `--env analyze=true`)
+
+### Automatic Dev Server Detection
+
+Shakapacker automatically uses `bin/shakapacker-dev-server` instead of the regular build command when:
+
+1. The build has `dev_server: true` explicitly set (preferred method - takes precedence over environment variables), OR
+2. The build has `WEBPACK_SERVE=true` or `HMR=true` in its environment variables (fallback for backward compatibility)
+
+Example:
+
+```bash
+# These are equivalent:
+bin/shakapacker --build dev-hmr
+WEBPACK_SERVE=true bin/shakapacker-dev-server  # (with dev-hmr environment vars)
+```
+
+### Variable Substitution
+
+The `config` field supports `${BUNDLER}` substitution:
+
+```yaml
+builds:
+  custom:
+    bundler: rspack
+    config: config/${BUNDLER}/custom.config.js # Becomes: config/rspack/custom.config.js
+```
+
+### When to Use Build Configurations
+
+Build configurations are useful for:
+
+- **Multiple build scenarios**: Use when you need different builds for HMR development, standard development, and production
+- **CI/CD pipelines**: Use when you want predefined builds that can be referenced in deployment scripts
+- **Team consistency**: Use to ensure all developers use the same build configurations
+- **Complex setups**: Use to manage different bundler configs or environment variables for different scenarios
 
 ## Troubleshooting
 
