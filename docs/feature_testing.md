@@ -23,50 +23,14 @@ This guide shows how to manually verify that Shakapacker features are working co
 
 **Early hints require HTTP/2 and will NOT work in standard Rails development mode**, which uses HTTP/1.1 by default.
 
-**Testing Options:**
-
-1. **Browser DevTools in production/staging** (Recommended):
-   - Deploy to an environment with HTTPS and HTTP/2 support
-   - Use Method 1 below to verify in browser
-   - You should see BOTH `103 Early Hints` AND `200 OK` status codes
-
-2. **curl on production/staging** (Command line verification):
-
-   ```bash
-   curl -v --http2 https://your-production-app.com 2>&1 | grep -A5 "< HTTP"
-   # Should show: < HTTP/2 103 (early hints)
-   # Then: < HTTP/2 200 (final response)
-   ```
-
-3. **Local testing is NOT possible** without complex SSL setup:
-
-   ```bash
-   # This will NOT work (returns HTTP/1.1, no early hints):
-   RAILS_ENV=production bundle exec rails server
-   curl -v --http2 http://localhost:3000 2>&1 | grep "< HTTP"
-   # Output: < HTTP/1.1 200 OK (no 103 status)
-   ```
-
-**Why localhost doesn't work:**
+**Why localhost testing doesn't work:**
 
 - Early hints require HTTP/2
-- HTTP/2 requires HTTPS/TLS (not http://)
+- HTTP/2 requires HTTPS/TLS (not `http://`)
 - Plain `http://localhost` uses HTTP/1.1
 - Early hints are silently ignored on HTTP/1.1
 
-**What "working" looks like:**
-
-```bash
-# Correct output (early hints ENABLED):
-< HTTP/2 103           # Early hints sent
-< link: </packs/app.js>; rel=preload
-< HTTP/2 200           # Final response
-
-# Incorrect output (early hints NOT enabled):
-< HTTP/2 200           # Only final response, no 103
-```
-
-**Recommendation:** Test early hints only on production/staging environments with HTTPS enabled.
+**Testing recommendation:** Use Method 1 (Browser DevTools) or Method 2 (curl) on production/staging environments with HTTPS enabled. You should see BOTH `HTTP/2 103` (early hints) and `HTTP/2 200` (final response).
 
 ### Method 1: Browser DevTools (Recommended)
 
