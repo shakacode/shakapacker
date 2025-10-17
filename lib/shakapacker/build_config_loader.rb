@@ -113,16 +113,25 @@ module Shakapacker
       # Load YAML config file safely with Ruby version compatibility
       # Ruby 3.1+ supports safe_load_file with aliases, older versions need safe_load
       def load_config
-        config = if YAML.respond_to?(:safe_load_file)
-          # Ruby 3.1+: Use safe_load_file with aliases enabled
-          YAML.safe_load_file(@config_file_path, aliases: true)
-        else
-          # Ruby 2.7-3.0: Use safe_load with aliases enabled
-          YAML.safe_load(
+        begin
+          config = if YAML.respond_to?(:safe_load_file)
+            # Ruby 3.1+: Use safe_load_file with aliases enabled
+            YAML.safe_load_file(@config_file_path, aliases: true)
+          else
+            # Ruby 2.7-3.0: Use safe_load with aliases enabled
+            YAML.safe_load(
+              File.read(@config_file_path),
+              permitted_classes: [],
+              permitted_symbols: [],
+              aliases: true
+            )
+          end
+        rescue ArgumentError
+          # Fallback for older Psych versions without aliases support
+          config = YAML.safe_load(
             File.read(@config_file_path),
             permitted_classes: [],
-            permitted_symbols: [],
-            aliases: true
+            permitted_symbols: []
           )
         end
 
