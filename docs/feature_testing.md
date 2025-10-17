@@ -19,6 +19,36 @@ This guide shows how to manually verify that Shakapacker features are working co
 - HTTP/2-capable server (Puma 5+ recommended)
 - Modern browser (Chrome/Edge/Firefox 103+, Safari 16.4+)
 
+### ⚠️ Development Mode Limitations
+
+**Early hints require HTTP/2 and will NOT work in standard Rails development mode**, which uses HTTP/1.1 by default.
+
+**Testing Options:**
+
+1. **Production mode locally** (Recommended for verification):
+
+   ```bash
+   RAILS_ENV=production bundle exec rails server
+   curl -v --http2 http://localhost:3000 2>&1 | grep "< HTTP"
+   # Still returns HTTP/1.1 - Puma needs SSL for HTTP/2
+   ```
+
+2. **Browser DevTools in production/staging** (Best method):
+   - Deploy to an environment with HTTP/2 support (production/staging with HTTPS)
+   - Use Method 1 below to verify in browser
+
+3. **Local HTTPS with HTTP/2** (Complex, not recommended):
+   - Requires SSL certificates and Puma configuration
+   - See Puma documentation for HTTP/2 setup
+
+**Why curl shows HTTP/1.1:**
+
+- Puma requires HTTPS/TLS to enable HTTP/2
+- Development mode typically runs on plain HTTP
+- Early hints will be silently ignored without HTTP/2
+
+**Recommendation:** Test early hints in a production or staging environment with HTTPS enabled. For development, you can enable the config but won't see the 103 status in tools like curl.
+
 ### Method 1: Browser DevTools (Recommended)
 
 1. **Enable early hints in config:**
@@ -55,10 +85,10 @@ Link: </packs/application-xyz789.css>; rel=preload; as=style; crossorigin="anony
 
 ### Method 2: curl (Command Line)
 
-**Test early hints with curl:**
+**Test early hints with curl (requires HTTPS/HTTP2):**
 
 ```bash
-# Using curl with verbose output
+# Production/staging with HTTPS
 curl -v --http2 https://your-app.com 2>&1 | grep -A5 "< HTTP"
 
 # Look for:
@@ -67,14 +97,16 @@ curl -v --http2 https://your-app.com 2>&1 | grep -A5 "< HTTP"
 # < HTTP/2 200
 ```
 
-**For local development (Puma):**
+**⚠️ Local testing limitations:**
 
 ```bash
-# Start Rails with Puma in production mode
+# This will NOT show early hints (returns HTTP/1.1):
 RAILS_ENV=production bundle exec rails server
+curl -v --http2 http://localhost:3000 2>&1 | grep -A5 "< HTTP"
+# Output: < HTTP/1.1 200 OK (no 103 status)
 
-# In another terminal, test with curl
-curl -v --http2 http://localhost:3000 2>&1 | grep -A10 "< HTTP"
+# Why: Puma requires SSL certificates for HTTP/2
+# Early hints need HTTP/2, which needs HTTPS
 ```
 
 **Expected output:**
