@@ -152,7 +152,48 @@ The asset filenames in early hints should match those in your HTML.
    - AWS ALB/ELB
    - Other load balancers and proxies
 
-   **Solution**: Early hints may still be working server-side and providing benefits even if you can't see them in tools. The debug HTML comments will confirm if Rails is sending them. If your proxy strips 103, browsers may still benefit from the Link headers in the final 200 response.
+   **How to fix proxy stripping:**
+
+   **nginx** - Enable early hints support:
+
+   ```nginx
+   # nginx.conf
+   http {
+     # Enable HTTP/2
+     server {
+       listen 443 ssl http2;
+
+       # Pass through early hints (nginx 1.13+)
+       proxy_pass_header Link;
+
+       location / {
+         proxy_pass http://rails_backend;
+         proxy_http_version 1.1;
+       }
+     }
+   }
+   ```
+
+   **Cloudflare** - Early hints are supported but must be enabled:
+   - Go to Speed > Optimization in your Cloudflare dashboard
+   - Enable "Early Hints"
+   - Note: Only available on paid plans (Pro, Business, Enterprise)
+
+   **AWS ALB/ELB** - Does NOT support HTTP/2 103:
+   - AWS load balancers strip 103 responses
+   - **Workaround**: Deploy without ALB/ELB, or accept Link headers in 200 response
+   - Alternative: Use CloudFront with origin that supports 103
+
+   **Control Plane (cpln.app)** - Currently strips 103:
+   - No configuration option to enable early hints passthrough
+   - **Workaround**: Accept that early hints won't be visible to clients
+   - Link headers may still be included in 200 response
+
+   **General workaround when proxy strips 103:**
+   - Rails still sends Link headers in the 200 response
+   - Browsers can use these for next-page prefetch (not early hints benefit)
+   - Consider if early hints are worth the complexity for your setup
+   - Use debug mode to verify Rails is sending hints correctly
 
 3. **Check server supports HTTP/2 and early hints:**
 

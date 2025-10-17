@@ -402,6 +402,17 @@ View page source and look for `<!-- Shakapacker Early Hints Debug -->` comments.
 - Verify HTTP/2 server (Puma 5+, nginx 1.13+)
 - Check Network tab shows "h2" protocol and 103 status
 
+**Reverse proxy stripping 103 responses:**
+
+If debug mode shows hints are sent but they're not reaching clients, configure your proxy:
+
+- **nginx**: Add `proxy_pass_header Link;` to pass through early hints (nginx 1.13+)
+- **Cloudflare**: Enable "Early Hints" in Speed > Optimization (paid plans only)
+- **AWS ALB/ELB**: Not supported - ALBs strip 103 responses. Workaround: skip ALB or use CloudFront
+- **Control Plane**: Not configurable - early hints will be stripped
+
+See the [Feature Testing Guide](feature_testing.md#troubleshooting-early-hints) for detailed proxy configuration examples.
+
 **Performance got worse:**
 
 - Page likely has large images/videos as LCP
