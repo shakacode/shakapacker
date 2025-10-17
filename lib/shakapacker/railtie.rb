@@ -42,11 +42,6 @@ class Shakapacker::Engine < ::Rails::Engine
   initializer "shakapacker.early_hints" do
     ActiveSupport.on_load :action_controller do
       ActionController::Base.class_eval do
-        # Class method to skip automatic early hints sending
-        def self.skip_send_pack_early_hints(**options)
-          before_action(**options) { request.env["shakapacker.skip_early_hints"] = true }
-        end
-
         # Class method to configure early hints per action
         # Supports 'all' shortcut and specific css/js configuration
         #
@@ -59,42 +54,6 @@ class Shakapacker::Engine < ::Rails::Engine
             view_context.configure_early_hints(all: all, css: css, js: js)
           end
         end
-
-        after_action :send_pack_early_hints_automatically, if: :should_send_early_hints?
-
-        private
-
-          def send_pack_early_hints_automatically
-            # Only send for HTML responses in actual controller rendering context
-            return unless response&.content_type&.include?("text/html")
-            return unless respond_to?(:view_context)
-            return unless view_context.respond_to?(:send_pack_early_hints)
-            # Don't send if headers already sent or response already committed
-            return if response.committed? || response.sent?
-
-            debug_output = view_context.send_pack_early_hints
-
-            # If debug mode is enabled and we got debug output, append it to the response body
-            if debug_output.present? && response.body.present?
-              # Insert debug comments right after <head> tag if present, otherwise at the top
-              if response.body.include?("<head>")
-                response.body = response.body.sub("<head>", "<head>\n#{debug_output}")
-              else
-                response.body = "#{debug_output}\n#{response.body}"
-              end
-            end
-          rescue => e
-            # Silently fail if early hints can't be sent (e.g., headers already sent, no view context)
-            Rails.logger.debug { "Early hints: automatic sending failed - #{e.class}: #{e.message}" }
-          end
-
-          def should_send_early_hints?
-            return false unless response.is_a?(ActionDispatch::Response)
-            return false if request.env["shakapacker.skip_early_hints"]
-
-            config = Shakapacker.config.early_hints rescue nil
-            config && config[:enabled]
-          end
       end
     end
   end
