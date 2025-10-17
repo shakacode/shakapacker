@@ -30,6 +30,7 @@ production:
 ```
 
 **How it works:**
+
 - When `stylesheet_pack_tag` is called, it automatically sends CSS early hints
 - When `javascript_pack_tag` is called, it automatically sends JS early hints
 - Combines queue (from `append_*_pack_tag`) + direct args
@@ -59,6 +60,7 @@ Customize hint handling per pack using a hash:
 ```
 
 **Options:**
+
 - `"preload"` - High priority (default)
 - `"prefetch"` - Low priority
 - `false` or `"none"` - Disabled
@@ -87,6 +89,7 @@ end
 ```
 
 **Timeline:**
+
 1. Request arrives
 2. `send_pack_early_hints` called → HTTP 103 sent immediately
 3. Browser starts downloading assets
@@ -96,6 +99,7 @@ end
 7. Assets already downloaded = faster page load
 
 **Benefits:**
+
 - ✅ Parallelizes browser downloads with server processing
 - ✅ Can save 200-500ms on pages with slow controllers
 - ✅ Most valuable for pages with expensive queries/API calls
@@ -132,6 +136,7 @@ Views can use `append_*_pack_tag` to add packs dynamically:
 ```
 
 **How it works:**
+
 - Views call `append_javascript_pack_tag('admin_tools')`
 - Layout calls `javascript_pack_tag('application')`
 - Helper combines: `['application', 'admin_tools']`
@@ -145,8 +150,8 @@ Views can use `append_*_pack_tag` to add packs dynamically:
 # config/shakapacker.yml
 production:
   early_hints:
-    enabled: true    # Master switch (default: false)
-    debug: true      # Show HTML comments with debug info (default: false)
+    enabled: true # Master switch (default: false)
+    debug: true # Show HTML comments with debug info (default: false)
 ```
 
 ---
@@ -170,6 +175,7 @@ end
 ```
 
 **How it works:**
+
 - Tracks which packs have sent JS hints: `@early_hints_javascript = {}`
 - Tracks which packs have sent CSS hints: `@early_hints_stylesheets = {}`
 - Skips sending hints for packs already sent
@@ -179,22 +185,26 @@ end
 ## When to Use Each Pattern
 
 ### Pattern 1 (Automatic) - Best for:
+
 - Simple apps with consistent performance
 - Small/medium JS bundles (<500KB)
 - Fast controllers (<100ms)
 
 ### Pattern 2 (Per-Pack) - Best for:
+
 - Mixed vendor bundles (preload critical, prefetch non-critical)
 - Different handling for different packs
 - Layout-specific optimizations
 
 ### Pattern 3 (Controller) - Best for:
+
 - Slow controllers with expensive queries (>300ms)
 - Large JS bundles (>500KB)
 - APIs calls in controller
 - Maximum parallelism needed
 
 ### Pattern 4 (View Override) - Best for:
+
 - Admin sections with extra packs
 - Feature flags determining packs
 - Page-specific bundles
@@ -332,6 +342,7 @@ CMD ["bundle", "exec", "thrust", "./bin/rails", "server"]
 ```
 
 Thruster will:
+
 1. Receive HTTP/2 requests from browsers
 2. Translate to HTTP/1.1 for Puma
 3. Pass through HTTP/1.1 103 Early Hints from Puma
@@ -349,6 +360,7 @@ Port: 3000
 **Why**: Puma ONLY supports HTTP/1.1 Early Hints. If you set protocol to `HTTP2`, Early Hints will NOT work.
 
 Control Plane's load balancer handles HTTP/2 translation automatically:
+
 1. Browser → Control Plane LB (HTTP/2)
 2. Control Plane LB → Puma (HTTP/1.1)
 3. Puma → Control Plane LB (HTTP/1.1 103)
@@ -385,6 +397,7 @@ server {
 ```
 
 nginx will:
+
 1. Receive HTTP/2 request from browser
 2. Forward as HTTP/1.1 to Puma
 3. Receive HTTP/1.1 103 from Puma
