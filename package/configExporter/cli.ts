@@ -114,7 +114,8 @@ export async function run(args: string[]): Promise<number> {
     if (resolvedOptions.build) {
       const loader = new ConfigFileLoader(resolvedOptions.configFile)
       if (!loader.exists()) {
-        const configPath = resolvedOptions.configFile || "config/shakapacker-builds.yml"
+        const configPath =
+          resolvedOptions.configFile || "config/shakapacker-builds.yml"
         throw new Error(
           `--build requires a config file but ${configPath} not found. Run --init to create it.`
         )
@@ -666,7 +667,8 @@ async function runAllBuildsCommand(options: ExportOptions): Promise<number> {
 
     const loader = new ConfigFileLoader(resolvedOptions.configFile)
     if (!loader.exists()) {
-      const configPath = resolvedOptions.configFile || "config/shakapacker-builds.yml"
+      const configPath =
+        resolvedOptions.configFile || "config/shakapacker-builds.yml"
       throw new Error(
         `Config file ${configPath} not found. Run --init to create it.`
       )
