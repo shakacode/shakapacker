@@ -672,13 +672,13 @@ builds:
 - **`environment`**: Environment variables to set when running the build
 - **`outputs`**: Array of output types - can include `client`, `server`, or both for multiple bundles in a single build
 - **`config`** (optional): Custom config file path (supports `${BUNDLER}` variable substitution)
-- **`bundler_env`** (optional): Webpack/rspack `--env` flags
+- **`bundler_env`** (optional): Key-value pairs passed as bundler `--env` flags (e.g., `{ analyze: true }` becomes `--env analyze=true`)
 
 ### Automatic Dev Server Detection
 
 Shakapacker automatically uses `bin/shakapacker-dev-server` instead of the regular build command when:
 
-1. The build has `dev_server: true` explicitly set (preferred method), OR
+1. The build has `dev_server: true` explicitly set (preferred method - takes precedence over environment variables), OR
 2. The build has `WEBPACK_SERVE=true` or `HMR=true` in its environment variables (fallback for backward compatibility)
 
 Example:
@@ -704,10 +704,10 @@ builds:
 
 Build configurations are useful for:
 
-- **Multiple build scenarios**: Different builds for HMR development, standard development, and production
-- **CI/CD pipelines**: Predefined builds that can be easily referenced in deployment scripts
-- **Team consistency**: Ensure all developers use the same build configurations
-- **Complex setups**: Manage different bundler configs or environment variables for different scenarios
+- **Multiple build scenarios**: Use when you need different builds for HMR development, standard development, and production
+- **CI/CD pipelines**: Use when you want predefined builds that can be referenced in deployment scripts
+- **Team consistency**: Use to ensure all developers use the same build configurations
+- **Complex setups**: Use to manage different bundler configs or environment variables for different scenarios
 
 ## Troubleshooting
 

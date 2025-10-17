@@ -19,28 +19,12 @@ module Shakapacker
       end
 
       config = load_config
-      build = config["builds"][build_name]
-
-      unless build
-        available = config["builds"].keys.join(", ")
-        raise ArgumentError, "Build '#{build_name}' not found in config file.\n" \
-                            "Available builds: #{available}\n" \
-                            "Use 'bin/shakapacker --list-builds' to see all available builds."
-      end
-
-      build
+      fetch_build_or_raise(config, build_name)
     end
 
     def resolve_build_config(build_name, default_bundler: "webpack")
       config = load_config
-      build = config["builds"][build_name]
-
-      unless build
-        available = config["builds"].keys.join(", ")
-        raise ArgumentError, "Build '#{build_name}' not found in config file.\n" \
-                            "Available builds: #{available}\n" \
-                            "Use 'bin/shakapacker --list-builds' to see all available builds."
-      end
+      build = fetch_build_or_raise(config, build_name)
 
       # Resolve bundler with precedence: build.bundler > config.default_bundler > default_bundler
       bundler = build["bundler"] || config["default_bundler"] || default_bundler
@@ -103,7 +87,7 @@ module Shakapacker
 
       builds.each do |name, build|
         bundler = build["bundler"] || config["default_bundler"] || "webpack (default)"
-        outputs = build["outputs"] ? build["outputs"].join(", ") : "auto-detect"
+        outputs = build["outputs"] ? build["outputs"].join(", ") : "missing (invalid)"
 
         puts "  #{name}"
         puts "    Description: #{build["description"]}" if build["description"]
@@ -114,6 +98,17 @@ module Shakapacker
     end
 
     private
+
+      def fetch_build_or_raise(config, build_name)
+        build = config["builds"][build_name]
+        unless build
+          available = config["builds"].keys.join(", ")
+          raise ArgumentError, "Build '#{build_name}' not found in config file.\n" \
+                              "Available builds: #{available}\n" \
+                              "Use 'bin/shakapacker --list-builds' to see all available builds."
+        end
+        build
+      end
 
       # Load YAML config file safely with Ruby version compatibility
       # Ruby 3.1+ supports safe_load_file with aliases, older versions need safe_load

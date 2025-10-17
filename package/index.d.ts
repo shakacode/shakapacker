@@ -17,13 +17,13 @@ declare const _default: {
   ) => Configuration
   baseConfig: Configuration
   env: {
-    railsEnv: any
-    nodeEnv: any
+    railsEnv: string
+    nodeEnv: string
     isProduction: boolean
     isDevelopment: boolean
     runningWebpackDevServer: boolean
   }
-  rules: any
+  rules: Configuration["module"]["rules"]
   moduleExists: (packageName: string) => boolean
   canProcess: <T = unknown>(
     rule: string,
