@@ -25,29 +25,48 @@ This guide shows how to manually verify that Shakapacker features are working co
 
 **Testing Options:**
 
-1. **Production mode locally** (Recommended for verification):
+1. **Browser DevTools in production/staging** (Recommended):
+   - Deploy to an environment with HTTPS and HTTP/2 support
+   - Use Method 1 below to verify in browser
+   - You should see BOTH `103 Early Hints` AND `200 OK` status codes
+
+2. **curl on production/staging** (Command line verification):
 
    ```bash
-   RAILS_ENV=production bundle exec rails server
-   curl -v --http2 http://localhost:3000 2>&1 | grep "< HTTP"
-   # Still returns HTTP/1.1 - Puma needs SSL for HTTP/2
+   curl -v --http2 https://your-production-app.com 2>&1 | grep -A5 "< HTTP"
+   # Should show: < HTTP/2 103 (early hints)
+   # Then: < HTTP/2 200 (final response)
    ```
 
-2. **Browser DevTools in production/staging** (Best method):
-   - Deploy to an environment with HTTP/2 support (production/staging with HTTPS)
-   - Use Method 1 below to verify in browser
+3. **Local testing is NOT possible** without complex SSL setup:
 
-3. **Local HTTPS with HTTP/2** (Complex, not recommended):
-   - Requires SSL certificates and Puma configuration
-   - See Puma documentation for HTTP/2 setup
+   ```bash
+   # This will NOT work (returns HTTP/1.1, no early hints):
+   RAILS_ENV=production bundle exec rails server
+   curl -v --http2 http://localhost:3000 2>&1 | grep "< HTTP"
+   # Output: < HTTP/1.1 200 OK (no 103 status)
+   ```
 
-**Why curl shows HTTP/1.1:**
+**Why localhost doesn't work:**
 
-- Puma requires HTTPS/TLS to enable HTTP/2
-- Development mode typically runs on plain HTTP
-- Early hints will be silently ignored without HTTP/2
+- Early hints require HTTP/2
+- HTTP/2 requires HTTPS/TLS (not http://)
+- Plain `http://localhost` uses HTTP/1.1
+- Early hints are silently ignored on HTTP/1.1
 
-**Recommendation:** Test early hints in a production or staging environment with HTTPS enabled. For development, you can enable the config but won't see the 103 status in tools like curl.
+**What "working" looks like:**
+
+```bash
+# Correct output (early hints ENABLED):
+< HTTP/2 103           # Early hints sent
+< link: </packs/app.js>; rel=preload
+< HTTP/2 200           # Final response
+
+# Incorrect output (early hints NOT enabled):
+< HTTP/2 200           # Only final response, no 103
+```
+
+**Recommendation:** Test early hints only on production/staging environments with HTTPS enabled.
 
 ### Method 1: Browser DevTools (Recommended)
 
