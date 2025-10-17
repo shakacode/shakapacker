@@ -184,9 +184,11 @@ The asset filenames in early hints should match those in your HTML.
    - **Workaround**: Deploy without ALB/ELB, or accept Link headers in 200 response
    - Alternative: Use CloudFront with origin that supports 103
 
-   **Control Plane (cpln.app)** - Currently strips 103:
-   - No configuration option to enable early hints passthrough
-   - **Workaround**: Accept that early hints won't be visible to clients
+   **Control Plane (cpln.app)** - Appears to strip 103:
+   - Control Plane supports HTTP/2 by default but early hints (103) don't appear to pass through
+   - No documented configuration option for early hints passthrough
+   - **Contact Control Plane support** if you need early hints support for your application
+   - **Workaround**: Early hints will work server-side but won't be visible to clients
    - Link headers may still be included in 200 response
 
    **General workaround when proxy strips 103:**

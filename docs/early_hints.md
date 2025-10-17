@@ -409,7 +409,7 @@ If debug mode shows hints are sent but they're not reaching clients, configure y
 - **nginx**: Add `proxy_pass_header Link;` to pass through early hints (nginx 1.13+)
 - **Cloudflare**: Enable "Early Hints" in Speed > Optimization (paid plans only)
 - **AWS ALB/ELB**: Not supported - ALBs strip 103 responses. Workaround: skip ALB or use CloudFront
-- **Control Plane**: Not configurable - early hints will be stripped
+- **Control Plane**: Appears to strip 103 - Contact their support if you need early hints
 
 See the [Feature Testing Guide](feature_testing.md#troubleshooting-early-hints) for detailed proxy configuration examples.
 
