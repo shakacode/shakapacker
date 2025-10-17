@@ -489,69 +489,33 @@ See [Subresource Integrity Guide](subresource_integrity.md) for details.
 ### `early_hints`
 
 **Type:** `object`
-**Default:** `{ enabled: false, include_css: true, include_js: true }`
-**Requires:** Rails 5.2+, HTTP/2-capable server (Puma 5+, nginx 1.13+)
+**Default:** `{ enabled: false, css: "preload", js: "preload" }`
+**Requires:** Rails 5.2+, HTTP/2 server
 
-Enable HTTP 103 Early Hints for faster asset loading by sending Link headers before the final response.
+Automatically send HTTP 103 Early Hints for faster asset loading.
 
 ```yaml
 early_hints:
-  enabled: true # default: false - must be explicitly enabled
-  include_css: true # default: true - send Link headers for CSS chunks
-  include_js: true # default: true - send Link headers for JS chunks
+  enabled: true # Master switch (default: false)
+  css: "preload" # 'preload' | 'prefetch' | 'none' (default: 'preload')
+  js: "preload" # 'preload' | 'prefetch' | 'none' (default: 'preload')
 ```
 
-**How it works:**
-Browser starts downloading assets while Rails is still rendering, improving perceived page load performance.
+**Options:**
 
-**Configuration options:**
+- `enabled`: Enable/disable early hints (default: `false`)
+- `css`: Hint type for CSS - `'preload'`, `'prefetch'`, or `'none'` (default: `'preload'`)
+- `js`: Hint type for JS - `'preload'`, `'prefetch'`, or `'none'` (default: `'preload'`)
 
-- **`enabled`**: Master switch for early hints feature (default: `false`)
-  - Set to `true` in production for faster page loads
-  - Keep `false` in development (minimal benefit, adds noise to logs)
-- **`include_css`**: Preload CSS assets (default: `true` when enabled)
-  - Set to `false` to skip CSS early hints (save bandwidth)
-  - Only has effect if your packs actually include CSS files
-  - If no CSS in manifest, this setting doesn't matter
-- **`include_js`**: Preload JavaScript assets (default: `true` when enabled)
-  - Set to `false` to skip JS early hints (rare use case)
-  - Most apps should keep this `true`
+⚠️ **Performance note**: May improve or hurt page load depending on content. Configure per-page for best results.
 
-**Common configurations:**
+See the [Early Hints Guide](EARLY_HINTS.md) for:
 
-```yaml
-# Recommended: Enable for production
-production:
-  early_hints:
-    enabled: true
-    include_css: true
-    include_js: true
-
-# Development: Disabled (default)
-development:
-  early_hints:
-    enabled: false
-
-# Mixed asset sources: Shakapacker has both JS and CSS
-# But you only want early hints for JS (save bandwidth)
-production:
-  early_hints:
-    enabled: true
-    include_css: false  # Skip CSS early hints
-    include_js: true    # Only preload JS
-```
-
-**Note:** If your Shakapacker packs have no CSS at all, setting `include_css: false` has no effect (nothing to skip). This is only useful if you have CSS in Shakapacker but choose not to preload it.
-
-**Requirements:**
-
-- Rails 5.2+ (for `request.send_early_hints` support)
-- HTTP/2-capable web server (Puma 5+, nginx 1.13+)
-- Modern browser (Chrome/Edge/Firefox 103+, Safari 16.4+)
-
-**Graceful degradation:** Feature automatically disables if server or browser doesn't support it.
-
-See [Early Hints Guide](EARLY_HINTS.md) for implementation and usage examples.
+- Performance considerations and warnings
+- Per-page configuration (`configure_pack_early_hints`)
+- Dynamic configuration examples
+- Hero image preloading with `preload_link_tag`
+- Troubleshooting and testing recommendations
 
 ## Environment-Specific Configuration
 

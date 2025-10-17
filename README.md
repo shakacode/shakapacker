@@ -566,49 +566,18 @@ If you want to preload a static asset in your `<head>`, you can use the `preload
 
 #### HTTP 103 Early Hints
 
-Shakapacker supports HTTP 103 Early Hints with `preload` and `prefetch` to optimize asset loading per-page.
-
-⚠️ **Critical**: JS/CSS hints may improve or hurt performance depending on content. Configure per-page for best results.
-
-**Quick Setup:**
+Automatically send early hints to browsers for faster asset loading. Supports `preload`/`prefetch`/`none` configuration per-page.
 
 ```yaml
 # config/shakapacker.yml
 production:
   early_hints:
     enabled: true
-    css: "preload" # 'preload' | 'prefetch' | 'none'
-    js: "preload" # 'preload' | 'prefetch' | 'none'
 ```
 
-**Per-Page Configuration (Recommended):**
+⚠️ **Important**: May improve or hurt performance depending on content. See the [Early Hints Guide](./docs/EARLY_HINTS.md) for configuration, performance guidance, and examples.
 
-```ruby
-class PostsController < ApplicationController
-  # Image-heavy page - don't compete with images
-  configure_pack_early_hints only: [:index], css: 'none', js: 'prefetch'
-
-  # Interactive editor - JS is critical
-  configure_pack_early_hints only: [:edit], all: 'preload'
-
-  # API endpoints
-  skip_send_pack_early_hints only: [:api]
-end
-```
-
-**Dynamic Configuration:**
-
-```ruby
-def show
-  if @post.has_hero_image?
-    configure_pack_early_hints css: 'none', js: 'prefetch'
-  end
-end
-```
-
-See the [Early Hints Guide](./docs/EARLY_HINTS.md) for complete documentation, performance guidance, and examples.
-
-**Requirements:** Rails 5.2+, HTTP/2-capable server (Puma 5+, nginx 1.13+), modern browsers (Chrome/Edge/Firefox 103+, Safari 16.4+). Gracefully degrades if not supported.
+**Requirements:** Rails 5.2+, HTTP/2 server, modern browsers. Gracefully degrades if not supported.
 
 ### Images in Stylesheets
 
