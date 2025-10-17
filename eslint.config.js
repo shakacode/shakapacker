@@ -192,7 +192,6 @@ module.exports = [
       "@typescript-eslint/no-unsafe-function-type": "off",
       "@typescript-eslint/no-unused-vars": "off",
       "@typescript-eslint/require-await": "off",
-      "no-param-reassign": "off",
       "no-await-in-loop": "off",
       "import/prefer-default-export": "off",
       "global-require": "off",

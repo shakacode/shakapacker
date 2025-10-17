@@ -101,20 +101,21 @@ export async function run(args: string[]): Promise<number> {
     setupNodePath(appRoot)
 
     // Apply defaults
-    applyDefaults(options)
+    const resolvedOptions = applyDefaults(options)
 
     // Validate after defaults are applied
-    if (options.annotate && options.format !== "yaml") {
+    if (resolvedOptions.annotate && resolvedOptions.format !== "yaml") {
       throw new Error(
         "Annotation requires YAML format. Use --no-annotate or --format=yaml."
       )
     }
 
     // Validate --build requires config file
-    if (options.build) {
-      const loader = new ConfigFileLoader(options.configFile)
+    if (resolvedOptions.build) {
+      const loader = new ConfigFileLoader(resolvedOptions.configFile)
       if (!loader.exists()) {
-        const configPath = options.configFile || "config/shakapacker-builds.yml"
+        const configPath =
+          resolvedOptions.configFile || "config/shakapacker-builds.yml"
         throw new Error(
           `--build requires a config file but ${configPath} not found. Run --init to create it.`
         )
@@ -122,17 +123,17 @@ export async function run(args: string[]): Promise<number> {
     }
 
     // Execute based on mode
-    if (options.doctor) {
-      await runDoctorMode(options, appRoot)
-    } else if (options.stdout) {
+    if (resolvedOptions.doctor) {
+      await runDoctorMode(resolvedOptions, appRoot)
+    } else if (resolvedOptions.stdout) {
       // Explicit stdout mode
-      await runStdoutMode(options, appRoot)
-    } else if (options.output) {
+      await runStdoutMode(resolvedOptions, appRoot)
+    } else if (resolvedOptions.output) {
       // Save to single file
-      await runSingleFileMode(options, appRoot)
+      await runSingleFileMode(resolvedOptions, appRoot)
     } else {
       // Default: save to directory
-      await runSaveMode(options, appRoot)
+      await runSaveMode(resolvedOptions, appRoot)
     }
 
     return 0
@@ -389,23 +390,34 @@ QUICK START (for troubleshooting):
   }
 }
 
-function applyDefaults(options: ExportOptions): void {
-  if (options.doctor) {
-    if (options.format === undefined) options.format = "yaml"
-    if (options.annotate === undefined) options.annotate = true
-  } else if (!options.stdout && !options.output) {
+function applyDefaults(options: ExportOptions): ExportOptions {
+  const updatedOptions = { ...options }
+
+  if (updatedOptions.doctor) {
+    if (updatedOptions.format === undefined) updatedOptions.format = "yaml"
+    if (updatedOptions.annotate === undefined) updatedOptions.annotate = true
+  } else if (!updatedOptions.stdout && !updatedOptions.output) {
     // Default mode: save to directory
-    if (options.format === undefined) options.format = "yaml"
-    if (options.annotate === undefined) options.annotate = true
+    if (updatedOptions.format === undefined) updatedOptions.format = "yaml"
+    if (updatedOptions.annotate === undefined) updatedOptions.annotate = true
   } else {
-    if (options.format === undefined) options.format = "inspect"
-    if (options.annotate === undefined) options.annotate = false
+    if (updatedOptions.format === undefined) updatedOptions.format = "inspect"
+    if (updatedOptions.annotate === undefined) updatedOptions.annotate = false
   }
 
   // Set default save directory for file output modes
-  if (!options.stdout && !options.output && !options.saveDir) {
-    options.saveDir = resolve(process.cwd(), "shakapacker-config-exports")
+  if (
+    !updatedOptions.stdout &&
+    !updatedOptions.output &&
+    !updatedOptions.saveDir
+  ) {
+    updatedOptions.saveDir = resolve(
+      process.cwd(),
+      "shakapacker-config-exports"
+    )
   }
+
+  return updatedOptions
 }
 
 function runInitCommand(options: ExportOptions): number {
@@ -651,11 +663,12 @@ async function runAllBuildsCommand(options: ExportOptions): Promise<number> {
     setupNodePath(appRoot)
 
     // Apply defaults
-    applyDefaults(options)
+    const resolvedOptions = applyDefaults(options)
 
-    const loader = new ConfigFileLoader(options.configFile)
+    const loader = new ConfigFileLoader(resolvedOptions.configFile)
     if (!loader.exists()) {
-      const configPath = options.configFile || "config/shakapacker-builds.yml"
+      const configPath =
+        resolvedOptions.configFile || "config/shakapacker-builds.yml"
       throw new Error(
         `Config file ${configPath} not found. Run --init to create it.`
       )
@@ -668,7 +681,7 @@ async function runAllBuildsCommand(options: ExportOptions): Promise<number> {
       `\n📦 Exporting ${buildNames.length} builds from config file...\n`
     )
 
-    const targetDir = options.saveDir! // Set by applyDefaults
+    const targetDir = resolvedOptions.saveDir! // Set by applyDefaults
     const createdFiles: string[] = []
 
     // Export each build
@@ -680,16 +693,16 @@ async function runAllBuildsCommand(options: ExportOptions): Promise<number> {
       restoreBuildEnvironmentVariables(savedEnv)
 
       // Create a modified options object for this build
-      const buildOptions = { ...options, build: buildName }
+      const buildOptions = { ...resolvedOptions, build: buildName }
       const configs = await loadConfigsForEnv(undefined, buildOptions, appRoot)
 
       for (const { config: cfg, metadata } of configs) {
-        const output = formatConfig(cfg, metadata, options, appRoot)
+        const output = formatConfig(cfg, metadata, resolvedOptions, appRoot)
         const filename = FileWriter.generateFilename(
           metadata.bundler,
           metadata.environment,
           metadata.configType,
-          options.format!,
+          resolvedOptions.format!,
           metadata.buildName
         )
 
