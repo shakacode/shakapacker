@@ -48,17 +48,15 @@ class Shakapacker::Engine < ::Rails::Engine
         end
 
         # Class method to configure early hints per action
-        # Supports 'all' shortcut, specific css/js configuration, and custom links
+        # Supports 'all' shortcut and specific css/js configuration
         #
         # Examples:
         #   configure_pack_early_hints only: [:show], css: 'prefetch', js: 'preload'
         #   configure_pack_early_hints only: [:gallery], all: 'none'
         #   configure_pack_early_hints all: 'prefetch', css: 'preload'
-        #   configure_pack_early_hints only: [:landing],
-        #     links: [{ href: '/images/hero.jpg', as: 'image' }]
-        def self.configure_pack_early_hints(all: nil, css: nil, js: nil, links: nil, **options)
+        def self.configure_pack_early_hints(all: nil, css: nil, js: nil, **options)
           before_action(**options) do
-            view_context.configure_early_hints(all: all, css: css, js: js, links: links)
+            view_context.configure_early_hints(all: all, css: css, js: js)
           end
         end
 

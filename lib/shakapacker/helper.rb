@@ -428,14 +428,6 @@ module Shakapacker::Helper
         end
       end
 
-      # Add custom links from request.env (images, videos, etc)
-      if request.respond_to?(:env) && request.env["shakapacker.custom_links"]
-        request.env["shakapacker.custom_links"].each do |link|
-          header = build_custom_link_header(link)
-          link_headers << header if header
-        end
-      end
-
       link_headers.any? ? { "Link" => link_headers.join(", ") } : {}
     end
 
@@ -461,37 +453,15 @@ module Shakapacker::Helper
       parts.join("; ")
     end
 
-    # Build Link header for a custom resource (image, video, etc)
-    # Accepts hash with :href, :as, :type, :rel (optional), :crossorigin (optional)
-    def build_custom_link_header(link)
-      href = link[:href] || link["href"]
-      as = link[:as] || link["as"]
-      type = link[:type] || link["type"]
-      rel = link[:rel] || link["rel"] || "preload"
-      crossorigin = link[:crossorigin] || link["crossorigin"]
-
-      return nil unless href && as
-
-      parts = ["<#{href}>", "rel=#{rel}", "as=#{as}"]
-      parts << "type=\"#{type}\"" if type
-      parts << "crossorigin=\"#{crossorigin}\"" if crossorigin
-
-      parts.join("; ")
-    end
-
     # Configure early hints for the current request
     # Can be called from controller actions or before_action
-    # Supports 'all' shortcut, specific css/js configuration, and custom links
+    # Supports 'all' shortcut and specific css/js configuration
     #
     # Examples:
     #   configure_early_hints css: 'prefetch', js: 'preload'
     #   configure_early_hints all: 'none'
     #   configure_early_hints all: 'prefetch', js: 'preload'
-    #   configure_early_hints links: [
-    #     { href: '/images/hero.jpg', as: 'image', type: 'image/jpeg' },
-    #     { href: '/videos/intro.mp4', as: 'video', type: 'video/mp4' }
-    #   ]
-    def configure_early_hints(all: nil, css: nil, js: nil, links: nil)
+    def configure_early_hints(all: nil, css: nil, js: nil)
       return unless request.respond_to?(:env)
 
       # Apply 'all' shortcut first
@@ -503,12 +473,6 @@ module Shakapacker::Helper
       # Specific values override 'all'
       request.env["shakapacker.css_hint"] = normalize_hint_value(css) if css
       request.env["shakapacker.js_hint"] = normalize_hint_value(js) if js
-
-      # Store custom links
-      if links
-        request.env["shakapacker.custom_links"] ||= []
-        request.env["shakapacker.custom_links"].concat(Array(links))
-      end
     end
 
     # Resolve hint type for a given asset type (css or js)

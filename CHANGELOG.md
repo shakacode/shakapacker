@@ -16,7 +16,7 @@ Changes since the last non-beta release.
 - **HTTP 103 Early Hints support** for faster asset loading. [PR #722](https://github.com/shakacode/shakapacker/pull/722) by [justin808](https://github.com/justin808). Fixes [#721](https://github.com/shakacode/shakapacker/issues/721).
   - **Automatic sending**: Early hints are sent automatically when `early_hints: enabled: true` in `shakapacker.yml`
   - **Per-page configuration**: Configure hints per-controller/action with `preload`/`prefetch`/`none` options
-  - **Hero image/video preloading**: Preload LCP images and videos with custom `links:` parameter
+  - **Hero image/video preloading**: Use Rails' built-in `preload_link_tag` (automatically sends early hints)
   - **Zero-config upgrade**: No changes to layouts or views needed - just enable the config!
   - Works seamlessly with existing `append_javascript_pack_tag` / `append_stylesheet_pack_tag` pattern
   - Automatically discovers packs from queues populated by views/partials

@@ -81,55 +81,47 @@ end
 
 ### 4. Preloading Hero Images and Videos
 
-Preload hero images or video fragments to improve LCP:
+Use Rails' built-in `preload_link_tag` to preload hero images, videos, and other LCP resources. Rails automatically sends these as early hints:
 
-```ruby
-class LandingController < ApplicationController
-  configure_pack_early_hints only: [:index],
-    css: 'prefetch',
-    js: 'prefetch',
-    links: [
-      { href: '/images/hero.jpg', as: 'image', type: 'image/jpeg' }
-    ]
-end
+```erb
+<%# app/views/layouts/application.html.erb %>
+<!DOCTYPE html>
+<html>
+  <head>
+    <%= preload_link_tag image_path('hero.jpg'), as: 'image', type: 'image/jpeg' %>
+    <%= preload_link_tag video_path('intro.mp4'), as: 'video', type: 'video/mp4' %>
+  </head>
+  <body>
+    <%= yield %>
+  </body>
+</html>
 ```
 
-**Dynamic hero preloading:**
-
-```ruby
-class PostsController < ApplicationController
-  def show
-    @post = Post.find(params[:id])
-
-    # Preload hero image dynamically
-    configure_early_hints(
-      css: 'prefetch',
-      js: 'prefetch',
-      links: [
-        { href: @post.hero_image_url, as: 'image', type: @post.hero_image_type }
-      ]
-    )
-  end
-end
-```
-
-**View-level preloading:**
+**Dynamic preloading in views:**
 
 ```erb
 <%# app/views/posts/show.html.erb %>
-<% configure_early_hints links: [
-  { href: image_path('hero.jpg'), as: 'image' },
-  { href: video_path('intro.mp4'), as: 'video', type: 'video/mp4' }
-] %>
+<% if @post.hero_image_url.present? %>
+  <%= preload_link_tag @post.hero_image_url, as: 'image' %>
+<% end %>
 ```
 
-**Custom link options:**
+**Benefits:**
 
-- `href`: Resource URL (required)
-- `as`: Resource type (`'image'`, `'video'`, `'font'`, etc.) (required)
-- `type`: MIME type (e.g., `'image/jpeg'`, `'video/mp4'`) (optional)
-- `rel`: `'preload'` (default) or `'prefetch'` (optional)
-- `crossorigin`: `'anonymous'` or `'use-credentials'` for CORS (optional)
+- ✅ Standard Rails API - no custom Shakapacker code needed
+- ✅ Automatically sends early hints when server supports it
+- ✅ Works with `image_path`, `video_path`, `asset_path` helpers
+- ✅ Supports all standard attributes: `as`, `type`, `crossorigin`, `integrity`
+
+**When to preload images/videos:**
+
+- Hero images that are LCP (Largest Contentful Paint) elements
+- Above-the-fold images critical for initial render
+- Background videos that play on page load
+
+**Performance tip:** Don't over-preload! Each preload competes for bandwidth. Focus only on critical resources that improve LCP.
+
+See [Rails preload_link_tag docs](https://api.rubyonrails.org/classes/ActionView/Helpers/AssetTagHelper.html#method-i-preload_link_tag) for full API.
 
 ## Controller Configuration
 
