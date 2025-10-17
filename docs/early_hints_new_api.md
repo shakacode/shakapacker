@@ -249,10 +249,147 @@ end
 
 ---
 
-## Requirements
+## Requirements & Limitations
+
+**IMPORTANT:** Before implementing Early Hints, understand these limitations:
+
+### Architecture: Proxy Required for HTTP/2
+
+**Standard production architecture for Early Hints:**
+
+```
+Browser (HTTP/2)
+    ↓
+Proxy (Thruster, nginx, CDN, etc.)
+    ├─ Receives HTTP/2
+    ├─ Translates to HTTP/1.1
+    ↓
+Puma (HTTP/1.1)
+    ├─ Sends HTTP/1.1 103 Early Hints ✅
+    ├─ Sends HTTP/1.1 200 OK
+    ↓
+Proxy
+    ├─ Translates to HTTP/2
+    ↓
+Browser (HTTP/2 103) ✅
+```
+
+**Key insight**: Puma always runs HTTP/1.1. The proxy handles HTTP/2 for external clients.
+
+### Puma Limitation: HTTP/1.1 Only
+
+**Puma ONLY supports HTTP/1.1 Early Hints** (not HTTP/2). This is a Rack/Puma limitation, and **there are no plans to add HTTP/2 support to Puma**.
+
+- ✅ **Works**: Puma 5+ with HTTP/1.1
+- ❌ **Doesn't work**: Puma with HTTP/2 (h2)
+- ✅ **Solution**: Use a proxy in front of Puma (Thruster, nginx, etc.)
+
+**This is the expected architecture** - there's always something in front of Puma to handle HTTP/2 translation in production.
+
+### Browser Behavior
+
+**Browsers only process the FIRST `HTTP/1.1 103` response.**
+
+- Shakapacker sends ONE 103 response with ALL hints (JS + CSS combined)
+- Subsequent 103 responses are ignored by browsers
+- This is by design per the HTTP 103 spec
+
+### Minimum Requirements
 
 - Rails 5.2+ (for `request.send_early_hints`)
-- HTTP/2 web server (Puma 5+, nginx 1.13+)
+- Puma 5+ (for HTTP/1.1 103 support)
 - Modern browsers (Chrome/Firefox 103+, Safari 16.4+)
 
 Gracefully degrades if not supported.
+
+### Testing Locally
+
+```bash
+# Test with curl (use HTTP/1.1, NOT HTTP/2)
+curl -v http://localhost:3000/
+
+# Look for this in output:
+< HTTP/1.1 103 Early Hints
+< link: </packs/application.js>; rel=preload; as=script
+< link: </packs/application.css>; rel=preload; as=style
+<
+< HTTP/1.1 200 OK
+```
+
+**Important**: Use `http://` (not `https://`) for local testing. Puma dev mode uses HTTP/1.1.
+
+### Production Setup
+
+#### Thruster (Rails 8+ Default)
+
+**Recommended**: Use [Thruster](https://github.com/basecamp/thruster) in front of Puma (Rails 8 default).
+
+Thruster handles HTTP/2 → HTTP/1.1 translation automatically. No configuration needed - Early Hints just work.
+
+```dockerfile
+# Dockerfile (Rails 8 default)
+CMD ["bundle", "exec", "thrust", "./bin/rails", "server"]
+```
+
+Thruster will:
+1. Receive HTTP/2 requests from browsers
+2. Translate to HTTP/1.1 for Puma
+3. Pass through HTTP/1.1 103 Early Hints from Puma
+4. Translate to HTTP/2 103 for browsers
+
+#### Control Plane
+
+**CRITICAL**: Set workload protocol to `HTTP` (NOT `HTTP2`):
+
+```
+Protocol: HTTP   ← Use HTTP/1.1 for Puma container
+Port: 3000
+```
+
+**Why**: Puma ONLY supports HTTP/1.1 Early Hints. If you set protocol to `HTTP2`, Early Hints will NOT work.
+
+Control Plane's load balancer handles HTTP/2 translation automatically:
+1. Browser → Control Plane LB (HTTP/2)
+2. Control Plane LB → Puma (HTTP/1.1)
+3. Puma → Control Plane LB (HTTP/1.1 103)
+4. Control Plane LB → Browser (HTTP/2 103)
+
+#### nginx (Self-Hosted)
+
+If you want HTTP/2 in production with self-hosted nginx:
+
+```nginx
+# /etc/nginx/sites-available/myapp
+upstream puma {
+  server unix:///var/www/myapp/tmp/sockets/puma.sock;
+}
+
+server {
+  listen 443 ssl http2;
+  server_name example.com;
+
+  # SSL certificates
+  ssl_certificate /path/to/cert.pem;
+  ssl_certificate_key /path/to/key.pem;
+
+  location / {
+    proxy_pass http://puma;  # Puma uses HTTP/1.1
+    proxy_set_header Host $host;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
+
+    # CRITICAL: Pass through Early Hints from Puma
+    proxy_pass_header Link;
+  }
+}
+```
+
+nginx will:
+1. Receive HTTP/2 request from browser
+2. Forward as HTTP/1.1 to Puma
+3. Receive HTTP/1.1 103 from Puma
+4. Translate to HTTP/2 103 for browser
+
+### Reference
+
+- [Rails 103 Early Hints Analysis](https://island94.org/2025/10/rails-103-early-hints-could-be-better-maybe-doesn-t-matter)

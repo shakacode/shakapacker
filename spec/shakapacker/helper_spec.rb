@@ -299,20 +299,14 @@ module ActionView::TestCase::Behavior
 
         it "sends early hints for JavaScript and CSS" do
           allow(Shakapacker.config).to receive(:early_hints).and_return({ enabled: true })
-          js_count = 0
-          css_count = 0
-          allow(@request).to receive(:send_early_hints) do |headers|
-            if headers["Link"].include?(".js>")
-              js_count += 1
-              expect(headers["Link"]).to match(%r{</packs/application-k344a6d59eef8632c9d1\.js>})
-            elsif headers["Link"].include?(".css>")
-              css_count += 1
-              expect(headers["Link"]).to match(%r{</packs/application-k344a6d59eef8632c9d1\.chunk\.css>})
-            end
+          # Expect SINGLE 103 response with BOTH JS and CSS (browsers only process first 103)
+          expect(@request).to receive(:send_early_hints).once do |headers|
+            link = headers["Link"]
+            # Should contain BOTH JS and CSS in one response
+            expect(link).to match(%r{</packs/application-k344a6d59eef8632c9d1\.js>})
+            expect(link).to match(%r{</packs/application-k344a6d59eef8632c9d1\.chunk\.css>})
           end
           send_pack_early_hints({ "application" => { js: "preload", css: "preload" } })
-          expect(js_count).to eq(1)
-          expect(css_count).to eq(1)
         end
 
         it "sends early hints only for JavaScript when CSS is disabled" do
@@ -335,15 +329,17 @@ module ActionView::TestCase::Behavior
 
         it "sends early hints for multiple packs" do
           allow(Shakapacker.config).to receive(:early_hints).and_return({ enabled: true })
-          call_count = 0
-          allow(@request).to receive(:send_early_hints) do |headers|
-            call_count += 1
+          # Expect SINGLE 103 response with ALL packs (browsers only process first 103)
+          expect(@request).to receive(:send_early_hints).once do |headers|
+            link = headers["Link"]
+            # Should contain ALL packs in one response
+            expect(link).to match(/application/)
+            expect(link).to match(/bootstrap/)
           end
           send_pack_early_hints({
             "application" => { js: "preload", css: "preload" },
             "bootstrap" => { js: "preload", css: "preload" }
           })
-          expect(call_count).to be >= 2  # At least one for JS, one for CSS
         end
 
         it "handles prefetch rel correctly" do

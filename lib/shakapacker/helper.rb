@@ -123,6 +123,8 @@ module Shakapacker::Helper
     if early_hints_enabled? && early_hints && early_hints != "none" && early_hints != false
       hints_config = normalize_pack_hints(all_packs, early_hints)
       send_javascript_early_hints_internal(hints_config)
+      # Flush accumulated hints (sends the single 103 response)
+      flush_early_hints
     elsif early_hints_debug_enabled?
       @early_hints_debug_buffer ||= []
       @early_hints_debug_buffer << "<!-- Shakapacker Early Hints (JS): SKIPPED (early_hints: #{early_hints.inspect}) -->"
@@ -215,19 +217,24 @@ module Shakapacker::Helper
   def send_pack_early_hints(config)
     return nil unless early_hints_supported? && early_hints_enabled?
 
+    # Accumulate both JS and CSS hints, then send ONCE
     config.each do |pack_name, handlers|
-      # Handle JavaScript
+      # Accumulate JavaScript hints
       js_handling = handlers[:js] || handlers["js"]
       if js_handling && js_handling != "none" && js_handling != false
-        send_javascript_early_hints_internal({ pack_name.to_s => js_handling.to_s })
+        send_early_hints_internal({ pack_name.to_s => js_handling.to_s }, type: :javascript)
       end
 
-      # Handle CSS
+      # Accumulate CSS hints
       css_handling = handlers[:css] || handlers["css"]
       if css_handling && css_handling != "none" && css_handling != false
-        send_stylesheet_early_hints_internal({ pack_name.to_s => css_handling.to_s })
+        send_early_hints_internal({ pack_name.to_s => css_handling.to_s }, type: :stylesheet)
       end
     end
+
+    # Flush the accumulated hints as a SINGLE 103 response
+    # (Browsers only process the first 103)
+    flush_early_hints
 
     nil
   end
@@ -281,6 +288,8 @@ module Shakapacker::Helper
     if early_hints_enabled? && early_hints && early_hints != "none" && early_hints != false
       hints_config = normalize_pack_hints(all_packs, early_hints)
       send_stylesheet_early_hints_internal(hints_config)
+      # Flush accumulated hints (sends the single 103 response)
+      flush_early_hints
     elsif early_hints_debug_enabled?
       @early_hints_debug_buffer ||= []
       @early_hints_debug_buffer << "<!-- Shakapacker Early Hints (CSS): SKIPPED (early_hints: #{early_hints.inspect}) -->"
@@ -478,103 +487,87 @@ module Shakapacker::Helper
       end
     end
 
-    # Internal method to send JavaScript early hints with duplicate prevention
+    # Internal method to accumulate and send early hints
+    # Sends only ONE 103 response (browsers ignore subsequent ones)
     # config: { "application" => "preload", "vendor" => "prefetch" }
-    def send_javascript_early_hints_internal(config)
+    # type: :javascript or :stylesheet
+    def send_early_hints_internal(config, type:)
       return unless early_hints_supported?
 
-      @early_hints_javascript ||= {}
+      # Track hints per-type to avoid duplicates within a type
+      # But allow same pack for different types (JS + CSS)
+      @early_hints_sent_packs ||= { javascript: {}, stylesheet: {} }
+      @early_hints_link_buffer ||= []
       @early_hints_debug_buffer ||= []
 
-      # Filter to only new hints (not already sent)
-      new_hints = config.reject { |pack, _handling| @early_hints_javascript.key?(pack) }
-
-      if early_hints_debug_enabled?
-        skipped_packs = config.keys - new_hints.keys
-        if skipped_packs.any?
-          @early_hints_debug_buffer << "<!-- Shakapacker Early Hints (JS): Skipped packs (already sent): #{skipped_packs.join(', ')} -->"
+      # If we've already sent the 103 response, just track for debug
+      if @early_hints_103_sent
+        if early_hints_debug_enabled?
+          @early_hints_debug_buffer << "<!-- Shakapacker Early Hints (#{type.upcase}): Not sent (103 already sent) -->"
+          @early_hints_debug_buffer << "<!--   Packs: #{config.keys.join(', ')} -->"
         end
+        return
       end
 
-      return if new_hints.empty?
+      # Filter to only new packs for THIS type
+      new_hints = config.reject { |pack, _handling| @early_hints_sent_packs[type].key?(pack) }
 
-      # Build and send Link headers for JavaScript
-      link_headers = []
+      if early_hints_debug_enabled? && new_hints.empty?
+        @early_hints_debug_buffer << "<!-- Shakapacker Early Hints (#{type.upcase}): All packs already queued -->"
+      end
+
+      # Accumulate Link headers for this type
+      asset_type = type == :javascript ? "script" : "style"
       new_hints.each do |pack_name, handling|
         begin
-          sources = available_sources_from_manifest_entrypoints([pack_name], type: :javascript)
+          sources = available_sources_from_manifest_entrypoints([pack_name], type: type)
           sources.each do |source|
             source_path = lookup_source(source)
-            link_headers << build_link_header(source_path, source, as: "script", rel: handling)
+            @early_hints_link_buffer << build_link_header(source_path, source, as: asset_type, rel: handling)
           end
-          # Mark as sent
-          @early_hints_javascript[pack_name] = handling
+          # Mark pack as queued for THIS type
+          @early_hints_sent_packs[type][pack_name] = handling
         rescue Shakapacker::Manifest::MissingEntryError, NoMethodError => e
-          Rails.logger.debug { "Early hints JS: skipping pack '#{pack_name}' - #{e.class}: #{e.message}" }
+          Rails.logger.debug { "Early hints: skipping pack '#{pack_name}' - #{e.class}: #{e.message}" }
         end
       end
 
-      unless link_headers.empty?
-        request.send_early_hints({ "Link" => link_headers.join(", ") })
+      # Note: We DON'T flush here - caller must call flush_early_hints explicitly
+      # This allows accumulating multiple calls (JS + CSS) before sending ONE 103
+    end
 
-        if early_hints_debug_enabled?
-          @early_hints_debug_buffer << "<!-- Shakapacker Early Hints (JS): SENT -->"
-          @early_hints_debug_buffer << "<!--   Packs: #{new_hints.keys.join(', ')} -->"
-          @early_hints_debug_buffer << "<!--   Links: -->"
-          link_headers.each do |link|
-            @early_hints_debug_buffer << "<!--     #{link} -->"
-          end
+    # Send accumulated early hints as a SINGLE 103 response
+    # Browsers only process the first 103, so we send everything at once
+    def flush_early_hints
+      return if @early_hints_103_sent
+      return if @early_hints_link_buffer.nil? || @early_hints_link_buffer.empty?
+
+      request.send_early_hints({ "Link" => @early_hints_link_buffer.join(", ") })
+      @early_hints_103_sent = true
+
+      if early_hints_debug_enabled?
+        all_packs = (@early_hints_sent_packs[:javascript].keys + @early_hints_sent_packs[:stylesheet].keys).uniq
+        @early_hints_debug_buffer << "<!-- Shakapacker Early Hints: HTTP/1.1 103 SENT -->"
+        @early_hints_debug_buffer << "<!--   Total Links: #{@early_hints_link_buffer.size} -->"
+        @early_hints_debug_buffer << "<!--   Packs: #{all_packs.join(', ')} -->"
+        @early_hints_debug_buffer << "<!--   JS Packs: #{@early_hints_sent_packs[:javascript].keys.join(', ')} -->"
+        @early_hints_debug_buffer << "<!--   CSS Packs: #{@early_hints_sent_packs[:stylesheet].keys.join(', ')} -->"
+        @early_hints_debug_buffer << "<!--   Headers: -->"
+        @early_hints_link_buffer.each do |link|
+          @early_hints_debug_buffer << "<!--     #{link} -->"
         end
+        @early_hints_debug_buffer << "<!--   Note: Browsers only process the FIRST 103 response -->"
+        @early_hints_debug_buffer << "<!--   Note: Puma only supports HTTP/1.1 Early Hints (not HTTP/2) -->"
       end
     end
 
-    # Internal method to send stylesheet early hints with duplicate prevention
-    # config: { "application" => "preload", "vendor" => "prefetch" }
+    # Wrapper for JavaScript early hints
+    def send_javascript_early_hints_internal(config)
+      send_early_hints_internal(config, type: :javascript)
+    end
+
+    # Wrapper for stylesheet early hints
     def send_stylesheet_early_hints_internal(config)
-      return unless early_hints_supported?
-
-      @early_hints_stylesheets ||= {}
-      @early_hints_debug_buffer ||= []
-
-      # Filter to only new hints (not already sent)
-      new_hints = config.reject { |pack, _handling| @early_hints_stylesheets.key?(pack) }
-
-      if early_hints_debug_enabled?
-        skipped_packs = config.keys - new_hints.keys
-        if skipped_packs.any?
-          @early_hints_debug_buffer << "<!-- Shakapacker Early Hints (CSS): Skipped packs (already sent): #{skipped_packs.join(', ')} -->"
-        end
-      end
-
-      return if new_hints.empty?
-
-      # Build and send Link headers for CSS
-      link_headers = []
-      new_hints.each do |pack_name, handling|
-        begin
-          sources = available_sources_from_manifest_entrypoints([pack_name], type: :stylesheet)
-          sources.each do |source|
-            source_path = lookup_source(source)
-            link_headers << build_link_header(source_path, source, as: "style", rel: handling)
-          end
-          # Mark as sent
-          @early_hints_stylesheets[pack_name] = handling
-        rescue Shakapacker::Manifest::MissingEntryError, NoMethodError => e
-          Rails.logger.debug { "Early hints CSS: skipping pack '#{pack_name}' - #{e.class}: #{e.message}" }
-        end
-      end
-
-      unless link_headers.empty?
-        request.send_early_hints({ "Link" => link_headers.join(", ") })
-
-        if early_hints_debug_enabled?
-          @early_hints_debug_buffer << "<!-- Shakapacker Early Hints (CSS): SENT -->"
-          @early_hints_debug_buffer << "<!--   Packs: #{new_hints.keys.join(', ')} -->"
-          @early_hints_debug_buffer << "<!--   Links: -->"
-          link_headers.each do |link|
-            @early_hints_debug_buffer << "<!--     #{link} -->"
-          end
-        end
-      end
+      send_early_hints_internal(config, type: :stylesheet)
     end
 end
