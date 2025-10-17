@@ -95,24 +95,39 @@ module Shakapacker::Helper
   #
   #   <%= javascript_pack_tag 'calendar' %>
   #   <%= javascript_pack_tag 'map' %>
-  def javascript_pack_tag(*names, defer: true, async: false, early_hints: false, **options)
+  #
+  # Early Hints:
+  #   By default, HTTP 103 Early Hints are sent automatically when this helper is called,
+  #   allowing browsers to preload JavaScript assets in parallel with Rails rendering.
+  #
+  #   <%= javascript_pack_tag 'application' %>
+  #   # Automatically sends early hints for 'application' pack
+  #
+  #   # Customize handling per pack:
+  #   <%= javascript_pack_tag 'application', 'vendor',
+  #         early_hints: { 'application' => 'preload', 'vendor' => 'prefetch' } %>
+  #
+  #   # Disable early hints:
+  #   <%= javascript_pack_tag 'application', early_hints: false %>
+  def javascript_pack_tag(*names, defer: true, async: false, early_hints: "preload", **options)
     if @javascript_pack_tag_loaded
       raise "To prevent duplicated chunks on the page, you should call javascript_pack_tag only once on the page. " \
       "Please refer to https://github.com/shakacode/shakapacker/blob/main/README.md#view-helpers-javascript_pack_tag-and-stylesheet_pack_tag for the usage guide"
     end
 
-    # Send early hints if requested
-    if early_hints
-      early_hints_options = early_hints.is_a?(Hash) ? early_hints : {}
-      # Wrap request to prevent duplicate sends from Rails' automatic behavior
-      wrap_request_to_prevent_duplicate_early_hints
-      send_pack_early_hints(*names, **early_hints_options)
-    else
-      # Block all early hints sends when early_hints: false
-      block_request_early_hints
+    # Collect all packs (queue + direct args)
+    append_javascript_pack_tag(*names, defer: defer, async: async)
+    all_packs = javascript_pack_tag_queue.values.flatten.uniq
+
+    # Send early hints automatically if enabled
+    if early_hints_enabled? && early_hints && early_hints != "none" && early_hints != false
+      hints_config = normalize_pack_hints(all_packs, early_hints)
+      send_javascript_early_hints_internal(hints_config)
+    elsif early_hints_debug_enabled?
+      @early_hints_debug_buffer ||= []
+      @early_hints_debug_buffer << "<!-- Shakapacker Early Hints (JS): SKIPPED (early_hints: #{early_hints.inspect}) -->"
     end
 
-    append_javascript_pack_tag(*names, defer: defer, async: async)
     sync = sources_from_manifest_entrypoints(javascript_pack_tag_queue[:sync], type: :javascript)
     async = sources_from_manifest_entrypoints(javascript_pack_tag_queue[:async], type: :javascript) - sync
     deferred = sources_from_manifest_entrypoints(javascript_pack_tag_queue[:deferred], type: :javascript) - sync - async
@@ -120,6 +135,12 @@ module Shakapacker::Helper
     @javascript_pack_tag_loaded = true
 
     capture do
+      # Output debug buffer first
+      if early_hints_debug_enabled? && @early_hints_debug_buffer && @early_hints_debug_buffer.any?
+        concat @early_hints_debug_buffer.join("\n").html_safe
+        concat "\n"
+      end
+
       render_tags(async, :javascript, **options.dup.tap { |o| o[:async] = true })
       concat "\n" if async.any? && deferred.any?
       render_tags(deferred, :javascript, **options.dup.tap { |o| o[:defer] = true })
@@ -144,150 +165,71 @@ module Shakapacker::Helper
     end
   end
 
-  # Sends HTTP 103 Early Hints for the specified packs to enable browsers to preload
-  # critical assets while Rails is still rendering the response.
-  # This can significantly improve perceived page load performance.
+  # Sends HTTP 103 Early Hints for specified packs with fine-grained control over
+  # JavaScript and CSS handling. This is the "raw" method for maximum flexibility.
   #
-  # HTTP 103 Early Hints is a status code that allows the server to send preliminary
-  # responses with Link headers before the final HTTP 200 response. This enables
-  # browsers to start downloading critical assets during the server's "think time"
-  # while Rails is still rendering views and processing the request.
+  # Use this in controller actions BEFORE expensive work (database queries, API calls)
+  # to maximize parallelism - the browser downloads assets while Rails processes the request.
+  #
+  # For simpler cases, use javascript_pack_tag and stylesheet_pack_tag which automatically
+  # send hints when called (combining queued + direct pack names).
+  #
+  # HTTP 103 Early Hints allows the server to send preliminary responses with Link headers
+  # before the final HTTP 200 response, enabling browsers to start downloading critical
+  # assets during the server's "think time".
   #
   # Timeline:
   #   1. Browser requests page
-  #   2. Server sends HTTP 103 with Link: headers (this helper)
-  #   3. Browser starts downloading assets in parallel
-  #   4. Server finishes rendering and sends HTTP 200 with full HTML
-  #   5. Assets arrive faster because browser started downloading earlier
+  #   2. Controller calls send_pack_early_hints (this method)
+  #   3. Server sends HTTP 103 with Link: headers
+  #   4. Browser starts downloading assets IN PARALLEL with step 5
+  #   5. Rails continues expensive work (queries, rendering)
+  #   6. Server sends HTTP 200 with full HTML
+  #   7. Assets already downloaded = faster page load
   #
-  # Requires Rails 5.2+ (for request.send_early_hints) and server support (e.g., Puma 5+, nginx 1.13+).
-  # Gracefully degrades if not supported - no errors will occur.
-  #
-  # Important: Call this helper as early as possible in your layout for optimal performance.
-  # The earlier it's called, the sooner the browser can start downloading assets while
-  # Rails is still rendering the rest of the page.
+  # Requires Rails 5.2+, HTTP/2, and server support (Puma 5+, nginx 1.13+).
+  # Gracefully degrades if not supported.
   #
   # References:
   # - Rails API: https://api.rubyonrails.org/classes/ActionDispatch/Request.html#method-i-send_early_hints
-  # - Eileen Codes: https://eileencodes.com/posts/http2-early-hints/
   # - HTTP 103 Spec: https://datatracker.ietf.org/doc/html/rfc8297
   #
-  # Example:
+  # Examples:
   #
-  #   # Option 1: No arguments - reads from pack queues (recommended)
-  #   # Queues are populated by append_javascript_pack_tag / append_stylesheet_pack_tag in views
-  #   <% send_pack_early_hints %>
-  #   <!DOCTYPE html>
-  #   <html>
-  #     <head>
-  #       <%= stylesheet_pack_tag 'application' %>
-  #     </head>
-  #     <body>
-  #       <%= yield %>  <%# Views already rendered, queues populated! %>
-  #       <%= javascript_pack_tag 'application' %>
-  #     </body>
-  #   </html>
+  #   # Controller pattern: send hints BEFORE expensive work
+  #   def show
+  #     send_pack_early_hints({
+  #       "application" => { js: "preload", css: "preload" },
+  #       "vendor" => { js: "prefetch", css: "none" }
+  #     })
   #
-  #   # How it works:
-  #   # 1. Views/partials render and call append_javascript_pack_tag('foo')
-  #   # 2. Layout renders (views already done!)
-  #   # 3. send_pack_early_hints() reads pack names from queues
-  #   # 4. Early hints sent with all packs that will be used
+  #     # Browser now downloading assets while we do expensive work
+  #     @posts = Post.includes(:comments, :author).where(complex_conditions)
+  #     # ... more expensive work ...
+  #   end
   #
-  #   # Option 2: Explicit pack names (when you know them upfront)
-  #   <% send_pack_early_hints 'application', 'admin' %>
-  #
-  #   # Option 3: With options (rarely needed)
-  #   <% send_pack_early_hints 'application',
-  #        include_css: true,   # default: from config
-  #        include_js: true     # default: from config
-  #   %>
-  def send_pack_early_hints(*names, **options)
-    debug_output = []
+  #   # Supported handling values:
+  #   # - "preload": High-priority, browser downloads immediately
+  #   # - "prefetch": Low-priority, browser may download when idle
+  #   # - "none" or false: Skip this asset type for this pack
+  def send_pack_early_hints(config)
+    return nil unless early_hints_supported? && early_hints_enabled?
 
-    # Check if debug mode is enabled
-    debug_enabled = early_hints_debug_enabled?
-
-    unless early_hints_supported? && early_hints_enabled?
-      if debug_enabled
-        debug_output << "<!-- Shakapacker Early Hints Debug -->"
-        debug_output << "<!-- Status: SKIPPED -->"
-        debug_output << "<!-- Reason: #{early_hints_skip_reason} -->"
-        debug_output << "<!-- -->"
-        return debug_output.join("\n").html_safe
+    config.each do |pack_name, handlers|
+      # Handle JavaScript
+      js_handling = handlers[:js] || handlers["js"]
+      if js_handling && js_handling != "none" && js_handling != false
+        send_javascript_early_hints_internal({ pack_name.to_s => js_handling.to_s })
       end
-      return nil
-    end
 
-    # Mark that we've manually sent early hints to prevent automatic sending
-    # Use request.env for shared storage between view context and controller
-    request.env["shakapacker.skip_early_hints"] = true if request.respond_to?(:env)
-
-    # If no pack names provided, collect from queues populated by append/prepend helpers
-    # This allows zero-config usage: views call append_*, then layout calls send_pack_early_hints
-    if names.empty?
-      names = collect_pack_names_from_queues
-      # If queues are empty, nothing to send
-      if names.empty?
-        if debug_enabled
-          debug_output << "<!-- Shakapacker Early Hints Debug -->"
-          debug_output << "<!-- Status: SKIPPED -->"
-          debug_output << "<!-- Reason: No packs in queue (use append_javascript_pack_tag / append_stylesheet_pack_tag) -->"
-          debug_output << "<!-- -->"
-          return debug_output.join("\n").html_safe
-        end
-        return nil
+      # Handle CSS
+      css_handling = handlers[:css] || handlers["css"]
+      if css_handling && css_handling != "none" && css_handling != false
+        send_stylesheet_early_hints_internal({ pack_name.to_s => css_handling.to_s })
       end
     end
 
-    headers = build_early_hints_links(names, **options)
-    request.send_early_hints(headers) unless headers.empty?
-
-    # Output debug information if enabled
-    if debug_enabled
-      debug_output << "<!-- Shakapacker Early Hints Debug -->"
-      debug_output << "<!-- Status: SENT -->"
-      debug_output << "<!-- HTTP/2 Support: #{request.protocol == 'https://' ? 'YES (https)' : 'NO (http - early hints require HTTPS)'} -->"
-      debug_output << "<!-- Packs: #{names.join(', ')} -->"
-      debug_output << "<!-- Links Sent: -->"
-      headers["Link"]&.split(", ")&.each do |link|
-        debug_output << "<!--   #{link} -->"
-      end
-      debug_output << "<!-- -->"
-      return debug_output.join("\n").html_safe
-    end
-
-    # Return nil to avoid rendering output with <%= %>
     nil
-  end
-
-  # Wrap request.send_early_hints to allow one call and block subsequent ones
-  # This prevents Rails' automatic preload behavior from sending duplicates
-  def wrap_request_to_prevent_duplicate_early_hints
-    return unless request.respond_to?(:send_early_hints)
-    return if request.instance_variable_get(:@shakapacker_early_hints_wrapped)
-
-    request.instance_variable_set(:@shakapacker_early_hints_wrapped, true)
-    request.instance_variable_set(:@shakapacker_early_hints_sent, false)
-
-    original_send_early_hints = request.method(:send_early_hints)
-    request.define_singleton_method(:send_early_hints) do |*args|
-      unless instance_variable_get(:@shakapacker_early_hints_sent)
-        instance_variable_set(:@shakapacker_early_hints_sent, true)
-        original_send_early_hints.call(*args)
-      end
-    end
-  end
-
-  # Block all early hints sends (for early_hints: false case)
-  def block_request_early_hints
-    return unless request.respond_to?(:send_early_hints)
-    return if request.instance_variable_get(:@shakapacker_early_hints_wrapped)
-
-    request.instance_variable_set(:@shakapacker_early_hints_wrapped, true)
-    request.define_singleton_method(:send_early_hints) do |*args|
-      # Block all calls
-    end
   end
 
   # Creates link tags that reference the css chunks from entrypoints when using split chunks API,
@@ -315,8 +257,34 @@ module Shakapacker::Helper
   #
   #   <%= stylesheet_pack_tag 'calendar' %>
   #   <%= stylesheet_pack_tag 'map' %>
-  def stylesheet_pack_tag(*names, **options)
+  #
+  # Early Hints:
+  #   By default, HTTP 103 Early Hints are sent automatically when this helper is called,
+  #   allowing browsers to preload CSS assets in parallel with Rails rendering.
+  #
+  #   <%= stylesheet_pack_tag 'application' %>
+  #   # Automatically sends early hints for 'application' pack
+  #
+  #   # Customize handling per pack:
+  #   <%= stylesheet_pack_tag 'application', 'vendor',
+  #         early_hints: { 'application' => 'preload', 'vendor' => 'prefetch' } %>
+  #
+  #   # Disable early hints:
+  #   <%= stylesheet_pack_tag 'application', early_hints: false %>
+  def stylesheet_pack_tag(*names, early_hints: "preload", **options)
     return "" if Shakapacker.inlining_css?
+
+    # Collect all packs (queue + direct args)
+    all_packs = ((@stylesheet_pack_tag_queue || []) + names).uniq
+
+    # Send early hints automatically if enabled
+    if early_hints_enabled? && early_hints && early_hints != "none" && early_hints != false
+      hints_config = normalize_pack_hints(all_packs, early_hints)
+      send_stylesheet_early_hints_internal(hints_config)
+    elsif early_hints_debug_enabled?
+      @early_hints_debug_buffer ||= []
+      @early_hints_debug_buffer << "<!-- Shakapacker Early Hints (CSS): SKIPPED (early_hints: #{early_hints.inspect}) -->"
+    end
 
     requested_packs = sources_from_manifest_entrypoints(names, type: :stylesheet)
     appended_packs = available_sources_from_manifest_entrypoints(@stylesheet_pack_tag_queue || [], type: :stylesheet)
@@ -324,6 +292,12 @@ module Shakapacker::Helper
     @stylesheet_pack_tag_loaded = true
 
     capture do
+      # Output debug buffer first
+      if early_hints_debug_enabled? && @early_hints_debug_buffer && @early_hints_debug_buffer.any?
+        concat @early_hints_debug_buffer.join("\n").html_safe
+        concat "\n"
+      end
+
       render_tags(requested_packs | appended_packs, :stylesheet, options)
     end
   end
@@ -462,64 +436,6 @@ module Shakapacker::Helper
       "Unknown reason"
     end
 
-    # Collect pack names from queues populated by append/prepend helpers
-    # This allows send_pack_early_hints to work without arguments
-    def collect_pack_names_from_queues
-      names = []
-
-      # Collect from javascript pack queue (all async/deferred/sync)
-      if defined?(@javascript_pack_tag_queue) && @javascript_pack_tag_queue
-        names.concat(@javascript_pack_tag_queue.values.flatten)
-      end
-
-      # Collect from stylesheet pack queue
-      if defined?(@stylesheet_pack_tag_queue) && @stylesheet_pack_tag_queue
-        names.concat(@stylesheet_pack_tag_queue)
-      end
-
-      names.uniq.map(&:to_s)
-    end
-
-    # Build early hints Link headers for the specified packs
-    # Returns a headers hash in the format expected by Rails: {"Link" => [array of link strings]}
-    def build_early_hints_links(names, **options)
-      link_headers = []
-
-      names.each do |name|
-        # Collect JavaScript chunks
-        include_js, js_rel = should_include_hint?(:js, **options)
-        if include_js
-          begin
-            sources = available_sources_from_manifest_entrypoints([name], type: :javascript)
-            sources.each do |source|
-              source_path = lookup_source(source)
-              link_headers << build_link_header(source_path, source, as: "script", rel: js_rel)
-            end
-          rescue Shakapacker::Manifest::MissingEntryError, NoMethodError => e
-            # Gracefully handle missing entries or nil manifest responses
-            Rails.logger.debug { "Early hints: skipping pack '#{name}' JS - #{e.class}: #{e.message}" }
-          end
-        end
-
-        # Collect CSS chunks
-        include_css, css_rel = should_include_hint?(:css, **options)
-        if include_css
-          begin
-            sources = available_sources_from_manifest_entrypoints([name], type: :stylesheet)
-            sources.each do |source|
-              source_path = lookup_source(source)
-              link_headers << build_link_header(source_path, source, as: "style", rel: css_rel)
-            end
-          rescue Shakapacker::Manifest::MissingEntryError, NoMethodError => e
-            # Gracefully handle missing entries or nil manifest responses
-            Rails.logger.debug { "Early hints: skipping pack '#{name}' CSS - #{e.class}: #{e.message}" }
-          end
-        end
-      end
-
-      link_headers.any? ? { "Link" => link_headers.join(", ") } : {}
-    end
-
     # Build a Link header value for early hints
     # Takes the already-resolved source_path to avoid duplicate lookup_source calls
     def build_link_header(source_path, source, as:, rel: "preload")
@@ -542,91 +458,123 @@ module Shakapacker::Helper
       parts.join("; ")
     end
 
-    # Configure early hints for the current request
-    # Can be called from controller actions or before_action
-    # Supports 'all' shortcut and specific css/js configuration
-    #
-    # Examples:
-    #   configure_early_hints css: 'prefetch', js: 'preload'
-    #   configure_early_hints all: 'none'
-    #   configure_early_hints all: 'prefetch', js: 'preload'
-    def configure_early_hints(all: nil, css: nil, js: nil)
-      return unless request.respond_to?(:env)
-
-      # Apply 'all' shortcut first
-      if all
-        request.env["shakapacker.css_hint"] = normalize_hint_value(all)
-        request.env["shakapacker.js_hint"] = normalize_hint_value(all)
-      end
-
-      # Specific values override 'all'
-      request.env["shakapacker.css_hint"] = normalize_hint_value(css) if css
-      request.env["shakapacker.js_hint"] = normalize_hint_value(js) if js
-    end
-
-    # Resolve hint type for a given asset type (css or js)
-    # Checks request.env first (per-request config), then falls back to global config
-    # Returns 'preload', 'prefetch', or 'none'
-    def resolve_hint_type(asset_type, **options)
-      # Check explicit option passed to method (highest priority)
-      # Support both new format (css:/js:) and old format (include_css:/include_js:)
-      if options.key?(asset_type)
-        return normalize_hint_value(options[asset_type])
-      elsif options.key?("include_#{asset_type}".to_sym)
-        return normalize_hint_value(options["include_#{asset_type}".to_sym])
-      end
-
-      # Check request.env for per-request configuration
-      if request.respond_to?(:env)
-        env_key = "shakapacker.#{asset_type}_hint"
-        return request.env[env_key] if request.env[env_key]
-      end
-
-      # Fall back to global config
-      config = current_shakapacker_instance.config.early_hints || {}
-
-      # Try new format first (css/js), then old format (include_css/include_js) for backward compat
-      # Use has_key? to distinguish between false and nil
-      value = if config.key?(asset_type)
-        config[asset_type]
-              elsif config.key?(asset_type.to_s)
-                config[asset_type.to_s]
-              elsif config.key?("include_#{asset_type}".to_sym)
-                config["include_#{asset_type}".to_sym]
-              elsif config.key?("include_#{asset_type}")
-                config["include_#{asset_type}"]
-      end
-
-      normalize_hint_value(value)
-    end
-
-    # Normalize hint value to standard string
-    # Handles backward compatibility: true -> 'preload', false -> 'none'
-    # Returns 'preload', 'prefetch', or 'none'
-    def normalize_hint_value(value)
-      case value
-      when true, "preload", :preload
-        "preload"
-      when false, "none", :none
-        "none"
-      when "prefetch", :prefetch
-        "prefetch"
+    # Normalize pack hints configuration to a hash mapping pack names to handling
+    # Input can be:
+    #   - String: "preload" applies to all packs
+    #   - Hash: { "application" => "preload", "vendor" => "prefetch" }
+    # Returns: { "pack1" => "preload", "pack2" => "prefetch" }
+    def normalize_pack_hints(pack_names, hints_config)
+      if hints_config.is_a?(Hash)
+        # Already a hash, ensure all pack names have entries (default to "preload")
+        result = {}
+        pack_names.each do |pack|
+          result[pack.to_s] = hints_config[pack]&.to_s || hints_config[pack.to_s] || "preload"
+        end
+        result
       else
-        "preload" # default
+        # String or symbol, apply to all packs
+        handling = hints_config.to_s
+        pack_names.each_with_object({}) { |pack, h| h[pack.to_s] = handling }
       end
     end
 
-    # Check if hints should be included for a given asset type
-    # Returns: [should_include?, rel_value]
-    def should_include_hint?(asset_type, **options)
-      hint_type = resolve_hint_type(asset_type, **options)
-      case hint_type
-      when "none"
-        [false, nil]
-      when "prefetch"
-        [true, "prefetch"]
-      else # 'preload'
-        [true, "preload"]
+    # Internal method to send JavaScript early hints with duplicate prevention
+    # config: { "application" => "preload", "vendor" => "prefetch" }
+    def send_javascript_early_hints_internal(config)
+      return unless early_hints_supported?
+
+      @early_hints_javascript ||= {}
+      @early_hints_debug_buffer ||= []
+
+      # Filter to only new hints (not already sent)
+      new_hints = config.reject { |pack, _handling| @early_hints_javascript.key?(pack) }
+
+      if early_hints_debug_enabled?
+        skipped_packs = config.keys - new_hints.keys
+        if skipped_packs.any?
+          @early_hints_debug_buffer << "<!-- Shakapacker Early Hints (JS): Skipped packs (already sent): #{skipped_packs.join(', ')} -->"
+        end
+      end
+
+      return if new_hints.empty?
+
+      # Build and send Link headers for JavaScript
+      link_headers = []
+      new_hints.each do |pack_name, handling|
+        begin
+          sources = available_sources_from_manifest_entrypoints([pack_name], type: :javascript)
+          sources.each do |source|
+            source_path = lookup_source(source)
+            link_headers << build_link_header(source_path, source, as: "script", rel: handling)
+          end
+          # Mark as sent
+          @early_hints_javascript[pack_name] = handling
+        rescue Shakapacker::Manifest::MissingEntryError, NoMethodError => e
+          Rails.logger.debug { "Early hints JS: skipping pack '#{pack_name}' - #{e.class}: #{e.message}" }
+        end
+      end
+
+      unless link_headers.empty?
+        request.send_early_hints({ "Link" => link_headers.join(", ") })
+
+        if early_hints_debug_enabled?
+          @early_hints_debug_buffer << "<!-- Shakapacker Early Hints (JS): SENT -->"
+          @early_hints_debug_buffer << "<!--   Packs: #{new_hints.keys.join(', ')} -->"
+          @early_hints_debug_buffer << "<!--   Links: -->"
+          link_headers.each do |link|
+            @early_hints_debug_buffer << "<!--     #{link} -->"
+          end
+        end
+      end
+    end
+
+    # Internal method to send stylesheet early hints with duplicate prevention
+    # config: { "application" => "preload", "vendor" => "prefetch" }
+    def send_stylesheet_early_hints_internal(config)
+      return unless early_hints_supported?
+
+      @early_hints_stylesheets ||= {}
+      @early_hints_debug_buffer ||= []
+
+      # Filter to only new hints (not already sent)
+      new_hints = config.reject { |pack, _handling| @early_hints_stylesheets.key?(pack) }
+
+      if early_hints_debug_enabled?
+        skipped_packs = config.keys - new_hints.keys
+        if skipped_packs.any?
+          @early_hints_debug_buffer << "<!-- Shakapacker Early Hints (CSS): Skipped packs (already sent): #{skipped_packs.join(', ')} -->"
+        end
+      end
+
+      return if new_hints.empty?
+
+      # Build and send Link headers for CSS
+      link_headers = []
+      new_hints.each do |pack_name, handling|
+        begin
+          sources = available_sources_from_manifest_entrypoints([pack_name], type: :stylesheet)
+          sources.each do |source|
+            source_path = lookup_source(source)
+            link_headers << build_link_header(source_path, source, as: "style", rel: handling)
+          end
+          # Mark as sent
+          @early_hints_stylesheets[pack_name] = handling
+        rescue Shakapacker::Manifest::MissingEntryError, NoMethodError => e
+          Rails.logger.debug { "Early hints CSS: skipping pack '#{pack_name}' - #{e.class}: #{e.message}" }
+        end
+      end
+
+      unless link_headers.empty?
+        request.send_early_hints({ "Link" => link_headers.join(", ") })
+
+        if early_hints_debug_enabled?
+          @early_hints_debug_buffer << "<!-- Shakapacker Early Hints (CSS): SENT -->"
+          @early_hints_debug_buffer << "<!--   Packs: #{new_hints.keys.join(', ')} -->"
+          @early_hints_debug_buffer << "<!--   Links: -->"
+          link_headers.each do |link|
+            @early_hints_debug_buffer << "<!--     #{link} -->"
+          end
+        end
       end
     end
 end
