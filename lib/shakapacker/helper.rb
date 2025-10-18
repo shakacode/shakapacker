@@ -406,9 +406,11 @@ module Shakapacker::Helper
         end
 
         if type == :javascript
-          concat javascript_include_tag(tag_source, **options)
+          # Disable Rails' built-in early hints (nopush: true) since we handle early hints ourselves
+          concat javascript_include_tag(tag_source, **options.merge(nopush: true))
         else
-          concat stylesheet_link_tag(tag_source, **options)
+          # Disable Rails' built-in early hints (nopush: true) since we handle early hints ourselves
+          concat stylesheet_link_tag(tag_source, **options.merge(nopush: true))
         end
 
         concat "\n" unless index == sources.size - 1
