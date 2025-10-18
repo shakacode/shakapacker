@@ -1,5 +1,47 @@
 # HTTP 103 Early Hints - New API
 
+## ⚠️ IMPORTANT: Performance Testing Required
+
+**Early hints can improve OR hurt performance** depending on your application:
+
+- ✅ **May help**: Large JS bundles (>500KB), slow controllers (>300ms), fast CDN
+- ❌ **May hurt**: Large images as LCP (Largest Contentful Paint), small JS bundles
+- ⚠️ **Test before deploying**: Measure LCP and Time to Interactive before/after enabling
+
+**How to test:**
+
+1. Enable early hints in production for 10% of traffic
+2. Measure Core Web Vitals (LCP, FCP, TTI) for both groups
+3. Only keep enabled if metrics improve
+
+See [Troubleshooting](#performance-got-worse) if early hints decrease performance.
+
+---
+
+## Prerequisites
+
+Before implementing early hints, verify you have:
+
+1. **Puma 5+** with `--early-hints` flag (REQUIRED)
+2. **HTTP/2-capable proxy** in front of Puma:
+   - ✅ Thruster (Rails 8 default)
+   - ✅ nginx 1.13+
+   - ✅ Cloudflare (paid plans)
+   - ❌ Control Plane (strips 103 responses)
+   - ❌ AWS ALB/ELB (strips 103 responses)
+3. **Rails 5.2+** (for `request.send_early_hints` API)
+
+**Critical**: Puma requires the `--early-hints` flag to send HTTP 103:
+
+```bash
+# Procfile / Dockerfile
+web: bundle exec puma --early-hints -C config/puma.rb
+```
+
+Without this flag, early hints will NOT work. See [Setup](#production-setup) for details.
+
+---
+
 ## Quick Start
 
 ### Pattern 1: Automatic (Default)
@@ -384,28 +426,11 @@ Browser (HTTP/2 103) ✅
 - Subsequent 103 responses are ignored by browsers
 - This is by design per the HTTP 103 spec
 
-### Minimum Requirements
+### Browser Support
 
-- Rails 5.2+ (for `request.send_early_hints`)
-- **Puma 5+ with `--early-hints` flag** (for HTTP/1.1 103 support)
-- Modern browsers (Chrome/Firefox 103+, Safari 16.4+)
-
-**CRITICAL**: Puma requires the `--early-hints` flag to send HTTP 103 responses:
-
-```bash
-# Development
-bundle exec puma --early-hints
-
-# Production
-bundle exec puma --early-hints -e production
-
-# Procfile
-web: bundle exec puma --early-hints -C config/puma.rb
-```
-
-Without this flag, early hints will NOT work even if everything else is configured correctly.
-
-Gracefully degrades if not supported.
+- Chrome/Firefox 103+
+- Safari 16.4+
+- Gracefully degrades if not supported
 
 ### Testing Locally
 
