@@ -420,21 +420,23 @@ module Shakapacker::Helper
 
       begin
         sources.each.with_index do |source, index|
+          # Duplicate options per iteration to avoid leaking integrity/crossorigin between tags
+          local_options = options.dup
           tag_source = lookup_source(source)
 
           if current_shakapacker_instance.config.integrity[:enabled]
             integrity = lookup_integrity(source)
 
             if integrity.present?
-              options[:integrity] = integrity
-              options[:crossorigin] = current_shakapacker_instance.config.integrity[:cross_origin]
+              local_options[:integrity] = integrity
+              local_options[:crossorigin] = current_shakapacker_instance.config.integrity[:cross_origin]
             end
           end
 
           if type == :javascript
-            concat javascript_include_tag(tag_source, **options)
+            concat javascript_include_tag(tag_source, **local_options)
           else
-            concat stylesheet_link_tag(tag_source, **options)
+            concat stylesheet_link_tag(tag_source, **local_options)
           end
 
           concat "\n" unless index == sources.size - 1
@@ -626,9 +628,9 @@ module Shakapacker::Helper
       return if store[:http_103_sent]
       return if store[:link_buffer].nil? || store[:link_buffer].empty?
 
-      # Check if response is already being sent
-      if respond_to?(:response) && response&.sending?
-        Rails.logger.debug { "Early hints: Cannot send 103 - response already sending" }
+      # Check if response is already committed (headers already sent)
+      if respond_to?(:response) && response&.committed?
+        Rails.logger.debug { "Early hints: Cannot send 103 - response already committed" }
         return
       end
 
