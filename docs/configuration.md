@@ -11,6 +11,8 @@ This guide covers all configuration options available in `config/shakapacker.yml
 - [Development Server](#development-server)
 - [Compilation Options](#compilation-options)
 - [Advanced Options](#advanced-options)
+  - [Subresource Integrity](#integrity)
+  - [Early Hints](#early_hints)
 - [Environment-Specific Configuration](#environment-specific-configuration)
 - [Build Configurations (config/shakapacker-builds.yml)](#build-configurations-configshakapacker-buildsyml)
 
@@ -485,6 +487,37 @@ integrity:
 
 See [Subresource Integrity Guide](subresource_integrity.md) for details.
 
+### `early_hints`
+
+**Type:** `object`
+**Default:** `{ enabled: false, css: "preload", js: "preload" }`
+**Requires:** Rails 5.2+, HTTP/2 server
+
+Automatically send HTTP 103 Early Hints for faster asset loading.
+
+```yaml
+early_hints:
+  enabled: true # Master switch (default: false)
+  css: "preload" # 'preload' | 'prefetch' | 'none' (default: 'preload')
+  js: "preload" # 'preload' | 'prefetch' | 'none' (default: 'preload')
+```
+
+**Options:**
+
+- `enabled`: Enable/disable early hints (default: `false`)
+- `css`: Hint type for CSS - `'preload'`, `'prefetch'`, or `'none'` (default: `'preload'`)
+- `js`: Hint type for JS - `'preload'`, `'prefetch'`, or `'none'` (default: `'preload'`)
+
+⚠️ **Performance note**: May improve or hurt page load depending on content. Configure per-page for best results.
+
+See the [Early Hints Guide](early_hints.md) for:
+
+- Performance considerations and warnings
+- Per-page configuration (`configure_pack_early_hints`)
+- Dynamic configuration examples
+- Hero image preloading with `preload_link_tag`
+- Troubleshooting and testing recommendations
+
 ## Environment-Specific Configuration
 
 Shakapacker supports per-environment configuration with fallback logic:
@@ -728,4 +761,6 @@ See [Troubleshooting Guide](troubleshooting.md) for more help.
 - [Deployment Guide](deployment.md)
 - [CDN Setup Guide](cdn_setup.md)
 - [Precompile Hook Guide](precompile_hook.md)
+- [Early Hints Guide](early_hints.md)
+- [Subresource Integrity Guide](subresource_integrity.md)
 - [Troubleshooting Guide](troubleshooting.md)
