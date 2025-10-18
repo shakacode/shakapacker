@@ -6,6 +6,13 @@ module Shakapacker::Helper
     Shakapacker.instance
   end
 
+  # Override request method to prevent Rails' built-in early hints when we're handling them
+  # Rails checks `respond_to?(:request) && request` before sending early hints
+  def request
+    return nil if @disable_rails_early_hints
+    super if defined?(super)
+  end
+
   # Computes the relative path for a given Shakapacker asset.
   # Returns the relative path using manifest.json and passes it to path_to_asset helper.
   # This will use path_to_asset internally, so most of their behaviors will be the same.
@@ -109,7 +116,7 @@ module Shakapacker::Helper
   #
   #   # Disable early hints:
   #   <%= javascript_pack_tag 'application', early_hints: false %>
-  def javascript_pack_tag(*names, defer: true, async: false, early_hints: "preload", **options)
+  def javascript_pack_tag(*names, defer: true, async: false, early_hints: nil, **options)
     if @javascript_pack_tag_loaded
       raise "To prevent duplicated chunks on the page, you should call javascript_pack_tag only once on the page. " \
       "Please refer to https://github.com/shakacode/shakapacker/blob/main/README.md#view-helpers-javascript_pack_tag-and-stylesheet_pack_tag for the usage guide"
@@ -119,15 +126,18 @@ module Shakapacker::Helper
     append_javascript_pack_tag(*names, defer: defer, async: async)
     all_packs = javascript_pack_tag_queue.values.flatten.uniq
 
+    # Resolve effective early hints value (nil = use config default)
+    effective_hints = resolve_early_hints_value(early_hints, :javascript)
+
     # Send early hints automatically if enabled
-    if early_hints_enabled? && early_hints && early_hints != "none" && early_hints != false
-      hints_config = normalize_pack_hints(all_packs, early_hints)
+    if early_hints_enabled? && effective_hints && effective_hints != "none"
+      hints_config = normalize_pack_hints(all_packs, effective_hints)
       send_javascript_early_hints_internal(hints_config)
       # Flush accumulated hints (sends the single 103 response)
       flush_early_hints
     elsif early_hints_debug_enabled?
       @early_hints_debug_buffer ||= []
-      @early_hints_debug_buffer << "<!-- Shakapacker Early Hints (JS): SKIPPED (early_hints: #{early_hints.inspect}) -->"
+      @early_hints_debug_buffer << "<!-- Shakapacker Early Hints (JS): SKIPPED (early_hints: #{effective_hints.inspect}) -->"
     end
 
     sync = sources_from_manifest_entrypoints(javascript_pack_tag_queue[:sync], type: :javascript)
@@ -278,21 +288,24 @@ module Shakapacker::Helper
   #
   #   # Disable early hints:
   #   <%= stylesheet_pack_tag 'application', early_hints: false %>
-  def stylesheet_pack_tag(*names, early_hints: "preload", **options)
+  def stylesheet_pack_tag(*names, early_hints: nil, **options)
     return "" if Shakapacker.inlining_css?
 
     # Collect all packs (queue + direct args)
     all_packs = ((@stylesheet_pack_tag_queue || []) + names).uniq
 
+    # Resolve effective early hints value (nil = use config default)
+    effective_hints = resolve_early_hints_value(early_hints, :stylesheet)
+
     # Send early hints automatically if enabled
-    if early_hints_enabled? && early_hints && early_hints != "none" && early_hints != false
-      hints_config = normalize_pack_hints(all_packs, early_hints)
+    if early_hints_enabled? && effective_hints && effective_hints != "none"
+      hints_config = normalize_pack_hints(all_packs, effective_hints)
       send_stylesheet_early_hints_internal(hints_config)
       # Flush accumulated hints (sends the single 103 response)
       flush_early_hints
     elsif early_hints_debug_enabled?
       @early_hints_debug_buffer ||= []
-      @early_hints_debug_buffer << "<!-- Shakapacker Early Hints (CSS): SKIPPED (early_hints: #{early_hints.inspect}) -->"
+      @early_hints_debug_buffer << "<!-- Shakapacker Early Hints (CSS): SKIPPED (early_hints: #{effective_hints.inspect}) -->"
     end
 
     requested_packs = sources_from_manifest_entrypoints(names, type: :stylesheet)
@@ -405,10 +418,9 @@ module Shakapacker::Helper
           end
         end
 
-        # Temporarily save and clear request to prevent Rails' built-in early hints
+        # Temporarily disable Rails' built-in early hints by overriding request method
         # Rails checks `respond_to?(:request) && request` before sending early hints
-        saved_request = @request if defined?(@request)
-        @request = nil
+        @disable_rails_early_hints = true
 
         begin
           if type == :javascript
@@ -417,8 +429,7 @@ module Shakapacker::Helper
             concat stylesheet_link_tag(tag_source, **options)
           end
         ensure
-          # Restore request
-          @request = saved_request
+          @disable_rails_early_hints = false
         end
 
         concat "\n" unless index == sources.size - 1
@@ -432,16 +443,75 @@ module Shakapacker::Helper
 
     # Check if early hints are enabled in configuration
     def early_hints_enabled?
-      config = current_shakapacker_instance.config.early_hints
+      config = current_shakapacker_instance.config.early_hints rescue nil
       return false unless config
-      config[:enabled] == true
+      # Handle both symbol and string keys from YAML config
+      enabled = config[:enabled] || config["enabled"]
+      enabled == true
     end
 
     # Check if early hints debug mode is enabled
     def early_hints_debug_enabled?
-      config = current_shakapacker_instance.config.early_hints
+      config = current_shakapacker_instance.config.early_hints rescue nil
       return false unless config
-      config[:debug] == true
+      # Handle both symbol and string keys from YAML config
+      debug = config[:debug] || config["debug"]
+      debug == true
+    end
+
+    # Resolve the effective early hints value
+    # If nil or true, read from config; otherwise use the provided value
+    def resolve_early_hints_value(early_hints, asset_type)
+      # If explicitly set to false or "none", use that
+      return "none" if early_hints == false || early_hints == "none"
+
+      # If nil or true, read from config
+      if early_hints.nil? || early_hints == true
+        config = current_shakapacker_instance.config.early_hints rescue nil
+        return "preload" unless config  # Default fallback
+
+        # Get type-specific config (js/css), handling both symbol and string keys
+        type_key = asset_type == :javascript ? "js" : "css"
+        value = config[type_key.to_sym] || config[type_key]
+        return value || "preload"  # Default to preload if not configured
+      end
+
+      # Return provided value as-is (will be normalized later)
+      early_hints
+    end
+
+    # Normalize pack hints into a hash mapping pack names to validated hint values
+    # Converts booleans, validates strings, and ensures only valid values are used
+    def normalize_pack_hints(packs, early_hints)
+      # Normalize the hint value(s)
+      if early_hints.is_a?(Hash)
+        # Per-pack configuration
+        packs.each_with_object({}) do |pack, result|
+          hint_value = early_hints[pack] || early_hints[pack.to_s] || early_hints[pack.to_sym]
+          result[pack] = normalize_hint_value(hint_value || "preload")
+        end
+      else
+        # Single value for all packs
+        normalized_value = normalize_hint_value(early_hints)
+        packs.each_with_object({}) do |pack, result|
+          result[pack] = normalized_value
+        end
+      end
+    end
+
+    # Normalize and validate a single hint value
+    # Converts false/nil to "none", downcases strings, validates against allowed values
+    def normalize_hint_value(value)
+      # Convert booleans and nil
+      return "none" if value == false || value.nil?
+      return "preload" if value == true
+
+      # Downcase and validate string
+      str_value = value.to_s.downcase.strip
+
+      # Only allow valid values
+      valid_values = ["preload", "prefetch", "none"]
+      valid_values.include?(str_value) ? str_value : "none"
     end
 
     # Generate reason why early hints were skipped
@@ -477,26 +547,6 @@ module Shakapacker::Helper
       parts.join("; ")
     end
 
-    # Normalize pack hints configuration to a hash mapping pack names to handling
-    # Input can be:
-    #   - String: "preload" applies to all packs
-    #   - Hash: { "application" => "preload", "vendor" => "prefetch" }
-    # Returns: { "pack1" => "preload", "pack2" => "prefetch" }
-    def normalize_pack_hints(pack_names, hints_config)
-      if hints_config.is_a?(Hash)
-        # Already a hash, ensure all pack names have entries (default to "preload")
-        result = {}
-        pack_names.each do |pack|
-          result[pack.to_s] = hints_config[pack]&.to_s || hints_config[pack.to_s] || "preload"
-        end
-        result
-      else
-        # String or symbol, apply to all packs
-        handling = hints_config.to_s
-        pack_names.each_with_object({}) { |pack, h| h[pack.to_s] = handling }
-      end
-    end
-
     # Internal method to accumulate and send early hints
     # Sends only ONE 103 response (browsers ignore subsequent ones)
     # config: { "application" => "preload", "vendor" => "prefetch" }
@@ -519,8 +569,8 @@ module Shakapacker::Helper
         return
       end
 
-      # Filter to only new packs for THIS type
-      new_hints = config.reject { |pack, _handling| @early_hints_sent_packs[type].key?(pack) }
+      # Filter to only new packs for THIS type, and skip "none" values
+      new_hints = config.reject { |pack, handling| @early_hints_sent_packs[type].key?(pack) || handling == "none" }
 
       if early_hints_debug_enabled? && new_hints.empty?
         @early_hints_debug_buffer << "<!-- Shakapacker Early Hints (#{type.upcase}): All packs already queued -->"
@@ -529,6 +579,9 @@ module Shakapacker::Helper
       # Accumulate Link headers for this type
       asset_type = type == :javascript ? "script" : "style"
       new_hints.each do |pack_name, handling|
+        # Skip if handling is "none" (extra safety check)
+        next if handling == "none"
+
         begin
           sources = available_sources_from_manifest_entrypoints([pack_name], type: type)
           sources.each do |source|
