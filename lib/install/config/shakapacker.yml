@@ -88,13 +88,13 @@ default: &default
 
   # HTTP 103 Early Hints support for faster asset loading
   # Sends Link headers to browsers so they can preload assets while Rails is rendering
-  # Requires Rails 5.2+ and server support (e.g., Puma 5+)
+  # See docs/early_hints_new_api.md for setup instructions and requirements
   # https://api.rubyonrails.org/classes/ActionDispatch/Request.html#method-i-send_early_hints
   early_hints:
-    enabled: false # Enable to send HTTP 103 Early Hints
-    css: "preload" # 'preload' | 'prefetch' | 'none' - default: 'preload'
-    js: "preload" # 'preload' | 'prefetch' | 'none' - default: 'preload'
-    debug: false # Output early hints info as HTML comments for troubleshooting
+    enabled: false
+    # css: "preload" # 'preload' | 'prefetch' | 'none' - default: 'preload'
+    # js: "preload" # 'preload' | 'prefetch' | 'none' - default: 'preload'
+    # debug: false # Output early hints info as HTML comments for troubleshooting
 
 development:
   <<: *default
@@ -167,3 +167,11 @@ production:
 
   # Cache manifest.json for performance
   cache_manifest: true
+
+  # Early hints disabled by default. See docs/early_hints_new_api.md before enabling.
+  # Requires proper server configuration (Puma + HTTP/2 proxy like nginx, Thruster, or Control Plane)
+  early_hints:
+    enabled: false
+    # css: "preload"
+    # js: "preload"
+    # debug: false

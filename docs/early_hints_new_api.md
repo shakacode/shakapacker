@@ -259,6 +259,82 @@ end
 
 ---
 
+## Preloading Non-Pack Assets (Images, Videos, Fonts)
+
+**Shakapacker's early hints are for pack assets (JS/CSS bundles).** For non-pack assets like hero images, videos, and fonts, you have two options:
+
+### Option 1: Manual Early Hints (For LCP/Critical Assets)
+
+**IMPORTANT:** Browsers only process the FIRST HTTP 103 response. If you need both pack assets AND images/videos in early hints, you must send them together in ONE call.
+
+```ruby
+class PostsController < ApplicationController
+  before_action :send_critical_early_hints, only: [:show]
+
+  private
+
+  def send_critical_early_hints
+    # Build all early hints in ONE call (packs + images)
+    links = []
+
+    # Pack assets (using Shakapacker manifest)
+    js_path = "/packs/#{Shakapacker.manifest.lookup!('application.js')}"
+    css_path = "/packs/#{Shakapacker.manifest.lookup!('application.css')}"
+    links << "<#{js_path}>; rel=preload; as=script"
+    links << "<#{css_path}>; rel=preload; as=style"
+
+    # Critical images (for LCP - Largest Contentful Paint)
+    links << "<#{view_context.asset_path('hero.jpg')}>; rel=preload; as=image"
+
+    # Send ONE HTTP 103 response with all hints
+    request.send_early_hints("Link" => links.join(", "))
+  end
+
+  def show
+    # Early hints already sent, browser downloading assets in parallel
+    @post = Post.find(params[:id])
+  end
+end
+```
+
+**When to use:**
+
+- Pages with hero images affecting LCP (Largest Contentful Paint)
+- Videos that must load quickly
+- Critical fonts not in pack bundles
+
+### Option 2: HTML Preload Links (Simpler, No Early Hints)
+
+Use Rails' `preload_link_tag` to add `<link rel="preload">` in the HTML:
+
+```erb
+<%# app/views/layouts/application.html.erb %>
+<!DOCTYPE html>
+<html>
+  <head>
+    <%# Shakapacker sends early hints for packs %>
+    <%= stylesheet_pack_tag 'application' %>
+
+    <%# Preload link in HTML (no HTTP 103, but still speeds up loading) %>
+    <%= preload_link_tag asset_path('hero.jpg'), as: 'image' %>
+  </head>
+  <body>
+    <%= yield %>
+    <%= javascript_pack_tag 'application' %>
+  </body>
+</html>
+```
+
+**When to use:**
+
+- Images that don't affect LCP
+- Less critical assets
+- Simpler implementation preferred
+
+**Note:** `preload_link_tag` only adds HTML `<link>` tags - it does NOT send HTTP 103 Early Hints.
+
+---
+
 ## Requirements & Limitations
 
 **IMPORTANT:** Before implementing Early Hints, understand these limitations:
@@ -314,19 +390,47 @@ Gracefully degrades if not supported.
 
 ### Testing Locally
 
+**Step 1: Enable early hints in your test environment**
+
+```yaml
+# config/shakapacker.yml
+development:  # or production
+  early_hints:
+    enabled: true
+    debug: true  # Shows hints in HTML comments
+```
+
+**Step 2: Start Rails in the environment you configured**
+
 ```bash
-# Test with curl (use HTTP/1.1, NOT HTTP/2)
+# Option 1: Test in development (if enabled above)
+rails server
+
+# Option 2: Test in production mode locally (more realistic)
+RAILS_ENV=production rails assets:precompile  # Compile assets first
+RAILS_ENV=production rails server
+```
+
+**Step 3: Test with curl**
+
+```bash
+# Use HTTP/1.1 (NOT HTTP/2)
 curl -v http://localhost:3000/
 
 # Look for this in output:
 < HTTP/1.1 103 Early Hints
-< link: </packs/application.js>; rel=preload; as=script
-< link: </packs/application.css>; rel=preload; as=style
+< link: </packs/application-abc123.js>; rel=preload; as=script
+< link: </packs/application-abc123.css>; rel=preload; as=style
 <
 < HTTP/1.1 200 OK
 ```
 
-**Important**: Use `http://` (not `https://`) for local testing. Puma dev mode uses HTTP/1.1.
+**Important notes:**
+
+- Use `http://` (not `https://`) for local testing
+- Puma dev mode uses HTTP/1.1 (not HTTP/2)
+- Test in production mode for realistic asset paths with content hashes
+- Early hints must be `enabled: true` for the environment you're testing
 
 ### Production Setup
 
@@ -402,6 +506,153 @@ nginx will:
 2. Forward as HTTP/1.1 to Puma
 3. Receive HTTP/1.1 103 from Puma
 4. Translate to HTTP/2 103 for browser
+
+---
+
+## Troubleshooting
+
+### Early Hints Not Appearing
+
+**Step 1: Enable debug mode to see what Puma is sending**
+
+```yaml
+# config/shakapacker.yml
+development:
+  early_hints:
+    enabled: true
+    debug: true  # Shows hints in HTML comments
+```
+
+Reload your page and check the HTML source for comments like:
+
+```html
+<!-- Early hints sent (JS): application=preload -->
+<!-- Early hints sent (CSS): application=preload -->
+```
+
+**If debug shows hints are sent:**
+
+The issue is with your **proxy/infrastructure**, not Shakapacker. Proceed to Step 2.
+
+**If debug shows NO hints sent:**
+
+Check your config:
+
+- `early_hints.enabled: true` in `config/shakapacker.yml`
+- Rails 5.2+
+- Puma 5+
+
+---
+
+**Step 2: Check if your proxy is stripping 103 responses**
+
+This is the **most common cause** of missing early hints.
+
+Test with curl against your local Puma (HTTP/1.1):
+
+```bash
+# Direct to Puma (should work)
+curl -v http://localhost:3000/
+
+# Look for:
+< HTTP/1.1 103 Early Hints
+< link: </packs/application.js>; rel=preload; as=script
+<
+< HTTP/1.1 200 OK
+```
+
+If you see the 103 response, Puma is working correctly.
+
+---
+
+**Step 3: Common proxy issues**
+
+#### Control Plane
+
+**Fix:** Set workload protocol to `HTTP` (NOT `HTTP2`):
+
+```
+Protocol: HTTP   ← Must be HTTP/1.1
+Port: 3000
+```
+
+Control Plane's load balancer handles HTTP/2 translation. If you set protocol to `HTTP2`, early hints will NOT work.
+
+#### AWS ALB/ELB
+
+**Not supported** - ALBs strip 103 responses entirely. No workaround except:
+
+- Skip ALB (not recommended)
+- Use CloudFront in front (CloudFront supports early hints)
+
+#### Cloudflare
+
+Enable "Early Hints" in dashboard:
+
+```
+Speed > Optimization > Early Hints: ON
+```
+
+**Note:** Paid plans only (Pro/Business/Enterprise).
+
+#### nginx
+
+nginx 1.13+ passes 103 responses automatically. Ensure you're using HTTP/2:
+
+```nginx
+server {
+  listen 443 ssl http2;  # Enable HTTP/2
+
+  location / {
+    proxy_pass http://puma;  # Puma uses HTTP/1.1
+    proxy_http_version 1.1;  # Required for Puma
+  }
+}
+```
+
+No special configuration needed - nginx automatically translates HTTP/1.1 103 to HTTP/2 103.
+
+#### Thruster (Rails 8+)
+
+Thruster handles HTTP/2 → HTTP/1.1 translation automatically. Early hints just work. No configuration needed.
+
+---
+
+### Debugging Checklist
+
+1. ✅ **Config enabled:** `early_hints.enabled: true` in `shakapacker.yml`
+2. ✅ **Debug mode on:** See HTML comments confirming hints sent
+3. ✅ **Puma 5+:** Early hints require Puma 5+
+4. ✅ **Rails 5.2+:** `request.send_early_hints` API available
+5. ✅ **Architecture:** Proxy in front of Puma (Thruster, nginx, Control Plane)
+6. ✅ **Puma protocol:** Always HTTP/1.1 (never HTTP/2)
+7. ✅ **Proxy protocol:** HTTP/2 to browser, HTTP/1.1 to Puma
+8. ✅ **Browser support:** Chrome 103+, Firefox 103+, Safari 16.4+
+
+---
+
+### Performance Got Worse?
+
+If enabling early hints **decreased** performance:
+
+**Likely cause:** Page has large images/videos as LCP (Largest Contentful Paint).
+
+Preloading large JS bundles can delay image downloads, hurting LCP.
+
+**Fix:**
+
+```yaml
+# config/shakapacker.yml
+production:
+  early_hints:
+    enabled: true
+    css: "prefetch"  # Lower priority
+    js: "prefetch"   # Lower priority
+```
+
+Or disable entirely and use HTML `preload_link_tag` for images instead.
+
+---
 
 ### Reference
 
