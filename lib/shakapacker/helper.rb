@@ -405,12 +405,20 @@ module Shakapacker::Helper
           end
         end
 
-        if type == :javascript
-          # Disable Rails' built-in early hints (nopush: true) since we handle early hints ourselves
-          concat javascript_include_tag(tag_source, **options.merge(nopush: true))
-        else
-          # Disable Rails' built-in early hints (nopush: true) since we handle early hints ourselves
-          concat stylesheet_link_tag(tag_source, **options.merge(nopush: true))
+        # Temporarily save and clear request to prevent Rails' built-in early hints
+        # Rails checks `respond_to?(:request) && request` before sending early hints
+        saved_request = @request if defined?(@request)
+        @request = nil
+
+        begin
+          if type == :javascript
+            concat javascript_include_tag(tag_source, **options)
+          else
+            concat stylesheet_link_tag(tag_source, **options)
+          end
+        ensure
+          # Restore request
+          @request = saved_request
         end
 
         concat "\n" unless index == sources.size - 1
