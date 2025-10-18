@@ -1285,7 +1285,8 @@ function formatConfig(
       appRoot
     })
     return serializer.serialize(config, metadata)
-  } else if (options.format === "json") {
+  }
+  if (options.format === "json") {
     const jsonReplacer = (key: string, value: any): any => {
       if (typeof value === "function") {
         return `[Function: ${value.name || "anonymous"}]`
