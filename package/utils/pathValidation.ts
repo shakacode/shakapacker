@@ -14,11 +14,11 @@ export function isPathTraversalSafe(inputPath: string): boolean {
   if (inputPath.includes("\0")) return false
 
   const dangerousPatterns = [
-    /\.\.[\/\\]/, // ../ or ..\
+    /\.\.[/\\]/, // ../ or ..\
     /^\//, // POSIX absolute
-    /^[A-Za-z]:[\/\\]/, // Windows absolute (C:\ or C:/)
+    /^[A-Za-z]:[/\\]/, // Windows absolute (C:\ or C:/)
     /^\\\\/, // Windows UNC (\\server\share)
-    /~[\/\\]/, // Home directory expansion
+    /~[/\\]/, // Home directory expansion
     /%2e%2e/i // URL encoded traversal
   ]
 
