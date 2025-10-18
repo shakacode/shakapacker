@@ -15,6 +15,10 @@ module ActionView::TestCase::Behavior
         extend ActionView::TestCase::Behavior
 
         @request = Class.new do
+          def env
+            @env ||= {}
+          end
+
           def send_early_hints(links) end
 
           def base_url
@@ -449,6 +453,10 @@ module ActionView::TestCase::Behavior
         extend ActionView::TestCase::Behavior
 
         @request = Class.new do
+          def env
+            @env ||= {}
+          end
+
           def send_early_hints(links) end
 
           def base_url
