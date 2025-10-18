@@ -6,12 +6,6 @@ module Shakapacker::Helper
     Shakapacker.instance
   end
 
-  # Override request method to prevent Rails' built-in early hints when we're handling them
-  # Rails checks `respond_to?(:request) && request` before sending early hints
-  def request
-    return nil if @disable_rails_early_hints
-    super if defined?(super)
-  end
 
   # Computes the relative path for a given Shakapacker asset.
   # Returns the relative path using manifest.json and passes it to path_to_asset helper.
@@ -418,9 +412,17 @@ module Shakapacker::Helper
           end
         end
 
-        # Temporarily disable Rails' built-in early hints by overriding request method
-        # Rails checks `respond_to?(:request) && request` before sending early hints
-        @disable_rails_early_hints = true
+        # Temporarily disable Rails' built-in early hints by monkey-patching send_early_hints
+        # to be a no-op. This is safer than overriding the request method itself.
+        # Rails' javascript_include_tag and stylesheet_link_tag call request.send_early_hints
+        original_send_early_hints = nil
+
+        if respond_to?(:request) && request&.respond_to?(:send_early_hints)
+          # Save the original method
+          original_send_early_hints = request.method(:send_early_hints)
+          # Replace with a no-op
+          request.define_singleton_method(:send_early_hints) { |*args| nil }
+        end
 
         begin
           if type == :javascript
@@ -429,7 +431,10 @@ module Shakapacker::Helper
             concat stylesheet_link_tag(tag_source, **options)
           end
         ensure
-          @disable_rails_early_hints = false
+          # Restore the original method if we replaced it
+          if original_send_early_hints
+            request.define_singleton_method(:send_early_hints, &original_send_early_hints)
+          end
         end
 
         concat "\n" unless index == sources.size - 1
