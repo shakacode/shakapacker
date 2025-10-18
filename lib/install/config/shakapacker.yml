@@ -101,12 +101,14 @@ development:
   compile: true
   compiler_strategy: mtime
 
-  # Enable early hints in development for testing
-  early_hints:
-    enabled: true
-    css: "preload"
-    js: "preload"
-    debug: true # Show early hints debug info as HTML comments
+  # Early hints disabled by default in development
+  # To enable: Set enabled: true AND start Puma with: bundle exec puma --early-hints
+  # See docs/early_hints_new_api.md for setup instructions
+  # early_hints:
+  #   enabled: true
+  #   css: "preload"
+  #   js: "preload"
+  #   debug: true
 
   # Reference: https://webpack.js.org/configuration/dev-server/
   # Keys not described there are documented inline and in https://github.com/shakacode/shakapacker/
