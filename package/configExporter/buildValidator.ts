@@ -226,9 +226,8 @@ export class BuildValidator {
 
     if (isHMR) {
       return this.validateHMRBuild(build, appRoot, bundler)
-    } else {
-      return this.validateStaticBuild(build, appRoot, bundler)
     }
+    return this.validateStaticBuild(build, appRoot, bundler)
   }
 
   /**
