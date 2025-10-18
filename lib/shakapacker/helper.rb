@@ -6,7 +6,6 @@ module Shakapacker::Helper
     Shakapacker.instance
   end
 
-
   # Computes the relative path for a given Shakapacker asset.
   # Returns the relative path using manifest.json and passes it to path_to_asset helper.
   # This will use path_to_asset internally, so most of their behaviors will be the same.
@@ -400,44 +399,41 @@ module Shakapacker::Helper
     def render_tags(sources, type, options)
       return unless sources.present? || type.present?
 
-      sources.each.with_index do |source, index|
-        tag_source = lookup_source(source)
+      # Temporarily disable Rails' built-in early hints for ALL tags
+      # Rails' javascript_include_tag and stylesheet_link_tag call request.send_early_hints
+      # We handle early hints ourselves before render_tags is called
+      patched = false
+      if respond_to?(:request) && request&.respond_to?(:send_early_hints)
+        request.define_singleton_method(:send_early_hints) { |*args| nil }
+        patched = true
+      end
 
-        if current_shakapacker_instance.config.integrity[:enabled]
-          integrity = lookup_integrity(source)
+      begin
+        sources.each.with_index do |source, index|
+          tag_source = lookup_source(source)
 
-          if integrity.present?
-            options[:integrity] = integrity
-            options[:crossorigin] = current_shakapacker_instance.config.integrity[:cross_origin]
+          if current_shakapacker_instance.config.integrity[:enabled]
+            integrity = lookup_integrity(source)
+
+            if integrity.present?
+              options[:integrity] = integrity
+              options[:crossorigin] = current_shakapacker_instance.config.integrity[:cross_origin]
+            end
           end
-        end
 
-        # Temporarily disable Rails' built-in early hints by monkey-patching send_early_hints
-        # to be a no-op. This is safer than overriding the request method itself.
-        # Rails' javascript_include_tag and stylesheet_link_tag call request.send_early_hints
-        original_send_early_hints = nil
-
-        if respond_to?(:request) && request&.respond_to?(:send_early_hints)
-          # Save the original method
-          original_send_early_hints = request.method(:send_early_hints)
-          # Replace with a no-op
-          request.define_singleton_method(:send_early_hints) { |*args| nil }
-        end
-
-        begin
           if type == :javascript
             concat javascript_include_tag(tag_source, **options)
           else
             concat stylesheet_link_tag(tag_source, **options)
           end
-        ensure
-          # Restore the original method if we replaced it
-          if original_send_early_hints
-            request.define_singleton_method(:send_early_hints, &original_send_early_hints)
-          end
-        end
 
-        concat "\n" unless index == sources.size - 1
+          concat "\n" unless index == sources.size - 1
+        end
+      ensure
+        # Restore original method by removing the singleton method
+        if patched
+          request.singleton_class.send(:remove_method, :send_early_hints)
+        end
       end
     end
 
