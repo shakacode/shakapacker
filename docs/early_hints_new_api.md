@@ -346,11 +346,11 @@ Use Rails' `preload_link_tag` to add `<link rel="preload">` in the HTML:
 ```
 Browser (HTTP/2)
     ↓
-Proxy (Thruster, nginx, CDN, etc.)
+Proxy (Thruster ✅, nginx ✅, Cloudflare ✅)
     ├─ Receives HTTP/2
     ├─ Translates to HTTP/1.1
     ↓
-Puma (HTTP/1.1)
+Puma (HTTP/1.1 with --early-hints flag)
     ├─ Sends HTTP/1.1 103 Early Hints ✅
     ├─ Sends HTTP/1.1 200 OK
     ↓
@@ -360,7 +360,11 @@ Proxy
 Browser (HTTP/2 103) ✅
 ```
 
-**Key insight**: Puma always runs HTTP/1.1. The proxy handles HTTP/2 for external clients.
+**Key insights:**
+
+- Puma always runs HTTP/1.1 and requires `--early-hints` flag
+- The proxy handles HTTP/2 for external clients
+- **NOT all proxies support early hints** (Control Plane ❌, AWS ALB ❌)
 
 ### Puma Limitation: HTTP/1.1 Only
 
@@ -383,8 +387,23 @@ Browser (HTTP/2 103) ✅
 ### Minimum Requirements
 
 - Rails 5.2+ (for `request.send_early_hints`)
-- Puma 5+ (for HTTP/1.1 103 support)
+- **Puma 5+ with `--early-hints` flag** (for HTTP/1.1 103 support)
 - Modern browsers (Chrome/Firefox 103+, Safari 16.4+)
+
+**CRITICAL**: Puma requires the `--early-hints` flag to send HTTP 103 responses:
+
+```bash
+# Development
+bundle exec puma --early-hints
+
+# Production
+bundle exec puma --early-hints -e production
+
+# Procfile
+web: bundle exec puma --early-hints -C config/puma.rb
+```
+
+Without this flag, early hints will NOT work even if everything else is configured correctly.
 
 Gracefully degrades if not supported.
 
@@ -394,21 +413,21 @@ Gracefully degrades if not supported.
 
 ```yaml
 # config/shakapacker.yml
-development:  # or production
+development: # or production
   early_hints:
     enabled: true
-    debug: true  # Shows hints in HTML comments
+    debug: true # Shows hints in HTML comments
 ```
 
-**Step 2: Start Rails in the environment you configured**
+**Step 2: Start Rails with Puma's `--early-hints` flag**
 
 ```bash
 # Option 1: Test in development (if enabled above)
-rails server
+bundle exec puma --early-hints
 
 # Option 2: Test in production mode locally (more realistic)
 RAILS_ENV=production rails assets:precompile  # Compile assets first
-RAILS_ENV=production rails server
+RAILS_ENV=production bundle exec puma --early-hints -e production
 ```
 
 **Step 3: Test with curl**
@@ -454,21 +473,21 @@ Thruster will:
 
 #### Control Plane
 
-**CRITICAL**: Set workload protocol to `HTTP` (NOT `HTTP2`):
+**Status: Early Hints NOT supported** ❌
 
-```
-Protocol: HTTP   ← Use HTTP/1.1 for Puma container
-Port: 3000
-```
+Control Plane's load balancer appears to strip HTTP 103 responses, even with correct configuration:
 
-**Why**: Puma ONLY supports HTTP/1.1 Early Hints. If you set protocol to `HTTP2`, Early Hints will NOT work.
+- Puma sends HTTP/1.1 103 ✅ (verified locally with curl)
+- Control Plane LB strips 103 before reaching browser ❌
+- Workload protocol set to `HTTP` (not `HTTP2`) ✅
+- Puma started with `--early-hints` flag ✅
 
-Control Plane's load balancer handles HTTP/2 translation automatically:
+**Recommendation**: If you need early hints, consider:
 
-1. Browser → Control Plane LB (HTTP/2)
-2. Control Plane LB → Puma (HTTP/1.1)
-3. Puma → Control Plane LB (HTTP/1.1 103)
-4. Control Plane LB → Browser (HTTP/2 103)
+- **Thruster** (Rails 8 default, supports early hints)
+- **Self-hosted nginx** (supports early hints)
+- **Cloudflare** (paid plans only)
+- Contact Control Plane support to request early hints support
 
 #### nginx (Self-Hosted)
 
@@ -520,7 +539,7 @@ nginx will:
 development:
   early_hints:
     enabled: true
-    debug: true  # Shows hints in HTML comments
+    debug: true # Shows hints in HTML comments
 ```
 
 Reload your page and check the HTML source for comments like:
@@ -541,6 +560,7 @@ Check your config:
 - `early_hints.enabled: true` in `config/shakapacker.yml`
 - Rails 5.2+
 - Puma 5+
+- **Puma started with `--early-hints` flag** (REQUIRED!)
 
 ---
 
@@ -569,14 +589,9 @@ If you see the 103 response, Puma is working correctly.
 
 #### Control Plane
 
-**Fix:** Set workload protocol to `HTTP` (NOT `HTTP2`):
+**Status: NOT supported** ❌
 
-```
-Protocol: HTTP   ← Must be HTTP/1.1
-Port: 3000
-```
-
-Control Plane's load balancer handles HTTP/2 translation. If you set protocol to `HTTP2`, early hints will NOT work.
+Control Plane strips HTTP 103 responses. No known workaround. Consider switching to Thruster, nginx, or Cloudflare if you need early hints.
 
 #### AWS ALB/ELB
 
@@ -621,13 +636,14 @@ Thruster handles HTTP/2 → HTTP/1.1 translation automatically. Early hints just
 ### Debugging Checklist
 
 1. ✅ **Config enabled:** `early_hints.enabled: true` in `shakapacker.yml`
-2. ✅ **Debug mode on:** See HTML comments confirming hints sent
-3. ✅ **Puma 5+:** Early hints require Puma 5+
-4. ✅ **Rails 5.2+:** `request.send_early_hints` API available
-5. ✅ **Architecture:** Proxy in front of Puma (Thruster, nginx, Control Plane)
-6. ✅ **Puma protocol:** Always HTTP/1.1 (never HTTP/2)
-7. ✅ **Proxy protocol:** HTTP/2 to browser, HTTP/1.1 to Puma
-8. ✅ **Browser support:** Chrome 103+, Firefox 103+, Safari 16.4+
+2. ✅ **Puma `--early-hints` flag:** Puma started with this flag (REQUIRED!)
+3. ✅ **Debug mode on:** See HTML comments confirming hints sent
+4. ✅ **Puma 5+:** Early hints require Puma 5+
+5. ✅ **Rails 5.2+:** `request.send_early_hints` API available
+6. ✅ **Architecture:** Proxy in front of Puma (Thruster, nginx - NOT Control Plane or AWS ALB)
+7. ✅ **Puma protocol:** Always HTTP/1.1 (never HTTP/2)
+8. ✅ **Proxy protocol:** HTTP/2 to browser, HTTP/1.1 to Puma
+9. ✅ **Browser support:** Chrome 103+, Firefox 103+, Safari 16.4+
 
 ---
 
@@ -646,8 +662,8 @@ Preloading large JS bundles can delay image downloads, hurting LCP.
 production:
   early_hints:
     enabled: true
-    css: "prefetch"  # Lower priority
-    js: "prefetch"   # Lower priority
+    css: "prefetch" # Lower priority
+    js: "prefetch" # Lower priority
 ```
 
 Or disable entirely and use HTML `preload_link_tag` for images instead.
