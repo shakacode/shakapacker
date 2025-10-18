@@ -539,11 +539,12 @@ module Shakapacker::Helper
     # Send accumulated early hints as a SINGLE 103 response
     # Browsers only process the first 103, so we send everything at once
     def flush_early_hints
-      return if @early_hints_103_sent
+      # Guard against multiple flushes - only send once per request
+      return if defined?(@early_hints_103_sent) && @early_hints_103_sent
       return if @early_hints_link_buffer.nil? || @early_hints_link_buffer.empty?
 
+      @early_hints_103_sent = true  # Set flag BEFORE sending to prevent race conditions
       request.send_early_hints({ "Link" => @early_hints_link_buffer.join(", ") })
-      @early_hints_103_sent = true
 
       if early_hints_debug_enabled?
         all_packs = (@early_hints_sent_packs[:javascript].keys + @early_hints_sent_packs[:stylesheet].keys).uniq
