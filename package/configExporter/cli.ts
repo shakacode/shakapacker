@@ -1285,7 +1285,7 @@ async function loadConfigsForEnv(
       throw new Error(
         `Failed to execute config function: ${errorMessage}\n` +
           envDetails.join("\n") +
-          `Tip: ${suggestion}`
+          `\nTip: ${suggestion}`
       )
     }
   }

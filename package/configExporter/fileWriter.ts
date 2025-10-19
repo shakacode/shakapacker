@@ -46,20 +46,27 @@ export class FileWriter {
    * Generate filename for a config export
    * Format without build: {bundler}-{env}-{type}.{ext}
    * Format with build: {bundler}-{build}-{type}.{ext}
-   * Examples:
-   *   webpack-development-client.yaml
-   *   rspack-production-server.yaml
-   *   webpack-test-all.json
-   *   webpack-development-client-hmr.yaml
-   *   webpack-dev-client.yaml (with build name)
-   *   rspack-cypress-dev-server.yaml (with build name)
-   *   webpack-dev-hmr-client-modern.yaml (custom output name)
-   *   webpack-dev-hmr-client-legacy.yaml (custom output name)
+   *
+   * @param bundler - The bundler type (webpack, rspack)
+   * @param env - The environment (development, production, test)
+   * @param configType - Type of config. Built-in: "client", "server", "all", "client-hmr". Custom: any string from outputs array
+   * @param format - Output format (yaml, json, inspect)
+   * @param buildName - Optional build name that overrides env in filename
+   *
+   * @example
+   * // Built-in types
+   * generateFilename("webpack", "development", "client", "yaml")
+   * // => "webpack-development-client.yaml"
+   *
+   * @example
+   * // Custom output names
+   * generateFilename("webpack", "development", "client-modern", "yaml", "dev-hmr")
+   * // => "webpack-dev-hmr-client-modern.yaml"
    */
   static generateFilename(
     bundler: string,
     env: string,
-    configType: string, // Supports built-in (client, server, all) and custom output names (client-modern, etc.)
+    configType: string,
     format: "yaml" | "json" | "inspect",
     buildName?: string
   ): string {

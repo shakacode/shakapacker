@@ -58,6 +58,51 @@ describe("configExporter", () => {
       )
       expect(filename).toBe("rspack-production-client.json")
     })
+
+    test("generates correct filename for custom output name client-modern", () => {
+      const { FileWriter } = require("../../package/configExporter/fileWriter")
+      const filename = FileWriter.generateFilename(
+        "webpack",
+        "development",
+        "client-modern",
+        "yaml"
+      )
+      expect(filename).toBe("webpack-development-client-modern.yaml")
+    })
+
+    test("generates correct filename for custom output name client-legacy", () => {
+      const { FileWriter } = require("../../package/configExporter/fileWriter")
+      const filename = FileWriter.generateFilename(
+        "webpack",
+        "production",
+        "client-legacy",
+        "yaml"
+      )
+      expect(filename).toBe("webpack-production-client-legacy.yaml")
+    })
+
+    test("generates correct filename for custom output name server-bundle", () => {
+      const { FileWriter } = require("../../package/configExporter/fileWriter")
+      const filename = FileWriter.generateFilename(
+        "rspack",
+        "development",
+        "server-bundle",
+        "yaml"
+      )
+      expect(filename).toBe("rspack-development-server-bundle.yaml")
+    })
+
+    test("generates correct filename with buildName override", () => {
+      const { FileWriter } = require("../../package/configExporter/fileWriter")
+      const filename = FileWriter.generateFilename(
+        "webpack",
+        "development",
+        "client-modern",
+        "yaml",
+        "dev-hmr"
+      )
+      expect(filename).toBe("webpack-dev-hmr-client-modern.yaml")
+    })
   })
 
   describe("environment variable preservation in runDoctorMode", () => {
