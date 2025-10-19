@@ -78,6 +78,7 @@ Read the [full review here](https://clutch.co/profile/shakacode#reviews?sort_by=
     - [View Helper: `image_pack_tag`](#view-helper-image_pack_tag)
     - [View Helper: `favicon_pack_tag`](#view-helper-favicon_pack_tag)
     - [View Helper: `preload_pack_asset`](#view-helper-preload_pack_asset)
+    - [View Helper: `send_pack_early_hints`](#view-helper-send_pack_early_hints)
   - [Images in Stylesheets](#images-in-stylesheets)
   - [Server-Side Rendering (SSR)](#server-side-rendering-ssr)
   - [Development](#development)
@@ -562,6 +563,24 @@ If you want to preload a static asset in your `<head>`, you can use the `preload
 ```erb
 <%= preload_pack_asset 'fonts/fa-regular-400.woff2' %>
 ```
+
+#### HTTP 103 Early Hints
+
+Automatically send early hints to browsers for faster asset loading. Supports `preload`/`prefetch`/`none` configuration per-page.
+
+```yaml
+# config/shakapacker.yml
+production:
+  early_hints:
+    enabled: true
+    debug: false # Enable to see what hints are sent (as HTML comments)
+```
+
+⚠️ **Important**: May improve or hurt performance depending on content. See the [Early Hints Guide](./docs/early_hints.md) for configuration, performance guidance, and examples.
+
+**Troubleshooting**: Enable `debug: true` to see HTML comments showing what hints were sent or why they were skipped.
+
+**Requirements:** Rails 5.2+, HTTP/2 server, modern browsers. Gracefully degrades if not supported.
 
 ### Images in Stylesheets
 

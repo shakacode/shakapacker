@@ -15,6 +15,10 @@ module ActionView::TestCase::Behavior
         extend ActionView::TestCase::Behavior
 
         @request = Class.new do
+          def env
+            @env ||= {}
+          end
+
           def send_early_hints(links) end
 
           def base_url
@@ -22,6 +26,8 @@ module ActionView::TestCase::Behavior
           end
         end.new
         @javascript_pack_tag_loaded = nil
+        @javascript_pack_tag_queue = nil
+        @stylesheet_pack_tag_queue = nil
       end
 
       it "#asset_pack_path generates the correct path" do
@@ -288,6 +294,152 @@ module ActionView::TestCase::Behavior
         expect(app_style_with_media).to eq application_stylesheet_chunks.map { |chunk| stylesheet_link_tag(chunk, media: "print") }.join("\n")
         expect(hello_stimulus_style_with_media).to eq hello_stimulus_stylesheet_chunks.map { |chunk| stylesheet_link_tag(chunk, media: "all") }.join("\n")
       end
+
+      describe "#send_pack_early_hints" do
+        it "returns nil to avoid rendering output" do
+          allow(Shakapacker.config).to receive(:early_hints).and_return({ enabled: true })
+          expect(send_pack_early_hints({ "application" => { js: "preload", css: "preload" } })).to be_nil
+        end
+
+        it "sends early hints for JavaScript and CSS" do
+          allow(Shakapacker.config).to receive(:early_hints).and_return({ enabled: true })
+          # Expect SINGLE 103 response with BOTH JS and CSS (browsers only process first 103)
+          expect(@request).to receive(:send_early_hints).once do |headers|
+            link = headers["Link"]
+            # Should contain BOTH JS and CSS in one response
+            expect(link).to match(%r{</packs/application-k344a6d59eef8632c9d1\.js>})
+            expect(link).to match(%r{</packs/application-k344a6d59eef8632c9d1\.chunk\.css>})
+          end
+          send_pack_early_hints({ "application" => { js: "preload", css: "preload" } })
+        end
+
+        it "sends early hints only for JavaScript when CSS is disabled" do
+          allow(Shakapacker.config).to receive(:early_hints).and_return({ enabled: true })
+          expect(@request).to receive(:send_early_hints).once do |headers|
+            expect(headers["Link"]).to match(%r{</packs/application-k344a6d59eef8632c9d1\.js>})
+            expect(headers["Link"]).not_to match(/\.css>/)
+          end
+          send_pack_early_hints({ "application" => { js: "preload", css: false } })
+        end
+
+        it "sends early hints only for CSS when JavaScript is disabled" do
+          allow(Shakapacker.config).to receive(:early_hints).and_return({ enabled: true })
+          expect(@request).to receive(:send_early_hints).once do |headers|
+            expect(headers["Link"]).to match(%r{</packs/application-k344a6d59eef8632c9d1\.chunk\.css>})
+            expect(headers["Link"]).not_to match(/\.js>/)
+          end
+          send_pack_early_hints({ "application" => { js: false, css: "preload" } })
+        end
+
+        it "sends early hints for multiple packs" do
+          allow(Shakapacker.config).to receive(:early_hints).and_return({ enabled: true })
+          # Expect SINGLE 103 response with ALL packs (browsers only process first 103)
+          expect(@request).to receive(:send_early_hints).once do |headers|
+            link = headers["Link"]
+            # Should contain ALL packs in one response
+            expect(link).to match(/application/)
+            expect(link).to match(/bootstrap/)
+          end
+          send_pack_early_hints({
+            "application" => { js: "preload", css: "preload" },
+            "bootstrap" => { js: "preload", css: "preload" }
+          })
+        end
+
+        it "handles prefetch rel correctly" do
+          allow(Shakapacker.config).to receive(:early_hints).and_return({ enabled: true })
+          expect(@request).to receive(:send_early_hints).once do |headers|
+            expect(headers["Link"]).to match(/rel=prefetch/)
+          end
+          send_pack_early_hints({ "application" => { js: "prefetch", css: false } })
+        end
+
+        it "does not call send_early_hints when early hints are disabled" do
+          allow(Shakapacker.config).to receive(:early_hints).and_return({ enabled: false })
+          expect(@request).not_to receive(:send_early_hints)
+          send_pack_early_hints({ "application" => { js: "preload", css: "preload" } })
+        end
+
+        it "does not call send_early_hints when request does not support it" do
+          # Create a request object without send_early_hints method
+          @request = Class.new do
+            def base_url
+              "https://example.com"
+            end
+          end.new
+
+          allow(Shakapacker.config).to receive(:early_hints).and_return({ enabled: true })
+          # Should not raise an error and should not call send_early_hints
+          expect { send_pack_early_hints({ "application" => { js: "preload", css: "preload" } }) }.not_to raise_error
+        end
+
+        it "gracefully handles missing entries" do
+          allow(Shakapacker.config).to receive(:early_hints).and_return({ enabled: true })
+          expect(@request).not_to receive(:send_early_hints)
+          send_pack_early_hints({ "nonexistent_pack" => { js: "preload", css: "preload" } })
+        end
+
+        it "sends headers in correct Rails format with Link key and comma-delimited string value" do
+          allow(Shakapacker.config).to receive(:early_hints).and_return({ enabled: true })
+          expect(@request).to receive(:send_early_hints).at_least(:once) do |headers|
+            # Verify the structure matches Rails/Puma expectations: {"Link" => "comma, delimited, string"}
+            expect(headers).to be_a(Hash)
+            expect(headers.keys).to eq(["Link"])
+            expect(headers["Link"]).to be_a(String)
+            expect(headers["Link"]).not_to be_empty
+            # Should contain comma-separated Link headers
+            links = headers["Link"].split(", ")
+            expect(links.length).to be > 0
+            # Each link should be a properly formatted Link header
+            links.each do |link|
+              expect(link).to match(/^<[^>]+>;\s*rel=preload/)
+            end
+          end
+          send_pack_early_hints({ "application" => { js: "preload", css: "preload" } })
+        end
+      end
+
+      describe "#javascript_pack_tag with automatic early hints" do
+        it "automatically sends early hints by default (preload)" do
+          allow(Shakapacker.config).to receive(:early_hints).and_return({ enabled: true })
+          expect(@request).to receive(:send_early_hints).once do |headers|
+            expect(headers["Link"]).to match(%r{</packs/application-k344a6d59eef8632c9d1\.js>})
+            expect(headers["Link"]).to match(/rel=preload/)
+          end
+          javascript_pack_tag("application")
+        end
+
+        it "sends early hints with custom per-pack handling when early_hints is a hash" do
+          allow(Shakapacker.config).to receive(:early_hints).and_return({ enabled: true })
+          expect(@request).to receive(:send_early_hints).once do |headers|
+            expect(headers["Link"]).to match(/rel=prefetch/)
+          end
+          javascript_pack_tag("application", early_hints: { "application" => "prefetch" })
+        end
+
+        it "does not send early hints when early_hints: false" do
+          allow(Shakapacker.config).to receive(:early_hints).and_return({ enabled: true })
+          expect(@request).not_to receive(:send_early_hints)
+          javascript_pack_tag("application", early_hints: false)
+        end
+
+        it "combines queue and direct args when sending early hints" do
+          allow(Shakapacker.config).to receive(:early_hints).and_return({ enabled: true })
+          append_javascript_pack_tag("bootstrap")
+          expect(@request).to receive(:send_early_hints).once do |headers|
+            # Should include both bootstrap (from queue) and application (direct arg)
+            expect(headers["Link"]).to match(%r{</packs/bootstrap-300631c4f0e0f9c865bc\.js>})
+            expect(headers["Link"]).to match(%r{</packs/application-k344a6d59eef8632c9d1\.js>})
+          end
+          javascript_pack_tag("application")
+        end
+
+        it "does not send hints when early_hints are disabled in config" do
+          allow(Shakapacker.config).to receive(:early_hints).and_return({ enabled: false })
+          expect(@request).not_to receive(:send_early_hints)
+          javascript_pack_tag("application")
+        end
+      end
     end
 
     context "with integrity hashes" do
@@ -301,6 +453,10 @@ module ActionView::TestCase::Behavior
         extend ActionView::TestCase::Behavior
 
         @request = Class.new do
+          def env
+            @env ||= {}
+          end
+
           def send_early_hints(links) end
 
           def base_url
@@ -308,6 +464,8 @@ module ActionView::TestCase::Behavior
           end
         end.new
         @javascript_pack_tag_loaded = nil
+        @javascript_pack_tag_queue = nil
+        @stylesheet_pack_tag_queue = nil
 
         allow(Shakapacker.config).to receive(:integrity).and_return({ enabled: true, cross_origin: "anonymous" })
       end
@@ -576,6 +734,55 @@ module ActionView::TestCase::Behavior
         expect_stylesheet_link_tags_match(app_style_with_media, application_stylesheet_chunks.map { |chunk| stylesheet_link_tag(chunk, media: "print", crossorigin: "anonymous", integrity: "sha384-hash") }.join("\n"))
         expect_stylesheet_link_tags_match(hello_stimulus_style_with_media, hello_stimulus_stylesheet_chunks.map { |chunk| stylesheet_link_tag(chunk, media: "all", crossorigin: "anonymous", integrity: "sha384-hash") }.join("\n"))
       end
+
+      describe "#send_pack_early_hints with integrity hashes" do
+        it "returns nil to avoid rendering output" do
+          allow(Shakapacker.config).to receive(:early_hints).and_return({ enabled: true })
+          expect(send_pack_early_hints({ "application_with_integrity" => { js: "preload", css: "preload" } })).to be_nil
+        end
+
+        it "does not call send_early_hints when early hints are disabled" do
+          allow(Shakapacker.config).to receive(:early_hints).and_return({ enabled: false })
+          expect(@request).not_to receive(:send_early_hints)
+          send_pack_early_hints({ "application_with_integrity" => { js: "preload", css: "preload" } })
+        end
+
+        it "sends early hints with integrity hashes when enabled" do
+          allow(Shakapacker.config).to receive(:early_hints).and_return({ enabled: true })
+          expect(@request).to receive(:send_early_hints).at_least(:once) do |headers|
+            expect(headers).to have_key("Link")
+            # Verify that integrity hashes are included in the Link headers
+            expect(headers["Link"]).to include("integrity=")
+          end
+          send_pack_early_hints({ "application_with_integrity" => { js: "preload", css: "preload" } })
+        end
+
+        it "gracefully handles missing entries" do
+          allow(Shakapacker.config).to receive(:early_hints).and_return({ enabled: true })
+          expect(@request).not_to receive(:send_early_hints)
+          send_pack_early_hints({ "nonexistent_pack" => { js: "preload", css: "preload" } })
+        end
+      end
+
+      describe "#javascript_pack_tag with automatic early hints and integrity hashes" do
+        it "automatically sends early hints with integrity by default" do
+          allow(Shakapacker.config).to receive(:early_hints).and_return({ enabled: true })
+          expect(@request).to receive(:send_early_hints).once do |headers|
+            expect(headers).to have_key("Link")
+            expect(headers["Link"]).to include("integrity=")
+          end
+          javascript_pack_tag("application_with_integrity")
+        end
+
+        it "does not send early hints when early_hints: false" do
+          allow(Shakapacker.config).to receive(:early_hints).and_return({ enabled: true })
+          expect(@request).not_to receive(:send_early_hints)
+          javascript_pack_tag("application_with_integrity", early_hints: false)
+        end
+      end
     end
+
+    # Note: skip_send_pack_early_hints is a class method added to ActionController::Base
+    # in the railtie, so it's tested via integration tests rather than unit tests here.
   end
 end
