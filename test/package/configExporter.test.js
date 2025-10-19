@@ -23,7 +23,7 @@ describe("configExporter", () => {
         "client",
         "yaml"
       )
-      expect(filename).toBe("webpack-development-client.yaml")
+      expect(filename).toBe("webpack-development-client.yml")
     })
 
     test("generates correct filename for server config", () => {
@@ -34,7 +34,7 @@ describe("configExporter", () => {
         "server",
         "yaml"
       )
-      expect(filename).toBe("webpack-production-server.yaml")
+      expect(filename).toBe("webpack-production-server.yml")
     })
 
     test("generates correct filename for client-hmr config", () => {
@@ -45,7 +45,7 @@ describe("configExporter", () => {
         "client-hmr",
         "yaml"
       )
-      expect(filename).toBe("webpack-development-client-hmr.yaml")
+      expect(filename).toBe("webpack-development-client-hmr.yml")
     })
 
     test("generates correct filename for json format", () => {
@@ -67,7 +67,7 @@ describe("configExporter", () => {
         "client-modern",
         "yaml"
       )
-      expect(filename).toBe("webpack-development-client-modern.yaml")
+      expect(filename).toBe("webpack-development-client-modern.yml")
     })
 
     test("generates correct filename for custom output name client-legacy", () => {
@@ -78,7 +78,7 @@ describe("configExporter", () => {
         "client-legacy",
         "yaml"
       )
-      expect(filename).toBe("webpack-production-client-legacy.yaml")
+      expect(filename).toBe("webpack-production-client-legacy.yml")
     })
 
     test("generates correct filename for custom output name server-bundle", () => {
@@ -89,7 +89,7 @@ describe("configExporter", () => {
         "server-bundle",
         "yaml"
       )
-      expect(filename).toBe("rspack-development-server-bundle.yaml")
+      expect(filename).toBe("rspack-development-server-bundle.yml")
     })
 
     test("generates correct filename with buildName override", () => {
@@ -101,7 +101,7 @@ describe("configExporter", () => {
         "yaml",
         "dev-hmr"
       )
-      expect(filename).toBe("webpack-dev-hmr-client-modern.yaml")
+      expect(filename).toBe("webpack-dev-hmr-client-modern.yml")
     })
   })
 

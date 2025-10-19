@@ -351,7 +351,7 @@ QUICK START (for troubleshooting):
 
   # Advanced output options
   bin/shakapacker-config --build=dev --stdout             # View in terminal
-  bin/shakapacker-config --build=dev --output=config.yaml # Save to specific file`
+  bin/shakapacker-config --build=dev --output=config.yml # Save to specific file`
     )
     .strict()
     .parseSync()
@@ -611,7 +611,11 @@ async function runValidateCommand(options: ExportOptions): Promise<number> {
         "development"
 
       // Auto-detect bundler using the build's environment
-      const defaultBundler = await autoDetectBundler(buildEnv, appRoot)
+      const defaultBundler = await autoDetectBundler(
+        buildEnv,
+        appRoot,
+        options.verbose
+      )
 
       // Resolve build config with the correct default bundler
       const resolvedBuild = loader.resolveBuild(
@@ -1031,7 +1035,11 @@ async function loadConfigsForEnv(
     // Use a temporary env for auto-detection, will be overridden by build config
     const tempEnv = env || "development"
     const loader = new ConfigFileLoader(options.configFile)
-    const defaultBundler = await autoDetectBundler(tempEnv, appRoot)
+    const defaultBundler = await autoDetectBundler(
+      tempEnv,
+      appRoot,
+      options.verbose
+    )
     const resolvedBuild = loader.resolveBuild(
       options.build,
       options,
@@ -1055,7 +1063,7 @@ async function loadConfigsForEnv(
       "DYLD_INSERT_LIBRARIES"
     ]
 
-    if (process.env.VERBOSE) {
+    if (options.verbose) {
       console.log(
         `[Config Exporter] Setting environment variables from build config...`
       )
@@ -1075,7 +1083,7 @@ async function loadConfigsForEnv(
         )
         continue
       }
-      if (process.env.VERBOSE) {
+      if (options.verbose) {
         console.log(`[Config Exporter]   ${key}=${value}`)
       }
       process.env[key] = value
@@ -1125,7 +1133,9 @@ async function loadConfigsForEnv(
     finalEnv = env || "development"
 
     // Auto-detect bundler if not specified
-    bundler = options.bundler || (await autoDetectBundler(finalEnv, appRoot))
+    bundler =
+      options.bundler ||
+      (await autoDetectBundler(finalEnv, appRoot, options.verbose))
 
     // Set environment variables
     process.env.NODE_ENV = finalEnv
@@ -1141,9 +1151,10 @@ async function loadConfigsForEnv(
 
   // Find and load config file
   const configFile =
-    customConfigFile || findConfigFile(bundler, appRoot, finalEnv)
+    customConfigFile ||
+    findConfigFile(bundler, appRoot, finalEnv, options.verbose)
   // Quiet mode for cleaner output - only show if verbose or errors
-  if (process.env.VERBOSE) {
+  if (options.verbose) {
     console.log(`[Config Exporter] Loading config: ${configFile}`)
     console.log(`[Config Exporter] Environment: ${finalEnv}`)
     console.log(`[Config Exporter] Bundler: ${bundler}`)
@@ -1338,7 +1349,7 @@ async function loadConfigsForEnv(
   }
 
   // Debug logging
-  if (process.env.VERBOSE || buildOutputs.length > 0) {
+  if (options.verbose || buildOutputs.length > 0) {
     console.log(
       `[Config Exporter] Webpack returned ${configs.length} config(s), buildOutputs: [${buildOutputs.join(", ")}]`
     )
@@ -1542,11 +1553,12 @@ let shakapackerConfigCache: {
 
 function loadShakapackerConfig(
   env: string,
-  appRoot: string
+  appRoot: string,
+  verbose = false
 ): { bundler: "webpack" | "rspack"; configPath: string } {
   // Return cached result if same environment
   if (shakapackerConfigCache && shakapackerConfigCache.env === env) {
-    if (process.env.VERBOSE) {
+    if (verbose) {
       console.log(
         `[Config Exporter] Using cached bundler config for env: ${env}`
       )
@@ -1554,7 +1566,7 @@ function loadShakapackerConfig(
     return shakapackerConfigCache.result
   }
 
-  if (process.env.VERBOSE) {
+  if (verbose) {
     console.log(`[Config Exporter] Loading shakapacker config for env: ${env}`)
   }
 
@@ -1623,18 +1635,20 @@ function loadShakapackerConfig(
  */
 async function autoDetectBundler(
   env: string,
-  appRoot: string
+  appRoot: string,
+  verbose = false
 ): Promise<"webpack" | "rspack"> {
-  const { bundler } = loadShakapackerConfig(env, appRoot)
+  const { bundler } = loadShakapackerConfig(env, appRoot, verbose)
   return bundler
 }
 
 function findConfigFile(
   bundler: "webpack" | "rspack",
   appRoot: string,
-  env: string
+  env: string,
+  verbose = false
 ): string {
-  const { configPath } = loadShakapackerConfig(env, appRoot)
+  const { configPath } = loadShakapackerConfig(env, appRoot, verbose)
   const extensions = ["ts", "js"]
 
   if (bundler === "rspack") {

@@ -127,21 +127,21 @@ builds:
 
       // Should have 3 files (one per build)
       expect(files).toHaveLength(3)
-      expect(files).toContain("webpack-dev-hmr-client.yaml")
-      expect(files).toContain("webpack-dev-client.yaml")
-      expect(files).toContain("webpack-prod-client.yaml")
+      expect(files).toContain("webpack-dev-hmr-client.yml")
+      expect(files).toContain("webpack-dev-client.yml")
+      expect(files).toContain("webpack-prod-client.yml")
 
       // Verify files have different content (proving environment isolation)
       const devHmrContent = require("fs").readFileSync(
-        join(outputDir, "webpack-dev-hmr-client.yaml"),
+        join(outputDir, "webpack-dev-hmr-client.yml"),
         "utf8"
       )
       const devContent = require("fs").readFileSync(
-        join(outputDir, "webpack-dev-client.yaml"),
+        join(outputDir, "webpack-dev-client.yml"),
         "utf8"
       )
       const prodContent = require("fs").readFileSync(
-        join(outputDir, "webpack-prod-client.yaml"),
+        join(outputDir, "webpack-prod-client.yml"),
         "utf8"
       )
 
@@ -195,8 +195,8 @@ builds:
       // Verify files
       expect(existsSync(outputDir)).toBe(true)
       const files = readdirSync(outputDir)
-      expect(files).toContain("webpack-custom-dev-client.yaml")
-      expect(files).toContain("webpack-custom-prod-client.yaml")
+      expect(files).toContain("webpack-custom-dev-client.yml")
+      expect(files).toContain("webpack-custom-prod-client.yml")
     })
 
     it("should use fallback builds when no config file exists", () => {
