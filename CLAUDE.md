@@ -27,6 +27,13 @@
 - Create small, focused PRs that are easy to review
 - Always create a PR immediately after pushing changes
 
+## Changelog
+
+- **Update CHANGELOG.md for user-visible changes only**
+- User-visible changes include: new features, bug fixes, breaking changes, deprecations, performance improvements
+- **Do NOT add changelog entries for**: linting fixes, code formatting, internal refactoring, test updates, documentation fixes
+- Non-user-visible changes don't need changelog entries even if they modify code
+
 ## Shakapacker-Specific
 
 - This gem supports both webpack and rspack configurations
