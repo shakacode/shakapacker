@@ -81,7 +81,7 @@ describe Shakapacker::SwcMigrator do
         expect(root_path.join("config/swc.config.js")).to exist
         config_content = File.read(root_path.join("config/swc.config.js"))
         expect(config_content).to include("module.exports")
-        expect(config_content).to include('runtime: "automatic"')
+        expect(config_content).to include("runtime: 'automatic'")
       end
 
       it "creates config/swc.config.js with Stimulus compatibility and React Fast Refresh" do
@@ -457,7 +457,7 @@ describe Shakapacker::SwcMigrator do
     it "defines default SWC configuration" do
       config = described_class::DEFAULT_SWC_CONFIG
       expect(config).to include("module.exports")
-      expect(config).to include('runtime: "automatic"')
+      expect(config).to include("runtime: 'automatic'")
       expect(config).not_to include("jsc.target")
     end
   end
