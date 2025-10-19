@@ -56,12 +56,12 @@ export class FileWriter {
    * @example
    * // Built-in types
    * generateFilename("webpack", "development", "client", "yaml")
-   * // => "webpack-development-client.yaml"
+   * // => "webpack-development-client.yml"
    *
    * @example
    * // Custom output names
    * generateFilename("webpack", "development", "client-modern", "yaml", "dev-hmr")
-   * // => "webpack-dev-hmr-client-modern.yaml"
+   * // => "webpack-dev-hmr-client-modern.yml"
    */
   static generateFilename(
     bundler: string,
@@ -72,7 +72,7 @@ export class FileWriter {
   ): string {
     let ext: string
     if (format === "yaml") {
-      ext = "yaml"
+      ext = "yml"
     } else if (format === "json") {
       ext = "json"
     } else {
