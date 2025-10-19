@@ -1216,12 +1216,17 @@ async function loadConfigsForEnv(
     let configType: "client" | "server" | "all" = "all"
 
     // Use outputs from build config if available
-    if (
-      buildOutputs.length > 0 &&
-      index < buildOutputs.length &&
-      buildOutputs[index]
-    ) {
+    if (buildOutputs.length > 0) {
+      // If outputs are specified, skip configs beyond the outputs array
+      if (index >= buildOutputs.length) {
+        return // Skip this config
+      }
+
       const outputValue = buildOutputs[index]
+      if (!outputValue) {
+        return // Skip null/undefined entries
+      }
+
       // Validate the output value is a valid config type
       if (
         outputValue === "client" ||
