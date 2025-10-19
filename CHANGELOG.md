@@ -13,6 +13,18 @@ Changes since the last non-beta release.
 
 ### Added
 
+- **Support for arbitrary output names in build configurations**. [PR #752](https://github.com/shakacode/shakapacker/pull/752) by [justin808](https://github.com/justin808).
+  - `outputs` array now accepts any custom names (e.g., `client-modern`, `client-legacy`, `server-bundle`)
+  - Previously limited to only `client`, `server`, and `all`
+  - Enables better organization of multi-config webpack builds
+- **Enhanced error reporting in config exporter**. [PR #752](https://github.com/shakacode/shakapacker/pull/752) by [justin808](https://github.com/justin808).
+  - Shows detailed environment variable state when config functions fail
+  - Provides actionable suggestions based on error patterns (e.g., missing NODE_ENV)
+  - Improved formatting with clear sections for easier debugging
+- **Config count validation for build outputs**. [PR #752](https://github.com/shakacode/shakapacker/pull/752) by [justin808](https://github.com/justin808).
+  - Validates webpack/rspack config array length matches `outputs` array
+  - Clear error messages when mismatch detected
+  - Suggests fixes with example configuration
 - **HTTP 103 Early Hints support** for faster asset loading. [PR #722](https://github.com/shakacode/shakapacker/pull/722) by [justin808](https://github.com/justin808). Fixes [#721](https://github.com/shakacode/shakapacker/issues/721).
   - **Automatic sending**: Early hints are sent automatically when `early_hints: enabled: true` in `shakapacker.yml`
   - **Per-page configuration**: Configure hints per-controller/action with `preload`/`prefetch`/`none` options

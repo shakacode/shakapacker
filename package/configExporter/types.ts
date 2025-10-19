@@ -29,7 +29,12 @@ export interface ConfigMetadata {
   bundler: string
   environment: string
   configFile: string
-  configType: "client" | "server" | "all" | "client-hmr"
+  /**
+   * Type of webpack/rspack config output.
+   * Built-in types: "client", "server", "all", "client-hmr"
+   * Custom types: Any string matching your outputs array (e.g., "client-modern", "client-legacy", "server-bundle")
+   */
+  configType: string
   configCount: number
   buildName?: string // New: name of the build from config file
   environmentVariables: {
