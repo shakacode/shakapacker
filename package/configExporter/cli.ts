@@ -807,9 +807,13 @@ async function runDoctorMode(
         // If config file exists but is invalid, show error and exit
         const errorMessage =
           error instanceof Error ? error.message : String(error)
-        console.error(`\n❌ Config file found but invalid: ${errorMessage}`)
+        console.error(`\n❌ Error loading build configuration:`)
+        console.error(`\n${errorMessage}`)
         console.error(
-          `Fix the config file or run: bin/shakapacker-config --init\n`
+          `\n💡 To fix this issue, check your build config in ${configFilePath}`
+        )
+        console.error(
+          `   or run: bin/shakapacker-config --init to regenerate it.\n`
         )
         throw error
       }
@@ -1051,6 +1055,12 @@ async function loadConfigsForEnv(
       "DYLD_INSERT_LIBRARIES"
     ]
 
+    if (process.env.VERBOSE) {
+      console.log(
+        `[Config Exporter] Setting environment variables from build config...`
+      )
+    }
+
     for (const [key, value] of Object.entries(resolvedBuild.environment)) {
       if (DANGEROUS_ENV_VARS.includes(key)) {
         console.warn(
@@ -1064,6 +1074,9 @@ async function loadConfigsForEnv(
             `Allowed variables are: ${BUILD_ENV_VARS.join(", ")}`
         )
         continue
+      }
+      if (process.env.VERBOSE) {
+        console.log(`[Config Exporter]   ${key}=${value}`)
       }
       process.env[key] = value
     }
@@ -1238,13 +1251,40 @@ async function loadConfigsForEnv(
     } catch (error: unknown) {
       const errorMessage =
         error instanceof Error ? error.message : String(error)
+
+      // Build detailed environment information for debugging
+      const envDetails = [
+        `Config file: ${configFile}`,
+        `Build: ${buildName || "default"}`,
+        ``,
+        `Current Environment Variables:`,
+        `  NODE_ENV: ${process.env.NODE_ENV || "(not set)"}`,
+        `  RAILS_ENV: ${process.env.RAILS_ENV || "(not set)"}`,
+        `  CLIENT_BUNDLE_ONLY: ${process.env.CLIENT_BUNDLE_ONLY || "(not set)"}`,
+        `  SERVER_BUNDLE_ONLY: ${process.env.SERVER_BUNDLE_ONLY || "(not set)"}`,
+        `  WEBPACK_SERVE: ${process.env.WEBPACK_SERVE || "(not set)"}`,
+        ``,
+        `Bundler env args: ${JSON.stringify(envObject)}`,
+        `Mode: ${finalEnv}`,
+        ``,
+        `Error: ${errorMessage}`,
+        ``
+      ]
+
+      // Add suggestion based on common error patterns
+      let suggestion = `Check your webpack/rspack config for errors. The config function threw an exception when called.`
+      if (errorMessage.includes("NODE_ENV") && !process.env.NODE_ENV) {
+        suggestion = `NODE_ENV is not set. ` +
+          `Your build config should set NODE_ENV in the 'environment' section.\n` +
+          `Example:\n` +
+          `  environment:\n` +
+          `    NODE_ENV: "development"`
+      }
+
       throw new Error(
-        `Failed to execute webpack/rspack config function.\n\n` +
-          `Config file: ${configFile}\n` +
-          `Build: ${buildName || "default"}\n` +
-          `Environment: ${JSON.stringify(envObject)}\n` +
-          `Error: ${errorMessage}\n\n` +
-          `Tip: Check your webpack/rspack config for errors. The config function threw an exception when called.`
+        `Failed to execute config function: ${errorMessage}\n` +
+          envDetails.join("\n") +
+          `Tip: ${suggestion}`
       )
     }
   }
@@ -1255,15 +1295,61 @@ async function loadConfigsForEnv(
     : [loadedConfig]
   const results: Array<{ config: any; metadata: ConfigMetadata }> = []
 
+  // Validate config count matches expected outputs
+  if (buildOutputs.length > 0 && configs.length !== buildOutputs.length) {
+    const errorLines = [
+      `Webpack config returned ${configs.length} config(s) but outputs array specifies ${buildOutputs.length}.`,
+      ``,
+      `Build: ${buildName || "default"}`,
+      `Config file: ${configFile}`,
+      `Expected outputs: [${buildOutputs.join(", ")}]`,
+      `Actual configs returned: ${configs.length}`,
+      ``,
+      `This mismatch means:`,
+    ]
+
+    if (configs.length < buildOutputs.length) {
+      errorLines.push(
+        `  - Your webpack config is returning FEWER configs than expected.`,
+        `  - Either update your webpack config to return ${buildOutputs.length} config(s),`,
+        `  - Or update the 'outputs' array in your build config to match what webpack returns.`
+      )
+    } else {
+      errorLines.push(
+        `  - Your webpack config is returning MORE configs than expected.`,
+        `  - Either update the 'outputs' array to include all ${configs.length} outputs,`,
+        `  - Or update your webpack config to return only ${buildOutputs.length} config(s).`
+      )
+    }
+
+    errorLines.push(
+      ``,
+      `Example fix in build config:`,
+      `  outputs:`,
+      ...Array.from({ length: configs.length }, (_, i) =>
+        i < buildOutputs.length
+          ? `    - ${buildOutputs[i]}`
+          : `    - config-${i + 1}  # Add a name for this config`
+      )
+    )
+
+    throw new Error(errorLines.join("\n"))
+  }
+
   // Debug logging
   if (process.env.VERBOSE || buildOutputs.length > 0) {
     console.log(
       `[Config Exporter] Webpack returned ${configs.length} config(s), buildOutputs: [${buildOutputs.join(", ")}]`
     )
+    if (buildOutputs.length > 0 && configs.length === buildOutputs.length) {
+      console.log(
+        `[Config Exporter] ✓ Config count matches outputs array (${configs.length})`
+      )
+    }
   }
 
   configs.forEach((cfg, index) => {
-    let configType: "client" | "server" | "all" = "all"
+    let configType: string = "all"
 
     // Use outputs from build config if available
     if (buildOutputs.length > 0) {
@@ -1280,19 +1366,10 @@ async function loadConfigsForEnv(
         return // Skip null/undefined entries
       }
 
-      // Validate the output value is a valid config type
-      if (
-        outputValue === "client" ||
-        outputValue === "server" ||
-        outputValue === "all"
-      ) {
-        configType = outputValue
-      } else {
-        throw new Error(
-          `Invalid output type '${outputValue}' at index ${index} in build '${buildName}'. ` +
-            `Allowed values are: client, server, all`
-        )
-      }
+      // Accept any string as a valid output name
+      // Built-in types: client, server, all, client-hmr
+      // Custom types: client-modern, client-legacy, server-bundle, etc.
+      configType = outputValue
     } else if (configs.length === 2) {
       // Likely client and server configs
       configType = index === 0 ? "client" : "server"

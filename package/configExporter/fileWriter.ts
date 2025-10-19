@@ -53,11 +53,13 @@ export class FileWriter {
    *   webpack-development-client-hmr.yaml
    *   webpack-dev-client.yaml (with build name)
    *   rspack-cypress-dev-server.yaml (with build name)
+   *   webpack-dev-hmr-client-modern.yaml (custom output name)
+   *   webpack-dev-hmr-client-legacy.yaml (custom output name)
    */
   static generateFilename(
     bundler: string,
     env: string,
-    configType: "client" | "server" | "all" | "client-hmr",
+    configType: string, // Supports built-in (client, server, all) and custom output names (client-modern, etc.)
     format: "yaml" | "json" | "inspect",
     buildName?: string
   ): string {

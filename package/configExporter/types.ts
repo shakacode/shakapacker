@@ -29,7 +29,7 @@ export interface ConfigMetadata {
   bundler: string
   environment: string
   configFile: string
-  configType: "client" | "server" | "all" | "client-hmr"
+  configType: string // Supports built-in types (client, server, all, client-hmr) and custom output names
   configCount: number
   buildName?: string // New: name of the build from config file
   environmentVariables: {
