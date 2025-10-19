@@ -253,7 +253,7 @@ end
 
 **Shakapacker's early hints are for pack assets (JS/CSS bundles).** For non-pack assets like hero images, videos, and fonts, you have two options.
 
-> **Note:** The [main documentation](early_hints.md#preloading-hero-images-and-videos) covers using Rails' built-in `preload_link_tag` for images and videos, which is simpler than the manual approach below.
+> **Note:** The [main documentation](early_hints.md#4-preloading-hero-images-and-videos) covers using Rails' built-in `preload_link_tag` for images and videos, which is simpler than the manual approach below.
 
 ### Option 1: Manual Early Hints (For LCP/Critical Assets)
 
