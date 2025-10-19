@@ -38,6 +38,7 @@
   - Always link to the author: `by [username](https://github.com/username)`
   - Keep formatting consistent with existing entries
   - When releasing a version, update the version diff links at the bottom of CHANGELOG.md
+  - **For breaking changes**: Use bold formatting and link to migration documentation (e.g., `**Breaking**: Description. See [Migration Guide](docs/vX_upgrade.md)`)
 
 ## Shakapacker-Specific
 
