@@ -1274,7 +1274,8 @@ async function loadConfigsForEnv(
       // Add suggestion based on common error patterns
       let suggestion = `Check your webpack/rspack config for errors. The config function threw an exception when called.`
       if (errorMessage.includes("NODE_ENV") && !process.env.NODE_ENV) {
-        suggestion = `NODE_ENV is not set. ` +
+        suggestion =
+          `NODE_ENV is not set. ` +
           `Your build config should set NODE_ENV in the 'environment' section.\n` +
           `Example:\n` +
           `  environment:\n` +
@@ -1305,7 +1306,7 @@ async function loadConfigsForEnv(
       `Expected outputs: [${buildOutputs.join(", ")}]`,
       `Actual configs returned: ${configs.length}`,
       ``,
-      `This mismatch means:`,
+      `This mismatch means:`
     ]
 
     if (configs.length < buildOutputs.length) {
