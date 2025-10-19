@@ -27,6 +27,19 @@
 - Create small, focused PRs that are easy to review
 - Always create a PR immediately after pushing changes
 
+## Changelog
+
+- **Update CHANGELOG.md for user-visible changes only**
+- User-visible changes include: new features, bug fixes, breaking changes, deprecations, performance improvements
+- **Do NOT add changelog entries for**: linting fixes, code formatting, internal refactoring, test updates, documentation fixes
+- Non-user-visible changes don't need changelog entries even if they modify code
+- **Format requirements**:
+  - Always link to the PR: `[PR #123](https://github.com/shakacode/shakapacker/pull/123)`
+  - Always link to the author: `by [username](https://github.com/username)`
+  - Keep formatting consistent with existing entries
+  - When releasing a version, update the version diff links at the bottom of CHANGELOG.md
+  - **For breaking changes**: Use bold formatting and link to migration documentation (e.g., `**Breaking**: Description. See [Migration Guide](docs/vX_upgrade.md)`)
+
 ## Shakapacker-Specific
 
 - This gem supports both webpack and rspack configurations
