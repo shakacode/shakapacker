@@ -2,7 +2,7 @@
 
 This guide shows you how to use HTTP 103 Early Hints with Shakapacker to optimize page load performance.
 
-> **📚 Related Documentation:** For advanced manual control using `send_pack_early_hints` in controllers before expensive work, see [early_hints_new_api.md](early_hints_new_api.md).
+> **📚 Related Documentation:** For advanced manual control using `send_pack_early_hints` in controllers before expensive work, see [early_hints_manual_api.md](early_hints_manual_api.md).
 
 ## What are Early Hints?
 
@@ -324,7 +324,7 @@ Most apps should use controller configuration. For advanced use cases including:
 - Per-pack customization in layouts
 - View-specific logic
 
-See the [Manual API Guide](early_hints_new_api.md) for detailed examples and patterns.
+See the [Manual API Guide](early_hints_manual_api.md) for detailed examples and patterns.
 
 ## Requirements
 
