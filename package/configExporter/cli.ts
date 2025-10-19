@@ -596,6 +596,9 @@ async function runValidateCommand(options: ExportOptions): Promise<number> {
       clearBuildEnvironmentVariables()
       restoreBuildEnvironmentVariables(savedEnv)
 
+      // Clear shakapacker config cache between builds
+      shakapackerConfigCache = null
+
       // Get the build's environment to use for auto-detection
       const buildConfig = config.builds[buildName]
       const buildEnv =
@@ -692,6 +695,9 @@ async function runAllBuildsCommand(options: ExportOptions): Promise<number> {
       clearBuildEnvironmentVariables()
       restoreBuildEnvironmentVariables(savedEnv)
 
+      // Clear shakapacker config cache between builds
+      shakapackerConfigCache = null
+
       // Create a modified options object for this build
       const buildOptions = { ...resolvedOptions, build: buildName }
       const configs = await loadConfigsForEnv(undefined, buildOptions, appRoot)
@@ -770,6 +776,9 @@ async function runDoctorMode(
           clearBuildEnvironmentVariables()
           restoreBuildEnvironmentVariables(savedEnv)
 
+          // Clear shakapacker config cache between builds
+          shakapackerConfigCache = null
+
           const configs = await loadConfigsForEnv(
             undefined,
             { ...options, build: buildName },
@@ -824,6 +833,9 @@ async function runDoctorMode(
       // Clear and restore environment to prevent leakage between builds
       clearBuildEnvironmentVariables()
       restoreBuildEnvironmentVariables(savedEnv)
+
+      // Clear shakapacker config cache between builds
+      shakapackerConfigCache = null
 
       // Set WEBPACK_SERVE for HMR config
       if (hmr) {
@@ -1080,6 +1092,21 @@ async function loadConfigsForEnv(
     const railsEnv =
       options.env || resolvedBuild.environment.RAILS_ENV || finalEnv
     process.env.RAILS_ENV = railsEnv
+
+    // Auto-set CLIENT_BUNDLE_ONLY/SERVER_BUNDLE_ONLY from outputs if not already in environment
+    // This allows webpack configs to return the correct number of bundles
+    if (
+      !resolvedBuild.environment.CLIENT_BUNDLE_ONLY &&
+      !resolvedBuild.environment.SERVER_BUNDLE_ONLY
+    ) {
+      if (buildOutputs.length === 1) {
+        if (buildOutputs[0] === "client") {
+          process.env.CLIENT_BUNDLE_ONLY = "yes"
+        } else if (buildOutputs[0] === "server") {
+          process.env.SERVER_BUNDLE_ONLY = "yes"
+        }
+      }
+    }
   } else {
     // No build config - use CLI env or default
     finalEnv = env || "development"
@@ -1092,6 +1119,7 @@ async function loadConfigsForEnv(
     process.env.RAILS_ENV = finalEnv
   }
 
+  // Handle CLI flags for client/server only
   if (options.clientOnly) {
     process.env.CLIENT_BUNDLE_ONLY = "yes"
   } else if (options.serverOnly) {
@@ -1165,7 +1193,19 @@ async function loadConfigsForEnv(
   })
 
   // eslint-disable-next-line @typescript-eslint/no-var-requires
-  let loadedConfig = require(configFile)
+  let loadedConfig: any
+  try {
+    loadedConfig = require(configFile)
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : String(error)
+    throw new Error(
+      `Failed to load webpack/rspack config file.\n\n` +
+        `Config file: ${configFile}\n` +
+        `Build: ${buildName || "default"}\n` +
+        `Error: ${errorMessage}\n\n` +
+        `Tip: Check that the config file is valid and doesn't have syntax errors.`
+    )
+  }
 
   // Handle ES module default export
   if (typeof loadedConfig === "object" && "default" in loadedConfig) {
@@ -1199,9 +1239,12 @@ async function loadConfigsForEnv(
       const errorMessage =
         error instanceof Error ? error.message : String(error)
       throw new Error(
-        `Failed to execute config function: ${errorMessage}\n` +
+        `Failed to execute webpack/rspack config function.\n\n` +
           `Config file: ${configFile}\n` +
-          `Environment: ${JSON.stringify(envObject)}`
+          `Build: ${buildName || "default"}\n` +
+          `Environment: ${JSON.stringify(envObject)}\n` +
+          `Error: ${errorMessage}\n\n` +
+          `Tip: Check your webpack/rspack config for errors. The config function threw an exception when called.`
       )
     }
   }
@@ -1403,10 +1446,21 @@ function cleanConfig(obj: any, rootPath: string): any {
 /**
  * Loads and returns shakapacker.yml configuration
  */
+// Cache to avoid duplicate loading and logging
+let shakapackerConfigCache: {
+  env: string
+  result: { bundler: "webpack" | "rspack"; configPath: string }
+} | null = null
+
 function loadShakapackerConfig(
   env: string,
   appRoot: string
 ): { bundler: "webpack" | "rspack"; configPath: string } {
+  // Return cached result if same environment
+  if (shakapackerConfigCache && shakapackerConfigCache.env === env) {
+    return shakapackerConfigCache.result
+  }
+
   try {
     const configFilePath =
       process.env.SHAKAPACKER_CONFIG ||
@@ -1422,10 +1476,12 @@ function loadShakapackerConfig(
         console.warn(
           `[Config Exporter] Invalid bundler '${bundler}' in shakapacker.yml, defaulting to webpack`
         )
-        return {
-          bundler: "webpack",
+        const result = {
+          bundler: "webpack" as const,
           configPath: bundler === "rspack" ? "config/rspack" : "config/webpack"
         }
+        shakapackerConfigCache = { env, result }
+        return result
       }
 
       // Get config path
@@ -1437,7 +1493,9 @@ function loadShakapackerConfig(
       console.log(
         `[Config Exporter] Auto-detected bundler: ${bundler}, config path: ${configPath}`
       )
-      return { bundler, configPath }
+      const result = { bundler, configPath }
+      shakapackerConfigCache = { env, result }
+      return result
     }
   } catch (error: unknown) {
     console.warn(
@@ -1445,7 +1503,9 @@ function loadShakapackerConfig(
     )
   }
 
-  return { bundler: "webpack", configPath: "config/webpack" }
+  const result = { bundler: "webpack" as const, configPath: "config/webpack" }
+  shakapackerConfigCache = { env, result }
+  return result
 }
 
 /**
