@@ -1468,7 +1468,16 @@ function loadShakapackerConfig(
 ): { bundler: "webpack" | "rspack"; configPath: string } {
   // Return cached result if same environment
   if (shakapackerConfigCache && shakapackerConfigCache.env === env) {
+    if (process.env.VERBOSE) {
+      console.log(
+        `[Config Exporter] Using cached bundler config for env: ${env}`
+      )
+    }
     return shakapackerConfigCache.result
+  }
+
+  if (process.env.VERBOSE) {
+    console.log(`[Config Exporter] Loading shakapacker config for env: ${env}`)
   }
 
   try {
@@ -1500,11 +1509,14 @@ function loadShakapackerConfig(
         customConfigPath ||
         (bundler === "rspack" ? "config/rspack" : "config/webpack")
 
+      const result = { bundler, configPath }
+      shakapackerConfigCache = { env, result }
+
+      // Only log on first call (when cache was empty)
       console.log(
         `[Config Exporter] Auto-detected bundler: ${bundler}, config path: ${configPath}`
       )
-      const result = { bundler, configPath }
-      shakapackerConfigCache = { env, result }
+
       return result
     }
   } catch (error: unknown) {
