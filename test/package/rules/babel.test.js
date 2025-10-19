@@ -19,6 +19,7 @@ const babelConfig = require("../../../package/rules/babel")
 
 // Skip tests if babel config is not available (not the active transpiler)
 if (!babelConfig) {
+  // eslint-disable-next-line jest/no-disabled-tests
   describe.skip("babel - skipped", () => {
     test.todo("skipped because babel is not the active transpiler")
   })
