@@ -4,6 +4,14 @@
 
 This guide focuses on **manual control** of early hints for advanced scenarios where you need to send hints before expensive controller work or customize hints per-pack in layouts.
 
+## Automatic vs Manual API
+
+By default, Shakapacker automatically sends early hints when `javascript_pack_tag` and `stylesheet_pack_tag` are called (after views render). The manual API allows you to:
+
+- **Send hints earlier** - Before controller work starts, maximizing parallelism
+- **Customize per-pack** - Different strategies for different packs in the same layout
+- **Override automatic behavior** - When you need fine-grained control
+
 ## ⚠️ IMPORTANT: Performance Testing Required
 
 **Early hints can improve OR hurt performance** depending on your application:
@@ -18,7 +26,7 @@ This guide focuses on **manual control** of early hints for advanced scenarios w
 2. Measure Core Web Vitals (LCP, FCP, TTI) for both groups
 3. Only keep enabled if metrics improve
 
-See the [main documentation](early_hints.md#troubleshooting) for comprehensive troubleshooting and the [Feature Testing Guide](feature_testing.md#http-103-early-hints) for testing instructions.
+See the [Feature Testing Guide](feature_testing.md#http-103-early-hints) for testing instructions and the [main documentation](early_hints.md) for comprehensive troubleshooting.
 
 ## When to Use the Manual API
 
@@ -140,19 +148,7 @@ Views can use `append_*_pack_tag` to add packs dynamically:
 
 ## Configuration
 
-See the [main documentation](early_hints.md#quick-start) for complete configuration options including global settings, priority levels (preload/prefetch/none), and per-controller configuration.
-
-Basic configuration:
-
-```yaml
-# config/shakapacker.yml
-production:
-  early_hints:
-    enabled: true # Master switch (default: false)
-    debug: true # Show HTML comments with debug info (default: false)
-    css: "preload" # 'preload' | 'prefetch' | 'none'
-    js: "preload" # 'preload' | 'prefetch' | 'none'
-```
+> **📚 Configuration:** See the [main documentation](early_hints.md#quick-start) for all configuration options including global settings, priority levels (preload/prefetch/none), and per-controller configuration.
 
 ---
 
@@ -211,11 +207,11 @@ end
 # app/controllers/posts_controller.rb
 class PostsController < ApplicationController
   def index
-    # Fast controller, use automatic hints
+    # Fast controller, automatic hints work fine (Pattern 1)
   end
 
   def show
-    # Slow controller, send hints early
+    # Slow controller, send hints early for parallelism (Pattern 2)
     send_pack_early_hints({
       "application" => { js: "preload", css: "preload" }
     })
@@ -229,6 +225,7 @@ end
 ```erb
 <%# app/views/posts/show.html.erb %>
 <% if current_user&.admin? %>
+  <%# Pattern 3: Dynamic pack loading based on user role %>
   <% append_javascript_pack_tag 'admin_tools' %>
 <% end %>
 ```
@@ -238,13 +235,12 @@ end
 <!DOCTYPE html>
 <html>
   <head>
-    <%# Automatic CSS hints for application %>
     <%= stylesheet_pack_tag 'application' %>
   </head>
   <body>
     <%= yield %>
 
-    <%# Automatic JS hints for application + admin_tools (if appended) %>
+    <%# Sends hints for application + admin_tools (if appended) %>
     <%# Won't duplicate hints already sent in controller %>
     <%= javascript_pack_tag 'application' %>
   </body>
