@@ -31,7 +31,7 @@ Changes since the last non-beta release.
   - **Performance note**: May improve or hurt page load performance depending on content - careful testing advised
   - See [Early Hints Guide](docs/early_hints.md) for detailed usage and advanced patterns
 
-## [v9.3.0-beta.0] - October 13, 2025
+## [v9.3.0-beta.5] - October 18, 2025
 
 ### Added
 
@@ -53,6 +53,15 @@ Changes since the last non-beta release.
 - **Build timing logs** for webpack and rspack. [PR #706](https://github.com/shakacode/shakapacker/pull/706) by [justin808](https://github.com/justin808).
   - Shows duration of build operations
   - Helps identify performance bottlenecks
+- **Named build configurations with `--build` flag**. [PR #728](https://github.com/shakacode/shakapacker/pull/728) by [justin808](https://github.com/justin808).
+  - Allows specifying custom build configurations: `bin/shakapacker --build=production` or `bin/shakapacker --build=test`
+  - Useful for creating specialized build configurations for different deployment environments
+- **Build validation in `bin/export-bundler-config`**. [PR #717](https://github.com/shakacode/shakapacker/pull/717) by [justin808](https://github.com/justin808).
+  - Validates webpack/rspack configuration before export to catch errors early
+  - Provides clear error messages for configuration issues
+- **Backward compatibility for rspack config in `config/webpack/`**. [PR #734](https://github.com/shakacode/shakapacker/pull/734) by [justin808](https://github.com/justin808).
+  - Rspack configurations can now be placed in `config/webpack/` directory for easier migration
+  - Maintains compatibility with existing project structures
 - Added Knip for detecting dead code to CI. [PR #675](https://github.com/shakacode/shakapacker/pull/675) by [justin808](https://github.com/justin808).
 
 ### Changed
@@ -80,6 +89,12 @@ Changes since the last non-beta release.
 - **Improved doctor command output** clarity and accuracy. [PR #682](https://github.com/shakacode/shakapacker/pull/682) by [justin808](https://github.com/justin808).
   - Better formatting and organization of diagnostic information
   - More actionable recommendations
+- **Documented `content_for` pattern to prevent FOUC** with `stylesheet_pack_tag`. [PR #737](https://github.com/shakacode/shakapacker/pull/737) by [justin808](https://github.com/justin808).
+  - Added documentation on using `content_for` to prevent Flash of Unstyled Content
+  - Best practice patterns for managing stylesheet loading order
+- **Improved upgrade documentation** to clarify dual Gemfile and package.json updates. [PR #731](https://github.com/shakacode/shakapacker/pull/731) by [justin808](https://github.com/justin808).
+  - Clearer instructions for upgrading both Ruby gem and NPM package
+  - Helps prevent version mismatch issues
 - Formatted all markdown files with prettier. [PR #673](https://github.com/shakacode/shakapacker/pull/673) by [justin808](https://github.com/justin808).
 
 ### Fixed
@@ -752,8 +767,8 @@ Note: [Rubygem is 6.3.0.pre.rc.1](https://rubygems.org/gems/shakapacker/versions
 
 See [CHANGELOG.md in rails/webpacker (up to v5.4.3)](https://github.com/rails/webpacker/blob/master/CHANGELOG.md)
 
-[Unreleased]: https://github.com/shakacode/shakapacker/compare/v9.3.0-beta.0...main
-[v9.3.0-beta.0]: https://github.com/shakacode/shakapacker/compare/v9.2.0...v9.3.0-beta.0
+[Unreleased]: https://github.com/shakacode/shakapacker/compare/v9.3.0-beta.5...main
+[v9.3.0-beta.5]: https://github.com/shakacode/shakapacker/compare/v9.2.0...v9.3.0-beta.5
 [v9.2.0]: https://github.com/shakacode/shakapacker/compare/v9.1.0...v9.2.0
 [v9.1.0]: https://github.com/shakacode/shakapacker/compare/v9.0.0...v9.1.0
 [v9.0.0]: https://github.com/shakacode/shakapacker/compare/v8.4.0...v9.0.0
