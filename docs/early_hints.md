@@ -2,6 +2,8 @@
 
 This guide shows you how to use HTTP 103 Early Hints with Shakapacker to optimize page load performance.
 
+> **📚 Related Documentation:** For advanced manual control using `send_pack_early_hints` in controllers before expensive work, see [early_hints_manual_api.md](early_hints_manual_api.md).
+
 ## What are Early Hints?
 
 HTTP 103 Early Hints is emitted **after** Rails has finished rendering but **before** the final response is sent, allowing browsers to begin fetching resources (JS, CSS) prior to receiving the full HTML response. This may significantly improve page load performance or cause an equally significant regression, depending on the page's content.
@@ -316,29 +318,13 @@ Shakapacker automatically sends early hints after your views render:
 
 ## Advanced: Manual Control
 
-Most apps should use controller configuration. Use manual control for view-specific logic:
+Most apps should use controller configuration. For advanced use cases including:
 
-```erb
-<%# app/views/layouts/application.html.erb %>
-<% send_pack_early_hints css: 'prefetch', js: 'preload' %>
+- Sending hints **before** expensive controller work for maximum parallelism
+- Per-pack customization in layouts
+- View-specific logic
 
-<!DOCTYPE html>
-<html>
-  <body>
-    <%= yield %>
-    <%= javascript_pack_tag 'application' %>
-  </body>
-</html>
-```
-
-**Per-tag override:**
-
-```erb
-<%= javascript_pack_tag 'application',
-    early_hints: { css: 'preload', js: 'prefetch' } %>
-```
-
-**Use cases:** Layout-specific optimizations, conditional hints based on view variables, A/B testing
+See the [Manual API Guide](early_hints_manual_api.md) for detailed examples and patterns.
 
 ## Requirements
 
