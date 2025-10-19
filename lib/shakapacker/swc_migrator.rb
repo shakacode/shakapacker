@@ -61,13 +61,13 @@ module Shakapacker
             keepClassNames: true,
             transform: {
               react: {
-                runtime: "automatic",
-                refresh: env.isDevelopment && env.runningWebpackDevServer
-              }
-            }
-          }
-        }
-      }
+                runtime: 'automatic',
+                refresh: env.isDevelopment && env.runningWebpackDevServer,
+              },
+            },
+          },
+        },
+      };
     JS
 
     def initialize(root_path, logger: nil)
