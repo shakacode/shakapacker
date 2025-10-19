@@ -165,6 +165,7 @@ export const ErrorMessages: Record<ErrorCode, string> = {
  */
 export class ShakapackerError extends Error {
   public readonly code: ErrorCode
+
   public readonly details?: Record<string, any>
 
   constructor(
