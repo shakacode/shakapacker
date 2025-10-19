@@ -1363,8 +1363,8 @@ async function loadConfigsForEnv(
       }
 
       const outputValue = buildOutputs[index]
-      if (!outputValue) {
-        return // Skip null/undefined entries
+      if (!outputValue || outputValue.trim() === "") {
+        return // Skip null/undefined/empty string entries
       }
 
       // Accept any string as a valid output name
