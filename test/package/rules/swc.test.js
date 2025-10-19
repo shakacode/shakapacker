@@ -19,6 +19,7 @@ const swcConfig = require("../../../package/rules/swc")
 
 // Skip tests if swc config is not available (not the active transpiler)
 if (!swcConfig) {
+  // eslint-disable-next-line jest/no-disabled-tests
   describe.skip("swc - skipped", () => {
     test.todo("skipped because swc is not the active transpiler")
   })
