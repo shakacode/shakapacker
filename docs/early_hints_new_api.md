@@ -1,4 +1,8 @@
-# HTTP 103 Early Hints - New API
+# HTTP 103 Early Hints - Manual API Guide
+
+> **📚 Main Documentation:** This guide covers the manual `send_pack_early_hints` API for advanced use cases. For the recommended controller-based API (`configure_pack_early_hints`, `skip_send_pack_early_hints`) and comprehensive setup instructions, see [early_hints.md](early_hints.md).
+
+This guide focuses on **manual control** of early hints for advanced scenarios where you need to send hints before expensive controller work or customize hints per-pack in layouts.
 
 ## ⚠️ IMPORTANT: Performance Testing Required
 
@@ -14,73 +18,21 @@
 2. Measure Core Web Vitals (LCP, FCP, TTI) for both groups
 3. Only keep enabled if metrics improve
 
-See [Troubleshooting](#performance-got-worse) if early hints decrease performance.
+See the [main documentation](early_hints.md#troubleshooting) for comprehensive troubleshooting and the [Feature Testing Guide](feature_testing.md#http-103-early-hints) for testing instructions.
 
----
+## When to Use the Manual API
 
-## Prerequisites
+Use `send_pack_early_hints` when you need:
 
-Before implementing early hints, verify you have:
+1. **Maximum parallelism** - Send hints BEFORE expensive controller work (database queries, API calls)
+2. **Per-pack customization** - Different hint strategies for different packs in layouts
+3. **Dynamic control** - Runtime decisions about which packs to hint
 
-1. **Puma 5+** with `--early-hints` flag (REQUIRED)
-2. **HTTP/2-capable proxy** in front of Puma:
-   - ✅ Thruster (Rails 8 default)
-   - ✅ nginx 1.13+
-   - ✅ Cloudflare (paid plans)
-   - ❌ Control Plane (strips 103 responses)
-   - ❌ AWS ALB/ELB (strips 103 responses)
-3. **Rails 5.2+** (for `request.send_early_hints` API)
+For most applications, use the [controller-based API](early_hints.md#controller-configuration) instead (`configure_pack_early_hints`, `skip_send_pack_early_hints`).
 
-**Critical**: Puma requires the `--early-hints` flag to send HTTP 103:
+## Manual API Patterns
 
-```bash
-# Procfile / Dockerfile
-web: bundle exec puma --early-hints -C config/puma.rb
-```
-
-Without this flag, early hints will NOT work. See [Setup](#production-setup) for details.
-
----
-
-## Quick Start
-
-### Pattern 1: Automatic (Default)
-
-By default, `javascript_pack_tag` and `stylesheet_pack_tag` automatically send early hints when early hints are enabled in config:
-
-```yaml
-# config/shakapacker.yml
-production:
-  early_hints:
-    enabled: true
-```
-
-```erb
-<%# app/views/layouts/application.html.erb %>
-<!DOCTYPE html>
-<html>
-  <head>
-    <%# Automatically sends early hints for application pack CSS %>
-    <%= stylesheet_pack_tag 'application' %>
-  </head>
-  <body>
-    <%= yield %>
-    <%# Automatically sends early hints for application pack JS %>
-    <%= javascript_pack_tag 'application' %>
-  </body>
-</html>
-```
-
-**How it works:**
-
-- When `stylesheet_pack_tag` is called, it automatically sends CSS early hints
-- When `javascript_pack_tag` is called, it automatically sends JS early hints
-- Combines queue (from `append_*_pack_tag`) + direct args
-- Default: `rel=preload` for all packs
-
----
-
-## Pattern 2: Per-Pack Customization in Layout
+### Pattern 1: Per-Pack Customization in Layout
 
 Customize hint handling per pack using a hash:
 
@@ -109,7 +61,7 @@ Customize hint handling per pack using a hash:
 
 ---
 
-## Pattern 3: Controller Override (Before Expensive Work)
+### Pattern 2: Controller Override (Before Expensive Work)
 
 Send hints manually in controller BEFORE expensive work to maximize parallelism:
 
@@ -148,7 +100,7 @@ end
 
 ---
 
-## Pattern 4: View Override
+### Pattern 3: View Override
 
 Views can use `append_*_pack_tag` to add packs dynamically:
 
@@ -188,12 +140,18 @@ Views can use `append_*_pack_tag` to add packs dynamically:
 
 ## Configuration
 
+See the [main documentation](early_hints.md#quick-start) for complete configuration options including global settings, priority levels (preload/prefetch/none), and per-controller configuration.
+
+Basic configuration:
+
 ```yaml
 # config/shakapacker.yml
 production:
   early_hints:
     enabled: true # Master switch (default: false)
     debug: true # Show HTML comments with debug info (default: false)
+    css: "preload" # 'preload' | 'prefetch' | 'none'
+    js: "preload" # 'preload' | 'prefetch' | 'none'
 ```
 
 ---
@@ -226,26 +184,20 @@ end
 
 ## When to Use Each Pattern
 
-### Pattern 1 (Automatic) - Best for:
-
-- Simple apps with consistent performance
-- Small/medium JS bundles (<500KB)
-- Fast controllers (<100ms)
-
-### Pattern 2 (Per-Pack) - Best for:
+### Pattern 1 (Per-Pack) - Best for:
 
 - Mixed vendor bundles (preload critical, prefetch non-critical)
 - Different handling for different packs
 - Layout-specific optimizations
 
-### Pattern 3 (Controller) - Best for:
+### Pattern 2 (Controller) - Best for:
 
 - Slow controllers with expensive queries (>300ms)
 - Large JS bundles (>500KB)
 - APIs calls in controller
 - Maximum parallelism needed
 
-### Pattern 4 (View Override) - Best for:
+### Pattern 3 (View Override) - Best for:
 
 - Admin sections with extra packs
 - Feature flags determining packs
@@ -303,7 +255,9 @@ end
 
 ## Preloading Non-Pack Assets (Images, Videos, Fonts)
 
-**Shakapacker's early hints are for pack assets (JS/CSS bundles).** For non-pack assets like hero images, videos, and fonts, you have two options:
+**Shakapacker's early hints are for pack assets (JS/CSS bundles).** For non-pack assets like hero images, videos, and fonts, you have two options.
+
+> **Note:** The [main documentation](early_hints.md#preloading-hero-images-and-videos) covers using Rails' built-in `preload_link_tag` for images and videos, which is simpler than the manual approach below.
 
 ### Option 1: Manual Early Hints (For LCP/Critical Assets)
 
@@ -379,7 +333,9 @@ Use Rails' `preload_link_tag` to add `<link rel="preload">` in the HTML:
 
 ## Requirements & Limitations
 
-**IMPORTANT:** Before implementing Early Hints, understand these limitations:
+> **📚 Full Requirements:** See the [main documentation](early_hints.md#requirements) for complete browser and server requirements. This section covers limitations specific to the manual API.
+
+**IMPORTANT:** Understand these limitations when using the manual API:
 
 ### Architecture: Proxy Required for HTTP/2
 
@@ -426,13 +382,9 @@ Browser (HTTP/2 103) ✅
 - Subsequent 103 responses are ignored by browsers
 - This is by design per the HTTP 103 spec
 
-### Browser Support
-
-- Chrome/Firefox 103+
-- Safari 16.4+
-- Gracefully degrades if not supported
-
 ### Testing Locally
+
+> **📚 Full Testing Guide:** See the [Feature Testing Guide](feature_testing.md#http-103-early-hints) for comprehensive testing instructions with browser DevTools and curl.
 
 **Step 1: Enable early hints in your test environment**
 
@@ -478,223 +430,29 @@ curl -v http://localhost:3000/
 
 ### Production Setup
 
-#### Thruster (Rails 8+ Default)
+> **📚 Production Setup:** See the [main documentation](early_hints.md#requirements) for complete production setup instructions including Puma configuration, proxy setup (Thruster, nginx, Cloudflare), and troubleshooting proxy issues.
 
-**Recommended**: Use [Thruster](https://github.com/basecamp/thruster) in front of Puma (Rails 8 default).
+**Quick checklist:**
 
-Thruster handles HTTP/2 → HTTP/1.1 translation automatically. No configuration needed - Early Hints just work.
-
-```dockerfile
-# Dockerfile (Rails 8 default)
-CMD ["bundle", "exec", "thrust", "./bin/rails", "server"]
-```
-
-Thruster will:
-
-1. Receive HTTP/2 requests from browsers
-2. Translate to HTTP/1.1 for Puma
-3. Pass through HTTP/1.1 103 Early Hints from Puma
-4. Translate to HTTP/2 103 for browsers
-
-#### Control Plane
-
-**Status: Early Hints NOT supported** ❌
-
-Control Plane's load balancer appears to strip HTTP 103 responses, even with correct configuration:
-
-- Puma sends HTTP/1.1 103 ✅ (verified locally with curl)
-- Control Plane LB strips 103 before reaching browser ❌
-- Workload protocol set to `HTTP` (not `HTTP2`) ✅
-- Puma started with `--early-hints` flag ✅
-
-**Recommendation**: If you need early hints, consider:
-
-- **Thruster** (Rails 8 default, supports early hints)
-- **Self-hosted nginx** (supports early hints)
-- **Cloudflare** (paid plans only)
-- Contact Control Plane support to request early hints support
-
-#### nginx (Self-Hosted)
-
-If you want HTTP/2 in production with self-hosted nginx:
-
-```nginx
-# /etc/nginx/sites-available/myapp
-upstream puma {
-  server unix:///var/www/myapp/tmp/sockets/puma.sock;
-}
-
-server {
-  listen 443 ssl http2;
-  server_name example.com;
-
-  # SSL certificates
-  ssl_certificate /path/to/cert.pem;
-  ssl_certificate_key /path/to/key.pem;
-
-  location / {
-    proxy_pass http://puma;  # Puma uses HTTP/1.1
-    proxy_set_header Host $host;
-    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-    proxy_set_header X-Forwarded-Proto $scheme;
-
-    # CRITICAL: Pass through Early Hints from Puma
-    proxy_pass_header Link;
-  }
-}
-```
-
-nginx will:
-
-1. Receive HTTP/2 request from browser
-2. Forward as HTTP/1.1 to Puma
-3. Receive HTTP/1.1 103 from Puma
-4. Translate to HTTP/2 103 for browser
+- Puma 5+ with `--early-hints` flag (REQUIRED)
+- HTTP/2-capable proxy (Thruster ✅, nginx ✅, Cloudflare ✅, Control Plane ❌, AWS ALB ❌)
+- Rails 5.2+
 
 ---
 
 ## Troubleshooting
 
-### Early Hints Not Appearing
+> **📚 Complete Troubleshooting:** See the [main documentation](early_hints.md#troubleshooting) for comprehensive troubleshooting including debug mode, proxy configuration, and performance optimization.
 
-**Step 1: Enable debug mode to see what Puma is sending**
+Quick debugging steps:
 
-```yaml
-# config/shakapacker.yml
-development:
-  early_hints:
-    enabled: true
-    debug: true # Shows hints in HTML comments
-```
-
-Reload your page and check the HTML source for comments like:
-
-```html
-<!-- Early hints sent (JS): application=preload -->
-<!-- Early hints sent (CSS): application=preload -->
-```
-
-**If debug shows hints are sent:**
-
-The issue is with your **proxy/infrastructure**, not Shakapacker. Proceed to Step 2.
-
-**If debug shows NO hints sent:**
-
-Check your config:
-
-- `early_hints.enabled: true` in `config/shakapacker.yml`
-- Rails 5.2+
-- Puma 5+
-- **Puma started with `--early-hints` flag** (REQUIRED!)
-
----
-
-**Step 2: Check if your proxy is stripping 103 responses**
-
-This is the **most common cause** of missing early hints.
-
-Test with curl against your local Puma (HTTP/1.1):
-
-```bash
-# Direct to Puma (should work)
-curl -v http://localhost:3000/
-
-# Look for:
-< HTTP/1.1 103 Early Hints
-< link: </packs/application.js>; rel=preload; as=script
-<
-< HTTP/1.1 200 OK
-```
-
-If you see the 103 response, Puma is working correctly.
-
----
-
-**Step 3: Common proxy issues**
-
-#### Control Plane
-
-**Status: NOT supported** ❌
-
-Control Plane strips HTTP 103 responses. No known workaround. Consider switching to Thruster, nginx, or Cloudflare if you need early hints.
-
-#### AWS ALB/ELB
-
-**Not supported** - ALBs strip 103 responses entirely. No workaround except:
-
-- Skip ALB (not recommended)
-- Use CloudFront in front (CloudFront supports early hints)
-
-#### Cloudflare
-
-Enable "Early Hints" in dashboard:
-
-```
-Speed > Optimization > Early Hints: ON
-```
-
-**Note:** Paid plans only (Pro/Business/Enterprise).
-
-#### nginx
-
-nginx 1.13+ passes 103 responses automatically. Ensure you're using HTTP/2:
-
-```nginx
-server {
-  listen 443 ssl http2;  # Enable HTTP/2
-
-  location / {
-    proxy_pass http://puma;  # Puma uses HTTP/1.1
-    proxy_http_version 1.1;  # Required for Puma
-  }
-}
-```
-
-No special configuration needed - nginx automatically translates HTTP/1.1 103 to HTTP/2 103.
-
-#### Thruster (Rails 8+)
-
-Thruster handles HTTP/2 → HTTP/1.1 translation automatically. Early hints just work. No configuration needed.
-
----
-
-### Debugging Checklist
-
-1. ✅ **Config enabled:** `early_hints.enabled: true` in `shakapacker.yml`
-2. ✅ **Puma `--early-hints` flag:** Puma started with this flag (REQUIRED!)
-3. ✅ **Debug mode on:** See HTML comments confirming hints sent
-4. ✅ **Puma 5+:** Early hints require Puma 5+
-5. ✅ **Rails 5.2+:** `request.send_early_hints` API available
-6. ✅ **Architecture:** Proxy in front of Puma (Thruster, nginx - NOT Control Plane or AWS ALB)
-7. ✅ **Puma protocol:** Always HTTP/1.1 (never HTTP/2)
-8. ✅ **Proxy protocol:** HTTP/2 to browser, HTTP/1.1 to Puma
-9. ✅ **Browser support:** Chrome 103+, Firefox 103+, Safari 16.4+
-
----
-
-### Performance Got Worse?
-
-If enabling early hints **decreased** performance:
-
-**Likely cause:** Page has large images/videos as LCP (Largest Contentful Paint).
-
-Preloading large JS bundles can delay image downloads, hurting LCP.
-
-**Fix:**
-
-```yaml
-# config/shakapacker.yml
-production:
-  early_hints:
-    enabled: true
-    css: "prefetch" # Lower priority
-    js: "prefetch" # Lower priority
-```
-
-Or disable entirely and use HTML `preload_link_tag` for images instead.
-
----
+1. Enable `debug: true` in shakapacker.yml to see hints in HTML comments
+2. Verify Puma started with `--early-hints` flag
+3. Test with `curl -v http://localhost:3000/` to see if Puma sends 103 responses
+4. Check if your proxy strips 103 responses (Control Plane ❌, AWS ALB ❌)
 
 ### Reference
 
+- [Main Early Hints Documentation](early_hints.md)
+- [Feature Testing Guide](feature_testing.md#http-103-early-hints)
 - [Rails 103 Early Hints Analysis](https://island94.org/2025/10/rails-103-early-hints-could-be-better-maybe-doesn-t-matter)
