@@ -1255,6 +1255,13 @@ async function loadConfigsForEnv(
     : [loadedConfig]
   const results: Array<{ config: any; metadata: ConfigMetadata }> = []
 
+  // Debug logging
+  if (process.env.VERBOSE || buildOutputs.length > 0) {
+    console.log(
+      `[Config Exporter] Webpack returned ${configs.length} config(s), buildOutputs: [${buildOutputs.join(", ")}]`
+    )
+  }
+
   configs.forEach((cfg, index) => {
     let configType: "client" | "server" | "all" = "all"
 
@@ -1262,6 +1269,9 @@ async function loadConfigsForEnv(
     if (buildOutputs.length > 0) {
       // If outputs are specified, skip configs beyond the outputs array
       if (index >= buildOutputs.length) {
+        console.log(
+          `[Config Exporter] Skipping config[${index}] - beyond outputs array`
+        )
         return // Skip this config
       }
 
