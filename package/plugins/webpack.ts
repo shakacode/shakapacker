@@ -3,7 +3,7 @@ const { requireOrError } = require("../utils/requireOrError")
 const WebpackAssetsManifest = requireOrError("webpack-assets-manifest")
 const webpack = requireOrError("webpack")
 const config = require("../config")
-const { isProduction } = require("../env")
+const { isProduction, isDevelopment } = require("../env")
 const { moduleExists } = require("../utils/helpers")
 
 const getPlugins = (): unknown[] => {
@@ -15,6 +15,7 @@ const getPlugins = (): unknown[] => {
   const plugins = [
     new webpack.EnvironmentPlugin(process.env),
     new WebpackAssetsManifestConstructor({
+      merge: isDevelopment,
       entrypoints: true,
       writeToDisk: true,
       output: config.manifestPath,
