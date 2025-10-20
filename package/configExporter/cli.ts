@@ -358,18 +358,21 @@ QUICK START (for troubleshooting):
 
   // Type assertions are safe here because yargs validates choices at runtime
   // Handle --webpack and --rspack flags
-  let { bundler } = argv
+  let bundler: "webpack" | "rspack" | undefined = argv.bundler as
+    | "webpack"
+    | "rspack"
+    | undefined
   if (argv.webpack) bundler = "webpack"
   if (argv.rspack) bundler = "rspack"
 
   return {
     bundler,
-    env: argv.env,
+    env: argv.env as "development" | "production" | "test" | undefined,
     clientOnly: argv["client-only"],
     serverOnly: argv["server-only"],
     output: argv.output,
-    depth: argv.depth,
-    format: argv.format,
+    depth: argv.depth as number | null,
+    format: argv.format as "yaml" | "json" | "inspect" | undefined,
     help: false, // yargs handles help internally
     verbose: argv.verbose,
     doctor: argv.doctor,
