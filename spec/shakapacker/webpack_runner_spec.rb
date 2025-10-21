@@ -85,6 +85,12 @@ describe "WebpackRunner" do
         .to output(/Examples/).to_stdout
         .and raise_error(SystemExit)
     end
+
+    it "supports --help=verbose flag" do
+      expect { Shakapacker::Runner.run(["--help=verbose"]) }
+        .to output(/--help=verbose/).to_stdout
+        .and raise_error(SystemExit)
+    end
   end
 
   describe "exit code handling" do

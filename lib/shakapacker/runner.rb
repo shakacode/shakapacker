@@ -29,8 +29,10 @@ module Shakapacker
       $stdout.sync = true
 
       # Show Shakapacker help and exit (don't call bundler)
-      if argv.include?("--help") || argv.include?("-h")
-        print_help
+      # Support --help, -h, and --help=verbose formats
+      help_verbose = argv.any? { |arg| arg == "--help=verbose" }
+      if argv.include?("--help") || argv.include?("-h") || help_verbose
+        print_help(verbose: help_verbose)
         exit(0)
       elsif argv.include?("--version") || argv.include?("-v")
         print_version
@@ -310,7 +312,7 @@ module Shakapacker
         $stderr.puts "Current configured path: #{config_dir}"
       end
 
-      def self.print_help
+      def self.print_help(verbose: false)
         puts <<~HELP
         ================================================================================
         SHAKAPACKER - Rails Webpack/Rspack Integration
@@ -320,6 +322,7 @@ module Shakapacker
 
         Shakapacker-specific options:
           -h, --help                Show this help message
+              --help=verbose        Show verbose help including all bundler options
           -v, --version             Show Shakapacker version
           --debug-shakapacker       Enable Node.js debugging (--inspect-brk)
           --trace-deprecation       Show stack traces for deprecations
@@ -347,7 +350,7 @@ module Shakapacker
 
         HELP
 
-        print_bundler_help
+        print_bundler_help(verbose: verbose)
 
         puts <<~HELP
 
@@ -366,8 +369,9 @@ module Shakapacker
         HELP
       end
 
-      def self.print_bundler_help
-        bundler_type, bundler_help = get_bundler_help
+      def self.print_bundler_help(verbose: false)
+        help_flag = verbose ? "--help=verbose" : "--help"
+        bundler_type, bundler_help = get_bundler_help(help_flag)
 
         if bundler_help
           bundler_name = bundler_type == :rspack ? "RSPACK" : "WEBPACK"
@@ -390,8 +394,8 @@ module Shakapacker
         end
       end
 
-      def self.get_bundler_help
-        execute_bundler_command("--help") { |stdout| stdout }
+      def self.get_bundler_help(help_flag = "--help")
+        execute_bundler_command(help_flag) { |stdout| stdout }
       end
 
       # Filter bundler help output to remove Shakapacker-managed options
