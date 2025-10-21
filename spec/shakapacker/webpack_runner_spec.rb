@@ -91,6 +91,16 @@ describe "WebpackRunner" do
         .to output(/--help=verbose/).to_stdout
         .and raise_error(SystemExit)
     end
+
+    it "passes --help=verbose to the bundler" do
+      allow(Shakapacker::Runner).to receive(:execute_bundler_command) do |flag|
+        expect(flag).to eq("--help=verbose")
+        [:webpack, "mock verbose help output"]
+      end
+
+      expect { Shakapacker::Runner.run(["--help=verbose"]) }
+        .to raise_error(SystemExit)
+    end
   end
 
   describe "exit code handling" do

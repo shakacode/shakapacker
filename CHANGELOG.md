@@ -13,6 +13,10 @@ Changes since the last non-beta release.
 
 ### Added
 
+- **`--help=verbose` flag support** to display all available webpack/rspack bundler options. [PR #763](https://github.com/shakacode/shakapacker/pull/763) by [justin808](https://github.com/justin808).
+  - Run `bin/shakapacker --help=verbose` to see complete bundler documentation
+  - Shows all webpack CLI options when using webpack
+  - Useful for discovering advanced bundler configuration options
 - **Support for arbitrary output names in build configurations**. [PR #752](https://github.com/shakacode/shakapacker/pull/752) by [justin808](https://github.com/justin808).
   - `outputs` array now accepts any custom names (e.g., `client-modern`, `client-legacy`, `server-bundle`)
   - Previously limited to only `client`, `server`, and `all`
