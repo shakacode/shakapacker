@@ -150,7 +150,7 @@ export class YamlSerializer {
 
       // Check if this is a plugin object and add its name as a comment
       const pluginName = this.getConstructorName(item)
-      const isPlugin = pluginName && keyPath.includes("plugins")
+      const isPlugin = pluginName && /(^|\.)plugins\[\d+\]/.test(keyPath)
       const isEmpty =
         typeof item === "object" &&
         item !== null &&
