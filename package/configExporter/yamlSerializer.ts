@@ -147,6 +147,22 @@ export class YamlSerializer {
 
     arr.forEach((item, index) => {
       const itemPath = `${keyPath}[${index}]`
+
+      // Check if this is a plugin object and add its name as a comment
+      const pluginName = this.getConstructorName(item)
+      const isPlugin = pluginName && /(^|\.)plugins\[\d+\]/.test(itemPath)
+      const isEmpty =
+        typeof item === "object" &&
+        item !== null &&
+        !Array.isArray(item) &&
+        Object.keys(item).length === 0
+
+      // For non-empty plugins, add comment before the plugin
+      // For empty plugins, the name will be shown inline
+      if (isPlugin && !isEmpty) {
+        lines.push(`${itemIndent}# ${pluginName}`)
+      }
+
       const serialized = this.serializeValue(item, indent + 4, itemPath)
 
       // Add documentation for array items if available
@@ -200,7 +216,13 @@ export class YamlSerializer {
 
   private serializeObject(obj: any, indent: number, keyPath: string): string {
     const keys = Object.keys(obj)
+    const constructorName = this.getConstructorName(obj)
+
+    // For empty objects, show constructor name if available
     if (keys.length === 0) {
+      if (constructorName) {
+        return `{} # ${constructorName}`
+      }
       return "{}"
     }
 
@@ -276,5 +298,19 @@ export class YamlSerializer {
     }
 
     return "./" + rel
+  }
+
+  /**
+   * Extracts the constructor name from an object
+   * Returns null for plain objects (Object constructor)
+   */
+  private getConstructorName(obj: any): string | null {
+    if (!obj || typeof obj !== "object") return null
+    if (Array.isArray(obj)) return null
+
+    const constructorName = obj.constructor?.name
+    if (!constructorName || constructorName === "Object") return null
+
+    return constructorName
   }
 }
