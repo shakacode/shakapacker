@@ -566,7 +566,7 @@ async function runValidateCommand(options: ExportOptions): Promise<number> {
       }
     }
 
-    console.log("\n" + "=".repeat(80))
+    console.log(`\n${"=".repeat(80)}`)
     console.log("🔍 Validating Builds")
     console.log("=".repeat(80))
     console.log(`\nValidating ${buildsToValidate.length} build(s)...\n`)
@@ -577,7 +577,7 @@ async function runValidateCommand(options: ExportOptions): Promise<number> {
         "   This includes all webpack/rspack compilation logs, warnings, and progress messages"
       )
       console.log("   Use without --verbose to see only errors and summaries\n")
-      console.log("=".repeat(80) + "\n")
+      console.log(`${"=".repeat(80)}\n`)
     }
 
     const results = []
@@ -585,7 +585,7 @@ async function runValidateCommand(options: ExportOptions): Promise<number> {
     // Validate each build
     for (const buildName of buildsToValidate) {
       if (options.verbose) {
-        console.log("\n" + "=".repeat(80))
+        console.log(`\n${"=".repeat(80)}`)
         console.log(`📦 VALIDATING BUILD: ${buildName}`)
         console.log("=".repeat(80))
       } else {
@@ -723,7 +723,7 @@ async function runAllBuildsCommand(options: ExportOptions): Promise<number> {
     }
 
     // Print summary
-    console.log("\n" + "=".repeat(80))
+    console.log(`\n${"=".repeat(80)}`)
     console.log("✅ All Builds Exported!")
     console.log("=".repeat(80))
     console.log(`\nCreated ${createdFiles.length} configuration file(s) in:`)
@@ -732,7 +732,7 @@ async function runAllBuildsCommand(options: ExportOptions): Promise<number> {
     createdFiles.forEach((file) => {
       console.log(`  ✓ ${basename(file)}`)
     })
-    console.log("\n" + "=".repeat(80) + "\n")
+    console.log(`\n${"=".repeat(80)}\n`)
 
     return 0
   } catch (error: unknown) {
@@ -753,7 +753,7 @@ async function runDoctorMode(
   const savedEnv = saveBuildEnvironmentVariables()
 
   try {
-    console.log("\n" + "=".repeat(80))
+    console.log(`\n${"=".repeat(80)}`)
     console.log("🔍 Config Exporter - Doctor Mode")
     console.log("=".repeat(80))
 
@@ -903,7 +903,7 @@ async function runDoctorMode(
 
 function printDoctorSummary(createdFiles: string[], targetDir: string): void {
   // Print summary
-  console.log("\n" + "=".repeat(80))
+  console.log(`\n${"=".repeat(80)}`)
   console.log("✅ Export Complete!")
   console.log("=".repeat(80))
   console.log(`\nCreated ${createdFiles.length} configuration file(s) in:`)
@@ -926,14 +926,14 @@ function printDoctorSummary(createdFiles: string[], targetDir: string): void {
   }
 
   if (shouldSuggestGitignore) {
-    console.log("\n" + "─".repeat(80))
+    console.log(`\n${"─".repeat(80)}`)
     console.log(
       "💡 Tip: Add the export directory to .gitignore to avoid committing config files:"
     )
     console.log(`\n  echo "${dirName}/" >> .gitignore\n`)
   }
 
-  console.log("\n" + "=".repeat(80) + "\n")
+  console.log(`\n${"=".repeat(80)}\n`)
 }
 
 async function runSaveMode(
@@ -950,7 +950,7 @@ async function runSaveMode(
   if (options.output) {
     // Single file output
     const combined = configs.map((c) => c.config)
-    const metadata = configs[0].metadata
+    const { metadata } = configs[0]
     metadata.configCount = combined.length
 
     const output = formatConfig(
@@ -990,15 +990,15 @@ async function runStdoutMode(
   options: ExportOptions,
   appRoot: string
 ): Promise<void> {
-  const configs = await loadConfigsForEnv(options.env!, options, appRoot)
+  const configs = await loadConfigsForEnv(options.env, options, appRoot)
   const combined = configs.map((c) => c.config)
-  const metadata = configs[0].metadata
+  const { metadata } = configs[0]
   metadata.configCount = combined.length
 
   const config = combined.length === 1 ? combined[0] : combined
   const output = formatConfig(config, metadata, options, appRoot)
 
-  console.log("\n" + "=".repeat(80) + "\n")
+  console.log(`\n${"=".repeat(80)}\n`)
   console.log(output)
 }
 
@@ -1006,9 +1006,9 @@ async function runSingleFileMode(
   options: ExportOptions,
   appRoot: string
 ): Promise<void> {
-  const configs = await loadConfigsForEnv(options.env!, options, appRoot)
+  const configs = await loadConfigsForEnv(options.env, options, appRoot)
   const combined = configs.map((c) => c.config)
-  const metadata = configs[0].metadata
+  const { metadata } = configs[0]
   metadata.configCount = combined.length
 
   const config = combined.length === 1 ? combined[0] : combined
@@ -1167,7 +1167,6 @@ async function loadConfigsForEnv(
   // Register ts-node for TypeScript config files
   if (configFile.endsWith(".ts")) {
     try {
-      // eslint-disable-next-line @typescript-eslint/no-var-requires
       require("ts-node/register/transpile-only")
     } catch (error) {
       throw new Error(
@@ -1216,7 +1215,6 @@ async function loadConfigsForEnv(
     }
   })
 
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
   let loadedConfig: any
   try {
     loadedConfig = require(configFile)
@@ -1294,9 +1292,9 @@ async function loadConfigsForEnv(
       }
 
       throw new Error(
-        `Failed to execute config function: ${errorMessage}\n` +
-          envDetails.join("\n") +
-          `\nTip: ${suggestion}`
+        `Failed to execute config function: ${errorMessage}\n${envDetails.join(
+          "\n"
+        )}\nTip: ${suggestion}`
       )
     }
   }
@@ -1453,39 +1451,37 @@ function formatConfig(
       return value
     }
     return JSON.stringify({ metadata, config }, jsonReplacer, 2)
-  } else {
-    // inspect format
-    const inspectOptions = {
-      depth: options.depth,
-      colors: false,
-      maxArrayLength: null,
-      maxStringLength: null,
-      breakLength: 120,
-      compact: false
-    }
-
-    let output =
-      "=== METADATA ===\n\n" + inspect(metadata, inspectOptions) + "\n\n"
-    output += "=== CONFIG ===\n\n"
-
-    if (Array.isArray(config)) {
-      output += `Total configs: ${config.length}\n\n`
-      config.forEach((cfg, index) => {
-        output += `--- Config [${index}] ---\n\n`
-        output += inspect(cfg, inspectOptions) + "\n\n"
-      })
-    } else {
-      output += inspect(config, inspectOptions) + "\n"
-    }
-
-    return output
   }
+  // inspect format
+  const inspectOptions = {
+    depth: options.depth,
+    colors: false,
+    maxArrayLength: null,
+    maxStringLength: null,
+    breakLength: 120,
+    compact: false
+  }
+
+  let output = `=== METADATA ===\n\n${inspect(metadata, inspectOptions)}\n\n`
+  output += "=== CONFIG ===\n\n"
+
+  if (Array.isArray(config)) {
+    output += `Total configs: ${config.length}\n\n`
+    config.forEach((cfg, index) => {
+      output += `--- Config [${index}] ---\n\n`
+      output += `${inspect(cfg, inspectOptions)}\n\n`
+    })
+  } else {
+    output += `${inspect(config, inspectOptions)}\n`
+  }
+
+  return output
 }
 
 function cleanConfig(obj: any, rootPath: string): any {
   const makePathRelative = (str: string): string => {
     if (typeof str === "string" && str.startsWith(rootPath)) {
-      return "./" + str.substring(rootPath.length + 1)
+      return `./${str.substring(rootPath.length + 1)}`
     }
     return str
   }
@@ -1706,7 +1702,6 @@ function setupNodePath(appRoot: string): void {
       ? `${nodePaths.join(delimiter)}${delimiter}${existingNodePath}`
       : nodePaths.join(delimiter)
 
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
     require("module").Module._initPaths()
   }
 }
