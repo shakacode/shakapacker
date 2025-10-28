@@ -193,6 +193,89 @@ describe("configExporter", () => {
       // Expected order: clean, filename, path
       expect(outputKeys).toStrictEqual(["clean", "filename", "path"])
     })
+
+    test("quotes strings containing square brackets", () => {
+      const {
+        YamlSerializer
+      } = require("../../package/configExporter/yamlSerializer")
+      const yaml = require("js-yaml")
+
+      const serializer = new YamlSerializer({
+        annotate: false,
+        appRoot: process.cwd()
+      })
+
+      const testConfig = {
+        options: {
+          modules: {
+            localIdentName: "[name]-[local]__[contenthash]"
+          }
+        }
+      }
+
+      const metadata = {
+        exportedAt: new Date().toISOString(),
+        environment: "test",
+        bundler: "webpack",
+        configType: "test",
+        configCount: 1
+      }
+
+      const yamlOutput = serializer.serialize(testConfig, metadata)
+
+      // Verify YAML can be parsed without errors
+      expect(() => yaml.load(yamlOutput)).not.toThrow()
+
+      // Verify the parsed value matches the original
+      const parsed = yaml.load(yamlOutput)
+      expect(parsed.options.modules.localIdentName).toBe(
+        "[name]-[local]__[contenthash]"
+      )
+    })
+
+    test("quotes RegExp strings containing special characters", () => {
+      const {
+        YamlSerializer
+      } = require("../../package/configExporter/yamlSerializer")
+      const yaml = require("js-yaml")
+
+      const serializer = new YamlSerializer({
+        annotate: false,
+        appRoot: process.cwd()
+      })
+
+      const testConfig = {
+        options: {
+          modules: {
+            localIdentRegExp: /([^/-]+|[^/]+)(?:-styles)?.module.scss$/,
+            localIdentName: "[name]-[local]__[contenthash]"
+          }
+        }
+      }
+
+      const metadata = {
+        exportedAt: new Date().toISOString(),
+        environment: "test",
+        bundler: "webpack",
+        configType: "test",
+        configCount: 1
+      }
+
+      const yamlOutput = serializer.serialize(testConfig, metadata)
+
+      // Verify YAML can be parsed without errors
+      expect(() => yaml.load(yamlOutput)).not.toThrow()
+
+      // Verify the parsed values match the originals
+      const parsed = yaml.load(yamlOutput)
+      expect(parsed.options.modules.localIdentName).toBe(
+        "[name]-[local]__[contenthash]"
+      )
+      // RegExp becomes a string in YAML
+      expect(parsed.options.modules.localIdentRegExp).toBe(
+        "([^/-]+|[^/]+)(?:-styles)?.module.scss$"
+      )
+    })
   })
 
   describe("environment variable preservation in runDoctorMode", () => {

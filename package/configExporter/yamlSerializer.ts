@@ -69,7 +69,12 @@ export class YamlSerializer {
     }
 
     if (value instanceof RegExp) {
-      return this.serializeString(value.toString())
+      // Extract pattern without slashes and flags
+      // toString() returns "/pattern/flags", we want just "pattern"
+      const regexStr = value.toString()
+      const lastSlash = regexStr.lastIndexOf("/")
+      const pattern = regexStr.slice(1, lastSlash)
+      return this.serializeString(pattern)
     }
 
     if (Array.isArray(value)) {
@@ -100,6 +105,8 @@ export class YamlSerializer {
       cleaned.includes("#") ||
       cleaned.includes("'") ||
       cleaned.includes('"') ||
+      cleaned.includes("[") ||
+      cleaned.includes("]") ||
       cleaned.startsWith(" ") ||
       cleaned.endsWith(" ")
     ) {
@@ -249,6 +256,10 @@ export class YamlSerializer {
         for (const line of value.split("\n")) {
           lines.push(`${valueIndent}${line}`)
         }
+      } else if (value instanceof RegExp || typeof value === "function") {
+        // Handle RegExp and functions through serializeValue
+        const serialized = this.serializeValue(value, indent + 2, fullKeyPath)
+        lines.push(`${keyIndent}${key}: ${serialized}`)
       } else if (
         typeof value === "object" &&
         value !== null &&
