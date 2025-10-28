@@ -27,6 +27,13 @@ module.exports = [
     ]
   },
 
+  // Global linter options
+  {
+    linterOptions: {
+      reportUnusedDisableDirectives: "error"
+    }
+  },
+
   // Base config for all JS files
   ...compat.extends("airbnb"),
   {
