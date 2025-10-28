@@ -316,7 +316,15 @@ At its core, Shakapacker's essential function is to:
 
 ### Configuration and Code
 
-**📖 For a comprehensive guide to all configuration options, see [Configuration Guide](./docs/configuration.md)**
+**📖 For a comprehensive guide to all configuration options, see the [Configuration Guide](./docs/configuration.md)**
+
+This includes documentation for:
+
+- All `config/shakapacker.yml` options (including `assets_bundler_config_path`)
+- Environment-specific configuration
+- Development server settings
+- Build configurations (`config/shakapacker-builds.yml`)
+- Best practices and common patterns
 
 You will need your file system to correspond to the setup of your `config/shakapacker.yml` file.
 

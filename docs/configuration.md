@@ -4,6 +4,7 @@ This guide covers all configuration options available in `config/shakapacker.yml
 
 ## Table of Contents
 
+- [Quick Reference](#quick-reference)
 - [Basic Configuration](#basic-configuration)
 - [Source Configuration](#source-configuration)
 - [Output Configuration](#output-configuration)
@@ -15,6 +16,33 @@ This guide covers all configuration options available in `config/shakapacker.yml
   - [Early Hints](#early_hints)
 - [Environment-Specific Configuration](#environment-specific-configuration)
 - [Build Configurations (config/shakapacker-builds.yml)](#build-configurations-configshakapacker-buildsyml)
+
+## Quick Reference
+
+Common configuration options with their defaults:
+
+| Option                         | Type    | Default                                 | Description                                                |
+| ------------------------------ | ------- | --------------------------------------- | ---------------------------------------------------------- |
+| `assets_bundler`               | string  | `"webpack"`                             | Bundler to use: `"webpack"` or `"rspack"`                  |
+| `assets_bundler_config_path`   | string  | `"config/webpack"` or `"config/rspack"` | Directory containing bundler config files                  |
+| `javascript_transpiler`        | string  | `"swc"` or `"babel"`                    | Transpiler: `"swc"`, `"babel"`, or `"esbuild"`             |
+| `source_path`                  | string  | `"app/javascript"`                      | Root directory for JavaScript source files                 |
+| `source_entry_path`            | string  | `"packs"`                               | Subdirectory within `source_path` for entry points         |
+| `nested_entries`               | boolean | `true`                                  | Discover entry points in subdirectories                    |
+| `public_output_path`           | string  | `"packs"`                               | Subdirectory within `public_root_path` for compiled assets |
+| `private_output_path`          | string  | `nil`                                   | Directory for private server-side bundles (e.g., SSR)      |
+| `compile`                      | boolean | env-specific                            | Compile assets on-demand when requests are made            |
+| `cache_manifest`               | boolean | `false` (dev), `true` (prod)            | Cache manifest.json in memory                              |
+| `compiler_strategy`            | string  | `"mtime"` (dev), `"digest"` (prod)      | How to determine if recompilation is needed                |
+| `useContentHash`               | boolean | `false` (dev), `true` (prod)            | Include content hashes in asset filenames                  |
+| `webpack_compile_output`       | boolean | `true`                                  | Show webpack/rspack compilation output                     |
+| `shakapacker_precompile`       | boolean | `true`                                  | Include in `rails assets:precompile`                       |
+| `ensure_consistent_versioning` | boolean | `true`                                  | Enforce gem/npm version matching                           |
+| `dev_server.host`              | string  | `"localhost"`                           | Development server host                                    |
+| `dev_server.port`              | number  | `3035`                                  | Development server port                                    |
+| `dev_server.hmr`               | boolean | `false`                                 | Enable Hot Module Replacement                              |
+
+For detailed explanations, examples, and additional options, see the sections below.
 
 ## Basic Configuration
 
