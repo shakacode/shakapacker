@@ -81,9 +81,17 @@ function clearBuildEnvironmentVariables(): void {
 
 // Main CLI entry point
 export async function run(args: string[]): Promise<number> {
+  let options: ExportOptions
   try {
-    const options = parseArguments(args)
+    options = parseArguments(args)
+  } catch (error: unknown) {
+    // yargs throws when validation fails (with exitProcess(false))
+    const errorMessage = error instanceof Error ? error.message : String(error)
+    console.error(`[Config Exporter] Error: ${errorMessage}`)
+    return 1
+  }
 
+  try {
     // Handle --init command
     if (options.init) {
       return runInitCommand(options)
@@ -164,6 +172,7 @@ export async function run(args: string[]): Promise<number> {
 
 export function parseArguments(args: string[]): ExportOptions {
   const argv = yargs(args)
+    .exitProcess(false)
     .version(VERSION)
     .usage(
       `Shakapacker Config Exporter
@@ -350,6 +359,11 @@ QUICK START (for troubleshooting):
       if (argv.validate && (argv.build || argv["all-builds"])) {
         throw new Error(
           "--validate cannot be used with --build or --all-builds."
+        )
+      }
+      if (argv["all-builds"] && argv.output) {
+        throw new Error(
+          "--all-builds and --output are mutually exclusive. Use --save-dir instead."
         )
       }
       if (argv.ssr && !argv.init) {

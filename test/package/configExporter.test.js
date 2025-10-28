@@ -1,4 +1,5 @@
 const { resetEnv } = require("../helpers")
+const { run } = require("../../package/configExporter/cli")
 
 // Helper function that mimics the env var restore logic from cli.ts lines 267-282
 function restoreEnvVars(saved) {
@@ -280,6 +281,46 @@ describe("configExporter", () => {
       expect(process.env.CLIENT_BUNDLE_ONLY).toBeUndefined()
       expect(process.env.WEBPACK_SERVE).toBeUndefined()
       expect(process.env.SERVER_BUNDLE_ONLY).toBeUndefined()
+    })
+  })
+
+  describe("argument validation", () => {
+    // Mock console.error to suppress error output in tests
+    let consoleErrorSpy
+
+    beforeEach(() => {
+      consoleErrorSpy = jest
+        .spyOn(console, "error")
+        .mockImplementation(() => {})
+    })
+
+    afterEach(() => {
+      consoleErrorSpy.mockRestore()
+    })
+
+    test("rejects --all-builds with --output", async () => {
+      const exitCode = await run(["--all-builds", "--output=config.yml"])
+      expect(exitCode).toBe(1)
+      expect(consoleErrorSpy).toHaveBeenCalledWith(
+        expect.stringContaining(
+          "--all-builds and --output are mutually exclusive"
+        )
+      )
+    })
+
+    test("allows --all-builds with --save-dir", async () => {
+      // This test would normally run the command, but we'll just verify it doesn't
+      // throw a validation error. Since we don't have a real config file in test,
+      // it will fail later with a different error (config file not found)
+      const exitCode = await run(["--all-builds", "--save-dir=./output"])
+      expect(exitCode).toBe(1)
+      // Should fail with config file error, not validation error
+      expect(consoleErrorSpy).toHaveBeenCalledWith(
+        expect.stringContaining("Config file")
+      )
+      expect(consoleErrorSpy).not.toHaveBeenCalledWith(
+        expect.stringContaining("mutually exclusive")
+      )
     })
   })
 })
