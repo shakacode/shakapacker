@@ -68,7 +68,6 @@ default: &default
 
   # Select whether the compiler will always use a content hash and not just in production
   # Content hashes are recommended for production cache busting
-  # https://webpack.js.org/guides/caching/
   useContentHash: true
 
   # Setting the asset host here will override Rails.application.config.asset_host.
@@ -102,6 +101,7 @@ development:
   compiler_strategy: mtime
 
   # Disable content hashes in development for faster builds
+  # https://webpack.js.org/guides/caching/
   useContentHash: false
 
   # Early hints disabled by default in development
