@@ -69,7 +69,7 @@ default: &default
   # Select whether the compiler will always use a content hash and not just in production
   # Don't use contentHash except for production for performance
   # https://webpack.js.org/guides/build-performance/#avoid-production-specific-tooling
-  useContentHash: false
+  useContentHash: true
 
   # Setting the asset host here will override Rails.application.config.asset_host.
   # Here, you can set different asset_host per environment. Note that
@@ -100,6 +100,9 @@ development:
   <<: *default
   compile: true
   compiler_strategy: mtime
+
+  # Disable content hashing in development for faster builds
+  useContentHash: false
 
   # Early hints disabled by default in development
   # To enable: Set enabled: true AND start Puma with: bundle exec puma --early-hints
@@ -163,9 +166,6 @@ production:
 
   # Production depends on precompilation of packs prior to booting for performance.
   compile: false
-
-  # Use content hash for naming assets. Cannot be overridden in production.
-  useContentHash: true
 
   # Cache manifest.json for performance
   cache_manifest: true

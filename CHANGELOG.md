@@ -11,6 +11,15 @@
 
 Changes since the last non-beta release.
 
+### Fixed
+
+- **Default `useContentHash` setting in template** now set to `true` to eliminate production warning. [PR #773](https://github.com/shakacode/shakapacker/pull/773) by [justin808](https://github.com/justin808). Fixes [#703](https://github.com/shakacode/shakapacker/issues/703).
+  - Changed default from `false` to `true` in template's default section
+  - Added explicit `useContentHash: false` override for development environment
+  - Removed redundant production override (inherits `true` from default)
+  - Eliminates confusing warning about content hashing in production
+  - Aligns with webpack best practices for cache busting
+
 ## [v9.3.0] - October 28, 2025
 
 ### Added
