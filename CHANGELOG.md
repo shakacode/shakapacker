@@ -11,6 +11,14 @@
 
 Changes since the last non-beta release.
 
+### Fixed
+
+- **Default template no longer triggers production warning**. [PR #774](https://github.com/shakacode/shakapacker/pull/774) by [justin808](https://github.com/justin808). Fixes [#703](https://github.com/shakacode/shakapacker/issues/703).
+  - Changed default `useContentHash` to `true` in `shakapacker.yml` template
+  - Eliminates confusing warning about `useContentHash: false` not being allowed in production
+  - Development environment now explicitly sets `useContentHash: false` for faster builds
+  - Production no longer needs explicit override since it inherits the correct default
+
 ## [v9.3.0] - October 28, 2025
 
 ### Added
