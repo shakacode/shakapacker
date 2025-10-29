@@ -5,7 +5,7 @@ import * as webpackMerge from "webpack-merge"
 import { resolve } from "path"
 import { existsSync } from "fs"
 // @ts-ignore: webpack is an optional peer dependency (using type-only import)
-import type { Configuration } from "webpack"
+import type { Configuration, RuleSetRule } from "webpack"
 import config from "./config"
 import baseConfig from "./environments/base"
 import devServer from "./dev_server"
@@ -14,8 +14,16 @@ import { moduleExists, canProcess } from "./utils/helpers"
 import inliningCss from "./utils/inliningCss"
 
 const rulesPath = resolve(__dirname, "rules", `${config.assets_bundler}.js`)
-const rules = require(rulesPath)
+/** Array of webpack/rspack loader rules */
+const rules = require(rulesPath) as RuleSetRule[]
 
+/**
+ * Generate webpack configuration with optional custom config.
+ *
+ * @param extraConfig - Optional webpack configuration to merge with base config
+ * @returns Final webpack configuration
+ * @throws {Error} If more than one argument is provided
+ */
 const generateWebpackConfig = (
   extraConfig: Configuration = {},
   ...extraArgs: unknown[]
@@ -41,15 +49,32 @@ const generateWebpackConfig = (
   return webpackMerge.merge({}, environmentConfig, extraConfig)
 }
 
+/**
+ * The Shakapacker module exports.
+ * This object is exported via CommonJS `export =`.
+ *
+ * NOTE: This pattern is temporary and will be replaced with named exports
+ * once issue #641 is resolved.
+ */
 export = {
-  config, // shakapacker.yml
+  /** Shakapacker configuration from shakapacker.yml */
+  config,
+  /** Development server configuration */
   devServer,
+  /** Generate webpack configuration with optional custom config */
   generateWebpackConfig,
+  /** Base webpack/rspack configuration */
   baseConfig,
+  /** Environment configuration (railsEnv, nodeEnv, etc.) */
   env,
+  /** Array of webpack/rspack loader rules */
   rules,
+  /** Check if a module exists in node_modules */
   moduleExists,
+  /** Process a file if a specific loader is available */
   canProcess,
+  /** Whether CSS should be inlined (dev server with HMR) */
   inliningCss,
+  /** webpack-merge functions (merge, mergeWithCustomize, mergeWithRules, unique) */
   ...webpackMerge
 }
