@@ -352,6 +352,21 @@ QUICK START (for troubleshooting):
           "--validate cannot be used with --build or --all-builds."
         )
       }
+      if (argv["all-builds"] && argv.output) {
+        throw new Error(
+          "--all-builds and --output are mutually exclusive. Use --save-dir instead."
+        )
+      }
+      if (argv["all-builds"] && argv.stdout) {
+        throw new Error(
+          "--all-builds and --stdout are mutually exclusive. Use --save-dir instead."
+        )
+      }
+      if (argv.stdout && argv.output) {
+        throw new Error(
+          "--stdout and --output are mutually exclusive. Use one or the other."
+        )
+      }
       if (argv.ssr && !argv.init) {
         throw new Error(
           "--ssr can only be used with --init. Use: bin/shakapacker-config --init --ssr"

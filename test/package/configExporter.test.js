@@ -409,4 +409,51 @@ describe("configExporter", () => {
       expect(process.env.SERVER_BUNDLE_ONLY).toBeUndefined()
     })
   })
+
+  describe("argument validation", () => {
+    let mockExit
+
+    beforeEach(() => {
+      // Mock process.exit to prevent yargs from killing the test process
+      mockExit = jest.spyOn(process, "exit").mockImplementation(() => {
+        throw new Error("process.exit called")
+      })
+    })
+
+    afterEach(() => {
+      mockExit.mockRestore()
+    })
+
+    test("rejects --all-builds with --output", () => {
+      const { parseArguments } = require("../../package/configExporter/cli")
+
+      expect(() => {
+        parseArguments(["--all-builds", "--output=config.yml"])
+      }).toThrow("process.exit called")
+    })
+
+    test("rejects --all-builds with --stdout", () => {
+      const { parseArguments } = require("../../package/configExporter/cli")
+
+      expect(() => {
+        parseArguments(["--all-builds", "--stdout"])
+      }).toThrow("process.exit called")
+    })
+
+    test("rejects --stdout with --output", () => {
+      const { parseArguments } = require("../../package/configExporter/cli")
+
+      expect(() => {
+        parseArguments(["--stdout", "--output=config.yml"])
+      }).toThrow("process.exit called")
+    })
+
+    test("allows --all-builds with --save-dir", () => {
+      const { parseArguments } = require("../../package/configExporter/cli")
+
+      expect(() => {
+        parseArguments(["--all-builds", "--save-dir=./configs"])
+      }).not.toThrow()
+    })
+  })
 })
