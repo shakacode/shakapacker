@@ -322,5 +322,23 @@ describe("configExporter", () => {
         expect.stringContaining("mutually exclusive")
       )
     })
+
+    test("rejects --all-builds with --stdout", async () => {
+      const exitCode = await run(["--all-builds", "--stdout"])
+      expect(exitCode).toBe(1)
+      expect(consoleErrorSpy).toHaveBeenCalledWith(
+        expect.stringContaining(
+          "--all-builds and --stdout are mutually exclusive"
+        )
+      )
+    })
+
+    test("rejects --stdout with --output", async () => {
+      const exitCode = await run(["--stdout", "--output=config.yml"])
+      expect(exitCode).toBe(1)
+      expect(consoleErrorSpy).toHaveBeenCalledWith(
+        expect.stringContaining("--stdout and --output are mutually exclusive")
+      )
+    })
   })
 })
