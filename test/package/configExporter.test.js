@@ -320,5 +320,13 @@ describe("configExporter", () => {
         parseArguments(["--stdout", "--output=config.yml"])
       }).toThrow("process.exit called")
     })
+
+    test("allows --all-builds with --save-dir", () => {
+      const { parseArguments } = require("../../package/configExporter/cli")
+
+      expect(() => {
+        parseArguments(["--all-builds", "--save-dir=./configs"])
+      }).not.toThrow()
+    })
   })
 })
