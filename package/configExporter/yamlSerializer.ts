@@ -65,7 +65,7 @@ export class YamlSerializer {
     }
 
     if (typeof value === "function") {
-      return this.serializeFunction(value)
+      return this.serializeFunction(value, indent)
     }
 
     if (value instanceof RegExp) {
@@ -76,7 +76,7 @@ export class YamlSerializer {
       const pattern = regexStr.slice(1, lastSlash)
       const flags = regexStr.slice(lastSlash + 1)
 
-      const serializedPattern = this.serializeString(pattern)
+      const serializedPattern = this.serializeString(pattern, indent)
 
       // Add flags as inline comment if present (e.g., "pattern" # flags: gi)
       if (flags) {
@@ -137,7 +137,7 @@ export class YamlSerializer {
     return cleaned
   }
 
-  private serializeFunction(fn: Function): string {
+  private serializeFunction(fn: Function, indent: number = 0): string {
     // Get function source code
     const source = fn.toString()
 
@@ -160,8 +160,8 @@ export class YamlSerializer {
       displayLines.map((line) => line.substring(minIndent)).join("\n") +
       (truncated ? "\n..." : "")
 
-    // Use serializeString to properly handle multiline
-    return this.serializeString(formatted)
+    // Use serializeString to properly handle multiline with correct indentation
+    return this.serializeString(formatted, indent)
   }
 
   private serializeArray(arr: any[], indent: number, keyPath: string): string {
