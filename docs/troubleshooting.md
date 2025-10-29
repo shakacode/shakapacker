@@ -21,7 +21,7 @@ If you're experiencing FOUC where content briefly appears unstyled before CSS lo
 
 4. You can also pass additional options to the command to run the webpack-dev-server and start the webpack-dev-server with the option `--debug-shakapacker`
 
-5. **Export your full webpack/rspack configuration for analysis**: Use the `bin/export-bundler-config` utility to export your complete resolved configuration. This is especially helpful for:
+5. **Export your full webpack/rspack configuration for analysis**: Use the `bin/shakapacker-config` utility to export your complete resolved configuration. This is especially helpful for:
    - **Migrations**: Comparing configurations before and after migrating between webpack and rspack, or between different Shakapacker versions
    - **Debugging**: Inspecting the exact configuration webpack/rspack is using, including all merged settings
    - **AI Analysis**: Uploading the exported config to ChatGPT or other AI tools for troubleshooting
@@ -35,7 +35,7 @@ If you're experiencing FOUC where content briefly appears unstyled before CSS lo
    rake shakapacker:binstubs
 
    # Export EVERYTHING for troubleshooting (dev + prod, annotated YAML)
-   bin/export-bundler-config --doctor
+   bin/shakapacker-config --doctor
    # Creates: webpack-development-client.yaml, webpack-development-server.yaml,
    #          webpack-production-client.yaml, webpack-production-server.yaml
    ```
@@ -44,28 +44,28 @@ If you're experiencing FOUC where content briefly appears unstyled before CSS lo
 
    ```bash
    # Save current environment configs with auto-generated names
-   bin/export-bundler-config --save
+   bin/shakapacker-config --save
    # Creates: webpack-development-client.yaml, webpack-development-server.yaml
 
    # Save to specific directory
-   bin/export-bundler-config --save --save-dir=./debug-configs
+   bin/shakapacker-config --save --save-dir=./debug-configs
 
    # Export only client config for production
-   bin/export-bundler-config --save --env=production --client-only
+   bin/shakapacker-config --save --env=production --client-only
    # Creates: webpack-production-client.yaml
 
    # Compare development vs production configs
-   bin/export-bundler-config --save --save-dir=./configs
+   bin/shakapacker-config --save --save-dir=./configs
    diff configs/webpack-development-client.yaml configs/webpack-production-client.yaml
 
    # View config in terminal (no files created)
-   bin/export-bundler-config
+   bin/shakapacker-config
 
    # Export without inline documentation annotations
-   bin/export-bundler-config --save --no-annotate
+   bin/shakapacker-config --save --no-annotate
 
    # Export in JSON format for programmatic analysis
-   bin/export-bundler-config --save --format=json
+   bin/shakapacker-config --save --format=json
    ```
 
    **Config files are automatically named:** `{bundler}-{env}-{type}.{ext}`
@@ -73,9 +73,9 @@ If you're experiencing FOUC where content briefly appears unstyled before CSS lo
    - YAML format includes inline documentation explaining each config key
    - Separate files for client and server bundles (cleaner than combined)
 
-   See `bin/export-bundler-config --help` for all available options.
+   See `bin/shakapacker-config --help` for all available options.
 
-6. **Validate your webpack/rspack builds**: Use `bin/export-bundler-config --validate` to test that all your build configurations compile successfully. This is especially useful for:
+6. **Validate your webpack/rspack builds**: Use `bin/shakapacker-config --validate` to test that all your build configurations compile successfully. This is especially useful for:
    - **CI/CD pipelines**: Catch configuration errors before deployment
    - **Migration testing**: Verify builds work after upgrading webpack, rspack, or Shakapacker
    - **Multi-environment testing**: Ensure all build configurations (dev, prod, HMR) compile correctly
@@ -84,13 +84,13 @@ If you're experiencing FOUC where content briefly appears unstyled before CSS lo
 
    ```bash
    # Validate all builds defined in .bundler-config.yml
-   bin/export-bundler-config --validate
+   bin/shakapacker-config --validate
 
    # Validate with full output logs (shows all webpack/rspack compilation output)
-   bin/export-bundler-config --validate --verbose
+   bin/shakapacker-config --validate --verbose
 
    # Validate a specific build
-   bin/export-bundler-config --validate-build=dev-hmr
+   bin/shakapacker-config --validate-build=dev-hmr
    ```
 
    **Verbose Mode:**
@@ -108,13 +108,13 @@ If you're experiencing FOUC where content briefly appears unstyled before CSS lo
 
    ```bash
    # Create a .bundler-config.yml file with example builds
-   bin/export-bundler-config --init
+   bin/shakapacker-config --init
 
    # List all available builds
-   bin/export-bundler-config --list-builds
+   bin/shakapacker-config --list-builds
 
    # Validate all builds
-   bin/export-bundler-config --validate
+   bin/shakapacker-config --validate
    ```
 
    **Advanced options:**
@@ -177,9 +177,9 @@ If you're experiencing FOUC where content briefly appears unstyled before CSS lo
    💡 Debugging Tips:
       To get more details, run individual builds with --verbose:
 
-      bin/export-bundler-config --validate-build prod --verbose
+      bin/shakapacker-config --validate-build prod --verbose
 
-      Or validate all builds with full output: bin/export-bundler-config --validate --verbose
+      Or validate all builds with full output: bin/shakapacker-config --validate --verbose
    ================================================================================
    ```
 
@@ -189,13 +189,13 @@ If you're experiencing FOUC where content briefly appears unstyled before CSS lo
    1. **Run a specific build with verbose output** to see full webpack/rspack logs:
 
       ```bash
-      bin/export-bundler-config --validate-build prod --verbose
+      bin/shakapacker-config --validate-build prod --verbose
       ```
 
    2. **Validate all builds with verbose output** to see everything:
 
       ```bash
-      bin/export-bundler-config --validate --verbose
+      bin/shakapacker-config --validate --verbose
       ```
 
    3. **Test individual builds manually** using the same configuration:

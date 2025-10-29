@@ -601,13 +601,13 @@ To compare your webpack and rspack configurations during migration:
 
 ```bash
 # Export webpack configs before switching
-bin/export-bundler-config --doctor
+bin/shakapacker-config --doctor
 
 # Switch to rspack
 rails shakapacker:switch_bundler rspack --install-deps
 
 # Export rspack configs to compare
-bin/export-bundler-config --doctor
+bin/shakapacker-config --doctor
 
 # Compare the files in shakapacker-config-exports/
 diff shakapacker-config-exports/webpack-production-client.yaml \
