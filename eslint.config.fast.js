@@ -28,7 +28,8 @@ module.exports = [
   // Global linter options
   {
     linterOptions: {
-      reportUnusedDisableDirectives: "error"
+      reportUnusedDisableDirectives: "error",
+      reportUnusedInlineConfigs: "error"
     }
   },
 
