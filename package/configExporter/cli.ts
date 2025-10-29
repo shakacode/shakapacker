@@ -11,7 +11,8 @@ import {
   ConfigMetadata,
   FileOutput,
   BUILD_ENV_VARS,
-  DANGEROUS_ENV_VARS,
+  isBuildEnvVar,
+  isDangerousEnvVar,
   DEFAULT_EXPORT_DIR,
   DEFAULT_CONFIG_FILE
 } from "./types"
@@ -1082,13 +1083,13 @@ async function loadConfigsForEnv(
     }
 
     for (const [key, value] of Object.entries(resolvedBuild.environment)) {
-      if ((DANGEROUS_ENV_VARS as readonly string[]).includes(key)) {
+      if (isDangerousEnvVar(key)) {
         console.warn(
           `[Config Exporter] Warning: Skipping dangerous environment variable: ${key}`
         )
         continue
       }
-      if (!(BUILD_ENV_VARS as readonly string[]).includes(key)) {
+      if (!isBuildEnvVar(key)) {
         console.warn(
           `[Config Exporter] Warning: Skipping non-whitelisted environment variable: ${key}. ` +
             `Allowed variables are: ${BUILD_ENV_VARS.join(", ")}`

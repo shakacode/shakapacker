@@ -27,6 +27,24 @@ export const DANGEROUS_ENV_VARS = [
 ] as const
 
 /**
+ * Type predicate to check if a string is in the BUILD_ENV_VARS whitelist
+ */
+export function isBuildEnvVar(
+  key: string
+): key is (typeof BUILD_ENV_VARS)[number] {
+  return (BUILD_ENV_VARS as readonly string[]).includes(key)
+}
+
+/**
+ * Type predicate to check if a string is in the DANGEROUS_ENV_VARS blacklist
+ */
+export function isDangerousEnvVar(
+  key: string
+): key is (typeof DANGEROUS_ENV_VARS)[number] {
+  return (DANGEROUS_ENV_VARS as readonly string[]).includes(key)
+}
+
+/**
  * Default directory for config exports when using --doctor or file output modes.
  */
 export const DEFAULT_EXPORT_DIR = "shakapacker-config-exports"
