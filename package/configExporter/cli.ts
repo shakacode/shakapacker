@@ -13,10 +13,15 @@ import { ConfigFileLoader, generateSampleConfigFile } from "./configFile"
 import { BuildValidator } from "./buildValidator"
 
 // Read version from package.json
-const packageJson = JSON.parse(
-  readFileSync(resolve(__dirname, "../../package.json"), "utf8")
-)
-const VERSION = packageJson.version
+let VERSION = "unknown"
+try {
+  const packageJson = JSON.parse(
+    readFileSync(resolve(__dirname, "../../package.json"), "utf8")
+  )
+  VERSION = packageJson.version || "unknown"
+} catch (error) {
+  console.warn("Could not read version from package.json")
+}
 
 /**
  * Environment variable names that can be set by build configurations
@@ -30,6 +35,64 @@ const BUILD_ENV_VARS = [
   "CLIENT_BUNDLE_ONLY",
   "SERVER_BUNDLE_ONLY"
 ] as const
+
+/**
+ * Validates that a path is within the current working directory
+ * to prevent path traversal attacks including symlink-based bypasses
+ * @param path - The path to validate
+ * @param baseDir - The base directory (defaults to cwd)
+ * @throws Error if path is outside baseDir
+ */
+function validatePath(path: string, baseDir: string = process.cwd()): void {
+  const { realpathSync } = require("fs")
+
+  // Resolve the base directory (should always exist)
+  let resolvedBase: string
+  try {
+    resolvedBase = realpathSync(baseDir)
+  } catch (error) {
+    // If baseDir doesn't exist, fall back to resolve (for testing)
+    resolvedBase = resolve(baseDir)
+  }
+
+  // For output paths that may not exist yet, validate the parent directory
+  // and then construct the full path
+  const absolutePath = resolve(path)
+  const parentDir = dirname(absolutePath)
+  const fileName = basename(absolutePath)
+
+  // Resolve parent directory through symlinks if it exists
+  let resolvedParent: string
+  try {
+    resolvedParent = realpathSync(parentDir)
+  } catch (error) {
+    // Parent doesn't exist - validate the absolute path as-is
+    // This handles cases like --output=./new-dir/config.yml where new-dir doesn't exist yet
+    if (
+      !absolutePath.startsWith(resolvedBase + sep) &&
+      absolutePath !== resolvedBase
+    ) {
+      throw new Error(
+        `Path must be within ${resolvedBase}. Got: ${absolutePath}`
+      )
+    }
+    return
+  }
+
+  // Reconstruct the full path with the resolved (symlink-free) parent
+  const resolvedPath = resolve(resolvedParent, fileName)
+
+  // Check if resolved path is within base directory
+  // Must either be equal to base or start with base + separator
+  if (
+    resolvedPath !== resolvedBase &&
+    !resolvedPath.startsWith(resolvedBase + sep)
+  ) {
+    throw new Error(
+      `Path must be within ${resolvedBase}. Got: ${resolvedPath} (symlink-resolved from ${path})`
+    )
+  }
+}
 
 /**
  * Saves current values of build environment variables for later restoration
@@ -103,6 +166,14 @@ export async function run(args: string[]): Promise<number> {
     // Apply defaults
     const resolvedOptions = applyDefaults(options)
 
+    // Validate paths for security AFTER defaults are applied
+    if (resolvedOptions.output) {
+      validatePath(resolvedOptions.output)
+    }
+    if (resolvedOptions.saveDir) {
+      validatePath(resolvedOptions.saveDir)
+    }
+
     // Validate after defaults are applied
     if (resolvedOptions.annotate && resolvedOptions.format !== "yaml") {
       throw new Error(
@@ -144,7 +215,7 @@ export async function run(args: string[]): Promise<number> {
   }
 }
 
-function parseArguments(args: string[]): ExportOptions {
+export function parseArguments(args: string[]): ExportOptions {
   const argv = yargs(args)
     .version(VERSION)
     .usage(
@@ -235,11 +306,27 @@ QUICK START (for troubleshooting):
         "Enable inline documentation (YAML only, default with --doctor or file output)"
     })
     .option("depth", {
-      type: "number",
+      // Note: type: "number" is intentionally omitted to allow the string "null"
+      // which yargs would reject if type was set to "number". The coerce function
+      // handles type validation and conversion for both numeric values and "null".
       default: 20,
       coerce: (value: number | string) => {
+        // Handle "null" string for unlimited depth
         if (value === "null" || value === null) return null
-        return typeof value === "number" ? value : parseInt(String(value), 10)
+
+        // Reject non-numeric types (arrays, objects, etc.)
+        if (typeof value !== "number" && typeof value !== "string") {
+          throw new Error(
+            `--depth must be a number or 'null', got: ${typeof value}`
+          )
+        }
+
+        const parsed =
+          typeof value === "number" ? value : parseInt(String(value), 10)
+        if (isNaN(parsed)) {
+          throw new Error(`--depth must be a number or 'null', got: ${value}`)
+        }
+        return parsed
       },
       description: "Inspection depth (use 'null' for unlimited)"
     })
