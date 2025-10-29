@@ -179,8 +179,8 @@ describe("YamlSerializer", () => {
 
       const result = serializer.serialize(config, metadata)
 
-      // RegExp objects serialize as empty objects {}
-      expect(result).toContain("test: {}")
+      // RegExp objects serialize as their pattern without slashes
+      expect(result).toContain("test: \\.js$")
     })
   })
 })
