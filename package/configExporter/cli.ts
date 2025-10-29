@@ -11,6 +11,7 @@ import { YamlSerializer } from "./yamlSerializer"
 import { FileWriter } from "./fileWriter"
 import { ConfigFileLoader, generateSampleConfigFile } from "./configFile"
 import { BuildValidator } from "./buildValidator"
+import { safeResolvePath } from "../utils/pathValidation"
 
 // Read version from package.json
 let VERSION = "unknown"
@@ -20,7 +21,10 @@ try {
   )
   VERSION = packageJson.version || "unknown"
 } catch (error) {
-  console.warn("Could not read version from package.json")
+  console.warn(
+    "Could not read version from package.json:",
+    error instanceof Error ? error.message : String(error)
+  )
 }
 
 /**
@@ -35,64 +39,6 @@ const BUILD_ENV_VARS = [
   "CLIENT_BUNDLE_ONLY",
   "SERVER_BUNDLE_ONLY"
 ] as const
-
-/**
- * Validates that a path is within the current working directory
- * to prevent path traversal attacks including symlink-based bypasses
- * @param path - The path to validate
- * @param baseDir - The base directory (defaults to cwd)
- * @throws Error if path is outside baseDir
- */
-function validatePath(path: string, baseDir: string = process.cwd()): void {
-  const { realpathSync } = require("fs")
-
-  // Resolve the base directory (should always exist)
-  let resolvedBase: string
-  try {
-    resolvedBase = realpathSync(baseDir)
-  } catch (error) {
-    // If baseDir doesn't exist, fall back to resolve (for testing)
-    resolvedBase = resolve(baseDir)
-  }
-
-  // For output paths that may not exist yet, validate the parent directory
-  // and then construct the full path
-  const absolutePath = resolve(path)
-  const parentDir = dirname(absolutePath)
-  const fileName = basename(absolutePath)
-
-  // Resolve parent directory through symlinks if it exists
-  let resolvedParent: string
-  try {
-    resolvedParent = realpathSync(parentDir)
-  } catch (error) {
-    // Parent doesn't exist - validate the absolute path as-is
-    // This handles cases like --output=./new-dir/config.yml where new-dir doesn't exist yet
-    if (
-      !absolutePath.startsWith(resolvedBase + sep) &&
-      absolutePath !== resolvedBase
-    ) {
-      throw new Error(
-        `Path must be within ${resolvedBase}. Got: ${absolutePath}`
-      )
-    }
-    return
-  }
-
-  // Reconstruct the full path with the resolved (symlink-free) parent
-  const resolvedPath = resolve(resolvedParent, fileName)
-
-  // Check if resolved path is within base directory
-  // Must either be equal to base or start with base + separator
-  if (
-    resolvedPath !== resolvedBase &&
-    !resolvedPath.startsWith(resolvedBase + sep)
-  ) {
-    throw new Error(
-      `Path must be within ${resolvedBase}. Got: ${resolvedPath} (symlink-resolved from ${path})`
-    )
-  }
-}
 
 /**
  * Saves current values of build environment variables for later restoration
@@ -167,11 +113,12 @@ export async function run(args: string[]): Promise<number> {
     const resolvedOptions = applyDefaults(options)
 
     // Validate paths for security AFTER defaults are applied
+    // Use safeResolvePath which validates and resolves symlinks
     if (resolvedOptions.output) {
-      validatePath(resolvedOptions.output)
+      safeResolvePath(appRoot, resolvedOptions.output)
     }
     if (resolvedOptions.saveDir) {
-      validatePath(resolvedOptions.saveDir)
+      safeResolvePath(appRoot, resolvedOptions.saveDir)
     }
 
     // Validate after defaults are applied
@@ -306,9 +253,8 @@ QUICK START (for troubleshooting):
         "Enable inline documentation (YAML only, default with --doctor or file output)"
     })
     .option("depth", {
-      // Note: type: "number" is intentionally omitted to allow the string "null"
-      // which yargs would reject if type was set to "number". The coerce function
-      // handles type validation and conversion for both numeric values and "null".
+      // Note: type omitted to allow string "null" (yargs would reject it).
+      // Coerce function handles validation for both numbers and "null".
       default: 20,
       coerce: (value: number | string) => {
         // Handle "null" string for unlimited depth
