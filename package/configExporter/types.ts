@@ -28,6 +28,10 @@ export const DANGEROUS_ENV_VARS = [
 
 /**
  * Type predicate to check if a string is in the BUILD_ENV_VARS whitelist
+ *
+ * Note: The type assertion is necessary because TypeScript's type system cannot
+ * infer that .includes() on a readonly const array will properly narrow the type.
+ * The assertion is safe because we're only widening the type for the includes() check.
  */
 export function isBuildEnvVar(
   key: string
@@ -37,6 +41,10 @@ export function isBuildEnvVar(
 
 /**
  * Type predicate to check if a string is in the DANGEROUS_ENV_VARS blacklist
+ *
+ * Note: The type assertion is necessary because TypeScript's type system cannot
+ * infer that .includes() on a readonly const array will properly narrow the type.
+ * The assertion is safe because we're only widening the type for the includes() check.
  */
 export function isDangerousEnvVar(
   key: string
