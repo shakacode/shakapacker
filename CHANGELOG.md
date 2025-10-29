@@ -11,125 +11,43 @@
 
 Changes since the last non-beta release.
 
-### Added
-
-- **`--help=verbose` flag support** to display all available webpack/rspack bundler options. [PR #763](https://github.com/shakacode/shakapacker/pull/763) by [justin808](https://github.com/justin808).
-  - Run `bin/shakapacker --help=verbose` to see complete bundler documentation
-  - Shows all webpack CLI options when using webpack
-  - Useful for discovering advanced bundler configuration options
-- **Support for arbitrary output names in build configurations**. [PR #752](https://github.com/shakacode/shakapacker/pull/752) by [justin808](https://github.com/justin808).
-  - `outputs` array now accepts any custom names (e.g., `client-modern`, `client-legacy`, `server-bundle`)
-  - Previously limited to only `client`, `server`, and `all`
-  - Enables better organization of multi-config webpack builds
-- **Enhanced error reporting in config exporter**. [PR #752](https://github.com/shakacode/shakapacker/pull/752) by [justin808](https://github.com/justin808).
-  - Shows detailed environment variable state when config functions fail
-  - Provides actionable suggestions based on error patterns (e.g., missing NODE_ENV)
-  - Improved formatting with clear sections for easier debugging
-- **Config count validation for build outputs**. [PR #752](https://github.com/shakacode/shakapacker/pull/752) by [justin808](https://github.com/justin808).
-  - Validates webpack/rspack config array length matches `outputs` array
-  - Clear error messages when mismatch detected
-  - Suggests fixes with example configuration
-- **HTTP 103 Early Hints support** for faster asset loading. [PR #722](https://github.com/shakacode/shakapacker/pull/722) by [justin808](https://github.com/justin808). Fixes [#721](https://github.com/shakacode/shakapacker/issues/721).
-  - **Automatic sending**: Early hints are sent automatically when `early_hints: enabled: true` in `shakapacker.yml`
-  - **Per-page configuration**: Configure hints per-controller/action with `preload`/`prefetch`/`none` options
-  - **Hero image/video preloading**: Use Rails' built-in `preload_link_tag` (automatically sends early hints)
-  - **Zero-config upgrade**: No changes to layouts or views needed - just enable the config!
-  - Works seamlessly with existing `append_javascript_pack_tag` / `append_stylesheet_pack_tag` pattern
-  - Automatically discovers packs from queues populated by views/partials
-  - New `configure_pack_early_hints` class method for controller-level configuration
-  - New `skip_send_pack_early_hints` helper to opt-out for specific controllers (e.g., JSON APIs)
-  - Optional manual control: `configure_early_hints` can be called in controllers or views
-  - Added `early_hints:` option to `javascript_pack_tag` for per-tag control
-  - New `early_hints` configuration in `shakapacker.yml` with per-environment settings (`enabled: false` by default)
-  - Requires Rails 5.2+ and HTTP/2-capable server (e.g., Puma 5+)
-  - Browser support: All modern browsers (Chrome/Edge/Firefox 103+, Safari 16.4+)
-  - Gracefully degrades if not supported
-  - **Performance note**: May improve or hurt page load performance depending on content - careful testing advised
-  - See [Early Hints Guide](docs/early_hints.md) for detailed usage and advanced patterns
-
-## [v9.3.0-beta.5] - October 18, 2025
+## [v9.3.0] - October 28, 2025
 
 ### Added
 
-- **New `precompile_hook` configuration option** to run custom commands during asset precompilation. [PR #678](https://github.com/shakacode/shakapacker/pull/678) by [justin808](https://github.com/justin808).
-  - Allows executing custom scripts or tasks during the precompile process
-  - Configure in `shakapacker.yml` with `precompile_hook: "command to run"`
-- **New `assets_bundler_config_path` configuration option** for custom bundler config locations. [PR #710](https://github.com/shakacode/shakapacker/pull/710) by [justin808](https://github.com/justin808).
-  - Allows specifying a custom path for webpack/rspack configuration files
-  - Useful for complex project structures or shared configurations
-- **YAML output format support for `bin/export-bundler-config`**. [PR #704](https://github.com/shakacode/shakapacker/pull/704) by [justin808](https://github.com/justin808).
-  - New `--format yaml` option exports bundler configuration as YAML
-  - Easier to read than JSON for debugging and documentation
-- **Custom help messages for `bin/shakapacker` commands**. [PR #702](https://github.com/shakacode/shakapacker/pull/702) by [justin808](https://github.com/justin808).
-  - Improved help output for better command discoverability
-  - Clear usage examples and option descriptions
-- **HMR client config export in doctor mode**. [PR #701](https://github.com/shakacode/shakapacker/pull/701) by [justin808](https://github.com/justin808).
-  - `bin/export-bundler-config --doctor` now includes HMR client configuration
-  - Helps debug Hot Module Replacement issues
-- **Build timing logs** for webpack and rspack. [PR #706](https://github.com/shakacode/shakapacker/pull/706) by [justin808](https://github.com/justin808).
-  - Shows duration of build operations
-  - Helps identify performance bottlenecks
-- **Named build configurations with `--build` flag**. [PR #728](https://github.com/shakacode/shakapacker/pull/728) by [justin808](https://github.com/justin808).
-  - Allows specifying custom build configurations: `bin/shakapacker --build=production` or `bin/shakapacker --build=test`
-  - Useful for creating specialized build configurations for different deployment environments
-- **Build validation in `bin/export-bundler-config`**. [PR #717](https://github.com/shakacode/shakapacker/pull/717) by [justin808](https://github.com/justin808).
-  - Validates webpack/rspack configuration before export to catch errors early
-  - Provides clear error messages for configuration issues
-- **Backward compatibility for rspack config in `config/webpack/`**. [PR #734](https://github.com/shakacode/shakapacker/pull/734) by [justin808](https://github.com/justin808).
-  - Rspack configurations can now be placed in `config/webpack/` directory for easier migration
-  - Maintains compatibility with existing project structures
-- Added Knip for detecting dead code to CI. [PR #675](https://github.com/shakacode/shakapacker/pull/675) by [justin808](https://github.com/justin808).
+- **HTTP 103 Early Hints support** for faster asset loading. [PR #722](https://github.com/shakacode/shakapacker/pull/722) by [justin808](https://github.com/justin808). Automatically sends early hints when `early_hints: enabled: true` in `shakapacker.yml`. Works with `append_javascript_pack_tag`/`append_stylesheet_pack_tag`, supports per-controller/action configuration, and includes helpers like `configure_pack_early_hints` and `skip_send_pack_early_hints`. Requires Rails 5.2+ and HTTP/2-capable server. See [Early Hints Guide](docs/early_hints.md).
+- **`--help=verbose` flag** to display all available webpack/rspack bundler options. [PR #763](https://github.com/shakacode/shakapacker/pull/763) by [justin808](https://github.com/justin808). Run `bin/shakapacker --help=verbose` to see complete bundler documentation.
+- **Support for arbitrary output names in build configurations**. [PR #752](https://github.com/shakacode/shakapacker/pull/752) by [justin808](https://github.com/justin808). The `outputs` array now accepts any custom names (e.g., `client-modern`, `client-legacy`, `server-bundle`) instead of being limited to only `client`, `server`, and `all`.
+- **Enhanced error reporting in config exporter**. [PR #752](https://github.com/shakacode/shakapacker/pull/752) by [justin808](https://github.com/justin808). Shows detailed environment variable state when config functions fail and provides actionable suggestions based on error patterns.
+- **Config count validation for build outputs**. [PR #752](https://github.com/shakacode/shakapacker/pull/752) by [justin808](https://github.com/justin808). Validates webpack/rspack config array length matches `outputs` array with clear error messages and suggested fixes.
+- **`precompile_hook` configuration option** to run custom commands during asset precompilation. [PR #678](https://github.com/shakacode/shakapacker/pull/678) by [justin808](https://github.com/justin808). Configure in `shakapacker.yml` with `precompile_hook: "command to run"`.
+- **`assets_bundler_config_path` configuration option** for custom bundler config locations. [PR #710](https://github.com/shakacode/shakapacker/pull/710) by [justin808](https://github.com/justin808). Allows specifying a custom path for webpack/rspack configuration files.
+- **YAML output format support for `bin/export-bundler-config`**. [PR #704](https://github.com/shakacode/shakapacker/pull/704) by [justin808](https://github.com/justin808). New `--format yaml` option exports bundler configuration as YAML.
+- **Plugin names displayed in YAML config export**. [PR #750](https://github.com/shakacode/shakapacker/pull/750) by [justin808](https://github.com/justin808). Shows plugin constructor names in exported configuration to help identify which plugins are active.
+- **Custom help messages for `bin/shakapacker` commands**. [PR #702](https://github.com/shakacode/shakapacker/pull/702) by [justin808](https://github.com/justin808). Improved help output for better command discoverability with clear usage examples.
+- **HMR client config export in doctor mode**. [PR #701](https://github.com/shakacode/shakapacker/pull/701) by [justin808](https://github.com/justin808). `bin/export-bundler-config --doctor` now includes HMR client configuration to help debug Hot Module Replacement issues.
+- **Build timing logs** for webpack and rspack. [PR #706](https://github.com/shakacode/shakapacker/pull/706) by [justin808](https://github.com/justin808). Shows duration of build operations to help identify performance bottlenecks.
+- **Named build configurations with `--build` flag**. [PR #728](https://github.com/shakacode/shakapacker/pull/728) by [justin808](https://github.com/justin808). Allows specifying custom build configurations like `bin/shakapacker --build=production` or `bin/shakapacker --build=test`.
+- **Build validation in `bin/export-bundler-config`**. [PR #717](https://github.com/shakacode/shakapacker/pull/717) by [justin808](https://github.com/justin808). Validates webpack/rspack configuration before export to catch errors early.
+- **Backward compatibility for rspack config in `config/webpack/`**. [PR #734](https://github.com/shakacode/shakapacker/pull/734) by [justin808](https://github.com/justin808). Rspack configurations can now be placed in `config/webpack/` directory for easier migration.
+- **Merge option for WebpackAssetsManifestPlugin**. [PR #760](https://github.com/shakacode/shakapacker/pull/760) by [justin808](https://github.com/justin808). Adds `merge` option to control manifest merging behavior, useful for multi-compiler setups.
+- Support for esbuild-loader v5. [PR #758](https://github.com/shakacode/shakapacker/pull/758) by [justin808](https://github.com/justin808).
 
 ### Changed
 
-- **Migrated to ESLint v9 with flat config format**. [PR #677](https://github.com/shakacode/shakapacker/pull/677) by [justin808](https://github.com/justin808).
-  - Updated all ESLint plugins to latest versions
-  - Uses new flat config format for better maintainability
-- **Replaced custom argument parser with yargs**. [PR #692](https://github.com/shakacode/shakapacker/pull/692) by [justin808](https://github.com/justin808).
-  - More robust command-line argument parsing
-  - Better error messages and help output
-- Replaced `require` with `import` in package/index.ts. [PR #674](https://github.com/shakacode/shakapacker/pull/674) by [justin808](https://github.com/justin808).
+- **Generated `swc.config.js` now uses single quotes and trailing commas**. [PR #755](https://github.com/shakacode/shakapacker/pull/755) by [justin808](https://github.com/justin808). Consistent code style in generated configuration files.
 - Updated @rspack dependencies to 1.5.8. [PR #700](https://github.com/shakacode/shakapacker/pull/700) by [justin808](https://github.com/justin808).
 
 ### Improved
 
-- **Enhanced rspack migration documentation** with real-world lessons. [PR #713](https://github.com/shakacode/shakapacker/pull/713) by [justin808](https://github.com/justin808).
-  - Added practical migration guidance based on actual project experiences
-  - Common pitfalls and solutions documented
-- **Consolidated duplicate configuration documentation**. [PR #714](https://github.com/shakacode/shakapacker/pull/714) by [justin808](https://github.com/justin808).
-  - Removed redundant documentation
-  - Single source of truth for configuration options
-- **Improved error messages** to suggest `assets_bundler_config_path`. [PR #712](https://github.com/shakacode/shakapacker/pull/712) by [justin808](https://github.com/justin808).
-  - More helpful error messages when bundler config is not found
-  - Suggests using `assets_bundler_config_path` for custom locations
-- **Improved doctor command output** clarity and accuracy. [PR #682](https://github.com/shakacode/shakapacker/pull/682) by [justin808](https://github.com/justin808).
-  - Better formatting and organization of diagnostic information
-  - More actionable recommendations
-- **Documented `content_for` pattern to prevent FOUC** with `stylesheet_pack_tag`. [PR #737](https://github.com/shakacode/shakapacker/pull/737) by [justin808](https://github.com/justin808).
-  - Added documentation on using `content_for` to prevent Flash of Unstyled Content
-  - Best practice patterns for managing stylesheet loading order
-- **Improved upgrade documentation** to clarify dual Gemfile and package.json updates. [PR #731](https://github.com/shakacode/shakapacker/pull/731) by [justin808](https://github.com/justin808).
-  - Clearer instructions for upgrading both Ruby gem and NPM package
-  - Helps prevent version mismatch issues
-- Formatted all markdown files with prettier. [PR #673](https://github.com/shakacode/shakapacker/pull/673) by [justin808](https://github.com/justin808).
+- **Improved error messages** to suggest `assets_bundler_config_path`. [PR #712](https://github.com/shakacode/shakapacker/pull/712) by [justin808](https://github.com/justin808). More helpful error messages when bundler config is not found, suggesting use of `assets_bundler_config_path` for custom locations.
+- **Improved doctor command output** clarity and accuracy. [PR #682](https://github.com/shakacode/shakapacker/pull/682) by [justin808](https://github.com/justin808). Better formatting and organization of diagnostic information with more actionable recommendations.
 
 ### Fixed
 
-- Fixed rspack native bindings installation issue when switching bundlers. [PR #672](https://github.com/shakacode/shakapacker/pull/672) by [justin808](https://github.com/justin808).
-  - Running `rake shakapacker:switch_bundler rspack -- --install-deps` now properly installs platform-specific native bindings
-  - Fixes "Cannot find native binding" error when switching to rspack
-- Fixed Rails constant error when using custom environments like staging. [PR #681](https://github.com/shakacode/shakapacker/pull/681) by [justin808](https://github.com/justin808).
-  - `RAILS_ENV=staging` no longer causes "uninitialized constant Shakapacker::Instance::Rails" error
-  - Shakapacker now works in non-Rails contexts (like standalone runner)
-- Fixed TypeScript type definitions to export proper types instead of `any`. [PR #684](https://github.com/shakacode/shakapacker/pull/684) by [justin808](https://github.com/justin808).
-  - Previously `package/index.d.ts` was exporting all types as `any`, breaking IDE autocomplete
-  - Now properly exports typed interfaces for `WebpackConfig`, `RspackConfig`, etc.
-- Fixed integrity config handling and sass-loader version check. [PR #688](https://github.com/shakacode/shakapacker/pull/688) by [justin808](https://github.com/justin808).
-  - Properly handles subresource integrity configuration
-  - Correctly detects sass-loader version for conditional logic
-- Prevented index.d.ts confusion in build process. [PR #698](https://github.com/shakacode/shakapacker/pull/698) by [justin808](https://github.com/justin808).
-  - TypeScript declaration files no longer interfere with build output
-- Fixed yarn.lock formatting changes in Conductor setup. [PR #683](https://github.com/shakacode/shakapacker/pull/683) by [justin808](https://github.com/justin808).
+- Fixed Rails constant error when using custom environments like staging. [PR #681](https://github.com/shakacode/shakapacker/pull/681) by [justin808](https://github.com/justin808). `RAILS_ENV=staging` no longer causes "uninitialized constant Shakapacker::Instance::Rails" error. Shakapacker now works in non-Rails contexts.
+- Fixed TypeScript type definitions to export proper types instead of `any`. [PR #684](https://github.com/shakacode/shakapacker/pull/684) by [justin808](https://github.com/justin808). Previously `package/index.d.ts` was exporting all types as `any`, breaking IDE autocomplete. Now properly exports typed interfaces.
+- Fixed integrity config handling and sass-loader version check. [PR #688](https://github.com/shakacode/shakapacker/pull/688) by [justin808](https://github.com/justin808). Properly handles subresource integrity configuration and correctly detects sass-loader version for conditional logic.
 
 ## [v9.2.0] - October 9, 2025
 
@@ -783,8 +701,8 @@ Note: [Rubygem is 6.3.0.pre.rc.1](https://rubygems.org/gems/shakapacker/versions
 
 See [CHANGELOG.md in rails/webpacker (up to v5.4.3)](https://github.com/rails/webpacker/blob/master/CHANGELOG.md)
 
-[Unreleased]: https://github.com/shakacode/shakapacker/compare/v9.3.0-beta.5...main
-[v9.3.0-beta.5]: https://github.com/shakacode/shakapacker/compare/v9.2.0...v9.3.0-beta.5
+[Unreleased]: https://github.com/shakacode/shakapacker/compare/v9.3.0...main
+[v9.3.0]: https://github.com/shakacode/shakapacker/compare/v9.2.0...v9.3.0
 [v9.2.0]: https://github.com/shakacode/shakapacker/compare/v9.1.0...v9.2.0
 [v9.1.0]: https://github.com/shakacode/shakapacker/compare/v9.0.0...v9.1.0
 [v9.0.0]: https://github.com/shakacode/shakapacker/compare/v8.4.0...v9.0.0
