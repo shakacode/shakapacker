@@ -18,7 +18,7 @@ let VERSION = "unknown"
 try {
   const packageJson = JSON.parse(
     readFileSync(resolve(__dirname, "../../package.json"), "utf8")
-  )
+  ) as { version?: string }
   VERSION = packageJson.version || "unknown"
 } catch (error) {
   console.warn(
@@ -391,21 +391,18 @@ QUICK START (for troubleshooting):
 
   // Type assertions are safe here because yargs validates choices at runtime
   // Handle --webpack and --rspack flags
-  let bundler: "webpack" | "rspack" | undefined = argv.bundler as
-    | "webpack"
-    | "rspack"
-    | undefined
+  let { bundler } = argv
   if (argv.webpack) bundler = "webpack"
   if (argv.rspack) bundler = "rspack"
 
   return {
     bundler,
-    env: argv.env as "development" | "production" | "test" | undefined,
+    env: argv.env,
     clientOnly: argv["client-only"],
     serverOnly: argv["server-only"],
     output: argv.output,
-    depth: argv.depth as number | null,
-    format: argv.format as "yaml" | "json" | "inspect" | undefined,
+    depth: argv.depth,
+    format: argv.format,
     help: false, // yargs handles help internally
     verbose: argv.verbose,
     doctor: argv.doctor,

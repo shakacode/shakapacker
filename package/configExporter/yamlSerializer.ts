@@ -19,7 +19,7 @@ export class YamlSerializer {
   /**
    * Serialize a config object to YAML string with metadata header
    */
-  serialize(config: any, metadata: ConfigMetadata): string {
+  serialize(config: unknown, metadata: ConfigMetadata): string {
     const output: string[] = []
 
     // Add metadata header
@@ -47,7 +47,11 @@ export class YamlSerializer {
     return lines.join("\n")
   }
 
-  private serializeValue(value: any, indent: number, keyPath: string): string {
+  private serializeValue(
+    value: unknown,
+    indent: number,
+    keyPath: string
+  ): string {
     if (value === null || value === undefined) {
       return "null"
     }
@@ -65,7 +69,7 @@ export class YamlSerializer {
     }
 
     if (typeof value === "function") {
-      return this.serializeFunction(value)
+      return this.serializeFunction(value as (...args: unknown[]) => unknown)
     }
 
     if (value instanceof RegExp) {
@@ -77,10 +81,15 @@ export class YamlSerializer {
     }
 
     if (typeof value === "object") {
-      return this.serializeObject(value, indent, keyPath)
+      return this.serializeObject(
+        value as Record<string, unknown>,
+        indent,
+        keyPath
+      )
     }
 
-    return String(value)
+    // Fallback for any other types (symbols, etc)
+    return JSON.stringify(value)
   }
 
   private serializeString(str: string, indent: number = 0): string {
@@ -110,7 +119,7 @@ export class YamlSerializer {
     return cleaned
   }
 
-  private serializeFunction(fn: Function): string {
+  private serializeFunction(fn: (...args: unknown[]) => unknown): string {
     // Get function source code
     const source = fn.toString()
 
@@ -137,7 +146,11 @@ export class YamlSerializer {
     return this.serializeString(formatted)
   }
 
-  private serializeArray(arr: any[], indent: number, keyPath: string): string {
+  private serializeArray(
+    arr: unknown[],
+    indent: number,
+    keyPath: string
+  ): string {
     if (arr.length === 0) {
       return "[]"
     }
@@ -215,7 +228,11 @@ export class YamlSerializer {
     return `\n${lines.join("\n")}`
   }
 
-  private serializeObject(obj: any, indent: number, keyPath: string): string {
+  private serializeObject(
+    obj: Record<string, unknown>,
+    indent: number,
+    keyPath: string
+  ): string {
     const keys = Object.keys(obj).sort()
     const constructorName = YamlSerializer.getConstructorName(obj)
 
@@ -259,7 +276,7 @@ export class YamlSerializer {
         } else {
           lines.push(`${keyIndent}${key}:`)
           const nestedLines = this.serializeObject(
-            value,
+            value as Record<string, unknown>,
             indent + 2,
             fullKeyPath
           )
@@ -305,13 +322,19 @@ export class YamlSerializer {
    * Extracts the constructor name from an object
    * Returns null for plain objects (Object constructor)
    */
-  private static getConstructorName(obj: any): string | null {
+  private static getConstructorName(obj: unknown): string | null {
     if (!obj || typeof obj !== "object") return null
     if (Array.isArray(obj)) return null
 
-    const constructorName = obj.constructor?.name
-    if (!constructorName || constructorName === "Object") return null
+    const constructorName = (obj as Record<string, unknown>).constructor
+    if (
+      !constructorName ||
+      typeof constructorName !== "function" ||
+      constructorName.name === "Object"
+    ) {
+      return null
+    }
 
-    return constructorName
+    return constructorName.name
   }
 }
