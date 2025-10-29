@@ -11,7 +11,9 @@
   - [Server-Side Rendering (SSR) Considerations](#server-side-rendering-ssr-considerations)
 - [Key Differences from Webpack](#key-differences-from-webpack)
 - [Migration Steps](#migration-steps)
+- [Build Verification](#build-verification)
 - [Configuration Best Practices](#configuration-best-practices)
+- [Common Migration Issues](#common-migration-issues)
 - [Common Issues and Solutions](#common-issues-and-solutions)
 - [Performance Tips](#performance-tips)
 - [Debugging Configuration](#debugging-configuration)
@@ -312,6 +314,73 @@ bin/shakapacker --mode production
 - [ ] Deploy to staging
 - [ ] Monitor performance improvements
 
+## Build Verification
+
+After completing your migration, verify that everything works correctly:
+
+### Basic Build Verification
+
+```bash
+# Clean previous build artifacts
+rm -rf public/packs public/packs-test
+
+# Test development build
+bin/shakapacker
+
+# Test production build
+RAILS_ENV=production bin/shakapacker
+
+# Verify assets were generated
+ls -la public/packs/
+```
+
+### SSR Build Verification
+
+If your application uses Server-Side Rendering, perform these additional checks:
+
+```bash
+# 1. Verify server bundle was created
+ls -la public/packs/*-server-bundle.js
+
+# 2. Test SSR rendering in Rails console
+bundle exec rails console
+# In console:
+ReactOnRails::ServerRenderingPool.reset_pool
+# Then visit a page that uses SSR and check for errors
+
+# 3. Run full test suite (watch for SSR-related failures)
+bundle exec rspec
+
+# 4. Check for CSS extraction issues in SSR
+# Look for "Cannot read properties of undefined" errors in tests
+# or intermittent test failures related to styling
+```
+
+### Common Verification Issues
+
+**Silent SSR failures**: If your SSR pages render without errors but components appear unstyled or with missing data, check:
+
+- Server bundle is being generated correctly
+- CSS extraction is disabled for server bundle (see [Common Migration Issues](#common-migration-issues))
+- React runtime configuration is compatible with your SSR framework
+
+**Error patterns to watch for**:
+
+- `Cannot read properties of undefined (reading 'className')` - CSS Modules configuration issue
+- `Invalid call to renderToString` - React runtime compatibility issue
+- `Module not found: Can't resolve './Module.bs.js'` - File extension resolution issue
+- Intermittent/flaky tests - CSS extraction leaking into server bundle
+
+### Testing Strategy for SSR
+
+For applications with SSR, follow this verification order:
+
+1. Test client-only pages first (verify basic Rspack build works)
+2. Test SSR pages without CSS modules (verify SSR configuration)
+3. Test SSR pages with CSS modules (verify CSS extraction + SSR work together)
+4. Run full test suite multiple times to catch flaky tests
+5. Test in production mode (some issues only appear with minification)
+
 ## Configuration Best Practices
 
 ### Configuration Organization
@@ -389,6 +458,173 @@ When upgrading to Shakapacker 9 with Rspack:
 3. **Test with frozen lockfile**: Ensure your CI runs with `--frozen-lockfile` or equivalent to catch lockfile issues
 4. **Check Node version compatibility**: Verify your Node version meets all dependency requirements
 5. **Don't make empty commits**: If CI fails but local passes, investigate the root cause - don't try to "trigger CI re-run" with empty commits
+
+## Common Migration Issues
+
+This section highlights the most critical configuration issues that cause build failures during webpack-to-Rspack migration. These issues are especially important for applications using Server-Side Rendering (SSR), CSS Modules, or non-standard file extensions.
+
+### 1. SWC React Runtime for SSR (CRITICAL for React on Rails)
+
+**Problem**: React on Rails SSR detection expects specific function signatures that may not work with SWC's automatic React runtime.
+
+**Symptoms**:
+
+- Error: `Invalid call to renderToString. Possibly you have a renderFunction...`
+- SSR pages fail to render or render without React hydration
+
+**Solution**: Configure SWC to use classic React runtime instead of automatic:
+
+```javascript
+// config/swc.config.js
+const customConfig = {
+  options: {
+    jsc: {
+      transform: {
+        react: {
+          runtime: "classic", // Use 'classic' instead of 'automatic' for SSR
+          refresh: env.isDevelopment && env.runningWebpackDevServer
+        }
+      }
+    }
+  }
+}
+```
+
+**Why this matters**: The automatic runtime changes how React imports work (`import { jsx as _jsx }` vs `import React`), which breaks React on Rails' SSR function detection logic. This is a silent failure that only manifests at runtime.
+
+**Implementation checklist for SSR users**:
+
+- [ ] Locate your SWC configuration file (typically `config/swc.config.js`)
+- [ ] Change `runtime: 'automatic'` to `runtime: 'classic'`
+- [ ] Test SSR rendering in development and production modes
+- [ ] Verify React hydration works correctly on client side
+- [ ] Run full test suite to catch any related issues
+
+### 2. CSS Modules Configuration for Server Bundles (CRITICAL for SSR + CSS Modules)
+
+**Problem**: When configuring server bundles, you must preserve Shakapacker 9's CSS Modules settings (`namedExport: true`) while adding SSR-specific settings. Simply setting `exportOnlyLocals: true` will override the base configuration and break CSS imports.
+
+**Symptoms**:
+
+- Error: `export 'default' (imported as 'css') was not found`
+- CSS classes return undefined in SSR
+- Client-side CSS works but SSR fails
+- Intermittent/flaky test failures
+
+**Solution**: Use spread operator to merge CSS Modules options instead of replacing them:
+
+```javascript
+// config/webpack/serverWebpackConfig.js
+if (cssLoader && cssLoader.options && cssLoader.options.modules) {
+  // ✅ CORRECT - Preserves namedExport and other settings
+  cssLoader.options.modules = {
+    ...cssLoader.options.modules,
+    exportOnlyLocals: true
+  }
+
+  // ❌ INCORRECT - Overwrites all settings
+  // cssLoader.options.modules.exportOnlyLocals = true
+}
+```
+
+**Why this matters**: Shakapacker 9 changed the default CSS Modules configuration to use named exports. If you only set `exportOnlyLocals: true` without preserving the base config, you'll lose the `namedExport: true` setting, causing import/export mismatches between client and server bundles.
+
+**Related configuration**: You must also filter out CSS extraction loaders in server bundles:
+
+```javascript
+// config/webpack/serverWebpackConfig.js
+rule.use = rule.use.filter((item) => {
+  let testValue
+  if (typeof item === "string") {
+    testValue = item
+  } else if (typeof item.loader === "string") {
+    testValue = item.loader
+  }
+  // Handle both Webpack and Rspack CSS extract loaders
+  return !(
+    testValue?.match(/mini-css-extract-plugin/) ||
+    testValue?.includes("cssExtractLoader") || // Rspack uses this path
+    testValue === "style-loader"
+  )
+})
+```
+
+**Implementation checklist for SSR + CSS Modules users**:
+
+- [ ] Update server bundle config to use spread operator for CSS Modules options
+- [ ] Ensure CSS extraction loaders are filtered for both webpack and Rspack paths
+- [ ] Test SSR pages with CSS Modules imports
+- [ ] Verify CSS classes are defined (not undefined) during SSR
+- [ ] Run tests multiple times to catch flaky failures
+
+### 3. ReScript File Resolution (CRITICAL for ReScript users)
+
+**Problem**: Rspack requires explicit configuration to resolve `.bs.js` extensions (ReScript compiled output), while webpack handled this automatically.
+
+**Symptoms**:
+
+- Error: `Module not found: Can't resolve './Module.bs.js'`
+- ReScript modules fail to import
+- Build fails with missing module errors
+
+**Solution**: Add `.bs.js` to resolve extensions:
+
+```javascript
+// config/webpack/webpack.config.js (works for both webpack and rspack)
+const commonOptions = {
+  resolve: {
+    extensions: [".css", ".ts", ".tsx", ".bs.js"] // Add .bs.js for ReScript
+  }
+}
+
+module.exports = merge({}, baseConfig, commonOptions)
+```
+
+**Why this matters**: ReScript compiles `.res` source files to `.bs.js` JavaScript files. If your bundler can't resolve these extensions, all ReScript imports will fail, even though the compiled files exist.
+
+**Additional consideration - Missing compiled files**: Some ReScript npm packages ship only `.res` source files without compiled `.bs.js` files. If you encounter this, use `patch-package` to fix the dependency's `bsconfig.json` (see detailed solution in [Common Issues and Solutions](#issue-rescript-dependencies-missing-compiled-files)).
+
+**Implementation checklist for ReScript users**:
+
+- [ ] Add `.bs.js` to resolve extensions in webpack/rspack config
+- [ ] Verify all ReScript modules can be imported
+- [ ] Check if any ReScript dependencies are missing compiled files
+- [ ] If needed, patch broken dependencies with `patch-package`
+- [ ] Test build with all ReScript code paths
+
+### 4. Build Verification Steps (IMPORTANT for all migrations)
+
+**Problem**: The migration documentation lacked practical verification procedures, leaving developers without guidance on testing SSR functionality or identifying configuration errors.
+
+**Solution**: Follow the comprehensive verification steps in the [Build Verification](#build-verification) section above, which includes:
+
+- Basic build verification commands
+- SSR-specific testing procedures
+- Error pattern identification
+- Testing strategy for SSR applications
+
+**Why this matters**: Silent SSR failures and configuration issues often only manifest in specific scenarios (production mode, certain page types, race conditions in tests). Without systematic verification, these issues may slip into production.
+
+**Implementation checklist for all users**:
+
+- [ ] Clean build artifacts before testing
+- [ ] Test both development and production builds
+- [ ] Verify generated assets in `public/packs/`
+- [ ] For SSR: verify server bundle generation
+- [ ] For SSR: test rendering in Rails console
+- [ ] Run full test suite multiple times
+- [ ] Check for error patterns listed in Build Verification
+
+### Configuration Differences: webpack vs Rspack Summary
+
+Quick reference for the key differences that cause migration issues:
+
+| Area                       | Webpack                   | Rspack                              | Migration Action                            |
+| -------------------------- | ------------------------- | ----------------------------------- | ------------------------------------------- |
+| CSS Extraction Loader Path | `mini-css-extract-plugin` | `cssExtractLoader.js`               | Filter both paths in SSR config             |
+| React Runtime (SSR)        | Works with both           | Classic required for React on Rails | Use `runtime: 'classic'`                    |
+| ReScript Extensions        | Auto-resolves `.bs.js`    | Requires explicit config            | Add to `resolve.extensions`                 |
+| CSS Modules Default        | `namedExport: true` (v9+) | Same                                | Preserve with spread operator in SSR config |
 
 ## Common Issues and Solutions
 
