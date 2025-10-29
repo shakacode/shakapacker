@@ -1,6 +1,6 @@
+import { relative, isAbsolute } from "path"
 import { ConfigMetadata } from "./types"
 import { getDocForKey } from "./configDocs"
-import { relative, isAbsolute } from "path"
 
 /**
  * Serializes webpack/rspack config to YAML format with optional inline documentation.
@@ -8,6 +8,7 @@ import { relative, isAbsolute } from "path"
  */
 export class YamlSerializer {
   private annotate: boolean
+
   private appRoot: string
 
   constructor(options: { annotate: boolean; appRoot: string }) {
@@ -22,7 +23,7 @@ export class YamlSerializer {
     const output: string[] = []
 
     // Add metadata header
-    output.push(this.createHeader(metadata))
+    output.push(YamlSerializer.createHeader(metadata))
     output.push("")
 
     // Serialize the config
@@ -31,9 +32,9 @@ export class YamlSerializer {
     return output.join("\n")
   }
 
-  private createHeader(metadata: ConfigMetadata): string {
+  private static createHeader(metadata: ConfigMetadata): string {
     const lines: string[] = []
-    lines.push("# " + "=".repeat(77))
+    lines.push(`# ${"=".repeat(77)}`)
     lines.push("# Webpack/Rspack Configuration Export")
     lines.push(`# Generated: ${metadata.exportedAt}`)
     lines.push(`# Environment: ${metadata.environment}`)
@@ -42,7 +43,7 @@ export class YamlSerializer {
     if (metadata.configCount > 1) {
       lines.push(`# Total Configs: ${metadata.configCount}`)
     }
-    lines.push("# " + "=".repeat(77))
+    lines.push(`# ${"=".repeat(77)}`)
     return lines.join("\n")
   }
 
@@ -90,7 +91,7 @@ export class YamlSerializer {
     if (cleaned.includes("\n")) {
       const lines = cleaned.split("\n")
       const lineIndent = " ".repeat(indent + 2)
-      return "|\n" + lines.map((line) => lineIndent + line).join("\n")
+      return `|\n${lines.map((line) => lineIndent + line).join("\n")}`
     }
 
     // Escape strings that need quoting
@@ -149,7 +150,7 @@ export class YamlSerializer {
       const itemPath = `${keyPath}[${index}]`
 
       // Check if this is a plugin object and add its name as a comment
-      const pluginName = this.getConstructorName(item)
+      const pluginName = YamlSerializer.getConstructorName(item)
       const isPlugin = pluginName && /(^|\.)plugins\[\d+\]/.test(itemPath)
       const isEmpty =
         typeof item === "object" &&
@@ -211,12 +212,12 @@ export class YamlSerializer {
       }
     })
 
-    return "\n" + lines.join("\n")
+    return `\n${lines.join("\n")}`
   }
 
   private serializeObject(obj: any, indent: number, keyPath: string): string {
     const keys = Object.keys(obj)
-    const constructorName = this.getConstructorName(obj)
+    const constructorName = YamlSerializer.getConstructorName(obj)
 
     // For empty objects, show constructor name if available
     if (keys.length === 0) {
@@ -297,14 +298,14 @@ export class YamlSerializer {
       return str
     }
 
-    return "./" + rel
+    return `./${rel}`
   }
 
   /**
    * Extracts the constructor name from an object
    * Returns null for plain objects (Object constructor)
    */
-  private getConstructorName(obj: any): string | null {
+  private static getConstructorName(obj: any): string | null {
     if (!obj || typeof obj !== "object") return null
     if (Array.isArray(obj)) return null
 
