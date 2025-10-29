@@ -28,26 +28,76 @@ export function isPathTraversalSafe(inputPath: string): boolean {
 /**
  * Resolves and validates a path within a base directory
  * Prevents directory traversal attacks by ensuring the resolved path
- * stays within the base directory
+ * stays within the base directory.
+ * Also resolves symlinks to prevent symlink-based path traversal attacks.
+ *
+ * @param basePath - The base directory to validate against
+ * @param userPath - The user-provided path to validate
+ * @param resolveSymlinks - Whether to resolve symlinks (default: true for security)
+ * @returns The validated absolute path
+ * @throws Error if path is outside base directory
  */
-export function safeResolvePath(basePath: string, userPath: string): string {
-  // Normalize the base path
-  const normalizedBase = path.resolve(basePath)
+export function safeResolvePath(
+  basePath: string,
+  userPath: string,
+  resolveSymlinks = true
+): string {
+  // Resolve the base path through symlinks if enabled
+  let normalizedBase: string
+  try {
+    normalizedBase = resolveSymlinks
+      ? fs.realpathSync(basePath)
+      : path.resolve(basePath)
+  } catch (error) {
+    // If basePath doesn't exist, fall back to path.resolve
+    normalizedBase = path.resolve(basePath)
+  }
 
-  // Resolve the user path relative to base
-  const resolved = path.resolve(normalizedBase, userPath)
+  // For paths that may not exist yet, validate the parent directory
+  const absolutePath = path.resolve(basePath, userPath)
+  const parentDir = path.dirname(absolutePath)
+  const fileName = path.basename(absolutePath)
+
+  // Resolve parent directory through symlinks if it exists and symlink resolution is enabled
+  let resolvedParent: string
+  try {
+    resolvedParent = resolveSymlinks
+      ? fs.realpathSync(parentDir)
+      : path.resolve(parentDir)
+  } catch (error) {
+    // Parent doesn't exist - validate the absolute path as-is
+    if (
+      !absolutePath.startsWith(normalizedBase + path.sep) &&
+      absolutePath !== normalizedBase
+    ) {
+      throw new Error(
+        `[SHAKAPACKER SECURITY] Path traversal attempt detected.\n` +
+          `Requested path would resolve outside of allowed directory.\n` +
+          `Base: ${normalizedBase}\n` +
+          `Attempted: ${userPath}\n` +
+          `Resolved to: ${absolutePath}`
+      )
+    }
+    return absolutePath
+  }
+
+  // Reconstruct the full path with the resolved (symlink-free) parent
+  const resolved = path.resolve(resolvedParent, fileName)
 
   // Ensure the resolved path is within the base directory
   if (
     !resolved.startsWith(normalizedBase + path.sep) &&
     resolved !== normalizedBase
   ) {
+    const symlinkNote = resolveSymlinks
+      ? ` (symlink-resolved from ${userPath})`
+      : ""
     throw new Error(
       `[SHAKAPACKER SECURITY] Path traversal attempt detected.\n` +
         `Requested path would resolve outside of allowed directory.\n` +
         `Base: ${normalizedBase}\n` +
         `Attempted: ${userPath}\n` +
-        `Resolved to: ${resolved}`
+        `Resolved to: ${resolved}${symlinkNote}`
     )
   }
 

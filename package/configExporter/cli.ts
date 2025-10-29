@@ -11,12 +11,21 @@ import { YamlSerializer } from "./yamlSerializer"
 import { FileWriter } from "./fileWriter"
 import { ConfigFileLoader, generateSampleConfigFile } from "./configFile"
 import { BuildValidator } from "./buildValidator"
+import { safeResolvePath } from "../utils/pathValidation"
 
 // Read version from package.json
-const packageJson = JSON.parse(
-  readFileSync(resolve(__dirname, "../../package.json"), "utf8")
-)
-const VERSION = packageJson.version
+let VERSION = "unknown"
+try {
+  const packageJson = JSON.parse(
+    readFileSync(resolve(__dirname, "../../package.json"), "utf8")
+  )
+  VERSION = packageJson.version || "unknown"
+} catch (error) {
+  console.warn(
+    "Could not read version from package.json:",
+    error instanceof Error ? error.message : String(error)
+  )
+}
 
 /**
  * Environment variable names that can be set by build configurations
@@ -103,6 +112,15 @@ export async function run(args: string[]): Promise<number> {
     // Apply defaults
     const resolvedOptions = applyDefaults(options)
 
+    // Validate paths for security AFTER defaults are applied
+    // Use safeResolvePath which validates and resolves symlinks
+    if (resolvedOptions.output) {
+      safeResolvePath(appRoot, resolvedOptions.output)
+    }
+    if (resolvedOptions.saveDir) {
+      safeResolvePath(appRoot, resolvedOptions.saveDir)
+    }
+
     // Validate after defaults are applied
     if (resolvedOptions.annotate && resolvedOptions.format !== "yaml") {
       throw new Error(
@@ -144,7 +162,7 @@ export async function run(args: string[]): Promise<number> {
   }
 }
 
-function parseArguments(args: string[]): ExportOptions {
+export function parseArguments(args: string[]): ExportOptions {
   const argv = yargs(args)
     .version(VERSION)
     .usage(
@@ -235,11 +253,26 @@ QUICK START (for troubleshooting):
         "Enable inline documentation (YAML only, default with --doctor or file output)"
     })
     .option("depth", {
-      type: "number",
+      // Note: type omitted to allow string "null" (yargs would reject it).
+      // Coerce function handles validation for both numbers and "null".
       default: 20,
       coerce: (value: number | string) => {
+        // Handle "null" string for unlimited depth
         if (value === "null" || value === null) return null
-        return typeof value === "number" ? value : parseInt(String(value), 10)
+
+        // Reject non-numeric types (arrays, objects, etc.)
+        if (typeof value !== "number" && typeof value !== "string") {
+          throw new Error(
+            `--depth must be a number or 'null', got: ${typeof value}`
+          )
+        }
+
+        const parsed =
+          typeof value === "number" ? value : parseInt(String(value), 10)
+        if (isNaN(parsed)) {
+          throw new Error(`--depth must be a number or 'null', got: ${value}`)
+        }
+        return parsed
       },
       description: "Inspection depth (use 'null' for unlimited)"
     })
