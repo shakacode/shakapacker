@@ -105,6 +105,96 @@ describe("configExporter", () => {
     })
   })
 
+  describe("yamlSerializer", () => {
+    test("serializes object keys in alphabetical order", () => {
+      const {
+        YamlSerializer
+      } = require("../../package/configExporter/yamlSerializer")
+      const serializer = new YamlSerializer({
+        annotate: false,
+        appRoot: "/test/app"
+      })
+
+      // Create an object with keys intentionally out of alphabetical order
+      const config = {
+        mode: "production",
+        entry: "./src/index.js",
+        optimization: {
+          minimize: true
+        },
+        output: {
+          path: "/dist",
+          filename: "bundle.js"
+        },
+        devtool: "source-map"
+      }
+
+      const metadata = {
+        exportedAt: "2025-10-28",
+        environment: "production",
+        bundler: "webpack",
+        configType: "client",
+        configCount: 1
+      }
+
+      const result = serializer.serialize(config, metadata)
+
+      // Extract just the config part (skip the header)
+      const lines = result.split("\n")
+      const keyMatches = lines
+        .map((line) => line.match(/^(\w+):/))
+        .filter(Boolean)
+        .map((match) => match[1])
+
+      // Expected order: devtool, entry, mode, optimization, output
+      expect(keyMatches).toStrictEqual([
+        "devtool",
+        "entry",
+        "mode",
+        "optimization",
+        "output"
+      ])
+    })
+
+    test("serializes nested object keys in alphabetical order", () => {
+      const {
+        YamlSerializer
+      } = require("../../package/configExporter/yamlSerializer")
+      const serializer = new YamlSerializer({
+        annotate: false,
+        appRoot: "/test/app"
+      })
+
+      const config = {
+        output: {
+          path: "/dist",
+          filename: "bundle.js",
+          clean: true
+        }
+      }
+
+      const metadata = {
+        exportedAt: "2025-10-28",
+        environment: "production",
+        bundler: "webpack",
+        configType: "client",
+        configCount: 1
+      }
+
+      const result = serializer.serialize(config, metadata)
+
+      // Extract nested keys from the output section
+      const lines = result.split("\n")
+      const outputKeys = lines
+        .map((line) => line.match(/^ {2}(\w+):/))
+        .filter(Boolean)
+        .map((match) => match[1])
+
+      // Expected order: clean, filename, path
+      expect(outputKeys).toStrictEqual(["clean", "filename", "path"])
+    })
+  })
+
   describe("environment variable preservation in runDoctorMode", () => {
     let originalEnv
 

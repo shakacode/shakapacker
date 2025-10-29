@@ -216,7 +216,7 @@ export class YamlSerializer {
   }
 
   private serializeObject(obj: any, indent: number, keyPath: string): string {
-    const keys = Object.keys(obj)
+    const keys = Object.keys(obj).sort()
     const constructorName = YamlSerializer.getConstructorName(obj)
 
     // For empty objects, show constructor name if available
