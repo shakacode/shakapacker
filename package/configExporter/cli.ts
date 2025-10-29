@@ -262,7 +262,7 @@ QUICK START (for troubleshooting):
 
         const parsed =
           typeof value === "number" ? value : parseInt(String(value), 10)
-        if (isNaN(parsed)) {
+        if (Number.isNaN(parsed)) {
           throw new Error(`--depth must be a number or 'null', got: ${value}`)
         }
         return parsed
@@ -309,8 +309,8 @@ QUICK START (for troubleshooting):
       description:
         "Generate only server config (fallback when no config file exists)"
     })
-    .check((argv) => {
-      if (argv.webpack && argv.rspack) {
+    .check((args) => {
+      if (args.webpack && args.rspack) {
         throw new Error(
           "--webpack and --rspack are mutually exclusive. Please specify only one."
         )
@@ -399,21 +399,18 @@ QUICK START (for troubleshooting):
 
   // Type assertions are safe here because yargs validates choices at runtime
   // Handle --webpack and --rspack flags
-  let bundler: "webpack" | "rspack" | undefined = argv.bundler as
-    | "webpack"
-    | "rspack"
-    | undefined
+  let { bundler } = argv
   if (argv.webpack) bundler = "webpack"
   if (argv.rspack) bundler = "rspack"
 
   return {
     bundler,
-    env: argv.env as "development" | "production" | "test" | undefined,
+    env: argv.env,
     clientOnly: argv["client-only"],
     serverOnly: argv["server-only"],
     output: argv.output,
-    depth: argv.depth as number | null,
-    format: argv.format as "yaml" | "json" | "inspect" | undefined,
+    depth: argv.depth,
+    format: argv.format,
     help: false, // yargs handles help internally
     verbose: argv.verbose,
     doctor: argv.doctor,

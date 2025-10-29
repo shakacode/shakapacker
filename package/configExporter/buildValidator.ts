@@ -222,7 +222,7 @@ export class BuildValidator {
     const isHMR =
       build.environment.WEBPACK_SERVE === "true" ||
       build.environment.HMR === "true"
-    const bundler = build.bundler
+    const { bundler } = build
 
     if (isHMR) {
       return this.validateHMRBuild(build, appRoot, bundler)
@@ -301,7 +301,7 @@ export class BuildValidator {
       args.push(...build.bundlerEnvArgs)
     }
 
-    return new Promise((resolve) => {
+    return new Promise((resolvePromise) => {
       const child = spawn(devServerBin, args, {
         cwd: appRoot,
         env: this.filterEnvironment(build.environment),
@@ -316,7 +316,7 @@ export class BuildValidator {
       const resolveOnce = (res: BuildValidationResult) => {
         if (!resolved) {
           resolved = true
-          resolve(res)
+          resolvePromise(res)
         }
       }
 
@@ -428,7 +428,7 @@ export class BuildValidator {
 
         // Check for specific error codes and provide actionable guidance
         if ("code" in err) {
-          const code = (err as NodeJS.ErrnoException).code
+          const { code } = err as NodeJS.ErrnoException
           if (code === "ENOENT") {
             errorMessage += `. Binary not found. Install with: npm install -D ${devServerCmd}`
           } else if (code === "EMFILE" || code === "ENFILE") {
@@ -515,7 +515,7 @@ export class BuildValidator {
     // Add --json for structured output (helps parse errors)
     args.push("--json")
 
-    return new Promise((resolve) => {
+    return new Promise((resolvePromise) => {
       const child = spawn(bundlerBin, args, {
         cwd: appRoot,
         env: this.filterEnvironment(build.environment),
@@ -534,7 +534,7 @@ export class BuildValidator {
           `Timeout: ${bundler} did not complete within ${this.options.timeout}ms.`
         )
         child.kill("SIGTERM")
-        resolve(result)
+        resolvePromise(result)
       }, this.options.timeout)
 
       child.stdout?.on("data", (data: Buffer) => {
@@ -683,7 +683,7 @@ export class BuildValidator {
           result.output.push(stderrData)
         }
 
-        resolve(result)
+        resolvePromise(result)
       })
 
       child.on("error", (err) => {
@@ -693,7 +693,7 @@ export class BuildValidator {
 
         // Check for specific error codes and provide actionable guidance
         if ("code" in err) {
-          const code = (err as NodeJS.ErrnoException).code
+          const { code } = err as NodeJS.ErrnoException
           if (code === "ENOENT") {
             errorMessage += `. Binary not found. Install with: npm install -D ${bundler}`
           } else if (code === "EMFILE" || code === "ENFILE") {
@@ -704,7 +704,7 @@ export class BuildValidator {
         }
 
         result.errors.push(errorMessage)
-        resolve(result)
+        resolvePromise(result)
       })
     })
   }
@@ -776,19 +776,19 @@ export class BuildValidator {
   formatResults(results: BuildValidationResult[]): string {
     const lines: string[] = []
 
-    lines.push("\n" + "=".repeat(80))
+    lines.push(`\n${"=".repeat(80)}`)
     lines.push("🔍 Build Validation Results")
-    lines.push("=".repeat(80) + "\n")
+    lines.push(`${"=".repeat(80)}\n`)
 
-    let totalBuilds = results.length
+    const totalBuilds = results.length
     let successCount = 0
     let failureCount = 0
 
     results.forEach((result) => {
       if (result.success) {
-        successCount++
+        successCount += 1
       } else {
-        failureCount++
+        failureCount += 1
       }
 
       const icon = result.success ? "✅" : "❌"
