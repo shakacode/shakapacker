@@ -65,11 +65,25 @@ export class YamlSerializer {
     }
 
     if (typeof value === "function") {
-      return this.serializeFunction(value)
+      return this.serializeFunction(value, indent)
     }
 
     if (value instanceof RegExp) {
-      return this.serializeString(value.toString())
+      // Extract pattern without surrounding slashes: "/pattern/flags" -> "pattern"
+      // Include flags as inline comment when present for semantic clarity
+      const regexStr = value.toString()
+      const lastSlash = regexStr.lastIndexOf("/")
+      const pattern = regexStr.slice(1, lastSlash)
+      const flags = regexStr.slice(lastSlash + 1)
+
+      const serializedPattern = this.serializeString(pattern, indent)
+
+      // Add flags as inline comment if present (e.g., "pattern" # flags: gi)
+      if (flags) {
+        return `${serializedPattern} # flags: ${flags}`
+      }
+
+      return serializedPattern
     }
 
     if (Array.isArray(value)) {
@@ -94,12 +108,25 @@ export class YamlSerializer {
       return `|\n${lines.map((line) => lineIndent + line).join("\n")}`
     }
 
-    // Escape strings that need quoting
+    // Escape strings that need quoting in YAML
+    // YAML has many special characters that can cause parsing errors:
+    // : # ' " (basic delimiters)
+    // [ ] { } (flow collections)
+    // * & ! @ ` (special constructs: aliases, anchors, tags)
     if (
       cleaned.includes(":") ||
       cleaned.includes("#") ||
       cleaned.includes("'") ||
       cleaned.includes('"') ||
+      cleaned.includes("[") ||
+      cleaned.includes("]") ||
+      cleaned.includes("{") ||
+      cleaned.includes("}") ||
+      cleaned.includes("*") ||
+      cleaned.includes("&") ||
+      cleaned.includes("!") ||
+      cleaned.includes("@") ||
+      cleaned.includes("`") ||
       cleaned.startsWith(" ") ||
       cleaned.endsWith(" ")
     ) {
@@ -110,7 +137,7 @@ export class YamlSerializer {
     return cleaned
   }
 
-  private serializeFunction(fn: Function): string {
+  private serializeFunction(fn: Function, indent: number = 0): string {
     // Get function source code
     const source = fn.toString()
 
@@ -133,8 +160,8 @@ export class YamlSerializer {
       displayLines.map((line) => line.substring(minIndent)).join("\n") +
       (truncated ? "\n..." : "")
 
-    // Use serializeString to properly handle multiline
-    return this.serializeString(formatted)
+    // Use serializeString to properly handle multiline with correct indentation
+    return this.serializeString(formatted, indent)
   }
 
   private serializeArray(arr: any[], indent: number, keyPath: string): string {
@@ -249,6 +276,12 @@ export class YamlSerializer {
         for (const line of value.split("\n")) {
           lines.push(`${valueIndent}${line}`)
         }
+      } else if (value instanceof RegExp || typeof value === "function") {
+        // Handle RegExp and functions explicitly before the generic object check
+        // to prevent them from being treated as empty objects (RegExp/functions
+        // have no enumerable keys but should serialize as their string representation)
+        const serialized = this.serializeValue(value, indent + 2, fullKeyPath)
+        lines.push(`${keyIndent}${key}: ${serialized}`)
       } else if (
         typeof value === "object" &&
         value !== null &&
