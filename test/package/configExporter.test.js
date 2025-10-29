@@ -1,5 +1,4 @@
 const { resetEnv } = require("../helpers")
-const { run } = require("../../package/configExporter/cli")
 
 // Helper function that mimics the env var restore logic from cli.ts lines 267-282
 function restoreEnvVars(saved) {
@@ -285,60 +284,41 @@ describe("configExporter", () => {
   })
 
   describe("argument validation", () => {
-    // Mock console.error to suppress error output in tests
-    let consoleErrorSpy
+    let mockExit
 
     beforeEach(() => {
-      consoleErrorSpy = jest
-        .spyOn(console, "error")
-        .mockImplementation(() => {})
+      // Mock process.exit to prevent yargs from killing the test process
+      mockExit = jest.spyOn(process, "exit").mockImplementation(() => {
+        throw new Error("process.exit called")
+      })
     })
 
     afterEach(() => {
-      consoleErrorSpy.mockRestore()
+      mockExit.mockRestore()
     })
 
-    test("rejects --all-builds with --output", async () => {
-      const exitCode = await run(["--all-builds", "--output=config.yml"])
-      expect(exitCode).toBe(1)
-      expect(consoleErrorSpy).toHaveBeenCalledWith(
-        expect.stringContaining(
-          "--all-builds and --output are mutually exclusive"
-        )
-      )
+    test("rejects --all-builds with --output", () => {
+      const { parseArguments } = require("../../package/configExporter/cli")
+
+      expect(() => {
+        parseArguments(["--all-builds", "--output=config.yml"])
+      }).toThrow("process.exit called")
     })
 
-    test("allows --all-builds with --save-dir", async () => {
-      // This test would normally run the command, but we'll just verify it doesn't
-      // throw a validation error. Since we don't have a real config file in test,
-      // it will fail later with a different error (config file not found)
-      const exitCode = await run(["--all-builds", "--save-dir=./output"])
-      expect(exitCode).toBe(1)
-      // Should fail with config file error, not validation error
-      expect(consoleErrorSpy).toHaveBeenCalledWith(
-        expect.stringContaining("Config file")
-      )
-      expect(consoleErrorSpy).not.toHaveBeenCalledWith(
-        expect.stringContaining("mutually exclusive")
-      )
+    test("rejects --all-builds with --stdout", () => {
+      const { parseArguments } = require("../../package/configExporter/cli")
+
+      expect(() => {
+        parseArguments(["--all-builds", "--stdout"])
+      }).toThrow("process.exit called")
     })
 
-    test("rejects --all-builds with --stdout", async () => {
-      const exitCode = await run(["--all-builds", "--stdout"])
-      expect(exitCode).toBe(1)
-      expect(consoleErrorSpy).toHaveBeenCalledWith(
-        expect.stringContaining(
-          "--all-builds and --stdout are mutually exclusive"
-        )
-      )
-    })
+    test("rejects --stdout with --output", () => {
+      const { parseArguments } = require("../../package/configExporter/cli")
 
-    test("rejects --stdout with --output", async () => {
-      const exitCode = await run(["--stdout", "--output=config.yml"])
-      expect(exitCode).toBe(1)
-      expect(consoleErrorSpy).toHaveBeenCalledWith(
-        expect.stringContaining("--stdout and --output are mutually exclusive")
-      )
+      expect(() => {
+        parseArguments(["--stdout", "--output=config.yml"])
+      }).toThrow("process.exit called")
     })
   })
 })

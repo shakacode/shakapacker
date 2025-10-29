@@ -81,17 +81,9 @@ function clearBuildEnvironmentVariables(): void {
 
 // Main CLI entry point
 export async function run(args: string[]): Promise<number> {
-  let options: ExportOptions
   try {
-    options = parseArguments(args)
-  } catch (error: unknown) {
-    // yargs throws when validation fails (with exitProcess(false))
-    const errorMessage = error instanceof Error ? error.message : String(error)
-    console.error(`[Config Exporter] Error: ${errorMessage}`)
-    return 1
-  }
+    const options = parseArguments(args)
 
-  try {
     // Handle --init command
     if (options.init) {
       return runInitCommand(options)
@@ -172,7 +164,6 @@ export async function run(args: string[]): Promise<number> {
 
 export function parseArguments(args: string[]): ExportOptions {
   const argv = yargs(args)
-    .exitProcess(false)
     .version(VERSION)
     .usage(
       `Shakapacker Config Exporter
