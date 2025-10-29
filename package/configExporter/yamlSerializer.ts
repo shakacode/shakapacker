@@ -69,14 +69,21 @@ export class YamlSerializer {
     }
 
     if (value instanceof RegExp) {
-      // Extract pattern without slashes and flags
-      // toString() returns "/pattern/flags", we want just "pattern"
-      // Note: Flags (i, g, m, etc.) are intentionally omitted as the exported YAML
-      // is for human-readable documentation/debugging, not round-trip serialization
+      // Extract pattern without surrounding slashes: "/pattern/flags" -> "pattern"
+      // Include flags as inline comment when present for semantic clarity
       const regexStr = value.toString()
       const lastSlash = regexStr.lastIndexOf("/")
       const pattern = regexStr.slice(1, lastSlash)
-      return this.serializeString(pattern)
+      const flags = regexStr.slice(lastSlash + 1)
+
+      const serializedPattern = this.serializeString(pattern)
+
+      // Add flags as inline comment if present (e.g., "pattern" # flags: gi)
+      if (flags) {
+        return `${serializedPattern} # flags: ${flags}`
+      }
+
+      return serializedPattern
     }
 
     if (Array.isArray(value)) {

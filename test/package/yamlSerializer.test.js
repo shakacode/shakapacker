@@ -165,7 +165,7 @@ describe("YamlSerializer", () => {
       expect(result).toContain("filename()")
     })
 
-    test("handles RegExp in config", () => {
+    test("handles RegExp in config without flags", () => {
       const config = {
         test: /\.js$/
       }
@@ -181,6 +181,24 @@ describe("YamlSerializer", () => {
 
       // RegExp objects serialize as their pattern without slashes
       expect(result).toContain("test: \\.js$")
+    })
+
+    test("handles RegExp with flags in config", () => {
+      const config = {
+        test: /\.js$/i
+      }
+      const metadata = {
+        exportedAt: "2025-01-15T12:00:00Z",
+        environment: "development",
+        bundler: "webpack",
+        configType: "client",
+        configCount: 1
+      }
+
+      const result = serializer.serialize(config, metadata)
+
+      // RegExp with flags includes flags as inline comment
+      expect(result).toContain("test: \\.js$ # flags: i")
     })
   })
 })
