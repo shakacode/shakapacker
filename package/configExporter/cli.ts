@@ -1,5 +1,5 @@
 // This will be a substantial file - the main CLI entry point
-// Migrating from bin/export-bundler-config but streamlined for TypeScript
+// Originally migrated from bin/export-bundler-config, now bin/shakapacker-config
 
 import { existsSync, readFileSync, writeFileSync } from "fs"
 import { resolve, dirname, sep, delimiter, basename } from "path"

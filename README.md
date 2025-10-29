@@ -809,7 +809,7 @@ Shakapacker provides a powerful utility to export and analyze your webpack/rspac
 
 ```bash
 # Export all configs for troubleshooting (recommended)
-bin/export-bundler-config --doctor
+bin/shakapacker-config --doctor
 
 # Or via rake task
 bundle exec rake shakapacker:export_bundler_config -- --doctor
