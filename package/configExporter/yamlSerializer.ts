@@ -105,8 +105,37 @@ export class YamlSerializer {
       )
     }
 
-    // Fallback for any other types (symbols, etc)
-    return JSON.stringify(value)
+    // Handle Symbol and BigInt explicitly - they cannot be JSON.stringify'd
+    if (typeof value === "symbol") {
+      return value.toString()
+    }
+
+    if (typeof value === "bigint") {
+      return value.toString()
+    }
+
+    // Fallback for any other types with safe stringification
+    // At this point, value should be a primitive (not object, function, symbol, or bigint)
+    try {
+      const result = JSON.stringify(value)
+      // JSON.stringify can return undefined for some values
+      if (result === undefined || result === null) {
+        // Shouldn't reach here for primitives, but handle defensively
+        if (typeof value === "object" && value !== null) {
+          return "[Unknown Object]"
+        }
+        // Cast to primitive for stringification since we've ruled out objects
+        return String(value as string | number | boolean | null | undefined)
+      }
+      return result
+    } catch {
+      // If JSON.stringify throws, fall back to string coercion
+      if (typeof value === "object" && value !== null) {
+        return "[Unknown Object]"
+      }
+      // Cast to primitive for stringification since we've ruled out objects
+      return String(value as string | number | boolean | null | undefined)
+    }
   }
 
   private serializeString(str: string, indent: number = 0): string {
