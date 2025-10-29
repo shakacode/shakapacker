@@ -363,6 +363,13 @@ describe("configExporter/cli", () => {
   })
 
   describe("parseArguments - path validation", () => {
+    // Note: Path validation tests are separate from other validation tests because
+    // they use a different validation mechanism. Other validations (mutual exclusivity,
+    // required combinations) happen in yargs .check() hook during parsing.
+    // Path validation happens later in run() after applyDefaults() to ensure
+    // default paths are also validated. These tests verify parseArguments() accepts
+    // all paths (validation is deferred to run()).
+
     test("accepts output path within cwd", () => {
       const { parseArguments } = require("../../../package/configExporter/cli")
       const relativePath = "./output/config.yml"
