@@ -71,6 +71,8 @@ export class YamlSerializer {
     if (value instanceof RegExp) {
       // Extract pattern without slashes and flags
       // toString() returns "/pattern/flags", we want just "pattern"
+      // Note: Flags (i, g, m, etc.) are intentionally omitted as the exported YAML
+      // is for human-readable documentation/debugging, not round-trip serialization
       const regexStr = value.toString()
       const lastSlash = regexStr.lastIndexOf("/")
       const pattern = regexStr.slice(1, lastSlash)
@@ -99,7 +101,11 @@ export class YamlSerializer {
       return `|\n${lines.map((line) => lineIndent + line).join("\n")}`
     }
 
-    // Escape strings that need quoting
+    // Escape strings that need quoting in YAML
+    // YAML has many special characters that can cause parsing errors:
+    // : # ' " (basic delimiters)
+    // [ ] { } (flow collections)
+    // * & ! @ ` (special constructs: aliases, anchors, tags)
     if (
       cleaned.includes(":") ||
       cleaned.includes("#") ||
@@ -107,6 +113,13 @@ export class YamlSerializer {
       cleaned.includes('"') ||
       cleaned.includes("[") ||
       cleaned.includes("]") ||
+      cleaned.includes("{") ||
+      cleaned.includes("}") ||
+      cleaned.includes("*") ||
+      cleaned.includes("&") ||
+      cleaned.includes("!") ||
+      cleaned.includes("@") ||
+      cleaned.includes("`") ||
       cleaned.startsWith(" ") ||
       cleaned.endsWith(" ")
     ) {
@@ -257,7 +270,9 @@ export class YamlSerializer {
           lines.push(`${valueIndent}${line}`)
         }
       } else if (value instanceof RegExp || typeof value === "function") {
-        // Handle RegExp and functions through serializeValue
+        // Handle RegExp and functions explicitly before the generic object check
+        // to prevent them from being treated as empty objects (RegExp/functions
+        // have no enumerable keys but should serialize as their string representation)
         const serialized = this.serializeValue(value, indent + 2, fullKeyPath)
         lines.push(`${keyIndent}${key}: ${serialized}`)
       } else if (
