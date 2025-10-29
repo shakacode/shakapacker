@@ -6,7 +6,16 @@ import { resolve, dirname, sep, delimiter, basename } from "path"
 import { inspect } from "util"
 import { load as loadYaml } from "js-yaml"
 import yargs from "yargs"
-import { ExportOptions, ConfigMetadata, FileOutput } from "./types"
+import {
+  ExportOptions,
+  ConfigMetadata,
+  FileOutput,
+  BUILD_ENV_VARS,
+  isBuildEnvVar,
+  isDangerousEnvVar,
+  DEFAULT_EXPORT_DIR,
+  DEFAULT_CONFIG_FILE
+} from "./types"
 import { YamlSerializer } from "./yamlSerializer"
 import { FileWriter } from "./fileWriter"
 import { ConfigFileLoader, generateSampleConfigFile } from "./configFile"
@@ -26,19 +35,6 @@ try {
     error instanceof Error ? error.message : String(error)
   )
 }
-
-/**
- * Environment variable names that can be set by build configurations
- */
-const BUILD_ENV_VARS = [
-  "NODE_ENV",
-  "RAILS_ENV",
-  "NODE_OPTIONS",
-  "BABEL_ENV",
-  "WEBPACK_SERVE",
-  "CLIENT_BUNDLE_ONLY",
-  "SERVER_BUNDLE_ONLY"
-] as const
 
 /**
  * Saves current values of build environment variables for later restoration
@@ -132,8 +128,7 @@ export async function run(args: string[]): Promise<number> {
     if (resolvedOptions.build) {
       const loader = new ConfigFileLoader(resolvedOptions.configFile)
       if (!loader.exists()) {
-        const configPath =
-          resolvedOptions.configFile || "config/shakapacker-builds.yml"
+        const configPath = resolvedOptions.configFile || DEFAULT_CONFIG_FILE
         throw new Error(
           `--build requires a config file but ${configPath} not found. Run --init to create it.`
         )
@@ -182,8 +177,7 @@ QUICK START (for troubleshooting):
     .option("init", {
       type: "boolean",
       default: false,
-      description:
-        "Generate config/shakapacker-builds.yml (use with --ssr for SSR builds)"
+      description: `Generate ${DEFAULT_CONFIG_FILE} (use with --ssr for SSR builds)`
     })
     .option("ssr", {
       type: "boolean",
@@ -206,8 +200,7 @@ QUICK START (for troubleshooting):
     })
     .option("config-file", {
       type: "string",
-      description:
-        "Path to config file (default: config/shakapacker-builds.yml)"
+      description: `Path to config file (default: ${DEFAULT_CONFIG_FILE})`
     })
     // Validation Options
     .option("validate", {
@@ -459,17 +452,14 @@ function applyDefaults(options: ExportOptions): ExportOptions {
     !updatedOptions.output &&
     !updatedOptions.saveDir
   ) {
-    updatedOptions.saveDir = resolve(
-      process.cwd(),
-      "shakapacker-config-exports"
-    )
+    updatedOptions.saveDir = resolve(process.cwd(), DEFAULT_EXPORT_DIR)
   }
 
   return updatedOptions
 }
 
 function runInitCommand(options: ExportOptions): number {
-  const configPath = options.configFile || "config/shakapacker-builds.yml"
+  const configPath = options.configFile || DEFAULT_CONFIG_FILE
   const fullPath = resolve(process.cwd(), configPath)
 
   // Check if SSR variant is requested via --ssr flag
@@ -576,7 +566,7 @@ async function runValidateCommand(options: ExportOptions): Promise<number> {
     // Validate that config file exists
     const loader = new ConfigFileLoader(options.configFile)
     if (!loader.exists()) {
-      const configPath = options.configFile || "config/shakapacker-builds.yml"
+      const configPath = options.configFile || DEFAULT_CONFIG_FILE
       throw new Error(
         `Config file ${configPath} not found. Run --init to create it.`
       )
@@ -609,7 +599,7 @@ async function runValidateCommand(options: ExportOptions): Promise<number> {
       // Handle empty builds edge case
       if (buildsToValidate.length === 0) {
         throw new Error(
-          `No builds found in config file. Add at least one build to config/shakapacker-builds.yml or run --init to see examples.`
+          `No builds found in config file. Add at least one build to ${DEFAULT_CONFIG_FILE} or run --init to see examples.`
         )
       }
     }
@@ -722,8 +712,7 @@ async function runAllBuildsCommand(options: ExportOptions): Promise<number> {
 
     const loader = new ConfigFileLoader(resolvedOptions.configFile)
     if (!loader.exists()) {
-      const configPath =
-        resolvedOptions.configFile || "config/shakapacker-builds.yml"
+      const configPath = resolvedOptions.configFile || DEFAULT_CONFIG_FILE
       throw new Error(
         `Config file ${configPath} not found. Run --init to create it.`
       )
@@ -810,7 +799,7 @@ async function runDoctorMode(
     const createdFiles: string[] = []
 
     // Check if config file exists - always use it for doctor mode
-    const configFilePath = options.configFile || "config/shakapacker-builds.yml"
+    const configFilePath = options.configFile || DEFAULT_CONFIG_FILE
     const loader = new ConfigFileLoader(configFilePath)
 
     if (loader.exists()) {
@@ -1102,15 +1091,6 @@ async function loadConfigsForEnv(
 
     // Set environment variables from config
     // Security: Only allow specific environment variables to prevent malicious configs
-    const DANGEROUS_ENV_VARS = [
-      "PATH",
-      "HOME",
-      "LD_PRELOAD",
-      "LD_LIBRARY_PATH",
-      "DYLD_LIBRARY_PATH",
-      "DYLD_INSERT_LIBRARIES"
-    ]
-
     if (options.verbose) {
       console.log(
         `[Config Exporter] Setting environment variables from build config...`
@@ -1118,13 +1098,13 @@ async function loadConfigsForEnv(
     }
 
     for (const [key, value] of Object.entries(resolvedBuild.environment)) {
-      if (DANGEROUS_ENV_VARS.includes(key)) {
+      if (isDangerousEnvVar(key)) {
         console.warn(
           `[Config Exporter] Warning: Skipping dangerous environment variable: ${key}`
         )
         continue
       }
-      if (!(BUILD_ENV_VARS as readonly string[]).includes(key)) {
+      if (!isBuildEnvVar(key)) {
         console.warn(
           `[Config Exporter] Warning: Skipping non-whitelisted environment variable: ${key}. ` +
             `Allowed variables are: ${BUILD_ENV_VARS.join(", ")}`

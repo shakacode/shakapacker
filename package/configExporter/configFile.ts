@@ -5,7 +5,8 @@ import {
   BundlerConfigFile,
   BuildConfig,
   ResolvedBuildConfig,
-  ExportOptions
+  ExportOptions,
+  DEFAULT_CONFIG_FILE
 } from "./types"
 
 /**
@@ -18,12 +19,12 @@ export class ConfigFileLoader {
   private configFilePath: string
 
   /**
-   * @param configFilePath - Path to config file (defaults to config/shakapacker-builds.yml in cwd)
+   * @param configFilePath - Path to config file (defaults to DEFAULT_CONFIG_FILE in cwd)
    * @throws Error if path is outside project directory
    */
   constructor(configFilePath?: string) {
     this.configFilePath =
-      configFilePath || resolve(process.cwd(), "config/shakapacker-builds.yml")
+      configFilePath || resolve(process.cwd(), DEFAULT_CONFIG_FILE)
     this.validateConfigPath()
   }
 
