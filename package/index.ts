@@ -22,6 +22,7 @@ const rules = require(rulesPath) as RuleSetRule[]
  *
  * @param extraConfig - Optional webpack configuration to merge with base config
  * @returns Final webpack configuration
+ * @throws {Error} If more than one argument is provided
  */
 const generateWebpackConfig = (
   extraConfig: Configuration = {},
@@ -51,6 +52,9 @@ const generateWebpackConfig = (
 /**
  * The Shakapacker module exports.
  * This object is exported via CommonJS `export =`.
+ *
+ * NOTE: This pattern is temporary and will be replaced with named exports
+ * once issue #641 is resolved.
  */
 export = {
   /** Shakapacker configuration from shakapacker.yml */
