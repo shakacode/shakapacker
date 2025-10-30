@@ -1,6 +1,6 @@
 import { spawn } from "child_process"
 import { existsSync } from "fs"
-import { resolve, relative, sep } from "path"
+import { resolve, relative } from "path"
 import { ResolvedBuildConfig, BuildValidationResult } from "./types"
 
 export interface ValidatorOptions {
@@ -397,8 +397,8 @@ export class BuildValidator {
         })
       }
 
-      child.stdout?.on("data", (data) => processOutput(data))
-      child.stderr?.on("data", (data) => processOutput(data))
+      child.stdout?.on("data", (data: Buffer) => processOutput(data))
+      child.stderr?.on("data", (data: Buffer) => processOutput(data))
 
       child.on("exit", (code) => {
         clearTimeout(timeoutId)
@@ -603,7 +603,7 @@ export class BuildValidator {
 
         // Parse JSON output
         try {
-          const jsonOutput: WebpackJsonOutput = JSON.parse(stdoutData)
+          const jsonOutput = JSON.parse(stdoutData) as WebpackJsonOutput
 
           // Extract output path if available
           if (jsonOutput.outputPath) {
@@ -613,10 +613,22 @@ export class BuildValidator {
           // Check for errors in webpack/rspack JSON output
           if (jsonOutput.errors && jsonOutput.errors.length > 0) {
             jsonOutput.errors.forEach((error) => {
-              const errorMsg =
-                typeof error === "string"
-                  ? error
-                  : error.message || String(error)
+              let errorMsg: string
+              if (typeof error === "string") {
+                errorMsg = error
+              } else if (error.message) {
+                errorMsg = error.message
+              } else {
+                // Attempt to extract useful info from malformed error using all enumerable props
+                try {
+                  errorMsg = JSON.stringify(
+                    error,
+                    Object.getOwnPropertyNames(error)
+                  )
+                } catch {
+                  errorMsg = "[Error object with no message]"
+                }
+              }
               result.errors.push(errorMsg)
               // Also add to output for visibility
               if (!this.options.verbose) {
@@ -628,10 +640,22 @@ export class BuildValidator {
           // Check for warnings
           if (jsonOutput.warnings && jsonOutput.warnings.length > 0) {
             jsonOutput.warnings.forEach((warning) => {
-              const warningMsg =
-                typeof warning === "string"
-                  ? warning
-                  : warning.message || String(warning)
+              let warningMsg: string
+              if (typeof warning === "string") {
+                warningMsg = warning
+              } else if (warning.message) {
+                warningMsg = warning.message
+              } else {
+                // Attempt to extract useful info from malformed warning using all enumerable props
+                try {
+                  warningMsg = JSON.stringify(
+                    warning,
+                    Object.getOwnPropertyNames(warning)
+                  )
+                } catch {
+                  warningMsg = "[Warning object with no message]"
+                }
+              }
               result.warnings.push(warningMsg)
             })
           }
