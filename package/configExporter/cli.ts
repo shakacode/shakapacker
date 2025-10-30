@@ -262,7 +262,7 @@ QUICK START (for troubleshooting):
 
         const parsed =
           typeof value === "number" ? value : parseInt(String(value), 10)
-        if (isNaN(parsed)) {
+        if (Number.isNaN(parsed)) {
           throw new Error(`--depth must be a number or 'null', got: ${value}`)
         }
         return parsed
@@ -309,6 +309,7 @@ QUICK START (for troubleshooting):
       description:
         "Generate only server config (fallback when no config file exists)"
     })
+    // eslint-disable-next-line no-shadow
     .check((argv) => {
       if (argv.webpack && argv.rspack) {
         throw new Error(

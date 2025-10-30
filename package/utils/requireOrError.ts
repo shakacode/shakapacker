@@ -5,7 +5,7 @@ const config = require("../config")
 const requireOrError = (moduleName: string): any => {
   try {
     return require(moduleName)
-  } catch (error) {
+  } catch {
     throw new Error(
       `[SHAKAPACKER]: ${moduleName} is required for ${config.assets_bundler} but is not installed. View Shakapacker's documented dependencies at https://github.com/shakacode/shakapacker/tree/main/docs/peer-dependencies.md`
     )
