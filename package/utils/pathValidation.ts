@@ -48,7 +48,7 @@ export function safeResolvePath(
     normalizedBase = resolveSymlinks
       ? fs.realpathSync(basePath)
       : path.resolve(basePath)
-  } catch (error) {
+  } catch {
     // If basePath doesn't exist, fall back to path.resolve
     normalizedBase = path.resolve(basePath)
   }
@@ -64,7 +64,7 @@ export function safeResolvePath(
     resolvedParent = resolveSymlinks
       ? fs.realpathSync(parentDir)
       : path.resolve(parentDir)
-  } catch (error) {
+  } catch {
     // Parent doesn't exist - validate the absolute path as-is
     if (
       !absolutePath.startsWith(normalizedBase + path.sep) &&
