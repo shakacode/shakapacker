@@ -13,6 +13,11 @@ Changes since the last non-beta release.
 
 ### Fixed
 
+- **Enhanced error handling for better security and debugging**. [PR #786](https://github.com/shakacode/shakapacker/pull/786) by [justin808](https://github.com/justin808).
+  - Path validation now properly reports permission errors instead of silently handling them
+  - Module loading errors now include original error context for easier troubleshooting
+  - Improved security by only catching ENOENT errors in path resolution, rethrowing permission and access errors
+  - Better type safety with custom ErrorWithCause interface and optional chaining for error.code checks
 - **Default template no longer triggers production warning**. [PR #774](https://github.com/shakacode/shakapacker/pull/774) by [justin808](https://github.com/justin808). Fixes [#703](https://github.com/shakacode/shakapacker/issues/703).
   - Changed default `useContentHash` to `true` in `shakapacker.yml` template
   - Eliminates confusing warning about `useContentHash: false` not being allowed in production

@@ -2,16 +2,20 @@
 /* eslint import/no-dynamic-require: 0 */
 const config = require("../config")
 
+interface ErrorWithCause extends Error {
+  cause?: unknown
+}
+
 const requireOrError = (moduleName: string): any => {
   try {
     return require(moduleName)
-  } catch (originalError) {
-    const error = new Error(
+  } catch (originalError: unknown) {
+    const error: ErrorWithCause = new Error(
       `[SHAKAPACKER]: ${moduleName} is required for ${config.assets_bundler} but is not installed. View Shakapacker's documented dependencies at https://github.com/shakacode/shakapacker/tree/main/docs/peer-dependencies.md`
     )
     // Add the original error as the cause for better debugging (ES2022+)
-    // Using type assertion since target is ES2020 but runtime supports it
-    ;(error as any).cause = originalError
+    // Using custom interface since target is ES2020 but runtime supports it
+    error.cause = originalError
     throw error
   }
 }

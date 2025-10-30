@@ -52,7 +52,7 @@ export function safeResolvePath(
     // If basePath doesn't exist (ENOENT), fall back to path.resolve
     // Rethrow other errors (e.g., permission issues) as they indicate real problems
     const nodeError = error as NodeJS.ErrnoException
-    if (nodeError.code === "ENOENT") {
+    if (nodeError?.code === "ENOENT") {
       normalizedBase = path.resolve(basePath)
     } else {
       throw error
@@ -74,7 +74,7 @@ export function safeResolvePath(
     // If parent doesn't exist (ENOENT), validate the absolute path as-is
     // Rethrow other errors (e.g., permission issues) as they indicate real problems
     const nodeError = error as NodeJS.ErrnoException
-    if (nodeError.code === "ENOENT") {
+    if (nodeError?.code === "ENOENT") {
       if (
         !absolutePath.startsWith(normalizedBase + path.sep) &&
         absolutePath !== normalizedBase
