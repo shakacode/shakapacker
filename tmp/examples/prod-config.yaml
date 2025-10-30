@@ -1,0 +1,19 @@
+mode: production
+devtool: source-map
+output:
+  path: /app/public/packs
+  publicPath: /packs/
+  filename: "[name]-[contenthash:8].js"
+cache:
+  type: filesystem
+optimization:
+  minimize: true
+  minimizer:
+    - TerserPlugin
+  splitChunks:
+    chunks: all
+    maxSize: 250000
+plugins:
+  - HtmlWebpackPlugin
+  - DefinePlugin
+  - CompressionPlugin
