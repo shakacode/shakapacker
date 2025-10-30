@@ -55,7 +55,6 @@ if (existsSync(configPath)) {
     const envAppConfig = appYmlObject[railsEnv]
 
     if (!envAppConfig) {
-      /* eslint no-console:0 */
       console.warn(
         `[SHAKAPACKER WARNING] Environment '${railsEnv}' not found in ${configPath}\n` +
           `Available environments: ${Object.keys(appYmlObject).join(", ")}\n` +

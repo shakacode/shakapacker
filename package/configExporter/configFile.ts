@@ -358,7 +358,7 @@ export class ConfigFileLoader {
    */
   listBuilds(): void {
     const config = this.load()
-    const builds = config.builds
+    const { builds } = config
 
     console.log(`\nAvailable builds in ${this.configFilePath}:\n`)
 
