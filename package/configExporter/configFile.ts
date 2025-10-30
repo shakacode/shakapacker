@@ -1,7 +1,12 @@
 import { existsSync, readFileSync, realpathSync } from "fs"
 import { resolve, relative, isAbsolute } from "path"
 import { load as loadYaml, FAILSAFE_SCHEMA } from "js-yaml"
-import { BundlerConfigFile, ResolvedBuildConfig, ExportOptions } from "./types"
+import {
+  BundlerConfigFile,
+  ResolvedBuildConfig,
+  ExportOptions,
+  DEFAULT_CONFIG_FILE
+} from "./types"
 
 /**
  * Loads and validates bundler configuration files
@@ -13,12 +18,12 @@ export class ConfigFileLoader {
   private configFilePath: string
 
   /**
-   * @param configFilePath - Path to config file (defaults to config/shakapacker-builds.yml in cwd)
+   * @param configFilePath - Path to config file (defaults to DEFAULT_CONFIG_FILE in cwd)
    * @throws Error if path is outside project directory
    */
   constructor(configFilePath?: string) {
     this.configFilePath =
-      configFilePath || resolve(process.cwd(), "config/shakapacker-builds.yml")
+      configFilePath || resolve(process.cwd(), DEFAULT_CONFIG_FILE)
     this.validateConfigPath()
   }
 

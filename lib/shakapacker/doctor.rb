@@ -391,7 +391,7 @@ module Shakapacker
         expected_binstubs = {
           "bin/shakapacker" => "Main Shakapacker binstub",
           "bin/shakapacker-dev-server" => "Development server binstub",
-          "bin/export-bundler-config" => "Config export binstub"
+          "bin/shakapacker-config" => "Config export binstub"
         }
 
         expected_binstubs.each do |path, description|
@@ -1013,7 +1013,7 @@ module Shakapacker
             binstubs = [
               "bin/shakapacker",
               "bin/shakapacker-dev-server",
-              "bin/export-bundler-config"
+              "bin/shakapacker-config"
             ]
 
             existing_binstubs = binstubs.select { |b| doctor.root_path.join(b).exist? }
@@ -1171,10 +1171,10 @@ module Shakapacker
             puts "  #{package_manager_install_command(package_manager)}"
             puts ""
             puts "For debugging configuration issues, export your webpack/rspack config:"
-            puts "  bin/export-bundler-config --doctor"
+            puts "  bin/shakapacker-config --doctor"
             puts "  (Exports annotated YAML configs for dev and production - best for troubleshooting)"
             puts ""
-            puts "  See 'bin/export-bundler-config --help' for more options"
+            puts "  See 'bin/shakapacker-config --help' for more options"
           end
 
           def package_manager_install_command(manager)
