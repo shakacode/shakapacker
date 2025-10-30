@@ -48,9 +48,15 @@ export function safeResolvePath(
     normalizedBase = resolveSymlinks
       ? fs.realpathSync(basePath)
       : path.resolve(basePath)
-  } catch {
-    // If basePath doesn't exist, fall back to path.resolve
-    normalizedBase = path.resolve(basePath)
+  } catch (error: unknown) {
+    // If basePath doesn't exist (ENOENT), fall back to path.resolve
+    // Rethrow other errors (e.g., permission issues) as they indicate real problems
+    const nodeError = error as NodeJS.ErrnoException
+    if (nodeError.code === "ENOENT") {
+      normalizedBase = path.resolve(basePath)
+    } else {
+      throw error
+    }
   }
 
   // For paths that may not exist yet, validate the parent directory
@@ -64,21 +70,26 @@ export function safeResolvePath(
     resolvedParent = resolveSymlinks
       ? fs.realpathSync(parentDir)
       : path.resolve(parentDir)
-  } catch {
-    // Parent doesn't exist - validate the absolute path as-is
-    if (
-      !absolutePath.startsWith(normalizedBase + path.sep) &&
-      absolutePath !== normalizedBase
-    ) {
-      throw new Error(
-        `[SHAKAPACKER SECURITY] Path traversal attempt detected.\n` +
-          `Requested path would resolve outside of allowed directory.\n` +
-          `Base: ${normalizedBase}\n` +
-          `Attempted: ${userPath}\n` +
-          `Resolved to: ${absolutePath}`
-      )
+  } catch (error: unknown) {
+    // If parent doesn't exist (ENOENT), validate the absolute path as-is
+    // Rethrow other errors (e.g., permission issues) as they indicate real problems
+    const nodeError = error as NodeJS.ErrnoException
+    if (nodeError.code === "ENOENT") {
+      if (
+        !absolutePath.startsWith(normalizedBase + path.sep) &&
+        absolutePath !== normalizedBase
+      ) {
+        throw new Error(
+          `[SHAKAPACKER SECURITY] Path traversal attempt detected.\n` +
+            `Requested path would resolve outside of allowed directory.\n` +
+            `Base: ${normalizedBase}\n` +
+            `Attempted: ${userPath}\n` +
+            `Resolved to: ${absolutePath}`
+        )
+      }
+      return absolutePath
     }
-    return absolutePath
+    throw error
   }
 
   // Reconstruct the full path with the resolved (symlink-free) parent
