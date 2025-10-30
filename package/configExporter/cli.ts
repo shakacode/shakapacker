@@ -309,7 +309,6 @@ QUICK START (for troubleshooting):
       description:
         "Generate only server config (fallback when no config file exists)"
     })
-    // eslint-disable-next-line no-shadow
     .check((argv) => {
       if (argv.webpack && argv.rspack) {
         throw new Error(
