@@ -13,6 +13,12 @@ Changes since the last non-beta release.
 
 ### Fixed
 
+- **Improved type safety and error handling in configExporter module**. [PR #778](https://github.com/shakacode/shakapacker/pull/778) by [justin808](https://github.com/justin808). Resolves [#707](https://github.com/shakacode/shakapacker/issues/707).
+  - Enhanced type safety across configFile, buildValidator, and yamlSerializer modules
+  - Improved error message preservation for webpack/rspack build failures
+  - Fixed edge cases in YAML serialization (empty arrays, malformed objects)
+  - More robust constructor name detection for object serialization
+  - Better handling of Symbol, BigInt, and edge case types
 - **Default template no longer triggers production warning**. [PR #774](https://github.com/shakacode/shakapacker/pull/774) by [justin808](https://github.com/justin808). Fixes [#703](https://github.com/shakacode/shakapacker/issues/703).
   - Changed default `useContentHash` to `true` in `shakapacker.yml` template
   - Eliminates confusing warning about `useContentHash: false` not being allowed in production

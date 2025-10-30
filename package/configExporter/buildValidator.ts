@@ -619,8 +619,15 @@ export class BuildValidator {
               } else if (error.message) {
                 errorMsg = error.message
               } else {
-                // Fallback for malformed error objects (shouldn't happen but be defensive)
-                errorMsg = "[Error object with no message]"
+                // Attempt to extract useful info from malformed error using all enumerable props
+                try {
+                  errorMsg = JSON.stringify(
+                    error,
+                    Object.getOwnPropertyNames(error)
+                  )
+                } catch {
+                  errorMsg = "[Error object with no message]"
+                }
               }
               result.errors.push(errorMsg)
               // Also add to output for visibility
@@ -639,8 +646,15 @@ export class BuildValidator {
               } else if (warning.message) {
                 warningMsg = warning.message
               } else {
-                // Fallback for malformed warning objects (shouldn't happen but be defensive)
-                warningMsg = "[Warning object with no message]"
+                // Attempt to extract useful info from malformed warning using all enumerable props
+                try {
+                  warningMsg = JSON.stringify(
+                    warning,
+                    Object.getOwnPropertyNames(warning)
+                  )
+                } catch {
+                  warningMsg = "[Warning object with no message]"
+                }
               }
               result.warnings.push(warningMsg)
             })

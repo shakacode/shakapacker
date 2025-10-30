@@ -105,37 +105,13 @@ export class YamlSerializer {
       )
     }
 
-    // Handle Symbol and BigInt explicitly - they cannot be JSON.stringify'd
-    if (typeof value === "symbol") {
-      return value.toString()
-    }
+    // Handle remaining types explicitly
+    if (typeof value === "symbol") return value.toString()
+    if (typeof value === "bigint") return value.toString()
 
-    if (typeof value === "bigint") {
-      return value.toString()
-    }
-
-    // Fallback for any other types with safe stringification
-    // At this point, value should be a primitive (not object, function, symbol, or bigint)
-    try {
-      const result = JSON.stringify(value)
-      // JSON.stringify can return undefined for some values
-      if (result === undefined || result === null) {
-        // Shouldn't reach here for primitives, but handle defensively
-        if (typeof value === "object" && value !== null) {
-          return "[Unknown Object]"
-        }
-        // Cast to primitive for stringification since we've ruled out objects
-        return String(value as string | number | boolean | null | undefined)
-      }
-      return result
-    } catch {
-      // If JSON.stringify throws, fall back to string coercion
-      if (typeof value === "object" && value !== null) {
-        return "[Unknown Object]"
-      }
-      // Cast to primitive for stringification since we've ruled out objects
-      return String(value as string | number | boolean | null | undefined)
-    }
+    // All remaining types are primitives (string, number, boolean, null, undefined)
+    // that String() handles safely - cast to exclude objects since we've already handled them
+    return String(value as string | number | boolean | null | undefined)
   }
 
   private serializeString(str: string, indent: number = 0): string {
@@ -386,21 +362,30 @@ export class YamlSerializer {
 
   /**
    * Extracts the constructor name from an object
-   * Returns null for plain objects (Object constructor)
+   * Returns null for plain objects (Object constructor) or objects without prototypes
    */
   private static getConstructorName(obj: unknown): string | null {
     if (!obj || typeof obj !== "object") return null
     if (Array.isArray(obj)) return null
 
-    const constructorName = (obj as Record<string, unknown>).constructor
-    if (
-      !constructorName ||
-      typeof constructorName !== "function" ||
-      constructorName.name === "Object"
-    ) {
+    // Use Object.getPrototypeOf for safer access to constructor
+    // This handles Object.create(null) and unusual prototypes correctly
+    try {
+      const proto = Object.getPrototypeOf(obj) as {
+        constructor?: { name?: string }
+      } | null
+      if (!proto || proto === Object.prototype) return null
+
+      const { constructor } = proto
+      if (!constructor || typeof constructor !== "function") return null
+
+      const constructorName = constructor.name
+      if (!constructorName || constructorName === "Object") return null
+
+      return constructorName
+    } catch {
+      // Handle frozen objects or other edge cases
       return null
     }
-
-    return constructorName.name
   }
 }
