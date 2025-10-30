@@ -194,11 +194,10 @@ export class YamlSerializer {
     const displayLines = truncated ? lines.slice(0, maxLines) : lines
 
     // Clean up indentation while preserving structure
-    const minIndent = Math.min(
-      ...displayLines
-        .filter((l) => l.trim().length > 0)
-        .map((l) => l.match(/^\s*/)?.[0].length || 0)
-    )
+    const indentLevels = displayLines
+      .filter((l) => l.trim().length > 0)
+      .map((l) => l.match(/^\s*/)?.[0].length || 0)
+    const minIndent = indentLevels.length > 0 ? Math.min(...indentLevels) : 0
 
     const formatted =
       displayLines.map((line) => line.substring(minIndent)).join("\n") +
@@ -256,11 +255,11 @@ export class YamlSerializer {
           .split("\n")
           .filter((line: string) => line.trim().length > 0)
         // Compute minimum leading whitespace to preserve relative indentation
-        const minIndent = Math.min(
-          ...nonEmptyLines.map(
-            (line: string) => line.match(/^\s*/)?.[0].length || 0
-          )
+        const indentLevels = nonEmptyLines.map(
+          (line: string) => line.match(/^\s*/)?.[0].length || 0
         )
+        const minIndent =
+          indentLevels.length > 0 ? Math.min(...indentLevels) : 0
         nonEmptyLines.forEach((line: string) => {
           // Remove only the common indent, preserving relative indentation
           lines.push(contentIndent + line.substring(minIndent))
@@ -272,11 +271,11 @@ export class YamlSerializer {
           .split("\n")
           .filter((line: string) => line.trim().length > 0)
         // Compute minimum leading whitespace to preserve relative indentation
-        const minIndent = Math.min(
-          ...nonEmptyLines.map(
-            (line: string) => line.match(/^\s*/)?.[0].length || 0
-          )
+        const indentLevels = nonEmptyLines.map(
+          (line: string) => line.match(/^\s*/)?.[0].length || 0
         )
+        const minIndent =
+          indentLevels.length > 0 ? Math.min(...indentLevels) : 0
         nonEmptyLines.forEach((line: string) => {
           // Remove only the common indent, preserving relative indentation
           lines.push(contentIndent + line.substring(minIndent))
@@ -368,7 +367,6 @@ export class YamlSerializer {
   }
 
   private makePathRelative(str: string): string {
-    if (typeof str !== "string") return str
     if (!isAbsolute(str)) return str
 
     // Convert absolute paths to relative paths using path.relative

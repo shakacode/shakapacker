@@ -613,10 +613,15 @@ export class BuildValidator {
           // Check for errors in webpack/rspack JSON output
           if (jsonOutput.errors && jsonOutput.errors.length > 0) {
             jsonOutput.errors.forEach((error) => {
-              const errorMsg =
-                typeof error === "string"
-                  ? error
-                  : error.message || JSON.stringify(error)
+              let errorMsg: string
+              if (typeof error === "string") {
+                errorMsg = error
+              } else if (error.message) {
+                errorMsg = error.message
+              } else {
+                // Fallback for malformed error objects (shouldn't happen but be defensive)
+                errorMsg = "[Error object with no message]"
+              }
               result.errors.push(errorMsg)
               // Also add to output for visibility
               if (!this.options.verbose) {
@@ -628,10 +633,15 @@ export class BuildValidator {
           // Check for warnings
           if (jsonOutput.warnings && jsonOutput.warnings.length > 0) {
             jsonOutput.warnings.forEach((warning) => {
-              const warningMsg =
-                typeof warning === "string"
-                  ? warning
-                  : warning.message || JSON.stringify(warning)
+              let warningMsg: string
+              if (typeof warning === "string") {
+                warningMsg = warning
+              } else if (warning.message) {
+                warningMsg = warning.message
+              } else {
+                // Fallback for malformed warning objects (shouldn't happen but be defensive)
+                warningMsg = "[Warning object with no message]"
+              }
               result.warnings.push(warningMsg)
             })
           }
