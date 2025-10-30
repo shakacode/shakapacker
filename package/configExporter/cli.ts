@@ -309,8 +309,9 @@ QUICK START (for troubleshooting):
       description:
         "Generate only server config (fallback when no config file exists)"
     })
-    .check((args) => {
-      if (args.webpack && args.rspack) {
+    // eslint-disable-next-line no-shadow
+    .check((argv) => {
+      if (argv.webpack && argv.rspack) {
         throw new Error(
           "--webpack and --rspack are mutually exclusive. Please specify only one."
         )
