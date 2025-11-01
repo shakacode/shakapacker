@@ -63,6 +63,50 @@ describe("Path Validation Security", () => {
         safeResolvePath(basePath, maliciousPath)
       }).toThrow("Path traversal attempt detected")
     })
+
+    it("rethrows non-ENOENT errors for better security", () => {
+      const fs = require("fs")
+
+      // Mock fs.realpathSync to throw EACCES (permission denied)
+      const realpathSyncSpy = jest
+        .spyOn(fs, "realpathSync")
+        .mockImplementation(() => {
+          const error = new Error("Permission denied")
+          error.code = "EACCES"
+          throw error
+        })
+
+      const basePath = path.join(path.sep, "app")
+      const userPath = path.join("src", "index.js")
+
+      expect(() => {
+        safeResolvePath(basePath, userPath)
+      }).toThrow("Permission denied")
+
+      // Restore original function
+      realpathSyncSpy.mockRestore()
+    })
+
+    it("handles errors without code property gracefully", () => {
+      const fs = require("fs")
+
+      // Mock fs.realpathSync to throw error without code property
+      const realpathSyncSpy = jest
+        .spyOn(fs, "realpathSync")
+        .mockImplementation(() => {
+          throw new Error("Unknown error")
+        })
+
+      const basePath = path.join(path.sep, "app")
+      const userPath = path.join("src", "index.js")
+
+      expect(() => {
+        safeResolvePath(basePath, userPath)
+      }).toThrow("Unknown error")
+
+      // Restore original function
+      realpathSyncSpy.mockRestore()
+    })
   })
 
   describe("validatePaths", () => {
