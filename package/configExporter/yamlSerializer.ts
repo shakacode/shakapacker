@@ -19,7 +19,7 @@ export class YamlSerializer {
   /**
    * Serialize a config object to YAML string with metadata header
    */
-  serialize(config: any, metadata: ConfigMetadata): string {
+  serialize(config: unknown, metadata: ConfigMetadata): string {
     const output: string[] = []
 
     // Add metadata header
@@ -47,7 +47,11 @@ export class YamlSerializer {
     return lines.join("\n")
   }
 
-  private serializeValue(value: any, indent: number, keyPath: string): string {
+  private serializeValue(
+    value: unknown,
+    indent: number,
+    keyPath: string
+  ): string {
     if (value === null || value === undefined) {
       return "null"
     }
@@ -65,7 +69,10 @@ export class YamlSerializer {
     }
 
     if (typeof value === "function") {
-      return this.serializeFunction(value, indent)
+      return this.serializeFunction(
+        value as (...args: unknown[]) => unknown,
+        indent
+      )
     }
 
     if (value instanceof RegExp) {
@@ -91,10 +98,20 @@ export class YamlSerializer {
     }
 
     if (typeof value === "object") {
-      return this.serializeObject(value, indent, keyPath)
+      return this.serializeObject(
+        value as Record<string, unknown>,
+        indent,
+        keyPath
+      )
     }
 
-    return String(value)
+    // Handle remaining types explicitly
+    if (typeof value === "symbol") return value.toString()
+    if (typeof value === "bigint") return value.toString()
+
+    // All remaining types are primitives (string, number, boolean, null, undefined)
+    // that String() handles safely - cast to exclude objects since we've already handled them
+    return String(value as string | number | boolean | null | undefined)
   }
 
   private serializeString(str: string, indent: number = 0): string {
@@ -137,7 +154,10 @@ export class YamlSerializer {
     return cleaned
   }
 
-  private serializeFunction(fn: Function, indent: number = 0): string {
+  private serializeFunction(
+    fn: (...args: unknown[]) => unknown,
+    indent: number = 0
+  ): string {
     // Get function source code
     const source = fn.toString()
 
@@ -150,11 +170,10 @@ export class YamlSerializer {
     const displayLines = truncated ? lines.slice(0, maxLines) : lines
 
     // Clean up indentation while preserving structure
-    const minIndent = Math.min(
-      ...displayLines
-        .filter((l) => l.trim().length > 0)
-        .map((l) => l.match(/^\s*/)?.[0].length || 0)
-    )
+    const indentLevels = displayLines
+      .filter((l) => l.trim().length > 0)
+      .map((l) => l.match(/^\s*/)?.[0].length || 0)
+    const minIndent = indentLevels.length > 0 ? Math.min(...indentLevels) : 0
 
     const formatted =
       displayLines.map((line) => line.substring(minIndent)).join("\n") +
@@ -164,7 +183,11 @@ export class YamlSerializer {
     return this.serializeString(formatted, indent)
   }
 
-  private serializeArray(arr: any[], indent: number, keyPath: string): string {
+  private serializeArray(
+    arr: unknown[],
+    indent: number,
+    keyPath: string
+  ): string {
     if (arr.length === 0) {
       return "[]"
     }
@@ -208,11 +231,11 @@ export class YamlSerializer {
           .split("\n")
           .filter((line: string) => line.trim().length > 0)
         // Compute minimum leading whitespace to preserve relative indentation
-        const minIndent = Math.min(
-          ...nonEmptyLines.map(
-            (line: string) => line.match(/^\s*/)?.[0].length || 0
-          )
+        const indentLevels = nonEmptyLines.map(
+          (line: string) => line.match(/^\s*/)?.[0].length || 0
         )
+        const minIndent =
+          indentLevels.length > 0 ? Math.min(...indentLevels) : 0
         nonEmptyLines.forEach((line: string) => {
           // Remove only the common indent, preserving relative indentation
           lines.push(contentIndent + line.substring(minIndent))
@@ -224,11 +247,11 @@ export class YamlSerializer {
           .split("\n")
           .filter((line: string) => line.trim().length > 0)
         // Compute minimum leading whitespace to preserve relative indentation
-        const minIndent = Math.min(
-          ...nonEmptyLines.map(
-            (line: string) => line.match(/^\s*/)?.[0].length || 0
-          )
+        const indentLevels = nonEmptyLines.map(
+          (line: string) => line.match(/^\s*/)?.[0].length || 0
         )
+        const minIndent =
+          indentLevels.length > 0 ? Math.min(...indentLevels) : 0
         nonEmptyLines.forEach((line: string) => {
           // Remove only the common indent, preserving relative indentation
           lines.push(contentIndent + line.substring(minIndent))
@@ -242,7 +265,11 @@ export class YamlSerializer {
     return `\n${lines.join("\n")}`
   }
 
-  private serializeObject(obj: any, indent: number, keyPath: string): string {
+  private serializeObject(
+    obj: Record<string, unknown>,
+    indent: number,
+    keyPath: string
+  ): string {
     const keys = Object.keys(obj).sort()
     const constructorName = YamlSerializer.getConstructorName(obj)
 
@@ -292,7 +319,7 @@ export class YamlSerializer {
         } else {
           lines.push(`${keyIndent}${key}:`)
           const nestedLines = this.serializeObject(
-            value,
+            value as Record<string, unknown>,
             indent + 2,
             fullKeyPath
           )
@@ -316,7 +343,6 @@ export class YamlSerializer {
   }
 
   private makePathRelative(str: string): string {
-    if (typeof str !== "string") return str
     if (!isAbsolute(str)) return str
 
     // Convert absolute paths to relative paths using path.relative
@@ -336,15 +362,30 @@ export class YamlSerializer {
 
   /**
    * Extracts the constructor name from an object
-   * Returns null for plain objects (Object constructor)
+   * Returns null for plain objects (Object constructor) or objects without prototypes
    */
-  private static getConstructorName(obj: any): string | null {
+  private static getConstructorName(obj: unknown): string | null {
     if (!obj || typeof obj !== "object") return null
     if (Array.isArray(obj)) return null
 
-    const constructorName = obj.constructor?.name
-    if (!constructorName || constructorName === "Object") return null
+    // Use Object.getPrototypeOf for safer access to constructor
+    // This handles Object.create(null) and unusual prototypes correctly
+    try {
+      const proto = Object.getPrototypeOf(obj) as {
+        constructor?: { name?: string }
+      } | null
+      if (!proto || proto === Object.prototype) return null
 
-    return constructorName
+      const { constructor } = proto
+      if (!constructor || typeof constructor !== "function") return null
+
+      const constructorName = constructor.name
+      if (!constructorName || constructorName === "Object") return null
+
+      return constructorName
+    } catch {
+      // Handle frozen objects or other edge cases
+      return null
+    }
   }
 }

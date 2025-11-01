@@ -27,7 +27,7 @@ let VERSION = "unknown"
 try {
   const packageJson = JSON.parse(
     readFileSync(resolve(__dirname, "../../package.json"), "utf8")
-  )
+  ) as { version?: string }
   VERSION = packageJson.version || "unknown"
 } catch (error) {
   console.warn(
@@ -309,7 +309,6 @@ QUICK START (for troubleshooting):
       description:
         "Generate only server config (fallback when no config file exists)"
     })
-    // eslint-disable-next-line no-shadow
     .check((argv) => {
       if (argv.webpack && argv.rspack) {
         throw new Error(
