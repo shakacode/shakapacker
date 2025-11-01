@@ -92,7 +92,7 @@ export class ConfigFileLoader {
         json: true
       }) as BundlerConfigFile
 
-      this.validate(parsed)
+      ConfigFileLoader.validate(parsed)
       return parsed
     } catch (error: any) {
       throw new Error(
@@ -101,7 +101,7 @@ export class ConfigFileLoader {
     }
   }
 
-  private validate(config: BundlerConfigFile): void {
+  private static validate(config: BundlerConfigFile): void {
     if (!config.builds || typeof config.builds !== "object") {
       throw new Error("Config file must contain a 'builds' object")
     }
@@ -193,7 +193,7 @@ export class ConfigFileLoader {
     }
 
     // Resolve bundler with precedence
-    const bundler = this.resolveBundler(
+    const bundler = ConfigFileLoader.resolveBundler(
       options.bundler,
       build.bundler,
       config.default_bundler,
@@ -207,7 +207,9 @@ export class ConfigFileLoader {
     )
 
     // Convert bundler_env to CLI args
-    const bundlerEnvArgs = this.convertBundlerEnvToArgs(build.bundler_env || {})
+    const bundlerEnvArgs = ConfigFileLoader.convertBundlerEnvToArgs(
+      build.bundler_env || {}
+    )
 
     // Resolve and validate outputs
     const outputs = build.outputs || []
@@ -264,7 +266,7 @@ export class ConfigFileLoader {
     }
   }
 
-  private resolveBundler(
+  private static resolveBundler(
     cliFlag?: "webpack" | "rspack",
     buildBundler?: "webpack" | "rspack",
     defaultBundler?: "webpack" | "rspack",
@@ -295,7 +297,7 @@ export class ConfigFileLoader {
       /\$\{([^}:]+):-([^}]*)\}/g,
       (_, varName, defaultValue) => {
         // Validate env var name to prevent regex injection
-        if (!this.isValidEnvVarName(varName)) {
+        if (!ConfigFileLoader.isValidEnvVarName(varName)) {
           console.warn(
             `[Config Exporter] Warning: Invalid environment variable name: ${varName}`
           )
@@ -308,7 +310,7 @@ export class ConfigFileLoader {
     // Replace ${VAR} with VAR value
     expanded = expanded.replace(/\$\{([^}:]+)\}/g, (_, varName) => {
       // Validate env var name to prevent regex injection
-      if (!this.isValidEnvVarName(varName)) {
+      if (!ConfigFileLoader.isValidEnvVarName(varName)) {
         console.warn(
           `[Config Exporter] Warning: Invalid environment variable name: ${varName}`
         )
@@ -326,11 +328,11 @@ export class ConfigFileLoader {
    * @param name - The variable name to validate
    * @returns true if valid, false otherwise
    */
-  private isValidEnvVarName(name: string): boolean {
+  private static isValidEnvVarName(name: string): boolean {
     return /^[A-Z_][A-Z0-9_]*$/i.test(name)
   }
 
-  private convertBundlerEnvToArgs(
+  private static convertBundlerEnvToArgs(
     bundlerEnv: Record<string, string | boolean>
   ): string[] {
     const args: string[] = []

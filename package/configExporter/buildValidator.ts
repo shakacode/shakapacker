@@ -173,7 +173,7 @@ export class BuildValidator {
    * @returns The resolved absolute path to the config file
    * @throws Error if the config file does not exist or is outside appRoot
    */
-  private validateConfigPath(
+  private static validateConfigPath(
     configFile: string,
     appRoot: string,
     buildName: string
@@ -273,7 +273,7 @@ export class BuildValidator {
     // Add config file if specified
     if (build.configFile) {
       try {
-        const configPath = this.validateConfigPath(
+        const configPath = BuildValidator.validateConfigPath(
           build.configFile,
           appRoot,
           build.name
@@ -484,7 +484,7 @@ export class BuildValidator {
     // Add config file if specified
     if (build.configFile) {
       try {
-        const configPath = this.validateConfigPath(
+        const configPath = BuildValidator.validateConfigPath(
           build.configFile,
           appRoot,
           build.name
