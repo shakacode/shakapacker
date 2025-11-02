@@ -4,7 +4,6 @@
 import * as webpackMerge from "webpack-merge"
 import { resolve } from "path"
 import { existsSync } from "fs"
-// @ts-ignore: webpack is an optional peer dependency (using type-only import)
 import type { Configuration, RuleSetRule } from "webpack"
 import config from "./config"
 import baseConfig from "./environments/base"

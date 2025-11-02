@@ -3,10 +3,11 @@
  * @module environments/test
  */
 
+import type { Configuration as WebpackConfiguration } from "webpack"
+
 const { merge } = require("webpack-merge")
 const config = require("../config")
 const baseConfig = require("./base")
-import type { Configuration as WebpackConfiguration } from "webpack"
 
 interface TestConfig {
   mode: "development" | "production" | "none"

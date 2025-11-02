@@ -1,4 +1,5 @@
 import { dirname, sep, normalize } from "path"
+
 const {
   additional_paths: additionalPaths,
   source_path: sourcePath

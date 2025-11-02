@@ -3,18 +3,19 @@
  * @module environments/development
  */
 
-const { merge } = require("webpack-merge")
-const config = require("../config")
-const baseConfig = require("./base")
-const webpackDevServerConfig = require("../webpackDevServerConfig")
-const { runningWebpackDevServer } = require("../env")
-const { moduleExists } = require("../utils/helpers")
 import type {
   WebpackConfigWithDevServer,
   RspackConfigWithDevServer,
   ReactRefreshWebpackPlugin,
   ReactRefreshRspackPlugin
 } from "./types"
+
+const { merge } = require("webpack-merge")
+const config = require("../config")
+const baseConfig = require("./base")
+const webpackDevServerConfig = require("../webpackDevServerConfig")
+const { runningWebpackDevServer } = require("../env")
+const { moduleExists } = require("../utils/helpers")
 
 /**
  * Base development configuration shared between webpack and rspack
