@@ -6,7 +6,7 @@ interface ErrorWithCause extends Error {
   cause?: unknown
 }
 
-const requireOrError = (moduleName: string): any => {
+const requireOrError = (moduleName: string): unknown => {
   try {
     return require(moduleName)
   } catch (originalError: unknown) {

@@ -63,10 +63,10 @@ const packageFullVersion = (packageName: string): string => {
     // eslint-disable-next-line import/no-dynamic-require, global-require
     const packageJson = require(packageJsonPath) as { version: string }
     return packageJson.version
-  } catch (error: any) {
+  } catch (error: unknown) {
     // Re-throw the error with proper code to maintain compatibility with babel preset
     // The preset expects MODULE_NOT_FOUND errors to handle missing core-js gracefully
-    if (error.code === "MODULE_NOT_FOUND") {
+    if ((error as NodeJS.ErrnoException).code === "MODULE_NOT_FOUND") {
       throw error
     }
     // For other errors, warn and re-throw
