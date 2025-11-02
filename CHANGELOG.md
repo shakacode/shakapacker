@@ -11,6 +11,8 @@
 
 Changes since the last non-beta release.
 
+## [v9.3.0] - November 2, 2025
+
 ### Fixed
 
 - **Enhanced error handling for better security and debugging**. [PR #786](https://github.com/shakacode/shakapacker/pull/786) by [justin808](https://github.com/justin808).
@@ -29,8 +31,6 @@ Changes since the last non-beta release.
   - Eliminates confusing warning about `useContentHash: false` not being allowed in production
   - Development environment now explicitly sets `useContentHash: false` for faster builds
   - Production no longer needs explicit override since it inherits the correct default
-
-## [v9.3.0] - October 28, 2025
 
 ### Added
 
