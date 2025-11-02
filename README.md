@@ -737,6 +737,8 @@ default: &default
 
 This is useful when you're managing your own transpiler configuration entirely outside of Shakapacker's defaults.
 
+**Note:** Only use `javascript_transpiler: 'none'` if you're providing a completely custom webpack configuration without using `generateWebpackConfig()`. If you're using Shakapacker's webpack generation (which is the common case), use one of the supported transpilers (`'babel'`, `'swc'`, or `'esbuild'`) instead.
+
 The easiest way to modify this config is to pass your desired customizations to `generateWebpackConfig` which will use [webpack-merge](https://github.com/survivejs/webpack-merge) to merge them with the configuration generated from `config/shakapacker.yml`:
 
 ```js

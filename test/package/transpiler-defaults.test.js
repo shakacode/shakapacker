@@ -145,5 +145,37 @@ describe("JavaScript Transpiler Defaults", () => {
         require("../../package/config")
       }).not.toThrow()
     })
+
+    it("'none' option results in no transpiler rules being applied", () => {
+      process.env.SHAKAPACKER_JAVASCRIPT_TRANSPILER = "none"
+      delete process.env.SHAKAPACKER_ASSETS_BUNDLER
+
+      jest.resetModules()
+
+      // Load the webpack rules
+      const rules = require("../../package/rules/webpack")
+
+      // Filter to find any transpiler rules (babel, swc, esbuild)
+      const transpilerRules = rules.filter((rule) => {
+        if (!rule || !rule.use) return false
+        const loaders = Array.isArray(rule.use) ? rule.use : [rule.use]
+        return loaders.some((loader) => {
+          const loaderName =
+            typeof loader === "string"
+              ? loader
+              : loader && typeof loader === "object"
+                ? loader.loader
+                : ""
+          return (
+            loaderName.includes("babel-loader") ||
+            loaderName.includes("swc-loader") ||
+            loaderName.includes("esbuild-loader")
+          )
+        })
+      })
+
+      // Should have no transpiler rules when set to 'none'
+      expect(transpilerRules.length).toBe(0)
+    })
   })
 })

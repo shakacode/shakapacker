@@ -11,6 +11,10 @@
 
 Changes since the last non-beta release.
 
+### Added
+
+- **Support for `javascript_transpiler: 'none'`** for completely custom webpack configurations. [PR #799](https://github.com/shakacode/shakapacker/pull/799) by [justin808](https://github.com/justin808). Allows users with custom webpack configs to skip Shakapacker's transpiler setup and validation by setting `javascript_transpiler: 'none'` in `shakapacker.yml`. Useful when managing transpilation entirely outside of Shakapacker's defaults.
+
 ## [v9.3.0] - November 2, 2025
 
 ### Fixed
