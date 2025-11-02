@@ -17,7 +17,7 @@ const getPlugins = (): unknown[] => {
   const plugins = [
     new webpack.EnvironmentPlugin(process.env),
     new WebpackAssetsManifestConstructor({
-      merge: isDevelopment,
+      merge: true,
       entrypoints: true,
       writeToDisk: true,
       output: config.manifestPath,
