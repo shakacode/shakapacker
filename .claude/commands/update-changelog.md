@@ -86,32 +86,50 @@ When a new version is released:
 
 ### For Regular Changelog Updates
 
-1. **Check commits since last release**:
-   - Run `git log` to see commits on main/master since the last released version
+1. **Determine the correct version tag to compare against**:
+   - First, check the tag dates: `git log --tags --simplify-by-decoration --pretty="format:%ai %d" | head -10`
+   - Find the latest version tag and its date
+   - Compare main branch date to the tag date
+   - If the tag is NEWER than main, it means main needs to be updated to include the tag's commits
+   - **CRITICAL**: Always use `git log TAG..BRANCH` to find commits that are in the tag but not in the branch, as the tag may be ahead
+
+2. **Check commits and version boundaries**:
+   - Run `git log --oneline LAST_TAG..main` to see commits since the last release
+   - Also check `git log --oneline main..LAST_TAG` to see if the tag is ahead of main
+   - If the tag is ahead, entries in "Unreleased" section may actually belong to that tagged version
    - Identify which commits contain user-visible changes
    - Extract PR numbers and author information from commit messages
    - **Never ask the user for PR details** - get them from the git history
 
-2. **Validate** that changes are user-visible (per the criteria above). If not user-visible, skip those commits.
+3. **Validate** that changes are user-visible (per the criteria above). If not user-visible, skip those commits.
 
-3. **Read the current CHANGELOG.md** to understand the existing structure and formatting.
+4. **Read the current CHANGELOG.md** to understand the existing structure and formatting.
 
-4. **Add entries** to the `## [Unreleased]` section under appropriate category headings.
+5. **Determine where entries should go**:
+   - If the latest version tag is NEWER than main branch, move entries from "Unreleased" to that version section
+   - If main is ahead of the latest tag, add new entries to "Unreleased"
+   - Always verify the version date in CHANGELOG.md matches the actual tag date
 
-5. **Verify formatting**:
+6. **Add or move entries** to the appropriate section under appropriate category headings.
+   - **CRITICAL**: When moving entries from "Unreleased" to a version section, merge them with existing entries under the same category heading
+   - **NEVER create duplicate section headings** (e.g., don't create two "### Fixed" sections)
+   - If the version section already has a category heading (e.g., "### Fixed"), add the moved entries to that existing section
+   - Maintain the category order: Breaking Changes, Added, Changed, Improved, Security, Fixed, Deprecated, Removed
+
+7. **Verify formatting**:
    - Bold description with period
    - Proper PR link
    - Proper author link
    - Consistent with existing entries
    - File ends with a newline character
 
-6. **Run linting** after making changes:
+8. **Run linting** after making changes:
 
    ```bash
    yarn lint
    ```
 
-7. **Show the user** the added entries.
+9. **Show the user** the added or moved entries and explain what was done.
 
 ### For Beta to Non-Beta Version Release
 
