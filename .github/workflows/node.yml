@@ -58,6 +58,30 @@ jobs:
 
       - name: TypeScript type check
         run: yarn type-check
+
+  type-check-without-webpack:
+    name: TypeScript Type Checking (without webpack)
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20.x
+          cache: yarn
+
+      - name: Install dependencies
+        run: yarn --frozen-lockfile --non-interactive --prefer-offline
+
+      - name: Remove webpack and related types
+        run: |
+          yarn remove webpack @types/webpack webpack-dev-server @types/webpack-dev-server
+          yarn remove webpack-cli webpack-assets-manifest webpack-subresource-integrity compression-webpack-plugin
+
+      - name: TypeScript type check without webpack
+        run: yarn type-check
   test:
     name: Testing
     strategy:
