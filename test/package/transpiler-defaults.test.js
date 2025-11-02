@@ -124,4 +124,26 @@ describe("JavaScript Transpiler Defaults", () => {
       expect(config.javascript_transpiler).toBe("swc")
     })
   })
+
+  describe("none transpiler option", () => {
+    it("accepts 'none' as a valid transpiler value", () => {
+      process.env.SHAKAPACKER_JAVASCRIPT_TRANSPILER = "none"
+
+      jest.resetModules()
+      const config = require("../../package/config")
+
+      expect(config.javascript_transpiler).toBe("none")
+    })
+
+    it("'none' option doesn't throw errors for missing transpiler packages", () => {
+      process.env.SHAKAPACKER_JAVASCRIPT_TRANSPILER = "none"
+
+      jest.resetModules()
+
+      // Should not throw even though there's no 'none-loader' package
+      expect(() => {
+        require("../../package/config")
+      }).not.toThrow()
+    })
+  })
 })

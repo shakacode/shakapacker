@@ -38,6 +38,11 @@ const loaderMatches = <T = unknown>(
   loaderToCheck: string,
   fn: () => T
 ): T | null => {
+  // If transpiler is set to 'none', skip all transpiler rules (for custom webpack configs)
+  if (configLoader === "none") {
+    return null
+  }
+
   if (configLoader !== loaderToCheck) {
     return null
   }

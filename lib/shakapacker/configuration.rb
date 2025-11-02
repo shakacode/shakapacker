@@ -147,6 +147,9 @@ class Shakapacker::Configuration
     def validate_transpiler_configuration(transpiler)
       return unless ENV["NODE_ENV"] != "test" # Skip validation in test environment
 
+      # Skip validation if transpiler is set to 'none' (custom webpack config)
+      return if transpiler == "none"
+
       # Check if package.json exists
       package_json_path = root_path.join("package.json")
       return unless package_json_path.exist?

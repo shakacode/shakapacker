@@ -615,4 +615,32 @@ describe "Shakapacker::Configuration" do
       end
     end
   end
+
+  describe "javascript_transpiler: 'none'" do
+    context "with javascript_transpiler set to 'none'" do
+      let(:config) do
+        Shakapacker::Configuration.new(
+          root_path: ROOT_PATH,
+          config_path: Pathname.new(File.expand_path("./test_app/config/shakapacker.yml", __dir__)),
+          env: "production"
+        )
+      end
+
+      it "accepts 'none' as a valid value" do
+        allow(config).to receive(:fetch).with(:javascript_transpiler).and_return("none")
+        allow(config).to receive(:fetch).with(:webpack_loader).and_return(nil)
+        expect(config.javascript_transpiler).to eq "none"
+      end
+
+      it "skips transpiler validation when set to 'none'" do
+        allow(config).to receive(:fetch).with(:javascript_transpiler).and_return("none")
+        allow(config).to receive(:fetch).with(:webpack_loader).and_return(nil)
+        allow(config).to receive(:root_path).and_return(ROOT_PATH)
+
+        # Should not trigger any validation warnings
+        expect($stderr).not_to receive(:puts)
+        expect(config.javascript_transpiler).to eq "none"
+      end
+    end
+  end
 end
