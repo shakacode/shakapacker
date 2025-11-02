@@ -111,6 +111,10 @@ When a new version is released:
    - Always verify the version date in CHANGELOG.md matches the actual tag date
 
 6. **Add or move entries** to the appropriate section under appropriate category headings.
+   - **CRITICAL**: When moving entries from "Unreleased" to a version section, merge them with existing entries under the same category heading
+   - **NEVER create duplicate section headings** (e.g., don't create two "### Fixed" sections)
+   - If the version section already has a category heading (e.g., "### Fixed"), add the moved entries to that existing section
+   - Maintain the category order: Breaking Changes, Added, Changed, Improved, Security, Fixed, Deprecated, Removed
 
 7. **Verify formatting**:
    - Bold description with period

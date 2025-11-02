@@ -31,6 +31,9 @@ Changes since the last non-beta release.
   - Eliminates confusing warning about `useContentHash: false` not being allowed in production
   - Development environment now explicitly sets `useContentHash: false` for faster builds
   - Production no longer needs explicit override since it inherits the correct default
+- Fixed Rails constant error when using custom environments like staging. [PR #681](https://github.com/shakacode/shakapacker/pull/681) by [justin808](https://github.com/justin808). `RAILS_ENV=staging` no longer causes "uninitialized constant Shakapacker::Instance::Rails" error. Shakapacker now works in non-Rails contexts.
+- Fixed TypeScript type definitions to export proper types instead of `any`. [PR #684](https://github.com/shakacode/shakapacker/pull/684) by [justin808](https://github.com/justin808). Previously `package/index.d.ts` was exporting all types as `any`, breaking IDE autocomplete. Now properly exports typed interfaces.
+- Fixed integrity config handling and sass-loader version check. [PR #688](https://github.com/shakacode/shakapacker/pull/688) by [justin808](https://github.com/justin808). Properly handles subresource integrity configuration and correctly detects sass-loader version for conditional logic.
 
 ### Added
 
@@ -61,12 +64,6 @@ Changes since the last non-beta release.
 
 - **Improved error messages** to suggest `assets_bundler_config_path`. [PR #712](https://github.com/shakacode/shakapacker/pull/712) by [justin808](https://github.com/justin808). More helpful error messages when bundler config is not found, suggesting use of `assets_bundler_config_path` for custom locations.
 - **Improved doctor command output** clarity and accuracy. [PR #682](https://github.com/shakacode/shakapacker/pull/682) by [justin808](https://github.com/justin808). Better formatting and organization of diagnostic information with more actionable recommendations.
-
-### Fixed
-
-- Fixed Rails constant error when using custom environments like staging. [PR #681](https://github.com/shakacode/shakapacker/pull/681) by [justin808](https://github.com/justin808). `RAILS_ENV=staging` no longer causes "uninitialized constant Shakapacker::Instance::Rails" error. Shakapacker now works in non-Rails contexts.
-- Fixed TypeScript type definitions to export proper types instead of `any`. [PR #684](https://github.com/shakacode/shakapacker/pull/684) by [justin808](https://github.com/justin808). Previously `package/index.d.ts` was exporting all types as `any`, breaking IDE autocomplete. Now properly exports typed interfaces.
-- Fixed integrity config handling and sass-loader version check. [PR #688](https://github.com/shakacode/shakapacker/pull/688) by [justin808](https://github.com/justin808). Properly handles subresource integrity configuration and correctly detects sass-loader version for conditional logic.
 
 ## [v9.2.0] - October 9, 2025
 
