@@ -6,13 +6,13 @@ const inliningCss = require("./inliningCss")
 
 interface StyleRule {
   test: RegExp
-  use: any[]
+  use: unknown[]
   type?: string
 }
 
 const getStyleRule = (
   test: RegExp,
-  preprocessors: any[] = []
+  preprocessors: unknown[] = []
 ): StyleRule | null => {
   if (moduleExists("css-loader")) {
     const tryPostcss = () =>
