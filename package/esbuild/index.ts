@@ -1,4 +1,3 @@
-/* eslint global-require: 0 */
 /* eslint import/no-dynamic-require: 0 */
 
 import { resolve } from "path"
@@ -21,7 +20,6 @@ const getLoaderExtension = (filename: string): string => {
 const getCustomConfig = (): Partial<RuleSetRule> => {
   const path = resolve("config", "esbuild.config.js")
   if (existsSync(path)) {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
     return require(path)
   }
   return {}

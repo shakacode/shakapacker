@@ -1,13 +1,13 @@
-/* eslint global-require: 0 */
 /* eslint import/no-dynamic-require: 0 */
 
 import { Dirent } from "fs"
 import type { Configuration, Entry } from "webpack"
+import type { Config } from "../types"
 
 const { basename, dirname, join, relative, resolve } = require("path")
 const { existsSync, readdirSync } = require("fs")
 const extname = require("path-complete-extname")
-const config = require("../config")
+const config = require("../config") as Config
 const { isProduction } = require("../env")
 
 const pluginsPath = resolve(

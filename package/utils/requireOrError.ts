@@ -1,6 +1,7 @@
-/* eslint global-require: 0 */
 /* eslint import/no-dynamic-require: 0 */
-const config = require("../config")
+import type { Config } from "../types"
+
+const config = require("../config") as Config
 
 interface ErrorWithCause extends Error {
   cause?: unknown

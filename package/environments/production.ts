@@ -3,7 +3,6 @@
  * @module environments/production
  */
 
-/* eslint global-require: 0 */
 /* eslint import/no-dynamic-require: 0 */
 
 import type {
@@ -11,12 +10,13 @@ import type {
   WebpackPluginInstance
 } from "webpack"
 import type { CompressionPluginConstructor } from "./types"
+import type { Config } from "../types"
 
 const { resolve } = require("path")
 const { merge } = require("webpack-merge")
 const baseConfig = require("./base")
 const { moduleExists } = require("../utils/helpers")
-const config = require("../config")
+const config = require("../config") as Config
 
 const optimizationPath = resolve(
   __dirname,

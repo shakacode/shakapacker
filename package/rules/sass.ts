@@ -1,5 +1,3 @@
-/* eslint global-require: 0 */
-
 const { getStyleRule } = require("../utils/getStyleRule")
 const { canProcess, packageMajorVersion } = require("../utils/helpers")
 const { additional_paths: extraPaths } = require("../config")

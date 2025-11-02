@@ -19,13 +19,7 @@ module.exports = [
       "vendor/**", // Vendored dependencies
       "spec/**", // Ruby specs, not JavaScript
       "package/**/*.js", // Generated/compiled JavaScript from TypeScript
-      "package/**/*.d.ts", // Generated TypeScript declaration files
-      // Temporarily ignore TypeScript files until technical debt is resolved
-      // See ESLINT_TECHNICAL_DEBT.md for tracking
-      // TODO: Remove this once ESLint issues are fixed (tracked in #723)
-      // Exception: configExporter is being fixed in #707
-      "package/**/*.ts",
-      "!package/configExporter/**/*.ts" // Enable linting for configExporter (issue #707)
+      "package/**/*.d.ts" // Generated TypeScript declaration files
     ]
   },
 
@@ -157,31 +151,37 @@ module.exports = [
     }
   },
 
+  // Global rule for all TypeScript files in package/
+  // Suppress require() imports - these are intentional for CommonJS compatibility
+  // Will be addressed in Phase 3 (breaking changes) - see #708
+  {
+    files: ["package/**/*.ts"],
+    rules: {
+      "@typescript-eslint/no-require-imports": "off",
+      "global-require": "off",
+      "import/no-import-module-exports": "off"
+    }
+  },
+
   // Temporary overrides for files with remaining errors
   // See ESLINT_TECHNICAL_DEBT.md for detailed documentation
   //
-  // These overrides suppress ~172 errors that require either:
+  // These overrides suppress ~94 type safety errors that require:
   // 1. Major type refactoring (any/unsafe-* rules)
-  // 2. Potential breaking changes (module system)
-  // 3. Significant code restructuring
+  // 2. Proper type definitions for config objects
   //
-  // GitHub Issues tracking this technical debt:
-  // - #707: TypeScript: Refactor configExporter module for type safety
-  // - #708: Module System: Modernize to ES6 modules with codemod
-  // - #709: Code Style: Fix remaining ESLint style issues
+  // GitHub Issue tracking this technical debt:
+  // - #790: TypeScript ESLint Phase 2b: Type Safety Improvements (~94 errors)
   {
     // Consolidated override for package/config.ts and package/babel/preset.ts
     // Combines rules from both previous override blocks to avoid duplication
     files: ["package/babel/preset.ts", "package/config.ts"],
     rules: {
-      // From first override block
-      "@typescript-eslint/no-require-imports": "off",
       "@typescript-eslint/no-unused-vars": "off",
       "@typescript-eslint/no-unsafe-call": "off",
       "import/order": "off",
       "import/newline-after-import": "off",
       "import/first": "off",
-      // Additional rules that were in the second override for config.ts
       "@typescript-eslint/no-unsafe-assignment": "off",
       "@typescript-eslint/no-unsafe-member-access": "off",
       "@typescript-eslint/no-unsafe-argument": "off",
@@ -205,9 +205,7 @@ module.exports = [
       // Code organization (functions before use due to large file)
       "@typescript-eslint/no-use-before-define": "off",
       // Import style (CommonJS require for dynamic imports)
-      "@typescript-eslint/no-require-imports": "off",
       "import/no-dynamic-require": "off",
-      "global-require": "off",
       // Class methods that are part of public API
       "class-methods-use-this": "off",
       // Template expressions (valid use cases with union types)
@@ -236,17 +234,24 @@ module.exports = [
     }
   },
   {
-    // Remaining utils files (removed package/config.ts from this block)
+    // Remaining utils files that need type safety improvements
+    // These use dynamic requires and helper functions that return `any`
     files: [
       "package/utils/inliningCss.ts",
       "package/utils/errorCodes.ts",
       "package/utils/errorHelpers.ts",
-      "package/utils/pathValidation.ts"
+      "package/utils/pathValidation.ts",
+      "package/utils/getStyleRule.ts",
+      "package/utils/helpers.ts",
+      "package/utils/validateDependencies.ts",
+      "package/webpackDevServerConfig.ts"
     ],
     rules: {
       "@typescript-eslint/no-unsafe-assignment": "off",
       "@typescript-eslint/no-unsafe-member-access": "off",
       "@typescript-eslint/no-unsafe-argument": "off",
+      "@typescript-eslint/no-unsafe-call": "off",
+      "@typescript-eslint/no-unsafe-return": "off",
       "@typescript-eslint/no-explicit-any": "off",
       "no-useless-escape": "off",
       "no-continue": "off"
@@ -257,6 +262,7 @@ module.exports = [
     rules: {
       "@typescript-eslint/no-unsafe-assignment": "off",
       "@typescript-eslint/no-unsafe-call": "off",
+      "@typescript-eslint/no-unsafe-member-access": "off",
       "@typescript-eslint/no-redundant-type-constituents": "off",
       "import/prefer-default-export": "off"
     }
@@ -276,6 +282,8 @@ module.exports = [
       "@typescript-eslint/no-unsafe-assignment": "off",
       "@typescript-eslint/no-unsafe-call": "off",
       "@typescript-eslint/no-unsafe-return": "off",
+      "@typescript-eslint/no-unsafe-member-access": "off",
+      "@typescript-eslint/no-unsafe-argument": "off",
       "@typescript-eslint/no-redundant-type-constituents": "off",
       "@typescript-eslint/no-unused-vars": "off",
       "@typescript-eslint/no-unsafe-function-type": "off",
