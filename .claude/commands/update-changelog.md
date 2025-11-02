@@ -84,18 +84,19 @@ When a new version is released:
 
 ## Process
 
-1. **Ask for details** if not provided:
-   - What is the PR number?
-   - What is the GitHub username of the author?
-   - What category does this change belong to?
-   - What is a concise description of the change?
-   - Is this a breaking change?
+### For Regular Changelog Updates
 
-2. **Validate** that the change is user-visible (per the criteria above). If it's not user-visible, politely explain that it doesn't need a changelog entry.
+1. **Check commits since last release**:
+   - Run `git log` to see commits on main/master since the last released version
+   - Identify which commits contain user-visible changes
+   - Extract PR numbers and author information from commit messages
+   - **Never ask the user for PR details** - get them from the git history
+
+2. **Validate** that changes are user-visible (per the criteria above). If not user-visible, skip those commits.
 
 3. **Read the current CHANGELOG.md** to understand the existing structure and formatting.
 
-4. **Add the entry** to the `## [Unreleased]` section under the appropriate category heading.
+4. **Add entries** to the `## [Unreleased]` section under appropriate category headings.
 
 5. **Verify formatting**:
    - Bold description with period
@@ -110,7 +111,39 @@ When a new version is released:
    yarn lint
    ```
 
-7. **Verify the changes** by showing the user the added entry.
+7. **Show the user** the added entries.
+
+### For Beta to Non-Beta Version Release
+
+When releasing from beta to a stable version (e.g., v9.1.0-beta.3 → v9.1.0):
+
+1. **Remove all beta version labels** from the changelog:
+   - Change `## [v9.1.0-beta.1]`, `## [v9.1.0-beta.2]`, etc. to a single `## [v9.1.0]` section
+   - Combine all beta entries into the stable release section
+
+2. **Consolidate duplicate entries**:
+   - If bug fixes or changes were made to features introduced in earlier betas, keep only the final state
+   - Remove redundant changelog entries for fixes to beta features
+   - Keep the most recent/accurate description of each change
+
+3. **Update version diff links** at the bottom to point to the stable version
+
+### For New Beta Version Release
+
+When creating a new beta version, ask the user which approach to take:
+
+**Option 1: Process changes since last beta**
+
+- Only add entries for commits since the previous beta version
+- Maintains detailed history of what changed in each beta
+
+**Option 2: Collapse all prior betas into current beta**
+
+- Combine all beta changelog entries into the new beta version
+- Removes previous beta version sections
+- Cleaner changelog with less version noise
+
+After the user chooses, proceed with that approach.
 
 ## Examples
 
