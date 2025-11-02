@@ -53,8 +53,6 @@ export interface Env {
 type Header =
   | Array<{ key: string; value: string }>
   | Record<string, string | string[]>
-type ServerType = "http" | "https" | "spdy"
-type WebSocketType = "sockjs" | "ws"
 
 /**
  * This has the same keys and behavior as https://webpack.js.org/configuration/dev-server/ except:

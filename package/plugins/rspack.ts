@@ -1,8 +1,10 @@
+import type { Config } from "../types"
+
 const { requireOrError } = require("../utils/requireOrError")
 
 const { RspackManifestPlugin } = requireOrError("rspack-manifest-plugin")
 const rspack = requireOrError("@rspack/core")
-const config = require("../config")
+const config = require("../config") as Config
 const { isProduction } = require("../env")
 const { moduleExists } = require("../utils/helpers")
 

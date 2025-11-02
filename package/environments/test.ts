@@ -4,9 +4,10 @@
  */
 
 import type { Configuration as WebpackConfiguration } from "webpack"
+import type { Config } from "../types"
 
 const { merge } = require("webpack-merge")
-const config = require("../config")
+const config = require("../config") as Config
 const baseConfig = require("./base")
 
 interface TestConfig {

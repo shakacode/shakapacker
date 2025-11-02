@@ -1,8 +1,8 @@
 // These are the raw shakapacker dev server config settings from the YML file with ENV overrides applied.
-import { DevServerConfig } from "./types"
+import type { DevServerConfig, Config } from "./types"
 
 const { isBoolean } = require("./utils/helpers")
-const config = require("./config")
+const config = require("./config") as Config
 
 const envFetch = (key: string): string | boolean | undefined => {
   const value = process.env[key]

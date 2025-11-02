@@ -1,7 +1,8 @@
-/* eslint global-require: 0 */
+import type { Config } from "../types"
+
 const { canProcess, moduleExists } = require("./helpers")
 const { requireOrError } = require("./requireOrError")
-const config = require("../config")
+const config = require("../config") as Config
 const inliningCss = require("./inliningCss")
 
 interface StyleRule {

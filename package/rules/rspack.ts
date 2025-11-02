@@ -1,5 +1,3 @@
-/* eslint global-require: 0 */
-
 const { moduleExists } = require("../utils/helpers")
 const { debug, info, warn } = require("../utils/debug")
 

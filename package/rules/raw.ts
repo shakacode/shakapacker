@@ -1,4 +1,6 @@
-const config = require("../config")
+import type { Config } from "../types"
+
+const config = require("../config") as Config
 
 const rspackRawConfig = () => ({
   resourceQuery: /raw/,
