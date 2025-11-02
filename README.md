@@ -731,7 +731,7 @@ If you're providing a completely custom webpack configuration without using `gen
 ```yml
 # config/shakapacker.yml
 default: &default
-  javascript_transpiler: 'none'  # Skip Shakapacker's transpiler setup
+  javascript_transpiler: "none" # Skip Shakapacker's transpiler setup
   # ... other config
 ```
 
