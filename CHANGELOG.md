@@ -13,6 +13,11 @@ Changes since the last non-beta release.
 
 ### Fixed
 
+- **Enhanced error handling for better security and debugging**. [PR #786](https://github.com/shakacode/shakapacker/pull/786) by [justin808](https://github.com/justin808).
+  - Path validation now properly reports permission errors instead of silently handling them
+  - Module loading errors now include original error context for easier troubleshooting
+  - Improved security by only catching ENOENT errors in path resolution, rethrowing permission and access errors
+  - Better type safety with custom ErrorWithCause interface and optional chaining for error.code checks
 - **Improved type safety and error handling in configExporter module**. [PR #778](https://github.com/shakacode/shakapacker/pull/778) by [justin808](https://github.com/justin808). Resolves [#707](https://github.com/shakacode/shakapacker/issues/707).
   - Enhanced type safety across configFile, buildValidator, and yamlSerializer modules
   - Improved error message preservation for webpack/rspack build failures
