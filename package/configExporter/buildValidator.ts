@@ -1,6 +1,6 @@
 import { spawn } from "child_process"
 import { existsSync } from "fs"
-import { resolve, relative, sep } from "path"
+import { resolve, relative } from "path"
 import { ResolvedBuildConfig, BuildValidationResult } from "./types"
 
 export interface ValidatorOptions {
@@ -222,7 +222,7 @@ export class BuildValidator {
     const isHMR =
       build.environment.WEBPACK_SERVE === "true" ||
       build.environment.HMR === "true"
-    const bundler = build.bundler
+    const { bundler } = build
 
     if (isHMR) {
       return this.validateHMRBuild(build, appRoot, bundler)
@@ -301,7 +301,7 @@ export class BuildValidator {
       args.push(...build.bundlerEnvArgs)
     }
 
-    return new Promise((resolve) => {
+    return new Promise((resolvePromise) => {
       const child = spawn(devServerBin, args, {
         cwd: appRoot,
         env: this.filterEnvironment(build.environment),
@@ -316,7 +316,7 @@ export class BuildValidator {
       const resolveOnce = (res: BuildValidationResult) => {
         if (!resolved) {
           resolved = true
-          resolve(res)
+          resolvePromise(res)
         }
       }
 
@@ -397,8 +397,8 @@ export class BuildValidator {
         })
       }
 
-      child.stdout?.on("data", (data) => processOutput(data))
-      child.stderr?.on("data", (data) => processOutput(data))
+      child.stdout?.on("data", (data: Buffer) => processOutput(data))
+      child.stderr?.on("data", (data: Buffer) => processOutput(data))
 
       child.on("exit", (code) => {
         clearTimeout(timeoutId)
@@ -428,7 +428,7 @@ export class BuildValidator {
 
         // Check for specific error codes and provide actionable guidance
         if ("code" in err) {
-          const code = (err as NodeJS.ErrnoException).code
+          const { code } = err as NodeJS.ErrnoException
           if (code === "ENOENT") {
             errorMessage += `. Binary not found. Install with: npm install -D ${devServerCmd}`
           } else if (code === "EMFILE" || code === "ENFILE") {
@@ -515,7 +515,7 @@ export class BuildValidator {
     // Add --json for structured output (helps parse errors)
     args.push("--json")
 
-    return new Promise((resolve) => {
+    return new Promise((resolvePromise) => {
       const child = spawn(bundlerBin, args, {
         cwd: appRoot,
         env: this.filterEnvironment(build.environment),
@@ -534,7 +534,7 @@ export class BuildValidator {
           `Timeout: ${bundler} did not complete within ${this.options.timeout}ms.`
         )
         child.kill("SIGTERM")
-        resolve(result)
+        resolvePromise(result)
       }, this.options.timeout)
 
       child.stdout?.on("data", (data: Buffer) => {
@@ -603,7 +603,7 @@ export class BuildValidator {
 
         // Parse JSON output
         try {
-          const jsonOutput: WebpackJsonOutput = JSON.parse(stdoutData)
+          const jsonOutput = JSON.parse(stdoutData) as WebpackJsonOutput
 
           // Extract output path if available
           if (jsonOutput.outputPath) {
@@ -613,10 +613,22 @@ export class BuildValidator {
           // Check for errors in webpack/rspack JSON output
           if (jsonOutput.errors && jsonOutput.errors.length > 0) {
             jsonOutput.errors.forEach((error) => {
-              const errorMsg =
-                typeof error === "string"
-                  ? error
-                  : error.message || String(error)
+              let errorMsg: string
+              if (typeof error === "string") {
+                errorMsg = error
+              } else if (error.message) {
+                errorMsg = error.message
+              } else {
+                // Attempt to extract useful info from malformed error using all enumerable props
+                try {
+                  errorMsg = JSON.stringify(
+                    error,
+                    Object.getOwnPropertyNames(error)
+                  )
+                } catch {
+                  errorMsg = "[Error object with no message]"
+                }
+              }
               result.errors.push(errorMsg)
               // Also add to output for visibility
               if (!this.options.verbose) {
@@ -628,10 +640,22 @@ export class BuildValidator {
           // Check for warnings
           if (jsonOutput.warnings && jsonOutput.warnings.length > 0) {
             jsonOutput.warnings.forEach((warning) => {
-              const warningMsg =
-                typeof warning === "string"
-                  ? warning
-                  : warning.message || String(warning)
+              let warningMsg: string
+              if (typeof warning === "string") {
+                warningMsg = warning
+              } else if (warning.message) {
+                warningMsg = warning.message
+              } else {
+                // Attempt to extract useful info from malformed warning using all enumerable props
+                try {
+                  warningMsg = JSON.stringify(
+                    warning,
+                    Object.getOwnPropertyNames(warning)
+                  )
+                } catch {
+                  warningMsg = "[Warning object with no message]"
+                }
+              }
               result.warnings.push(warningMsg)
             })
           }
@@ -683,7 +707,7 @@ export class BuildValidator {
           result.output.push(stderrData)
         }
 
-        resolve(result)
+        resolvePromise(result)
       })
 
       child.on("error", (err) => {
@@ -693,7 +717,7 @@ export class BuildValidator {
 
         // Check for specific error codes and provide actionable guidance
         if ("code" in err) {
-          const code = (err as NodeJS.ErrnoException).code
+          const { code } = err as NodeJS.ErrnoException
           if (code === "ENOENT") {
             errorMessage += `. Binary not found. Install with: npm install -D ${bundler}`
           } else if (code === "EMFILE" || code === "ENFILE") {
@@ -704,7 +728,7 @@ export class BuildValidator {
         }
 
         result.errors.push(errorMessage)
-        resolve(result)
+        resolvePromise(result)
       })
     })
   }
@@ -776,19 +800,19 @@ export class BuildValidator {
   formatResults(results: BuildValidationResult[]): string {
     const lines: string[] = []
 
-    lines.push("\n" + "=".repeat(80))
+    lines.push(`\n${"=".repeat(80)}`)
     lines.push("🔍 Build Validation Results")
-    lines.push("=".repeat(80) + "\n")
+    lines.push(`${"=".repeat(80)}\n`)
 
-    let totalBuilds = results.length
+    const totalBuilds = results.length
     let successCount = 0
     let failureCount = 0
 
     results.forEach((result) => {
       if (result.success) {
-        successCount++
+        successCount += 1
       } else {
-        failureCount++
+        failureCount += 1
       }
 
       const icon = result.success ? "✅" : "❌"

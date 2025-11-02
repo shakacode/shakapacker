@@ -1,5 +1,6 @@
 import { load } from "js-yaml"
 import { readFileSync } from "fs"
+
 const defaultConfigPath = require("./utils/defaultConfigPath")
 const configPath = require("./utils/configPath")
 const { isFileNotFoundError } = require("./utils/errorHelpers")
@@ -76,7 +77,6 @@ const validatedRailsEnv =
   initialRailsEnv && initialRailsEnv.match(regex) ? initialRailsEnv : DEFAULT
 
 if (initialRailsEnv && validatedRailsEnv !== initialRailsEnv) {
-  /* eslint no-console:0 */
   console.warn(
     `[SHAKAPACKER WARNING] Environment '${initialRailsEnv}' not found in the configuration.\n` +
       `Using '${DEFAULT}' configuration as a fallback.`

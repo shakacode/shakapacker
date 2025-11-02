@@ -3,9 +3,9 @@ import { resolve, relative, isAbsolute } from "path"
 import { load as loadYaml, FAILSAFE_SCHEMA } from "js-yaml"
 import {
   BundlerConfigFile,
-  BuildConfig,
   ResolvedBuildConfig,
-  ExportOptions
+  ExportOptions,
+  DEFAULT_CONFIG_FILE
 } from "./types"
 
 /**
@@ -18,12 +18,12 @@ export class ConfigFileLoader {
   private configFilePath: string
 
   /**
-   * @param configFilePath - Path to config file (defaults to config/shakapacker-builds.yml in cwd)
+   * @param configFilePath - Path to config file (defaults to DEFAULT_CONFIG_FILE in cwd)
    * @throws Error if path is outside project directory
    */
   constructor(configFilePath?: string) {
     this.configFilePath =
-      configFilePath || resolve(process.cwd(), "config/shakapacker-builds.yml")
+      configFilePath || resolve(process.cwd(), DEFAULT_CONFIG_FILE)
     this.validateConfigPath()
   }
 
@@ -46,7 +46,7 @@ export class ConfigFileLoader {
         // If file doesn't exist yet, just use the resolved path
         realPath = absPath
       }
-    } catch (error) {
+    } catch {
       // If we can't resolve the path, use the original
       realPath = absPath
     }
@@ -94,9 +94,11 @@ export class ConfigFileLoader {
 
       ConfigFileLoader.validate(parsed)
       return parsed
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const errorMessage =
+        error instanceof Error ? error.message : String(error)
       throw new Error(
-        `Failed to load config file ${this.configFilePath}: ${error.message}`
+        `Failed to load config file ${this.configFilePath}: ${errorMessage}`
       )
     }
   }
@@ -295,7 +297,7 @@ export class ConfigFileLoader {
     // Replace ${VAR:-default} with VAR value or default
     expanded = expanded.replace(
       /\$\{([^}:]+):-([^}]*)\}/g,
-      (_, varName, defaultValue) => {
+      (_: string, varName: string, defaultValue: string) => {
         // Validate env var name to prevent regex injection
         if (!ConfigFileLoader.isValidEnvVarName(varName)) {
           console.warn(
@@ -308,16 +310,19 @@ export class ConfigFileLoader {
     )
 
     // Replace ${VAR} with VAR value
-    expanded = expanded.replace(/\$\{([^}:]+)\}/g, (_, varName) => {
-      // Validate env var name to prevent regex injection
-      if (!ConfigFileLoader.isValidEnvVarName(varName)) {
-        console.warn(
-          `[Config Exporter] Warning: Invalid environment variable name: ${varName}`
-        )
-        return `\${${varName}}`
+    expanded = expanded.replace(
+      /\$\{([^}:]+)\}/g,
+      (_: string, varName: string) => {
+        // Validate env var name to prevent regex injection
+        if (!ConfigFileLoader.isValidEnvVarName(varName)) {
+          console.warn(
+            `[Config Exporter] Warning: Invalid environment variable name: ${varName}`
+          )
+          return `\${${varName}}`
+        }
+        return process.env[varName] || ""
       }
-      return process.env[varName] || ""
-    })
+    )
 
     return expanded
   }
@@ -359,7 +364,7 @@ export class ConfigFileLoader {
    */
   listBuilds(): void {
     const config = this.load()
-    const builds = config.builds
+    const { builds } = config
 
     console.log(`\nAvailable builds in ${this.configFilePath}:\n`)
 

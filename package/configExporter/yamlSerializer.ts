@@ -19,7 +19,7 @@ export class YamlSerializer {
   /**
    * Serialize a config object to YAML string with metadata header
    */
-  serialize(config: any, metadata: ConfigMetadata): string {
+  serialize(config: unknown, metadata: ConfigMetadata): string {
     const output: string[] = []
 
     // Add metadata header
@@ -47,7 +47,11 @@ export class YamlSerializer {
     return lines.join("\n")
   }
 
-  private serializeValue(value: any, indent: number, keyPath: string): string {
+  private serializeValue(
+    value: unknown,
+    indent: number,
+    keyPath: string
+  ): string {
     if (value === null || value === undefined) {
       return "null"
     }
@@ -65,11 +69,28 @@ export class YamlSerializer {
     }
 
     if (typeof value === "function") {
-      return this.serializeFunction(value)
+      return this.serializeFunction(
+        value as (...args: unknown[]) => unknown,
+        indent
+      )
     }
 
     if (value instanceof RegExp) {
-      return this.serializeString(value.toString())
+      // Extract pattern without surrounding slashes: "/pattern/flags" -> "pattern"
+      // Include flags as inline comment when present for semantic clarity
+      const regexStr = value.toString()
+      const lastSlash = regexStr.lastIndexOf("/")
+      const pattern = regexStr.slice(1, lastSlash)
+      const flags = regexStr.slice(lastSlash + 1)
+
+      const serializedPattern = this.serializeString(pattern, indent)
+
+      // Add flags as inline comment if present (e.g., "pattern" # flags: gi)
+      if (flags) {
+        return `${serializedPattern} # flags: ${flags}`
+      }
+
+      return serializedPattern
     }
 
     if (Array.isArray(value)) {
@@ -77,10 +98,20 @@ export class YamlSerializer {
     }
 
     if (typeof value === "object") {
-      return this.serializeObject(value, indent, keyPath)
+      return this.serializeObject(
+        value as Record<string, unknown>,
+        indent,
+        keyPath
+      )
     }
 
-    return String(value)
+    // Handle remaining types explicitly
+    if (typeof value === "symbol") return value.toString()
+    if (typeof value === "bigint") return value.toString()
+
+    // All remaining types are primitives (string, number, boolean, null, undefined)
+    // that String() handles safely - cast to exclude objects since we've already handled them
+    return String(value as string | number | boolean | null | undefined)
   }
 
   private serializeString(str: string, indent: number = 0): string {
@@ -94,12 +125,25 @@ export class YamlSerializer {
       return `|\n${lines.map((line) => lineIndent + line).join("\n")}`
     }
 
-    // Escape strings that need quoting
+    // Escape strings that need quoting in YAML
+    // YAML has many special characters that can cause parsing errors:
+    // : # ' " (basic delimiters)
+    // [ ] { } (flow collections)
+    // * & ! @ ` (special constructs: aliases, anchors, tags)
     if (
       cleaned.includes(":") ||
       cleaned.includes("#") ||
       cleaned.includes("'") ||
       cleaned.includes('"') ||
+      cleaned.includes("[") ||
+      cleaned.includes("]") ||
+      cleaned.includes("{") ||
+      cleaned.includes("}") ||
+      cleaned.includes("*") ||
+      cleaned.includes("&") ||
+      cleaned.includes("!") ||
+      cleaned.includes("@") ||
+      cleaned.includes("`") ||
       cleaned.startsWith(" ") ||
       cleaned.endsWith(" ")
     ) {
@@ -110,7 +154,10 @@ export class YamlSerializer {
     return cleaned
   }
 
-  private serializeFunction(fn: Function): string {
+  private serializeFunction(
+    fn: (...args: unknown[]) => unknown,
+    indent: number = 0
+  ): string {
     // Get function source code
     const source = fn.toString()
 
@@ -123,21 +170,24 @@ export class YamlSerializer {
     const displayLines = truncated ? lines.slice(0, maxLines) : lines
 
     // Clean up indentation while preserving structure
-    const minIndent = Math.min(
-      ...displayLines
-        .filter((l) => l.trim().length > 0)
-        .map((l) => l.match(/^\s*/)?.[0].length || 0)
-    )
+    const indentLevels = displayLines
+      .filter((l) => l.trim().length > 0)
+      .map((l) => l.match(/^\s*/)?.[0].length || 0)
+    const minIndent = indentLevels.length > 0 ? Math.min(...indentLevels) : 0
 
     const formatted =
       displayLines.map((line) => line.substring(minIndent)).join("\n") +
       (truncated ? "\n..." : "")
 
-    // Use serializeString to properly handle multiline
-    return this.serializeString(formatted)
+    // Use serializeString to properly handle multiline with correct indentation
+    return this.serializeString(formatted, indent)
   }
 
-  private serializeArray(arr: any[], indent: number, keyPath: string): string {
+  private serializeArray(
+    arr: unknown[],
+    indent: number,
+    keyPath: string
+  ): string {
     if (arr.length === 0) {
       return "[]"
     }
@@ -181,11 +231,11 @@ export class YamlSerializer {
           .split("\n")
           .filter((line: string) => line.trim().length > 0)
         // Compute minimum leading whitespace to preserve relative indentation
-        const minIndent = Math.min(
-          ...nonEmptyLines.map(
-            (line: string) => line.match(/^\s*/)?.[0].length || 0
-          )
+        const indentLevels = nonEmptyLines.map(
+          (line: string) => line.match(/^\s*/)?.[0].length || 0
         )
+        const minIndent =
+          indentLevels.length > 0 ? Math.min(...indentLevels) : 0
         nonEmptyLines.forEach((line: string) => {
           // Remove only the common indent, preserving relative indentation
           lines.push(contentIndent + line.substring(minIndent))
@@ -197,11 +247,11 @@ export class YamlSerializer {
           .split("\n")
           .filter((line: string) => line.trim().length > 0)
         // Compute minimum leading whitespace to preserve relative indentation
-        const minIndent = Math.min(
-          ...nonEmptyLines.map(
-            (line: string) => line.match(/^\s*/)?.[0].length || 0
-          )
+        const indentLevels = nonEmptyLines.map(
+          (line: string) => line.match(/^\s*/)?.[0].length || 0
         )
+        const minIndent =
+          indentLevels.length > 0 ? Math.min(...indentLevels) : 0
         nonEmptyLines.forEach((line: string) => {
           // Remove only the common indent, preserving relative indentation
           lines.push(contentIndent + line.substring(minIndent))
@@ -215,7 +265,11 @@ export class YamlSerializer {
     return `\n${lines.join("\n")}`
   }
 
-  private serializeObject(obj: any, indent: number, keyPath: string): string {
+  private serializeObject(
+    obj: Record<string, unknown>,
+    indent: number,
+    keyPath: string
+  ): string {
     const keys = Object.keys(obj).sort()
     const constructorName = YamlSerializer.getConstructorName(obj)
 
@@ -249,6 +303,12 @@ export class YamlSerializer {
         for (const line of value.split("\n")) {
           lines.push(`${valueIndent}${line}`)
         }
+      } else if (value instanceof RegExp || typeof value === "function") {
+        // Handle RegExp and functions explicitly before the generic object check
+        // to prevent them from being treated as empty objects (RegExp/functions
+        // have no enumerable keys but should serialize as their string representation)
+        const serialized = this.serializeValue(value, indent + 2, fullKeyPath)
+        lines.push(`${keyIndent}${key}: ${serialized}`)
       } else if (
         typeof value === "object" &&
         value !== null &&
@@ -259,7 +319,7 @@ export class YamlSerializer {
         } else {
           lines.push(`${keyIndent}${key}:`)
           const nestedLines = this.serializeObject(
-            value,
+            value as Record<string, unknown>,
             indent + 2,
             fullKeyPath
           )
@@ -283,7 +343,6 @@ export class YamlSerializer {
   }
 
   private makePathRelative(str: string): string {
-    if (typeof str !== "string") return str
     if (!isAbsolute(str)) return str
 
     // Convert absolute paths to relative paths using path.relative
@@ -303,15 +362,30 @@ export class YamlSerializer {
 
   /**
    * Extracts the constructor name from an object
-   * Returns null for plain objects (Object constructor)
+   * Returns null for plain objects (Object constructor) or objects without prototypes
    */
-  private static getConstructorName(obj: any): string | null {
+  private static getConstructorName(obj: unknown): string | null {
     if (!obj || typeof obj !== "object") return null
     if (Array.isArray(obj)) return null
 
-    const constructorName = obj.constructor?.name
-    if (!constructorName || constructorName === "Object") return null
+    // Use Object.getPrototypeOf for safer access to constructor
+    // This handles Object.create(null) and unusual prototypes correctly
+    try {
+      const proto = Object.getPrototypeOf(obj) as {
+        constructor?: { name?: string }
+      } | null
+      if (!proto || proto === Object.prototype) return null
 
-    return constructorName
+      const { constructor } = proto
+      if (!constructor || typeof constructor !== "function") return null
+
+      const constructorName = constructor.name
+      if (!constructorName || constructorName === "Object") return null
+
+      return constructorName
+    } catch {
+      // Handle frozen objects or other edge cases
+      return null
+    }
   }
 }

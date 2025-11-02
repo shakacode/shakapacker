@@ -1,23 +1,70 @@
-# Singleton registry for accessing the packs path using a generated manifest.
-# This allows javascript_pack_tag, stylesheet_pack_tag, asset_pack_path to take a reference to,
-# say, "calendar.js" or "calendar.css" and turn it into "/packs/calendar-1016838bab065ae1e314.js" or
-# "/packs/calendar-1016838bab065ae1e314.css".
+# Manifest for looking up compiled asset paths
 #
-# When the configuration is set to on-demand compilation, with the `compile: true` option in
-# the shakapacker.yml file, any lookups will be preceded by a compilation if one is needed.
+# The manifest reads the +manifest.json+ file produced by webpack/rspack during
+# compilation and provides methods to look up the compiled (digested) paths for
+# source files.
+#
+# This allows view helpers like +javascript_pack_tag+, +stylesheet_pack_tag+, and
+# +asset_pack_path+ to take a reference to a source file (e.g., "calendar.js")
+# and turn it into the compiled path with digest (e.g., "/packs/calendar-1016838bab065ae1e314.js").
+#
+# == Automatic Compilation
+#
+# When the configuration has +compile: true+ in shakapacker.yml, any lookups will
+# automatically trigger compilation if the assets are stale. This is typically
+# enabled in development and disabled in production.
+#
+# == Caching
+#
+# The manifest can cache the loaded data in memory when +cache_manifest: true+ is
+# set in the configuration. This improves performance in production by avoiding
+# repeated file reads.
+#
+# @example Looking up assets
+#   manifest = Shakapacker.manifest
+#   manifest.lookup("application.js")
+#   #=> "/packs/application-abc123.js"
+#
+#   manifest.lookup!("missing.js")
+#   #=> raises Shakapacker::Manifest::MissingEntryError
+#
+# @see Shakapacker::Helper
 class Shakapacker::Manifest
+  # Raised when an asset cannot be found in the manifest
   class MissingEntryError < StandardError; end
 
   delegate :config, :compiler, :dev_server, to: :@instance
 
+  # Creates a new manifest instance
+  #
+  # @param instance [Shakapacker::Instance] the Shakapacker instance
+  # @return [Shakapacker::Manifest] the new manifest
   def initialize(instance)
     @instance = instance
   end
 
+  # Reloads the manifest data from disk
+  #
+  # Forces a fresh read of the manifest.json file, bypassing any cache.
+  # This is useful when you know the manifest has been updated.
+  #
+  # @return [Hash] the loaded manifest data
   def refresh
     @data = load
   end
 
+  # Looks up an entry point with all its chunks (split code)
+  #
+  # This method is used when you need to load all chunks for a pack that has
+  # been split via code splitting. It returns an array of asset paths for the
+  # main entry and all its dynamic imports.
+  #
+  # @param name [String] the entry point name (e.g., "application")
+  # @param pack_type [Hash] options hash with :type key (:javascript, :stylesheet, etc.)
+  # @return [Array<String>, nil] array of asset paths, or nil if not found
+  # @example
+  #   manifest.lookup_pack_with_chunks("application", type: :javascript)
+  #   #=> ["/packs/runtime-abc123.js", "/packs/application-def456.js"]
   def lookup_pack_with_chunks(name, pack_type = {})
     compile if compiling?
 
@@ -28,23 +75,50 @@ class Shakapacker::Manifest
     nil
   end
 
+  # Like {#lookup_pack_with_chunks}, but raises an error if not found
+  #
+  # @param name [String] the entry point name
+  # @param pack_type [Hash] options hash with :type key
+  # @return [Array<String>] array of asset paths
+  # @raise [MissingEntryError] if the entry point is not found in the manifest
   def lookup_pack_with_chunks!(name, pack_type = {})
     lookup_pack_with_chunks(name, pack_type) || handle_missing_entry(name, pack_type)
   end
 
-  # Computes the relative path for a given Shakapacker asset using manifest.json.
-  # If no asset is found, returns nil.
+  # Looks up the compiled path for a given asset
   #
-  # Example:
+  # Computes the relative path for a Shakapacker asset using the manifest.json file.
+  # If automatic compilation is enabled and the assets are stale, triggers a
+  # compilation before looking up the path.
   #
-  #   Shakapacker.manifest.lookup('calendar.js') # => "/packs/calendar-1016838bab065ae1e122.js"
+  # @param name [String] the source file name (e.g., "calendar.js" or "calendar")
+  # @param pack_type [Hash] options hash with :type key (:javascript, :stylesheet, etc.).
+  #   If not specified, the extension from the name is used.
+  # @return [String, nil] the compiled asset path, or nil if not found
+  # @example
+  #   Shakapacker.manifest.lookup('calendar.js')
+  #   #=> "/packs/calendar-1016838bab065ae1e122.js"
+  #
+  #   Shakapacker.manifest.lookup('calendar', type: :javascript)
+  #   #=> "/packs/calendar-1016838bab065ae1e122.js"
   def lookup(name, pack_type = {})
     compile if compiling?
 
     find(full_pack_name(name, pack_type[:type]))
   end
 
-  # Like lookup, except that if no asset is found, raises a Shakapacker::Manifest::MissingEntryError.
+  # Like {#lookup}, but raises an error if the asset is not found
+  #
+  # @param name [String] the source file name
+  # @param pack_type [Hash] options hash with :type key
+  # @return [String] the compiled asset path
+  # @raise [MissingEntryError] if the asset is not found in the manifest
+  # @example
+  #   Shakapacker.manifest.lookup!('calendar.js')
+  #   #=> "/packs/calendar-1016838bab065ae1e122.js"
+  #
+  #   Shakapacker.manifest.lookup!('missing.js')
+  #   #=> raises MissingEntryError
   def lookup!(name, pack_type = {})
     lookup(name, pack_type) || handle_missing_entry(name, pack_type)
   end

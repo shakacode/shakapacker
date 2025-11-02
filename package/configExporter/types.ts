@@ -1,3 +1,67 @@
+/**
+ * Environment variable names that can be set by build configurations.
+ * These are the only environment variables that build configs are allowed to set.
+ * This whitelist prevents malicious configs from modifying critical system variables.
+ */
+export const BUILD_ENV_VARS = [
+  "NODE_ENV",
+  "RAILS_ENV",
+  "NODE_OPTIONS",
+  "BABEL_ENV",
+  "WEBPACK_SERVE",
+  "CLIENT_BUNDLE_ONLY",
+  "SERVER_BUNDLE_ONLY"
+] as const
+
+/**
+ * Environment variables that must never be set by build configurations.
+ * Setting these could compromise system security or cause unexpected behavior.
+ */
+export const DANGEROUS_ENV_VARS = [
+  "PATH",
+  "HOME",
+  "LD_PRELOAD",
+  "LD_LIBRARY_PATH",
+  "DYLD_LIBRARY_PATH",
+  "DYLD_INSERT_LIBRARIES"
+] as const
+
+/**
+ * Type predicate to check if a string is in the BUILD_ENV_VARS whitelist
+ *
+ * Note: The type assertion is necessary because TypeScript's type system cannot
+ * infer that .includes() on a readonly const array will properly narrow the type.
+ * The assertion is safe because we're only widening the type for the includes() check.
+ */
+export function isBuildEnvVar(
+  key: string
+): key is (typeof BUILD_ENV_VARS)[number] {
+  return (BUILD_ENV_VARS as readonly string[]).includes(key)
+}
+
+/**
+ * Type predicate to check if a string is in the DANGEROUS_ENV_VARS blacklist
+ *
+ * Note: The type assertion is necessary because TypeScript's type system cannot
+ * infer that .includes() on a readonly const array will properly narrow the type.
+ * The assertion is safe because we're only widening the type for the includes() check.
+ */
+export function isDangerousEnvVar(
+  key: string
+): key is (typeof DANGEROUS_ENV_VARS)[number] {
+  return (DANGEROUS_ENV_VARS as readonly string[]).includes(key)
+}
+
+/**
+ * Default directory for config exports when using --doctor or file output modes.
+ */
+export const DEFAULT_EXPORT_DIR = "shakapacker-config-exports"
+
+/**
+ * Default config file path for bundler build configurations.
+ */
+export const DEFAULT_CONFIG_FILE = "config/shakapacker-builds.yml"
+
 export interface ExportOptions {
   doctor?: boolean
   saveDir?: string

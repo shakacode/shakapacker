@@ -11,7 +11,7 @@ namespace :shakapacker do
     • Required and optional npm dependencies
     • JavaScript transpiler (Babel, SWC, esbuild) configuration
     • CSS, CSS Modules, and stylesheet preprocessor setup
-    • Binstubs presence (shakapacker, shakapacker-dev-server, export-bundler-config)
+    • Binstubs presence (shakapacker, shakapacker-dev-server, shakapacker-config)
     • Version consistency between gem and npm package
     • Legacy Webpacker file detection
 

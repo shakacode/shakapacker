@@ -13,6 +13,12 @@ Changes since the last non-beta release.
 
 ### Fixed
 
+- **Improved type safety and error handling in configExporter module**. [PR #778](https://github.com/shakacode/shakapacker/pull/778) by [justin808](https://github.com/justin808). Resolves [#707](https://github.com/shakacode/shakapacker/issues/707).
+  - Enhanced type safety across configFile, buildValidator, and yamlSerializer modules
+  - Improved error message preservation for webpack/rspack build failures
+  - Fixed edge cases in YAML serialization (empty arrays, malformed objects)
+  - More robust constructor name detection for object serialization
+  - Better handling of Symbol, BigInt, and edge case types
 - **Default template no longer triggers production warning**. [PR #774](https://github.com/shakacode/shakapacker/pull/774) by [justin808](https://github.com/justin808). Fixes [#703](https://github.com/shakacode/shakapacker/issues/703).
   - Changed default `useContentHash` to `true` in `shakapacker.yml` template
   - Eliminates confusing warning about `useContentHash: false` not being allowed in production
@@ -30,13 +36,13 @@ Changes since the last non-beta release.
 - **Config count validation for build outputs**. [PR #752](https://github.com/shakacode/shakapacker/pull/752) by [justin808](https://github.com/justin808). Validates webpack/rspack config array length matches `outputs` array with clear error messages and suggested fixes.
 - **`precompile_hook` configuration option** to run custom commands during asset precompilation. [PR #678](https://github.com/shakacode/shakapacker/pull/678) by [justin808](https://github.com/justin808). Configure in `shakapacker.yml` with `precompile_hook: "command to run"`.
 - **`assets_bundler_config_path` configuration option** for custom bundler config locations. [PR #710](https://github.com/shakacode/shakapacker/pull/710) by [justin808](https://github.com/justin808). Allows specifying a custom path for webpack/rspack configuration files.
-- **YAML output format support for `bin/export-bundler-config`**. [PR #704](https://github.com/shakacode/shakapacker/pull/704) by [justin808](https://github.com/justin808). New `--format yaml` option exports bundler configuration as YAML.
+- **YAML output format support for `bin/shakapacker-config`** (formerly `bin/export-bundler-config`). [PR #704](https://github.com/shakacode/shakapacker/pull/704) by [justin808](https://github.com/justin808). New `--format yaml` option exports bundler configuration as YAML.
 - **Plugin names displayed in YAML config export**. [PR #750](https://github.com/shakacode/shakapacker/pull/750) by [justin808](https://github.com/justin808). Shows plugin constructor names in exported configuration to help identify which plugins are active.
 - **Custom help messages for `bin/shakapacker` commands**. [PR #702](https://github.com/shakacode/shakapacker/pull/702) by [justin808](https://github.com/justin808). Improved help output for better command discoverability with clear usage examples.
-- **HMR client config export in doctor mode**. [PR #701](https://github.com/shakacode/shakapacker/pull/701) by [justin808](https://github.com/justin808). `bin/export-bundler-config --doctor` now includes HMR client configuration to help debug Hot Module Replacement issues.
+- **HMR client config export in doctor mode**. [PR #701](https://github.com/shakacode/shakapacker/pull/701) by [justin808](https://github.com/justin808). `bin/shakapacker-config --doctor` now includes HMR client configuration to help debug Hot Module Replacement issues.
 - **Build timing logs** for webpack and rspack. [PR #706](https://github.com/shakacode/shakapacker/pull/706) by [justin808](https://github.com/justin808). Shows duration of build operations to help identify performance bottlenecks.
 - **Named build configurations with `--build` flag**. [PR #728](https://github.com/shakacode/shakapacker/pull/728) by [justin808](https://github.com/justin808). Allows specifying custom build configurations like `bin/shakapacker --build=production` or `bin/shakapacker --build=test`.
-- **Build validation in `bin/export-bundler-config`**. [PR #717](https://github.com/shakacode/shakapacker/pull/717) by [justin808](https://github.com/justin808). Validates webpack/rspack configuration before export to catch errors early.
+- **Build validation in `bin/shakapacker-config`**. [PR #717](https://github.com/shakacode/shakapacker/pull/717) by [justin808](https://github.com/justin808). Validates webpack/rspack configuration before export to catch errors early.
 - **Backward compatibility for rspack config in `config/webpack/`**. [PR #734](https://github.com/shakacode/shakapacker/pull/734) by [justin808](https://github.com/justin808). Rspack configurations can now be placed in `config/webpack/` directory for easier migration.
 - **Merge option for WebpackAssetsManifestPlugin**. [PR #760](https://github.com/shakacode/shakapacker/pull/760) by [justin808](https://github.com/justin808). Adds `merge` option to control manifest merging behavior, useful for multi-compiler setups.
 - Support for esbuild-loader v5. [PR #758](https://github.com/shakacode/shakapacker/pull/758) by [justin808](https://github.com/justin808).
@@ -62,7 +68,7 @@ Changes since the last non-beta release.
 ### Added
 
 - **New config export utility for debugging webpack/rspack configurations** [PR #647](https://github.com/shakacode/shakapacker/pull/647) by [justin808](https://github.com/justin808).
-  - Adds `bin/export-bundler-config` utility with three modes:
+  - Adds `bin/shakapacker-config` utility (originally named `bin/export-bundler-config`, renamed in PR #728) with three modes:
     - **Doctor mode** (`--doctor`): Exports all configs (dev + prod, client + server) to `shakapacker-config-exports/` directory - best for troubleshooting
     - **Save mode** (`--save`): Export current environment configs to files
     - **Stdout mode** (default): View configs in terminal
@@ -74,7 +80,7 @@ Changes since the last non-beta release.
     - Validates bundler value and output paths
     - Sanitizes filenames to prevent path traversal
     - Helpful `.gitignore` suggestions
-  - **Usage:** `bin/export-bundler-config --doctor` or `bundle exec rake shakapacker:export_bundler_config`
+  - **Usage:** `bin/shakapacker-config --doctor` or `bundle exec rake shakapacker:export_bundler_config`
   - Works seamlessly with `rake shakapacker:switch_bundler` for comparing webpack vs rspack configs
   - Lays groundwork for future config diff feature (tracked in [#667](https://github.com/shakacode/shakapacker/issues/667))
 

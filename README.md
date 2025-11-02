@@ -85,6 +85,7 @@ Read the [full review here](https://clutch.co/profile/shakacode#reviews?sort_by=
     - [Automatic Webpack Code Building](#automatic-webpack-code-building)
     - [Compiler strategies](#compiler-strategies)
     - [Common Development Commands](#common-development-commands)
+  - [API Documentation](#api-documentation)
   - [Webpack Configuration](#webpack-configuration)
   - [Babel configuration](#babel-configuration)
   - [SWC configuration](#swc-configuration)
@@ -672,6 +673,48 @@ end
 
 **Note:** Don't forget to prefix `ruby` when running these binstubs on Windows
 
+### API Documentation
+
+Shakapacker's Ruby API is documented using RDoc comments. You can generate the API documentation locally using either RDoc or YARD:
+
+#### Using RDoc (Standard Ruby Documentation)
+
+```bash
+# Generate documentation in the doc/ directory
+rdoc lib/
+
+# View the generated documentation
+open doc/index.html
+```
+
+#### Using YARD (Enhanced Documentation)
+
+YARD provides better formatting and supports additional tags used in the codebase:
+
+```bash
+# Install YARD if you don't have it
+gem install yard
+
+# Generate documentation
+yard doc
+
+# View the generated documentation
+open doc/index.html
+
+# Or start a local documentation server
+yard server
+```
+
+The API documentation covers:
+
+- **Shakapacker** - Main module with configuration, compilation, and manifest access
+- **Shakapacker::Configuration** - All configuration options from `shakapacker.yml`
+- **Shakapacker::Manifest** - Asset lookup methods used by view helpers
+- **Shakapacker::DevServer** - Development server status and configuration
+- **Shakapacker::Instance** - Instance management and lifecycle
+
+For the most up-to-date API reference, generate the documentation from the source code as shown above.
+
 ### Webpack Configuration
 
 First, you don't _need_ to use Shakapacker's webpack configuration. However, the `shakapacker` NPM package provides convenient access to configuration code that reads the `config/shakapacker.yml` file which the view helpers also use. If you have your customized webpack configuration, at the minimum, you must ensure:
@@ -809,7 +852,7 @@ Shakapacker provides a powerful utility to export and analyze your webpack/rspac
 
 ```bash
 # Export all configs for troubleshooting (recommended)
-bin/export-bundler-config --doctor
+bin/shakapacker-config --doctor
 
 # Or via rake task
 bundle exec rake shakapacker:export_bundler_config -- --doctor

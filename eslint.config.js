@@ -23,7 +23,9 @@ module.exports = [
       // Temporarily ignore TypeScript files until technical debt is resolved
       // See ESLINT_TECHNICAL_DEBT.md for tracking
       // TODO: Remove this once ESLint issues are fixed (tracked in #723)
-      "package/**/*.ts"
+      // Exception: configExporter is being fixed in #707
+      "package/**/*.ts",
+      "!package/configExporter/**/*.ts" // Enable linting for configExporter (issue #707)
     ]
   },
 
@@ -189,21 +191,48 @@ module.exports = [
     }
   },
   {
+    // #707: Significant type safety improvements in configExporter module!
+    // - configFile.ts: ✅ Fully type-safe (0 type errors)
+    // - buildValidator.ts: ✅ Fully type-safe (0 type errors)
+    // - yamlSerializer.ts: ✅ Fully type-safe (0 type errors)
+    // - cli.ts: ⚠️ Partial (dynamic webpack config loading requires some `any`)
+    //
+    // Remaining overrides are for:
+    // 1. Code style/organization (not type safety)
+    // 2. Dynamic require() in cli.ts for webpack config loading
     files: ["package/configExporter/**/*.ts"],
+    rules: {
+      // Code organization (functions before use due to large file)
+      "@typescript-eslint/no-use-before-define": "off",
+      // Import style (CommonJS require for dynamic imports)
+      "@typescript-eslint/no-require-imports": "off",
+      "import/no-dynamic-require": "off",
+      "global-require": "off",
+      // Class methods that are part of public API
+      "class-methods-use-this": "off",
+      // Template expressions (valid use cases with union types)
+      "@typescript-eslint/restrict-template-expressions": "off",
+      // Style preferences
+      "no-continue": "off",
+      "import/prefer-default-export": "off",
+      "no-await-in-loop": "off",
+      "no-underscore-dangle": "off",
+      "no-shadow": "off",
+      "no-restricted-globals": "off",
+      "@typescript-eslint/no-unused-vars": "off",
+      "@typescript-eslint/require-await": "off"
+    }
+  },
+  {
+    // cli.ts: Dynamic webpack config loading requires `any` types
+    // This is acceptable as webpack configs can have any shape
+    files: ["package/configExporter/cli.ts"],
     rules: {
       "@typescript-eslint/no-explicit-any": "off",
       "@typescript-eslint/no-unsafe-assignment": "off",
       "@typescript-eslint/no-unsafe-member-access": "off",
       "@typescript-eslint/no-unsafe-call": "off",
-      "@typescript-eslint/no-unsafe-return": "off",
-      "@typescript-eslint/no-unsafe-argument": "off",
-      "@typescript-eslint/no-unsafe-function-type": "off",
-      "@typescript-eslint/no-unused-vars": "off",
-      "@typescript-eslint/require-await": "off",
-      "no-await-in-loop": "off",
-      "import/prefer-default-export": "off",
-      "global-require": "off",
-      "no-underscore-dangle": "off"
+      "@typescript-eslint/no-unsafe-return": "off"
     }
   },
   {
