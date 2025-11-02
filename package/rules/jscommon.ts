@@ -1,5 +1,6 @@
 import { resolve } from "path"
 import { realpathSync } from "fs"
+
 const {
   source_path: sourcePath,
   additional_paths: additionalPaths

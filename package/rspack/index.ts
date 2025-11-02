@@ -4,10 +4,11 @@
 // Mixed require/import syntax:
 // - Using require() for compiled JS modules that may not have proper ES module exports
 // - Using import for type-only imports and Node.js built-in modules
-const webpackMerge = require("webpack-merge")
 import { resolve } from "path"
 import { existsSync } from "fs"
 import type { RspackConfigWithDevServer } from "../environments/types"
+
+const webpackMerge = require("webpack-merge")
 const config = require("../config")
 const baseConfig = require("../environments/base")
 const devServer = require("../dev_server")

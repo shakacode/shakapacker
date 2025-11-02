@@ -59,7 +59,6 @@ const loaderMatches = <T = unknown>(
 
 const packageFullVersion = (packageName: string): string => {
   try {
-    // eslint-disable-next-line import/no-dynamic-require
     const packageJsonPath = require.resolve(`${packageName}/package.json`)
     // eslint-disable-next-line import/no-dynamic-require, global-require
     const packageJson = require(packageJsonPath) as { version: string }

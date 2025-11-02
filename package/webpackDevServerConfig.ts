@@ -1,4 +1,5 @@
 import { DevServerConfig } from "./types"
+
 const snakeToCamelCase = require("./utils/snakeToCamelCase")
 
 const shakapackerDevServerYamlConfig =
