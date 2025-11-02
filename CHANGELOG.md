@@ -9,6 +9,9 @@
 
 ## [Unreleased]
 
+### Fixed
+- Extended manifest merging for multiple client configurations to all environments. [PR #800](https://github.com/shakacode/shakapacker/pull/800) by [Judahmeek](https://github.com/Judahmeek).
+
 Changes since the last non-beta release.
 
 ## [v9.3.0] - November 2, 2025
