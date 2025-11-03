@@ -36,7 +36,7 @@ Each changelog entry MUST follow this exact format:
 - Start with a dash and space: `- `
 - Use **bold** for the main description
 - End the bold description with a period before the link
-- Always link to the PR: `[PR #123](https://github.com/shakacode/shakapacker/pull/123)`
+- Always link to the PR: `[PR #123](https://github.com/shakacode/shakapacker/pull/123)` - **Note: Shakapacker uses `#` in PR links, unlike React on Rails**
 - Always link to the author: `by [username](https://github.com/username)`
 - End with a period after the author link
 - Additional details can be added after the main entry, using proper indentation for multi-line entries
@@ -51,18 +51,41 @@ For breaking changes, use this format:
 
 ### Category Organization
 
-Entries should be organized under these section headings in order of priority:
+Entries should be organized under these section headings. The project uses both standard and custom headings:
 
-1. `### ⚠️ Breaking Changes` - Breaking changes only
-2. `### Added` - New features
-3. `### Changed` - Changes to existing functionality
-4. `### Improved` - Improvements to existing features
-5. `### Security` - Security-related changes
-6. `### Fixed` - Bug fixes
-7. `### Deprecated` - Deprecation notices
-8. `### Removed` - Removed features
+**Standard headings** (from keepachangelog.com) - use these for most changes:
+
+- `### Added` - New features
+- `### Changed` - Changes to existing functionality
+- `### Deprecated` - Deprecation notices
+- `### Removed` - Removed features
+- `### Fixed` - Bug fixes
+- `### Security` - Security-related changes
+- `### Improved` - Improvements to existing features
+
+**Custom headings** (project-specific) - use sparingly when standard headings don't fit:
+
+- `### ⚠️ Breaking Changes` - Breaking changes only (Shakapacker uses emoji in heading)
+- `### API Improvements` - API changes and improvements
+- `### Developer Experience` - Developer workflow improvements
+- `### Performance` - Performance improvements
+
+**Prefer standard headings.** Only use custom headings when the change needs more specific categorization.
 
 **Only include section headings that have entries.**
+
+### Version Management
+
+After adding entries, use the rake task to manage version headers:
+
+```bash
+bundle exec rake update_changelog
+```
+
+This will:
+
+- Add headers for the new version
+- Update version diff links at the bottom of the file
 
 ### Version Links
 
@@ -114,7 +137,7 @@ When a new version is released:
    - **CRITICAL**: When moving entries from "Unreleased" to a version section, merge them with existing entries under the same category heading
    - **NEVER create duplicate section headings** (e.g., don't create two "### Fixed" sections)
    - If the version section already has a category heading (e.g., "### Fixed"), add the moved entries to that existing section
-   - Maintain the category order: Breaking Changes, Added, Changed, Improved, Security, Fixed, Deprecated, Removed
+   - Maintain the category order as defined above
 
 7. **Verify formatting**:
    - Bold description with period
@@ -165,6 +188,12 @@ After the user chooses, proceed with that approach.
 
 ## Examples
 
+Run this command to see real formatting examples from the codebase:
+
+```bash
+grep -A 3 "^### " CHANGELOG.md | head -30
+```
+
 ### Good Entry Example
 
 ```markdown
@@ -172,6 +201,12 @@ After the user chooses, proceed with that approach.
   - Path validation now properly reports permission errors instead of silently handling them
   - Module loading errors now include original error context for easier troubleshooting
   - Improved security by only catching ENOENT errors in path resolution, rethrowing permission and access errors
+```
+
+### Entry with Sub-bullets Example
+
+```markdown
+- **HTTP 103 Early Hints support** for faster asset loading. [PR #722](https://github.com/shakacode/shakapacker/pull/722) by [justin808](https://github.com/justin808). Automatically sends early hints when `early_hints: enabled: true` in `shakapacker.yml`. Works with `append_javascript_pack_tag`/`append_stylesheet_pack_tag`, supports per-controller/action configuration, and includes helpers like `configure_pack_early_hints` and `skip_send_pack_early_hints`. Requires Rails 5.2+ and HTTP/2-capable server. See [Early Hints Guide](docs/early_hints.md).
 ```
 
 ### Breaking Change Example

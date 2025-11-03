@@ -29,16 +29,12 @@
 
 ## Changelog
 
-- **Update CHANGELOG.md for user-visible changes only**
-- User-visible changes include: new features, bug fixes, breaking changes, deprecations, performance improvements
-- **Do NOT add changelog entries for**: linting fixes, code formatting, internal refactoring, test updates, documentation fixes
-- Non-user-visible changes don't need changelog entries even if they modify code
-- **Format requirements**:
-  - Always link to the PR: `[PR #123](https://github.com/shakacode/shakapacker/pull/123)`
-  - Always link to the author: `by [username](https://github.com/username)`
-  - Keep formatting consistent with existing entries
-  - When releasing a version, update the version diff links at the bottom of CHANGELOG.md
-  - **For breaking changes**: Use bold formatting and link to migration documentation (e.g., `**Breaking**: Description. See [Migration Guide](docs/vX_upgrade.md)`)
+- **Update CHANGELOG.md for user-visible changes only** (features, bug fixes, breaking changes, deprecations, performance improvements)
+- **Do NOT add entries for**: linting, formatting, refactoring, tests, or documentation fixes
+- **Format**: `[PR #123](https://github.com/shakacode/shakapacker/pull/123) by [username](https://github.com/username)` (Shakapacker uses `#` in PR links)
+- **Use `/update-changelog` command** for guided changelog updates with automatic formatting
+- **Version management**: Run `bundle exec rake update_changelog` after releases to update version headers
+- **Examples**: Run `grep -A 3 "^### " CHANGELOG.md | head -30` to see real formatting examples
 
 ## Shakapacker-Specific
 
