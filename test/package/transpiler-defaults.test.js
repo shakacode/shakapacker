@@ -155,27 +155,35 @@ describe("JavaScript Transpiler Defaults", () => {
       // Load the webpack rules
       const rules = require("../../package/rules/webpack")
 
-      // Filter to find any transpiler rules (babel, swc, esbuild)
-      const transpilerRules = rules.filter((rule) => {
-        if (!rule || !rule.use) return false
-        const loaders = Array.isArray(rule.use) ? rule.use : [rule.use]
+      // Helper to extract loader name from various loader formats
+      const getLoaderName = (loader) => {
+        return (
+          (typeof loader === "string" && loader) ||
+          (loader && loader.loader) ||
+          ""
+        )
+      }
+
+      // Helper to check if a rule uses transpiler loaders
+      const isTranspilerRule = (rule) => {
+        const use = rule && rule.use
+        const loaders = (use && (Array.isArray(use) ? use : [use])) || []
+
         return loaders.some((loader) => {
-          const loaderName =
-            typeof loader === "string"
-              ? loader
-              : loader && typeof loader === "object"
-                ? loader.loader
-                : ""
+          const name = getLoaderName(loader)
           return (
-            loaderName.includes("babel-loader") ||
-            loaderName.includes("swc-loader") ||
-            loaderName.includes("esbuild-loader")
+            name.includes("babel-loader") ||
+            name.includes("swc-loader") ||
+            name.includes("esbuild-loader")
           )
         })
-      })
+      }
+
+      // Filter to find any transpiler rules (babel, swc, esbuild)
+      const transpilerRules = rules.filter(isTranspilerRule)
 
       // Should have no transpiler rules when set to 'none'
-      expect(transpilerRules.length).toBe(0)
+      expect(transpilerRules).toHaveLength(0)
     })
   })
 })
