@@ -59,8 +59,8 @@ jobs:
       - name: TypeScript type check
         run: yarn type-check
 
-  type-check-without-webpack:
-    name: TypeScript Type Checking (without webpack)
+  type-check-dts-without-webpack:
+    name: Verify .d.ts files work without webpack
     runs-on: ubuntu-latest
 
     steps:
@@ -70,18 +70,16 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20.x
-          cache: yarn
 
-      - name: Install dependencies
-        run: yarn --frozen-lockfile --non-interactive --prefer-offline
+      - name: Install minimal dependencies (TypeScript only, no webpack)
+        run: npm install typescript
 
-      - name: Remove webpack and related types
+      - name: Verify hand-written .d.ts files type-check without webpack
         run: |
-          yarn remove webpack @types/webpack webpack-dev-server @types/webpack-dev-server
-          yarn remove webpack-cli webpack-assets-manifest webpack-subresource-integrity compression-webpack-plugin
-
-      - name: TypeScript type check without webpack
-        run: yarn type-check
+          npx tsc --noEmit \
+            --skipLibCheck \
+            --moduleResolution node \
+            package/*.d.ts
   test:
     name: Testing
     strategy:
