@@ -724,6 +724,21 @@ First, you don't _need_ to use Shakapacker's webpack configuration. However, the
 
 The webpack configuration used by Shakapacker lives in `config/webpack/webpack.config.js`; this makes it easy to customize the configuration beyond what's available in `config/shakapacker.yml` by giving you complete control of the final configuration. By default, this file exports the result of `generateWebpackConfig` which handles generating a webpack configuration based on `config/shakapacker.yml`.
 
+#### Using a Completely Custom Webpack Configuration
+
+If you're providing a completely custom webpack configuration without using `generateWebpackConfig()`, you should set `javascript_transpiler: 'none'` in your `config/shakapacker.yml` to skip Shakapacker's transpiler validation and dependency checks:
+
+```yml
+# config/shakapacker.yml
+default: &default
+  javascript_transpiler: "none" # Skip Shakapacker's transpiler setup
+  # ... other config
+```
+
+This is useful when you're managing your own transpiler configuration entirely outside of Shakapacker's defaults.
+
+**Note:** Only use `javascript_transpiler: 'none'` if you're providing a completely custom webpack configuration without using `generateWebpackConfig()`. If you're using Shakapacker's webpack generation (which is the common case), use one of the supported transpilers (`'babel'`, `'swc'`, or `'esbuild'`) instead.
+
 The easiest way to modify this config is to pass your desired customizations to `generateWebpackConfig` which will use [webpack-merge](https://github.com/survivejs/webpack-merge) to merge them with the configuration generated from `config/shakapacker.yml`:
 
 ```js

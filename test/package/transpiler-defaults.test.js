@@ -124,4 +124,46 @@ describe("JavaScript Transpiler Defaults", () => {
       expect(config.javascript_transpiler).toBe("swc")
     })
   })
+
+  describe("none transpiler option", () => {
+    it("accepts 'none' as a valid transpiler value", () => {
+      process.env.SHAKAPACKER_JAVASCRIPT_TRANSPILER = "none"
+
+      jest.resetModules()
+      const config = require("../../package/config")
+
+      expect(config.javascript_transpiler).toBe("none")
+    })
+
+    it("'none' option doesn't throw errors for missing transpiler packages", () => {
+      process.env.SHAKAPACKER_JAVASCRIPT_TRANSPILER = "none"
+
+      jest.resetModules()
+
+      // Should not throw even though there's no 'none-loader' package
+      expect(() => {
+        require("../../package/config")
+      }).not.toThrow()
+    })
+
+    it("'none' option results in no transpiler rules being applied", () => {
+      process.env.SHAKAPACKER_JAVASCRIPT_TRANSPILER = "none"
+      delete process.env.SHAKAPACKER_ASSETS_BUNDLER
+
+      jest.resetModules()
+
+      // Load the webpack rules - should not include babel, swc, or esbuild rules
+      const rules = require("../../package/rules/webpack")
+
+      // Verify no transpiler rules are present by checking rules array
+      // When transpiler is 'none', loaderMatches returns null for all transpilers
+      // which means babel.ts, swc.ts, and esbuild.ts all export null
+      // These get filtered out, so rules array should not contain them
+      const rulesJson = JSON.stringify(rules)
+
+      expect(rulesJson).not.toContain("babel-loader")
+      expect(rulesJson).not.toContain("swc-loader")
+      expect(rulesJson).not.toContain("esbuild-loader")
+    })
+  })
 })
