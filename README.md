@@ -832,7 +832,9 @@ You can also change your Babel configuration by removing these lines in your `pa
 
 ### SWC configuration
 
-SWC is the default JavaScript transpiler in Shakapacker v9+ (20x faster than Babel). You can read more at [SWC usage docs](./docs/using_swc_loader.md).
+SWC is the recommended JavaScript transpiler in Shakapacker v9+ (20x faster than Babel). New installations use SWC by default via the installation template. You can read more at [SWC usage docs](./docs/using_swc_loader.md).
+
+**Note on defaults**: The installation template explicitly sets `javascript_transpiler: "swc"` for new projects. However, for backward compatibility, webpack's runtime default (when no explicit config exists) remains `"babel"`. Rspack always defaults to `"swc"`.
 
 Please note that SWC supports [React](#react) integration out of the box - no additional configuration needed.
 

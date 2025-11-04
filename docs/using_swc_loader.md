@@ -1,6 +1,6 @@
 # Using SWC Loader
 
-SWC is the default JavaScript transpiler in Shakapacker v9+. If you face any issues, please report at https://github.com/shakacode/shakapacker/issues.
+SWC is the recommended JavaScript transpiler in Shakapacker v9+, and is set as the default in new installations. If you face any issues, please report at https://github.com/shakacode/shakapacker/issues.
 
 ## About SWC
 
@@ -10,11 +10,13 @@ It supports all ECMAScript features and it's designed to be a drop-in replacemen
 
 For comparison between SWC and Babel, see the docs at https://swc.rs/docs/migrating-from-babel.
 
-> **Note:** SWC is also natively built into RSpack bundler, providing even faster compilation speeds. When using RSpack (`assets_bundler: 'rspack'`), SWC is used automatically regardless of the `javascript_transpiler` setting.
+> **Note:** SWC is also natively built into RSpack bundler, providing even faster compilation speeds. When using RSpack (`assets_bundler: 'rspack'`), SWC is the default if `javascript_transpiler` is not explicitly set.
 
 ## Using SWC in your Shakapacker project
 
-SWC is the default transpiler in Shakapacker v9+. For new installations, SWC is automatically configured.
+For new installations of Shakapacker v9+, SWC is automatically configured in the installation template.
+
+**Note**: While the installation template sets SWC as the default, webpack's runtime fallback (when no explicit config exists) remains Babel for backward compatibility. Rspack always defaults to SWC.
 
 If you're upgrading from v8 or earlier and want to switch from Babel to SWC:
 
