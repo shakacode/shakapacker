@@ -22,7 +22,7 @@ If you're upgrading from v8 or earlier and want to switch from Babel to SWC:
 
 1. Make sure you've installed `@swc/core` and `swc-loader` packages.
 
-```
+```bash
 npm install @swc/core swc-loader
 ```
 
