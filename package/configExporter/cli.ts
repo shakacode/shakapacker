@@ -1099,19 +1099,17 @@ async function loadConfigsForEnv(
         console.warn(
           `[Config Exporter] Warning: Skipping dangerous environment variable: ${key}`
         )
-        continue
-      }
-      if (!isBuildEnvVar(key)) {
+      } else if (!isBuildEnvVar(key)) {
         console.warn(
           `[Config Exporter] Warning: Skipping non-whitelisted environment variable: ${key}. ` +
             `Allowed variables are: ${BUILD_ENV_VARS.join(", ")}`
         )
-        continue
+      } else {
+        if (options.verbose) {
+          console.log(`[Config Exporter]   ${key}=${value}`)
+        }
+        process.env[key] = value
       }
-      if (options.verbose) {
-        console.log(`[Config Exporter]   ${key}=${value}`)
-      }
-      process.env[key] = value
     }
 
     // Determine final env: CLI flag > build config NODE_ENV > default

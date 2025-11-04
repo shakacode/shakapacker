@@ -186,8 +186,7 @@ module.exports = [
       "@typescript-eslint/no-unsafe-member-access": "off",
       "@typescript-eslint/no-unsafe-argument": "off",
       "@typescript-eslint/no-explicit-any": "off",
-      "no-useless-escape": "off",
-      "no-continue": "off"
+      "no-useless-escape": "off"
     }
   },
   {
@@ -211,7 +210,6 @@ module.exports = [
       // Template expressions (valid use cases with union types)
       "@typescript-eslint/restrict-template-expressions": "off",
       // Style preferences
-      "no-continue": "off",
       "import/prefer-default-export": "off",
       "no-await-in-loop": "off",
       "no-underscore-dangle": "off",
@@ -253,8 +251,7 @@ module.exports = [
       "@typescript-eslint/no-unsafe-call": "off",
       "@typescript-eslint/no-unsafe-return": "off",
       "@typescript-eslint/no-explicit-any": "off",
-      "no-useless-escape": "off",
-      "no-continue": "off"
+      "no-useless-escape": "off"
     }
   },
   {
