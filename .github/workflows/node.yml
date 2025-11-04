@@ -71,15 +71,25 @@ jobs:
         with:
           node-version: 20.x
 
-      - name: Install minimal dependencies (TypeScript only, no webpack)
-        run: npm install typescript
+      - name: Create test directory and copy .d.ts files
+        run: |
+          mkdir -p /tmp/test-types
+          cp package/*.d.ts /tmp/test-types/
+          cp package/types.ts /tmp/test-types/ 2>/dev/null || true
+
+      - name: Install TypeScript in test directory
+        run: |
+          cd /tmp/test-types
+          npm init -y
+          npm install typescript
 
       - name: Verify hand-written .d.ts files type-check without webpack
         run: |
+          cd /tmp/test-types
           npx tsc --noEmit \
             --skipLibCheck \
             --moduleResolution node \
-            package/*.d.ts
+            *.d.ts
   test:
     name: Testing
     strategy:
