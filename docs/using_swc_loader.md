@@ -1,6 +1,6 @@
 # Using SWC Loader
 
-SWC is the recommended JavaScript transpiler in Shakapacker v9+, and is set as the default in new installations. If you face any issues, please report at https://github.com/shakacode/shakapacker/issues.
+SWC is the recommended JavaScript transpiler in Shakapacker v9+, and is set as the default in new installations. If you face any issues, please report them at [Shakapacker Issues](https://github.com/shakacode/shakapacker/issues).
 
 ## About SWC
 
