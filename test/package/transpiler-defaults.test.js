@@ -152,38 +152,18 @@ describe("JavaScript Transpiler Defaults", () => {
 
       jest.resetModules()
 
-      // Load the webpack rules
+      // Load the webpack rules - should not include babel, swc, or esbuild rules
       const rules = require("../../package/rules/webpack")
 
-      // Helper to extract loader name from various loader formats
-      const getLoaderName = (loader) => {
-        return (
-          (typeof loader === "string" && loader) ||
-          (loader && loader.loader) ||
-          ""
-        )
-      }
+      // Verify no transpiler rules are present by checking rules array
+      // When transpiler is 'none', loaderMatches returns null for all transpilers
+      // which means babel.ts, swc.ts, and esbuild.ts all export null
+      // These get filtered out, so rules array should not contain them
+      const rulesJson = JSON.stringify(rules)
 
-      // Helper to check if a rule uses transpiler loaders
-      const isTranspilerRule = (rule) => {
-        const use = rule && rule.use
-        const loaders = (use && (Array.isArray(use) ? use : [use])) || []
-
-        return loaders.some((loader) => {
-          const name = getLoaderName(loader)
-          return (
-            name.includes("babel-loader") ||
-            name.includes("swc-loader") ||
-            name.includes("esbuild-loader")
-          )
-        })
-      }
-
-      // Filter to find any transpiler rules (babel, swc, esbuild)
-      const transpilerRules = rules.filter(isTranspilerRule)
-
-      // Should have no transpiler rules when set to 'none'
-      expect(transpilerRules).toHaveLength(0)
+      expect(rulesJson).not.toContain("babel-loader")
+      expect(rulesJson).not.toContain("swc-loader")
+      expect(rulesJson).not.toContain("esbuild-loader")
     })
   })
 })
