@@ -1,8 +1,6 @@
 # Using SWC Loader
 
-:warning: This feature is currently experimental. The configuration and API are subject to change during the beta release cycle.
-
-If you face any issues, please report at https://github.com/shakacode/shakapacker/issues.
+SWC is the default JavaScript transpiler in Shakapacker v9+. If you face any issues, please report at https://github.com/shakacode/shakapacker/issues.
 
 ## About SWC
 
@@ -14,9 +12,11 @@ For comparison between SWC and Babel, see the docs at https://swc.rs/docs/migrat
 
 > **Note:** SWC is also natively built into RSpack bundler, providing even faster compilation speeds. When using RSpack (`assets_bundler: 'rspack'`), SWC is used automatically regardless of the `javascript_transpiler` setting.
 
-## Switching your Shakapacker project to SWC
+## Using SWC in your Shakapacker project
 
-In order to use SWC as your compiler today. You need to do two things:
+SWC is the default transpiler in Shakapacker v9+. For new installations, SWC is automatically configured.
+
+If you're upgrading from v8 or earlier and want to switch from Babel to SWC:
 
 1. Make sure you've installed `@swc/core` and `swc-loader` packages.
 
@@ -24,8 +24,7 @@ In order to use SWC as your compiler today. You need to do two things:
 npm install @swc/core swc-loader
 ```
 
-2. Add or change `javascript_transpiler` value in your default `shakapacker.yml` config to `swc`
-   The default configuration of babel is done by using `package.json` to use the file within the `shakapacker` package.
+2. Confirm `javascript_transpiler` is set to `swc` in your `config/shakapacker.yml`:
 
 ```yml
 default: &default
@@ -43,7 +42,9 @@ default: &default
   # Reload manifest.json on all requests so we reload latest compiled packs
   cache_manifest: false
 
-  # Select JavaScript transpiler to use, available options are 'babel' (default) or 'swc'
+  # Select JavaScript transpiler to use
+  # Available options: 'swc' (default, 20x faster), 'babel', or 'esbuild'
+  # Note: When using rspack, swc is used automatically regardless of this setting
   javascript_transpiler: "swc"
 ```
 

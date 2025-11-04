@@ -25,7 +25,7 @@ Common configuration options with their defaults:
 | ------------------------------ | ------- | --------------------------------------- | ---------------------------------------------------------- |
 | `assets_bundler`               | string  | `"webpack"`                             | Bundler to use: `"webpack"` or `"rspack"`                  |
 | `assets_bundler_config_path`   | string  | `"config/webpack"` or `"config/rspack"` | Directory containing bundler config files                  |
-| `javascript_transpiler`        | string  | `"swc"` or `"babel"`                    | Transpiler: `"swc"`, `"babel"`, or `"esbuild"`             |
+| `javascript_transpiler`        | string  | `"swc"`                                 | Transpiler: `"swc"` (default), `"babel"`, or `"esbuild"`   |
 | `source_path`                  | string  | `"app/javascript"`                      | Root directory for JavaScript source files                 |
 | `source_entry_path`            | string  | `"packs"`                               | Subdirectory within `source_path` for entry points         |
 | `nested_entries`               | boolean | `true`                                  | Discover entry points in subdirectories                    |
@@ -91,13 +91,13 @@ assets_bundler_config_path: "."
 ### `javascript_transpiler`
 
 **Type:** `string`
-**Default:** `"swc"` (or `"babel"` for webpack when not specified)
+**Default:** `"swc"`
 **Options:** `"swc"`, `"babel"`, or `"esbuild"`
 
 Specifies which transpiler to use for JavaScript/TypeScript.
 
 ```yaml
-# Use SWC (recommended - 20x faster than Babel)
+# Use SWC (default - 20x faster than Babel)
 javascript_transpiler: "swc"
 
 # Use Babel (for maximum compatibility)

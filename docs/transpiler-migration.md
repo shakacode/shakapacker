@@ -4,10 +4,11 @@
 
 ## Default Transpilers
 
-Shakapacker uses different default JavaScript transpilers based on the bundler:
+Shakapacker v9 uses SWC as the default JavaScript transpiler for new installations:
 
-- **Webpack**: `babel` (default) - Maintains backward compatibility
-- **Rspack**: `swc` (default) - Modern, faster transpiler for new bundler
+- **Default (v9+)**: `swc` - Modern, 20x faster transpiler recommended for all new projects
+- **Rspack**: `swc` (always) - Rspack has built-in SWC support
+- **Legacy**: `babel` - Still supported for backward compatibility if explicitly configured
 
 ## Available Transpilers
 
@@ -22,15 +23,15 @@ Set the transpiler in your `config/shakapacker.yml`:
 
 ```yaml
 default: &default
-  # For webpack users (babel is default, no change needed)
+  # SWC is the default (recommended - 20x faster than Babel)
+  javascript_transpiler: swc
+
+  # To use Babel for backward compatibility
   javascript_transpiler: babel
 
-  # To opt-in to SWC for better performance
-  javascript_transpiler: swc
-
-  # For rspack users (swc is default, no change needed)
+  # For rspack users (swc is always used automatically)
   assets_bundler: rspack
-  javascript_transpiler: swc
+  # javascript_transpiler setting is ignored when using rspack
 ```
 
 ## Migration Guide
