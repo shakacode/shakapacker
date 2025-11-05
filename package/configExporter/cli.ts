@@ -646,6 +646,7 @@ async function runValidateCommand(options: ExportOptions): Promise<number> {
         "development"
 
       // Auto-detect bundler using the build's environment
+      // eslint-disable-next-line no-await-in-loop -- Sequential execution required: each build modifies shared global state (env vars, config cache) that must be cleared/restored between iterations
       const defaultBundler = await autoDetectBundler(
         buildEnv,
         appRoot,
@@ -660,6 +661,7 @@ async function runValidateCommand(options: ExportOptions): Promise<number> {
       )
 
       // Validate the build
+      // eslint-disable-next-line no-await-in-loop -- Sequential execution required: each build modifies shared global state (env vars, config cache) that must be cleared/restored between iterations
       const result = await validator.validateBuild(resolvedBuild, appRoot)
       results.push(result)
 
@@ -738,6 +740,7 @@ async function runAllBuildsCommand(options: ExportOptions): Promise<number> {
 
       // Create a modified options object for this build
       const buildOptions = { ...resolvedOptions, build: buildName }
+      // eslint-disable-next-line no-await-in-loop -- Sequential execution required: each build modifies shared global state (env vars, config cache) that must be cleared/restored between iterations
       const configs = await loadConfigsForEnv(undefined, buildOptions, appRoot)
 
       for (const { config: cfg, metadata } of configs) {
@@ -817,6 +820,7 @@ async function runDoctorMode(
           // Clear shakapacker config cache between builds
           shakapackerConfigCache = null
 
+          // eslint-disable-next-line no-await-in-loop -- Sequential execution required: each build modifies shared global state (env vars, config cache) that must be cleared/restored between iterations
           const configs = await loadConfigsForEnv(
             undefined,
             { ...options, build: buildName },
@@ -884,6 +888,7 @@ async function runDoctorMode(
         process.env.WEBPACK_SERVE = "true"
       }
 
+      // eslint-disable-next-line no-await-in-loop -- Sequential execution required: each config modifies shared global state (env vars, config cache) that must be cleared/restored between iterations
       const configs = await loadConfigsForEnv(env, options, appRoot)
 
       for (const { config, metadata } of configs) {
