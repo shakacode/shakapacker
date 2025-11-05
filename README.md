@@ -833,7 +833,7 @@ fileRule.type = "asset"
 
 ### Babel configuration
 
-By default, you will find the Shakapacker preset in your `package.json`. Note, you need to use the new NPM package name, `shakapacker`.
+If you choose to use Babel instead of the default SWC transpiler, you will need to configure it in your `package.json`:
 
 ```json
 "babel": {
@@ -843,19 +843,21 @@ By default, you will find the Shakapacker preset in your `package.json`. Note, y
 },
 ```
 
-Optionally, you can change your Babel configuration by removing these lines in your `package.json` and adding [a Babel configuration file](https://babeljs.io/docs/en/config-files) to your project. For an example of customization based on the original, see [Customizing Babel Config](./docs/customizing_babel_config.md).
+You can also change your Babel configuration by removing these lines in your `package.json` and adding [a Babel configuration file](https://babeljs.io/docs/en/config-files) to your project. For an example of customization based on the original, see [Customizing Babel Config](./docs/customizing_babel_config.md).
 
 ### SWC configuration
 
-You can try out experimental integration with the SWC loader. You can read more at [SWC usage docs](./docs/using_swc_loader.md).
+SWC is the recommended JavaScript transpiler in Shakapacker v9+ (20x faster than Babel). New installations use SWC by default via the installation template. You can read more at [SWC usage docs](./docs/using_swc_loader.md).
 
-Please note that if you want opt-in to use SWC, you can skip [React](#react) integration instructions as it is supported out of the box.
+**Note on defaults**: The installation template explicitly sets `javascript_transpiler: "swc"` for new projects. However, for backward compatibility, webpack's runtime default (when no explicit config exists) remains `"babel"`. Rspack always defaults to `"swc"`.
+
+Please note that SWC supports [React](#react) integration out of the box - no additional configuration needed.
 
 ### esbuild loader configuration
 
-You can try out experimental integration with the esbuild-loader. You can read more at [esbuild-loader usage docs](./docs/using_esbuild_loader.md).
+You can use esbuild as an alternative JavaScript transpiler. You can read more at [esbuild-loader usage docs](./docs/using_esbuild_loader.md).
 
-Please note that if you want opt-in to use esbuild-loader, you can skip [React](#react) integration instructions as it is supported out of the box.
+Please note that esbuild supports [React](#react) integration out of the box - no additional configuration needed.
 
 ### Switching between transpilers
 

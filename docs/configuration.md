@@ -25,7 +25,7 @@ Common configuration options with their defaults:
 | ------------------------------ | ------- | --------------------------------------- | ---------------------------------------------------------- |
 | `assets_bundler`               | string  | `"webpack"`                             | Bundler to use: `"webpack"` or `"rspack"`                  |
 | `assets_bundler_config_path`   | string  | `"config/webpack"` or `"config/rspack"` | Directory containing bundler config files                  |
-| `javascript_transpiler`        | string  | `"swc"` or `"babel"`                    | Transpiler: `"swc"`, `"babel"`, or `"esbuild"`             |
+| `javascript_transpiler`        | string  | `"swc"`\*                               | Transpiler: `"swc"`, `"babel"`, or `"esbuild"`             |
 | `source_path`                  | string  | `"app/javascript"`                      | Root directory for JavaScript source files                 |
 | `source_entry_path`            | string  | `"packs"`                               | Subdirectory within `source_path` for entry points         |
 | `nested_entries`               | boolean | `true`                                  | Discover entry points in subdirectories                    |
@@ -43,6 +43,8 @@ Common configuration options with their defaults:
 | `dev_server.hmr`               | boolean | `false`                                 | Enable Hot Module Replacement                              |
 
 For detailed explanations, examples, and additional options, see the sections below.
+
+**\*Note on `javascript_transpiler` default**: The installation template sets this to `"swc"` for new projects. However, at runtime, if no explicit value is configured, webpack defaults to `"babel"` (for backward compatibility) while rspack defaults to `"swc"`.
 
 ## Basic Configuration
 
@@ -91,23 +93,27 @@ assets_bundler_config_path: "."
 ### `javascript_transpiler`
 
 **Type:** `string`
-**Default:** `"swc"` (or `"babel"` for webpack when not specified)
+**Default:** `"swc"` (new installations), `"babel"` (webpack runtime), `"swc"` (rspack runtime)
 **Options:** `"swc"`, `"babel"`, or `"esbuild"`
 
 Specifies which transpiler to use for JavaScript/TypeScript.
 
 ```yaml
-# Use SWC (recommended - 20x faster than Babel)
+# Use SWC (recommended - 20x faster than Babel, set by default in new installations)
 javascript_transpiler: "swc"
 
-# Use Babel (for maximum compatibility)
+# Use Babel (for maximum compatibility, webpack runtime default if not configured)
 javascript_transpiler: "babel"
 
 # Use esbuild (fastest, but may have compatibility issues)
 javascript_transpiler: "esbuild"
 ```
 
-**Note:** When using rspack, swc is used automatically regardless of this setting due to built-in support.
+**Important default behavior:**
+
+- **New installations**: The installation template explicitly sets `javascript_transpiler: "swc"`
+- **Webpack runtime default**: If not explicitly configured, defaults to `"babel"` for backward compatibility
+- **Rspack runtime default**: If not explicitly configured, defaults to `"swc"` as rspack is a newer bundler
 
 See [Transpiler Performance Guide](transpiler-performance.md) for benchmarks and migration guides.
 
