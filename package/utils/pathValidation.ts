@@ -138,17 +138,16 @@ export function validatePaths(paths: string[], basePath: string): string[] {
       console.warn(
         `[SHAKAPACKER WARNING] Skipping potentially unsafe path: ${userPath}`
       )
-      continue
-    }
-
-    try {
-      const safePath = safeResolvePath(basePath, userPath)
-      validatedPaths.push(safePath)
-    } catch (error) {
-      console.warn(
-        `[SHAKAPACKER WARNING] Invalid path configuration: ${userPath}\n` +
-          `Error: ${error instanceof Error ? error.message : String(error)}`
-      )
+    } else {
+      try {
+        const safePath = safeResolvePath(basePath, userPath)
+        validatedPaths.push(safePath)
+      } catch (error) {
+        console.warn(
+          `[SHAKAPACKER WARNING] Invalid path configuration: ${userPath}\n` +
+            `Error: ${error instanceof Error ? error.message : String(error)}`
+        )
+      }
     }
   }
 
