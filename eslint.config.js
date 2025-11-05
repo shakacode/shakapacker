@@ -211,7 +211,6 @@ module.exports = [
       "@typescript-eslint/restrict-template-expressions": "off",
       // Style preferences
       "import/prefer-default-export": "off",
-      "no-await-in-loop": "off",
       "no-underscore-dangle": "off",
       "no-shadow": "off",
       "no-restricted-globals": "off",
