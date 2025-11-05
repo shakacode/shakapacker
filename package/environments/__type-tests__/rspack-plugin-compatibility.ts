@@ -9,26 +9,26 @@
 import type { RspackPlugin, RspackPluginInstance } from "../types"
 
 // Test 1: RspackPlugin should be assignable to RspackPluginInstance
-const testPluginToInstance = (plugin: RspackPlugin): RspackPluginInstance =>
+const _testPluginToInstance = (plugin: RspackPlugin): RspackPluginInstance =>
   plugin
 
 // Test 2: RspackPluginInstance should be assignable to RspackPlugin
-const testInstanceToPlugin = (instance: RspackPluginInstance): RspackPlugin =>
+const _testInstanceToPlugin = (instance: RspackPluginInstance): RspackPlugin =>
   instance
 
 // Test 3: Array compatibility
-const testArrayCompatibility = (
+const _testArrayCompatibility = (
   plugins: RspackPlugin[]
 ): RspackPluginInstance[] => plugins
-const testArrayCompatibilityReverse = (
+const _testArrayCompatibilityReverse = (
   instances: RspackPluginInstance[]
 ): RspackPlugin[] => instances
 
 // Test 4: Optional parameter compatibility
-const testOptionalParam = (
+const _testOptionalParam = (
   plugin?: RspackPlugin
 ): RspackPluginInstance | undefined => plugin
-const testOptionalParamReverse = (
+const _testOptionalParamReverse = (
   instance?: RspackPluginInstance
 ): RspackPlugin | undefined => instance
 
