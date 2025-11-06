@@ -5,6 +5,14 @@ on:
     branches:
       - "main"
   pull_request:
+    paths:
+      - "spec/dummy/**"
+      - "lib/**"
+      - "**.rb"
+      - "**.js"
+      - "**.ts"
+      - "package.json"
+      - ".github/workflows/dummy.yml"
 
 concurrency:
   # Pushing new changes to a branch will cancel any in-progress CI runs
