@@ -150,11 +150,45 @@ If you prefer to keep the v8 default export behavior during migration, you can o
 
 ## Reverting to Default Exports (v8 Behavior)
 
-To use the v8-style default exports instead of v9's named exports:
+To use the v8-style default exports instead of v9's named exports, you have several options:
 
-### Option 1: Update `config/webpack/commonWebpackConfig.js` (Recommended)
+### Option 1: Configuration File (Easiest - Recommended)
 
-This approach modifies the common webpack configuration that applies to all environments:
+The simplest way to restore v8 behavior is to set the `css_modules_export_mode` option in your `config/shakapacker.yml`:
+
+```yaml
+# config/shakapacker.yml
+default: &default
+  # ... other settings ...
+
+  # CSS Modules export mode
+  # 'named' (default) - Use named exports with camelCase conversion (v9 default)
+  # 'default' - Use default export with both original and camelCase names (v8 behavior)
+  css_modules_export_mode: "default"
+```
+
+This configuration automatically adjusts the CSS loader settings:
+
+- Sets `namedExport: false` to enable default exports
+- Sets `exportLocalsConvention: 'camelCase'` to export both original and camelCase versions
+
+**Restart your development server** after changing this setting for the changes to take effect.
+
+With this configuration, you can continue using v8-style imports:
+
+```js
+// Works with css_modules_export_mode: "default"
+import styles from "./Component.module.css"
+;<div className={styles.container}>
+  <button className={styles.button}>Click me</button>
+  <button className={styles["my-button"]}>Kebab-case</button>
+  <button className={styles.myButton}>Also available</button>
+</div>
+```
+
+### Option 2: Manual Webpack Configuration (Advanced)
+
+If you need more control or can't use the configuration file approach, you can manually modify the webpack configuration that applies to all environments:
 
 ```js
 // config/webpack/commonWebpackConfig.js
@@ -198,7 +232,7 @@ const commonWebpackConfig = () => {
 module.exports = commonWebpackConfig
 ```
 
-### Option 2: Create `config/webpack/environment.js` (Alternative)
+### Option 3: Create `config/webpack/environment.js` (Alternative)
 
 If you prefer using a separate environment file:
 
@@ -239,12 +273,12 @@ module.exports = environment
 
 Then reference this in your environment-specific configs (development.js, production.js, etc.).
 
-### Option 3: (Optional) Sass Modules
+### Option 4: (Optional) Sass Modules
 
 If you also use Sass modules, add similar configuration for SCSS files:
 
 ```js
-// For Option 1 approach, extend the overrideCssModulesConfig function:
+// For Option 2 approach (manual webpack config), extend the overrideCssModulesConfig function:
 const overrideCssModulesConfig = (config) => {
   // Handle both CSS and SCSS rules
   const styleRules = config.module.rules.filter(

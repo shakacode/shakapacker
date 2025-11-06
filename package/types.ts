@@ -15,6 +15,7 @@ export interface Config {
   source_entry_path: string
   nested_entries: boolean
   css_extract_ignore_order_warnings: boolean
+  css_modules_export_mode?: "named" | "default"
   public_root_path: string
   public_output_path: string
   private_output_path?: string

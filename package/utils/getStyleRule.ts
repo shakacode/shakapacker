@@ -29,6 +29,11 @@ const getStyleRule = (
         ? requireOrError("@rspack/core").CssExtractRspackPlugin.loader
         : requireOrError("mini-css-extract-plugin").loader
 
+    // Determine CSS Modules export mode based on configuration
+    // 'named' (default): Use named exports with camelCaseOnly (v9 behavior)
+    // 'default': Use default exports with camelCase (v8 behavior)
+    const useNamedExports = config.css_modules_export_mode !== "default"
+
     const use = [
       inliningCss ? "style-loader" : extractionPlugin,
       {
@@ -38,11 +43,13 @@ const getStyleRule = (
           importLoaders: 2,
           modules: {
             auto: true,
-            // v9 defaults: Use named exports with camelCase conversion
-            // Note: css-loader requires 'camelCaseOnly' or 'dashesOnly' when namedExport is true
-            // Using 'camelCase' with namedExport: true causes a build error
-            namedExport: true,
-            exportLocalsConvention: "camelCaseOnly"
+            // Use named exports for v9 (default), or default exports for v8 compatibility
+            namedExport: useNamedExports,
+            // 'camelCaseOnly' with namedExport: true (v9 default)
+            // 'camelCase' with namedExport: false (v8 behavior - exports both original and camelCase)
+            exportLocalsConvention: useNamedExports
+              ? "camelCaseOnly"
+              : "camelCase"
           }
         }
       },
