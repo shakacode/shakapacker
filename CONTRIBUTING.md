@@ -223,6 +223,8 @@ The project uses Yarn in CI workflows for the following reasons:
 - `.github/workflows/ruby.yml` - Ruby test suite across Ruby/Rails versions
 - `.github/workflows/node.yml` - Node.js test suite across Node versions
 - `.github/workflows/generator.yml` - Generator installation tests
+- `.github/workflows/dummy.yml` - Dummy app integration tests
+- `.github/workflows/eslint-validation.yml` - ESLint configuration validation
 
 All workflows use:
 
@@ -238,6 +240,36 @@ And install dependencies with:
 ```bash
 yarn install
 ```
+
+### CI Optimization: Path Filtering
+
+To reduce CI costs and execution time, workflows use **path filtering** to run only when relevant files change:
+
+- **Ruby workflow** - Only runs when Ruby files, gemspecs, Gemfile, or RuboCop config changes
+- **Node workflow** - Only runs when JS/TS files, package.json, or Node config changes
+- **Generator specs** - Only runs when generator-related files change
+- **Dummy specs** - Only runs when dummy app or lib files change
+- **Test bundlers** - Only runs when code affecting bundler integration changes
+
+This means documentation-only PRs (e.g., only changing `README.md`) will skip all test workflows entirely.
+
+**Important:** The full test suite always runs on pushes to the `main` branch to ensure the main branch is always thoroughly tested.
+
+### Manual Workflow Execution
+
+All workflows can be triggered manually via the GitHub Actions UI using the "Run workflow" button. This is useful for:
+
+- Re-running tests after a temporary CI failure
+- Testing workflows on specific branches without creating a PR
+- Running full test suites on PRs that would normally skip certain workflows
+
+### Conditional Linting
+
+The Node workflow includes conditional execution of actionlint (GitHub Actions linter):
+
+- Only downloads and runs when `.github/workflows/*` files change
+- Saves time by skipping on most PRs
+- Includes caching for faster execution when needed
 
 ### Testing with Other Package Managers
 

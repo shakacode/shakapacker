@@ -17,6 +17,7 @@ on:
       - "**.js"
       - "**.ts"
       - ".github/workflows/generator.yml"
+  workflow_dispatch:
 
 concurrency:
   # Pushing new changes to a branch will cancel any in-progress CI runs

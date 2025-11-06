@@ -13,6 +13,7 @@ on:
       - ".github/workflows/test-bundlers.yml"
   push:
     branches: [master, main]
+  workflow_dispatch:
 
 jobs:
   test-webpack:

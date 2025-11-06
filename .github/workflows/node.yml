@@ -17,6 +17,7 @@ on:
       - "knip.json"
       - "tsconfig.json"
       - ".github/workflows/node.yml"
+  workflow_dispatch:
 
 concurrency:
   # Pushing new changes to a branch will cancel any in-progress CI runs
