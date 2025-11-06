@@ -181,17 +181,21 @@ describe "CSS Modules Configuration" do
       # Read the TypeScript source to verify configuration
       style_rule_content = File.read("package/utils/getStyleRule.ts")
 
-      # Should have namedExport: true
-      expect(style_rule_content).to include("namedExport: true")
+      # Should have conditional logic based on css_modules_export_mode
+      expect(style_rule_content).to include("css_modules_export_mode")
+      expect(style_rule_content).to include("useNamedExports")
 
-      # Should have exportLocalsConvention: 'camelCaseOnly' (not 'camelCase')
-      expect(style_rule_content).to include('exportLocalsConvention: "camelCaseOnly"')
+      # Should set namedExport conditionally
+      expect(style_rule_content).to include("namedExport: useNamedExports")
 
-      # Should NOT have the invalid 'camelCase' with namedExport: true
-      expect(style_rule_content).not_to include('exportLocalsConvention: "camelCase"')
+      # Should set exportLocalsConvention conditionally
+      expect(style_rule_content).to include("exportLocalsConvention: useNamedExports")
+      expect(style_rule_content).to include('"camelCaseOnly"')
+      expect(style_rule_content).to include('"camelCase"')
 
-      # Should have explanatory comment about the requirement
-      expect(style_rule_content).to include("css-loader requires 'camelCaseOnly' or 'dashesOnly'")
+      # Should have explanatory comments about v9 and v8 behavior
+      expect(style_rule_content).to include("v9 behavior")
+      expect(style_rule_content).to include("v8 behavior")
     end
   end
 
