@@ -197,6 +197,42 @@ describe "CSS Modules Configuration" do
       expect(style_rule_content).to include("v9 behavior")
       expect(style_rule_content).to include("v8 behavior")
     end
+
+    describe "css_modules_export_mode configuration" do
+      it "defaults to 'named' when not specified" do
+        # The test config doesn't have css_modules_export_mode set
+        expect(config.css_modules_export_mode).to eq("named")
+      end
+
+      it "accepts 'default' as a valid value" do
+        allow(config).to receive(:fetch).with(:css_modules_export_mode).and_return("default")
+        expect(config.css_modules_export_mode).to eq("default")
+      end
+
+      it "raises ArgumentError for invalid values" do
+        allow(config).to receive(:fetch).with(:css_modules_export_mode).and_return("invalid")
+
+        expect {
+          config.css_modules_export_mode
+        }.to raise_error(ArgumentError, /Invalid css_modules_export_mode: 'invalid'/)
+      end
+
+      it "provides helpful error message with valid options" do
+        allow(config).to receive(:fetch).with(:css_modules_export_mode).and_return("foobar")
+
+        expect {
+          config.css_modules_export_mode
+        }.to raise_error(ArgumentError, /Valid values are: 'named', 'default'/)
+      end
+
+      it "includes documentation link in error message" do
+        allow(config).to receive(:fetch).with(:css_modules_export_mode).and_return("bad")
+
+        expect {
+          config.css_modules_export_mode
+        }.to raise_error(ArgumentError, /css-modules-export-mode\.md/)
+      end
+    end
   end
 
   describe "migration scenarios" do
