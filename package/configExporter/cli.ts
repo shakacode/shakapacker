@@ -309,58 +309,58 @@ QUICK START (for troubleshooting):
       description:
         "Generate only server config (fallback when no config file exists)"
     })
-    .check((argv) => {
-      if (argv.webpack && argv.rspack) {
+    .check((args) => {
+      if (args.webpack && args.rspack) {
         throw new Error(
           "--webpack and --rspack are mutually exclusive. Please specify only one."
         )
       }
-      if (argv["client-only"] && argv["server-only"]) {
+      if (args["client-only"] && args["server-only"]) {
         throw new Error(
           "--client-only and --server-only are mutually exclusive. Please specify only one."
         )
       }
-      if (argv.output && argv["save-dir"]) {
+      if (args.output && args["save-dir"]) {
         throw new Error(
           "--output and --save-dir are mutually exclusive. Use one or the other."
         )
       }
-      if (argv.stdout && argv["save-dir"]) {
+      if (args.stdout && args["save-dir"]) {
         throw new Error(
           "--stdout and --save-dir are mutually exclusive. Use one or the other."
         )
       }
-      if (argv.build && argv["all-builds"]) {
+      if (args.build && args["all-builds"]) {
         throw new Error(
           "--build and --all-builds are mutually exclusive. Use one or the other."
         )
       }
-      if (argv.validate && argv["validate-build"]) {
+      if (args.validate && args["validate-build"]) {
         throw new Error(
           "--validate and --validate-build are mutually exclusive. Use one or the other."
         )
       }
-      if (argv.validate && (argv.build || argv["all-builds"])) {
+      if (args.validate && (args.build || args["all-builds"])) {
         throw new Error(
           "--validate cannot be used with --build or --all-builds."
         )
       }
-      if (argv["all-builds"] && argv.output) {
+      if (args["all-builds"] && args.output) {
         throw new Error(
           "--all-builds and --output are mutually exclusive. Use --save-dir instead."
         )
       }
-      if (argv["all-builds"] && argv.stdout) {
+      if (args["all-builds"] && args.stdout) {
         throw new Error(
           "--all-builds and --stdout are mutually exclusive. Use --save-dir instead."
         )
       }
-      if (argv.stdout && argv.output) {
+      if (args.stdout && args.output) {
         throw new Error(
           "--stdout and --output are mutually exclusive. Use one or the other."
         )
       }
-      if (argv.ssr && !argv.init) {
+      if (args.ssr && !args.init) {
         throw new Error(
           "--ssr can only be used with --init. Use: bin/shakapacker-config --init --ssr"
         )
