@@ -927,7 +927,8 @@ async function runDoctorMode(
         }
 
         const fullPath = resolve(targetDir, filename)
-        const fileOutput: FileOutput = { filename, content: output, metadata }
+        // Type validation: ensure data matches FileOutput interface
+        const _fileOutput: FileOutput = { filename, content: output, metadata }
         FileWriter.writeSingleFile(fullPath, output)
         createdFiles.push(fullPath)
       }
