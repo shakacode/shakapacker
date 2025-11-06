@@ -353,6 +353,17 @@ class Shakapacker::Configuration
     rspack? ? "config/rspack" : "config/webpack"
   end
 
+  # Returns the raw configuration data hash
+  #
+  # Returns the merged configuration from the shakapacker.yml file for the current environment.
+  # This is the symbolized hash loaded from the config file, with defaults applied via {#fetch}.
+  #
+  # @return [Hash] the raw configuration data
+  # @api public
+  def data
+    @data ||= load
+  end
+
   private
 
     def default_javascript_transpiler
@@ -496,10 +507,6 @@ class Shakapacker::Configuration
     rescue Errno::ENOENT
       # If paths don't exist yet, fall back to cleanpath for comparison
       [private_full_path.cleanpath.to_s, public_full_path.cleanpath.to_s]
-    end
-
-    def data
-      @data ||= load
     end
 
     def load
