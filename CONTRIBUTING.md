@@ -27,6 +27,7 @@ We welcome pull requests that fix bugs, add new features, or improve existing on
 - Write tests for your changes and [make sure all tests pass](#making-sure-your-changes-pass-all-tests).
 - Update the documentation as needed.
 - Update CHANGELOG.md if the changes affect public behavior of the project.
+- Update RBS type signatures in `sig/` directory if you modify public APIs.
 
 ---
 
@@ -45,6 +46,81 @@ To enable pre-commit hooks locally:
 ```bash
 npx husky install
 npx husky add .husky/pre-commit "npx lint-staged"
+```
+
+---
+
+## RBS Type Signatures
+
+Shakapacker includes RBS type signatures for all public APIs in the `sig/` directory. These signatures provide static type checking and improved IDE support.
+
+### When to Update RBS Files
+
+Update RBS signatures when you:
+
+- Add new public methods or classes
+- Change method signatures (parameters, return types)
+- Modify public APIs
+- Add or remove public attributes
+
+### RBS File Structure
+
+```
+sig/
+├── shakapacker.rbs                    # Main Shakapacker module
+└── shakapacker/
+    ├── configuration.rbs              # Configuration class
+    ├── helper.rbs                     # View helper module
+    ├── manifest.rbs                   # Manifest class
+    ├── compiler.rbs                   # Compiler class
+    └── ...                            # Other components
+```
+
+### Validating RBS Signatures
+
+To validate your RBS signatures:
+
+```bash
+# Install RBS if not already installed
+gem install rbs
+
+# Validate all signatures
+rbs validate
+
+# Check a specific file
+rbs validate sig/shakapacker/configuration.rbs
+```
+
+### RBS Best Practices
+
+1. **Use specific types** instead of `untyped` when possible
+2. **Document optional parameters** with `?` prefix
+3. **Use union types** for methods that can return multiple types (e.g., `String | nil`)
+4. **Keep signatures in sync** with implementation changes
+5. **Test with type checkers** like [Steep](https://github.com/soutaro/steep) when possible
+
+### Example RBS Signature
+
+```rbs
+# Good: Specific types with documentation
+class Shakapacker::Configuration
+  def initialize: (
+    root_path: Pathname,
+    config_path: Pathname,
+    env: ActiveSupport::StringInquirer,
+    ?bundler_override: String?
+  ) -> void
+
+  def source_path: () -> Pathname
+  def webpack?: () -> bool
+  def assets_bundler: () -> String
+end
+
+# Avoid: Overly generic types
+class Shakapacker::Configuration
+  def initialize: (**untyped) -> void
+  def source_path: () -> untyped
+end
 ```
 
 ---
