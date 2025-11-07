@@ -136,10 +136,10 @@ module.exports = [
       // Disable base rule in favor of TypeScript version
       "no-use-before-define": "off",
       "@typescript-eslint/no-use-before-define": ["error"],
-      // Allow unused vars if they start with underscore (convention for ignored params)
+      // Allow unused vars if they start with underscore (convention for ignored params and type tests)
       "@typescript-eslint/no-unused-vars": [
         "error",
-        { argsIgnorePattern: "^_" }
+        { argsIgnorePattern: "^_", varsIgnorePattern: "^_" }
       ],
       // Strict: no 'any' types allowed - use 'unknown' or specific types instead
       "@typescript-eslint/no-explicit-any": "error",
@@ -265,7 +265,6 @@ module.exports = [
   },
   {
     files: [
-      "package/environments/**/*.ts",
       "package/index.ts",
       "package/rspack/index.ts",
       "package/rules/**/*.ts",
@@ -282,6 +281,23 @@ module.exports = [
       "@typescript-eslint/no-unsafe-argument": "off",
       "@typescript-eslint/no-redundant-type-constituents": "off",
       "@typescript-eslint/no-unused-vars": "off",
+      "@typescript-eslint/no-unsafe-function-type": "off",
+      "import/prefer-default-export": "off",
+      "no-underscore-dangle": "off"
+    }
+  },
+  {
+    // package/environments/**/*.ts now passes no-unused-vars rule
+    // Type test functions use underscore prefix (argsIgnorePattern: "^_")
+    // All other variables are used in the code
+    files: ["package/environments/**/*.ts"],
+    rules: {
+      "@typescript-eslint/no-unsafe-assignment": "off",
+      "@typescript-eslint/no-unsafe-call": "off",
+      "@typescript-eslint/no-unsafe-return": "off",
+      "@typescript-eslint/no-unsafe-member-access": "off",
+      "@typescript-eslint/no-unsafe-argument": "off",
+      "@typescript-eslint/no-redundant-type-constituents": "off",
       "@typescript-eslint/no-unsafe-function-type": "off",
       "import/prefer-default-export": "off",
       "no-underscore-dangle": "off"
