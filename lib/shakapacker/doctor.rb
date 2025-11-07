@@ -914,7 +914,7 @@ module Shakapacker
             return unless doctor.config.config_path.exist?
 
             puts "\nConfiguration values for '#{doctor.config.env}' environment:"
-            config_data = doctor.config.send(:data)
+            config_data = doctor.config.data
 
             if config_data.any?
               print_config_data(config_data)
