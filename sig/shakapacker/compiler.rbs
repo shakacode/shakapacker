@@ -48,7 +48,7 @@ class Shakapacker::Compiler
 
   def lock_file_path: () -> Pathname
 
-  def optional_ruby_runner: () -> String
+  def optional_ruby_runner: () -> String?
 
   def bin_shakapacker_path: () -> Pathname
 
