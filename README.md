@@ -723,6 +723,61 @@ open doc/index.html
 
 The generated documentation includes all public and private methods with detailed descriptions.
 
+#### Type Signatures with RBS
+
+Shakapacker includes **RBS type signatures** for all public APIs, enabling static type checking and improved IDE support:
+
+**Benefits:**
+
+- **IDE Autocomplete**: Get accurate method signatures and parameter hints in your editor
+- **Static Type Checking**: Catch type errors before runtime using [Steep](https://github.com/soutaro/steep) or [TypeProf](https://github.com/ruby/typeprof)
+- **Self-Documenting Code**: Types provide machine-readable API documentation
+- **Safer Refactoring**: Type checker catches breaking changes across your codebase
+
+**RBS Signatures Location:**
+Type signatures are in the `sig/` directory and included with the gem:
+
+```
+sig/
+├── shakapacker.rbs                    # Main module
+└── shakapacker/
+    ├── configuration.rbs              # Configuration API
+    ├── helper.rbs                     # View helpers
+    ├── manifest.rbs                   # Asset lookup
+    ├── compiler.rbs                   # Compilation
+    ├── dev_server.rbs                 # Dev server
+    └── ...                            # Other components
+```
+
+**Using with Steep (Type Checker):**
+
+```yaml
+# Steepfile
+target :app do
+signature "sig"
+check "app"
+library "shakapacker"
+end
+```
+
+**Example Type Checking:**
+
+```ruby
+# Your code
+config = Shakapacker.config
+config.source_path  # Type checker knows this returns Pathname
+config.webpack?     # Type checker knows this returns bool
+
+# Type error caught at development time:
+config.invalid_method  # ⚠️ Steep reports: Method `invalid_method` is not defined
+```
+
+**Learn More:**
+
+- [RBS Documentation](https://github.com/ruby/rbs)
+- [Steep Type Checker](https://github.com/soutaro/steep)
+- [TypeProf](https://github.com/ruby/typeprof)
+
 ### Webpack Configuration
 
 First, you don't _need_ to use Shakapacker's webpack configuration. However, the `shakapacker` NPM package provides convenient access to configuration code that reads the `config/shakapacker.yml` file which the view helpers also use. If you have your customized webpack configuration, at the minimum, you must ensure:
