@@ -356,12 +356,20 @@ class Shakapacker::Configuration
   # Returns the raw configuration data hash
   #
   # Returns the merged configuration from the shakapacker.yml file for the current environment.
-  # This is the symbolized hash loaded from the config file, with defaults applied via {#fetch}.
+  # The hash has symbolized keys loaded from the config file. Individual config values can be
+  # accessed through specific accessor methods like {#source_path}, which apply defaults via {#fetch}.
   #
-  # @return [Hash] the raw configuration data
+  # The returned hash is frozen to prevent accidental mutations. To access config values,
+  # use the provided accessor methods instead of modifying this hash directly.
+  #
+  # @return [Hash<Symbol, Object>] the raw configuration data with symbolized keys (frozen)
+  # @example
+  #   config.data[:source_path]  #=> "app/javascript"
+  #   config.data[:compile]      #=> true
+  # @note The hash is frozen to prevent mutations. Use accessor methods for safe config access.
   # @api public
   def data
-    @data ||= load
+    @data ||= load.freeze
   end
 
   private
