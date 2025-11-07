@@ -103,11 +103,36 @@ Shakapacker uses optional peer dependencies (via `peerDependenciesMeta`) for max
 - **No installation warnings** - Package managers won't warn about missing optional dependencies
 - **Version constraints still apply** - When a package is installed, version compatibility is enforced
 
+### TypeScript Declaration Files and Optional Dependencies
+
+When importing types from optional peer dependencies, we use `@ts-expect-error` directives:
+
+```typescript
+// @ts-expect-error: webpack is an optional peer dependency (using type-only import)
+import type { Configuration } from "webpack"
+```
+
+**Important behavior:**
+
+- **In development** (webpack installed): TypeScript doesn't error, but `@ts-expect-error` expects one → TypeScript compilation will fail
+- **In production** (webpack not installed): TypeScript errors on import, `@ts-expect-error` suppresses it → TypeScript compilation succeeds
+
+This is counterintuitive but correct. Our CI validates both scenarios to ensure the behavior works as expected.
+
+**Example scenario:**
+
+If webpack were changed from optional to required in `package.json`:
+
+- Development builds would fail with: `error TS2578: Unused '@ts-expect-error' directive`
+- This surfaces the dependency change immediately, preventing accidental breakage
+- The build failure prompts developers to remove the `@ts-expect-error` directive
+
 ### When modifying dependencies:
 
 1. Add new peer dependencies to both `peerDependencies` and `peerDependenciesMeta` (marking as optional)
 2. Keep version ranges synchronized between `devDependencies` and `peerDependencies`
 3. Test with multiple package managers: `npm`, `yarn`, and `pnpm`
+4. If adding type-only imports from optional dependencies, use the `@ts-expect-error` pattern shown above
 
 ### Testing peer dependency changes:
 
