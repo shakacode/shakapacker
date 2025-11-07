@@ -21,14 +21,15 @@ default: &default
 
   # CSS Modules export mode
   # Controls how CSS Module class names are exported in JavaScript
+  # Defaults to 'named' if not specified. Uncomment and change to 'default' for v8 behavior.
   # Options:
-  #   named (default) - Use named exports with camelCase conversion (v9 default)
+  #   - named (default): Use named exports with camelCase conversion (v9 default)
   #     Example: import { button } from './styles.module.css'
-  #   default - Use default export with both original and camelCase names (v8 behavior)
+  #   - default: Use default export with both original and camelCase names (v8 behavior)
   #     Example: import styles from './styles.module.css'
   # For gradual migration, you can set this to default to maintain v8 behavior
   # See https://github.com/shakacode/shakapacker/blob/main/docs/css-modules-export-mode.md
-  css_modules_export_mode: named
+  # css_modules_export_mode: named
 
   public_root_path: public
   public_output_path: packs

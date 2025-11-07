@@ -348,18 +348,20 @@ class Shakapacker::Configuration
   # @return [String] "named" or "default"
   # @raise [ArgumentError] if an invalid value is configured
   def css_modules_export_mode
-    mode = fetch(:css_modules_export_mode) || "named"
+    @css_modules_export_mode ||= begin
+      mode = fetch(:css_modules_export_mode) || "named"
 
-    # Validate the configuration value
-    valid_modes = ["named", "default"]
-    unless valid_modes.include?(mode)
-      raise ArgumentError,
-        "Invalid css_modules_export_mode: '#{mode}'. " \
-        "Valid values are: #{valid_modes.map { |m| "'#{m}'" }.join(', ')}. " \
-        "See https://github.com/shakacode/shakapacker/blob/main/docs/css-modules-export-mode.md"
+      # Validate the configuration value
+      valid_modes = ["named", "default"]
+      unless valid_modes.include?(mode)
+        raise ArgumentError,
+          "Invalid css_modules_export_mode: '#{mode}'. " \
+          "Valid values are: #{valid_modes.map { |m| "'#{m}'" }.join(', ')}. " \
+          "See https://github.com/shakacode/shakapacker/blob/main/docs/css-modules-export-mode.md"
+      end
+
+      mode
     end
-
-    mode
   end
 
   # Returns the path to the bundler configuration directory
