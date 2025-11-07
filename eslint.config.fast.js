@@ -135,7 +135,7 @@ module.exports = [
       "@typescript-eslint/no-use-before-define": ["error"],
       "@typescript-eslint/no-unused-vars": [
         "error",
-        { argsIgnorePattern: "^_" }
+        { argsIgnorePattern: "^_", varsIgnorePattern: "^_" }
       ],
       "@typescript-eslint/no-explicit-any": "error",
       "@typescript-eslint/explicit-module-boundary-types": "off",
@@ -243,6 +243,11 @@ module.exports = [
       "@typescript-eslint/no-unused-vars": "off"
     }
   },
+
+  // Note: Type-aware rule overrides from main config (e.g., @typescript-eslint/no-unsafe-*,
+  // @typescript-eslint/restrict-template-expressions) are intentionally omitted here since
+  // fast mode doesn't enable type-aware linting (no parserOptions.project specified).
+  // This keeps fast mode performant while maintaining consistency for non-type-aware rules.
 
   // Prettier config must be last to override other configs
   prettierConfig
