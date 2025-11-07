@@ -55,6 +55,28 @@ describe "Shakapacker::Configuration" do
       expect(config.cache_path.to_s).to eq cache_path
     end
 
+    describe "#data" do
+      it "is publicly accessible" do
+        expect(config).to respond_to(:data)
+      end
+
+      it "returns a hash with symbolized keys" do
+        data = config.data
+        expect(data).to be_a(Hash)
+        expect(data.keys).to all(be_a(Symbol))
+      end
+
+      it "returns configuration from shakapacker.yml" do
+        data = config.data
+        expect(data[:source_path]).to eq("app/javascript")
+        expect(data[:public_output_path]).to eq("packs")
+      end
+
+      it "returns frozen hash to prevent mutations" do
+        expect(config.data).to be_frozen
+      end
+    end
+
     it "#private_output_path returns correct path" do
       private_output_path = File.expand_path File.join(File.dirname(__FILE__), "./test_app/ssr-generated").to_s
 
