@@ -1,4 +1,4 @@
-import { dirname, sep, normalize } from "path"
+import { dirname, normalize } from "path"
 
 const {
   additional_paths: additionalPaths,

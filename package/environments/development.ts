@@ -5,9 +5,7 @@
 
 import type {
   WebpackConfigWithDevServer,
-  RspackConfigWithDevServer,
-  ReactRefreshWebpackPlugin,
-  ReactRefreshRspackPlugin
+  RspackConfigWithDevServer
 } from "./types"
 import type { Config } from "../types"
 
