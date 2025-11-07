@@ -119,6 +119,14 @@ import type { Configuration } from "webpack"
 
 This is counterintuitive but correct. Our CI validates both scenarios to ensure the behavior works as expected.
 
+**Example scenario:**
+
+If webpack were changed from optional to required in `package.json`:
+
+- Development builds would fail with: `error TS2578: Unused '@ts-expect-error' directive`
+- This surfaces the dependency change immediately, preventing accidental breakage
+- The build failure prompts developers to remove the `@ts-expect-error` directive
+
 ### When modifying dependencies:
 
 1. Add new peer dependencies to both `peerDependencies` and `peerDependenciesMeta` (marking as optional)

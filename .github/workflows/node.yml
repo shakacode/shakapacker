@@ -75,6 +75,7 @@ jobs:
         run: |
           mkdir -p /tmp/test-types
           cp package/*.d.ts /tmp/test-types/
+          # types.ts is imported by index.d.ts; copy if it exists
           cp package/types.ts /tmp/test-types/ 2>/dev/null || true
 
       - name: Install TypeScript in test directory
