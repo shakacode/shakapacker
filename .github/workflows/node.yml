@@ -81,7 +81,7 @@ jobs:
         run: |
           cd /tmp/test-types
           npm init -y
-          npm install typescript
+          npm install typescript @types/node
 
       - name: Verify hand-written .d.ts files type-check without webpack
         run: |
