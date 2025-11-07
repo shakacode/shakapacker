@@ -107,6 +107,38 @@ jobs:
           SHELLCHECK_OPTS="-S warning" ./actionlint -color
         shell: bash
 
+  type-check-dts-without-webpack:
+    name: Verify .d.ts files work without webpack
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20.x
+
+      - name: Create test directory and copy .d.ts files
+        run: |
+          mkdir -p /tmp/test-types
+          cp package/*.d.ts /tmp/test-types/
+          # types.ts is imported by index.d.ts; copy if it exists
+          cp package/types.ts /tmp/test-types/ 2>/dev/null || true
+
+      - name: Install TypeScript in test directory
+        run: |
+          cd /tmp/test-types
+          npm init -y
+          npm install typescript @types/node
+
+      - name: Verify hand-written .d.ts files type-check without webpack
+        run: |
+          cd /tmp/test-types
+          npx tsc --noEmit \
+            --skipLibCheck \
+            --moduleResolution node \
+            *.d.ts
   test:
     name: Testing
     strategy:

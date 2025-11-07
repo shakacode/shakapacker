@@ -85,7 +85,7 @@ Read the [full review here](https://clutch.co/profile/shakacode#reviews?sort_by=
     - [Automatic Webpack Code Building](#automatic-webpack-code-building)
     - [Compiler strategies](#compiler-strategies)
     - [Common Development Commands](#common-development-commands)
-  - [API Documentation](#api-documentation)
+  - [Ruby API Reference](#ruby-api-reference)
   - [Webpack Configuration](#webpack-configuration)
   - [Babel configuration](#babel-configuration)
   - [SWC configuration](#swc-configuration)
@@ -673,47 +673,55 @@ end
 
 **Note:** Don't forget to prefix `ruby` when running these binstubs on Windows
 
-### API Documentation
+### Ruby API Reference
 
-Shakapacker's Ruby API is documented using RDoc comments. You can generate the API documentation locally using either RDoc or YARD:
+**📚 For comprehensive Ruby API documentation, see the [API Reference Guide](./docs/api-reference.md).**
 
-#### Using RDoc (Standard Ruby Documentation)
+This guide covers:
 
-```bash
-# Generate documentation in the doc/ directory
-rdoc lib/
+- **Main Shakapacker Module** - Configuration, compilation, and manifest access
+- **Configuration API** - Accessing `config/shakapacker.yml` settings programmatically
+- **View Helpers** - Complete reference for all Rails helpers
+- **Manifest API** - Asset lookup and resolution methods
+- **Dev Server API** - Development server status and management
+- **Advanced Usage** - Multiple instances, testing, custom configurations
 
-# View the generated documentation
-open doc/index.html
+#### Quick Examples
+
+```ruby
+# Access configuration
+Shakapacker.config.source_path
+# => #<Pathname:/app/app/javascript>
+
+# Get raw configuration hash
+Shakapacker.config.data
+# => { "source_path" => "app/javascript", ... }
+
+# Look up compiled assets
+Shakapacker.manifest.lookup("application.js")
+# => "/packs/application-abc123.js"
+
+# Check dev server status
+Shakapacker.dev_server.running?
+# => true
 ```
 
-#### Using YARD (Enhanced Documentation)
+#### Generating Full API Documentation
 
-YARD provides better formatting and supports additional tags used in the codebase:
+For complete API documentation with all methods and parameters:
 
 ```bash
-# Install YARD if you don't have it
+# Using YARD (recommended - better formatting)
 gem install yard
-
-# Generate documentation
 yard doc
+yard server  # Browse at http://localhost:8808
 
-# View the generated documentation
+# Using RDoc (standard Ruby documentation)
+rdoc lib/
 open doc/index.html
-
-# Or start a local documentation server
-yard server
 ```
 
-The API documentation covers:
-
-- **Shakapacker** - Main module with configuration, compilation, and manifest access
-- **Shakapacker::Configuration** - All configuration options from `shakapacker.yml`
-- **Shakapacker::Manifest** - Asset lookup methods used by view helpers
-- **Shakapacker::DevServer** - Development server status and configuration
-- **Shakapacker::Instance** - Instance management and lifecycle
-
-For the most up-to-date API reference, generate the documentation from the source code as shown above.
+The generated documentation includes all public and private methods with detailed descriptions.
 
 ### Webpack Configuration
 

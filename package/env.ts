@@ -51,7 +51,7 @@ try {
     // File not found, use default configuration
     try {
       config = load(readFileSync(defaultConfigPath, "utf8")) as ConfigFile
-    } catch (defaultError) {
+    } catch (_defaultError) {
       throw new Error(
         `Failed to load Shakapacker configuration.\n` +
           `Neither user config (${configPath}) nor default config (${defaultConfigPath}) could be loaded.\n\n` +
