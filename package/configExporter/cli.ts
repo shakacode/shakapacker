@@ -539,7 +539,7 @@ end
   // Make executable
   try {
     chmodSync(binStubPath, 0o755)
-  } catch (e) {
+  } catch (_e) {
     // chmod might fail on some systems, but mode in writeFileSync should handle it
   }
 }
@@ -1196,7 +1196,7 @@ async function loadConfigsForEnv(
   if (configFile.endsWith(".ts")) {
     try {
       require("ts-node/register/transpile-only")
-    } catch (error) {
+    } catch (_error) {
       throw new Error(
         "TypeScript config detected but ts-node is not available. " +
           "Install ts-node as a dev dependency: npm install --save-dev ts-node"
@@ -1633,7 +1633,7 @@ function loadShakapackerConfig(
 
       return result
     }
-  } catch (error: unknown) {
+  } catch (_error: unknown) {
     console.warn(
       `[Config Exporter] Error loading shakapacker config, defaulting to webpack`
     )
