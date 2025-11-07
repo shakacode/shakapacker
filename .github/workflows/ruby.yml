@@ -12,6 +12,8 @@ on:
       - "Rakefile"
       - "gemfiles/**"
       - ".rubocop.yml"
+      - "package.json"
+      - "**.ts"
       - ".github/workflows/ruby.yml"
   workflow_dispatch:
 

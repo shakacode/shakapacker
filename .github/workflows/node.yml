@@ -8,7 +8,6 @@ on:
     paths:
       - "**.js"
       - "**.ts"
-      - "**.json"
       - "package.json"
       - "yarn.lock"
       - "eslint.config.js"
@@ -16,6 +15,7 @@ on:
       - ".prettierignore"
       - "knip.json"
       - "tsconfig.json"
+      - "jest.config.js"
       - ".github/workflows/node.yml"
   workflow_dispatch:
 
@@ -74,7 +74,9 @@ jobs:
 
       # We only download and run Actionlint if there is any difference in GitHub Action workflows
       # https://github.com/rhysd/actionlint/blob/main/docs/usage.md#on-github-actions
+      # Note: Only runs on pull_request events, not push events (where github.event.pull_request is null)
       - name: Check GitHub Action changes
+        if: github.event_name == 'pull_request'
         id: check-workflows
         run: |
           git fetch origin ${{ github.event.pull_request.base.sha }}
@@ -91,17 +93,17 @@ jobs:
             fi
           fi
       - name: Setup Actionlint
-        if: steps.check-workflows.outputs.changed == 'true'
+        if: github.event_name == 'pull_request' && steps.check-workflows.outputs.changed == 'true'
         uses: actions/cache@v4
         id: cache-actionlint
         with:
           path: ./actionlint
           key: ${{ runner.os }}-actionlint-${{ steps.check-workflows.outputs.actionlint_version }}
       - name: Download Actionlint
-        if: steps.check-workflows.outputs.changed == 'true' && steps.cache-actionlint.outputs.cache-hit != 'true'
+        if: github.event_name == 'pull_request' && steps.check-workflows.outputs.changed == 'true' && steps.cache-actionlint.outputs.cache-hit != 'true'
         run: bash <(curl https://raw.githubusercontent.com/rhysd/actionlint/main/scripts/download-actionlint.bash)
       - name: Lint GitHub Actions
-        if: steps.check-workflows.outputs.changed == 'true'
+        if: github.event_name == 'pull_request' && steps.check-workflows.outputs.changed == 'true'
         run: |
           echo "::add-matcher::.github/actionlint-matcher.json"
           SHELLCHECK_OPTS="-S warning" ./actionlint -color
