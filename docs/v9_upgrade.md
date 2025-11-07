@@ -149,7 +149,7 @@ import * as styles from './Component.module.css';
 
    ```yaml
    # config/shakapacker.yml
-   css_modules_export_mode: "default"
+   css_modules_export_mode: default
    ```
 
    This allows you to keep using default imports while migrating gradually

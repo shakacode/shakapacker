@@ -162,9 +162,9 @@ default: &default
   # ... other settings ...
 
   # CSS Modules export mode
-  # 'named' (default) - Use named exports with camelCase conversion (v9 default)
-  # 'default' - Use default export with both original and camelCase names (v8 behavior)
-  css_modules_export_mode: "default"
+  # named (default) - Use named exports with camelCase conversion (v9 default)
+  # default - Use default export with both original and camelCase names (v8 behavior)
+  css_modules_export_mode: default
 ```
 
 This configuration automatically adjusts the CSS loader settings:
@@ -177,7 +177,7 @@ This configuration automatically adjusts the CSS loader settings:
 With this configuration, you can continue using v8-style imports:
 
 ```js
-// Works with css_modules_export_mode: "default"
+// Works with css_modules_export_mode: default
 import styles from "./Component.module.css"
 ;<div className={styles.container}>
   <button className={styles.button}>Click me</button>
