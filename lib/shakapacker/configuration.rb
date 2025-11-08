@@ -339,6 +339,31 @@ class Shakapacker::Configuration
     javascript_transpiler
   end
 
+  # Returns the CSS Modules export mode configuration
+  #
+  # Controls how CSS Module class names are exported in JavaScript:
+  # - "named" (default): Use named exports with camelCase conversion (v9 behavior)
+  # - "default": Use default export with both original and camelCase names (v8 behavior)
+  #
+  # @return [String] "named" or "default"
+  # @raise [ArgumentError] if an invalid value is configured
+  def css_modules_export_mode
+    @css_modules_export_mode ||= begin
+      mode = fetch(:css_modules_export_mode) || "named"
+
+      # Validate the configuration value
+      valid_modes = ["named", "default"]
+      unless valid_modes.include?(mode)
+        raise ArgumentError,
+          "Invalid css_modules_export_mode: '#{mode}'. " \
+          "Valid values are: #{valid_modes.map { |m| "'#{m}'" }.join(', ')}. " \
+          "See https://github.com/shakacode/shakapacker/blob/main/docs/css-modules-export-mode.md"
+      end
+
+      mode
+    end
+  end
+
   # Returns the path to the bundler configuration directory
   #
   # This is where webpack.config.js or rspack.config.js should be located.
