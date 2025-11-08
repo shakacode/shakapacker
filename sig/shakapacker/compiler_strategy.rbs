@@ -17,7 +17,7 @@ module Shakapacker
     def stale?: () -> bool
 
     # Runs the post-compile hook
-    def after_compile_hook: () -> (void | nil)
+    def after_compile_hook: () -> void
 
     private
 
