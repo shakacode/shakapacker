@@ -11,6 +11,7 @@
 
 ### Fixed
 
+- **Fixed NODE_ENV not being set when running shakapacker-dev-server**. [PR #823](https://github.com/shakacode/shakapacker/pull/823) by [Seifeldin7](https://github.com/Seifeldin7). Resolves [#802](https://github.com/shakacode/shakapacker/issues/802). The dev server now properly initializes NODE_ENV to match RAILS_ENV (or "production" by default), fixing webpack configurations that dynamically load environment-specific files.
 - Extended manifest merging for multiple client configurations to all environments. [PR #800](https://github.com/shakacode/shakapacker/pull/800) by [Judahmeek](https://github.com/Judahmeek).
 
 Changes since the last non-beta release.
