@@ -155,8 +155,55 @@ import * as styles from './Component.module.css';
    This allows you to keep using default imports while migrating gradually
 
 3. **Keep v8 behavior** using webpack configuration (Advanced):
-   - Override the css-loader configuration as shown in [CSS Modules Export Mode documentation](./css-modules-export-mode.md)
-   - Provides more control over the configuration
+
+   If you need more control over the configuration, you can override the css-loader settings directly in your webpack config:
+
+   ```javascript
+   // config/webpack/commonWebpackConfig.js (or similar)
+   const { generateWebpackConfig, merge } = require("shakapacker")
+
+   const commonWebpackConfig = () => {
+     const config = merge({}, generateWebpackConfig())
+
+     // Override CSS Modules to use default exports (v8 behavior)
+     config.module.rules.forEach((rule) => {
+       if (
+         rule.test &&
+         (rule.test.test("example.module.scss") ||
+           rule.test.test("example.module.css"))
+       ) {
+         if (Array.isArray(rule.use)) {
+           rule.use.forEach((loader) => {
+             if (
+               loader.loader &&
+               loader.loader.includes("css-loader") &&
+               loader.options &&
+               loader.options.modules
+             ) {
+               // Disable named exports to support default imports
+               loader.options.modules.namedExport = false
+               loader.options.modules.exportLocalsConvention = "camelCase"
+             }
+           })
+         }
+       }
+     })
+
+     return config
+   }
+
+   module.exports = commonWebpackConfig
+   ```
+
+   **Key points:**
+   - Test both `.module.scss` and `.module.css` file extensions
+   - Validate all loader properties exist before accessing them
+   - Use `.includes('css-loader')` since the loader path may vary
+   - Set both `namedExport: false` and `exportLocalsConvention: 'camelCase'` for full v8 compatibility
+
+   **Note:** This is a temporary solution. The recommended approach is to migrate your imports to use named exports as shown in the main documentation.
+
+   For detailed configuration options, see the [CSS Modules Export Mode documentation](./css-modules-export-mode.md)
 
 **Benefits of the change:**
 
