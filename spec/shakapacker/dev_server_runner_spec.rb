@@ -136,6 +136,37 @@ describe "DevServerRunner" do
     end
   end
 
+  describe "NODE_ENV environment variable" do
+    it "sets NODE_ENV when not already set" do
+      original_node_env = ENV.delete("NODE_ENV")
+
+      begin
+        Dir.chdir(test_app_path) do
+          klass = Shakapacker::DevServerRunner
+
+          allow(Shakapacker::Utils::Manager).to receive(:error_unless_package_manager_is_obvious!)
+
+          instance = klass.new([])
+
+          allow(klass).to receive(:new).and_return(instance)
+
+          # Stub build_cmd and system to prevent actual execution
+          allow(instance).to receive(:build_cmd).and_return(["webpack", "serve"])
+          allow(instance).to receive(:system) do |*args|
+            system("true")  # Sets $? to successful status
+            true
+          end
+
+          klass.run([])
+
+          expect(ENV["NODE_ENV"]).to eq("development")
+        end
+      ensure
+        ENV["NODE_ENV"] = original_node_env if original_node_env
+      end
+    end
+  end
+
   private
 
     def verify_command(cmd, argv: [], env: Shakapacker::Compiler.env)
