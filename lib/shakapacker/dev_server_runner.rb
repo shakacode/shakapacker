@@ -18,6 +18,8 @@ module Shakapacker
         exit(0)
       end
 
+      Shakapacker.ensure_node_env!
+
       # Check for --build flag
       build_index = argv.index("--build")
       if build_index
@@ -65,6 +67,8 @@ module Shakapacker
     end
 
     def self.run_with_build_config(argv, build_config)
+      Shakapacker.ensure_node_env!
+
       # Apply build config environment variables
       build_config[:environment].each do |key, value|
         ENV[key] = value.to_s
