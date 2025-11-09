@@ -9,12 +9,14 @@
 
 ## [Unreleased]
 
+Changes since the last non-beta release.
+
+## [v9.3.1] - November 9, 2025
+
 ### Fixed
 
 - **Fixed NODE_ENV not being set when running shakapacker-dev-server**. [PR #823](https://github.com/shakacode/shakapacker/pull/823) by [Seifeldin7](https://github.com/Seifeldin7). Resolves [#802](https://github.com/shakacode/shakapacker/issues/802). The dev server now properly initializes NODE_ENV to match RAILS_ENV (or "production" by default), fixing webpack configurations that dynamically load environment-specific files.
 - Extended manifest merging for multiple client configurations to all environments. [PR #800](https://github.com/shakacode/shakapacker/pull/800) by [Judahmeek](https://github.com/Judahmeek).
-
-Changes since the last non-beta release.
 
 ### Added
 
@@ -728,7 +730,8 @@ Note: [Rubygem is 6.3.0.pre.rc.1](https://rubygems.org/gems/shakapacker/versions
 
 See [CHANGELOG.md in rails/webpacker (up to v5.4.3)](https://github.com/rails/webpacker/blob/master/CHANGELOG.md)
 
-[Unreleased]: https://github.com/shakacode/shakapacker/compare/v9.3.0...main
+[Unreleased]: https://github.com/shakacode/shakapacker/compare/v9.3.1...main
+[v9.3.1]: https://github.com/shakacode/shakapacker/compare/v9.3.0...v9.3.1
 [v9.3.0]: https://github.com/shakacode/shakapacker/compare/v9.2.0...v9.3.0
 [v9.2.0]: https://github.com/shakacode/shakapacker/compare/v9.1.0...v9.2.0
 [v9.1.0]: https://github.com/shakacode/shakapacker/compare/v9.0.0...v9.1.0
