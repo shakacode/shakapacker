@@ -145,9 +145,18 @@ import * as styles from './Component.module.css';
    - TypeScript: Change to namespace imports (`import * as styles`)
    - Kebab-case class names are automatically converted to camelCase
 
-2. **Keep v8 behavior** temporarily:
+2. **Keep v8 behavior** temporarily using configuration file (Easiest):
+
+   ```yaml
+   # config/shakapacker.yml
+   css_modules_export_mode: default
+   ```
+
+   This allows you to keep using default imports while migrating gradually
+
+3. **Keep v8 behavior** using webpack configuration (Advanced):
    - Override the css-loader configuration as shown in [CSS Modules Export Mode documentation](./css-modules-export-mode.md)
-   - This gives you time to migrate gradually
+   - Provides more control over the configuration
 
 **Benefits of the change:**
 
