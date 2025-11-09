@@ -9,16 +9,19 @@
 
 ## [Unreleased]
 
+Changes since the last non-beta release.
+
+## [v9.3.1] - November 9, 2025
+
 ### Fixed
 
+- **Fixed NODE_ENV not being set when running shakapacker-dev-server**. [PR #823](https://github.com/shakacode/shakapacker/pull/823) by [Seifeldin7](https://github.com/Seifeldin7). Resolves [#802](https://github.com/shakacode/shakapacker/issues/802). The dev server now properly initializes NODE_ENV to match RAILS_ENV (or "production" by default), fixing webpack configurations that dynamically load environment-specific files.
 - Extended manifest merging for multiple client configurations to all environments. [PR #800](https://github.com/shakacode/shakapacker/pull/800) by [Judahmeek](https://github.com/Judahmeek).
-
-Changes since the last non-beta release.
 
 ### Added
 
 - **Support for `css_modules_export_mode` configuration option**. [PR #817](https://github.com/shakacode/shakapacker/pull/817) by [justin808](https://github.com/justin808). Adds `css_modules_export_mode` setting in `shakapacker.yml` to control CSS Modules export style. Set to `"named"` (default, v9+ behavior with true named exports) or `"default"` (v8 behavior with default export object). Allows teams to opt into v8-style exports for easier migration from v8 or when using TypeScript with strict type checking.
-- **`Configuration#data` public API method** with enhanced documentation and safety. [PR #820](https://github.com/shakacode/shakapacker/pull/820) by [justin808](https://github.com/justin808). The `Configuration#data` method is now part of the public Ruby API, providing stable access to raw configuration data. Returns a frozen hash with symbolized keys to prevent accidental mutations. Includes comprehensive test coverage and detailed RDoc documentation.
+- **`Configuration#data` public API method** with enhanced documentation and safety. [PR #818](https://github.com/shakacode/shakapacker/pull/818) by [justin808](https://github.com/justin808). The `Configuration#data` method is now part of the public Ruby API, providing stable access to raw configuration data. Returns a frozen hash with symbolized keys to prevent accidental mutations. Includes comprehensive test coverage and detailed RDoc documentation.
 - **Support for `javascript_transpiler: 'none'`** for completely custom webpack configurations. [PR #799](https://github.com/shakacode/shakapacker/pull/799) by [justin808](https://github.com/justin808). Allows users with custom webpack configs to skip Shakapacker's transpiler setup and validation by setting `javascript_transpiler: 'none'` in `shakapacker.yml`. Useful when managing transpilation entirely outside of Shakapacker's defaults.
 
 ## [v9.3.0] - November 2, 2025
@@ -727,7 +730,8 @@ Note: [Rubygem is 6.3.0.pre.rc.1](https://rubygems.org/gems/shakapacker/versions
 
 See [CHANGELOG.md in rails/webpacker (up to v5.4.3)](https://github.com/rails/webpacker/blob/master/CHANGELOG.md)
 
-[Unreleased]: https://github.com/shakacode/shakapacker/compare/v9.3.0...main
+[Unreleased]: https://github.com/shakacode/shakapacker/compare/v9.3.1...main
+[v9.3.1]: https://github.com/shakacode/shakapacker/compare/v9.3.0...v9.3.1
 [v9.3.0]: https://github.com/shakacode/shakapacker/compare/v9.2.0...v9.3.0
 [v9.2.0]: https://github.com/shakacode/shakapacker/compare/v9.1.0...v9.2.0
 [v9.1.0]: https://github.com/shakacode/shakapacker/compare/v9.0.0...v9.1.0
