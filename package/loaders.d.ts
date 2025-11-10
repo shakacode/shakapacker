@@ -1,4 +1,4 @@
-// @ts-expect-error: webpack is an optional peer dependency (using type-only import)
+// @ts-ignore: webpack is an optional peer dependency (using type-only import)
 import type { LoaderDefinitionFunction } from "webpack"
 
 export interface ShakapackerLoaderOptions {
