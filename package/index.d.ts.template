@@ -7,7 +7,7 @@
  * When adding/modifying exports in index.ts, update this file accordingly.
  */
 
-// @ts-expect-error: webpack is an optional peer dependency (using type-only import)
+// @ts-ignore: webpack is an optional peer dependency (using type-only import)
 import type { Configuration, RuleSetRule } from "webpack"
 import type { Config, DevServerConfig, Env } from "./types"
 
