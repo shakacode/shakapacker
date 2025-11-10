@@ -11,6 +11,10 @@
 
 Changes since the last non-beta release.
 
+### Fixed
+
+- Use `@ts-ignore` to suppress potential import error in public types when `webpack` is not installed. [PR #828](https://github.com/shakacode/shakapacker/pull/828) by [G-Rath]
+
 ## [v9.3.1] - November 9, 2025
 
 ### Fixed
