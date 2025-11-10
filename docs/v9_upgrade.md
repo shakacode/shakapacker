@@ -156,13 +156,15 @@ import * as styles from './Component.module.css';
 
 3. **Keep v8 behavior** using webpack configuration (Advanced):
 
-   If you need more control over the configuration, you can override the css-loader settings directly in your webpack config:
+   If you need more control over the configuration, you can override the css-loader settings directly in your webpack config.
+
+   **Where to add this:** Create or modify `config/webpack/webpack.config.js`. If this file doesn't exist, create it and ensure your `config/webpacker.yml` or build process loads it. See [Webpack Configuration](./webpack.md) for details on customizing webpack.
 
    ```javascript
-   // config/webpack/commonWebpackConfig.js (or similar)
+   // config/webpack/webpack.config.js
    const { generateWebpackConfig, merge } = require("shakapacker")
 
-   const commonWebpackConfig = () => {
+   const customConfig = () => {
      const config = merge({}, generateWebpackConfig())
 
      // Override CSS Modules to use default exports (v8 behavior)
@@ -192,7 +194,7 @@ import * as styles from './Component.module.css';
      return config
    }
 
-   module.exports = commonWebpackConfig
+   module.exports = customConfig
    ```
 
    **Key points:**
@@ -200,6 +202,23 @@ import * as styles from './Component.module.css';
    - Validate all loader properties exist before accessing them
    - Use `.includes('css-loader')` since the loader path may vary
    - Set both `namedExport: false` and `exportLocalsConvention: 'camelCase'` for full v8 compatibility
+
+   **Debugging tip:** To verify the override is applied correctly, you can inspect the webpack config:
+
+   ```javascript
+   // Add this temporarily to verify your changes
+   if (process.env.DEBUG_WEBPACK_CONFIG) {
+     const cssModuleRules = config.module.rules
+       .filter((r) => r.test?.test?.("example.module.css"))
+       .flatMap((r) => r.use?.filter((l) => l.loader?.includes("css-loader")))
+     console.log(
+       "CSS Module loader options:",
+       JSON.stringify(cssModuleRules, null, 2)
+     )
+   }
+   ```
+
+   Then run: `DEBUG_WEBPACK_CONFIG=true bin/shakapacker`
 
    **Note:** This is a temporary solution. The recommended approach is to migrate your imports to use named exports as shown in the main documentation.
 
