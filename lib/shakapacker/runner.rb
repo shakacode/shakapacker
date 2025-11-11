@@ -302,7 +302,7 @@ module Shakapacker
       def print_config_not_found_error(bundler_type, config_path, config_dir)
         $stderr.puts "[Shakapacker] ERROR: #{bundler_type} config #{config_path} not found."
         $stderr.puts ""
-        $stderr.puts "Please run 'bundle exec rails shakapacker:install' to install Shakapacker with default configs,"
+        $stderr.puts "Please run 'bundle exec rake shakapacker:install' to install Shakapacker with default configs,"
         $stderr.puts "or create the missing config file."
         $stderr.puts ""
         $stderr.puts "If your config file is in a different location, you can configure it in config/shakapacker.yml:"
