@@ -156,7 +156,7 @@ describe Shakapacker::BundlerSwitcher do
       expect(config["default"]["assets_bundler"]).to eq("rspack")
     end
 
-    it "adds assets_bundler key when missing even without javascript_transpiler" do
+    it "does not add assets_bundler key when switching to webpack without the key (using default)" do
       config_minimal = <<~YAML
         default: &default
           source_path: app/javascript
@@ -166,9 +166,31 @@ describe Shakapacker::BundlerSwitcher do
       YAML
       File.write(config_path, config_minimal)
 
-      switcher.switch_to("webpack")
+      # When switching to webpack without the key, it should recognize we're already using webpack
+      # via the default and not add an unnecessary key
+      expect do
+        switcher.switch_to("webpack")
+      end.to output(/Already using webpack/).to_stdout
+
       config = load_yaml_for_test(config_path)
-      expect(config["default"]["assets_bundler"]).to eq("webpack")
+      # Should NOT have added the key since we're already on webpack via default
+      expect(config.dig("default", "assets_bundler")).to be_nil
+    end
+
+    it "adds assets_bundler key when switching to rspack even without javascript_transpiler" do
+      config_minimal = <<~YAML
+        default: &default
+          source_path: app/javascript
+
+        development:
+          <<: *default
+      YAML
+      File.write(config_path, config_minimal)
+
+      # When switching to rspack, the key should be added even without javascript_transpiler
+      switcher.switch_to("rspack")
+      config = load_yaml_for_test(config_path)
+      expect(config["default"]["assets_bundler"]).to eq("rspack")
     end
 
     it "adds assets_bundler key to real-world config structure" do
@@ -246,6 +268,42 @@ describe Shakapacker::BundlerSwitcher do
       updated_content = File.read(config_path)
       expect(updated_content).to include("# This is a comment")
       expect(updated_content).to include("# inline comment")
+    end
+
+    it "handles non-standard config with fallback pattern" do
+      # Config with no javascript_transpiler, source_path, or standard anchor
+      config_non_standard = <<~YAML
+        default: &default
+          public_root_path: public
+          public_output_path: packs
+          cache_path: tmp/cache/webpacker
+
+        development:
+          <<: *default
+      YAML
+      File.write(config_path, config_non_standard)
+
+      # Should use the fallback pattern to add after "default:" with detected indentation
+      switcher.switch_to("rspack")
+      config = load_yaml_for_test(config_path)
+      expect(config["default"]["assets_bundler"]).to eq("rspack")
+    end
+
+    it "warns when config structure is completely incompatible" do
+      # Completely unusual structure with no recognizable patterns
+      config_incompatible = <<~YAML
+        production_only: &production
+          cache_path: tmp/cache
+      YAML
+      File.write(config_path, config_incompatible)
+
+      expect do
+        switcher.switch_to("rspack")
+      end.to output(/Warning: Could not find appropriate location/).to_stdout
+
+      # Should not have added the key since structure was incompatible
+      config = load_yaml_for_test(config_path)
+      expect(config.dig("default", "assets_bundler")).to be_nil
     end
 
     context "when already using the target bundler" do

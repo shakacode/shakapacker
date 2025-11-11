@@ -43,18 +43,30 @@ module Shakapacker
       config_content = File.read(config_path)
       has_assets_bundler = config_content =~ ASSETS_BUNDLER_PATTERN
 
-      if current == bundler && has_assets_bundler && !install_deps
+      # Early exit if already using the target bundler
+      # For webpack: only exit if the key exists OR if we're already on webpack via default
+      # For rspack: always require the key to be present
+      already_configured = if bundler == "webpack"
+        current == bundler && (has_assets_bundler || current == "webpack")
+      else
+        current == bundler && has_assets_bundler
+      end
+
+      if already_configured && !install_deps
         puts "✅ Already using #{bundler}"
         return
       end
 
-      if current == bundler && has_assets_bundler && install_deps
+      if already_configured && install_deps
         puts "✅ Already using #{bundler} - reinstalling dependencies as requested"
         manage_dependencies(bundler, install_deps, switching: false, no_uninstall: no_uninstall)
         return
       end
 
-      update_config(bundler)
+      successfully_updated = update_config(bundler, config_content, has_assets_bundler)
+
+      # Verify the update was successful (only if update reported success)
+      verify_config_update(bundler) if successfully_updated
 
       puts "✅ Switched from #{current} to #{bundler}"
       puts ""
@@ -150,37 +162,66 @@ module Shakapacker
         end
       end
 
-      def update_config(bundler)
-        content = File.read(config_path)
-
+      def update_config(bundler, content, has_assets_bundler)
         # Check if assets_bundler key exists (only uncommented lines)
-        unless ASSETS_BUNDLER_PATTERN.match?(content)
-          # Add assets_bundler after javascript_transpiler if it exists
-          if (match = content.match(/^([ \t]*)javascript_transpiler:.*$/))
+        unless has_assets_bundler
+          # Track whether we successfully added the key
+          added = false
+
+          # Add assets_bundler after javascript_transpiler if it exists (excluding commented lines)
+          if (match = content.match(/^([ \t]*)(?!#)javascript_transpiler:.*$/))
             indent = match[1]
-            content.sub!(/^([ \t]*javascript_transpiler:.*$)/, "\\1#{assets_bundler_entry(bundler, indent)}")
-          # Otherwise, add it after source_path if it exists
-          elsif (match = content.match(/^([ \t]*)source_path:.*$/))
+            content.sub!(/^([ \t]*)(?!#)(javascript_transpiler:.*$)/, "\\1\\2#{assets_bundler_entry(bundler, indent)}")
+            added = true
+          # Otherwise, add it after source_path if it exists (excluding commented lines)
+          elsif (match = content.match(/^([ \t]*)(?!#)source_path:.*$/))
             indent = match[1]
-            content.sub!(/^([ \t]*source_path:.*$)/, "\\1#{assets_bundler_entry(bundler, indent)}")
-          # Last resort: add it after default: &default
+            content.sub!(/^([ \t]*)(?!#)(source_path:.*$)/, "\\1\\2#{assets_bundler_entry(bundler, indent)}")
+            added = true
+          # Add it after default: &default if it exists
           elsif content.match?(/^default:[ \t]*&default[ \t]*$/)
             # Use default 2-space indentation for this case
             content.sub!(/^(default:[ \t]*&default[ \t]*)$/, "\\1#{assets_bundler_entry(bundler, '  ')}")
+            added = true
+          # Fallback: add after "default:" on its own line with proper indentation detection
+          elsif (match = content.match(/^default:\s*\n([ \t]+)/m))
+            # Extract indentation from first indented line after "default:"
+            indent = match[1]
+            content.sub!(/^(default:\s*)$/, "\\1#{assets_bundler_entry(bundler, indent)}")
+            added = true
           end
+
+          unless added
+            puts "⚠️  Warning: Could not find appropriate location for assets_bundler in config"
+            puts "   Please add 'assets_bundler: #{bundler}' to the default section manually"
+          end
+
+          File.write(config_path, content)
+          return added
         else
           # Replace existing assets_bundler value (handles spaces, tabs, and various quote styles)
           # Only matches uncommented lines
-          content.gsub!(/^([ \t]*assets_bundler:[ \t]*['"]?)(webpack|rspack)(['"]?)/, "\\1#{bundler}\\3")
+          content.gsub!(/^([ \t]*)(?!#)(assets_bundler:[ \t]*['"]?)(webpack|rspack)(['"]?)/, "\\1\\2#{bundler}\\4")
         end
 
         # Update javascript_transpiler recommendation for rspack
         # Only update if not already set to swc and only on uncommented lines
-        if bundler == "rspack" && content !~ /^[ \t]*javascript_transpiler:[ \t]*['"]?swc['"]?/
-          content.gsub!(/^([ \t]*javascript_transpiler:[ \t]*['"]?)\w+(['"]?)/, "\\1swc\\2")
+        if bundler == "rspack" && content !~ /^[ \t]*(?!#)javascript_transpiler:[ \t]*['"]?swc['"]?/
+          content.gsub!(/^([ \t]*)(?!#)(javascript_transpiler:[ \t]*['"]?)\w+(['"]?)/, "\\1\\2swc\\3")
         end
 
         File.write(config_path, content)
+        true
+      end
+
+      # Verify that the config was updated successfully
+      def verify_config_update(bundler)
+        config = load_yaml_config(config_path)
+        actual_bundler = config.dig("default", "assets_bundler")
+
+        if actual_bundler != bundler
+          raise "Config update verification failed: expected assets_bundler to be '#{bundler}', but got '#{actual_bundler}'"
+        end
       end
 
       # Generate the assets_bundler YAML entry with proper indentation
