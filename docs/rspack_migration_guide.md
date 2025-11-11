@@ -212,20 +212,22 @@ Shakapacker provides a convenient rake task to switch between webpack and rspack
 
 ```bash
 # Switch to rspack with automatic dependency management
-bundle exec rake shakapacker:switch_bundler rspack -- --install-deps
+bin/rake shakapacker:switch_bundler rspack -- --install-deps
 
 # Fast switching without uninstalling old bundler (keeps both)
-bundle exec rake shakapacker:switch_bundler rspack -- --install-deps --no-uninstall
+bin/rake shakapacker:switch_bundler rspack -- --install-deps --no-uninstall
 
 # Switch to rspack manually (you manage dependencies yourself)
-bundle exec rake shakapacker:switch_bundler rspack
+bin/rake shakapacker:switch_bundler rspack
 
 # Switch back to webpack if needed
-bundle exec rake shakapacker:switch_bundler webpack -- --install-deps
+bin/rake shakapacker:switch_bundler webpack -- --install-deps
 
 # Show help
-bundle exec rake shakapacker:switch_bundler -- --help
+bin/rake shakapacker:switch_bundler -- --help
 ```
+
+> **⚠️ Important:** This task must be run with `bin/rake`, not `bin/rails`.
 
 The task will:
 
