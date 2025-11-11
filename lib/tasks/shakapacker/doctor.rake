@@ -20,9 +20,9 @@ namespace :shakapacker do
       --verbose    Display additional diagnostic details (paths, versions, environment)
 
     Examples:
-      bin/rails shakapacker:doctor
-      bin/rails shakapacker:doctor -- --verbose
-      bin/rails shakapacker:doctor -- --help
+      bundle exec rake shakapacker:doctor
+      bundle exec rake shakapacker:doctor -- --verbose
+      bundle exec rake shakapacker:doctor -- --help
 
     Exit codes:
       0 - No issues found

@@ -80,7 +80,7 @@ _If you're on webpacker v5, follow [how to upgrade to webpacker v6.0.0.rc.6 from
    ```
 
    ```bash
-   bundle exec rails webpacker:install
+   bundle exec rake webpacker:install
    ```
 
    Overwrite all files and check what changed.
@@ -181,7 +181,7 @@ _If you're on webpacker v5, follow [how to upgrade to webpacker v6.0.0.rc.6 from
 
 1. Make sure that you can run `bin/webpack` without errors.
 
-1. Try running `RAILS_ENV=production bin/rails assets:precompile`. If all goes well, don't forget to clean the generated assets with `bin/rails assets:clobber`.
+1. Try running `RAILS_ENV=production rake assets:precompile`. If all goes well, don't forget to clean the generated assets with `rake assets:clobber`.
 
 1. Run `yarn add webpack-dev-server` if those are not already in your dev dependencies. Make sure you're using v4+.
 

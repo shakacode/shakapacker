@@ -212,28 +212,20 @@ Shakapacker provides a convenient rake task to switch between webpack and rspack
 
 ```bash
 # Switch to rspack with automatic dependency management
-rails shakapacker:switch_bundler rspack --install-deps
-# or with rake (note the -- separator)
-rake shakapacker:switch_bundler rspack -- --install-deps
+bundle exec rake shakapacker:switch_bundler rspack -- --install-deps
 
 # Fast switching without uninstalling old bundler (keeps both)
-rails shakapacker:switch_bundler webpack --install-deps --no-uninstall
-rake shakapacker:switch_bundler rspack -- --install-deps --no-uninstall
+bundle exec rake shakapacker:switch_bundler rspack -- --install-deps --no-uninstall
 
 # Switch to rspack manually (you manage dependencies yourself)
-rails shakapacker:switch_bundler rspack
-rake shakapacker:switch_bundler rspack
+bundle exec rake shakapacker:switch_bundler rspack
 
 # Switch back to webpack if needed
-rails shakapacker:switch_bundler webpack --install-deps
-rake shakapacker:switch_bundler webpack -- --install-deps
+bundle exec rake shakapacker:switch_bundler webpack -- --install-deps
 
 # Show help
-rails shakapacker:switch_bundler --help
-rake shakapacker:switch_bundler -- --help
+bundle exec rake shakapacker:switch_bundler -- --help
 ```
-
-**Note:** When using `rake`, you must use `--` to separate rake options from task arguments.
 
 The task will:
 
@@ -246,7 +238,7 @@ The task will:
 **Custom Dependencies:** You can customize which dependencies are installed by creating a `.shakapacker-switch-bundler-dependencies.yml` file:
 
 ```bash
-rails shakapacker:switch_bundler --init-config
+bundle exec rake shakapacker:switch_bundler --init-config
 ```
 
 ### Manual Migration Steps
@@ -840,7 +832,7 @@ To compare your webpack and rspack configurations during migration:
 bin/shakapacker-config --doctor
 
 # Switch to rspack
-rails shakapacker:switch_bundler rspack --install-deps
+bundle exec rake shakapacker:switch_bundler rspack --install-deps
 
 # Export rspack configs to compare
 bin/shakapacker-config --doctor

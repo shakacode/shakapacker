@@ -36,7 +36,7 @@ Common configuration options with their defaults:
 | `compiler_strategy`            | string  | `"mtime"` (dev), `"digest"` (prod)      | How to determine if recompilation is needed                |
 | `useContentHash`               | boolean | `false` (dev), `true` (prod)            | Include content hashes in asset filenames                  |
 | `webpack_compile_output`       | boolean | `true`                                  | Show webpack/rspack compilation output                     |
-| `shakapacker_precompile`       | boolean | `true`                                  | Include in `rails assets:precompile`                       |
+| `shakapacker_precompile`       | boolean | `true`                                  | Include in `bundle exec rake assets:precompile`                       |
 | `ensure_consistent_versioning` | boolean | `true`                                  | Enforce gem/npm version matching                           |
 | `dev_server.host`              | string  | `"localhost"`                           | Development server host                                    |
 | `dev_server.port`              | number  | `3035`                                  | Development server port                                    |
@@ -401,7 +401,7 @@ production:
 **Type:** `boolean`
 **Default:** `true`
 
-Whether `rails assets:precompile` should compile webpack/rspack assets.
+Whether `bundle exec rake assets:precompile` should compile webpack/rspack assets.
 
 ```yaml
 # Include in assets:precompile (recommended)
@@ -414,7 +414,7 @@ shakapacker_precompile: false
 **Override via environment variable:**
 
 ```bash
-SHAKAPACKER_PRECOMPILE=false rails assets:precompile
+SHAKAPACKER_PRECOMPILE=false bundle exec rake assets:precompile
 ```
 
 ### `cache_manifest`

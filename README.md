@@ -163,7 +163,7 @@ Then run the following to install Shakapacker:
 
 ```bash
 ./bin/bundle install
-./bin/rails shakapacker:install
+bundle exec rake shakapacker:install
 ```
 
 Before initiating the installation process, ensure you have committed all the changes. While installing Shakapacker, there might be some conflict between the existing file content and what Shakapacker tries to copy. You can either approve all the prompts for overriding these files or use the `FORCE=true` environment variable before the installation command to force the override without any prompt.
@@ -282,12 +282,10 @@ Depending on your setup, you'll need different subsets of the optional peer depe
 **Quick tip:** You can easily switch between webpack and rspack using:
 
 ```bash
-rails shakapacker:switch_bundler rspack --install-deps
-# or with rake (note the -- separator)
-rake shakapacker:switch_bundler rspack -- --install-deps
+bundle exec rake shakapacker:switch_bundler rspack -- --install-deps
 
 # For faster switching, use --no-uninstall to keep both bundlers installed
-rails shakapacker:switch_bundler webpack --install-deps --no-uninstall
+bundle exec rake shakapacker:switch_bundler webpack -- --install-deps --no-uninstall
 ```
 
 See the [Rspack Migration Guide](./docs/rspack_migration_guide.md) for details.
@@ -1117,13 +1115,13 @@ Otherwise, Shakapacker will use the production environment as a fallback environ
 For example, the below command will compile assets in production mode but will use staging configurations from `config/shakapacker.yml` if available or use fallback production environment configuration:
 
 ```bash
-RAILS_ENV=staging bundle exec rails assets:precompile
+RAILS_ENV=staging bundle exec rake assets:precompile
 ```
 
 And, this will compile in development mode and load configuration for the cucumber environment if defined in `shakapacker.yml` or fallback to production configuration
 
 ```bash
-RAILS_ENV=cucumber NODE_ENV=development bundle exec rails assets:precompile
+RAILS_ENV=cucumber NODE_ENV=development bundle exec rake assets:precompile
 ```
 
 Please note, binstubs compiles in development mode however rake tasks compiles in production mode.
@@ -1134,8 +1132,8 @@ Please note, binstubs compiles in development mode however rake tasks compiles i
 ./bin/shakapacker-dev-server
 
 # Compiles in production mode by default unless NODE_ENV is specified, per `lib/tasks/shakapacker/compile.rake`
-bundle exec rails assets:precompile
-bundle exec rails shakapacker:compile
+bundle exec rake assets:precompile
+bundle exec rake shakapacker:compile
 ```
 
 ### Upgrading
@@ -1147,7 +1145,7 @@ You can run the following commands to upgrade Shakapacker to the latest stable v
 bundle update shakapacker
 
 # overwrite your changes to the default install files and revert any unwanted changes from the install
-rails shakapacker:install
+bundle exec rake shakapacker:install
 
 # using npm
 npm install shakapacker@latest
@@ -1294,7 +1292,7 @@ For detailed CDN setup instructions, including CloudFlare configuration, trouble
 
 ```bash
 export SHAKAPACKER_ASSET_HOST=https://cdn.example.com
-RAILS_ENV=production bundle exec rails assets:precompile
+RAILS_ENV=production bundle exec rake assets:precompile
 ```
 
 For more deployment documentation, see [Deployment](./docs/deployment.md).

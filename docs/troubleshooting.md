@@ -280,7 +280,7 @@ See the [deployment guide](./deployment.md#custom-rails-environments-eg-staging)
 ## ENOENT: no such file or directory - node-sass
 
 If you get the error `ENOENT: no such file or directory - node-sass` on deploy with
-`assets:precompile` or `bundle exec rails shakapacker:compile` you may need to
+`assets:precompile` or `bundle exec rake shakapacker:compile` you may need to
 move Sass to production `dependencies`.
 
 Move any packages that related to Sass (e.g. `node-sass` or `sass-loader`) from
@@ -326,13 +326,13 @@ In `package.json`:
 
 ## webpack or webpack-dev-server not found
 
-- This could happen if `shakapacker:install` step is skipped. Please run `bundle exec rails shakapacker:install` to fix the issue.
+- This could happen if `shakapacker:install` step is skipped. Please run `bundle exec rake shakapacker:install` to fix the issue.
 
 - If you encounter the above error on heroku after upgrading from Rails 4.x to 5.1.x, then the problem might be related to missing `yarn` binstub. Please run following commands to update/add binstubs:
 
 ```bash
 bundle config --delete bin
-./bin/rails app:update:bin # or rails app:update:bin
+bundle exec rake app:update:bin
 ```
 
 ## Running webpack on Windows
