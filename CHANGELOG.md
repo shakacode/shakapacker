@@ -11,9 +11,21 @@
 
 Changes since the last non-beta release.
 
+## [v9.3.2] - November 10, 2025
+
 ### Fixed
 
-- Use `@ts-ignore` to suppress potential import error in public types when `webpack` is not installed. [PR #828](https://github.com/shakacode/shakapacker/pull/828) by [G-Rath]
+- **Fixed TypeScript import error in public types when webpack is not installed**. [PR #828](https://github.com/shakacode/shakapacker/pull/828) by [G-Rath](https://github.com/G-Rath). Uses `@ts-ignore` instead of `@ts-expect-error` to suppress potential import error when webpack is not installed.
+- **Fixed bundler switch task to add missing `assets_bundler` config**. [PR #833](https://github.com/shakacode/shakapacker/pull/833) by [justin808](https://github.com/justin808). The `rake shakapacker:switch_bundler` task now automatically adds the `assets_bundler` key to `shakapacker.yml` if it's missing, preventing silent failures when switching bundlers.
+- **Fixed rake tasks to use `bundle exec rake` instead of `bundle exec rails`**. [PR #830](https://github.com/shakacode/shakapacker/pull/830) by [Judahmeek](https://github.com/Judahmeek). Rake tasks should be invoked with `bundle exec rake` to support command-line flags properly, as Rails commands don't support flags.
+
+### Added
+
+- **Support for esbuild 0.26 and 0.27**. [PR #832](https://github.com/shakacode/shakapacker/pull/832) by [justin808](https://github.com/justin808). Extended peer dependency range to support newer esbuild versions.
+
+### Changed
+
+- **Simplified `switch_bundler` task to only support rake command**. [PR #831](https://github.com/shakacode/shakapacker/pull/831) by [justin808](https://github.com/justin808). The `rake shakapacker:switch_bundler` task now only works with `bundle exec rake`, not `bundle exec rails`. Use `bundle exec rake shakapacker:switch_bundler [bundler] -- [options]` for clearer command-line flag support.
 
 ## [v9.3.1] - November 9, 2025
 
@@ -734,7 +746,8 @@ Note: [Rubygem is 6.3.0.pre.rc.1](https://rubygems.org/gems/shakapacker/versions
 
 See [CHANGELOG.md in rails/webpacker (up to v5.4.3)](https://github.com/rails/webpacker/blob/master/CHANGELOG.md)
 
-[Unreleased]: https://github.com/shakacode/shakapacker/compare/v9.3.1...main
+[Unreleased]: https://github.com/shakacode/shakapacker/compare/v9.3.2...main
+[v9.3.2]: https://github.com/shakacode/shakapacker/compare/v9.3.1...v9.3.2
 [v9.3.1]: https://github.com/shakacode/shakapacker/compare/v9.3.0...v9.3.1
 [v9.3.0]: https://github.com/shakacode/shakapacker/compare/v9.2.0...v9.3.0
 [v9.2.0]: https://github.com/shakacode/shakapacker/compare/v9.1.0...v9.2.0
