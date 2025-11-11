@@ -37,12 +37,15 @@ module Shakapacker
       end
 
       current = current_bundler
-      if current == bundler && !install_deps
+      config_content = File.read(config_path)
+      has_assets_bundler = config_content =~ /^[ \t]*assets_bundler:/
+
+      if current == bundler && has_assets_bundler && !install_deps
         puts "✅ Already using #{bundler}"
         return
       end
 
-      if current == bundler && install_deps
+      if current == bundler && has_assets_bundler && install_deps
         puts "✅ Already using #{bundler} - reinstalling dependencies as requested"
         manage_dependencies(bundler, install_deps, switching: false, no_uninstall: no_uninstall)
         return
@@ -147,9 +150,23 @@ module Shakapacker
       def update_config(bundler)
         content = File.read(config_path)
 
-        # Replace assets_bundler value (handles spaces, tabs, and various quote styles)
-        # Only matches uncommented lines
-        content.gsub!(/^([ \t]*assets_bundler:[ \t]*['"]?)(webpack|rspack)(['"]?)/, "\\1#{bundler}\\3")
+        # Check if assets_bundler key exists
+        if !/^[ \t]*assets_bundler:/.match?(content)
+          # Add assets_bundler after javascript_transpiler if it exists
+          if /^[ \t]*javascript_transpiler:.*$/.match?(content)
+            content.sub!(/^([ \t]*javascript_transpiler:.*$)/, "\\1\n\n  # Select assets bundler to use\n  # Available options: 'webpack' (default) or 'rspack'\n  assets_bundler: \"#{bundler}\"")
+          # Otherwise, add it after source_path if it exists
+          elsif /^[ \t]*source_path:.*$/.match?(content)
+            content.sub!(/^([ \t]*source_path:.*$)/, "\\1\n\n  # Select assets bundler to use\n  # Available options: 'webpack' (default) or 'rspack'\n  assets_bundler: \"#{bundler}\"")
+          # Last resort: add it after default: &default
+          elsif /^default:[ \t]*&default[ \t]*$/.match?(content)
+            content.sub!(/^(default:[ \t]*&default[ \t]*)$/, "\\1\n  # Select assets bundler to use\n  # Available options: 'webpack' (default) or 'rspack'\n  assets_bundler: \"#{bundler}\"")
+          end
+        else
+          # Replace existing assets_bundler value (handles spaces, tabs, and various quote styles)
+          # Only matches uncommented lines
+          content.gsub!(/^([ \t]*assets_bundler:[ \t]*['"]?)(webpack|rspack)(['"]?)/, "\\1#{bundler}\\3")
+        end
 
         # Update javascript_transpiler recommendation for rspack
         # Only update if not already set to swc and only on uncommented lines

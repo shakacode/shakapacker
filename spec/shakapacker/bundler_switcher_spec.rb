@@ -137,6 +137,40 @@ describe Shakapacker::BundlerSwitcher do
       expect(config["default"]["javascript_transpiler"]).to eq("swc")
     end
 
+    it "adds assets_bundler key when missing from config" do
+      config_without_assets_bundler = <<~YAML
+        default: &default
+          source_path: app/javascript
+          javascript_transpiler: babel
+
+        development:
+          <<: *default
+
+        production:
+          <<: *default
+      YAML
+      File.write(config_path, config_without_assets_bundler)
+
+      switcher.switch_to("rspack")
+      config = load_yaml_for_test(config_path)
+      expect(config["default"]["assets_bundler"]).to eq("rspack")
+    end
+
+    it "adds assets_bundler key when missing even without javascript_transpiler" do
+      config_minimal = <<~YAML
+        default: &default
+          source_path: app/javascript
+
+        development:
+          <<: *default
+      YAML
+      File.write(config_path, config_minimal)
+
+      switcher.switch_to("webpack")
+      config = load_yaml_for_test(config_path)
+      expect(config["default"]["assets_bundler"]).to eq("webpack")
+    end
+
     it "preserves config file structure and comments" do
       config_with_comments = <<~YAML
         # This is a comment
