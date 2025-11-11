@@ -14,8 +14,8 @@ This is useful for:
 
 The precompile hook is especially useful when you need to run commands like:
 
-- `rake react_on_rails:generate_packs` - Generate dynamic entry points
-- `rake react_on_rails:locale` - Generate locale files
+- `bin/rake react_on_rails:generate_packs` - Generate dynamic entry points
+- `bin/rake react_on_rails:locale` - Generate locale files
 - Any custom script that prepares files before asset compilation
 
 **Important:** The hook runs in **both development and production**:
@@ -149,7 +149,7 @@ Now simply run:
 bin/shakapacker-dev-server
 
 # Production
-RAILS_ENV=production rake assets:precompile
+RAILS_ENV=production bin/rake assets:precompile
 ```
 
 ## Security
@@ -292,7 +292,7 @@ default:
 
 if [ "$RAILS_ENV" = "production" ]; then
   echo "Running production-specific setup..."
-  rake react_on_rails:generate_packs
+  bin/rake react_on_rails:generate_packs
 else
   echo "Running development setup..."
   # Lighter-weight setup for development

@@ -8,7 +8,7 @@ namespace :shakapacker do
     This task updates config/shakapacker.yml and optionally manages npm dependencies.
 
     Usage:
-      rake shakapacker:switch_bundler [webpack|rspack] -- [OPTIONS]
+      bin/rake shakapacker:switch_bundler [webpack|rspack] -- [OPTIONS]
 
     Options:
       --install-deps    Automatically install/uninstall bundler dependencies
@@ -17,10 +17,10 @@ namespace :shakapacker do
       --help, -h        Show detailed help message
 
     Examples:
-      rake shakapacker:switch_bundler rspack -- --install-deps
-      rake shakapacker:switch_bundler webpack -- --install-deps --no-uninstall
-      rake shakapacker:switch_bundler -- --init-config
-      rake shakapacker:switch_bundler -- --help
+      bin/rake shakapacker:switch_bundler rspack -- --install-deps
+      bin/rake shakapacker:switch_bundler webpack -- --install-deps --no-uninstall
+      bin/rake shakapacker:switch_bundler -- --init-config
+      bin/rake shakapacker:switch_bundler -- --help
 
     What it does:
       - Updates 'assets_bundler' in config/shakapacker.yml
@@ -40,9 +40,9 @@ namespace :shakapacker do
     # Check the actual command name, not just if the path contains "rails"
     command_name = File.basename($0)
     if command_name == "rails" || $0.end_with?("/rails")
-      puts "\nError: This task must be run with 'bundle exec rake', not 'bundle exec rails'"
-      puts "Usage: bundle exec rake shakapacker:switch_bundler [bundler] -- [options]"
-      puts "Run 'bundle exec rake shakapacker:switch_bundler -- --help' for more information"
+      puts "\nError: This task must be run with 'bin/rake', not 'bin/rails'"
+      puts "Usage: bin/rake shakapacker:switch_bundler [bundler] -- [options]"
+      puts "Run 'bin/rake shakapacker:switch_bundler -- --help' for more information"
       exit 1
     end
 

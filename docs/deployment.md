@@ -16,7 +16,7 @@ Quick example for production deployment:
 ```yaml
 # config/shakapacker.yml
 production:
-  precompile_hook: "rake react_on_rails:generate_packs"
+  precompile_hook: "bin/rake react_on_rails:generate_packs"
 ```
 
 This ensures your dynamic entry points are generated before `assets:precompile` runs.

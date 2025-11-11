@@ -94,7 +94,7 @@ describe "RakeTasks" do
       # This tests the command detection logic
       output = `bundle exec rake shakapacker:switch_bundler 2>&1`
       # Should not show the rails error when called with rake
-      expect(output).not_to include "must be run with 'bundle exec rake', not 'bundle exec rails'"
+      expect(output).not_to include "must be run with 'bin/rake', not 'bin/rails'"
     end
 
     it "shows usage when called without arguments" do
