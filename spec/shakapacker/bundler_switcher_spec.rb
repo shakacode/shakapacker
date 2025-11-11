@@ -361,6 +361,24 @@ describe Shakapacker::BundlerSwitcher do
       expect(config["default"]["assets_bundler"]).to eq("rspack")
     end
 
+    it "handles config with multiple blank lines after default" do
+      config_many_blanks = <<~YAML
+        default: &default
+
+
+          source_path: app/javascript
+          javascript_transpiler: babel
+
+        development:
+          <<: *default
+      YAML
+      File.write(config_path, config_many_blanks)
+
+      switcher.switch_to("rspack")
+      config = load_yaml_for_test(config_path)
+      expect(config["default"]["assets_bundler"]).to eq("rspack")
+    end
+
     context "when already using the target bundler" do
       it "does not reinstall deps when install_deps is false" do
         expect(switcher).not_to receive(:system)

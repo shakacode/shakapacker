@@ -220,6 +220,8 @@ module Shakapacker
         if actual_bundler != bundler
           raise "Config update verification failed: expected assets_bundler to be '#{bundler}', but got '#{actual_bundler}'"
         end
+      rescue Psych::SyntaxError => e
+        raise "Config update generated invalid YAML: #{e.message}"
       end
 
       # Generate the assets_bundler YAML entry with proper indentation
