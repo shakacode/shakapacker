@@ -203,9 +203,30 @@ describe Shakapacker::BundlerSwitcher do
       switcher.switch_to("rspack")
       config = load_yaml_for_test(config_path)
       expect(config["default"]["assets_bundler"]).to eq("rspack")
-      # Verify it was added after javascript_transpiler
+      # Verify it was added after javascript_transpiler with proper indentation
       content = File.read(config_path)
       expect(content).to match(/javascript_transpiler:.*\n\n.*assets_bundler:/m)
+    end
+
+    it "treats commented-out assets_bundler as missing" do
+      config_with_commented_key = <<~YAML
+        default: &default
+          source_path: app/javascript
+          javascript_transpiler: babel
+          # assets_bundler: webpack
+
+        development:
+          <<: *default
+      YAML
+      File.write(config_path, config_with_commented_key)
+
+      switcher.switch_to("rspack")
+      config = load_yaml_for_test(config_path)
+      # Should add a new uncommented key
+      expect(config["default"]["assets_bundler"]).to eq("rspack")
+      # Should preserve the commented line
+      content = File.read(config_path)
+      expect(content).to include("# assets_bundler: webpack")
     end
 
     it "preserves config file structure and comments" do

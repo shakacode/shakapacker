@@ -9,6 +9,9 @@ module Shakapacker
     SHAKAPACKER_CONFIG = "config/shakapacker.yml"
     CUSTOM_DEPS_CONFIG = ".shakapacker-switch-bundler-dependencies.yml"
 
+    # Regex pattern to detect assets_bundler key in config (only matches uncommented lines)
+    ASSETS_BUNDLER_PATTERN = /^[ \t]*assets_bundler:/
+
     # Default dependencies for each bundler (package names only, no versions)
     DEFAULT_RSPACK_DEPS = {
       dev: %w[@rspack/cli @rspack/plugin-react-refresh],
@@ -38,7 +41,7 @@ module Shakapacker
 
       current = current_bundler
       config_content = File.read(config_path)
-      has_assets_bundler = config_content =~ /^[ \t]*assets_bundler:/
+      has_assets_bundler = config_content =~ ASSETS_BUNDLER_PATTERN
 
       if current == bundler && has_assets_bundler && !install_deps
         puts "✅ Already using #{bundler}"
@@ -150,17 +153,20 @@ module Shakapacker
       def update_config(bundler)
         content = File.read(config_path)
 
-        # Check if assets_bundler key exists
-        if !/^[ \t]*assets_bundler:/.match?(content)
+        # Check if assets_bundler key exists (only uncommented lines)
+        unless ASSETS_BUNDLER_PATTERN.match?(content)
           # Add assets_bundler after javascript_transpiler if it exists
-          if /^[ \t]*javascript_transpiler:.*$/.match?(content)
-            content.sub!(/^([ \t]*javascript_transpiler:.*$)/, "\\1\n\n  # Select assets bundler to use\n  # Available options: 'webpack' (default) or 'rspack'\n  assets_bundler: \"#{bundler}\"")
+          if (match = content.match(/^([ \t]*)javascript_transpiler:.*$/))
+            indent = match[1]
+            content.sub!(/^([ \t]*javascript_transpiler:.*$)/, "\\1#{assets_bundler_entry(bundler, indent)}")
           # Otherwise, add it after source_path if it exists
-          elsif /^[ \t]*source_path:.*$/.match?(content)
-            content.sub!(/^([ \t]*source_path:.*$)/, "\\1\n\n  # Select assets bundler to use\n  # Available options: 'webpack' (default) or 'rspack'\n  assets_bundler: \"#{bundler}\"")
+          elsif (match = content.match(/^([ \t]*)source_path:.*$/))
+            indent = match[1]
+            content.sub!(/^([ \t]*source_path:.*$)/, "\\1#{assets_bundler_entry(bundler, indent)}")
           # Last resort: add it after default: &default
-          elsif /^default:[ \t]*&default[ \t]*$/.match?(content)
-            content.sub!(/^(default:[ \t]*&default[ \t]*)$/, "\\1\n  # Select assets bundler to use\n  # Available options: 'webpack' (default) or 'rspack'\n  assets_bundler: \"#{bundler}\"")
+          elsif content.match?(/^default:[ \t]*&default[ \t]*$/)
+            # Use default 2-space indentation for this case
+            content.sub!(/^(default:[ \t]*&default[ \t]*)$/, "\\1#{assets_bundler_entry(bundler, '  ')}")
           end
         else
           # Replace existing assets_bundler value (handles spaces, tabs, and various quote styles)
@@ -175,6 +181,14 @@ module Shakapacker
         end
 
         File.write(config_path, content)
+      end
+
+      # Generate the assets_bundler YAML entry with proper indentation
+      # @param bundler [String] The bundler name ('webpack' or 'rspack')
+      # @param indent [String] The indentation string to use (e.g., '  ' or '\t')
+      # @return [String] The formatted YAML entry
+      def assets_bundler_entry(bundler, indent)
+        "\n\n#{indent}# Select assets bundler to use\n#{indent}# Available options: 'webpack' (default) or 'rspack'\n#{indent}assets_bundler: \"#{bundler}\""
       end
 
       def manage_dependencies(bundler, install_deps, switching: true, no_uninstall: false)
