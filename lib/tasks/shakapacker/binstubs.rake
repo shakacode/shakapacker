@@ -7,9 +7,11 @@ namespace :shakapacker do
     prefix = task.name.split(/#|shakapacker:binstubs/).first
 
     if Rails::VERSION::MAJOR >= 5
-      exec "#{RbConfig.ruby} '#{bin_path}/rails' #{prefix}app:template LOCATION='#{binstubs_template_path}'"
+      system "#{RbConfig.ruby} '#{bin_path}/rails' #{prefix}app:template LOCATION='#{binstubs_template_path}'" or
+        raise "Binstubs installation failed"
     else
-      exec "#{RbConfig.ruby} '#{bin_path}/rake' #{prefix}rails:template LOCATION='#{binstubs_template_path}'"
+      system "#{RbConfig.ruby} '#{bin_path}/rake' #{prefix}rails:template LOCATION='#{binstubs_template_path}'" or
+        raise "Binstubs installation failed"
     end
   end
 end
