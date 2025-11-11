@@ -37,7 +37,9 @@ namespace :shakapacker do
   DESC
   task :switch_bundler do
     # This task must be run with rake, not rails
-    if $0.include?("rails")
+    # Check the actual command name, not just if the path contains "rails"
+    command_name = File.basename($0)
+    if command_name == "rails" || $0.end_with?("/rails")
       puts "\nError: This task must be run with 'bundle exec rake', not 'bundle exec rails'"
       puts "Usage: bundle exec rake shakapacker:switch_bundler [bundler] -- [options]"
       puts "Run 'bundle exec rake shakapacker:switch_bundler -- --help' for more information"
@@ -46,7 +48,9 @@ namespace :shakapacker do
 
     switcher = Shakapacker::BundlerSwitcher.new
 
-    bundler = ARGV[1]
+    # Parse command line arguments
+    # ARGV[0] is the task name, ARGV[1] would be the bundler name if provided
+    bundler = ARGV.length > 1 ? ARGV[1] : nil
     install_deps = ARGV.include?("--install-deps")
     no_uninstall = ARGV.include?("--no-uninstall")
     init_config = ARGV.include?("--init-config")

@@ -418,7 +418,7 @@ bundle exec rake shakapacker:switch_bundler rspack -- --install-deps
 bundle exec rake shakapacker:switch_bundler rspack -- --install-deps --no-uninstall
 ```
 
-**Note:** This task must be run with `bundle exec rake`, not `bundle exec rails`.
+> **⚠️ Important:** This task must be run with `bundle exec rake`, not `bundle exec rails`.
 
 The task will:
 

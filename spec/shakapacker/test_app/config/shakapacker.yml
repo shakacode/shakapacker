@@ -9,7 +9,7 @@ default: &default
   private_output_path: ssr-generated
   cache_path: tmp/shakapacker
   webpack_compile_output: false
-  javascript_transpiler: babel
+  javascript_transpiler: swc
 
   # Location for manifest.json, defaults to {public_output_path}/manifest.json if unset
   # manifest_path: public/packs/manifest.json

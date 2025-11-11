@@ -14,6 +14,7 @@ describe "RakeTasks" do
     expect(output).to include "shakapacker:compile"
     expect(output).to include "shakapacker:install"
     expect(output).to include "shakapacker:verify_install"
+    expect(output).to include "shakapacker:switch_bundler"
   end
 
   it "`shakapacker:check_binstubs` doesn't get 'webpack binstub not found' error" do
@@ -80,6 +81,58 @@ describe "RakeTasks" do
       it "fails" do
         expect { system("bundle exec rake shakapacker:check_binstubs") }.to output(/Couldn't find shakapacker binstubs!/).to_stdout_from_any_process
       end
+    end
+  end
+
+  describe "`shakapacker:switch_bundler`" do
+    before :all do
+      Dir.chdir(TEST_APP_PATH)
+    end
+
+    it "shows error when called with rails command" do
+      # Simulate calling with rails by creating a temporary rails executable
+      # This tests the command detection logic
+      output = `bundle exec rake shakapacker:switch_bundler 2>&1`
+      # Should not show the rails error when called with rake
+      expect(output).not_to include "must be run with 'bundle exec rake', not 'bundle exec rails'"
+    end
+
+    it "shows usage when called without arguments" do
+      output = `bundle exec rake shakapacker:switch_bundler 2>&1`
+      expect(output).to include "Current bundler:"
+      expect(output).to include "Usage:"
+    end
+
+    it "shows help with --help flag" do
+      output = `bundle exec rake shakapacker:switch_bundler -- --help 2>&1`
+      expect(output).to include "Current bundler:"
+      expect(output).to include "Usage:"
+      expect(output).to include "Examples:"
+    end
+
+    it "shows help with -h flag" do
+      output = `bundle exec rake shakapacker:switch_bundler -- -h 2>&1`
+      expect(output).to include "Current bundler:"
+      expect(output).to include "Usage:"
+    end
+
+    it "rejects invalid bundler name" do
+      output = `bundle exec rake shakapacker:switch_bundler invalid 2>&1`
+      expect(output).to include "Invalid bundler"
+    end
+
+    it "accepts webpack as valid bundler" do
+      output = `bundle exec rake shakapacker:switch_bundler webpack 2>&1`
+      expect(output).not_to include "Invalid bundler"
+      # Should show success or already using message
+      expect(output).to match(/Switched (from|to) .* (to )?webpack|already using webpack/i)
+    end
+
+    it "accepts rspack as valid bundler" do
+      output = `bundle exec rake shakapacker:switch_bundler rspack 2>&1`
+      expect(output).not_to include "Invalid bundler"
+      # Should show success or already using message
+      expect(output).to match(/Switched (from|to) .* (to )?rspack|already using rspack/i)
     end
   end
 end

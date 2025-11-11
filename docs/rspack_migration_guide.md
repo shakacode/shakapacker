@@ -227,7 +227,7 @@ bundle exec rake shakapacker:switch_bundler webpack -- --install-deps
 bundle exec rake shakapacker:switch_bundler -- --help
 ```
 
-**Note:** This task must be run with `bundle exec rake`, not `bundle exec rails`.
+> **⚠️ Important:** This task must be run with `bundle exec rake`, not `bundle exec rails`.
 
 The task will:
 
