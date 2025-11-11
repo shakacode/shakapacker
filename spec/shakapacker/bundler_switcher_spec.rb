@@ -171,6 +171,43 @@ describe Shakapacker::BundlerSwitcher do
       expect(config["default"]["assets_bundler"]).to eq("webpack")
     end
 
+    it "adds assets_bundler key to real-world config structure" do
+      # Based on https://github.com/swrobel/meta-surf-forecast/blob/8f54a2ca0a798b8724430e137d56dfcc5fcbe775/config/shakapacker.yml
+      config_real_world = <<~YAML
+        # Note: You must restart bin/webpack-dev-server for changes to take effect
+
+        default: &default
+          ensure_consistent_versioning: true
+          source_path: app/javascript
+          source_entry_path: /
+          public_root_path: public
+          public_output_path: packs
+          cache_path: tmp/cache/webpacker
+          check_yarn_integrity: false
+          webpack_compile_output: false
+          javascript_transpiler: 'swc'
+
+          # If nested_entries is true, then we'll pick up subdirectories within the source_entry_path.
+          nested_entries: false
+
+        development:
+          <<: *default
+          compile: true
+
+        production:
+          <<: *default
+          compile: false
+      YAML
+      File.write(config_path, config_real_world)
+
+      switcher.switch_to("rspack")
+      config = load_yaml_for_test(config_path)
+      expect(config["default"]["assets_bundler"]).to eq("rspack")
+      # Verify it was added after javascript_transpiler
+      content = File.read(config_path)
+      expect(content).to match(/javascript_transpiler:.*\n\n.*assets_bundler:/m)
+    end
+
     it "preserves config file structure and comments" do
       config_with_comments = <<~YAML
         # This is a comment
