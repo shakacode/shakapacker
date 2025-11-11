@@ -132,7 +132,7 @@ rails new myapp --skip-javascript
 cd myapp
 bundle add shakapacker --strict
 ./bin/bundle install
-./bin/rails shakapacker:install
+bundle exec rake shakapacker:install
 npm install react react-dom @babel/preset-react
 npm install css-loader style-loader mini-css-extract-plugin css-minimizer-webpack-plugin
 ```

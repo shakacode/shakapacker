@@ -399,7 +399,7 @@ development: # or production
 bundle exec puma --early-hints
 
 # Option 2: Test in production mode locally (more realistic)
-RAILS_ENV=production rails assets:precompile  # Compile assets first
+RAILS_ENV=production bundle exec rake assets:precompile  # Compile assets first
 RAILS_ENV=production bundle exec puma --early-hints -e production
 ```
 

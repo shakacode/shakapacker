@@ -412,13 +412,13 @@ Shakapacker provides a convenient rake task to automate the migration:
 
 ```bash
 # Switch to rspack with automatic dependency management
-rails shakapacker:switch_bundler rspack --install-deps
+bundle exec rake shakapacker:switch_bundler rspack --install-deps
 
 # Or with rake (note the -- separator)
-rake shakapacker:switch_bundler rspack -- --install-deps
+bundle exec rake shakapacker:switch_bundler rspack -- --install-deps
 
 # Fast switching without uninstalling webpack (keeps both)
-rails shakapacker:switch_bundler rspack --install-deps --no-uninstall
+bundle exec rake shakapacker:switch_bundler rspack --install-deps --no-uninstall
 ```
 
 The task will:
@@ -432,7 +432,7 @@ The task will:
 **Custom dependencies:** You can customize which dependencies are installed:
 
 ```bash
-rails shakapacker:switch_bundler --init-config
+bundle exec rake shakapacker:switch_bundler --init-config
 ```
 
 #### 2. Manual installation (alternative)

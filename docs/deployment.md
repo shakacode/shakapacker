@@ -16,7 +16,7 @@ Quick example for production deployment:
 ```yaml
 # config/shakapacker.yml
 production:
-  precompile_hook: "bin/rails react_on_rails:generate_packs"
+  precompile_hook: "rake react_on_rails:generate_packs"
 ```
 
 This ensures your dynamic entry points are generated before `assets:precompile` runs.
@@ -56,7 +56,7 @@ Your production build process is responsible for installing your JavaScript depe
 RAILS_ENV=staging bin/shakapacker
 
 # Also works with rake task
-RAILS_ENV=staging bundle exec rails assets:precompile
+RAILS_ENV=staging bundle exec rake assets:precompile
 ```
 
 **How it works:**
@@ -156,7 +156,7 @@ Shakapacker supports serving JavaScript bundles and assets from a CDN. For a com
 
 ```bash
 export SHAKAPACKER_ASSET_HOST=https://cdn.example.com
-RAILS_ENV=production bundle exec rails assets:precompile
+RAILS_ENV=production bundle exec rake assets:precompile
 ```
 
 Note: Shakapacker does NOT use the `ASSET_HOST` environment variable. You must use `SHAKAPACKER_ASSET_HOST` instead (`WEBPACKER_ASSET_HOST` if using Shakapacker before v7).

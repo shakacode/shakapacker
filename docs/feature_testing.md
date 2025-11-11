@@ -434,7 +434,7 @@ curl http://localhost:3035/packs/application.js
 
 Use this checklist to verify a complete Shakapacker setup:
 
-- [ ] **Assets compile:** `bundle exec rails assets:precompile` succeeds
+- [ ] **Assets compile:** `bundle exec rake assets:precompile` succeeds
 - [ ] **Manifest exists:** `public/packs/manifest.json` contains entrypoints
 - [ ] **Assets load:** Page loads without 404s for pack files
 - [ ] **Code splitting works:** Multiple chunks load in Network tab
@@ -456,7 +456,7 @@ cat public/packs/manifest.json | jq .
 **Recompile:**
 
 ```bash
-bundle exec rails assets:precompile
+bundle exec rake assets:precompile
 ```
 
 ### Old Assets Cached
@@ -465,7 +465,7 @@ bundle exec rails assets:precompile
 
 ```bash
 rm -rf public/packs
-bundle exec rails assets:precompile
+bundle exec rake assets:precompile
 ```
 
 ### Dev Server Won't Start

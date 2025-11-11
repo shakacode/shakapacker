@@ -58,7 +58,7 @@ describe "Config Path Resolution" do
         expect(stderr_output).to include("not found")
         expect(stderr_output).to include("assets_bundler_config_path: your/custom/path")
         expect(stderr_output).to include("Current configured path: config/webpack")
-        expect(stderr_output).to include("bundle exec rails shakapacker:install")
+        expect(stderr_output).to include("bundle exec rake shakapacker:install")
       ensure
         $stderr = old_stderr
       end
@@ -128,7 +128,7 @@ describe "Config Path Resolution" do
         expect(stderr_output).to include("not found")
         expect(stderr_output).to include("assets_bundler_config_path: your/custom/path")
         expect(stderr_output).to include("Current configured path: config/rspack")
-        expect(stderr_output).to include("bundle exec rails shakapacker:install")
+        expect(stderr_output).to include("bundle exec rake shakapacker:install")
       ensure
         $stderr = old_stderr
       end

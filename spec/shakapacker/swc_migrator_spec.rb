@@ -120,7 +120,7 @@ describe Shakapacker::SwcMigrator do
 
         expect(logger).to have_received(:info).with(/Cleanup Recommendations/)
         expect(logger).to have_received(:info).with(/Found the following Babel packages/)
-        expect(logger).to have_received(:info).with(/rails shakapacker:clean_babel_packages/)
+        expect(logger).to have_received(:info).with(/rake shakapacker:clean_babel_packages/)
       end
 
       it "runs package manager install when packages are added" do

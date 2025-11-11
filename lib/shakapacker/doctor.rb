@@ -54,7 +54,7 @@ module Shakapacker
           Shakapacker Doctor - Diagnostic tool for Shakapacker configuration
 
           Usage:
-            bin/rails shakapacker:doctor [options]
+            bundle exec rake shakapacker:doctor [options]
 
           Options:
             --help       Show this help message
@@ -163,7 +163,7 @@ module Shakapacker
           begin
             manifest_content = JSON.parse(File.read(manifest_path))
             if manifest_content.empty?
-              add_warning("Manifest file is empty - you may need to run 'bin/rails assets:precompile'")
+              add_warning("Manifest file is empty - you may need to run 'bundle exec rake assets:precompile'")
             end
           rescue JSON::ParserError
             @issues << "Manifest file #{manifest_path} contains invalid JSON"
@@ -325,16 +325,16 @@ module Shakapacker
           if source_files.any?
             newest_source = source_files.map { |f| File.mtime(f) }.max
             if newest_source > File.mtime(manifest_path)
-              add_warning("Source files have been modified after last asset compilation. Run 'bin/rails assets:precompile'")
+              add_warning("Source files have been modified after last asset compilation. Run 'bundle exec rake assets:precompile'")
             end
           end
         else
           rails_env = defined?(Rails) ? Rails.env : ENV["RAILS_ENV"]
           if rails_env == "production"
-            @issues << "No compiled assets found (manifest.json missing). Run 'bin/rails assets:precompile'"
+            @issues << "No compiled assets found (manifest.json missing). Run 'bundle exec rake assets:precompile'"
           elsif options[:verbose]
             # Only show in verbose mode for non-production environments
-            @info << "Assets not yet compiled. Run 'bin/rails assets:precompile' or start the dev server"
+            @info << "Assets not yet compiled. Run 'bundle exec rake assets:precompile' or start the dev server"
           end
         end
       end
@@ -402,7 +402,7 @@ module Shakapacker
 
         unless missing_binstubs.empty?
           add_action_required("Missing binstubs: #{missing_binstubs.join(', ')}.")
-          add_action_required("  Fix: Run 'bin/rails shakapacker:binstubs' to create them.")
+          add_action_required("  Fix: Run 'bundle exec rake shakapacker:binstubs' to create them.")
         end
       end
 
