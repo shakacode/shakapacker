@@ -408,34 +408,30 @@ bin/shakapacker compile
 
 #### 1. Use the switch bundler rake task (recommended)
 
-Shakapacker provides a convenient task to automate the migration:
+Shakapacker provides a convenient rake task to automate the migration:
 
 ```bash
-# Using rake command (note the -- separator for options)
+# Switch to rspack with automatic dependency management (note the -- separator)
 bundle exec rake shakapacker:switch_bundler rspack -- --install-deps
-bundle exec rake shakapacker:switch_bundler rspack -- --install-deps --no-uninstall
 
-# Using rails command (with environment variables)
-bundle exec rails shakapacker:switch_bundler BUNDLER=rspack INSTALL_DEPS=true
-bundle exec rails shakapacker:switch_bundler BUNDLER=rspack INSTALL_DEPS=true NO_UNINSTALL=true
+# Fast switching without uninstalling webpack (keeps both)
+bundle exec rake shakapacker:switch_bundler rspack -- --install-deps --no-uninstall
 ```
+
+**Note:** This task must be run with `bundle exec rake`, not `bundle exec rails`.
 
 The task will:
 
 - Update `config/shakapacker.yml` to use rspack
-- Install rspack dependencies (with `--install-deps` or `INSTALL_DEPS=true`)
-- Optionally uninstall webpack dependencies (default) or keep both (with `--no-uninstall` or `NO_UNINSTALL=true`)
+- Install rspack dependencies (with `--install-deps`)
+- Optionally uninstall webpack dependencies (default) or keep both (with `--no-uninstall`)
 - Update `javascript_transpiler` to `swc` (recommended for rspack)
 - Preserve your config file comments and structure
 
 **Custom dependencies:** You can customize which dependencies are installed:
 
 ```bash
-# Using rake
 bundle exec rake shakapacker:switch_bundler -- --init-config
-
-# Using rails
-bundle exec rails shakapacker:switch_bundler INIT_CONFIG=true
 ```
 
 #### 2. Manual installation (alternative)
