@@ -101,11 +101,11 @@ module Shakapacker
           logger.info "   - #{package}"
         end
         logger.info "\n   To remove them, run:"
-        logger.info "   rails shakapacker:clean_babel_packages"
+        logger.info "   bundle exec rake shakapacker:clean_babel_packages"
       end
 
       # Suggest running doctor to verify configuration
-      logger.info "\n🩺 Run 'rails shakapacker:doctor' to verify your configuration"
+      logger.info "\n🩺 Run 'bundle exec rake shakapacker:doctor' to verify your configuration"
 
       # Run package manager install if packages were added
       if run_installer && results[:packages_installed].any?
