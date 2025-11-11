@@ -306,6 +306,61 @@ describe Shakapacker::BundlerSwitcher do
       expect(config.dig("default", "assets_bundler")).to be_nil
     end
 
+    it "does not match commented javascript_transpiler lines" do
+      config_with_commented = <<~YAML
+        default: &default
+          source_path: app/javascript
+          # javascript_transpiler: babel
+          other_key: value
+
+        development:
+          <<: *default
+      YAML
+      File.write(config_path, config_with_commented)
+
+      switcher.switch_to("rspack")
+      content = File.read(config_path)
+      # Should not add after the commented line
+      expect(content).not_to match(/# javascript_transpiler:.*\n.*assets_bundler:/)
+      # Should add after source_path instead (with single newline)
+      expect(content).to match(/source_path:.*\n\n.*# Select assets bundler/)
+    end
+
+    it "preserves inline comments when adding assets_bundler" do
+      config_with_inline = <<~YAML
+        default: &default
+          source_path: app/javascript  # Important path
+          javascript_transpiler: babel # Keep this
+
+        development:
+          <<: *default
+      YAML
+      File.write(config_path, config_with_inline)
+
+      switcher.switch_to("rspack")
+      content = File.read(config_path)
+      # Should preserve inline comments
+      expect(content).to include("source_path: app/javascript  # Important path")
+      expect(content).to include("javascript_transpiler: swc # Keep this")
+    end
+
+    it "handles config with blank lines after default" do
+      config_with_blanks = <<~YAML
+        default: &default
+
+          source_path: app/javascript
+          javascript_transpiler: babel
+
+        development:
+          <<: *default
+      YAML
+      File.write(config_path, config_with_blanks)
+
+      switcher.switch_to("rspack")
+      config = load_yaml_for_test(config_path)
+      expect(config["default"]["assets_bundler"]).to eq("rspack")
+    end
+
     context "when already using the target bundler" do
       it "does not reinstall deps when install_deps is false" do
         expect(switcher).not_to receive(:system)
