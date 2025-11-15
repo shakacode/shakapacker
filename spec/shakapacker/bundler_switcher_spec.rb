@@ -405,8 +405,8 @@ describe Shakapacker::BundlerSwitcher do
         allow(package_json).to receive(:manager).and_return(manager)
 
         # Expect remove calls for webpack deps
-        expect(manager).to receive(:remove).with(["webpack", "webpack-cli", "webpack-dev-server", "@pmmmwh/react-refresh-webpack-plugin", "@swc/core", "swc-loader"]).and_return(true)
-        expect(manager).to receive(:remove).with(["webpack-assets-manifest", "webpack-merge"]).and_return(true)
+        expect(manager).to receive(:remove).with(["webpack", "webpack-cli", "webpack-dev-server", "@pmmmwh/react-refresh-webpack-plugin"]).and_return(true)
+        expect(manager).to receive(:remove).with(["webpack-assets-manifest"]).and_return(true)
 
         # Expect add calls for rspack deps
         expect(manager).to receive(:add).with(["@rspack/cli", "@rspack/plugin-react-refresh"], type: :dev).and_return(true)
@@ -469,6 +469,7 @@ describe Shakapacker::BundlerSwitcher do
       config = load_yaml_for_test(custom_config_path)
       expect(config["webpack"]["devDependencies"]).to include("webpack")
       expect(config["webpack"]["devDependencies"]).to include("webpack-cli")
+      expect(config["webpack"]["dependencies"]).to include("webpack-assets-manifest")
     end
 
     it "does not overwrite existing config file" do
