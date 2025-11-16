@@ -11,6 +11,12 @@
 
 Changes since the last non-beta release.
 
+## [v9.3.3] - November 15, 2025
+
+### Fixed
+
+- **Fixed `switch_bundler` task to preserve shared dependencies**. [PR #836](https://github.com/shakacode/shakapacker/pull/836) by [justin808](https://github.com/justin808). The task no longer removes `@swc/core`, `swc-loader`, and `webpack-merge` when switching bundlers, as these packages are shared between webpack and rspack configurations.
+
 ## [v9.3.2] - November 10, 2025
 
 ### Fixed
@@ -746,7 +752,8 @@ Note: [Rubygem is 6.3.0.pre.rc.1](https://rubygems.org/gems/shakapacker/versions
 
 See [CHANGELOG.md in rails/webpacker (up to v5.4.3)](https://github.com/rails/webpacker/blob/master/CHANGELOG.md)
 
-[Unreleased]: https://github.com/shakacode/shakapacker/compare/v9.3.2...main
+[Unreleased]: https://github.com/shakacode/shakapacker/compare/v9.3.3...main
+[v9.3.3]: https://github.com/shakacode/shakapacker/compare/v9.3.2...v9.3.3
 [v9.3.2]: https://github.com/shakacode/shakapacker/compare/v9.3.1...v9.3.2
 [v9.3.1]: https://github.com/shakacode/shakapacker/compare/v9.3.0...v9.3.1
 [v9.3.0]: https://github.com/shakacode/shakapacker/compare/v9.2.0...v9.3.0
