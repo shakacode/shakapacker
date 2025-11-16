@@ -15,16 +15,16 @@ class Shakapacker::Manifest
   def refresh: () -> Hash[String, untyped]
 
   # Looks up an entry point with all its chunks (split code)
-  def lookup_pack_with_chunks: (String name, ?Hash[Symbol, Symbol] pack_type) -> Array[String]?
+  def lookup_pack_with_chunks: (String name, ?Hash[Symbol, untyped] pack_type) -> Array[String]?
 
   # Like lookup_pack_with_chunks, but raises an error if not found
-  def lookup_pack_with_chunks!: (String name, ?Hash[Symbol, Symbol] pack_type) -> Array[String]
+  def lookup_pack_with_chunks!: (String name, ?Hash[Symbol, untyped] pack_type) -> Array[String]
 
   # Looks up the compiled path for a given asset
-  def lookup: (String name, ?Hash[Symbol, Symbol] pack_type) -> String?
+  def lookup: (String name, ?Hash[Symbol, untyped] pack_type) -> String?
 
   # Like lookup, but raises an error if not found
-  def lookup!: (String name, ?Hash[Symbol, Symbol] pack_type) -> String
+  def lookup!: (String name, ?Hash[Symbol, untyped] pack_type) -> String
 
   # Returns the configuration object
   def config: () -> Configuration
@@ -45,9 +45,9 @@ class Shakapacker::Manifest
 
   def load: () -> Hash[String, untyped]
 
-  def find: (String key) -> untyped
+  def find: (String key) -> (String | Hash[String, untyped] | nil)
 
-  def handle_missing_entry: (String name, Hash[Symbol, Symbol] pack_type) -> void
+  def handle_missing_entry: (String name, Hash[Symbol, untyped] pack_type) -> void
 
   def manifest_type: (Symbol? type) -> String
 

@@ -29,7 +29,7 @@ class Shakapacker::Configuration
   ) -> void
 
   # Returns the dev server configuration hash
-  def dev_server: () -> Hash[untyped, untyped]
+  def dev_server: () -> Hash[String | Symbol, untyped]
 
   # Returns whether automatic compilation is enabled
   def compile?: () -> bool
@@ -113,7 +113,7 @@ class Shakapacker::Configuration
   def asset_host: () -> String?
 
   # Returns whether subresource integrity (SRI) is enabled
-  def integrity: () -> untyped
+  def integrity: () -> (bool | Hash[String | Symbol, untyped])
 
   # Returns whether HTTP/2 Early Hints are enabled
   def early_hints: () -> bool
