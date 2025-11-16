@@ -408,9 +408,9 @@ describe Shakapacker::BundlerSwitcher do
         expect(manager).to receive(:remove).with(["webpack", "webpack-cli", "webpack-dev-server", "@pmmmwh/react-refresh-webpack-plugin"]).and_return(true)
         expect(manager).to receive(:remove).with(["webpack-assets-manifest"]).and_return(true)
 
-        # Expect add calls for rspack deps
+        # Expect add calls for rspack deps (including shared deps)
         expect(manager).to receive(:add).with(["@rspack/cli", "@rspack/plugin-react-refresh"], type: :dev).and_return(true)
-        expect(manager).to receive(:add).with(["@rspack/core", "rspack-manifest-plugin"], type: :production).and_return(true)
+        expect(manager).to receive(:add).with(["@rspack/core", "rspack-manifest-plugin", "webpack-merge"], type: :production).and_return(true)
 
         # Expect install call to resolve optional dependencies
         expect(manager).to receive(:install).and_return(true)
@@ -432,9 +432,9 @@ describe Shakapacker::BundlerSwitcher do
         # Should NOT call remove
         expect(manager).not_to receive(:remove)
 
-        # Should only call add
+        # Should only call add (including shared deps)
         expect(manager).to receive(:add).with(["@rspack/cli", "@rspack/plugin-react-refresh"], type: :dev).and_return(true)
-        expect(manager).to receive(:add).with(["@rspack/core", "rspack-manifest-plugin"], type: :production).and_return(true)
+        expect(manager).to receive(:add).with(["@rspack/core", "rspack-manifest-plugin", "webpack-merge"], type: :production).and_return(true)
 
         # Should call install to resolve optional dependencies
         expect(manager).to receive(:install).and_return(true)
@@ -517,10 +517,11 @@ describe Shakapacker::BundlerSwitcher do
       allow(switcher).to receive(:get_package_json).and_return(package_json)
       allow(package_json).to receive(:manager).and_return(manager)
 
+      # Shared deps (webpack-merge) should not be removed, only dev deps
       expect(manager).to receive(:remove).with(["webpack", "custom-webpack-dep"]).and_return(true)
-      expect(manager).to receive(:remove).with(["webpack-merge"]).and_return(true)
+      # No prod deps removal call expected because webpack-merge is shared and gets filtered out
       expect(manager).to receive(:add).with(["@rspack/cli", "custom-rspack-dep"], type: :dev).and_return(true)
-      expect(manager).to receive(:add).with(["@rspack/core"], type: :production).and_return(true)
+      expect(manager).to receive(:add).with(["@rspack/core", "webpack-merge"], type: :production).and_return(true)
       expect(manager).to receive(:install).and_return(true)
 
       switcher.switch_to("rspack", install_deps: true)

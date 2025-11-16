@@ -12,10 +12,16 @@ module Shakapacker
     # Regex pattern to detect assets_bundler key in config (only matches uncommented lines)
     ASSETS_BUNDLER_PATTERN = /^[ \t]*assets_bundler:/
 
+    # Shared dependencies used by both webpack and rspack
+    # These should not be removed when switching bundlers
+    SHARED_DEPS = {
+      dev: %w[],
+      prod: %w[webpack-merge]
+    }.freeze
+
     # Default dependencies for each bundler (package names only, no versions)
     # Note: Excludes independent/optional dependencies like @swc/core, swc-loader (user-configured
-    # transpilers) and shared utilities like webpack-merge that should not be automatically removed
-    # when switching bundlers
+    # transpilers)
     DEFAULT_RSPACK_DEPS = {
       dev: %w[@rspack/cli @rspack/plugin-react-refresh],
       prod: %w[@rspack/core rspack-manifest-plugin]
@@ -151,16 +157,24 @@ module Shakapacker
             raise
           end
           rspack_deps = {
-            dev: custom.dig("rspack", "devDependencies") || DEFAULT_RSPACK_DEPS[:dev],
-            prod: custom.dig("rspack", "dependencies") || DEFAULT_RSPACK_DEPS[:prod]
+            dev: (custom.dig("rspack", "devDependencies") || DEFAULT_RSPACK_DEPS[:dev]) + SHARED_DEPS[:dev],
+            prod: (custom.dig("rspack", "dependencies") || DEFAULT_RSPACK_DEPS[:prod]) + SHARED_DEPS[:prod]
           }
           webpack_deps = {
-            dev: custom.dig("webpack", "devDependencies") || DEFAULT_WEBPACK_DEPS[:dev],
-            prod: custom.dig("webpack", "dependencies") || DEFAULT_WEBPACK_DEPS[:prod]
+            dev: (custom.dig("webpack", "devDependencies") || DEFAULT_WEBPACK_DEPS[:dev]) + SHARED_DEPS[:dev],
+            prod: (custom.dig("webpack", "dependencies") || DEFAULT_WEBPACK_DEPS[:prod]) + SHARED_DEPS[:prod]
           }
           [rspack_deps, webpack_deps]
         else
-          [DEFAULT_RSPACK_DEPS, DEFAULT_WEBPACK_DEPS]
+          rspack_with_shared = {
+            dev: DEFAULT_RSPACK_DEPS[:dev] + SHARED_DEPS[:dev],
+            prod: DEFAULT_RSPACK_DEPS[:prod] + SHARED_DEPS[:prod]
+          }
+          webpack_with_shared = {
+            dev: DEFAULT_WEBPACK_DEPS[:dev] + SHARED_DEPS[:dev],
+            prod: DEFAULT_WEBPACK_DEPS[:prod] + SHARED_DEPS[:prod]
+          }
+          [rspack_with_shared, webpack_with_shared]
         end
       end
 
@@ -237,7 +251,13 @@ module Shakapacker
       def manage_dependencies(bundler, install_deps, switching: true, no_uninstall: false)
         rspack_deps, webpack_deps = load_dependencies
         deps_to_install = bundler == "rspack" ? rspack_deps : webpack_deps
-        deps_to_remove = bundler == "rspack" ? webpack_deps : rspack_deps
+        old_bundler_deps = bundler == "rspack" ? webpack_deps : rspack_deps
+
+        # Remove shared dependencies from removal list
+        deps_to_remove = {
+          dev: old_bundler_deps[:dev] - SHARED_DEPS[:dev],
+          prod: old_bundler_deps[:prod] - SHARED_DEPS[:prod]
+        }
 
         if install_deps
           puts ""
