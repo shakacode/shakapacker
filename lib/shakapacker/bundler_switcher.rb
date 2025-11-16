@@ -13,6 +13,9 @@ module Shakapacker
     ASSETS_BUNDLER_PATTERN = /^[ \t]*assets_bundler:/
 
     # Default dependencies for each bundler (package names only, no versions)
+    # Note: Excludes independent/optional dependencies like @swc/core, swc-loader (user-configured
+    # transpilers) and shared utilities like webpack-merge that should not be automatically removed
+    # when switching bundlers
     DEFAULT_RSPACK_DEPS = {
       dev: %w[@rspack/cli @rspack/plugin-react-refresh],
       prod: %w[@rspack/core rspack-manifest-plugin]
