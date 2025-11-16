@@ -98,6 +98,10 @@ rbs validate sig/shakapacker/configuration.rbs
 3. **Use union types** for methods that can return multiple types (e.g., `String | nil`)
 4. **Keep signatures in sync** with implementation changes
 5. **Test with type checkers** like [Steep](https://github.com/soutaro/steep) when possible
+6. **Use `void` vs `nil` appropriately**:
+   - Use `void` when the return value is expected to be discarded (e.g., `initialize`)
+   - Use `nil` when a method explicitly returns nil as a meaningful value
+7. **Module singleton methods**: For modules using `extend self`, use `module ModuleName : _Singleton` to indicate all methods are module-level singleton methods
 
 ### Example RBS Signature
 
@@ -114,6 +118,12 @@ class Shakapacker::Configuration
   def source_path: () -> Pathname
   def webpack?: () -> bool
   def assets_bundler: () -> String
+end
+
+# Module with singleton methods (using extend self)
+module Shakapacker : _Singleton
+  def self.config: () -> Configuration
+  def self.compile: () -> bool
 end
 
 # Avoid: Overly generic types

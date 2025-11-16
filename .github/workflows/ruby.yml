@@ -50,6 +50,7 @@ jobs:
         with:
           persist-credentials: false
       - name: Remove Gemfile.lock
+        # Remove lock to test compatibility with latest gem versions
         run: rm -f Gemfile.lock
       - uses: ruby/setup-ruby@v1
         with:
