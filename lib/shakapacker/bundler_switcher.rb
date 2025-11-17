@@ -301,7 +301,7 @@ module Shakapacker
         package_json = get_package_json
 
         # Combine dev and prod dependencies into a single list for removal
-        # Package managers automatically detect where packages are installed and remove them accordingly
+        # Package managers remove packages from both dependencies and devDependencies sections if present
         all_deps = deps[:dev] + deps[:prod]
 
         unless all_deps.empty?
