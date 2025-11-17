@@ -42,5 +42,5 @@ class Shakapacker::Instance
   private
 
   # Returns the compiler strategy for determining staleness
-  def strategy: () -> CompilerStrategy
+  def strategy: () -> (MtimeStrategy | DigestStrategy)
 end
