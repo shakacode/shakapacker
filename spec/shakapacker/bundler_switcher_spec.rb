@@ -404,9 +404,8 @@ describe Shakapacker::BundlerSwitcher do
         allow(switcher).to receive(:get_package_json).and_return(package_json)
         allow(package_json).to receive(:manager).and_return(manager)
 
-        # Expect remove calls for webpack deps
-        expect(manager).to receive(:remove).with(["webpack", "webpack-cli", "webpack-dev-server", "@pmmmwh/react-refresh-webpack-plugin"]).and_return(true)
-        expect(manager).to receive(:remove).with(["webpack-assets-manifest"]).and_return(true)
+        # Expect single remove call for all webpack deps (dev + prod combined)
+        expect(manager).to receive(:remove).with(["webpack", "webpack-cli", "webpack-dev-server", "@pmmmwh/react-refresh-webpack-plugin", "webpack-assets-manifest"]).and_return(true)
 
         # Expect add calls for rspack deps (including shared deps)
         expect(manager).to receive(:add).with(["@rspack/cli", "@rspack/plugin-react-refresh"], type: :dev).and_return(true)

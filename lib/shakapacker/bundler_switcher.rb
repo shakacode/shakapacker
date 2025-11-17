@@ -300,15 +300,13 @@ module Shakapacker
       def remove_dependencies(deps)
         package_json = get_package_json
 
-        unless deps[:dev].empty?
-          unless package_json.manager.remove(deps[:dev])
-            puts "   ⚠️  Warning: Failed to uninstall some dev dependencies"
-          end
-        end
+        # Combine dev and prod dependencies into a single list for removal
+        # Package managers remove packages from both dependencies and devDependencies sections if present
+        all_deps = deps[:dev] + deps[:prod]
 
-        unless deps[:prod].empty?
-          unless package_json.manager.remove(deps[:prod])
-            puts "   ⚠️  Warning: Failed to uninstall some prod dependencies"
+        unless all_deps.empty?
+          unless package_json.manager.remove(all_deps)
+            puts "   ⚠️  Warning: Failed to uninstall some dependencies"
           end
         end
       end
