@@ -70,7 +70,7 @@ yarn lint --cache
 
 ## Setting Up a Development Environment
 
-1. Install [Yarn](https://classic.yarnpkg.com/)
+1. Install [Yarn](https://classic.yarnpkg.com/) & [yalc](https://github.com/wclr/yalc)
 2. To test your changes on a Rails test project do the following steps:
    - For Ruby gem, update `Gemfile` and point the `shakapacker` to the locally developing Shakapacker project:
      ```ruby
