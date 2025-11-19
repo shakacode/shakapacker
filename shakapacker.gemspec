@@ -24,12 +24,13 @@ Gem::Specification.new do |s|
   s.add_dependency "semantic_range", ">= 2.3.0"
 
   s.add_development_dependency "bundler", ">= 1.3.0"
+  s.add_development_dependency "rbs", "~> 3.0"
   s.add_development_dependency "rubocop"
   s.add_development_dependency "rubocop-performance"
 
   s.files = `git ls-files -z`.split("\x0").reject { |f|
     f.match(%r{^(test|spec|features|tmp|node_modules|packages|coverage|Gemfile.lock|rakelib)/})
-  }
+  } + Dir.glob("sig/**/*.rbs")
 
   s.test_files = `git ls-files -- test/*`.split("\n")
 end

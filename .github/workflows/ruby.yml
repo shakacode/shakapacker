@@ -7,6 +7,7 @@ on:
   pull_request:
     paths:
       - "**.rb"
+      - "**.rbs"
       - "**.gemspec"
       - "Gemfile"
       - "Rakefile"
@@ -40,6 +41,25 @@ jobs:
 
       - name: Ruby rubocop
         run: bundle exec rubocop
+
+  rbs-validate:
+    name: RBS Type Validation
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Remove Gemfile.lock
+        # Remove lock to test compatibility with latest gem versions
+        run: rm -f Gemfile.lock
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.4"
+          rubygems: latest
+          bundler-cache: true
+
+      - name: Validate RBS signatures
+        run: bundle exec rbs validate
 
   test:
     name: Testing
