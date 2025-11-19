@@ -68,7 +68,7 @@ module Shakapacker::Helper
 
   def lookup_source: (String | Hash[String, untyped] source) -> String
 
-  def render_tags: (Array[String] sources, Symbol type, Hash[Symbol, untyped] options) -> void
+  def render_tags: (Array[String] sources, Symbol type, Hash[Symbol, untyped] options) -> nil
 
   def early_hints_supported?: () -> bool
 
