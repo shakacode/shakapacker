@@ -1,0 +1,58 @@
+#!/usr/bin/env bash
+# Lint and format staged JavaScript/TypeScript files
+
+set -e
+
+if [ -z "$1" ]; then
+  echo "No files to check"
+  exit 0
+fi
+
+echo "Running JavaScript/TypeScript linter and formatter on staged files..."
+
+# Separate TypeScript files from JavaScript files
+ts_files=""
+js_files=""
+format_files=""
+
+for file in "$@"; do
+  # Add all files to format_files for prettier
+  format_files="$format_files $file"
+
+  # Separate TS/TSX from JS/JSX for type checking
+  if [[ "$file" == *.ts || "$file" == *.tsx ]]; then
+    ts_files="$ts_files $file"
+  elif [[ "$file" == *.js || "$file" == *.jsx ]]; then
+    js_files="$js_files $file"
+  fi
+done
+
+has_errors=0
+
+# Run ESLint with --fix on JS/TS files
+if [ -n "$js_files" ] || [ -n "$ts_files" ]; then
+  echo "Running ESLint --fix..."
+  yarn eslint --fix $format_files || has_errors=1
+fi
+
+# Run Prettier on all files
+if [ -n "$format_files" ]; then
+  echo "Running Prettier..."
+  yarn prettier --write $format_files || has_errors=1
+fi
+
+# Run TypeScript type checking on TS/TSX files
+if [ -n "$ts_files" ]; then
+  echo "Running TypeScript type checking..."
+  node scripts/type-check-no-emit.js || has_errors=1
+fi
+
+if [ $has_errors -ne 0 ]; then
+  echo ""
+  echo "JavaScript/TypeScript linting or formatting failed."
+  echo "Please review the changes and stage them if they look good:"
+  echo "  git add <files>"
+  exit 1
+fi
+
+echo "✓ JavaScript/TypeScript linting and formatting passed"

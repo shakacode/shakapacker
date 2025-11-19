@@ -13,3 +13,7 @@ end
 group :test do
   gem "byebug"
 end
+
+group :development do
+  gem "lefthook", "~> 2.0.0", require: false
+end

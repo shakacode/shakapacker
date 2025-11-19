@@ -33,7 +33,7 @@ We welcome pull requests that fix bugs, add new features, or improve existing on
 
 ## Git Hooks (Optional)
 
-This project includes configuration for git hooks via `husky` and `lint-staged`, but they are **opt-in for contributors**.
+This project includes configuration for git hooks via [Lefthook](https://github.com/evilmartians/lefthook), but they are **opt-in for contributors**.
 
 **Why are hooks optional?** As a library project, we don't enforce git hooks because:
 
@@ -44,9 +44,11 @@ This project includes configuration for git hooks via `husky` and `lint-staged`,
 To enable pre-commit hooks locally:
 
 ```bash
-npx husky install
-npx husky add .husky/pre-commit "npx lint-staged"
+bundle install
+bundle exec lefthook install
 ```
+
+The hooks will automatically run linters, formatters, and tests on staged files before each commit.
 
 ---
 

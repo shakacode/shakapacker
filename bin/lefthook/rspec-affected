@@ -1,0 +1,48 @@
+#!/usr/bin/env bash
+# Run RSpec tests for affected files
+
+set -e
+
+if [ -z "$1" ]; then
+  echo "No files to test"
+  exit 0
+fi
+
+# Convert source files to their corresponding spec files
+spec_files=""
+for file in "$@"; do
+  # Skip if file is already a spec file
+  if [[ "$file" == *"_spec.rb" ]]; then
+    if [ -f "$file" ]; then
+      spec_files="$spec_files $file"
+    fi
+    continue
+  fi
+
+  # Convert lib/shakapacker/foo.rb to spec/shakapacker/foo_spec.rb
+  if [[ "$file" == lib/* ]]; then
+    spec_file="${file/lib\//spec/}"
+    spec_file="${spec_file/.rb/_spec.rb}"
+    if [ -f "$spec_file" ]; then
+      spec_files="$spec_files $spec_file"
+    fi
+  fi
+done
+
+if [ -z "$spec_files" ]; then
+  echo "No corresponding spec files found for staged files"
+  exit 0
+fi
+
+echo "Running RSpec for affected files..."
+echo "Spec files: $spec_files"
+
+bundle exec rspec $spec_files
+
+if [ $? -ne 0 ]; then
+  echo ""
+  echo "Tests failed. Please fix the issues before committing."
+  exit 1
+fi
+
+echo "✓ All affected tests passed"

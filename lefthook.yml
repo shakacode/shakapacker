@@ -1,0 +1,37 @@
+# Lefthook Configuration
+# Parallel Git hooks for fast validation
+# See: https://github.com/evilmartians/lefthook
+
+pre-commit:
+  parallel: true
+  commands:
+    rubocop-lint:
+      glob: "*.rb"
+      run: bin/lefthook/rubocop-lint {staged_files}
+    js-lint:
+      glob: "*.{js,jsx,ts,tsx}"
+      run: bin/lefthook/js-lint {staged_files}
+    prettier-format:
+      glob: "*.{json,yml,yaml,md}"
+      run: bin/lefthook/prettier-format {staged_files}
+    check-trailing-newlines:
+      glob: "*.{rb,js,jsx,ts,tsx,yml,yaml,json,md}"
+      run: bin/lefthook/check-trailing-newlines {staged_files}
+    rspec-affected:
+      glob: "*.rb"
+      run: bin/lefthook/rspec-affected {staged_files}
+    jest-affected:
+      glob: "*.{js,jsx,ts,tsx}"
+      run: bin/lefthook/jest-affected {staged_files}
+
+pre-push:
+  parallel: true
+  commands:
+    rubocop-full:
+      run: bundle exec rubocop
+    rspec-full:
+      run: bundle exec rspec
+    js-lint-full:
+      run: yarn lint
+    jest-full:
+      run: yarn test

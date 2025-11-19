@@ -1,0 +1,24 @@
+#!/usr/bin/env bash
+# Format JSON/YAML/Markdown files with Prettier
+
+set -e
+
+if [ -z "$1" ]; then
+  echo "No files to format"
+  exit 0
+fi
+
+echo "Running Prettier on documentation and config files..."
+
+# Run prettier on the files
+yarn prettier --write $@
+
+if [ $? -ne 0 ]; then
+  echo ""
+  echo "Prettier formatting failed."
+  echo "Please review the changes and stage them if they look good:"
+  echo "  git add <files>"
+  exit 1
+fi
+
+echo "✓ Prettier formatting passed"

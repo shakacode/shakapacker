@@ -1,0 +1,39 @@
+#!/usr/bin/env bash
+# Check that all files end with a trailing newline
+
+set -e
+
+if [ -z "$1" ]; then
+  echo "No files to check"
+  exit 0
+fi
+
+echo "Checking for trailing newlines..."
+
+failed_files=""
+
+for file in "$@"; do
+  # Skip if file doesn't exist or is empty
+  if [ ! -f "$file" ] || [ ! -s "$file" ]; then
+    continue
+  fi
+
+  # Check if file ends with a newline
+  if [ "$(tail -c 1 "$file" | wc -l)" -eq 0 ]; then
+    failed_files="$failed_files\n  - $file"
+    # Auto-fix: add trailing newline
+    printf '\n' >> "$file"
+  fi
+done
+
+if [ -n "$failed_files" ]; then
+  echo ""
+  echo "Added trailing newlines to the following files:"
+  echo -e "$failed_files"
+  echo ""
+  echo "Please stage these changes:"
+  echo "  git add <files>"
+  exit 1
+fi
+
+echo "✓ All files have trailing newlines"

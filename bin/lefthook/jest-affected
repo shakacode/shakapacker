@@ -1,0 +1,72 @@
+#!/usr/bin/env bash
+# Run Jest tests for affected JavaScript/TypeScript files
+
+set -e
+
+if [ -z "$1" ]; then
+  echo "No files to test"
+  exit 0
+fi
+
+# Check if package.json exists and has a test script
+if [ ! -f "package.json" ]; then
+  echo "No package.json found, skipping JavaScript tests"
+  exit 0
+fi
+
+# Check if yarn test script exists
+if ! grep -q '"test"' package.json; then
+  echo "No test script found in package.json, skipping JavaScript tests"
+  exit 0
+fi
+
+# Check if Jest is installed (check package.json devDependencies)
+if ! grep -q '"jest"' package.json; then
+  echo "Jest not found in package.json, skipping JavaScript tests"
+  exit 0
+fi
+
+echo "Running Jest for affected files..."
+
+# Convert source files to their corresponding test files
+test_files=""
+for file in "$@"; do
+  # Skip if file is already a test file
+  if [[ "$file" == *".test."* ]] || [[ "$file" == *".spec."* ]]; then
+    if [ -f "$file" ]; then
+      test_files="$test_files $file"
+    fi
+    continue
+  fi
+
+  # Look for corresponding test files
+  # Try .test.js, .test.ts, .spec.js, .spec.ts patterns
+  base="${file%.*}"
+  ext="${file##*.}"
+
+  for test_pattern in ".test.$ext" ".spec.$ext" ".test.js" ".spec.js" ".test.ts" ".spec.ts"; do
+    test_file="${base}${test_pattern}"
+    if [ -f "$test_file" ]; then
+      test_files="$test_files $test_file"
+      break
+    fi
+  done
+done
+
+if [ -z "$test_files" ]; then
+  echo "No corresponding test files found for staged files"
+  exit 0
+fi
+
+echo "Test files: $test_files"
+
+# Run Jest on the test files
+yarn test --findRelatedTests $test_files
+
+if [ $? -ne 0 ]; then
+  echo ""
+  echo "JavaScript tests failed. Please fix the issues before committing."
+  exit 1
+fi
+
+echo "✓ All affected JavaScript tests passed"
