@@ -34,9 +34,11 @@ fi
 if [ $has_errors -ne 0 ]; then
   echo ""
   echo "JavaScript/TypeScript linting or formatting failed."
-  echo "Please review the changes and stage them if they look good:"
-  echo "  git add <files>"
+  echo "Please fix the remaining issues manually."
   exit 1
 fi
+
+# Re-stage any files that were auto-fixed
+git add $js_ts_files
 
 echo "✓ JavaScript/TypeScript linting and formatting passed"

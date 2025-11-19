@@ -11,14 +11,14 @@ fi
 echo "Running RuboCop on staged files..."
 
 # Run RuboCop with auto-correct on staged files
-bundle exec rubocop --autocorrect-all $@
-exit_code=$?
-
-if [ $exit_code -ne 0 ]; then
+if ! bundle exec rubocop --autocorrect-all "$@"; then
   echo ""
   echo "RuboCop found issues that could not be auto-corrected."
   echo "Please fix the remaining issues manually."
   exit 1
 fi
+
+# Re-stage any files that were auto-corrected
+git add "$@"
 
 echo "✓ RuboCop passed"

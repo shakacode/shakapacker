@@ -11,12 +11,14 @@ fi
 echo "Running Prettier on documentation and config files..."
 
 # Run prettier on the files
-if ! yarn prettier --write $@; then
+if ! yarn prettier --write "$@"; then
   echo ""
   echo "Prettier formatting failed."
-  echo "Please review the changes and stage them if they look good:"
-  echo "  git add <files>"
+  echo "Please fix the remaining issues manually."
   exit 1
 fi
+
+# Re-stage any files that were formatted
+git add "$@"
 
 echo "✓ Prettier formatting passed"
