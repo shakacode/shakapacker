@@ -6,22 +6,22 @@ pre-commit:
   parallel: true
   commands:
     rubocop-lint:
-      glob: "*.rb"
+      glob: "**/*.rb"
       run: bin/lefthook/rubocop-lint {staged_files}
     js-lint:
-      glob: "*.{js,jsx,ts,tsx}"
+      glob: "**/*.{js,jsx,ts,tsx}"
       run: bin/lefthook/js-lint {staged_files}
     prettier-format:
-      glob: "*.{json,yml,yaml,md}"
+      glob: "**/*.{json,yml,yaml,md}"
       run: bin/lefthook/prettier-format {staged_files}
     check-trailing-newlines:
-      glob: "*.{rb,js,jsx,ts,tsx,yml,yaml,json,md}"
+      glob: "**/*.{rb,js,jsx,ts,tsx,yml,yaml,json,md}"
       run: bin/lefthook/check-trailing-newlines {staged_files}
     rspec-affected:
-      glob: "*.rb"
+      glob: "**/*.rb"
       run: bin/lefthook/rspec-affected {staged_files}
     jest-affected:
-      glob: "*.{js,jsx,ts,tsx}"
+      glob: "**/*.{js,jsx,ts,tsx}"
       run: bin/lefthook/jest-affected {staged_files}
 
 pre-push:

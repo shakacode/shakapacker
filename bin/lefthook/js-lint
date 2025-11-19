@@ -1,8 +1,6 @@
 #!/usr/bin/env bash
 # Lint and format staged JavaScript/TypeScript files
 
-set -e
-
 if [ -z "$1" ]; then
   echo "No files to check"
   exit 0

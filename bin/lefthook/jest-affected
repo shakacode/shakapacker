@@ -61,9 +61,7 @@ fi
 echo "Test files: $test_files"
 
 # Run Jest on the test files
-yarn test --findRelatedTests $test_files
-
-if [ $? -ne 0 ]; then
+if ! yarn test --findRelatedTests $test_files; then
   echo ""
   echo "JavaScript tests failed. Please fix the issues before committing."
   exit 1

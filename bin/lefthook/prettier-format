@@ -11,9 +11,7 @@ fi
 echo "Running Prettier on documentation and config files..."
 
 # Run prettier on the files
-yarn prettier --write $@
-
-if [ $? -ne 0 ]; then
+if ! yarn prettier --write $@; then
   echo ""
   echo "Prettier formatting failed."
   echo "Please review the changes and stage them if they look good:"

@@ -37,9 +37,7 @@ fi
 echo "Running RSpec for affected files..."
 echo "Spec files: $spec_files"
 
-bundle exec rspec $spec_files
-
-if [ $? -ne 0 ]; then
+if ! bundle exec rspec $spec_files; then
   echo ""
   echo "Tests failed. Please fix the issues before committing."
   exit 1

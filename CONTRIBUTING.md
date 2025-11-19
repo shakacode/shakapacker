@@ -180,7 +180,7 @@ yarn lint --cache
    ```
    bundle install
    yarn install
-   yarn prepare:husky  # Set up pre-commit hooks for linting
+   bundle exec lefthook install  # (Optional) Set up git hooks for linting/tests
    ```
 
 ## Understanding Optional Peer Dependencies
