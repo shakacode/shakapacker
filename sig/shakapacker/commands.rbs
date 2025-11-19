@@ -4,7 +4,7 @@ class Shakapacker::Commands
   def initialize: (Instance instance) -> void
 
   # Cleanup old assets in the compile directory
-  def clean: (?count: Integer, ?age: Integer) -> bool
+  def clean: (?Integer, ?Integer) -> bool
 
   # Removes all compiled packs
   def clobber: () -> void

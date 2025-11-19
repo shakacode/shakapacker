@@ -56,7 +56,7 @@ module Shakapacker : _Singleton
   def self.bootstrap: () -> void
 
   # Removes old compiled packs, keeping the most recent versions
-  def self.clean: (?Integer? count, ?Integer? age) -> void
+  def self.clean: (?Integer, ?Integer) -> bool
 
   # Removes all compiled packs
   def self.clobber: () -> void
