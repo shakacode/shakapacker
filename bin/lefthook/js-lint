@@ -8,35 +8,27 @@ fi
 
 echo "Running JavaScript/TypeScript linter and formatter on staged files..."
 
-# Separate TypeScript files from JavaScript files
-ts_files=""
-js_files=""
-format_files=""
+# Collect all JS/TS files for ESLint and Prettier
+js_ts_files=""
 
 for file in "$@"; do
-  # Add all files to format_files for prettier
-  format_files="$format_files $file"
-
-  # Separate TS/TSX from JS/JSX for type checking
-  if [[ "$file" == *.ts || "$file" == *.tsx ]]; then
-    ts_files="$ts_files $file"
-  elif [[ "$file" == *.js || "$file" == *.jsx ]]; then
-    js_files="$js_files $file"
+  if [[ "$file" == *.ts || "$file" == *.tsx || "$file" == *.js || "$file" == *.jsx ]]; then
+    js_ts_files="$js_ts_files $file"
   fi
 done
 
 has_errors=0
 
 # Run ESLint with --fix on JS/TS files
-if [ -n "$js_files" ] || [ -n "$ts_files" ]; then
+if [ -n "$js_ts_files" ]; then
   echo "Running ESLint --fix..."
-  yarn eslint --fix $format_files || has_errors=1
+  yarn eslint --fix $js_ts_files || has_errors=1
 fi
 
-# Run Prettier on all files
-if [ -n "$format_files" ]; then
+# Run Prettier on JS/TS files
+if [ -n "$js_ts_files" ]; then
   echo "Running Prettier..."
-  yarn prettier --write $format_files || has_errors=1
+  yarn prettier --write $js_ts_files || has_errors=1
 fi
 
 if [ $has_errors -ne 0 ]; then
