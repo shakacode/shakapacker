@@ -17,6 +17,9 @@ pre-commit:
     check-trailing-newlines:
       glob: "**/*.{rb,js,jsx,ts,tsx,yml,yaml,json,md}"
       run: bin/lefthook/check-trailing-newlines {staged_files}
+    typescript-check:
+      glob: "**/*.{ts,tsx}"
+      run: yarn type-check
     rspec-affected:
       glob: "**/*.rb"
       run: bin/lefthook/rspec-affected {staged_files}
@@ -35,3 +38,5 @@ pre-push:
       run: yarn lint
     jest-full:
       run: yarn test
+    knip:
+      run: yarn knip

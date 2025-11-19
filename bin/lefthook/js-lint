@@ -39,12 +39,6 @@ if [ -n "$format_files" ]; then
   yarn prettier --write $format_files || has_errors=1
 fi
 
-# Run TypeScript type checking on TS/TSX files
-if [ -n "$ts_files" ]; then
-  echo "Running TypeScript type checking..."
-  node scripts/type-check-no-emit.js || has_errors=1
-fi
-
 if [ $has_errors -ne 0 ]; then
   echo ""
   echo "JavaScript/TypeScript linting or formatting failed."
