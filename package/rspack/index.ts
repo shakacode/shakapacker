@@ -1,14 +1,15 @@
-/* eslint global-require: 0 */
 /* eslint import/no-dynamic-require: 0 */
 
 // Mixed require/import syntax:
 // - Using require() for compiled JS modules that may not have proper ES module exports
 // - Using import for type-only imports and Node.js built-in modules
-const webpackMerge = require("webpack-merge")
 import { resolve } from "path"
 import { existsSync } from "fs"
 import type { RspackConfigWithDevServer } from "../environments/types"
-const config = require("../config")
+import type { Config } from "../types"
+
+const webpackMerge = require("webpack-merge")
+const config = require("../config") as Config
 const baseConfig = require("../environments/base")
 const devServer = require("../dev_server")
 const env = require("../env")
@@ -35,7 +36,7 @@ const generateRspackConfig = (
 
   const { nodeEnv } = env
   const path = resolve(__dirname, "../environments", `${nodeEnv}.js`)
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
+
   const environmentConfig = existsSync(path) ? require(path) : baseConfig
 
   // Create base rspack config

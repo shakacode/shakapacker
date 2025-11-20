@@ -70,6 +70,7 @@ Read the [full review here](https://clutch.co/profile/shakacode#reviews?sort_by=
 - [Concepts](#concepts)
 - [Usage](#usage)
   - [Configuration and Code](#configuration-and-code)
+    - [Configuration Guide](./docs/configuration.md)
   - [View Helpers](#view-helpers)
     - [View Helpers `javascript_pack_tag` and `stylesheet_pack_tag`](#view-helpers-javascript_pack_tag-and-stylesheet_pack_tag)
     - [View Helpers `append_javascript_pack_tag`, `prepend_javascript_pack_tag` and `append_stylesheet_pack_tag`](#view-helper-append_javascript_pack_tag-prepend_javascript_pack_tag-and-append_stylesheet_pack_tag)
@@ -77,12 +78,14 @@ Read the [full review here](https://clutch.co/profile/shakacode#reviews?sort_by=
     - [View Helper: `image_pack_tag`](#view-helper-image_pack_tag)
     - [View Helper: `favicon_pack_tag`](#view-helper-favicon_pack_tag)
     - [View Helper: `preload_pack_asset`](#view-helper-preload_pack_asset)
+    - [View Helper: `send_pack_early_hints`](#view-helper-send_pack_early_hints)
   - [Images in Stylesheets](#images-in-stylesheets)
   - [Server-Side Rendering (SSR)](#server-side-rendering-ssr)
   - [Development](#development)
     - [Automatic Webpack Code Building](#automatic-webpack-code-building)
     - [Compiler strategies](#compiler-strategies)
     - [Common Development Commands](#common-development-commands)
+  - [Ruby API Reference](#ruby-api-reference)
   - [Webpack Configuration](#webpack-configuration)
   - [Babel configuration](#babel-configuration)
   - [SWC configuration](#swc-configuration)
@@ -160,7 +163,7 @@ Then run the following to install Shakapacker:
 
 ```bash
 ./bin/bundle install
-./bin/rails shakapacker:install
+bundle exec rake shakapacker:install
 ```
 
 Before initiating the installation process, ensure you have committed all the changes. While installing Shakapacker, there might be some conflict between the existing file content and what Shakapacker tries to copy. You can either approve all the prompts for overriding these files or use the `FORCE=true` environment variable before the installation command to force the override without any prompt.
@@ -279,12 +282,10 @@ Depending on your setup, you'll need different subsets of the optional peer depe
 **Quick tip:** You can easily switch between webpack and rspack using:
 
 ```bash
-rails shakapacker:switch_bundler rspack --install-deps
-# or with rake (note the -- separator)
-rake shakapacker:switch_bundler rspack -- --install-deps
+bundle exec rake shakapacker:switch_bundler rspack -- --install-deps
 
 # For faster switching, use --no-uninstall to keep both bundlers installed
-rails shakapacker:switch_bundler webpack --install-deps --no-uninstall
+bundle exec rake shakapacker:switch_bundler webpack -- --install-deps --no-uninstall
 ```
 
 See the [Rspack Migration Guide](./docs/rspack_migration_guide.md) for details.
@@ -313,6 +314,16 @@ At its core, Shakapacker's essential function is to:
 ## Usage
 
 ### Configuration and Code
+
+**📖 For a comprehensive guide to all configuration options, see the [Configuration Guide](./docs/configuration.md)**
+
+This includes documentation for:
+
+- All `config/shakapacker.yml` options (including `assets_bundler_config_path`)
+- Environment-specific configuration
+- Development server settings
+- Build configurations (`config/shakapacker-builds.yml`)
+- Best practices and common patterns
 
 You will need your file system to correspond to the setup of your `config/shakapacker.yml` file.
 
@@ -348,28 +359,20 @@ public/packs                # webpack output
 
 Webpack intelligently includes only necessary files. In this example, the file `packs/application.js` would reference `../src/my_component.js`
 
-`nested_entries` allows you to have webpack entry points nested in subdirectories. This defaults to true as of shakapacker v7. With `nested_entries: false`, you can have your entire `source_path` used for your source (using the `source_entry_path: /`) and you place files at the top level that you want as entry points. `nested_entries: true` allows you to have entries that are in subdirectories. This is useful if you have entries that are generated, so you can have a `generated` subdirectory and easily separate generated files from the rest of your codebase.
+The `nested_entries` option allows webpack entry points in subdirectories (defaults to `true`). See the [Configuration Guide](./docs/configuration.md#nested_entries) for details.
 
-To enable/disable the usage of contentHash in any node environment (specified using the `NODE_ENV` environment variable), add/modify `useContentHash` with a boolean value in `config/shakapacker.yml`. This feature is disabled for all environments except production by default. You may not disable the content hash for a `NODE_ENV` of production as that would break the browser caching of assets. Notice that despite the possibility of enabling this option for the development environment, [it is not recommended](https://webpack.js.org/guides/build-performance/#avoid-production-specific-tooling).
+The `useContentHash` option enables content-based cache busting. It's disabled by default (except in production) to speed up development builds. See the [Configuration Guide](./docs/configuration.md#usecontenthash) for details.
 
 #### Precompile Hook
 
-Shakapacker supports running a custom command before webpack compilation via the `precompile_hook` configuration option. This is useful for:
+Shakapacker supports running custom commands before compilation via the `precompile_hook` configuration option.
 
-- Dynamically generating entry points (e.g., React on Rails `generate_packs`)
-- Running preparatory tasks before asset compilation in both development and production
-
-```yaml
-# Works in all environments (development, production)
-default: &default
-  precompile_hook: "bin/rails react_on_rails:generate_packs"
-```
-
-For complete documentation including React on Rails integration, security features, and troubleshooting, see the [Precompile Hook Guide](docs/precompile_hook.md).
+For configuration details, see [precompile_hook in the Configuration Guide](./docs/configuration.md#precompile_hook).
+For complete usage guide, see the [Precompile Hook Guide](./docs/precompile_hook.md).
 
 #### Setting custom config path
 
-You can use the environment variable `SHAKAPACKER_CONFIG` to enforce a particular path to the config file rather than the default `config/shakapacker.yml`.
+You can use the `SHAKAPACKER_CONFIG` environment variable to specify a custom config file path. See [Environment Variables in the Configuration Guide](./docs/configuration.md#environment-variables) for this and other configuration options.
 
 ### View Helpers
 
@@ -482,8 +485,8 @@ And the main layout has:
 is the same as using this in the main layout:
 
 ```erb
-<%= javascript_pack_tag 'calendar', 'map', application' %>
-<%= stylesheet_pack_tag 'calendar', 'map', application' %>
+<%= javascript_pack_tag 'calendar', 'map', 'application' %>
+<%= stylesheet_pack_tag 'calendar', 'map', 'application' %>
 ```
 
 However, you typically can't do that in the main layout, as the view and partial codes will depend on the route.
@@ -495,12 +498,13 @@ Thus, you can distribute the logic of what packs are needed for any route. All t
 The typical issue is that your layout might reference some partials that need to configure packs. A good way to solve this problem is to use `content_for` to ensure that the code to render your partial comes before the call to `javascript_pack_tag`.
 
 ```erb
-<% content_for :footer do
-   render 'shared/footer' %>
+<% content_for :footer do %>
+  <%= render 'shared/footer' %>
+<% end %>
 
 <%= javascript_pack_tag %>
 
-<%= content_for :footer %>
+<%= yield :footer %>
 ```
 
 There is also `prepend_javascript_pack_tag` that will put the entry at the front of the queue. This is handy when you want an entry in the main layout to go before the partial and main layout `append_javascript_pack_tag` entries.
@@ -527,10 +531,12 @@ And the main layout has:
 is the same as using this in the main layout:
 
 ```erb
-<%= javascript_pack_tag 'main', 'calendar', 'map', application' %>
+<%= javascript_pack_tag 'main', 'calendar', 'map', 'application' %>
 ```
 
 For alternative options for setting the additional packs, [see this discussion](https://github.com/shakacode/shakapacker/issues/39).
+
+**Important:** To prevent FOUC (Flash of Unstyled Content), always place `stylesheet_pack_tag` in the `<head>` section of your layout. When using `append_*` helpers with dynamic pack loading (e.g., React on Rails), use the `content_for` pattern to control execution order. See the [Preventing FOUC guide](./docs/preventing_fouc.md) for detailed examples.
 
 #### View Helper: `asset_pack_path`
 
@@ -565,6 +571,24 @@ If you want to preload a static asset in your `<head>`, you can use the `preload
 <%= preload_pack_asset 'fonts/fa-regular-400.woff2' %>
 ```
 
+#### HTTP 103 Early Hints
+
+Automatically send early hints to browsers for faster asset loading. Supports `preload`/`prefetch`/`none` configuration per-page.
+
+```yaml
+# config/shakapacker.yml
+production:
+  early_hints:
+    enabled: true
+    debug: false # Enable to see what hints are sent (as HTML comments)
+```
+
+⚠️ **Important**: May improve or hurt performance depending on content. See the [Early Hints Guide](./docs/early_hints.md) for configuration, performance guidance, and examples.
+
+**Troubleshooting**: Enable `debug: true` to see HTML comments showing what hints were sent or why they were skipped.
+
+**Requirements:** Rails 5.2+, HTTP/2 server, modern browsers. Gracefully degrades if not supported.
+
 ### Images in Stylesheets
 
 If you want to use images in your stylesheets:
@@ -598,11 +622,7 @@ Shakapacker ships with two different strategies that are used to determine wheth
 - `digest` - This strategy calculates SHA1 digest of files in your watched paths (see below). The calculated digest is then stored in a temp file. To check whether the assets need to be recompiled, Shakapacker calculates the SHA1 of the watched files and compares it with the one stored. If the digests are equal, no recompilation occurs. If the digests are different or the temp file is missing, files are recompiled.
 - `mtime` - This strategy looks at the last "modified at" timestamps of both files AND directories in your watched paths. The timestamp of the most recent file or directory is then compared with the timestamp of `manifest.json` file generated. If the manifest file timestamp is newer than one of the most recently modified files or directories in the watched paths, no recompilation occurs. If the manifest file is older, files are recompiled.
 
-The `mtime` strategy is generally faster than the `digest` one, but it requires stable timestamps, this makes it perfect for a development environment, such as needing to rebuild bundles for tests, or if you're not changing frontend assets much.
-
-In production or CI environments, the `digest` strategy is more suitable, unless you are using incremental builds or caching and can guarantee that the timestamps will not change after e.g. cache restore. However, many production or CI environments will explicitly compile assets, so `compile: false` is more appropriate. Otherwise, you'll waste time either checking file timestamps or computing digests.
-
-You can control what strategy is used by the `compiler_strategy` option in `shakapacker.yml` config file. By default `mtime` strategy is used in development environment, `digest` is used elsewhere.
+The `compiler_strategy` option determines how Shakapacker checks if assets need recompilation (`mtime` for development, `digest` for production). See the [Configuration Guide](./docs/configuration.md#compiler_strategy) for detailed comparison and recommendations.
 
 > [!NOTE]
 >
@@ -651,6 +671,111 @@ end
 
 **Note:** Don't forget to prefix `ruby` when running these binstubs on Windows
 
+### Ruby API Reference
+
+**📚 For comprehensive Ruby API documentation, see the [API Reference Guide](./docs/api-reference.md).**
+
+This guide covers:
+
+- **Main Shakapacker Module** - Configuration, compilation, and manifest access
+- **Configuration API** - Accessing `config/shakapacker.yml` settings programmatically
+- **View Helpers** - Complete reference for all Rails helpers
+- **Manifest API** - Asset lookup and resolution methods
+- **Dev Server API** - Development server status and management
+- **Advanced Usage** - Multiple instances, testing, custom configurations
+
+#### Quick Examples
+
+```ruby
+# Access configuration
+Shakapacker.config.source_path
+# => #<Pathname:/app/app/javascript>
+
+# Get raw configuration hash
+Shakapacker.config.data
+# => { "source_path" => "app/javascript", ... }
+
+# Look up compiled assets
+Shakapacker.manifest.lookup("application.js")
+# => "/packs/application-abc123.js"
+
+# Check dev server status
+Shakapacker.dev_server.running?
+# => true
+```
+
+#### Generating Full API Documentation
+
+For complete API documentation with all methods and parameters:
+
+```bash
+# Using YARD (recommended - better formatting)
+gem install yard
+yard doc
+yard server  # Browse at http://localhost:8808
+
+# Using RDoc (standard Ruby documentation)
+rdoc lib/
+open doc/index.html
+```
+
+The generated documentation includes all public and private methods with detailed descriptions.
+
+#### Type Signatures with RBS
+
+Shakapacker includes **RBS type signatures** for all public APIs, enabling static type checking and improved IDE support:
+
+**Benefits:**
+
+- **IDE Autocomplete**: Get accurate method signatures and parameter hints in your editor
+- **Static Type Checking**: Catch type errors before runtime using [Steep](https://github.com/soutaro/steep) or [TypeProf](https://github.com/ruby/typeprof)
+- **Self-Documenting Code**: Types provide machine-readable API documentation
+- **Safer Refactoring**: Type checker catches breaking changes across your codebase
+
+**RBS Signatures Location:**
+Type signatures are in the `sig/` directory and included with the gem:
+
+```
+sig/
+├── shakapacker.rbs                    # Main module
+└── shakapacker/
+    ├── configuration.rbs              # Configuration API
+    ├── helper.rbs                     # View helpers
+    ├── manifest.rbs                   # Asset lookup
+    ├── compiler.rbs                   # Compilation
+    ├── dev_server.rbs                 # Dev server
+    └── ...                            # Other components
+```
+
+**Using with Steep (Type Checker):**
+
+```yaml
+# Steepfile
+target :app do
+signature "sig"
+check "app"
+library "shakapacker"
+end
+```
+
+**Example Type Checking:**
+
+```ruby
+# Your code
+config = Shakapacker.config
+config.source_path  # Type checker knows this returns Pathname
+config.webpack?     # Type checker knows this returns bool
+
+# Type error caught at development time:
+config.invalid_method  # ⚠️ Steep reports: Method `invalid_method` is not defined
+```
+
+**Learn More:**
+
+- [RBS Documentation](https://github.com/ruby/rbs)
+- [Steep Type Checker](https://github.com/soutaro/steep)
+- [TypeProf](https://github.com/ruby/typeprof)
+
 ### Webpack Configuration
 
 First, you don't _need_ to use Shakapacker's webpack configuration. However, the `shakapacker` NPM package provides convenient access to configuration code that reads the `config/shakapacker.yml` file which the view helpers also use. If you have your customized webpack configuration, at the minimum, you must ensure:
@@ -659,6 +784,21 @@ First, you don't _need_ to use Shakapacker's webpack configuration. However, the
 2. Your output includes a manifest, via package [`webpack-assets-manifest`](https://github.com/webdeveric/webpack-assets-manifest) that maps output names (your 'packs') to the fingerprinted versions, including bundle-splitting dependencies. That's the main secret sauce of Shakapacker!
 
 The webpack configuration used by Shakapacker lives in `config/webpack/webpack.config.js`; this makes it easy to customize the configuration beyond what's available in `config/shakapacker.yml` by giving you complete control of the final configuration. By default, this file exports the result of `generateWebpackConfig` which handles generating a webpack configuration based on `config/shakapacker.yml`.
+
+#### Using a Completely Custom Webpack Configuration
+
+If you're providing a completely custom webpack configuration without using `generateWebpackConfig()`, you should set `javascript_transpiler: 'none'` in your `config/shakapacker.yml` to skip Shakapacker's transpiler validation and dependency checks:
+
+```yml
+# config/shakapacker.yml
+default: &default
+  javascript_transpiler: "none" # Skip Shakapacker's transpiler setup
+  # ... other config
+```
+
+This is useful when you're managing your own transpiler configuration entirely outside of Shakapacker's defaults.
+
+**Note:** Only use `javascript_transpiler: 'none'` if you're providing a completely custom webpack configuration without using `generateWebpackConfig()`. If you're using Shakapacker's webpack generation (which is the common case), use one of the supported transpilers (`'babel'`, `'swc'`, or `'esbuild'`) instead.
 
 The easiest way to modify this config is to pass your desired customizations to `generateWebpackConfig` which will use [webpack-merge](https://github.com/survivejs/webpack-merge) to merge them with the configuration generated from `config/shakapacker.yml`:
 
@@ -754,7 +894,7 @@ fileRule.type = "asset"
 
 ### Babel configuration
 
-By default, you will find the Shakapacker preset in your `package.json`. Note, you need to use the new NPM package name, `shakapacker`.
+If you choose to use Babel instead of the default SWC transpiler, you will need to configure it in your `package.json`:
 
 ```json
 "babel": {
@@ -764,19 +904,21 @@ By default, you will find the Shakapacker preset in your `package.json`. Note, y
 },
 ```
 
-Optionally, you can change your Babel configuration by removing these lines in your `package.json` and adding [a Babel configuration file](https://babeljs.io/docs/en/config-files) to your project. For an example of customization based on the original, see [Customizing Babel Config](./docs/customizing_babel_config.md).
+You can also change your Babel configuration by removing these lines in your `package.json` and adding [a Babel configuration file](https://babeljs.io/docs/en/config-files) to your project. For an example of customization based on the original, see [Customizing Babel Config](./docs/customizing_babel_config.md).
 
 ### SWC configuration
 
-You can try out experimental integration with the SWC loader. You can read more at [SWC usage docs](./docs/using_swc_loader.md).
+SWC is the recommended JavaScript transpiler in Shakapacker v9+ (20x faster than Babel). New installations use SWC by default via the installation template. You can read more at [SWC usage docs](./docs/using_swc_loader.md).
 
-Please note that if you want opt-in to use SWC, you can skip [React](#react) integration instructions as it is supported out of the box.
+**Note on defaults**: The installation template explicitly sets `javascript_transpiler: "swc"` for new projects. However, for backward compatibility, webpack's runtime default (when no explicit config exists) remains `"babel"`. Rspack always defaults to `"swc"`.
+
+Please note that SWC supports [React](#react) integration out of the box - no additional configuration needed.
 
 ### esbuild loader configuration
 
-You can try out experimental integration with the esbuild-loader. You can read more at [esbuild-loader usage docs](./docs/using_esbuild_loader.md).
+You can use esbuild as an alternative JavaScript transpiler. You can read more at [esbuild-loader usage docs](./docs/using_esbuild_loader.md).
 
-Please note that if you want opt-in to use esbuild-loader, you can skip [React](#react) integration instructions as it is supported out of the box.
+Please note that esbuild supports [React](#react) integration out of the box - no additional configuration needed.
 
 ### Switching between transpilers
 
@@ -788,7 +930,7 @@ Shakapacker provides a powerful utility to export and analyze your webpack/rspac
 
 ```bash
 # Export all configs for troubleshooting (recommended)
-bin/export-bundler-config --doctor
+bin/shakapacker-config --doctor
 
 # Or via rake task
 bundle exec rake shakapacker:export_bundler_config -- --doctor
@@ -1028,13 +1170,13 @@ Otherwise, Shakapacker will use the production environment as a fallback environ
 For example, the below command will compile assets in production mode but will use staging configurations from `config/shakapacker.yml` if available or use fallback production environment configuration:
 
 ```bash
-RAILS_ENV=staging bundle exec rails assets:precompile
+RAILS_ENV=staging bundle exec rake assets:precompile
 ```
 
 And, this will compile in development mode and load configuration for the cucumber environment if defined in `shakapacker.yml` or fallback to production configuration
 
 ```bash
-RAILS_ENV=cucumber NODE_ENV=development bundle exec rails assets:precompile
+RAILS_ENV=cucumber NODE_ENV=development bundle exec rake assets:precompile
 ```
 
 Please note, binstubs compiles in development mode however rake tasks compiles in production mode.
@@ -1045,8 +1187,8 @@ Please note, binstubs compiles in development mode however rake tasks compiles i
 ./bin/shakapacker-dev-server
 
 # Compiles in production mode by default unless NODE_ENV is specified, per `lib/tasks/shakapacker/compile.rake`
-bundle exec rails assets:precompile
-bundle exec rails shakapacker:compile
+bundle exec rake assets:precompile
+bundle exec rake shakapacker:compile
 ```
 
 ### Upgrading
@@ -1058,7 +1200,7 @@ You can run the following commands to upgrade Shakapacker to the latest stable v
 bundle update shakapacker
 
 # overwrite your changes to the default install files and revert any unwanted changes from the install
-rails shakapacker:install
+bundle exec rake shakapacker:install
 
 # using npm
 npm install shakapacker@latest
@@ -1205,7 +1347,7 @@ For detailed CDN setup instructions, including CloudFlare configuration, trouble
 
 ```bash
 export SHAKAPACKER_ASSET_HOST=https://cdn.example.com
-RAILS_ENV=production bundle exec rails assets:precompile
+RAILS_ENV=production bundle exec rake assets:precompile
 ```
 
 For more deployment documentation, see [Deployment](./docs/deployment.md).
@@ -1256,12 +1398,13 @@ The following companies support our Open Source projects, and ShakaCode uses the
     <img alt="BrowserStack" src="https://user-images.githubusercontent.com/4244251/184881129-e1edf4b7-3ae1-4ea8-9e6d-3595cf01609e.png" height="55px">
   </picture>
 </a>
-<a href="https://railsautoscale.com">
-  <img src="https://user-images.githubusercontent.com/4244251/184881144-95c2c25c-9879-4069-864d-4e67d6ed39d2.png" alt="Rails Autoscale" height="55px">
-</a>
 <a href="https://www.honeybadger.io">
   <img src="https://user-images.githubusercontent.com/4244251/184881133-79ee9c3c-8165-4852-958e-31687b9536f4.png" alt="Honeybadger" height="55px">
 </a>
-<a href="https://reviewable.io">
-  <img src="https://user-images.githubusercontent.com/20628911/230848305-c94510a4-82d7-468f-bf9f-eeb81d3f2ce0.png" alt="Reviewable" height="55px">
+<a href="https://coderabbit.ai">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="https://victorious-bubble-f69a016683.media.strapiapp.com/White_Typemark_7229870ac5.svg">
+    <source media="(prefers-color-scheme: light)" srcset="https://victorious-bubble-f69a016683.media.strapiapp.com/Orange_Typemark_7958cfa790.svg">
+    <img alt="CodeRabbit" src="https://victorious-bubble-f69a016683.media.strapiapp.com/Orange_Typemark_7958cfa790.svg" height="55px">
+  </picture>
 </a>

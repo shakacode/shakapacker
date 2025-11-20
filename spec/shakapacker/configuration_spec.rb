@@ -55,6 +55,28 @@ describe "Shakapacker::Configuration" do
       expect(config.cache_path.to_s).to eq cache_path
     end
 
+    describe "#data" do
+      it "is publicly accessible" do
+        expect(config).to respond_to(:data)
+      end
+
+      it "returns a hash with symbolized keys" do
+        data = config.data
+        expect(data).to be_a(Hash)
+        expect(data.keys).to all(be_a(Symbol))
+      end
+
+      it "returns configuration from shakapacker.yml" do
+        data = config.data
+        expect(data[:source_path]).to eq("app/javascript")
+        expect(data[:public_output_path]).to eq("packs")
+      end
+
+      it "returns frozen hash to prevent mutations" do
+        expect(config.data).to be_frozen
+      end
+    end
+
     it "#private_output_path returns correct path" do
       private_output_path = File.expand_path File.join(File.dirname(__FILE__), "./test_app/ssr-generated").to_s
 
@@ -612,6 +634,34 @@ describe "Shakapacker::Configuration" do
 
         expect($stderr).to receive(:puts).with(/DEPRECATION WARNING.*webpack_loader.*deprecated.*javascript_transpiler/)
         expect(config.javascript_transpiler).to eq "swc"
+      end
+    end
+  end
+
+  describe "javascript_transpiler: 'none'" do
+    context "with javascript_transpiler set to 'none'" do
+      let(:config) do
+        Shakapacker::Configuration.new(
+          root_path: ROOT_PATH,
+          config_path: Pathname.new(File.expand_path("./test_app/config/shakapacker.yml", __dir__)),
+          env: "production"
+        )
+      end
+
+      it "accepts 'none' as a valid value" do
+        allow(config).to receive(:fetch).with(:javascript_transpiler).and_return("none")
+        allow(config).to receive(:fetch).with(:webpack_loader).and_return(nil)
+        expect(config.javascript_transpiler).to eq "none"
+      end
+
+      it "skips transpiler validation when set to 'none'" do
+        allow(config).to receive(:fetch).with(:javascript_transpiler).and_return("none")
+        allow(config).to receive(:fetch).with(:webpack_loader).and_return(nil)
+        allow(config).to receive(:root_path).and_return(ROOT_PATH)
+
+        # Should not trigger any validation warnings
+        expect($stderr).not_to receive(:puts)
+        expect(config.javascript_transpiler).to eq "none"
       end
     end
   end

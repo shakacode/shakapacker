@@ -11,8 +11,8 @@ def verify_file_existence(binstub_file)
     puts <<~MSG
       Couldn't find shakapacker binstubs!
       Possible solutions:
-      - Ensure you have run `rails shakapacker:install`.
-      - Run `rails shakapacker:binstubs` if you have already installed shakapacker.
+      - Ensure you have run `bundle exec rake shakapacker:install`.
+      - Run `bundle exec rake shakapacker:binstubs` if you have already installed shakapacker.
       - Ensure the `bin` directory, `bin/shakapacker`, and `bin/shakapacker-dev-server` are not included in .gitignore.
     MSG
     exit!

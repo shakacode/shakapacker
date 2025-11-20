@@ -36,16 +36,16 @@ The automated release task handles the entire release process:
 
 ```bash
 # For a specific version (e.g., 9.1.0)
-rake create_release[9.1.0]
+bundle exec rake create_release[9.1.0]
 
 # For a beta release (note: use period, not dash)
-rake create_release[9.2.0.beta.1]  # Creates npm package 9.2.0-beta.1
+bundle exec rake create_release[9.2.0.beta.1]  # Creates npm package 9.2.0-beta.1
 
 # For a patch version bump (auto-increments)
-rake create_release
+bundle exec rake create_release
 
 # Dry run to test without publishing
-rake create_release[9.1.0,true]
+bundle exec rake create_release[9.1.0,true]
 ```
 
 ### 3. What the Release Task Does
@@ -83,13 +83,13 @@ The task automatically converts Ruby gem format to npm semver format:
 
 ```bash
 # Regular release
-rake create_release[9.1.0]  # Gem: 9.1.0, npm: 9.1.0
+bundle exec rake create_release[9.1.0]  # Gem: 9.1.0, npm: 9.1.0
 
 # Beta release
-rake create_release[9.2.0.beta.1]  # Gem: 9.2.0.beta.1, npm: 9.2.0-beta.1
+bundle exec rake create_release[9.2.0.beta.1]  # Gem: 9.2.0.beta.1, npm: 9.2.0-beta.1
 
 # Release candidate
-rake create_release[10.0.0.rc.1]  # Gem: 10.0.0.rc.1, npm: 10.0.0-rc.1
+bundle exec rake create_release[10.0.0.rc.1]  # Gem: 10.0.0.rc.1, npm: 10.0.0-rc.1
 ```
 
 ### 5. During the Release

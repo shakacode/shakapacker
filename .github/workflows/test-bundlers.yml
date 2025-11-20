@@ -2,8 +2,18 @@ name: Test Both Bundlers
 
 on:
   pull_request:
+    paths:
+      - "spec/dummy/**"
+      - "lib/**"
+      - "**.rb"
+      - "**.js"
+      - "**.ts"
+      - "package.json"
+      - "yarn.lock"
+      - ".github/workflows/test-bundlers.yml"
   push:
     branches: [master, main]
+  workflow_dispatch:
 
 jobs:
   test-webpack:

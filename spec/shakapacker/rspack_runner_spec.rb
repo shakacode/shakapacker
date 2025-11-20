@@ -1,4 +1,5 @@
 require_relative "spec_helper_initializer"
+require_relative "shared/help_and_version_examples"
 require "shakapacker/rspack_runner"
 require_relative "../support/package_json_helpers"
 
@@ -69,7 +70,136 @@ describe "RspackRunner" do
     end
   end
 
+  include_examples "help and version flags",
+                   Shakapacker::Runner,
+                   "SHAKAPACKER - Rails Webpack/Rspack Integration"
+
+  describe "help and version flags - runner specific" do
+    it "mentions trace-deprecation option in help and exits" do
+      expect { Shakapacker::Runner.run(["--help"]) }
+        .to output(/--trace-deprecation/).to_stdout
+        .and raise_error(SystemExit)
+    end
+
+    it "shows examples of usage" do
+      expect { Shakapacker::Runner.run(["--help"]) }
+        .to output(/Examples/).to_stdout
+        .and raise_error(SystemExit)
+    end
+  end
+
+  describe "exit code handling" do
+    it "exits with failure code when build fails" do
+      Dir.chdir(test_app_path) do
+        klass = Shakapacker::RspackRunner
+        instance = klass.new([])
+
+        allow(klass).to receive(:new).and_return(instance)
+        allow(Shakapacker::Utils::Manager).to receive(:error_unless_package_manager_is_obvious!)
+
+        # Stub system to simulate failure
+        allow(instance).to receive(:system) do |*args|
+          system("exit 5")  # Sets $? to exit code 5
+          false
+        end
+
+        expect { klass.run([]) }.to raise_error(SystemExit) do |error|
+          expect(error.status).to eq(5)
+        end
+      end
+    end
+
+    it "does not exit when build succeeds" do
+      Dir.chdir(test_app_path) do
+        klass = Shakapacker::RspackRunner
+        instance = klass.new([])
+
+        allow(klass).to receive(:new).and_return(instance)
+        allow(Shakapacker::Utils::Manager).to receive(:error_unless_package_manager_is_obvious!)
+
+        # Stub system to simulate success
+        allow(instance).to receive(:system) do |*args|
+          system("true")  # Sets $? to successful status
+          true
+        end
+
+        expect { klass.run([]) }.not_to raise_error
+      end
+    end
+  end
+
+  describe "timing output" do
+    it "shows timing for static builds" do
+      Dir.chdir(test_app_path) do
+        klass = Shakapacker::RspackRunner
+        instance = klass.new([])
+
+        allow(klass).to receive(:new).and_return(instance)
+        allow(Shakapacker::Utils::Manager).to receive(:error_unless_package_manager_is_obvious!)
+
+        allow(instance).to receive(:system) do |*args|
+          sleep(0.1)  # Simulate build time
+          system("true")
+          true
+        end
+
+        output = capture_stdout { klass.run([]) }
+
+        # The test app may have webpack config, so bundler name could be either
+        # Time format can be either "X.XXs" or "M:SS.SSs" for the display, always "X.XXs" in parentheses
+        expect(output).to match(/\[Shakapacker\] Completed (webpack|rspack) build in (\d+:\d+\.\d+s|\d+\.\d+s) \(\d+\.\d+s\)/)
+      end
+    end
+
+    it "does not show timing for watch mode with --watch flag" do
+      Dir.chdir(test_app_path) do
+        klass = Shakapacker::RspackRunner
+        instance = klass.new(["--watch"])
+
+        allow(klass).to receive(:new).and_return(instance)
+        allow(Shakapacker::Utils::Manager).to receive(:error_unless_package_manager_is_obvious!)
+
+        allow(instance).to receive(:system) do |*args|
+          system("true")
+          true
+        end
+
+        output = capture_stdout { klass.run(["--watch"]) }
+
+        expect(output).not_to match(/Completed (webpack|rspack) build/)
+      end
+    end
+
+    it "does not show timing for watch mode with -w flag" do
+      Dir.chdir(test_app_path) do
+        klass = Shakapacker::RspackRunner
+        instance = klass.new(["-w"])
+
+        allow(klass).to receive(:new).and_return(instance)
+        allow(Shakapacker::Utils::Manager).to receive(:error_unless_package_manager_is_obvious!)
+
+        allow(instance).to receive(:system) do |*args|
+          system("true")
+          true
+        end
+
+        output = capture_stdout { klass.run(["-w"]) }
+
+        expect(output).not_to match(/Completed (webpack|rspack) build/)
+      end
+    end
+  end
+
   private
+
+    def capture_stdout
+      old_stdout = $stdout
+      $stdout = StringIO.new
+      yield
+      $stdout.string
+    ensure
+      $stdout = old_stdout
+    end
 
     def verify_command(cmd, argv: [])
       Dir.chdir(test_app_path) do
@@ -77,11 +207,15 @@ describe "RspackRunner" do
         instance = klass.new(argv)
 
         allow(klass).to receive(:new).and_return(instance)
-        allow(Kernel).to receive(:exec)
+        # Stub system to set $? to successful status
+        allow(instance).to receive(:system) do |*args|
+          system("true")  # Sets $? to successful status
+          true
+        end
 
         klass.run(argv)
 
-        expect(Kernel).to have_received(:exec).with(Shakapacker::Compiler.env, *cmd)
+        expect(instance).to have_received(:system).with(Shakapacker::Compiler.env, *cmd)
         expect(Shakapacker::Utils::Manager).to have_received(:error_unless_package_manager_is_obvious!)
       end
     end

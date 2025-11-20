@@ -2,7 +2,7 @@
 import type { LoaderDefinitionFunction } from "webpack"
 
 export interface ShakapackerLoaderOptions {
-  [key: string]: any
+  [key: string]: unknown
 }
 
 export interface ShakapackerLoader {

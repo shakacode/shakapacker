@@ -1,4 +1,5 @@
 require_relative "spec_helper_initializer"
+require_relative "shared/help_and_version_examples"
 require "shakapacker/dev_server_runner"
 
 describe "DevServerRunner" do
@@ -117,6 +118,55 @@ describe "DevServerRunner" do
     end
   end
 
+  include_examples "help and version flags",
+                   Shakapacker::DevServerRunner,
+                   "SHAKAPACKER DEV SERVER"
+
+  describe "help and version flags - dev server specific" do
+    it "mentions configuration in help and exits" do
+      expect { Shakapacker::DevServerRunner.run(["--help"]) }
+        .to output(/config\/shakapacker\.yml/).to_stdout
+        .and raise_error(SystemExit)
+    end
+
+    it "mentions host/port are managed by config" do
+      expect { Shakapacker::DevServerRunner.run(["--help"]) }
+        .to output(/--host.*Set from dev_server\.host/).to_stdout
+        .and raise_error(SystemExit)
+    end
+  end
+
+  describe "NODE_ENV environment variable" do
+    it "sets NODE_ENV when not already set" do
+      original_node_env = ENV.delete("NODE_ENV")
+
+      begin
+        Dir.chdir(test_app_path) do
+          klass = Shakapacker::DevServerRunner
+
+          allow(Shakapacker::Utils::Manager).to receive(:error_unless_package_manager_is_obvious!)
+
+          instance = klass.new([])
+
+          allow(klass).to receive(:new).and_return(instance)
+
+          # Stub build_cmd and system to prevent actual execution
+          allow(instance).to receive(:build_cmd).and_return(["webpack", "serve"])
+          allow(instance).to receive(:system) do |*args|
+            system("true")  # Sets $? to successful status
+            true
+          end
+
+          klass.run([])
+
+          expect(ENV["NODE_ENV"]).to eq("development")
+        end
+      ensure
+        ENV["NODE_ENV"] = original_node_env if original_node_env
+      end
+    end
+  end
+
   private
 
     def verify_command(cmd, argv: [], env: Shakapacker::Compiler.env)
@@ -125,11 +175,15 @@ describe "DevServerRunner" do
         instance = klass.new(argv)
 
         allow(klass).to receive(:new).and_return(instance)
-        allow(Kernel).to receive(:exec).with(env, *cmd)
+        # Stub system to set $? to successful status
+        allow(instance).to receive(:system) do |*args|
+          system("true")  # Sets $? to successful status
+          true
+        end
 
         klass.run(argv)
 
-        expect(Kernel).to have_received(:exec).with(env, *cmd)
+        expect(instance).to have_received(:system).with(env, *cmd)
         expect(Shakapacker::Utils::Manager).to have_received(:error_unless_package_manager_is_obvious!)
       end
     end

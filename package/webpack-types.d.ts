@@ -13,7 +13,7 @@ export interface ShakapackerRule extends RuleSetRule {
 }
 
 export interface ShakapackerLoaderOptions {
-  [key: string]: any
+  [key: string]: unknown
 }
 
 export interface ShakapackerLoader {

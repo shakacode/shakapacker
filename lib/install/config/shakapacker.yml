@@ -19,6 +19,18 @@ default: &default
   #  css_extract_ignore_order_warnings to true
   css_extract_ignore_order_warnings: false
 
+  # CSS Modules export mode
+  # Controls how CSS Module class names are exported in JavaScript
+  # Defaults to 'named' if not specified. Uncomment and change to 'default' for v8 behavior.
+  # Options:
+  #   - named (default): Use named exports with camelCase conversion (v9 default)
+  #     Example: import { button } from './styles.module.css'
+  #   - default: Use default export with both original and camelCase names (v8 behavior)
+  #     Example: import styles from './styles.module.css'
+  # For gradual migration, you can set this to default to maintain v8 behavior
+  # See https://github.com/shakacode/shakapacker/blob/main/docs/css-modules-export-mode.md
+  # css_modules_export_mode: named
+
   public_root_path: public
   public_output_path: packs
   cache_path: tmp/shakapacker
@@ -41,13 +53,19 @@ default: &default
   cache_manifest: false
 
   # Select JavaScript transpiler to use
-  # Available options: 'swc' (default, 20x faster), 'babel', or 'esbuild'
+  # Available options: 'swc' (default, 20x faster), 'babel', 'esbuild', or 'none'
+  # Use 'none' when providing a completely custom webpack configuration
   # Note: When using rspack, swc is used automatically regardless of this setting
   javascript_transpiler: "swc"
 
   # Select assets bundler to use
   # Available options: 'webpack' (default) or 'rspack'
   assets_bundler: "webpack"
+
+  # Path to the directory containing webpack/rspack config files
+  # Defaults to 'config/webpack' for webpack or 'config/rspack' for rspack
+  # Use '.' to specify the root directory of your project
+  # assets_bundler_config_path: config/webpack
 
   # Hook to run before webpack compilation (e.g., for generating dynamic entry points)
   # SECURITY: Only reference trusted scripts within your project. The hook command will be
@@ -62,9 +80,8 @@ default: &default
   compiler_strategy: digest
 
   # Select whether the compiler will always use a content hash and not just in production
-  # Don't use contentHash except for production for performance
-  # https://webpack.js.org/guides/build-performance/#avoid-production-specific-tooling
-  useContentHash: false
+  # Content hashes are recommended for production cache busting
+  useContentHash: true
 
   # Setting the asset host here will override Rails.application.config.asset_host.
   # Here, you can set different asset_host per environment. Note that
@@ -81,10 +98,33 @@ default: &default
     # https://developer.mozilla.org/en-US/docs/Web/Security/Subresource_Integrity#cross-origin_resource_sharing_and_subresource_integrity
     cross_origin: "anonymous"
 
+  # HTTP 103 Early Hints support for faster asset loading
+  # Sends Link headers to browsers so they can preload assets while Rails is rendering
+  # See docs/early_hints_new_api.md for setup instructions and requirements
+  # https://api.rubyonrails.org/classes/ActionDispatch/Request.html#method-i-send_early_hints
+  early_hints:
+    enabled: false
+    # css: "preload" # 'preload' | 'prefetch' | 'none' - default: 'preload'
+    # js: "preload" # 'preload' | 'prefetch' | 'none' - default: 'preload'
+    # debug: false # Output early hints info as HTML comments for troubleshooting
+
 development:
   <<: *default
   compile: true
   compiler_strategy: mtime
+
+  # Disable content hashes in development for faster builds
+  # https://webpack.js.org/guides/caching/
+  useContentHash: false
+
+  # Early hints disabled by default in development
+  # To enable: Set enabled: true AND start Puma with: bundle exec puma --early-hints
+  # See docs/early_hints_new_api.md for setup instructions
+  # early_hints:
+  #   enabled: true
+  #   css: "preload"
+  #   js: "preload"
+  #   debug: true
 
   # Reference: https://webpack.js.org/configuration/dev-server/
   # Keys not described there are documented inline and in https://github.com/shakacode/shakapacker/
@@ -140,8 +180,13 @@ production:
   # Production depends on precompilation of packs prior to booting for performance.
   compile: false
 
-  # Use content hash for naming assets. Cannot be overridden in production.
-  useContentHash: true
-
   # Cache manifest.json for performance
   cache_manifest: true
+
+  # Early hints disabled by default. See docs/early_hints_new_api.md before enabling.
+  # Requires proper server configuration (Puma + HTTP/2 proxy like nginx, Thruster, or Control Plane)
+  early_hints:
+    enabled: false
+    # css: "preload"
+    # js: "preload"
+    # debug: false

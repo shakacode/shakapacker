@@ -2,14 +2,96 @@
 
 This document provides step-by-step instructions for the most common upgrade scenarios in Shakapacker projects.
 
+**📖 For configuration options, see the [Configuration Guide](./configuration.md)**
+
 ## Table of Contents
 
+- [Upgrading Shakapacker](#upgrading-shakapacker)
 - [Migrating Package Managers](#migrating-package-managers)
   - [Yarn to npm](#yarn-to-npm)
   - [npm to Yarn](#npm-to-yarn)
   - [Migrating to pnpm](#migrating-to-pnpm)
 - [Migrating from Babel to SWC](#migrating-from-babel-to-swc)
 - [Migrating from Webpack to Rspack](#migrating-from-webpack-to-rspack)
+
+---
+
+## Upgrading Shakapacker
+
+> **⚠️ Important:** Shakapacker is both a Ruby gem AND an npm package. **You must update BOTH** when upgrading.
+
+Shakapacker consists of two components that must be updated together:
+
+1. **Ruby gem** - provides Rails integration and view helpers
+2. **npm package** - provides webpack/rspack configuration and build tools
+
+### Upgrade Steps
+
+#### 1. Update `Gemfile`
+
+```ruby
+gem "shakapacker", "9.3.0"  # or the version you want to upgrade to
+```
+
+**Pre-release versions:** Ruby gems use dot notation (e.g., `"9.3.0.beta.1"`)
+
+#### 2. Update `package.json`
+
+```json
+{
+  "dependencies": {
+    "shakapacker": "9.3.0"
+  }
+}
+```
+
+**Pre-release versions:** npm uses hyphen notation (e.g., `"9.3.0-beta.1"`)
+
+#### 3. Run bundler and package manager
+
+```bash
+bundle update shakapacker
+yarn install  # or npm install, pnpm install, bun install
+```
+
+#### 4. Test your build
+
+```bash
+bin/shakapacker
+bin/shakapacker-dev-server
+```
+
+### Why Both Must Be Updated
+
+- **Mismatched versions can cause build failures** - The Ruby gem expects specific configuration formats from the npm package
+- **Feature compatibility** - New features in the gem require corresponding npm package updates
+- **Bug fixes** - Fixes often span both Ruby and JavaScript code
+
+### Version Format Differences
+
+Note that pre-release versions use different formats:
+
+| Component    | Stable Version | Pre-release Version |
+| ------------ | -------------- | ------------------- |
+| Gemfile      | `"9.3.0"`      | `"9.3.0.beta.1"`    |
+| package.json | `"9.3.0"`      | `"9.3.0-beta.1"`    |
+
+### Finding the Latest Version
+
+- **Ruby gem:** Check [RubyGems.org](https://rubygems.org/gems/shakapacker)
+- **npm package:** Check [npmjs.com](https://www.npmjs.com/package/shakapacker)
+- **Releases:** See [GitHub Releases](https://github.com/shakacode/shakapacker/releases)
+
+### Major Version Upgrades
+
+For major version upgrades, always consult the version-specific upgrade guides for breaking changes and new features:
+
+- [V9 Upgrade Guide](./v9_upgrade.md) - Upgrading from v8 to v9 (includes CSS Modules changes, SWC defaults, and more)
+- [V8 Upgrade Guide](./v8_upgrade.md) - Upgrading from v7 to v8
+- [V7 Upgrade Guide](./v7_upgrade.md) - Upgrading from v6 to v7
+- [V6 Upgrade Guide](./v6_upgrade.md) - Upgrading from v5 to v6
+
+> **💡 Note:** Major version upgrades may include breaking changes. The steps above cover the basic gem/package updates that apply to all versions, but you should always review the version-specific guide for additional migration steps.
 
 ---
 
@@ -329,15 +411,14 @@ bin/shakapacker compile
 Shakapacker provides a convenient rake task to automate the migration:
 
 ```bash
-# Switch to rspack with automatic dependency management
-rails shakapacker:switch_bundler rspack --install-deps
-
-# Or with rake (note the -- separator)
-rake shakapacker:switch_bundler rspack -- --install-deps
+# Switch to rspack with automatic dependency management (note the -- separator)
+bin/rake shakapacker:switch_bundler rspack -- --install-deps
 
 # Fast switching without uninstalling webpack (keeps both)
-rails shakapacker:switch_bundler rspack --install-deps --no-uninstall
+bin/rake shakapacker:switch_bundler rspack -- --install-deps --no-uninstall
 ```
+
+> **⚠️ Important:** This task must be run with `bin/rake`, not `bin/rails`.
 
 The task will:
 
@@ -350,7 +431,7 @@ The task will:
 **Custom dependencies:** You can customize which dependencies are installed:
 
 ```bash
-rails shakapacker:switch_bundler --init-config
+bin/rake shakapacker:switch_bundler -- --init-config
 ```
 
 #### 2. Manual installation (alternative)

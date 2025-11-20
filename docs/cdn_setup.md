@@ -91,7 +91,7 @@ During deployment, compile your assets as usual:
 ```bash
 # The SHAKAPACKER_ASSET_HOST will be used during compilation
 # to set the webpack publicPath
-RAILS_ENV=production bundle exec rails assets:precompile
+RAILS_ENV=production bundle exec rake assets:precompile
 ```
 
 This ensures that:
@@ -204,7 +204,7 @@ import("./components/HeavyComponent").then((module) => {
 **Solutions**:
 
 1. Ensure you set `SHAKAPACKER_ASSET_HOST` **before** running `assets:precompile`
-2. Clear Rails cache: `rails tmp:cache:clear`
+2. Clear Rails cache: `bundle exec rake tmp:cache:clear`
 3. Check the manifest.json file includes CDN URLs:
    ```bash
    cat public/packs/manifest.json
@@ -369,7 +369,7 @@ end
 ```bash
 # Deployment script
 export SHAKAPACKER_ASSET_HOST=https://cdn.example.com
-RAILS_ENV=production bundle exec rails assets:precompile
+RAILS_ENV=production bundle exec rake assets:precompile
 ```
 
 ## Summary

@@ -36,12 +36,14 @@ export function createFileOperationError(
   filePath: string,
   details?: string
 ): ShakapackerError {
-  const errorCode =
-    operation === "read"
-      ? ErrorCode.FILE_READ_ERROR
-      : operation === "write"
-        ? ErrorCode.FILE_WRITE_ERROR
-        : ErrorCode.FILE_NOT_FOUND
+  let errorCode: ErrorCode
+  if (operation === "read") {
+    errorCode = ErrorCode.FILE_READ_ERROR
+  } else if (operation === "write") {
+    errorCode = ErrorCode.FILE_WRITE_ERROR
+  } else {
+    errorCode = ErrorCode.FILE_NOT_FOUND
+  }
 
   return new ShakapackerError(errorCode, {
     path: filePath,
@@ -60,12 +62,14 @@ export function createFileOperationErrorLegacy(
 ): Error {
   const baseMessage = `Failed to ${operation} file at path '${filePath}'`
   const errorDetails = details ? ` - ${details}` : ""
-  const suggestion =
-    operation === "read"
-      ? " (check if file exists and permissions are correct)"
-      : operation === "write"
-        ? " (check write permissions and disk space)"
-        : " (check permissions)"
+  let suggestion: string
+  if (operation === "read") {
+    suggestion = " (check if file exists and permissions are correct)"
+  } else if (operation === "write") {
+    suggestion = " (check write permissions and disk space)"
+  } else {
+    suggestion = " (check permissions)"
+  }
   return new Error(`${baseMessage}${errorDetails}${suggestion}`)
 }
 

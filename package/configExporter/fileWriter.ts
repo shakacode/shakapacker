@@ -11,16 +11,16 @@ export class FileWriter {
   /**
    * Write multiple config files (one per config in array)
    */
-  writeMultipleFiles(outputs: FileOutput[], targetDir: string): void {
+  static writeMultipleFiles(outputs: FileOutput[], targetDir: string): void {
     // Ensure directory exists
-    this.ensureDirectory(targetDir)
+    FileWriter.ensureDirectory(targetDir)
 
     // Write each file
     outputs.forEach((output) => {
       const safeName = basename(output.filename)
       const filePath = resolve(targetDir, safeName)
-      this.validateOutputPath(filePath)
-      this.writeFile(filePath, output.content)
+      FileWriter.validateOutputPath(filePath)
+      FileWriter.writeFile(filePath, output.content)
       console.log(`[Config Exporter] Created: ${filePath}`)
     })
 
@@ -32,41 +32,61 @@ export class FileWriter {
   /**
    * Write a single file
    */
-  writeSingleFile(filePath: string, content: string, quiet = false): void {
+  static writeSingleFile(filePath: string, content: string): void {
     // Ensure parent directory exists
     const dir = dirname(filePath)
-    this.ensureDirectory(dir)
+    FileWriter.ensureDirectory(dir)
 
-    this.validateOutputPath(filePath)
-    this.writeFile(filePath, content)
-    if (!quiet && process.env.VERBOSE) {
-      console.log(`[Config Exporter] Config exported to: ${filePath}`)
-    }
+    FileWriter.validateOutputPath(filePath)
+    FileWriter.writeFile(filePath, content)
+    console.log(`[Config Exporter] Created: ${filePath}`)
   }
 
   /**
    * Generate filename for a config export
-   * Format: {bundler}-{env}-{type}.{ext}
-   * Examples:
-   *   webpack-development-client.yaml
-   *   rspack-production-server.yaml
-   *   webpack-test-all.json
+   * Format without build: {bundler}-{env}-{type}.{ext}
+   * Format with build: {bundler}-{build}-{type}.{ext}
+   *
+   * @param bundler - The bundler type (webpack, rspack)
+   * @param env - The environment (development, production, test)
+   * @param configType - Type of config. Built-in: "client", "server", "all", "client-hmr". Custom: any string from outputs array
+   * @param format - Output format (yaml, json, inspect)
+   * @param buildName - Optional build name that overrides env in filename
+   *
+   * @example
+   * // Built-in types
+   * generateFilename("webpack", "development", "client", "yaml")
+   * // => "webpack-development-client.yml"
+   *
+   * @example
+   * // Custom output names
+   * generateFilename("webpack", "development", "client-modern", "yaml", "dev-hmr")
+   * // => "webpack-dev-hmr-client-modern.yml"
    */
-  generateFilename(
+  static generateFilename(
     bundler: string,
     env: string,
-    configType: "client" | "server" | "all",
-    format: "yaml" | "json" | "inspect"
+    configType: string,
+    format: "yaml" | "json" | "inspect",
+    buildName?: string
   ): string {
-    const ext = format === "yaml" ? "yaml" : format === "json" ? "json" : "txt"
-    return `${bundler}-${env}-${configType}.${ext}`
+    let ext: string
+    if (format === "yaml") {
+      ext = "yml"
+    } else if (format === "json") {
+      ext = "json"
+    } else {
+      ext = "txt"
+    }
+    const name = buildName || env
+    return `${bundler}-${name}-${configType}.${ext}`
   }
 
-  private writeFile(filePath: string, content: string): void {
+  private static writeFile(filePath: string, content: string): void {
     writeFileSync(filePath, content, "utf8")
   }
 
-  private ensureDirectory(dir: string): void {
+  private static ensureDirectory(dir: string): void {
     if (!existsSync(dir)) {
       mkdirSync(dir, { recursive: true })
     }
@@ -75,7 +95,7 @@ export class FileWriter {
   /**
    * Validate output path and warn if writing outside cwd
    */
-  validateOutputPath(outputPath: string): void {
+  private static validateOutputPath(outputPath: string): void {
     const absPath = resolve(outputPath)
     const cwd = process.cwd()
 

@@ -27,6 +27,15 @@
 - Create small, focused PRs that are easy to review
 - Always create a PR immediately after pushing changes
 
+## Changelog
+
+- **Update CHANGELOG.md for user-visible changes only** (features, bug fixes, breaking changes, deprecations, performance improvements)
+- **Do NOT add entries for**: linting, formatting, refactoring, tests, or documentation fixes
+- **Format**: `[PR #123](https://github.com/shakacode/shakapacker/pull/123) by [username](https://github.com/username)` (Shakapacker uses `#` in PR links)
+- **Use `/update-changelog` command** for guided changelog updates with automatic formatting
+- **Version management**: Run `bundle exec rake update_changelog` after releases to update version headers
+- **Examples**: Run `grep -A 3 "^### " CHANGELOG.md | head -30` to see real formatting examples
+
 ## Shakapacker-Specific
 
 - This gem supports both webpack and rspack configurations

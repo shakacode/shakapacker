@@ -678,7 +678,7 @@ describe Shakapacker::Doctor do
   describe "binstub checks" do
     let(:binstub_path) { root_path.join("bin/shakapacker") }
     let(:dev_server_binstub_path) { root_path.join("bin/shakapacker-dev-server") }
-    let(:export_config_binstub_path) { root_path.join("bin/export-bundler-config") }
+    let(:export_config_binstub_path) { root_path.join("bin/shakapacker-config") }
 
     context "when all binstubs exist" do
       before do
@@ -707,7 +707,7 @@ describe Shakapacker::Doctor do
       end
     end
 
-    context "when export-bundler-config binstub does not exist" do
+    context "when shakapacker-config binstub does not exist" do
       before do
         FileUtils.mkdir_p(binstub_path.dirname)
         File.write(binstub_path, "#!/usr/bin/env ruby")
@@ -716,14 +716,14 @@ describe Shakapacker::Doctor do
 
       it "adds missing binstubs warning" do
         doctor.send(:check_binstub)
-        expect(warning_messages).to include(match(/Missing binstubs:.*bin\/export-bundler-config/))
+        expect(warning_messages).to include(match(/Missing binstubs:.*bin\/shakapacker-config/))
       end
     end
 
     context "when no binstubs exist" do
       it "adds missing binstubs warning for all three" do
         doctor.send(:check_binstub)
-        expect(warning_messages).to include(match(/Missing binstubs:.*bin\/shakapacker.*bin\/shakapacker-dev-server.*bin\/export-bundler-config/))
+        expect(warning_messages).to include(match(/Missing binstubs:.*bin\/shakapacker.*bin\/shakapacker-dev-server.*bin\/shakapacker-config/))
       end
     end
   end

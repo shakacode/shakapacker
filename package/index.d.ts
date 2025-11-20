@@ -1,20 +1,26 @@
-import * as webpackMerge from "webpack-merge"
-import type { Configuration } from "webpack"
-declare const _default: {
-  customizeArray: typeof webpackMerge.customizeArray
-  customizeObject: typeof webpackMerge.customizeObject
-  CustomizeRule: typeof webpackMerge.CustomizeRule
-  merge: typeof webpackMerge.merge
-  default: typeof webpackMerge.merge
-  mergeWithCustomize: typeof webpackMerge.mergeWithCustomize
-  mergeWithRules: typeof webpackMerge.mergeWithRules
-  unique: typeof webpackMerge.unique
-  config: import("./types").Config
-  devServer: import("./types").DevServerConfig
-  generateWebpackConfig: (
-    extraConfig?: Configuration,
-    ...extraArgs: unknown[]
-  ) => Configuration
+/**
+ * Manual type definitions for Shakapacker package exports.
+ *
+ * This file is manually maintained because TypeScript cannot infer types
+ * from the `export =` syntax with dynamic require() calls in index.ts.
+ *
+ * When adding/modifying exports in index.ts, update this file accordingly.
+ */
+
+// @ts-ignore: webpack is an optional peer dependency (using type-only import)
+import type { Configuration, RuleSetRule } from "webpack"
+import type { Config, DevServerConfig, Env } from "./types"
+
+/**
+ * The shape of the Shakapacker module exports.
+ * This interface represents the object exported via CommonJS `export =`.
+ */
+interface ShakapackerExports {
+  /** Shakapacker configuration from shakapacker.yml */
+  config: Config
+  /** Development server configuration */
+  devServer: DevServerConfig
+  /** Base webpack/rspack configuration */
   baseConfig: Configuration
   env: {
     railsEnv: any
@@ -30,6 +36,18 @@ declare const _default: {
     fn: (modulePath: string) => T
   ) => T | null
   inliningCss: boolean
+  /** Generate webpack configuration with optional custom config */
+  generateWebpackConfig: (extraConfig?: Configuration) => Configuration
+  /** webpack-merge's merge function */
+  merge: typeof import("webpack-merge").merge
+  /** webpack-merge's mergeWithCustomize function */
+  mergeWithCustomize: typeof import("webpack-merge").mergeWithCustomize
+  /** webpack-merge's mergeWithRules function */
+  mergeWithRules: typeof import("webpack-merge").mergeWithRules
+  /** webpack-merge's unique function */
+  unique: typeof import("webpack-merge").unique
 }
+
+declare const _default: ShakapackerExports
 export = _default
 //# sourceMappingURL=index.d.ts.map

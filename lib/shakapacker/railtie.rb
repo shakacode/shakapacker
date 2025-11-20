@@ -39,6 +39,10 @@ class Shakapacker::Engine < ::Rails::Engine
     end
   end
 
+  # Early hints are handled automatically by javascript_pack_tag and stylesheet_pack_tag helpers
+  # when early_hints.enabled: true in shakapacker.yml
+  # See docs/early_hints_new_api.md for usage
+
   initializer "shakapacker.logger" do
     config.after_initialize do
       if ::Rails.logger.respond_to?(:tagged)

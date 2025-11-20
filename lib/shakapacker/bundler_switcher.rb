@@ -9,15 +9,27 @@ module Shakapacker
     SHAKAPACKER_CONFIG = "config/shakapacker.yml"
     CUSTOM_DEPS_CONFIG = ".shakapacker-switch-bundler-dependencies.yml"
 
+    # Regex pattern to detect assets_bundler key in config (only matches uncommented lines)
+    ASSETS_BUNDLER_PATTERN = /^[ \t]*assets_bundler:/
+
+    # Shared dependencies used by both webpack and rspack
+    # These should not be removed when switching bundlers
+    SHARED_DEPS = {
+      dev: %w[],
+      prod: %w[webpack-merge]
+    }.freeze
+
     # Default dependencies for each bundler (package names only, no versions)
+    # Note: Excludes independent/optional dependencies like @swc/core, swc-loader (user-configured
+    # transpilers)
     DEFAULT_RSPACK_DEPS = {
       dev: %w[@rspack/cli @rspack/plugin-react-refresh],
       prod: %w[@rspack/core rspack-manifest-plugin]
     }.freeze
 
     DEFAULT_WEBPACK_DEPS = {
-      dev: %w[webpack webpack-cli webpack-dev-server @pmmmwh/react-refresh-webpack-plugin @swc/core swc-loader],
-      prod: %w[webpack-assets-manifest webpack-merge]
+      dev: %w[webpack webpack-cli webpack-dev-server @pmmmwh/react-refresh-webpack-plugin],
+      prod: %w[webpack-assets-manifest]
     }.freeze
 
     attr_reader :root_path
@@ -37,18 +49,33 @@ module Shakapacker
       end
 
       current = current_bundler
-      if current == bundler && !install_deps
+      config_content = File.read(config_path)
+      has_assets_bundler = config_content =~ ASSETS_BUNDLER_PATTERN
+
+      # Early exit if already using the target bundler
+      # For webpack: if current is webpack, we're done (key optional due to default)
+      # For rspack: requires explicit key to be present
+      already_configured = if bundler == "webpack"
+        current == bundler
+      else
+        current == bundler && has_assets_bundler
+      end
+
+      if already_configured && !install_deps
         puts "✅ Already using #{bundler}"
         return
       end
 
-      if current == bundler && install_deps
+      if already_configured && install_deps
         puts "✅ Already using #{bundler} - reinstalling dependencies as requested"
         manage_dependencies(bundler, install_deps, switching: false, no_uninstall: no_uninstall)
         return
       end
 
-      update_config(bundler)
+      successfully_updated = update_config(bundler, config_content, has_assets_bundler)
+
+      # Verify the update was successful (only if update reported success)
+      verify_config_update(bundler) if successfully_updated
 
       puts "✅ Switched from #{current} to #{bundler}"
       puts ""
@@ -95,22 +122,15 @@ module Shakapacker
       puts "Current bundler: #{current}"
       puts ""
       puts "Usage:"
-      puts "  rails shakapacker:switch_bundler [webpack|rspack] [OPTIONS]"
       puts "  rake shakapacker:switch_bundler [webpack|rspack] -- [OPTIONS]"
       puts ""
       puts "Options:"
       puts "  --install-deps    Automatically install/uninstall dependencies"
-      puts "  --no-uninstall    Skip uninstalling old bundler packages (faster, keeps both bundlers)"
+      puts "  --no-uninstall    Skip uninstalling old bundler packages"
       puts "  --init-config     Create #{CUSTOM_DEPS_CONFIG} with default dependencies"
       puts "  --help, -h        Show this help message"
       puts ""
       puts "Examples:"
-      puts "  # Using rails command"
-      puts "  rails shakapacker:switch_bundler rspack --install-deps"
-      puts "  rails shakapacker:switch_bundler webpack --install-deps --no-uninstall"
-      puts "  rails shakapacker:switch_bundler --init-config"
-      puts ""
-      puts "  # Using rake command (note the -- separator)"
       puts "  rake shakapacker:switch_bundler rspack -- --install-deps"
       puts "  rake shakapacker:switch_bundler webpack -- --install-deps --no-uninstall"
       puts "  rake shakapacker:switch_bundler -- --init-config"
@@ -137,39 +157,107 @@ module Shakapacker
             raise
           end
           rspack_deps = {
-            dev: custom.dig("rspack", "devDependencies") || DEFAULT_RSPACK_DEPS[:dev],
-            prod: custom.dig("rspack", "dependencies") || DEFAULT_RSPACK_DEPS[:prod]
+            dev: (custom.dig("rspack", "devDependencies") || DEFAULT_RSPACK_DEPS[:dev]) + SHARED_DEPS[:dev],
+            prod: (custom.dig("rspack", "dependencies") || DEFAULT_RSPACK_DEPS[:prod]) + SHARED_DEPS[:prod]
           }
           webpack_deps = {
-            dev: custom.dig("webpack", "devDependencies") || DEFAULT_WEBPACK_DEPS[:dev],
-            prod: custom.dig("webpack", "dependencies") || DEFAULT_WEBPACK_DEPS[:prod]
+            dev: (custom.dig("webpack", "devDependencies") || DEFAULT_WEBPACK_DEPS[:dev]) + SHARED_DEPS[:dev],
+            prod: (custom.dig("webpack", "dependencies") || DEFAULT_WEBPACK_DEPS[:prod]) + SHARED_DEPS[:prod]
           }
           [rspack_deps, webpack_deps]
         else
-          [DEFAULT_RSPACK_DEPS, DEFAULT_WEBPACK_DEPS]
+          rspack_with_shared = {
+            dev: DEFAULT_RSPACK_DEPS[:dev] + SHARED_DEPS[:dev],
+            prod: DEFAULT_RSPACK_DEPS[:prod] + SHARED_DEPS[:prod]
+          }
+          webpack_with_shared = {
+            dev: DEFAULT_WEBPACK_DEPS[:dev] + SHARED_DEPS[:dev],
+            prod: DEFAULT_WEBPACK_DEPS[:prod] + SHARED_DEPS[:prod]
+          }
+          [rspack_with_shared, webpack_with_shared]
         end
       end
 
-      def update_config(bundler)
-        content = File.read(config_path)
+      def update_config(bundler, content, has_assets_bundler)
+        # Check if assets_bundler key exists (only uncommented lines)
+        unless has_assets_bundler
+          # Track whether we successfully added the key
+          added = false
 
-        # Replace assets_bundler value (handles spaces, tabs, and various quote styles)
-        # Only matches uncommented lines
-        content.gsub!(/^([ \t]*assets_bundler:[ \t]*['"]?)(webpack|rspack)(['"]?)/, "\\1#{bundler}\\3")
+          # Add assets_bundler after javascript_transpiler if it exists (excluding commented lines)
+          if (match = content.match(/^[ \t]*(?![ \t]*#)javascript_transpiler:.*$/))
+            indent = match[0][/^[ \t]*/]
+            content.sub!(/^([ \t]*(?![ \t]*#)javascript_transpiler:.*$)/, "\\1\n#{assets_bundler_entry(bundler, indent)}")
+            added = true
+          # Otherwise, add it after source_path if it exists (excluding commented lines)
+          elsif (match = content.match(/^[ \t]*(?![ \t]*#)source_path:.*$/))
+            indent = match[0][/^[ \t]*/]
+            content.sub!(/^([ \t]*(?![ \t]*#)source_path:.*$)/, "\\1\n#{assets_bundler_entry(bundler, indent)}")
+            added = true
+          # Add it after default: &default if it exists
+          elsif content.match?(/^default:[ \t]*&default[ \t]*$/)
+            # Use default 2-space indentation for this case
+            content.sub!(/^(default:[ \t]*&default[ \t]*)$/, "\\1\n#{assets_bundler_entry(bundler, '  ')}")
+            added = true
+          # Fallback: add after "default:" with proper indentation detection (handles blank lines)
+          elsif (match = content.match(/^default:\s*\n\s*([ \t]+)/m))
+            # Extract indentation from first indented line after "default:"
+            indent = match[1]
+            content.sub!(/^(default:\s*)$/, "\\1\n#{assets_bundler_entry(bundler, indent)}")
+            added = true
+          end
+
+          unless added
+            puts "⚠️  Warning: Could not find appropriate location for assets_bundler in config"
+            puts "   Please add 'assets_bundler: #{bundler}' to the default section manually"
+          end
+        else
+          # Replace existing assets_bundler value (handles spaces, tabs, and various quote styles)
+          # Only matches uncommented lines
+          content.gsub!(/^([ \t]*)(?![ \t]*#)(assets_bundler:[ \t]*['"]?)(webpack|rspack)(['"]?)/, "\\1\\2#{bundler}\\4")
+          added = true
+        end
 
         # Update javascript_transpiler recommendation for rspack
         # Only update if not already set to swc and only on uncommented lines
-        if bundler == "rspack" && content !~ /^[ \t]*javascript_transpiler:[ \t]*['"]?swc['"]?/
-          content.gsub!(/^([ \t]*javascript_transpiler:[ \t]*['"]?)\w+(['"]?)/, "\\1swc\\2")
+        if bundler == "rspack" && content !~ /^[ \t]*(?![ \t]*#)javascript_transpiler:[ \t]*['"]?swc['"]?/
+          content.gsub!(/^([ \t]*(?![ \t]*#)javascript_transpiler:[ \t]*['"]?)(\w+)(['"]?)/, '\1swc\3')
         end
 
         File.write(config_path, content)
+        added
+      end
+
+      # Verify that the config was updated successfully
+      def verify_config_update(bundler)
+        config = load_yaml_config(config_path)
+        actual_bundler = config.dig("default", "assets_bundler")
+
+        if actual_bundler != bundler
+          raise "Config update verification failed: expected assets_bundler to be '#{bundler}', but got '#{actual_bundler}'"
+        end
+      rescue Psych::SyntaxError => e
+        raise "Config update generated invalid YAML: #{e.message}"
+      end
+
+      # Generate the assets_bundler YAML entry with proper indentation
+      # @param bundler [String] The bundler name ('webpack' or 'rspack')
+      # @param indent [String] The indentation string to use (e.g., '  ' or '\t')
+      # @return [String] The formatted YAML entry
+      def assets_bundler_entry(bundler, indent)
+        "\n#{indent}# Select assets bundler to use\n#{indent}# Available options: 'webpack' (default) or 'rspack'\n#{indent}assets_bundler: \"#{bundler}\""
       end
 
       def manage_dependencies(bundler, install_deps, switching: true, no_uninstall: false)
         rspack_deps, webpack_deps = load_dependencies
         deps_to_install = bundler == "rspack" ? rspack_deps : webpack_deps
-        deps_to_remove = bundler == "rspack" ? webpack_deps : rspack_deps
+        old_bundler_deps = bundler == "rspack" ? webpack_deps : rspack_deps
+
+        # Remove shared dependencies from removal list
+        deps_to_remove = {
+          dev: old_bundler_deps[:dev] - SHARED_DEPS[:dev],
+          prod: old_bundler_deps[:prod] - SHARED_DEPS[:prod]
+        }
 
         if install_deps
           puts ""
@@ -212,15 +300,13 @@ module Shakapacker
       def remove_dependencies(deps)
         package_json = get_package_json
 
-        unless deps[:dev].empty?
-          unless package_json.manager.remove(deps[:dev])
-            puts "   ⚠️  Warning: Failed to uninstall some dev dependencies"
-          end
-        end
+        # Combine dev and prod dependencies into a single list for removal
+        # Package managers remove packages from both dependencies and devDependencies sections if present
+        all_deps = deps[:dev] + deps[:prod]
 
-        unless deps[:prod].empty?
-          unless package_json.manager.remove(deps[:prod])
-            puts "   ⚠️  Warning: Failed to uninstall some prod dependencies"
+        unless all_deps.empty?
+          unless package_json.manager.remove(all_deps)
+            puts "   ⚠️  Warning: Failed to uninstall some dependencies"
           end
         end
       end

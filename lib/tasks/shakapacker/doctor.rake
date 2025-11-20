@@ -11,7 +11,7 @@ namespace :shakapacker do
     • Required and optional npm dependencies
     • JavaScript transpiler (Babel, SWC, esbuild) configuration
     • CSS, CSS Modules, and stylesheet preprocessor setup
-    • Binstubs presence (shakapacker, shakapacker-dev-server, export-bundler-config)
+    • Binstubs presence (shakapacker, shakapacker-dev-server, shakapacker-config)
     • Version consistency between gem and npm package
     • Legacy Webpacker file detection
 
@@ -20,9 +20,9 @@ namespace :shakapacker do
       --verbose    Display additional diagnostic details (paths, versions, environment)
 
     Examples:
-      bin/rails shakapacker:doctor
-      bin/rails shakapacker:doctor -- --verbose
-      bin/rails shakapacker:doctor -- --help
+      bundle exec rake shakapacker:doctor
+      bundle exec rake shakapacker:doctor -- --verbose
+      bundle exec rake shakapacker:doctor -- --help
 
     Exit codes:
       0 - No issues found

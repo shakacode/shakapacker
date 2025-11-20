@@ -102,7 +102,7 @@ If upgrading from Shakapacker v8:
 
 ### New Installations
 
-The installer (`rails shakapacker:install`) only adds packages needed for your configuration:
+The installer (`bundle exec rake shakapacker:install`) only adds packages needed for your configuration:
 
 - Detects your preferred bundler (webpack/rspack)
 - Installs appropriate JavaScript transpiler (babel/swc/esbuild)
@@ -159,7 +159,7 @@ The test suite includes:
 
 1. Check you've installed required dependencies for your configuration
 2. Refer to the configuration examples above
-3. Run `rails shakapacker:doctor` for diagnostics
+3. Run `bundle exec rake shakapacker:doctor` for diagnostics
 
 ### TypeScript errors?
 

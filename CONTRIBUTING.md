@@ -27,6 +27,7 @@ We welcome pull requests that fix bugs, add new features, or improve existing on
 - Write tests for your changes and [make sure all tests pass](#making-sure-your-changes-pass-all-tests).
 - Update the documentation as needed.
 - Update CHANGELOG.md if the changes affect public behavior of the project.
+- Update RBS type signatures in `sig/` directory if you modify public APIs.
 
 ---
 
@@ -45,6 +46,91 @@ To enable pre-commit hooks locally:
 ```bash
 npx husky install
 npx husky add .husky/pre-commit "npx lint-staged"
+```
+
+---
+
+## RBS Type Signatures
+
+Shakapacker includes RBS type signatures for all public APIs in the `sig/` directory. These signatures provide static type checking and improved IDE support.
+
+### When to Update RBS Files
+
+Update RBS signatures when you:
+
+- Add new public methods or classes
+- Change method signatures (parameters, return types)
+- Modify public APIs
+- Add or remove public attributes
+
+### RBS File Structure
+
+```
+sig/
+├── shakapacker.rbs                    # Main Shakapacker module
+└── shakapacker/
+    ├── configuration.rbs              # Configuration class
+    ├── helper.rbs                     # View helper module
+    ├── manifest.rbs                   # Manifest class
+    ├── compiler.rbs                   # Compiler class
+    └── ...                            # Other components
+```
+
+### Validating RBS Signatures
+
+To validate your RBS signatures:
+
+```bash
+# Install RBS if not already installed
+gem install rbs
+
+# Validate all signatures
+rbs validate
+
+# Check a specific file
+rbs validate sig/shakapacker/configuration.rbs
+```
+
+### RBS Best Practices
+
+1. **Use specific types** instead of `untyped` when possible
+2. **Document optional parameters** with `?` prefix
+3. **Use union types** for methods that can return multiple types (e.g., `String | nil`)
+4. **Keep signatures in sync** with implementation changes
+5. **Test with type checkers** like [Steep](https://github.com/soutaro/steep) when possible
+6. **Use `void` vs `nil` appropriately**:
+   - Use `void` when the return value is expected to be discarded (e.g., `initialize`)
+   - Use `nil` when a method explicitly returns nil as a meaningful value
+7. **Module singleton methods**: For modules using `extend self`, use `module ModuleName : _Singleton` to indicate all methods are module-level singleton methods
+
+### Example RBS Signature
+
+```rbs
+# Good: Specific types with documentation
+class Shakapacker::Configuration
+  def initialize: (
+    root_path: Pathname,
+    config_path: Pathname,
+    env: ActiveSupport::StringInquirer,
+    ?bundler_override: String?
+  ) -> void
+
+  def source_path: () -> Pathname
+  def webpack?: () -> bool
+  def assets_bundler: () -> String
+end
+
+# Module with singleton methods (using extend self)
+module Shakapacker : _Singleton
+  def self.config: () -> Configuration
+  def self.compile: () -> bool
+end
+
+# Avoid: Overly generic types
+class Shakapacker::Configuration
+  def initialize: (**untyped) -> void
+  def source_path: () -> untyped
+end
 ```
 
 ---
@@ -70,7 +156,7 @@ yarn lint --cache
 
 ## Setting Up a Development Environment
 
-1. Install [Yarn](https://classic.yarnpkg.com/)
+1. Install [Yarn](https://classic.yarnpkg.com/) & [yalc](https://github.com/wclr/yalc)
 2. To test your changes on a Rails test project do the following steps:
    - For Ruby gem, update `Gemfile` and point the `shakapacker` to the locally developing Shakapacker project:
      ```ruby
@@ -103,11 +189,23 @@ Shakapacker uses optional peer dependencies (via `peerDependenciesMeta`) for max
 - **No installation warnings** - Package managers won't warn about missing optional dependencies
 - **Version constraints still apply** - When a package is installed, version compatibility is enforced
 
+### TypeScript Declaration Files and Optional Dependencies
+
+When importing types from optional peer dependencies, we use `@ts-ignore` directives:
+
+```typescript
+// @ts-ignore: webpack is an optional peer dependency (using type-only import)
+import type { Configuration } from "webpack"
+```
+
+This ensures that typecheck downstream won't fail if lib checks are on regardless of if `webpack` is available.
+
 ### When modifying dependencies:
 
 1. Add new peer dependencies to both `peerDependencies` and `peerDependenciesMeta` (marking as optional)
 2. Keep version ranges synchronized between `devDependencies` and `peerDependencies`
 3. Test with multiple package managers: `npm`, `yarn`, and `pnpm`
+4. If adding type-only imports from optional dependencies, use the `@ts-ignore` pattern shown above
 
 ### Testing peer dependency changes:
 
@@ -223,6 +321,8 @@ The project uses Yarn in CI workflows for the following reasons:
 - `.github/workflows/ruby.yml` - Ruby test suite across Ruby/Rails versions
 - `.github/workflows/node.yml` - Node.js test suite across Node versions
 - `.github/workflows/generator.yml` - Generator installation tests
+- `.github/workflows/dummy.yml` - Dummy app integration tests
+- `.github/workflows/eslint-validation.yml` - ESLint configuration validation
 
 All workflows use:
 
@@ -238,6 +338,36 @@ And install dependencies with:
 ```bash
 yarn install
 ```
+
+### CI Optimization: Path Filtering
+
+To reduce CI costs and execution time, workflows use **path filtering** to run only when relevant files change:
+
+- **Ruby workflow** - Only runs when Ruby files, gemspecs, Gemfile, or RuboCop config changes
+- **Node workflow** - Only runs when JS/TS files, package.json, or Node config changes
+- **Generator specs** - Only runs when generator-related files change
+- **Dummy specs** - Only runs when dummy app or lib files change
+- **Test bundlers** - Only runs when code affecting bundler integration changes
+
+This means documentation-only PRs (e.g., only changing `README.md`) will skip all test workflows entirely.
+
+**Important:** The full test suite always runs on pushes to the `main` branch to ensure the main branch is always thoroughly tested.
+
+### Manual Workflow Execution
+
+All workflows can be triggered manually via the GitHub Actions UI using the "Run workflow" button. This is useful for:
+
+- Re-running tests after a temporary CI failure
+- Testing workflows on specific branches without creating a PR
+- Running full test suites on PRs that would normally skip certain workflows
+
+### Conditional Linting
+
+The Node workflow includes conditional execution of actionlint (GitHub Actions linter):
+
+- Only downloads and runs when `.github/workflows/*` files change
+- Saves time by skipping on most PRs
+- Includes caching for faster execution when needed
 
 ### Testing with Other Package Managers
 

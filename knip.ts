@@ -26,6 +26,7 @@ const config: KnipConfig = {
     "@rspack/plugin-react-refresh",
     // CLI tools used by developers
     "@rspack/cli",
+    "webpack-cli",
     "husky",
     // Optional dependencies used in webpack/rspack configs
     "mini-css-extract-plugin",
@@ -46,7 +47,14 @@ const config: KnipConfig = {
     "css-loader",
     "esbuild-loader",
     "swc-loader",
-    "webpack"
+    "webpack",
+    // eslint-config-airbnb isn't detected because it's used by compat.extends("airbnb"),
+    // the rest are its peerDependencies
+    "eslint-config-airbnb",
+    "eslint-plugin-import",
+    "eslint-plugin-jsx-a11y",
+    "eslint-plugin-react",
+    "eslint-plugin-react-hooks"
   ]
 }
 

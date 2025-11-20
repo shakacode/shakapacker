@@ -1,8 +1,6 @@
 # Using SWC Loader
 
-:warning: This feature is currently experimental. The configuration and API are subject to change during the beta release cycle.
-
-If you face any issues, please report at https://github.com/shakacode/shakapacker/issues.
+SWC is the recommended JavaScript transpiler in Shakapacker v9+, and is set as the default in new installations. If you face any issues, please report them at [Shakapacker Issues](https://github.com/shakacode/shakapacker/issues).
 
 ## About SWC
 
@@ -12,20 +10,23 @@ It supports all ECMAScript features and it's designed to be a drop-in replacemen
 
 For comparison between SWC and Babel, see the docs at https://swc.rs/docs/migrating-from-babel.
 
-> **Note:** SWC is also natively built into RSpack bundler, providing even faster compilation speeds. When using RSpack (`assets_bundler: 'rspack'`), SWC is used automatically regardless of the `javascript_transpiler` setting.
+> **Note:** SWC is also natively built into RSpack bundler, providing even faster compilation speeds. When using RSpack (`assets_bundler: 'rspack'`), SWC is the default if `javascript_transpiler` is not explicitly set.
 
-## Switching your Shakapacker project to SWC
+## Using SWC in your Shakapacker project
 
-In order to use SWC as your compiler today. You need to do two things:
+For new installations of Shakapacker v9+, SWC is automatically configured in the installation template.
+
+**Note**: While the installation template sets SWC as the default, webpack's runtime fallback (when no explicit config exists) remains Babel for backward compatibility. Rspack always defaults to SWC.
+
+If you're upgrading from v8 or earlier and want to switch from Babel to SWC:
 
 1. Make sure you've installed `@swc/core` and `swc-loader` packages.
 
-```
+```bash
 npm install @swc/core swc-loader
 ```
 
-2. Add or change `javascript_transpiler` value in your default `shakapacker.yml` config to `swc`
-   The default configuration of babel is done by using `package.json` to use the file within the `shakapacker` package.
+2. Confirm `javascript_transpiler` is set to `swc` in your `config/shakapacker.yml`:
 
 ```yml
 default: &default
@@ -43,7 +44,9 @@ default: &default
   # Reload manifest.json on all requests so we reload latest compiled packs
   cache_manifest: false
 
-  # Select JavaScript transpiler to use, available options are 'babel' (default) or 'swc'
+  # Select JavaScript transpiler to use
+  # Available options: 'swc' (default, 20x faster), 'babel', or 'esbuild'
+  # Note: When using rspack, swc is used automatically regardless of this setting
   javascript_transpiler: "swc"
 ```
 

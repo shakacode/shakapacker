@@ -1,5 +1,9 @@
 # Troubleshooting
 
+## Flash of Unstyled Content (FOUC)
+
+If you're experiencing FOUC where content briefly appears unstyled before CSS loads, see the [Preventing FOUC guide](./preventing_fouc.md) for solutions including proper `stylesheet_pack_tag` placement and `content_for` patterns for dynamic pack loading.
+
 ## Debugging your webpack config
 
 1. Read the error message carefully. The error message will tell you the precise key value
@@ -17,7 +21,7 @@
 
 4. You can also pass additional options to the command to run the webpack-dev-server and start the webpack-dev-server with the option `--debug-shakapacker`
 
-5. **Export your full webpack/rspack configuration for analysis**: Use the `bin/export-bundler-config` utility to export your complete resolved configuration. This is especially helpful for:
+5. **Export your full webpack/rspack configuration for analysis**: Use the `bin/shakapacker-config` utility to export your complete resolved configuration. This is especially helpful for:
    - **Migrations**: Comparing configurations before and after migrating between webpack and rspack, or between different Shakapacker versions
    - **Debugging**: Inspecting the exact configuration webpack/rspack is using, including all merged settings
    - **AI Analysis**: Uploading the exported config to ChatGPT or other AI tools for troubleshooting
@@ -31,7 +35,7 @@
    rake shakapacker:binstubs
 
    # Export EVERYTHING for troubleshooting (dev + prod, annotated YAML)
-   bin/export-bundler-config --doctor
+   bin/shakapacker-config --doctor
    # Creates: webpack-development-client.yaml, webpack-development-server.yaml,
    #          webpack-production-client.yaml, webpack-production-server.yaml,
    #          AI-ANALYSIS-PROMPT.md (prompt file for AI analysis)
@@ -48,28 +52,28 @@
 
    ```bash
    # Save current environment configs with auto-generated names
-   bin/export-bundler-config --save
+   bin/shakapacker-config --save
    # Creates: webpack-development-client.yaml, webpack-development-server.yaml
 
    # Save to specific directory
-   bin/export-bundler-config --save --save-dir=./debug-configs
+   bin/shakapacker-config --save --save-dir=./debug-configs
 
    # Export only client config for production
-   bin/export-bundler-config --save --env=production --client-only
+   bin/shakapacker-config --save --env=production --client-only
    # Creates: webpack-production-client.yaml
 
    # Compare development vs production configs
-   bin/export-bundler-config --save --save-dir=./configs
+   bin/shakapacker-config --save --save-dir=./configs
    diff configs/webpack-development-client.yaml configs/webpack-production-client.yaml
 
    # View config in terminal (no files created)
-   bin/export-bundler-config
+   bin/shakapacker-config
 
    # Export without inline documentation annotations
-   bin/export-bundler-config --save --no-annotate
+   bin/shakapacker-config --save --no-annotate
 
    # Export in JSON format for programmatic analysis
-   bin/export-bundler-config --save --format=json
+   bin/shakapacker-config --save --format=json
    ```
 
    **Config files are automatically named:** `{bundler}-{env}-{type}.{ext}`
@@ -77,9 +81,149 @@
    - YAML format includes inline documentation explaining each config key
    - Separate files for client and server bundles (cleaner than combined)
 
-   See `bin/export-bundler-config --help` for all available options.
+   See `bin/shakapacker-config --help` for all available options.
 
-6. Generate webpack stats for build analysis (useful for bundle size optimization):
+6. **Validate your webpack/rspack builds**: Use `bin/shakapacker-config --validate` to test that all your build configurations compile successfully. This is especially useful for:
+   - **CI/CD pipelines**: Catch configuration errors before deployment
+   - **Migration testing**: Verify builds work after upgrading webpack, rspack, or Shakapacker
+   - **Multi-environment testing**: Ensure all build configurations (dev, prod, HMR) compile correctly
+
+   **Quick validation:**
+
+   ```bash
+   # Validate all builds defined in .bundler-config.yml
+   bin/shakapacker-config --validate
+
+   # Validate with full output logs (shows all webpack/rspack compilation output)
+   bin/shakapacker-config --validate --verbose
+
+   # Validate a specific build
+   bin/shakapacker-config --validate-build=dev-hmr
+   ```
+
+   **Verbose Mode:**
+
+   When using `--verbose`, you'll see:
+   - A clear header indicating verbose mode is enabled
+   - Full real-time compilation output from webpack/rspack
+   - All warnings and progress messages
+   - Detailed error traces
+   - Separators between builds for clarity
+
+   This is useful for debugging compilation issues or understanding build performance.
+
+   **Setting up build configurations:**
+
+   ```bash
+   # Create a .bundler-config.yml file with example builds
+   bin/shakapacker-config --init
+
+   # List all available builds
+   bin/shakapacker-config --list-builds
+
+   # Validate all builds
+   bin/shakapacker-config --validate
+   ```
+
+   **Advanced options:**
+
+   The validator uses a default timeout of 2 minutes per build. For large projects or slow CI environments, you can customize this behavior by modifying the `ValidatorOptions` in your code, or by adjusting your build configuration to be more efficient.
+
+   If validation times out, try:
+   - Using `--verbose` to see where the build is hanging
+   - Optimizing your webpack/rspack configuration for faster builds
+   - Running validation on a single build with `--validate-build=build-name`
+
+   **How it works:**
+
+   The validator will:
+   - For HMR builds (with `WEBPACK_SERVE=true`): Start webpack-dev-server, wait for successful compilation, then shut down
+   - For static builds: Run webpack/rspack and check for compilation errors
+   - Report all errors and warnings with clear output
+   - Exit with code 1 if any build fails (perfect for CI)
+
+   **Example output:**
+
+   ```text
+   🔍 Validating Builds
+   ================================================================================
+
+   📦 Validating build: dev-hmr
+      ✅ Build passed
+
+   📦 Validating build: dev
+      ✅ Build passed
+
+   📦 Validating build: prod
+      ❌ Build failed with 2 error(s)
+
+   ================================================================================
+   🔍 Build Validation Results
+   ================================================================================
+
+   ✅ Build: dev-hmr (2.34s)
+      📦 Outputs: client
+      ⚙️  Config: config/webpack/webpack.config.js
+
+   ✅ Build: dev (3.12s)
+      📦 Outputs: client, server
+      ⚙️  Config: config/webpack/webpack.config.js
+      📁 Output: /app/public/packs
+
+   ❌ Build: prod (4.56s)
+      📦 Outputs: client, server
+      ⚙️  Config: config/webpack/webpack.config.js
+      📁 Output: /app/public/packs
+      ❌ 2 error(s)
+         Module not found: Error: Can't resolve './missing'
+         SyntaxError: Unexpected token
+
+   ================================================================================
+   Summary: 2/3 builds passed, 1 failed (Total: 10.02s)
+   ================================================================================
+
+   💡 Debugging Tips:
+      To get more details, run individual builds with --verbose:
+
+      bin/shakapacker-config --validate-build prod --verbose
+
+      Or validate all builds with full output: bin/shakapacker-config --validate --verbose
+   ================================================================================
+   ```
+
+   **Debugging Failed Builds:**
+
+   When builds fail, the validator automatically provides debugging commands. You can:
+   1. **Run a specific build with verbose output** to see full webpack/rspack logs:
+
+      ```bash
+      bin/shakapacker-config --validate-build prod --verbose
+      ```
+
+   2. **Validate all builds with verbose output** to see everything:
+
+      ```bash
+      bin/shakapacker-config --validate --verbose
+      ```
+
+   3. **Test individual builds manually** using the same configuration:
+
+      ```bash
+      # For static builds
+      NODE_ENV=production RAILS_ENV=production bundle exec webpack --config config/webpack/webpack.config.js
+
+      # For HMR/dev-server builds
+      NODE_ENV=development WEBPACK_SERVE=true bundle exec webpack serve --config config/webpack/webpack.config.js
+      ```
+
+   The verbose mode shows:
+   - Full real-time compilation output
+   - All webpack/rspack warnings and progress messages
+   - Detailed stack traces for errors
+   - Timing information for each build phase
+   - Clear separators between different builds
+
+7. Generate webpack stats for build analysis (useful for bundle size optimization):
 
    ```bash
    NODE_ENV=development bin/shakapacker --profile --json > /tmp/webpack-stats.json
@@ -144,7 +288,7 @@ See the [deployment guide](./deployment.md#custom-rails-environments-eg-staging)
 ## ENOENT: no such file or directory - node-sass
 
 If you get the error `ENOENT: no such file or directory - node-sass` on deploy with
-`assets:precompile` or `bundle exec rails shakapacker:compile` you may need to
+`assets:precompile` or `bundle exec rake shakapacker:compile` you may need to
 move Sass to production `dependencies`.
 
 Move any packages that related to Sass (e.g. `node-sass` or `sass-loader`) from
@@ -190,13 +334,13 @@ In `package.json`:
 
 ## webpack or webpack-dev-server not found
 
-- This could happen if `shakapacker:install` step is skipped. Please run `bundle exec rails shakapacker:install` to fix the issue.
+- This could happen if `shakapacker:install` step is skipped. Please run `bundle exec rake shakapacker:install` to fix the issue.
 
 - If you encounter the above error on heroku after upgrading from Rails 4.x to 5.1.x, then the problem might be related to missing `yarn` binstub. Please run following commands to update/add binstubs:
 
 ```bash
 bundle config --delete bin
-./bin/rails app:update:bin # or rails app:update:bin
+bundle exec rake app:update:bin
 ```
 
 ## Running webpack on Windows

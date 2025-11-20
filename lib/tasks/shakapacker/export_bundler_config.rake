@@ -7,7 +7,6 @@ namespace :shakapacker do
     client vs server bundle differences.
 
     Usage:
-      rails shakapacker:export_bundler_config [OPTIONS]
       rake shakapacker:export_bundler_config -- [OPTIONS]
 
     Quick Start (Recommended):
@@ -28,32 +27,29 @@ namespace :shakapacker do
 
     Examples:
       # Export all configs for troubleshooting
-      rails shakapacker:export_bundler_config --doctor
+      bundle exec rake shakapacker:export_bundler_config -- --doctor
 
       # Save production client config
-      rails shakapacker:export_bundler_config --save --env=production --client-only
+      bundle exec rake shakapacker:export_bundler_config -- --save --env=production --client-only
 
       # View development config in terminal
-      rails shakapacker:export_bundler_config
+      bundle exec rake shakapacker:export_bundler_config
 
       # Show detailed help
-      rails shakapacker:export_bundler_config --help
+      bundle exec rake shakapacker:export_bundler_config -- --help
 
-    Note: When using 'rake', you must use '--' to separate rake options from task arguments.
-          Example: rake shakapacker:export_bundler_config -- --doctor
-
-    The task automatically falls back to the gem version if bin/export-bundler-config
-    binstub is not installed. To install all binstubs, run: rails shakapacker:binstubs
+    The task automatically falls back to the gem version if bin/shakapacker-config
+    binstub is not installed. To install all binstubs, run: bundle exec rake shakapacker:binstubs
   DESC
   task :export_bundler_config do
     # Try to use the binstub if it exists, otherwise use the gem's version
-    bin_path = Rails.root.join("bin/export-bundler-config")
+    bin_path = Rails.root.join("bin/shakapacker-config")
 
     unless File.exist?(bin_path)
       # Binstub not installed, use the gem's version directly
-      gem_bin_path = File.expand_path("../../install/bin/export-bundler-config", __dir__)
+      gem_bin_path = File.expand_path("../../install/bin/shakapacker-config", __dir__)
 
-      $stderr.puts "Note: bin/export-bundler-config binstub not found."
+      $stderr.puts "Note: bin/shakapacker-config binstub not found."
       $stderr.puts "Using gem version directly. To install the binstub, run: rake shakapacker:binstubs"
       $stderr.puts ""
 

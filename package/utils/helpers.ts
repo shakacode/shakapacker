@@ -38,6 +38,11 @@ const loaderMatches = <T = unknown>(
   loaderToCheck: string,
   fn: () => T
 ): T | null => {
+  // If transpiler is set to 'none', skip all transpiler rules (for custom webpack configs)
+  if (configLoader === "none") {
+    return null
+  }
+
   if (configLoader !== loaderToCheck) {
     return null
   }
@@ -59,15 +64,14 @@ const loaderMatches = <T = unknown>(
 
 const packageFullVersion = (packageName: string): string => {
   try {
-    // eslint-disable-next-line import/no-dynamic-require
     const packageJsonPath = require.resolve(`${packageName}/package.json`)
-    // eslint-disable-next-line import/no-dynamic-require, global-require
+    // eslint-disable-next-line import/no-dynamic-require
     const packageJson = require(packageJsonPath) as { version: string }
     return packageJson.version
-  } catch (error: any) {
+  } catch (error: unknown) {
     // Re-throw the error with proper code to maintain compatibility with babel preset
     // The preset expects MODULE_NOT_FOUND errors to handle missing core-js gracefully
-    if (error.code === "MODULE_NOT_FOUND") {
+    if ((error as NodeJS.ErrnoException).code === "MODULE_NOT_FOUND") {
       throw error
     }
     // For other errors, warn and re-throw
@@ -78,9 +82,9 @@ const packageFullVersion = (packageName: string): string => {
   }
 }
 
-const packageMajorVersion = (packageName: string): string => {
+const packageMajorVersion = (packageName: string): number => {
   const match = packageFullVersion(packageName).match(/^\d+/)
-  return match ? match[0] : "0"
+  return match ? parseInt(match[0], 10) : 0
 }
 
 export {

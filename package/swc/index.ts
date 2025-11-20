@@ -1,4 +1,3 @@
-/* eslint global-require: 0 */
 /* eslint import/no-dynamic-require: 0 */
 
 import { resolve } from "path"
@@ -18,7 +17,6 @@ const isTypescriptFile = (filename: string): boolean =>
 const getCustomConfig = (): Partial<RuleSetRule> => {
   const path = resolve("config", "swc.config.js")
   if (existsSync(path)) {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
     return require(path)
   }
   return {}

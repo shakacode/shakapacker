@@ -6,12 +6,11 @@ const { ensureTrailingSlash } = require("./utils/helpers")
 const { railsEnv } = require("./env")
 const configPath = require("./utils/configPath")
 const defaultConfigPath = require("./utils/defaultConfigPath")
-import { Config, YamlConfig, LegacyConfig } from "./types"
+import { Config, YamlConfig } from "./types"
 const {
   isValidYamlConfig,
   createConfigValidationError,
-  isPartialConfig,
-  isValidConfig
+  isPartialConfig
 } = require("./utils/typeGuards")
 const {
   isFileNotFoundError,
@@ -55,7 +54,6 @@ if (existsSync(configPath)) {
     const envAppConfig = appYmlObject[railsEnv]
 
     if (!envAppConfig) {
-      /* eslint no-console:0 */
       console.warn(
         `[SHAKAPACKER WARNING] Environment '${railsEnv}' not found in ${configPath}\n` +
           `Available environments: ${Object.keys(appYmlObject).join(", ")}\n` +

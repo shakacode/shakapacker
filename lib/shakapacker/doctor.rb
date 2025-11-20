@@ -54,7 +54,7 @@ module Shakapacker
           Shakapacker Doctor - Diagnostic tool for Shakapacker configuration
 
           Usage:
-            bin/rails shakapacker:doctor [options]
+            bundle exec rake shakapacker:doctor [options]
 
           Options:
             --help       Show this help message
@@ -163,7 +163,7 @@ module Shakapacker
           begin
             manifest_content = JSON.parse(File.read(manifest_path))
             if manifest_content.empty?
-              add_warning("Manifest file is empty - you may need to run 'bin/rails assets:precompile'")
+              add_warning("Manifest file is empty - you may need to run 'bundle exec rake assets:precompile'")
             end
           rescue JSON::ParserError
             @issues << "Manifest file #{manifest_path} contains invalid JSON"
@@ -325,16 +325,16 @@ module Shakapacker
           if source_files.any?
             newest_source = source_files.map { |f| File.mtime(f) }.max
             if newest_source > File.mtime(manifest_path)
-              add_warning("Source files have been modified after last asset compilation. Run 'bin/rails assets:precompile'")
+              add_warning("Source files have been modified after last asset compilation. Run 'bundle exec rake assets:precompile'")
             end
           end
         else
           rails_env = defined?(Rails) ? Rails.env : ENV["RAILS_ENV"]
           if rails_env == "production"
-            @issues << "No compiled assets found (manifest.json missing). Run 'bin/rails assets:precompile'"
+            @issues << "No compiled assets found (manifest.json missing). Run 'bundle exec rake assets:precompile'"
           elsif options[:verbose]
             # Only show in verbose mode for non-production environments
-            @info << "Assets not yet compiled. Run 'bin/rails assets:precompile' or start the dev server"
+            @info << "Assets not yet compiled. Run 'bundle exec rake assets:precompile' or start the dev server"
           end
         end
       end
@@ -391,7 +391,7 @@ module Shakapacker
         expected_binstubs = {
           "bin/shakapacker" => "Main Shakapacker binstub",
           "bin/shakapacker-dev-server" => "Development server binstub",
-          "bin/export-bundler-config" => "Config export binstub"
+          "bin/shakapacker-config" => "Config export binstub"
         }
 
         expected_binstubs.each do |path, description|
@@ -402,7 +402,7 @@ module Shakapacker
 
         unless missing_binstubs.empty?
           add_action_required("Missing binstubs: #{missing_binstubs.join(', ')}.")
-          add_action_required("  Fix: Run 'bin/rails shakapacker:binstubs' to create them.")
+          add_action_required("  Fix: Run 'bundle exec rake shakapacker:binstubs' to create them.")
         end
       end
 
@@ -879,49 +879,81 @@ module Shakapacker
 
           def print_verbose_checks
             puts "\nVerbose diagnostics:"
+            print_environment_info
+            print_version_info
+            print_path_info
+            print_config_values
+          end
 
-            # Show environment info
+          def print_environment_info
             rails_env = defined?(Rails) ? Rails.env : ENV["RAILS_ENV"]
             node_env = ENV["NODE_ENV"]
             puts "  • Rails environment: #{rails_env || 'not set'}"
             puts "  • Node environment: #{node_env || 'not set'}"
+          end
 
-            # Show gem/npm versions
-            if doctor.send(:package_json_exists?)
-              package_json = doctor.send(:read_package_json)
-              npm_version = package_json.dig("dependencies", "shakapacker") ||
-                           package_json.dig("devDependencies", "shakapacker")
-              puts "  • Shakapacker gem version: #{Shakapacker::VERSION}"
-              puts "  • Shakapacker npm version: #{npm_version || 'not installed'}"
-            end
+          def print_version_info
+            return unless doctor.send(:package_json_exists?)
 
-            # Show paths
+            package_json = doctor.send(:read_package_json)
+            npm_version = package_json.dig("dependencies", "shakapacker") ||
+                          package_json.dig("devDependencies", "shakapacker")
+            puts "  • Shakapacker gem version: #{Shakapacker::VERSION}"
+            puts "  • Shakapacker npm version: #{npm_version || 'not installed'}"
+          end
+
+          def print_path_info
             puts "  • Root path: #{doctor.root_path}"
-            if doctor.config.config_path.exist?
-              puts "  • Cache path: #{doctor.config.cache_path}"
-              puts "  • Manifest path: #{doctor.config.manifest_path}"
-            end
+            return unless doctor.config.config_path.exist?
 
-            # Show environment-specific shakapacker.yml configuration values
-            if doctor.config.config_path.exist?
-              puts "\nConfiguration values for '#{doctor.config.env}' environment:"
-              config_data = doctor.config.send(:data)
-              if config_data.any?
-                config_data.each do |key, value|
-                  # Format the value nicely - truncate long arrays/hashes
-                  formatted_value = case value
-                                    when Array
-                                      value.length > 3 ? "#{value.first(3).inspect}... (#{value.length} items)" : value.inspect
-                                    when Hash
-                                      value.length > 3 ? "{...} (#{value.length} keys)" : value.inspect
-                                   else
-                                      value.inspect
-                  end
-                  puts "  • #{key}: #{formatted_value}"
-                end
-              else
-                puts "  (using bundled defaults - no environment-specific config found)"
-              end
+            puts "  • Cache path: #{doctor.config.cache_path}"
+            puts "  • Manifest path: #{doctor.config.manifest_path}"
+          end
+
+          def print_config_values
+            return unless doctor.config.config_path.exist?
+
+            puts "\nConfiguration values for '#{doctor.config.env}' environment:"
+            config_data = doctor.config.data
+
+            if config_data.any?
+              print_config_data(config_data)
+            else
+              puts "  (using bundled defaults - no environment-specific config found)"
+            end
+          end
+
+          def print_config_data(config_data)
+            config_data.each do |key, value|
+              formatted_value = format_config_value(value)
+              puts "  • #{key}: #{formatted_value}"
+            end
+          end
+
+          def format_config_value(value)
+            case value
+            when Array
+              format_array_value(value)
+            when Hash
+              format_hash_value(value)
+            else
+              value.inspect
+            end
+          end
+
+          def format_array_value(array)
+            if array.length > 3
+              "#{array.first(3).inspect}... (#{array.length} items)"
+            else
+              array.inspect
+            end
+          end
+
+          def format_hash_value(hash)
+            if hash.length > 3
+              "{...} (#{hash.length} keys)"
+            else
+              hash.inspect
             end
           end
 
@@ -981,7 +1013,7 @@ module Shakapacker
             binstubs = [
               "bin/shakapacker",
               "bin/shakapacker-dev-server",
-              "bin/export-bundler-config"
+              "bin/shakapacker-config"
             ]
 
             existing_binstubs = binstubs.select { |b| doctor.root_path.join(b).exist? }
@@ -1033,49 +1065,61 @@ module Shakapacker
 
             item_number = 0
             doctor.warnings.each do |warning|
-              category_prefix = case warning[:category]
-                                when :action_required then "[REQUIRED]"
-                                when :info then "[INFO]"
-                                when :recommended then "[RECOMMENDED]"
-                               else ""
-              end
-
-              # Sub-items start with whitespace (indented fix instructions)
-              is_subitem = warning[:message].start_with?("  ")
-
-              if is_subitem
-                # Fix instructions align at column 16 (length of "N. [RECOMMENDED]  ")
-                # This ensures all Fix lines align vertically regardless of category
-                subitem_prefix = " " * 15
-                wrapped = wrap_text(warning[:message], 100, subitem_prefix)
-                puts wrapped
+              if subitem?(warning[:message])
+                print_subitem(warning[:message])
               else
                 item_number += 1
-                # Format: N. [CATEGORY]  Message
-                prefix = "#{item_number}. #{category_prefix}  "
-                wrapped = wrap_text(warning[:message], 100, prefix)
-                puts wrapped
+                print_main_item(item_number, warning)
               end
             end
             puts ""
           end
 
-          def wrap_text(text, max_width, prefix)
-            # Strip leading whitespace from sub-items
-            text = text.strip
+          def subitem?(message)
+            message.start_with?("  ")
+          end
 
-            # Calculate available width for text
+          def print_subitem(message)
+            # Fix instructions align at column 16 (length of "N. [RECOMMENDED]  ")
+            # This ensures all Fix lines align vertically regardless of category
+            subitem_prefix = " " * 15
+            wrapped = wrap_text(message, 100, subitem_prefix)
+            puts wrapped
+          end
+
+          def print_main_item(item_number, warning)
+            category_prefix = case warning[:category]
+                              when :action_required then "[REQUIRED]"
+                              when :info then "[INFO]"
+                              when :recommended then "[RECOMMENDED]"
+                              else
+                                ""
+            end
+
+            # Format: N. [CATEGORY]  Message
+            prefix = "#{item_number}. #{category_prefix}  "
+            wrapped = wrap_text(warning[:message], 100, prefix)
+            puts wrapped
+          end
+
+          def wrap_text(text, max_width, prefix)
+            text = text.strip
             available_width = max_width - prefix.length
+
             return prefix + text if text.length <= available_width
 
-            # Wrap long lines
+            lines = build_wrapped_lines(text, available_width)
+            format_wrapped_output(lines, prefix)
+          end
+
+          def build_wrapped_lines(text, available_width)
             words = text.split(" ")
             lines = []
             current_line = []
             current_length = 0
 
             words.each do |word|
-              word_length = word.length + (current_line.empty? ? 0 : 1) # +1 for space
+              word_length = word.length + (current_line.empty? ? 0 : 1)
 
               if current_length + word_length <= available_width
                 current_line << word
@@ -1086,26 +1130,39 @@ module Shakapacker
                 current_length = word.length
               end
             end
-            lines << current_line.join(" ") unless current_line.empty?
 
-            # Format output
+            lines << current_line.join(" ") unless current_line.empty?
+            lines
+          end
+
+          def format_wrapped_output(lines, prefix)
             result = prefix + lines[0]
+            indent = " " * prefix.length
+
             lines[1..].each do |line|
-              result += "\n" + (" " * prefix.length) + line
+              result += "\n#{indent}#{line}"
             end
+
             result
           end
 
           def has_dependency_issues?
-            # Check if any issues or warnings are about missing npm/package dependencies
-            # Exclude optional dependencies - only show install instructions for required dependencies
             all_messages = doctor.issues + doctor.warnings.map { |w| w[:message] }
-            all_messages.any? do |msg|
-              next if msg.include?("Optional")
-              (msg.include?("Missing") && msg.include?("dependency")) ||
-              msg.include?("not installed") ||
-              msg.include?("is not installed")
-            end
+            all_messages.any? { |msg| dependency_issue?(msg) }
+          end
+
+          def dependency_issue?(message)
+            return false if message.include?("Optional")
+
+            missing_dependency?(message) || not_installed?(message)
+          end
+
+          def missing_dependency?(message)
+            message.include?("Missing") && message.include?("dependency")
+          end
+
+          def not_installed?(message)
+            message.include?("not installed") || message.include?("is not installed")
           end
 
           def print_fix_instructions
@@ -1114,10 +1171,10 @@ module Shakapacker
             puts "  #{package_manager_install_command(package_manager)}"
             puts ""
             puts "For debugging configuration issues, export your webpack/rspack config:"
-            puts "  bin/export-bundler-config --doctor"
+            puts "  bin/shakapacker-config --doctor"
             puts "  (Exports annotated YAML configs for dev and production - best for troubleshooting)"
             puts ""
-            puts "  See 'bin/export-bundler-config --help' for more options"
+            puts "  See 'bin/shakapacker-config --help' for more options"
           end
 
           def package_manager_install_command(manager)

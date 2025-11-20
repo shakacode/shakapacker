@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    shakapacker (9.2.0)
+    shakapacker (9.3.4.beta.0)
       activesupport (>= 5.2)
       package_json
       rack-proxy (>= 0.6.1)
@@ -178,6 +178,8 @@ GEM
       zeitwerk (~> 2.6)
     rainbow (3.1.1)
     rake (13.2.1)
+    rbs (3.9.5)
+      logger
     rdoc (6.7.0)
       psych (>= 4.0.0)
     regexp_parser (2.9.2)
@@ -242,6 +244,7 @@ DEPENDENCIES
   rails (>= 6.1.6)
   rails-html-sanitizer (>= 1.4.3)
   rake (>= 11.1)
+  rbs (~> 3.0)
   rspec-rails (~> 6.0.2)
   rubocop
   rubocop-performance
