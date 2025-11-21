@@ -35,16 +35,13 @@ $BUNDLE_CMD install
 echo "📦 Installing JavaScript dependencies..."
 yarn install --frozen-lockfile
 
-# Set up Husky git hooks
-echo "🪝 Setting up Husky git hooks..."
-npx husky
-if [ ! -f .husky/pre-commit ]; then
-    echo "Creating pre-commit hook..."
-    cat > .husky/pre-commit << 'EOF'
-#!/usr/bin/env sh
-npx lint-staged
-EOF
-    chmod +x .husky/pre-commit
+# Set up Lefthook git hooks
+echo "🪝 Setting up Lefthook git hooks..."
+bundle exec lefthook install
+if [ $? -eq 0 ]; then
+    echo "Lefthook git hooks installed successfully"
+else
+    echo "Failed to install Lefthook git hooks"
 fi
 
 # Copy environment files if they exist in root
