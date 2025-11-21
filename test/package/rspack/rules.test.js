@@ -1,4 +1,4 @@
-/* eslint-disable jest/no-conditional-in-test, no-unused-vars */
+/* eslint-disable jest/no-conditional-in-test */
 
 // Mock helpers and debug utilities
 jest.mock("../../../package/utils/helpers", () => {
@@ -138,52 +138,44 @@ describe("rspack/rules", () => {
   })
 
   describe("cSS rules", () => {
-    test("conditionally includes CSS rule based on css-loader availability", () => {
-      // This test verifies the conditional logic exists
-      // The actual rule inclusion depends on whether css-loader is installed
+    test("includes CSS rule when css-loader is available", () => {
       const cssRule = rules.find(
         (rule) => rule.test && rule.test.toString().includes("css")
       )
 
-      // CSS rule may or may not be present depending on dependencies
-      // We just verify the rules array is properly formed
-      expect(Array.isArray(rules)).toBe(true)
+      // CSS rule should be present since moduleExists is mocked to return true
+      expect(cssRule).toBeDefined()
     })
   })
 
   describe("sass rules", () => {
-    test("conditionally includes Sass rule based on dependencies", () => {
-      // Sass rule may or may not be present depending on installed dependencies
+    test("includes Sass rule when dependencies are available", () => {
       const sassRule = rules.find(
         (rule) => rule.test && rule.test.toString().includes("scss|sass")
       )
 
-      // Just verify the rules array structure is correct
-      expect(Array.isArray(rules)).toBe(true)
+      // Sass rule should be present since moduleExists is mocked to return true
+      expect(sassRule).toBeDefined()
     })
   })
 
   describe("less rules", () => {
-    test("conditionally includes Less rule based on dependencies", () => {
-      // Less rule may or may not be present depending on installed dependencies
-      const lessRule = rules.find(
-        (rule) => rule.test && rule.test.toString().includes("less")
-      )
-
-      // Just verify the rules array structure is correct
+    test("conditionally loads Less rule based on dependencies", () => {
+      // Less rule may or may not be present depending on actual project dependencies
+      // We verify the rules array is valid but don't assert Less exists
+      // since it's an optional dependency
       expect(Array.isArray(rules)).toBe(true)
+      expect(rules.length).toBeGreaterThan(0)
     })
   })
 
   describe("stylus rules", () => {
-    test("conditionally includes Stylus rule based on dependencies", () => {
-      // Stylus rule may or may not be present depending on installed dependencies
-      const stylusRule = rules.find(
-        (rule) => rule.test && rule.test.toString().includes("styl")
-      )
-
-      // Just verify the rules array structure is correct
+    test("conditionally loads Stylus rule based on dependencies", () => {
+      // Stylus rule may or may not be present depending on actual project dependencies
+      // We verify the rules array is valid but don't assert Stylus exists
+      // since it's an optional dependency
       expect(Array.isArray(rules)).toBe(true)
+      expect(rules.length).toBeGreaterThan(0)
     })
   })
 
