@@ -213,16 +213,26 @@ describe("rspack/rules", () => {
 
   describe("raw file rule", () => {
     test("includes raw file loading rule", () => {
-      const rawRule = rules.find(
-        (rule) =>
-          // The raw rule uses "asset/source" or may have a specific test pattern
-          rule.type === "asset/source" ||
-          (rule.test && rule.test.toString().includes("txt"))
-      )
+      // Raw rule may be a direct rule or nested in oneOf
+      const rawRule =
+        rules.find(
+          (rule) =>
+            rule.type === "asset/source" &&
+            rule.resourceQuery &&
+            rule.resourceQuery.toString().includes("raw")
+        ) ||
+        rules
+          .filter((rule) => rule.oneOf)
+          .flatMap((rule) => rule.oneOf)
+          .find(
+            (subRule) =>
+              subRule.type === "asset/source" &&
+              subRule.resourceQuery &&
+              subRule.resourceQuery.toString().includes("raw")
+          )
 
-      // Raw rule is defined in the codebase
-      expect(Array.isArray(rules)).toBe(true)
-      expect(rules.length).toBeGreaterThan(0)
+      expect(rawRule).toBeDefined()
+      expect(rawRule.type).toBe("asset/source")
     })
   })
 })
