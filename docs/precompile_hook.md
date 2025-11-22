@@ -284,6 +284,38 @@ default:
 
 ## Advanced Usage
 
+### Skipping the Hook
+
+You can skip the precompile hook using the `SHAKAPACKER_SKIP_PRECOMPILE_HOOK` environment variable:
+
+```bash
+SHAKAPACKER_SKIP_PRECOMPILE_HOOK=true bin/shakapacker
+```
+
+This is useful when:
+
+- Using `bin/dev` or Foreman to run the hook once before starting multiple webpack processes
+- Running the hook manually and then compiling multiple times
+- Debugging compilation issues without the hook
+
+**Example with bin/dev:**
+
+```ruby
+#!/usr/bin/env ruby
+# bin/dev
+
+# Run the hook once before launching all processes
+if (hook_command = Shakapacker.config.precompile_hook)
+  system(hook_command) or exit(1)
+end
+
+# Launch Procfile with skip flag to prevent duplicate execution
+ENV['SHAKAPACKER_SKIP_PRECOMPILE_HOOK'] = 'true'
+exec 'foreman', 'start', '-f', 'Procfile.dev'
+```
+
+This pattern ensures the hook runs once when development starts, not separately for each webpack process.
+
 ### Conditional Execution
 
 ```bash

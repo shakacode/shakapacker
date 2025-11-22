@@ -27,7 +27,7 @@ class Shakapacker::Compiler
       true
     else
       acquire_ipc_lock do
-        run_precompile_hook if config.precompile_hook
+        run_precompile_hook if should_run_precompile_hook?
         run_webpack.tap do |success|
           after_compile_hook
         end
@@ -78,6 +78,13 @@ class Shakapacker::Compiler
     def optional_ruby_runner
       first_line = File.readlines(bin_shakapacker_path).first.chomp
       /ruby/.match?(first_line) ? RbConfig.ruby : ""
+    end
+
+    def should_run_precompile_hook?
+      return false unless config.precompile_hook
+      return false if ENV["SHAKAPACKER_SKIP_PRECOMPILE_HOOK"] == "true"
+
+      true
     end
 
     def run_precompile_hook
