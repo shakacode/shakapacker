@@ -300,21 +300,46 @@ This is useful when:
 
 **Example with bin/dev:**
 
-```ruby
-#!/usr/bin/env ruby
+```bash
+#!/usr/bin/env bash
 # bin/dev
 
 # Run the hook once before launching all processes
-if (hook_command = Shakapacker.config.precompile_hook)
-  system(hook_command) or exit(1)
-end
+if [ -f "config/shakapacker.yml" ]; then
+  # Extract and run the precompile_hook if configured
+  HOOK=$(ruby -ryaml -e "puts YAML.load_file('config/shakapacker.yml')['development']['precompile_hook'] rescue nil")
+  if [ -n "$HOOK" ]; then
+    echo "Running precompile hook: $HOOK"
+    eval $HOOK || exit 1
+  fi
+fi
 
 # Launch Procfile with skip flag to prevent duplicate execution
-ENV['SHAKAPACKER_SKIP_PRECOMPILE_HOOK'] = 'true'
-exec 'foreman', 'start', '-f', 'Procfile.dev'
+export SHAKAPACKER_SKIP_PRECOMPILE_HOOK=true
+exec foreman start -f Procfile.dev
 ```
 
-This pattern ensures the hook runs once when development starts, not separately for each webpack process.
+Or with Overmind:
+
+```bash
+#!/usr/bin/env bash
+# bin/dev
+
+# Run the hook once before launching all processes
+if [ -f "config/shakapacker.yml" ]; then
+  HOOK=$(ruby -ryaml -e "puts YAML.load_file('config/shakapacker.yml')['development']['precompile_hook'] rescue nil")
+  if [ -n "$HOOK" ]; then
+    echo "Running precompile hook: $HOOK"
+    eval $HOOK || exit 1
+  fi
+fi
+
+# Launch Procfile with skip flag to prevent duplicate execution
+export SHAKAPACKER_SKIP_PRECOMPILE_HOOK=true
+exec overmind start -f Procfile.dev
+```
+
+This pattern ensures the hook runs once when development starts, not separately for each webpack process. The `export` command ensures the environment variable is passed to all subprocess spawned by foreman/overmind.
 
 ### Conditional Execution
 
