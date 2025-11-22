@@ -292,6 +292,8 @@ You can skip the precompile hook using the `SHAKAPACKER_SKIP_PRECOMPILE_HOOK` en
 SHAKAPACKER_SKIP_PRECOMPILE_HOOK=true bin/shakapacker
 ```
 
+**Important:** The environment variable must be set to the exact string `"true"` to skip the hook. Any other value (including `"false"`, `"1"`, or empty string) will run the hook normally.
+
 This is useful when:
 
 - Using `bin/dev` or Foreman to run the hook once before starting multiple webpack processes
@@ -300,60 +302,9 @@ This is useful when:
 
 **Note:** The examples below show how to implement this in your custom `bin/dev` script. If you're using React on Rails, the generated `bin/dev` script already implements this pattern automatically - it runs the precompile hook once before launching processes, then sets `SHAKAPACKER_SKIP_PRECOMPILE_HOOK=true` to prevent duplicate execution.
 
-**Example with Foreman:**
+**Recommended: Use Procfile env prefix**
 
-Foreman reads environment variables from `.env` files. Add the skip flag to your `.env` file:
-
-```bash
-#!/usr/bin/env bash
-# bin/dev
-
-# Run the hook once before launching all processes
-if [ -f "config/shakapacker.yml" ]; then
-  # Extract and run the precompile_hook if configured
-  HOOK=$(ruby -ryaml -e "puts YAML.load_file('config/shakapacker.yml')['development']['precompile_hook'] rescue nil")
-  if [ -n "$HOOK" ]; then
-    echo "Running precompile hook: $HOOK"
-    eval $HOOK || exit 1
-  fi
-fi
-
-# Add skip flag to .env file for foreman subprocesses
-echo "SHAKAPACKER_SKIP_PRECOMPILE_HOOK=true" > .env.tmp
-cat .env >> .env.tmp 2>/dev/null || true
-mv .env.tmp .env
-
-# Launch Procfile
-exec foreman start -f Procfile.dev
-```
-
-**Example with Overmind:**
-
-Overmind reads environment variables from `.env` or `.overmind.env` files:
-
-```bash
-#!/usr/bin/env bash
-# bin/dev
-
-# Run the hook once before launching all processes
-if [ -f "config/shakapacker.yml" ]; then
-  HOOK=$(ruby -ryaml -e "puts YAML.load_file('config/shakapacker.yml')['development']['precompile_hook'] rescue nil")
-  if [ -n "$HOOK" ]; then
-    echo "Running precompile hook: $HOOK"
-    eval $HOOK || exit 1
-  fi
-fi
-
-# Add skip flag to .overmind.env file for overmind subprocesses
-echo "SHAKAPACKER_SKIP_PRECOMPILE_HOOK=true" > .overmind.env
-
-# Launch Procfile
-exec overmind start -f Procfile.dev
-```
-
-**Alternative: Use Procfile env prefix**
-
-You can also set the environment variable per-process in your Procfile:
+The cleanest approach is to set the environment variable per-process in your Procfile:
 
 ```procfile
 # Procfile.dev
@@ -362,20 +313,68 @@ webpack-client: env SHAKAPACKER_SKIP_PRECOMPILE_HOOK=true bin/shakapacker --watc
 webpack-server: env SHAKAPACKER_SKIP_PRECOMPILE_HOOK=true bin/shakapacker --watch --config-name server
 ```
 
-Then your `bin/dev` can simply run the hook and launch the process manager:
+Then your `bin/dev` can run the hook once and launch the process manager:
 
 ```bash
 #!/usr/bin/env bash
 # bin/dev
 
 # Run the hook once before launching all processes
-if [ -f "config/shakapacker.yml" ]; then
-  HOOK=$(ruby -ryaml -e "puts YAML.load_file('config/shakapacker.yml')['development']['precompile_hook'] rescue nil")
-  if [ -n "$HOOK" ]; then
-    echo "Running precompile hook: $HOOK"
-    eval $HOOK || exit 1
-  fi
-fi
+bundle exec ruby -r ./config/boot -e "
+  hook = Shakapacker.config.precompile_hook
+  if hook
+    puts \"Running precompile hook: #{hook}\"
+    system(hook) or exit(1)
+  end
+"
+
+exec foreman start -f Procfile.dev
+# or: exec overmind start -f Procfile.dev
+```
+
+**Alternative: Export environment variable**
+
+You can export the environment variable before starting your process manager:
+
+```bash
+#!/usr/bin/env bash
+# bin/dev
+
+# Run the hook once before launching all processes
+bundle exec ruby -r ./config/boot -e "
+  hook = Shakapacker.config.precompile_hook
+  if hook
+    puts \"Running precompile hook: #{hook}\"
+    system(hook) or exit(1)
+  end
+"
+
+# Export skip flag for all subprocesses
+export SHAKAPACKER_SKIP_PRECOMPILE_HOOK=true
+
+exec foreman start -f Procfile.dev
+# or: exec overmind start -f Procfile.dev
+```
+
+**Alternative: Use .env.local (not tracked by git)**
+
+For Foreman or Overmind, you can create a `.env.local` file (typically gitignored):
+
+```bash
+#!/usr/bin/env bash
+# bin/dev
+
+# Run the hook once before launching all processes
+bundle exec ruby -r ./config/boot -e "
+  hook = Shakapacker.config.precompile_hook
+  if hook
+    puts \"Running precompile hook: #{hook}\"
+    system(hook) or exit(1)
+  end
+"
+
+# Create .env.local for process manager subprocesses
+echo "SHAKAPACKER_SKIP_PRECOMPILE_HOOK=true" > .env.local
 
 exec foreman start -f Procfile.dev
 # or: exec overmind start -f Procfile.dev
