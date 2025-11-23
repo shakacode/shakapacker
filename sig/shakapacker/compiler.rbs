@@ -52,7 +52,11 @@ class Shakapacker::Compiler
 
   def bin_shakapacker_path: () -> Pathname
 
+  def should_run_precompile_hook?: () -> bool
+
   def run_precompile_hook: () -> void
+
+  def validate_precompile_hook: (String hook_command) -> Hash[Symbol, untyped]
 
   def run_webpack: () -> bool
 

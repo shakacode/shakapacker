@@ -309,5 +309,86 @@ describe "Shakapacker::Compiler" do
       expect(captured_env["FOO"]).to eq("bar")
       expect(captured_env["BAZ"]).to eq("qux")
     end
+
+    it "skips precompile_hook when SHAKAPACKER_SKIP_PRECOMPILE_HOOK=true" do
+      mocked_strategy = spy("Strategy")
+      allow(mocked_strategy).to receive(:stale?).and_return(true)
+      allow(Shakapacker.compiler).to receive(:strategy).and_return(mocked_strategy)
+
+      webpack_status = OpenStruct.new(success?: true)
+      call_count = 0
+      allow(Open3).to receive(:capture3) do |*args|
+        call_count += 1
+        ["", "", webpack_status]
+      end
+
+      # Hook is configured
+      allow(Shakapacker.config).to receive(:precompile_hook).and_return("bin/test-hook")
+
+      # But skip flag is set
+      allow(ENV).to receive(:[]).and_call_original
+      allow(ENV).to receive(:[]).with("SHAKAPACKER_SKIP_PRECOMPILE_HOOK").and_return("true")
+
+      expect(Shakapacker.compiler.compile).to be true
+      expect(call_count).to eq(1) # Only webpack was called, hook was skipped
+    end
+
+    it "runs precompile_hook when SHAKAPACKER_SKIP_PRECOMPILE_HOOK is not set" do
+      mocked_strategy = spy("Strategy")
+      allow(mocked_strategy).to receive(:stale?).and_return(true)
+      allow(Shakapacker.compiler).to receive(:strategy).and_return(mocked_strategy)
+
+      hook_status = OpenStruct.new(success?: true, exitstatus: 0)
+      webpack_status = OpenStruct.new(success?: true)
+
+      call_count = 0
+      allow(Open3).to receive(:capture3) do |env, *args|
+        call_count += 1
+        if call_count == 1
+          expect(args[0]).to eq("bin/test-hook")
+          ["Hook output", "", hook_status]
+        else
+          ["", "", webpack_status]
+        end
+      end
+
+      allow(Shakapacker.config).to receive(:precompile_hook).and_return("bin/test-hook")
+
+      # Skip flag is not set
+      allow(ENV).to receive(:[]).and_call_original
+      allow(ENV).to receive(:[]).with("SHAKAPACKER_SKIP_PRECOMPILE_HOOK").and_return(nil)
+
+      expect(Shakapacker.compiler.compile).to be true
+      expect(call_count).to eq(2) # Both hook and webpack were called
+    end
+
+    it "runs precompile_hook when SHAKAPACKER_SKIP_PRECOMPILE_HOOK is false" do
+      mocked_strategy = spy("Strategy")
+      allow(mocked_strategy).to receive(:stale?).and_return(true)
+      allow(Shakapacker.compiler).to receive(:strategy).and_return(mocked_strategy)
+
+      hook_status = OpenStruct.new(success?: true, exitstatus: 0)
+      webpack_status = OpenStruct.new(success?: true)
+
+      call_count = 0
+      allow(Open3).to receive(:capture3) do |env, *args|
+        call_count += 1
+        if call_count == 1
+          expect(args[0]).to eq("bin/test-hook")
+          ["Hook output", "", hook_status]
+        else
+          ["", "", webpack_status]
+        end
+      end
+
+      allow(Shakapacker.config).to receive(:precompile_hook).and_return("bin/test-hook")
+
+      # Skip flag is set to "false" (not "true")
+      allow(ENV).to receive(:[]).and_call_original
+      allow(ENV).to receive(:[]).with("SHAKAPACKER_SKIP_PRECOMPILE_HOOK").and_return("false")
+
+      expect(Shakapacker.compiler.compile).to be true
+      expect(call_count).to eq(2) # Both hook and webpack were called
+    end
   end
 end

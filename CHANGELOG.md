@@ -11,6 +11,10 @@
 
 Changes since the last non-beta release.
 
+### Added
+
+- **Added `SHAKAPACKER_SKIP_PRECOMPILE_HOOK` environment variable to skip precompile hook**. [PR #XXX](https://github.com/shakacode/shakapacker/pull/XXX) by [justin808](https://github.com/justin808). Set `SHAKAPACKER_SKIP_PRECOMPILE_HOOK=true` to skip the precompile hook during compilation. This is useful when using process managers like Foreman or Overmind to run the hook once before starting multiple webpack processes, preventing duplicate hook execution. **Migration tip:** If you have a custom `bin/dev` script that starts multiple webpack processes, you can now run the precompile hook once in the script and set this environment variable to prevent each webpack process from running the hook again. See the [precompile hook documentation](./docs/precompile_hook.md#skipping-the-hook) for implementation examples.
+
 ## [v9.3.4-beta.0] - November 17, 2025
 
 ### Fixed
