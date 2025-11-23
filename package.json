@@ -22,6 +22,7 @@
     "./swc": "./package/swc/index.js",
     "./esbuild": "./package/esbuild/index.js",
     "./configExporter": "./package/configExporter/index.js",
+    "./configDiffer": "./package/configDiffer/index.js",
     "./package.json": "./package.json",
     "./package/babel/preset.js": "./package/babel/preset.js",
     "./package/*": "./package/*"

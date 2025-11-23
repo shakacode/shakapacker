@@ -1,0 +1,18 @@
+mode: development
+devtool: cheap-module-source-map
+output:
+  path: /app/public/packs
+  publicPath: /packs/
+  filename: "[name].js"
+cache:
+  type: filesystem
+optimization:
+  minimize: false
+  splitChunks:
+    chunks: all
+plugins:
+  - HtmlWebpackPlugin
+  - DefinePlugin
+devServer:
+  hot: true
+  port: 3035
