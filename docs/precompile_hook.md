@@ -300,7 +300,7 @@ This is useful when:
 - Running the hook manually and then compiling multiple times
 - Debugging compilation issues without the hook
 
-**Note:** The examples below show how to implement this in your custom `bin/dev` script. If you're using React on Rails, the generated `bin/dev` script already implements this pattern automatically - it runs the precompile hook once before launching processes, then sets `SHAKAPACKER_SKIP_PRECOMPILE_HOOK=true` to prevent duplicate execution.
+**Note:** The examples below show how to implement this in your custom `bin/dev` script. If you're using React on Rails v13.1.0+, the generated `bin/dev` script already implements this pattern automatically - **no action needed**. It runs the precompile hook once before launching processes, then sets `SHAKAPACKER_SKIP_PRECOMPILE_HOOK=true` to prevent duplicate execution.
 
 **Recommended: Use Procfile env prefix**
 
