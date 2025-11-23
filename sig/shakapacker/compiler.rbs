@@ -52,6 +52,7 @@ class Shakapacker::Compiler
 
   def bin_shakapacker_path: () -> Pathname
 
+  # Returns true if precompile hook should run, false if disabled or skipped via ENV
   def should_run_precompile_hook?: () -> bool
 
   def run_precompile_hook: () -> void
