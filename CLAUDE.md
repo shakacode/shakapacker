@@ -12,6 +12,10 @@
 - Run corresponding RSpec tests when changing source files
 - For example, when changing `lib/shakapacker/foo.rb`, run `spec/shakapacker/foo_spec.rb`
 - Run the full test suite with `bundle exec rspec` before pushing
+- **Use explicit RSpec spy assertions** - prefer `have_received`/`not_to have_received` over indirect counter patterns
+  - Good: `expect(Open3).to have_received(:capture3).with(anything, hook_command, anything)`
+  - Good: `expect(Open3).not_to have_received(:capture3).with(anything, hook_command, anything)`
+  - Avoid: `call_count += 1` followed by `expect(call_count).to eq(1)`
 
 ## Code Style
 
