@@ -11,6 +11,10 @@
 
 Changes since the last non-beta release.
 
+### Fixed
+
+- **Fixed gemspec to exclude Gemfile.lock from packaged gem**. [PR #856](https://github.com/shakacode/shakapacker/pull/856) by [adrien-k](https://github.com/adrien-k). The gemspec's file filtering regex now correctly matches `Gemfile.lock` (which has no trailing `/`), ensuring it is excluded from the gem package.
+
 ## [v9.4.0] - November 22, 2025
 
 ### Added
