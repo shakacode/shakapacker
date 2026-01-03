@@ -82,15 +82,17 @@ const getAllowedEnvVars = (): string[] => {
 
 /**
  * Builds a filtered environment object containing only allowed variables.
- * Returns an object with variable names as keys and their values (or undefined as default).
+ * Returns an object with variable names as keys and their values.
+ * Uses null as default for missing variables (rspack treats null as optional).
  */
-const getFilteredEnv = (): Record<string, string | undefined> => {
+const getFilteredEnv = (): Record<string, string | null> => {
   const allowedVars = getAllowedEnvVars()
-  const filtered: Record<string, string | undefined> = {}
+  const filtered: Record<string, string | null> = {}
 
   for (const varName of allowedVars) {
-    // Use undefined as default so rspack throws if var is missing and used
-    filtered[varName] = process.env[varName]
+    // Use null as default for missing vars - rspack treats null as optional
+    // (undefined would cause rspack to throw if the var is used but not set)
+    filtered[varName] = process.env[varName] ?? null
   }
 
   return filtered
