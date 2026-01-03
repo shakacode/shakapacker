@@ -11,6 +11,18 @@
 
 Changes since the last non-beta release.
 
+### Security
+
+- **CRITICAL: Fixed environment variable leak via EnvironmentPlugin**. [PR #XXX](https://github.com/shakacode/shakapacker/pull/XXX) by [XXX](https://github.com/XXX). The default webpack and rspack plugins were passing the entire `process.env` to `EnvironmentPlugin`, which exposed ALL build environment variables (including secrets like `DATABASE_URL`, `AWS_SECRET_ACCESS_KEY`, `RAILS_MASTER_KEY`, etc.) to client-side JavaScript bundles. This was especially dangerous with webpack 5.104+ which added `import.meta.env` object access support, causing full environment serialization when third-party libraries access `import.meta.env`. **Action required**: After upgrading, rotate any secrets that may have been exposed in production JavaScript bundles. See [security advisory](https://github.com/shakacode/shakapacker/security/advisories) for details.
+
+### Added
+
+- **Added `SHAKAPACKER_ENV_VARS` environment variable for extending allowed client-side env vars**. [PR #XXX](https://github.com/shakacode/shakapacker/pull/XXX) by [XXX](https://github.com/XXX). Set `SHAKAPACKER_ENV_VARS=VAR1,VAR2,VAR3` to expose additional environment variables to client-side JavaScript beyond the default allowlist (`NODE_ENV`, `RAILS_ENV`, `WEBPACK_SERVE`). Only add non-sensitive variables that are safe to embed in public JavaScript bundles.
+
+### Changed
+
+- **BREAKING: EnvironmentPlugin now uses allowlist instead of exposing all env vars**. [PR #XXX](https://github.com/shakacode/shakapacker/pull/XXX) by [XXX](https://github.com/XXX). Only `NODE_ENV`, `RAILS_ENV`, and `WEBPACK_SERVE` are exposed by default. If your client-side code relies on other environment variables, add them via `SHAKAPACKER_ENV_VARS` or customize your webpack/rspack config. This is a security fix - the previous behavior was dangerous.
+
 ## [v9.4.0] - November 22, 2025
 
 ### Added

@@ -27,9 +27,62 @@ interface Manifest {
     | undefined
 }
 
+/**
+ * Allowlist of environment variables that are safe to expose to client-side JavaScript.
+ *
+ * SECURITY: Never add sensitive variables like DATABASE_URL, API keys, or secrets.
+ * These values are embedded directly into the JavaScript bundle and are publicly visible.
+ *
+ * Users can extend this list via SHAKAPACKER_ENV_VARS environment variable (comma-separated)
+ * or by customizing their rspack config.
+ */
+const DEFAULT_ALLOWED_ENV_VARS = [
+  "NODE_ENV",
+  "RAILS_ENV",
+  "WEBPACK_SERVE"
+] as const
+
+/**
+ * Gets the list of environment variables to expose to client-side code.
+ * Combines default allowed vars with any user-specified vars from SHAKAPACKER_ENV_VARS.
+ */
+const getAllowedEnvVars = (): string[] => {
+  const allowed: string[] = [...DEFAULT_ALLOWED_ENV_VARS]
+
+  // Allow users to specify additional env vars via SHAKAPACKER_ENV_VARS
+  const userVars = process.env.SHAKAPACKER_ENV_VARS
+  if (userVars) {
+    const additionalVars = userVars
+      .split(",")
+      .map((v) => v.trim())
+      .filter(Boolean)
+    allowed.push(...additionalVars)
+  }
+
+  return allowed
+}
+
+/**
+ * Builds a filtered environment object containing only allowed variables.
+ * Returns an object with variable names as keys and their values (or undefined as default).
+ */
+const getFilteredEnv = (): Record<string, string | undefined> => {
+  const allowedVars = getAllowedEnvVars()
+  const filtered: Record<string, string | undefined> = {}
+
+  for (const varName of allowedVars) {
+    // Use undefined as default so rspack throws if var is missing and used
+    filtered[varName] = process.env[varName]
+  }
+
+  return filtered
+}
+
 const getPlugins = (): unknown[] => {
   const plugins = [
-    new rspack.EnvironmentPlugin(process.env),
+    // SECURITY: Only expose allowlisted environment variables to prevent secrets leaking
+    // into client-side bundles. See: https://github.com/shakacode/shakapacker/security/advisories
+    new rspack.EnvironmentPlugin(getFilteredEnv()),
     new RspackManifestPlugin({
       fileName: config.manifestPath.split("/").pop(), // Get just the filename
       publicPath: config.publicPathWithoutCDN,
