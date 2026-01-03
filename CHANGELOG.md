@@ -24,6 +24,7 @@ Changes since the last non-beta release.
 - **BREAKING: EnvironmentPlugin now uses allowlist instead of exposing all env vars**. [PR #857](https://github.com/shakacode/shakapacker/pull/857) by [justin808](https://github.com/justin808). Only `NODE_ENV`, `RAILS_ENV`, and `WEBPACK_SERVE` are exposed by default. If your client-side code relies on other environment variables, add them via `SHAKAPACKER_ENV_VARS` or customize your webpack/rspack config. This is a security fix - the previous behavior was dangerous.
 
   **Migration example:**
+
   ```bash
   # If your code uses process.env.API_BASE_URL
   SHAKAPACKER_ENV_VARS=API_BASE_URL bundle exec rails assets:precompile

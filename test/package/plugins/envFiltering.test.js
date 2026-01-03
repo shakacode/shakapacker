@@ -20,7 +20,8 @@ describe("environment variable filtering security", () => {
     // Simulate sensitive build environment variables
     process.env.DATABASE_URL = "postgres://user:password@host/db"
     process.env.AWS_ACCESS_KEY_ID = "AKIAIOSFODNN7EXAMPLE"
-    process.env.AWS_SECRET_ACCESS_KEY = "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY"
+    process.env.AWS_SECRET_ACCESS_KEY =
+      "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY"
     process.env.RAILS_MASTER_KEY = "abc123secretmasterkey456"
     process.env.STRIPE_SECRET_KEY = "sk_live_secretkey123"
     process.env.SESSION_SECRET = "supersecrettoken"
@@ -44,7 +45,10 @@ describe("environment variable filtering security", () => {
     it("only exposes allowlisted environment variables", () => {
       // Read the TypeScript source file to verify the implementation
       const webpackPluginSource = require("fs").readFileSync(
-        require("path").resolve(__dirname, "../../../package/plugins/webpack.ts"),
+        require("path").resolve(
+          __dirname,
+          "../../../package/plugins/webpack.ts"
+        ),
         "utf8"
       )
 
@@ -60,7 +64,10 @@ describe("environment variable filtering security", () => {
 
     it("does not include sensitive variable names in the default allowlist", () => {
       const webpackPluginSource = require("fs").readFileSync(
-        require("path").resolve(__dirname, "../../../package/plugins/webpack.ts"),
+        require("path").resolve(
+          __dirname,
+          "../../../package/plugins/webpack.ts"
+        ),
         "utf8"
       )
 
@@ -94,7 +101,10 @@ describe("environment variable filtering security", () => {
   describe("rspack plugin", () => {
     it("only exposes allowlisted environment variables", () => {
       const rspackPluginSource = require("fs").readFileSync(
-        require("path").resolve(__dirname, "../../../package/plugins/rspack.ts"),
+        require("path").resolve(
+          __dirname,
+          "../../../package/plugins/rspack.ts"
+        ),
         "utf8"
       )
 
@@ -110,7 +120,10 @@ describe("environment variable filtering security", () => {
 
     it("does not include sensitive variable names in the default allowlist", () => {
       const rspackPluginSource = require("fs").readFileSync(
-        require("path").resolve(__dirname, "../../../package/plugins/rspack.ts"),
+        require("path").resolve(
+          __dirname,
+          "../../../package/plugins/rspack.ts"
+        ),
         "utf8"
       )
 
@@ -145,7 +158,10 @@ describe("environment variable filtering security", () => {
     it("webpack plugin source includes SHAKAPACKER_ENV_VARS support", () => {
       // Read the TypeScript source file to verify the implementation
       const webpackPluginSource = require("fs").readFileSync(
-        require("path").resolve(__dirname, "../../../package/plugins/webpack.ts"),
+        require("path").resolve(
+          __dirname,
+          "../../../package/plugins/webpack.ts"
+        ),
         "utf8"
       )
 
@@ -156,7 +172,10 @@ describe("environment variable filtering security", () => {
     it("rspack plugin source includes SHAKAPACKER_ENV_VARS support", () => {
       // Read the TypeScript source file to verify the implementation
       const rspackPluginSource = require("fs").readFileSync(
-        require("path").resolve(__dirname, "../../../package/plugins/rspack.ts"),
+        require("path").resolve(
+          __dirname,
+          "../../../package/plugins/rspack.ts"
+        ),
         "utf8"
       )
 
@@ -168,11 +187,17 @@ describe("environment variable filtering security", () => {
   describe("consistency between webpack and rspack plugins", () => {
     it("both plugins use the same default allowlist", () => {
       const webpackPluginSource = require("fs").readFileSync(
-        require("path").resolve(__dirname, "../../../package/plugins/webpack.ts"),
+        require("path").resolve(
+          __dirname,
+          "../../../package/plugins/webpack.ts"
+        ),
         "utf8"
       )
       const rspackPluginSource = require("fs").readFileSync(
-        require("path").resolve(__dirname, "../../../package/plugins/rspack.ts"),
+        require("path").resolve(
+          __dirname,
+          "../../../package/plugins/rspack.ts"
+        ),
         "utf8"
       )
 
@@ -185,8 +210,7 @@ describe("environment variable filtering security", () => {
       )[1]
 
       // Normalize whitespace for comparison
-      const normalizeAllowlist = (str) =>
-        str.replace(/\s+/g, " ").trim()
+      const normalizeAllowlist = (str) => str.replace(/\s+/g, " ").trim()
 
       expect(normalizeAllowlist(webpackAllowlist)).toBe(
         normalizeAllowlist(rspackAllowlist)
@@ -195,11 +219,17 @@ describe("environment variable filtering security", () => {
 
     it("both plugins have the same dangerous patterns regex", () => {
       const webpackPluginSource = require("fs").readFileSync(
-        require("path").resolve(__dirname, "../../../package/plugins/webpack.ts"),
+        require("path").resolve(
+          __dirname,
+          "../../../package/plugins/webpack.ts"
+        ),
         "utf8"
       )
       const rspackPluginSource = require("fs").readFileSync(
-        require("path").resolve(__dirname, "../../../package/plugins/rspack.ts"),
+        require("path").resolve(
+          __dirname,
+          "../../../package/plugins/rspack.ts"
+        ),
         "utf8"
       )
 
@@ -220,7 +250,10 @@ describe("environment variable filtering security", () => {
   describe("dangerous pattern warnings", () => {
     it("source includes warning for sensitive variable names", () => {
       const webpackPluginSource = require("fs").readFileSync(
-        require("path").resolve(__dirname, "../../../package/plugins/webpack.ts"),
+        require("path").resolve(
+          __dirname,
+          "../../../package/plugins/webpack.ts"
+        ),
         "utf8"
       )
 
@@ -231,7 +264,10 @@ describe("environment variable filtering security", () => {
 
     it("dangerous patterns include common secret variable patterns", () => {
       const webpackPluginSource = require("fs").readFileSync(
-        require("path").resolve(__dirname, "../../../package/plugins/webpack.ts"),
+        require("path").resolve(
+          __dirname,
+          "../../../package/plugins/webpack.ts"
+        ),
         "utf8"
       )
 
@@ -264,17 +300,25 @@ describe("environment variable filtering security", () => {
   describe("shakapacker_ENV_VARS edge cases", () => {
     it("source handles whitespace in CSV values", () => {
       const webpackPluginSource = require("fs").readFileSync(
-        require("path").resolve(__dirname, "../../../package/plugins/webpack.ts"),
+        require("path").resolve(
+          __dirname,
+          "../../../package/plugins/webpack.ts"
+        ),
         "utf8"
       )
 
       // Verify trim() is called on each value
-      expect(webpackPluginSource).toMatch(/\.map\(\s*\(?v\)?\s*=>\s*v\.trim\(\)/)
+      expect(webpackPluginSource).toMatch(
+        /\.map\(\s*\(?v\)?\s*=>\s*v\.trim\(\)/
+      )
     })
 
     it("source filters empty values from CSV", () => {
       const webpackPluginSource = require("fs").readFileSync(
-        require("path").resolve(__dirname, "../../../package/plugins/webpack.ts"),
+        require("path").resolve(
+          __dirname,
+          "../../../package/plugins/webpack.ts"
+        ),
         "utf8"
       )
 
