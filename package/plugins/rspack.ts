@@ -31,7 +31,7 @@ interface Manifest {
 const getPlugins = (): unknown[] => {
   const plugins = [
     // SECURITY: Only expose allowlisted environment variables to prevent secrets leaking
-    // into client-side bundles. See: https://github.com/shakacode/shakapacker/security/advisories
+    // into client-side bundles. See envFilter.ts for the allowlist configuration.
     new rspack.EnvironmentPlugin(getFilteredEnv()),
     new RspackManifestPlugin({
       fileName: config.manifestPath.split("/").pop(), // Get just the filename

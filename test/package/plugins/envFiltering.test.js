@@ -128,7 +128,8 @@ describe("environment variable filtering security", () => {
         "KEY",
         "TOKEN",
         "CREDENTIAL",
-        "DATABASE_URL",
+        "DATABASE",
+        "DB_",
         "AWS_",
         "PRIVATE",
         "AUTH"

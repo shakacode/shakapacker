@@ -26,7 +26,7 @@ export const DEFAULT_ALLOWED_ENV_VARS = [
  * Used to warn developers if they accidentally expose secrets via SHAKAPACKER_ENV_VARS.
  */
 const DANGEROUS_PATTERNS =
-  /SECRET|PASSWORD|KEY|TOKEN|CREDENTIAL|DATABASE_URL|AWS_|PRIVATE|AUTH/i
+  /SECRET|PASSWORD|KEY|TOKEN|CREDENTIAL|DATABASE|DB_|AWS_|PRIVATE|AUTH/i
 
 /**
  * Gets the list of environment variables to expose to client-side code.

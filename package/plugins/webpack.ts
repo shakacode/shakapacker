@@ -17,7 +17,7 @@ const getPlugins = (): unknown[] => {
       : WebpackAssetsManifest
   const plugins = [
     // SECURITY: Only expose allowlisted environment variables to prevent secrets leaking
-    // into client-side bundles. See: https://github.com/shakacode/shakapacker/security/advisories
+    // into client-side bundles. See envFilter.ts for the allowlist configuration.
     new webpack.EnvironmentPlugin(getFilteredEnv()),
     new WebpackAssetsManifestConstructor({
       merge: true,
