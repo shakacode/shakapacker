@@ -24,6 +24,13 @@ const DEFAULT_ALLOWED_ENV_VARS = [
 ] as const
 
 /**
+ * Pattern to detect potentially sensitive environment variable names.
+ * Used to warn developers if they accidentally expose secrets via SHAKAPACKER_ENV_VARS.
+ */
+const DANGEROUS_PATTERNS =
+  /SECRET|PASSWORD|KEY|TOKEN|CREDENTIAL|DATABASE_URL|AWS_|PRIVATE|AUTH/i
+
+/**
  * Gets the list of environment variables to expose to client-side code.
  * Combines default allowed vars with any user-specified vars from SHAKAPACKER_ENV_VARS.
  */
@@ -37,6 +44,17 @@ const getAllowedEnvVars = (): string[] => {
       .split(",")
       .map((v) => v.trim())
       .filter(Boolean)
+
+    // Warn about potentially dangerous variable names
+    additionalVars.forEach((varName) => {
+      if (DANGEROUS_PATTERNS.test(varName)) {
+        console.warn(
+          `⚠️  [SHAKAPACKER SECURITY WARNING] "${varName}" matches a sensitive pattern. ` +
+            `Ensure this variable is safe to expose in client-side JavaScript bundles.`
+        )
+      }
+    })
+
     allowed.push(...additionalVars)
   }
 

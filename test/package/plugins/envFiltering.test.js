@@ -192,5 +192,94 @@ describe("environment variable filtering security", () => {
         normalizeAllowlist(rspackAllowlist)
       )
     })
+
+    it("both plugins have the same dangerous patterns regex", () => {
+      const webpackPluginSource = require("fs").readFileSync(
+        require("path").resolve(__dirname, "../../../package/plugins/webpack.ts"),
+        "utf8"
+      )
+      const rspackPluginSource = require("fs").readFileSync(
+        require("path").resolve(__dirname, "../../../package/plugins/rspack.ts"),
+        "utf8"
+      )
+
+      // Extract DANGEROUS_PATTERNS from both files
+      const webpackPattern = webpackPluginSource.match(
+        /DANGEROUS_PATTERNS\s*=\s*\/(.*?)\/i/
+      )
+      const rspackPattern = rspackPluginSource.match(
+        /DANGEROUS_PATTERNS\s*=\s*\/(.*?)\/i/
+      )
+
+      expect(webpackPattern).toBeTruthy()
+      expect(rspackPattern).toBeTruthy()
+      expect(webpackPattern[1]).toBe(rspackPattern[1])
+    })
+  })
+
+  describe("dangerous pattern warnings", () => {
+    it("source includes warning for sensitive variable names", () => {
+      const webpackPluginSource = require("fs").readFileSync(
+        require("path").resolve(__dirname, "../../../package/plugins/webpack.ts"),
+        "utf8"
+      )
+
+      expect(webpackPluginSource).toContain("DANGEROUS_PATTERNS")
+      expect(webpackPluginSource).toContain("SHAKAPACKER SECURITY WARNING")
+      expect(webpackPluginSource).toContain("matches a sensitive pattern")
+    })
+
+    it("dangerous patterns include common secret variable patterns", () => {
+      const webpackPluginSource = require("fs").readFileSync(
+        require("path").resolve(__dirname, "../../../package/plugins/webpack.ts"),
+        "utf8"
+      )
+
+      const patternMatch = webpackPluginSource.match(
+        /DANGEROUS_PATTERNS\s*=\s*\/(.*?)\/i/
+      )
+      expect(patternMatch).toBeTruthy()
+
+      const patternContent = patternMatch[1]
+
+      // Verify all expected patterns are included
+      const expectedPatterns = [
+        "SECRET",
+        "PASSWORD",
+        "KEY",
+        "TOKEN",
+        "CREDENTIAL",
+        "DATABASE_URL",
+        "AWS_",
+        "PRIVATE",
+        "AUTH"
+      ]
+
+      expectedPatterns.forEach((pattern) => {
+        expect(patternContent).toContain(pattern)
+      })
+    })
+  })
+
+  describe("shakapacker_ENV_VARS edge cases", () => {
+    it("source handles whitespace in CSV values", () => {
+      const webpackPluginSource = require("fs").readFileSync(
+        require("path").resolve(__dirname, "../../../package/plugins/webpack.ts"),
+        "utf8"
+      )
+
+      // Verify trim() is called on each value
+      expect(webpackPluginSource).toMatch(/\.map\(\s*\(?v\)?\s*=>\s*v\.trim\(\)/)
+    })
+
+    it("source filters empty values from CSV", () => {
+      const webpackPluginSource = require("fs").readFileSync(
+        require("path").resolve(__dirname, "../../../package/plugins/webpack.ts"),
+        "utf8"
+      )
+
+      // Verify filter(Boolean) is called to remove empty strings
+      expect(webpackPluginSource).toMatch(/\.filter\(Boolean\)/)
+    })
   })
 })
