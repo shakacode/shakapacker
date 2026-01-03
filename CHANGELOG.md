@@ -13,7 +13,7 @@ Changes since the last non-beta release.
 
 ### Security
 
-- **CRITICAL: Fixed environment variable leak via EnvironmentPlugin**. [PR #857](https://github.com/shakacode/shakapacker/pull/857) by [justin808](https://github.com/justin808). The default webpack and rspack plugins were passing the entire `process.env` to `EnvironmentPlugin`, which exposed ALL build environment variables (including secrets like `DATABASE_URL`, `AWS_SECRET_ACCESS_KEY`, `RAILS_MASTER_KEY`, etc.) to client-side JavaScript bundles when code referenced `process.env.VARIABLE_NAME`. **Action required**: After upgrading, rotate any secrets that may have been exposed in production JavaScript bundles.
+- **CRITICAL: Fixed environment variable leak via EnvironmentPlugin**. [PR #857](https://github.com/shakacode/shakapacker/pull/857) by [justin808](https://github.com/justin808). The default webpack and rspack plugins were passing the entire `process.env` to `EnvironmentPlugin`, which exposed ALL build environment variables (including secrets like `DATABASE_URL`, `AWS_SECRET_ACCESS_KEY`, `RAILS_MASTER_KEY`, etc.) to client-side JavaScript bundles when code referenced `process.env.VARIABLE_NAME`. **Note**: This vulnerability was inherited from webpacker v1.0.0 (January 2017) and has been present in all versions of webpacker and shakapacker. **Action required**: After upgrading, rotate any secrets that may have been exposed in production JavaScript bundles.
 
 ### Added
 

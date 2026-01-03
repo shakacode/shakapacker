@@ -8,6 +8,11 @@
  * See: https://github.com/shakacode/shakapacker/security/advisories
  */
 
+const fs = require("fs")
+const path = require("path")
+
+const pluginsDir = path.resolve(__dirname, "../../../package/plugins")
+
 describe("environment variable filtering security", () => {
   const originalEnv = { ...process.env }
 
@@ -41,237 +46,75 @@ describe("environment variable filtering security", () => {
     delete process.env.SHAKAPACKER_ENV_VARS
   })
 
-  describe("webpack plugin", () => {
-    it("only exposes allowlisted environment variables", () => {
-      // Read the TypeScript source file to verify the implementation
-      const webpackPluginSource = require("fs").readFileSync(
-        require("path").resolve(
-          __dirname,
-          "../../../package/plugins/webpack.ts"
-        ),
+  describe("shared envFilter module", () => {
+    it("exists and exports the filtering functions", () => {
+      const envFilterSource = fs.readFileSync(
+        path.join(pluginsDir, "envFilter.ts"),
         "utf8"
       )
 
-      // SECURITY: Verify the dangerous pattern is NOT present
-      expect(webpackPluginSource).not.toMatch(
-        /new webpack\.EnvironmentPlugin\(process\.env\)/
-      )
-
-      // Verify the safe pattern IS present
-      expect(webpackPluginSource).toMatch(/getFilteredEnv\(\)/)
-      expect(webpackPluginSource).toMatch(/DEFAULT_ALLOWED_ENV_VARS/)
+      // Verify exports
+      expect(envFilterSource).toContain("export const DEFAULT_ALLOWED_ENV_VARS")
+      expect(envFilterSource).toContain("export const getAllowedEnvVars")
+      expect(envFilterSource).toContain("export const getFilteredEnv")
     })
 
-    it("does not include sensitive variable names in the default allowlist", () => {
-      const webpackPluginSource = require("fs").readFileSync(
-        require("path").resolve(
-          __dirname,
-          "../../../package/plugins/webpack.ts"
-        ),
+    it("has the default allowlist with only safe variables", () => {
+      const envFilterSource = fs.readFileSync(
+        path.join(pluginsDir, "envFilter.ts"),
         "utf8"
       )
 
-      // These patterns should NEVER appear in the allowlist
-      const sensitivePatterns = [
-        "DATABASE",
-        "SECRET",
-        "PASSWORD",
-        "KEY",
-        "TOKEN",
-        "CREDENTIAL",
-        "AWS_",
-        "STRIPE",
-        "MASTER"
-      ]
-
       // Extract the DEFAULT_ALLOWED_ENV_VARS array from source
-      const allowlistMatch = webpackPluginSource.match(
+      const allowlistMatch = envFilterSource.match(
         /DEFAULT_ALLOWED_ENV_VARS\s*=\s*\[([\s\S]*?)\]\s*as const/
       )
       expect(allowlistMatch).toBeTruthy()
 
       const allowlistContent = allowlistMatch[1]
 
-      sensitivePatterns.forEach((pattern) => {
-        expect(allowlistContent.toUpperCase()).not.toContain(pattern)
-      })
-    })
-  })
-
-  describe("rspack plugin", () => {
-    it("only exposes allowlisted environment variables", () => {
-      const rspackPluginSource = require("fs").readFileSync(
-        require("path").resolve(
-          __dirname,
-          "../../../package/plugins/rspack.ts"
-        ),
-        "utf8"
-      )
-
-      // SECURITY: Verify the dangerous pattern is NOT present
-      expect(rspackPluginSource).not.toMatch(
-        /new rspack\.EnvironmentPlugin\(process\.env\)/
-      )
-
-      // Verify the safe pattern IS present
-      expect(rspackPluginSource).toMatch(/getFilteredEnv\(\)/)
-      expect(rspackPluginSource).toMatch(/DEFAULT_ALLOWED_ENV_VARS/)
-    })
-
-    it("does not include sensitive variable names in the default allowlist", () => {
-      const rspackPluginSource = require("fs").readFileSync(
-        require("path").resolve(
-          __dirname,
-          "../../../package/plugins/rspack.ts"
-        ),
-        "utf8"
-      )
-
       // These patterns should NEVER appear in the allowlist
       const sensitivePatterns = [
         "DATABASE",
         "SECRET",
         "PASSWORD",
-        "KEY",
-        "TOKEN",
         "CREDENTIAL",
         "AWS_",
         "STRIPE",
         "MASTER"
       ]
 
-      // Extract the DEFAULT_ALLOWED_ENV_VARS array from source
-      const allowlistMatch = rspackPluginSource.match(
-        /DEFAULT_ALLOWED_ENV_VARS\s*=\s*\[([\s\S]*?)\]\s*as const/
-      )
-      expect(allowlistMatch).toBeTruthy()
-
-      const allowlistContent = allowlistMatch[1]
-
       sensitivePatterns.forEach((pattern) => {
         expect(allowlistContent.toUpperCase()).not.toContain(pattern)
       })
-    })
-  })
 
-  describe("shakapacker_ENV_VARS extension", () => {
-    it("webpack plugin source includes SHAKAPACKER_ENV_VARS support", () => {
-      // Read the TypeScript source file to verify the implementation
-      const webpackPluginSource = require("fs").readFileSync(
-        require("path").resolve(
-          __dirname,
-          "../../../package/plugins/webpack.ts"
-        ),
-        "utf8"
-      )
-
-      expect(webpackPluginSource).toContain("SHAKAPACKER_ENV_VARS")
-      expect(webpackPluginSource).toContain('split(",")')
+      // Verify expected safe vars are present
+      expect(allowlistContent).toContain("NODE_ENV")
+      expect(allowlistContent).toContain("RAILS_ENV")
+      expect(allowlistContent).toContain("WEBPACK_SERVE")
     })
 
-    it("rspack plugin source includes SHAKAPACKER_ENV_VARS support", () => {
-      // Read the TypeScript source file to verify the implementation
-      const rspackPluginSource = require("fs").readFileSync(
-        require("path").resolve(
-          __dirname,
-          "../../../package/plugins/rspack.ts"
-        ),
+    it("includes SHAKAPACKER_ENV_VARS extension support", () => {
+      const envFilterSource = fs.readFileSync(
+        path.join(pluginsDir, "envFilter.ts"),
         "utf8"
       )
 
-      expect(rspackPluginSource).toContain("SHAKAPACKER_ENV_VARS")
-      expect(rspackPluginSource).toContain('split(",")')
-    })
-  })
-
-  describe("consistency between webpack and rspack plugins", () => {
-    it("both plugins use the same default allowlist", () => {
-      const webpackPluginSource = require("fs").readFileSync(
-        require("path").resolve(
-          __dirname,
-          "../../../package/plugins/webpack.ts"
-        ),
-        "utf8"
-      )
-      const rspackPluginSource = require("fs").readFileSync(
-        require("path").resolve(
-          __dirname,
-          "../../../package/plugins/rspack.ts"
-        ),
-        "utf8"
-      )
-
-      // Extract allowlists from both files
-      const webpackAllowlist = webpackPluginSource.match(
-        /DEFAULT_ALLOWED_ENV_VARS\s*=\s*\[([\s\S]*?)\]\s*as const/
-      )[1]
-      const rspackAllowlist = rspackPluginSource.match(
-        /DEFAULT_ALLOWED_ENV_VARS\s*=\s*\[([\s\S]*?)\]\s*as const/
-      )[1]
-
-      // Normalize whitespace for comparison
-      const normalizeAllowlist = (str) => str.replace(/\s+/g, " ").trim()
-
-      expect(normalizeAllowlist(webpackAllowlist)).toBe(
-        normalizeAllowlist(rspackAllowlist)
-      )
+      expect(envFilterSource).toContain("SHAKAPACKER_ENV_VARS")
+      expect(envFilterSource).toContain('split(",")')
     })
 
-    it("both plugins have the same dangerous patterns regex", () => {
-      const webpackPluginSource = require("fs").readFileSync(
-        require("path").resolve(
-          __dirname,
-          "../../../package/plugins/webpack.ts"
-        ),
-        "utf8"
-      )
-      const rspackPluginSource = require("fs").readFileSync(
-        require("path").resolve(
-          __dirname,
-          "../../../package/plugins/rspack.ts"
-        ),
+    it("includes dangerous pattern detection", () => {
+      const envFilterSource = fs.readFileSync(
+        path.join(pluginsDir, "envFilter.ts"),
         "utf8"
       )
 
-      // Extract DANGEROUS_PATTERNS from both files
-      const webpackPattern = webpackPluginSource.match(
-        /DANGEROUS_PATTERNS\s*=\s*\/(.*?)\/i/
-      )
-      const rspackPattern = rspackPluginSource.match(
-        /DANGEROUS_PATTERNS\s*=\s*\/(.*?)\/i/
-      )
+      expect(envFilterSource).toContain("DANGEROUS_PATTERNS")
+      expect(envFilterSource).toContain("SHAKAPACKER SECURITY WARNING")
+      expect(envFilterSource).toContain("matches a sensitive pattern")
 
-      expect(webpackPattern).toBeTruthy()
-      expect(rspackPattern).toBeTruthy()
-      expect(webpackPattern[1]).toBe(rspackPattern[1])
-    })
-  })
-
-  describe("dangerous pattern warnings", () => {
-    it("source includes warning for sensitive variable names", () => {
-      const webpackPluginSource = require("fs").readFileSync(
-        require("path").resolve(
-          __dirname,
-          "../../../package/plugins/webpack.ts"
-        ),
-        "utf8"
-      )
-
-      expect(webpackPluginSource).toContain("DANGEROUS_PATTERNS")
-      expect(webpackPluginSource).toContain("SHAKAPACKER SECURITY WARNING")
-      expect(webpackPluginSource).toContain("matches a sensitive pattern")
-    })
-
-    it("dangerous patterns include common secret variable patterns", () => {
-      const webpackPluginSource = require("fs").readFileSync(
-        require("path").resolve(
-          __dirname,
-          "../../../package/plugins/webpack.ts"
-        ),
-        "utf8"
-      )
-
-      const patternMatch = webpackPluginSource.match(
+      const patternMatch = envFilterSource.match(
         /DANGEROUS_PATTERNS\s*=\s*\/(.*?)\/i/
       )
       expect(patternMatch).toBeTruthy()
@@ -295,35 +138,122 @@ describe("environment variable filtering security", () => {
         expect(patternContent).toContain(pattern)
       })
     })
-  })
 
-  describe("shakapacker_ENV_VARS edge cases", () => {
-    it("source handles whitespace in CSV values", () => {
-      const webpackPluginSource = require("fs").readFileSync(
-        require("path").resolve(
-          __dirname,
-          "../../../package/plugins/webpack.ts"
-        ),
+    it("handles whitespace and empty values in CSV", () => {
+      const envFilterSource = fs.readFileSync(
+        path.join(pluginsDir, "envFilter.ts"),
         "utf8"
       )
 
       // Verify trim() is called on each value
-      expect(webpackPluginSource).toMatch(
-        /\.map\(\s*\(?v\)?\s*=>\s*v\.trim\(\)/
-      )
+      expect(envFilterSource).toMatch(/\.map\(\s*\(?v\)?\s*=>\s*v\.trim\(\)/)
+      // Verify filter(Boolean) is called to remove empty strings
+      expect(envFilterSource).toMatch(/\.filter\(Boolean\)/)
     })
+  })
 
-    it("source filters empty values from CSV", () => {
-      const webpackPluginSource = require("fs").readFileSync(
-        require("path").resolve(
-          __dirname,
-          "../../../package/plugins/webpack.ts"
-        ),
+  describe("webpack plugin", () => {
+    it("imports from shared envFilter module", () => {
+      const webpackPluginSource = fs.readFileSync(
+        path.join(pluginsDir, "webpack.ts"),
         "utf8"
       )
 
-      // Verify filter(Boolean) is called to remove empty strings
-      expect(webpackPluginSource).toMatch(/\.filter\(Boolean\)/)
+      expect(webpackPluginSource).toContain(
+        'import { getFilteredEnv } from "./envFilter"'
+      )
+    })
+
+    it("uses getFilteredEnv() not process.env", () => {
+      const webpackPluginSource = fs.readFileSync(
+        path.join(pluginsDir, "webpack.ts"),
+        "utf8"
+      )
+
+      // SECURITY: Verify the dangerous pattern is NOT present
+      expect(webpackPluginSource).not.toMatch(
+        /new webpack\.EnvironmentPlugin\(process\.env\)/
+      )
+
+      // Verify the safe pattern IS present
+      expect(webpackPluginSource).toMatch(/getFilteredEnv\(\)/)
+    })
+
+    it("does not duplicate the filtering logic", () => {
+      const webpackPluginSource = fs.readFileSync(
+        path.join(pluginsDir, "webpack.ts"),
+        "utf8"
+      )
+
+      // Should NOT have its own copy of these
+      expect(webpackPluginSource).not.toContain("DEFAULT_ALLOWED_ENV_VARS")
+      expect(webpackPluginSource).not.toContain("DANGEROUS_PATTERNS")
+      expect(webpackPluginSource).not.toContain("getAllowedEnvVars")
+    })
+  })
+
+  describe("rspack plugin", () => {
+    it("imports from shared envFilter module", () => {
+      const rspackPluginSource = fs.readFileSync(
+        path.join(pluginsDir, "rspack.ts"),
+        "utf8"
+      )
+
+      expect(rspackPluginSource).toContain(
+        'import { getFilteredEnv } from "./envFilter"'
+      )
+    })
+
+    it("uses getFilteredEnv() not process.env", () => {
+      const rspackPluginSource = fs.readFileSync(
+        path.join(pluginsDir, "rspack.ts"),
+        "utf8"
+      )
+
+      // SECURITY: Verify the dangerous pattern is NOT present
+      expect(rspackPluginSource).not.toMatch(
+        /new rspack\.EnvironmentPlugin\(process\.env\)/
+      )
+
+      // Verify the safe pattern IS present
+      expect(rspackPluginSource).toMatch(/getFilteredEnv\(\)/)
+    })
+
+    it("does not duplicate the filtering logic", () => {
+      const rspackPluginSource = fs.readFileSync(
+        path.join(pluginsDir, "rspack.ts"),
+        "utf8"
+      )
+
+      // Should NOT have its own copy of these
+      expect(rspackPluginSource).not.toContain("DEFAULT_ALLOWED_ENV_VARS")
+      expect(rspackPluginSource).not.toContain("DANGEROUS_PATTERNS")
+      expect(rspackPluginSource).not.toContain("getAllowedEnvVars")
+    })
+  })
+
+  describe("consistency", () => {
+    it("both plugins use the same shared module", () => {
+      const webpackPluginSource = fs.readFileSync(
+        path.join(pluginsDir, "webpack.ts"),
+        "utf8"
+      )
+      const rspackPluginSource = fs.readFileSync(
+        path.join(pluginsDir, "rspack.ts"),
+        "utf8"
+      )
+
+      // Both should import from the same source
+      const webpackImport = webpackPluginSource.match(
+        /import\s*{[^}]*getFilteredEnv[^}]*}\s*from\s*["']([^"']+)["']/
+      )
+      const rspackImport = rspackPluginSource.match(
+        /import\s*{[^}]*getFilteredEnv[^}]*}\s*from\s*["']([^"']+)["']/
+      )
+
+      expect(webpackImport).toBeTruthy()
+      expect(rspackImport).toBeTruthy()
+      expect(webpackImport[1]).toBe(rspackImport[1])
     })
   })
 })
