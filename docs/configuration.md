@@ -617,14 +617,39 @@ Shakapacker validates configuration at runtime and provides helpful error messag
 
 Some options can be overridden via environment variables:
 
-| Variable                     | Description              | Example                   |
-| ---------------------------- | ------------------------ | ------------------------- |
-| `SHAKAPACKER_CONFIG`         | Path to shakapacker.yml  | `config/webpack.yml`      |
-| `SHAKAPACKER_ASSETS_BUNDLER` | Override assets bundler  | `rspack`                  |
-| `SHAKAPACKER_PRECOMPILE`     | Override precompile flag | `false`                   |
-| `SHAKAPACKER_ASSET_HOST`     | Override asset host      | `https://cdn.example.com` |
-| `NODE_ENV`                   | Node environment         | `production`              |
-| `RAILS_ENV`                  | Rails environment        | `staging`                 |
+| Variable                     | Description                                      | Example                       |
+| ---------------------------- | ------------------------------------------------ | ----------------------------- |
+| `SHAKAPACKER_CONFIG`         | Path to shakapacker.yml                          | `config/webpack.yml`          |
+| `SHAKAPACKER_ASSETS_BUNDLER` | Override assets bundler                          | `rspack`                      |
+| `SHAKAPACKER_PRECOMPILE`     | Override precompile flag                         | `false`                       |
+| `SHAKAPACKER_ASSET_HOST`     | Override asset host                              | `https://cdn.example.com`     |
+| `SHAKAPACKER_ENV_VARS`       | Additional env vars to expose to client-side JS  | `API_URL,FEATURE_FLAGS`       |
+| `NODE_ENV`                   | Node environment                                 | `production`                  |
+| `RAILS_ENV`                  | Rails environment                                | `staging`                     |
+
+### SHAKAPACKER_ENV_VARS
+
+By default, only `NODE_ENV`, `RAILS_ENV`, and `WEBPACK_SERVE` are exposed to client-side JavaScript via webpack/rspack's `EnvironmentPlugin`. This is a security measure to prevent accidentally leaking secrets like `DATABASE_URL`, `API_SECRET_KEY`, etc. into your JavaScript bundles.
+
+To expose additional environment variables, set `SHAKAPACKER_ENV_VARS` to a comma-separated list:
+
+```bash
+# Expose additional variables during build
+SHAKAPACKER_ENV_VARS=API_BASE_URL,FEATURE_FLAGS bundle exec rake assets:precompile
+
+# In development
+SHAKAPACKER_ENV_VARS=API_BASE_URL bin/shakapacker-dev-server
+```
+
+**Security warnings:** If you add a variable that matches sensitive patterns (like `SECRET`, `PASSWORD`, `KEY`, `TOKEN`, `DATABASE`, `AWS_`, etc.), Shakapacker will display a warning. Only expose variables that are safe to embed in public JavaScript bundles.
+
+**Accessing in JavaScript:**
+
+```javascript
+// These are available after adding to SHAKAPACKER_ENV_VARS
+console.log(process.env.API_BASE_URL);
+console.log(process.env.FEATURE_FLAGS);
+```
 
 ## Best Practices
 
