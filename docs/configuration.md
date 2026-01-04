@@ -617,15 +617,15 @@ Shakapacker validates configuration at runtime and provides helpful error messag
 
 Some options can be overridden via environment variables:
 
-| Variable                     | Description                                      | Example                       |
-| ---------------------------- | ------------------------------------------------ | ----------------------------- |
-| `SHAKAPACKER_CONFIG`         | Path to shakapacker.yml                          | `config/webpack.yml`          |
-| `SHAKAPACKER_ASSETS_BUNDLER` | Override assets bundler                          | `rspack`                      |
-| `SHAKAPACKER_PRECOMPILE`     | Override precompile flag                         | `false`                       |
-| `SHAKAPACKER_ASSET_HOST`     | Override asset host                              | `https://cdn.example.com`     |
-| `SHAKAPACKER_ENV_VARS`       | Additional env vars to expose to client-side JS  | `API_URL,FEATURE_FLAGS`       |
-| `NODE_ENV`                   | Node environment                                 | `production`                  |
-| `RAILS_ENV`                  | Rails environment                                | `staging`                     |
+| Variable                     | Description                                     | Example                   |
+| ---------------------------- | ----------------------------------------------- | ------------------------- |
+| `SHAKAPACKER_CONFIG`         | Path to shakapacker.yml                         | `config/webpack.yml`      |
+| `SHAKAPACKER_ASSETS_BUNDLER` | Override assets bundler                         | `rspack`                  |
+| `SHAKAPACKER_PRECOMPILE`     | Override precompile flag                        | `false`                   |
+| `SHAKAPACKER_ASSET_HOST`     | Override asset host                             | `https://cdn.example.com` |
+| `SHAKAPACKER_ENV_VARS`       | Additional env vars to expose to client-side JS | `API_URL,FEATURE_FLAGS`   |
+| `NODE_ENV`                   | Node environment                                | `production`              |
+| `RAILS_ENV`                  | Rails environment                               | `staging`                 |
 
 ### SHAKAPACKER_ENV_VARS
 
@@ -647,8 +647,8 @@ SHAKAPACKER_ENV_VARS=API_BASE_URL bin/shakapacker-dev-server
 
 ```javascript
 // These are available after adding to SHAKAPACKER_ENV_VARS
-console.log(process.env.API_BASE_URL);
-console.log(process.env.FEATURE_FLAGS);
+console.log(process.env.API_BASE_URL)
+console.log(process.env.FEATURE_FLAGS)
 ```
 
 ## Best Practices
