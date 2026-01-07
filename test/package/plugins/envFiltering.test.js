@@ -125,6 +125,26 @@ describe("environment variable filtering security", () => {
       expect(envFilterSource).toContain("Object.keys(process.env)")
     })
 
+    it("uses SHAKAPACKER_PUBLIC_ prefix (with trailing underscore) to prevent system var exposure", () => {
+      const envFilterSource = fs.readFileSync(
+        path.join(pluginsDir, "envFilter.ts"),
+        "utf8"
+      )
+
+      // SECURITY: The prefix MUST include the trailing underscore to ensure
+      // Shakapacker system variables like SHAKAPACKER_CONFIG, SHAKAPACKER_ENV_VARS,
+      // SHAKAPACKER_PRECOMPILE, etc. are NOT accidentally exposed.
+      // Only SHAKAPACKER_PUBLIC_* variables should be auto-exposed.
+      const prefixMatch = envFilterSource.match(
+        /PUBLIC_ENV_PREFIX\s*=\s*["']([^"']+)["']/
+      )
+      expect(prefixMatch).toBeTruthy()
+      expect(prefixMatch[1]).toBe("SHAKAPACKER_PUBLIC_")
+
+      // Verify the trailing underscore is present - this is critical for security
+      expect(prefixMatch[1]).toMatch(/_$/)
+    })
+
     it("handles whitespace and empty values in CSV", () => {
       const envFilterSource = fs.readFileSync(
         path.join(pluginsDir, "envFilter.ts"),
