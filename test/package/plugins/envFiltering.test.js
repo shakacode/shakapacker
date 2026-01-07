@@ -262,4 +262,192 @@ describe("environment variable filtering security", () => {
       expect(webpackImport[1]).toBe(rspackImport[1])
     })
   })
+
+  /**
+   * Runtime behavioral tests that actually call the filtering functions.
+   * These complement the static source analysis tests above.
+   */
+  describe("runtime behavior", () => {
+    // Helper to get fresh module instance (avoiding caching issues)
+    const getEnvFilter = () => {
+      jest.resetModules()
+      return require("../../../package/plugins/envFilter")
+    }
+
+    describe("getAllowedEnvVars", () => {
+      it("returns default allowed vars when SHAKAPACKER_ENV_VARS is unset", () => {
+        delete process.env.SHAKAPACKER_ENV_VARS
+        // Remove any SHAKAPACKER_PUBLIC_* vars from test setup
+        const publicVars = Object.keys(process.env).filter((key) =>
+          key.startsWith("SHAKAPACKER_PUBLIC_")
+        )
+        publicVars.forEach((key) => {
+          delete process.env[key]
+        })
+
+        const { getAllowedEnvVars } = getEnvFilter()
+        const allowed = getAllowedEnvVars()
+
+        expect(allowed).toContain("NODE_ENV")
+        expect(allowed).toContain("RAILS_ENV")
+        expect(allowed).toContain("WEBPACK_SERVE")
+        expect(allowed).toHaveLength(3)
+      })
+
+      it("includes SHAKAPACKER_PUBLIC_* variables when present", () => {
+        delete process.env.SHAKAPACKER_ENV_VARS
+        process.env.SHAKAPACKER_PUBLIC_API_URL = "https://api.example.com"
+        process.env.SHAKAPACKER_PUBLIC_ANALYTICS_ID = "UA-12345"
+
+        const { getAllowedEnvVars } = getEnvFilter()
+        const allowed = getAllowedEnvVars()
+
+        expect(allowed).toContain("NODE_ENV")
+        expect(allowed).toContain("RAILS_ENV")
+        expect(allowed).toContain("WEBPACK_SERVE")
+        expect(allowed).toContain("SHAKAPACKER_PUBLIC_API_URL")
+        expect(allowed).toContain("SHAKAPACKER_PUBLIC_ANALYTICS_ID")
+
+        // Cleanup
+        delete process.env.SHAKAPACKER_PUBLIC_API_URL
+        delete process.env.SHAKAPACKER_PUBLIC_ANALYTICS_ID
+      })
+
+      it("does NOT include SHAKAPACKER_* system variables (without PUBLIC_)", () => {
+        process.env.SHAKAPACKER_CONFIG = "/custom/path"
+        process.env.SHAKAPACKER_PRECOMPILE = "true"
+        delete process.env.SHAKAPACKER_ENV_VARS
+
+        const { getAllowedEnvVars } = getEnvFilter()
+        const allowed = getAllowedEnvVars()
+
+        expect(allowed).not.toContain("SHAKAPACKER_CONFIG")
+        expect(allowed).not.toContain("SHAKAPACKER_PRECOMPILE")
+
+        // Cleanup
+        delete process.env.SHAKAPACKER_CONFIG
+        delete process.env.SHAKAPACKER_PRECOMPILE
+      })
+
+      it("parses SHAKAPACKER_ENV_VARS CSV and includes those variables", () => {
+        process.env.SHAKAPACKER_ENV_VARS = "CUSTOM_VAR1,CUSTOM_VAR2,ANOTHER_VAR"
+
+        const { getAllowedEnvVars } = getEnvFilter()
+        const allowed = getAllowedEnvVars()
+
+        expect(allowed).toContain("CUSTOM_VAR1")
+        expect(allowed).toContain("CUSTOM_VAR2")
+        expect(allowed).toContain("ANOTHER_VAR")
+      })
+
+      it("handles whitespace in SHAKAPACKER_ENV_VARS CSV", () => {
+        process.env.SHAKAPACKER_ENV_VARS = " VAR1 , VAR2 ,  VAR3  "
+
+        const { getAllowedEnvVars } = getEnvFilter()
+        const allowed = getAllowedEnvVars()
+
+        expect(allowed).toContain("VAR1")
+        expect(allowed).toContain("VAR2")
+        expect(allowed).toContain("VAR3")
+      })
+
+      it("ignores empty entries in SHAKAPACKER_ENV_VARS CSV", () => {
+        process.env.SHAKAPACKER_ENV_VARS = "VAR1,,VAR2,,,VAR3,"
+
+        const { getAllowedEnvVars } = getEnvFilter()
+        const allowed = getAllowedEnvVars()
+
+        expect(allowed).toContain("VAR1")
+        expect(allowed).toContain("VAR2")
+        expect(allowed).toContain("VAR3")
+        // Should not contain empty strings
+        expect(allowed.filter((v) => v === "")).toHaveLength(0)
+      })
+
+      it("deduplicates variables from multiple sources", () => {
+        process.env.SHAKAPACKER_ENV_VARS = "NODE_ENV,CUSTOM_VAR"
+
+        const { getAllowedEnvVars } = getEnvFilter()
+        const allowed = getAllowedEnvVars()
+
+        // NODE_ENV should only appear once (from defaults, not duplicated from CSV)
+        const nodeEnvCount = allowed.filter((v) => v === "NODE_ENV").length
+        expect(nodeEnvCount).toBe(1)
+      })
+    })
+
+    describe("getFilteredEnv", () => {
+      it("exposes allowed variables with their values", () => {
+        delete process.env.SHAKAPACKER_ENV_VARS
+        process.env.NODE_ENV = "production"
+        process.env.RAILS_ENV = "staging"
+
+        const { getFilteredEnv } = getEnvFilter()
+        const filtered = getFilteredEnv()
+
+        expect(filtered).toHaveProperty("NODE_ENV", "production")
+        expect(filtered).toHaveProperty("RAILS_ENV", "staging")
+      })
+
+      it("omits sensitive variables that are not in allowlist", () => {
+        delete process.env.SHAKAPACKER_ENV_VARS
+        // Sensitive vars are set in beforeEach
+
+        const { getFilteredEnv } = getEnvFilter()
+        const filtered = getFilteredEnv()
+
+        // SECURITY: These must NOT be present
+        expect(filtered).not.toHaveProperty("DATABASE_URL")
+        expect(filtered).not.toHaveProperty("AWS_ACCESS_KEY_ID")
+        expect(filtered).not.toHaveProperty("AWS_SECRET_ACCESS_KEY")
+        expect(filtered).not.toHaveProperty("RAILS_MASTER_KEY")
+        expect(filtered).not.toHaveProperty("STRIPE_SECRET_KEY")
+        expect(filtered).not.toHaveProperty("SESSION_SECRET")
+      })
+
+      it("exposes SHAKAPACKER_PUBLIC_* variables with their values", () => {
+        delete process.env.SHAKAPACKER_ENV_VARS
+        process.env.SHAKAPACKER_PUBLIC_API_URL = "https://api.example.com"
+
+        const { getFilteredEnv } = getEnvFilter()
+        const filtered = getFilteredEnv()
+
+        expect(filtered).toHaveProperty(
+          "SHAKAPACKER_PUBLIC_API_URL",
+          "https://api.example.com"
+        )
+
+        // Cleanup
+        delete process.env.SHAKAPACKER_PUBLIC_API_URL
+      })
+
+      it("uses null for missing variables from SHAKAPACKER_ENV_VARS", () => {
+        process.env.SHAKAPACKER_ENV_VARS = "MISSING_VAR,ANOTHER_MISSING"
+        delete process.env.MISSING_VAR
+        delete process.env.ANOTHER_MISSING
+
+        const { getFilteredEnv } = getEnvFilter()
+        const filtered = getFilteredEnv()
+
+        expect(filtered).toHaveProperty("MISSING_VAR", null)
+        expect(filtered).toHaveProperty("ANOTHER_MISSING", null)
+      })
+
+      it("includes variables from SHAKAPACKER_ENV_VARS with their values", () => {
+        process.env.SHAKAPACKER_ENV_VARS = "CUSTOM_API_URL"
+        process.env.CUSTOM_API_URL = "https://custom.example.com"
+
+        const { getFilteredEnv } = getEnvFilter()
+        const filtered = getFilteredEnv()
+
+        expect(filtered).toHaveProperty(
+          "CUSTOM_API_URL",
+          "https://custom.example.com"
+        )
+
+        // Cleanup
+        delete process.env.CUSTOM_API_URL
+      })
+    })
+  })
 })
