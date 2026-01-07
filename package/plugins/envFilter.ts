@@ -59,7 +59,8 @@ export const getAllowedEnvVars = (): string[] => {
     allowed.push(...additionalVars)
   }
 
-  return allowed
+  // Remove duplicates (can occur if same var is in multiple sources)
+  return [...new Set(allowed)]
 }
 
 /**
