@@ -17,16 +17,27 @@ Changes since the last non-beta release.
 
 ### Added
 
-- **Added `SHAKAPACKER_ENV_VARS` environment variable for extending allowed client-side env vars**. [PR #857](https://github.com/shakacode/shakapacker/pull/857) by [justin808](https://github.com/justin808). Set `SHAKAPACKER_ENV_VARS=VAR1,VAR2,VAR3` to expose additional environment variables to client-side JavaScript beyond the default allowlist (`NODE_ENV`, `RAILS_ENV`, `WEBPACK_SERVE`). A warning is displayed if variable names match sensitive patterns. Only add non-sensitive variables that are safe to embed in public JavaScript bundles.
+- **Added `SHAKAPACKER_PUBLIC_*` prefix convention for client-side environment variables**. [PR #857](https://github.com/shakacode/shakapacker/pull/857) by [justin808](https://github.com/justin808). Any environment variable prefixed with `SHAKAPACKER_PUBLIC_` is automatically exposed to client-side JavaScript. This follows the same convention used by Next.js (`NEXT_PUBLIC_*`) and Vite (`VITE_*`), making it explicit which variables are intended for client-side use.
+
+  ```bash
+  # These are automatically available in your JavaScript
+  export SHAKAPACKER_PUBLIC_API_URL=https://api.example.com
+  export SHAKAPACKER_PUBLIC_ANALYTICS_ID=UA-12345
+  ```
+
+- **Added `SHAKAPACKER_ENV_VARS` environment variable as escape hatch for extending allowed client-side env vars**. [PR #857](https://github.com/shakacode/shakapacker/pull/857) by [justin808](https://github.com/justin808). Set `SHAKAPACKER_ENV_VARS=VAR1,VAR2,VAR3` to expose additional environment variables to client-side JavaScript beyond the default allowlist (`NODE_ENV`, `RAILS_ENV`, `WEBPACK_SERVE`). Only add non-sensitive variables that are safe to embed in public JavaScript bundles.
 
 ### Changed
 
-- **BREAKING: EnvironmentPlugin now uses allowlist instead of exposing all env vars**. [PR #857](https://github.com/shakacode/shakapacker/pull/857) by [justin808](https://github.com/justin808). Only `NODE_ENV`, `RAILS_ENV`, and `WEBPACK_SERVE` are exposed by default. If your client-side code relies on other environment variables, add them via `SHAKAPACKER_ENV_VARS` or customize your webpack/rspack config. This is a security fix - the previous behavior was dangerous.
+- **BREAKING: EnvironmentPlugin now uses allowlist instead of exposing all env vars**. [PR #857](https://github.com/shakacode/shakapacker/pull/857) by [justin808](https://github.com/justin808). Only `NODE_ENV`, `RAILS_ENV`, `WEBPACK_SERVE`, and any `SHAKAPACKER_PUBLIC_*` variables are exposed by default. If your client-side code relies on other environment variables, either rename them with the `SHAKAPACKER_PUBLIC_` prefix (recommended), add them via `SHAKAPACKER_ENV_VARS`, or customize your webpack/rspack config. This is a security fix - the previous behavior was dangerous.
 
-  **Migration example:**
+  **Migration examples:**
 
   ```bash
-  # If your code uses process.env.API_BASE_URL
+  # Option 1 (recommended): Use the SHAKAPACKER_PUBLIC_ prefix
+  export SHAKAPACKER_PUBLIC_API_BASE_URL=https://api.example.com
+
+  # Option 2: Use SHAKAPACKER_ENV_VARS for existing variable names
   SHAKAPACKER_ENV_VARS=API_BASE_URL bundle exec rails assets:precompile
   ```
 

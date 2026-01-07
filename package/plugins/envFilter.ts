@@ -12,8 +12,10 @@
  * SECURITY: Never add sensitive variables like DATABASE_URL, API keys, or secrets.
  * These values are embedded directly into the JavaScript bundle and are publicly visible.
  *
- * Users can extend this list via SHAKAPACKER_ENV_VARS environment variable (comma-separated)
- * or by customizing their webpack/rspack config.
+ * Users can extend this list via:
+ * 1. SHAKAPACKER_PUBLIC_* prefix (auto-exposed, similar to Next.js/Vite conventions)
+ * 2. SHAKAPACKER_ENV_VARS environment variable (comma-separated list)
+ * 3. Customizing their webpack/rspack config
  */
 export const DEFAULT_ALLOWED_ENV_VARS = [
   "NODE_ENV",
@@ -22,18 +24,29 @@ export const DEFAULT_ALLOWED_ENV_VARS = [
 ] as const
 
 /**
- * Pattern to detect potentially sensitive environment variable names.
- * Used to warn developers if they accidentally expose secrets via SHAKAPACKER_ENV_VARS.
+ * Prefix for environment variables that are automatically exposed to client-side code.
+ * Similar to Next.js's NEXT_PUBLIC_ and Vite's VITE_ prefixes.
+ *
+ * Example: SHAKAPACKER_PUBLIC_API_URL will be available as process.env.SHAKAPACKER_PUBLIC_API_URL
  */
-const DANGEROUS_PATTERNS =
-  /SECRET|PASSWORD|KEY|TOKEN|CREDENTIAL|DATABASE|DB_|AWS_|PRIVATE|AUTH/i
+export const PUBLIC_ENV_PREFIX = "SHAKAPACKER_PUBLIC_"
 
 /**
  * Gets the list of environment variables to expose to client-side code.
- * Combines default allowed vars with any user-specified vars from SHAKAPACKER_ENV_VARS.
+ * Combines:
+ * 1. Default allowed vars (NODE_ENV, RAILS_ENV, WEBPACK_SERVE)
+ * 2. Any vars with SHAKAPACKER_PUBLIC_ prefix (auto-exposed)
+ * 3. Any user-specified vars from SHAKAPACKER_ENV_VARS
  */
 export const getAllowedEnvVars = (): string[] => {
   const allowed: string[] = [...DEFAULT_ALLOWED_ENV_VARS]
+
+  // Auto-expose any SHAKAPACKER_PUBLIC_* variables (similar to Next.js/Vite convention)
+  Object.keys(process.env).forEach((key) => {
+    if (key.startsWith(PUBLIC_ENV_PREFIX)) {
+      allowed.push(key)
+    }
+  })
 
   // Allow users to specify additional env vars via SHAKAPACKER_ENV_VARS
   const userVars = process.env.SHAKAPACKER_ENV_VARS
@@ -42,16 +55,6 @@ export const getAllowedEnvVars = (): string[] => {
       .split(",")
       .map((v) => v.trim())
       .filter(Boolean)
-
-    // Warn about potentially dangerous variable names
-    additionalVars.forEach((varName) => {
-      if (DANGEROUS_PATTERNS.test(varName)) {
-        console.warn(
-          `⚠️  [SHAKAPACKER SECURITY WARNING] "${varName}" matches a sensitive pattern. ` +
-            `Ensure this variable is safe to expose in client-side JavaScript bundles.`
-        )
-      }
-    })
 
     allowed.push(...additionalVars)
   }

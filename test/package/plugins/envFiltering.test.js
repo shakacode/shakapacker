@@ -104,40 +104,25 @@ describe("environment variable filtering security", () => {
       expect(envFilterSource).toContain('split(",")')
     })
 
-    it("includes dangerous pattern detection", () => {
+    it("exports PUBLIC_ENV_PREFIX constant", () => {
       const envFilterSource = fs.readFileSync(
         path.join(pluginsDir, "envFilter.ts"),
         "utf8"
       )
 
-      expect(envFilterSource).toContain("DANGEROUS_PATTERNS")
-      expect(envFilterSource).toContain("SHAKAPACKER SECURITY WARNING")
-      expect(envFilterSource).toContain("matches a sensitive pattern")
+      expect(envFilterSource).toContain("export const PUBLIC_ENV_PREFIX")
+      expect(envFilterSource).toContain('SHAKAPACKER_PUBLIC_"')
+    })
 
-      const patternMatch = envFilterSource.match(
-        /DANGEROUS_PATTERNS\s*=\s*\/(.*?)\/i/
+    it("auto-exposes SHAKAPACKER_PUBLIC_* variables", () => {
+      const envFilterSource = fs.readFileSync(
+        path.join(pluginsDir, "envFilter.ts"),
+        "utf8"
       )
-      expect(patternMatch).toBeTruthy()
 
-      const patternContent = patternMatch[1]
-
-      // Verify all expected patterns are included
-      const expectedPatterns = [
-        "SECRET",
-        "PASSWORD",
-        "KEY",
-        "TOKEN",
-        "CREDENTIAL",
-        "DATABASE",
-        "DB_",
-        "AWS_",
-        "PRIVATE",
-        "AUTH"
-      ]
-
-      expectedPatterns.forEach((pattern) => {
-        expect(patternContent).toContain(pattern)
-      })
+      // Verify the prefix check is present
+      expect(envFilterSource).toContain("startsWith(PUBLIC_ENV_PREFIX)")
+      expect(envFilterSource).toContain("Object.keys(process.env)")
     })
 
     it("handles whitespace and empty values in CSV", () => {
@@ -188,7 +173,7 @@ describe("environment variable filtering security", () => {
 
       // Should NOT have its own copy of these
       expect(webpackPluginSource).not.toContain("DEFAULT_ALLOWED_ENV_VARS")
-      expect(webpackPluginSource).not.toContain("DANGEROUS_PATTERNS")
+      expect(webpackPluginSource).not.toContain("PUBLIC_ENV_PREFIX")
       expect(webpackPluginSource).not.toContain("getAllowedEnvVars")
     })
   })
@@ -228,7 +213,7 @@ describe("environment variable filtering security", () => {
 
       // Should NOT have its own copy of these
       expect(rspackPluginSource).not.toContain("DEFAULT_ALLOWED_ENV_VARS")
-      expect(rspackPluginSource).not.toContain("DANGEROUS_PATTERNS")
+      expect(rspackPluginSource).not.toContain("PUBLIC_ENV_PREFIX")
       expect(rspackPluginSource).not.toContain("getAllowedEnvVars")
     })
   })
