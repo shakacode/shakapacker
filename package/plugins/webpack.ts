@@ -1,4 +1,5 @@
 import type { Config } from "../types"
+import { getFilteredEnv } from "./envFilter"
 
 const { requireOrError } = require("../utils/requireOrError")
 // TODO: Change to `const { WebpackAssetsManifest }` when dropping 'webpack-assets-manifest < 6.0.0' (Node >=20.10.0) support
@@ -15,7 +16,9 @@ const getPlugins = (): unknown[] => {
       ? WebpackAssetsManifest.WebpackAssetsManifest
       : WebpackAssetsManifest
   const plugins = [
-    new webpack.EnvironmentPlugin(process.env),
+    // SECURITY: Only expose allowlisted environment variables to prevent secrets leaking
+    // into client-side bundles. See envFilter.ts for the allowlist configuration.
+    new webpack.EnvironmentPlugin(getFilteredEnv()),
     new WebpackAssetsManifestConstructor({
       merge: true,
       entrypoints: true,

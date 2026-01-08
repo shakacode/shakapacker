@@ -1,4 +1,5 @@
 import type { Config } from "../types"
+import { getFilteredEnv } from "./envFilter"
 
 const { requireOrError } = require("../utils/requireOrError")
 
@@ -29,7 +30,9 @@ interface Manifest {
 
 const getPlugins = (): unknown[] => {
   const plugins = [
-    new rspack.EnvironmentPlugin(process.env),
+    // SECURITY: Only expose allowlisted environment variables to prevent secrets leaking
+    // into client-side bundles. See envFilter.ts for the allowlist configuration.
+    new rspack.EnvironmentPlugin(getFilteredEnv()),
     new RspackManifestPlugin({
       fileName: config.manifestPath.split("/").pop(), // Get just the filename
       publicPath: config.publicPathWithoutCDN,
