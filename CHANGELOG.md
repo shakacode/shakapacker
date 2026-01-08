@@ -11,6 +11,10 @@
 
 Changes since the last non-beta release.
 
+_None yet._
+
+## [v9.5.0] - January 7, 2026
+
 ### Security
 
 - **CRITICAL: Fixed environment variable leak via EnvironmentPlugin**. [PR #857](https://github.com/shakacode/shakapacker/pull/857) by [justin808](https://github.com/justin808). The default webpack and rspack plugins were passing the entire `process.env` to `EnvironmentPlugin`, which exposed ALL build environment variables (including secrets like `DATABASE_URL`, `AWS_SECRET_ACCESS_KEY`, `RAILS_MASTER_KEY`, etc.) to client-side JavaScript bundles when code referenced `process.env.VARIABLE_NAME`. **Note**: This issue is especially critical with webpack 5.103+ due to a [serialization change](https://github.com/webpack/webpack/commit/eecdeeb746b2f996ed4ab74365dd72c95070196b) that can embed all environment variables into bundles when `import.meta.env` is accessed conditionally. This vulnerability was inherited from webpacker v1.0.0 (January 2017) and has been present in all versions of webpacker and shakapacker. **Action required**: After upgrading, rotate any secrets that may have been exposed in production JavaScript bundles.
@@ -40,6 +44,10 @@ Changes since the last non-beta release.
   # Option 2: Use SHAKAPACKER_ENV_VARS for existing variable names
   SHAKAPACKER_ENV_VARS=API_BASE_URL bundle exec rails assets:precompile
   ```
+
+### Fixed
+
+- **Fixed gemspec to exclude Gemfile.lock from published gem**. [PR #856](https://github.com/shakacode/shakapacker/pull/856) by [adrien-k](https://github.com/adrien-k). The gemspec's file pattern now correctly excludes `Gemfile.lock`, preventing vulnerability alerts during Docker image scans caused by outdated pinned versions in the lock file.
 
 ## [v9.4.0] - November 22, 2025
 
@@ -248,6 +256,7 @@ See the [v9 Upgrade Guide](https://github.com/shakacode/shakapacker/blob/main/do
 ### ⚠️ Breaking Changes
 
 1. **SWC is now the default JavaScript transpiler instead of Babel** ([PR 603](https://github.com/shakacode/shakapacker/pull/603) by [justin808](https://github.com/justin808))
+
    - Babel dependencies are no longer included as peer dependencies
    - Improves compilation speed by 20x
    - **Migration for existing projects:**
@@ -264,6 +273,7 @@ See the [v9 Upgrade Guide](https://github.com/shakacode/shakapacker/blob/main/do
        ```
 
 2. **CSS Modules now use named exports by default** ([PR 599](https://github.com/shakacode/shakapacker/pull/599))
+
    - **JavaScript:** Use named imports: `import { className } from './styles.module.css'`
    - **TypeScript:** Use namespace imports: `import * as styles from './styles.module.css'`
    - To keep the old behavior with default imports, see [CSS Modules Export Mode documentation](./docs/css-modules-export-mode.md) for configuration instructions
@@ -529,6 +539,7 @@ See the [v8 Upgrade Guide](https://github.com/shakacode/shakapacker/blob/main/do
 
 - Set `source_entry_path` to `packs` and `nested_entries` to `true` in`shakapacker.yml` [PR 284](https://github.com/shakacode/shakapacker/pull/284) by [ahangarha](https://github.com/ahangarha).
 - Dev server configuration is modified to follow [webpack recommended configurations](https://webpack.js.org/configuration/dev-server/) for dev server. [PR276](https://github.com/shakacode/shakapacker/pull/276) by [ahangarha](https://github.com/ahangarha):
+
   - Deprecated `https` entry is removed from the default configuration file, allowing to set `server` or `https` as per the project requirements. For more detail, check webpack documentation. The `https` entry can be effective only if there is no `server` entry in the config file.
   - `allowed_hosts` is now set to `auto` instead of `all` by default.
 
@@ -795,7 +806,8 @@ Note: [Rubygem is 6.3.0.pre.rc.1](https://rubygems.org/gems/shakapacker/versions
 
 See [CHANGELOG.md in rails/webpacker (up to v5.4.3)](https://github.com/rails/webpacker/blob/master/CHANGELOG.md)
 
-[Unreleased]: https://github.com/shakacode/shakapacker/compare/v9.4.0...main
+[Unreleased]: https://github.com/shakacode/shakapacker/compare/v9.5.0...main
+[v9.5.0]: https://github.com/shakacode/shakapacker/compare/v9.4.0...v9.5.0
 [v9.4.0]: https://github.com/shakacode/shakapacker/compare/v9.3.4...v9.4.0
 [v9.3.4-beta.0]: https://github.com/shakacode/shakapacker/compare/v9.3.3...v9.3.4-beta.0
 [v9.3.3]: https://github.com/shakacode/shakapacker/compare/v9.3.2...v9.3.3
