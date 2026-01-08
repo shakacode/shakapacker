@@ -1,6 +1,21 @@
 require_relative File.join("..", "lib", "shakapacker", "utils", "version_syntax_converter")
 require_relative File.join("..", "lib", "shakapacker", "utils", "misc")
 
+def verify_npm_auth(registry_url = "https://registry.npmjs.org/")
+  result = `npm whoami --registry #{registry_url} 2>&1`
+  unless $CHILD_STATUS.success?
+    puts "⚠️  NPM authentication required!"
+    puts "Please run: npm login --registry #{registry_url}"
+    puts ""
+    system("npm login --registry #{registry_url}")
+    result = `npm whoami --registry #{registry_url} 2>&1`
+    unless $CHILD_STATUS.success?
+      abort "❌ NPM login failed! Please authenticate with npm before running the release."
+    end
+  end
+  puts "✓ Logged in to NPM as: #{result.strip}"
+end
+
 class RaisingMessageHandler
   def add_error(error)
     raise error
@@ -37,6 +52,14 @@ task :create_release, %i[gem_version dry_run] do |_t, args|
   args_hash = args.to_hash
 
   is_dry_run = Shakapacker::Utils::Misc.object_to_boolean(args_hash[:dry_run])
+
+  # Pre-flight check: verify npm authentication before any changes
+  unless is_dry_run
+    puts "ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ"
+    puts "PRE-FLIGHT CHECKS"
+    puts "ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ"
+    verify_npm_auth
+  end
 
   gem_version = args_hash.fetch(:gem_version, "")
 
