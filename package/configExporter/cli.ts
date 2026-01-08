@@ -18,6 +18,7 @@ import {
 } from "./types"
 import { YamlSerializer } from "./yamlSerializer"
 import { FileWriter } from "./fileWriter"
+import { AiPromptGenerator } from "./aiPromptGenerator"
 import { ConfigFileLoader, generateSampleConfigFile } from "./configFile"
 import { BuildValidator } from "./buildValidator"
 import { safeResolvePath } from "../utils/pathValidation"
@@ -800,6 +801,7 @@ async function runDoctorMode(
     const targetDir = options.saveDir! // Set by applyDefaults
 
     const createdFiles: string[] = []
+    let detectedBundler = "webpack"
 
     // Check if config file exists - always use it for doctor mode
     const configFilePath = options.configFile || DEFAULT_CONFIG_FILE
@@ -831,6 +833,7 @@ async function runDoctorMode(
           )
 
           for (const { config, metadata } of configs) {
+            detectedBundler = metadata.bundler
             const output = formatConfig(config, metadata, options, appRoot)
             const filename = FileWriter.generateFilename(
               metadata.bundler,
@@ -845,8 +848,21 @@ async function runDoctorMode(
           }
         }
 
+        // Generate AI analysis prompt
+        const aiPromptGenerator = new AiPromptGenerator()
+        const fileBasenames = createdFiles.map((f) => basename(f))
+        const aiPromptContent = aiPromptGenerator.generatePrompt(
+          fileBasenames,
+          targetDir,
+          detectedBundler
+        )
+        const aiPromptFilename = aiPromptGenerator.generatePromptFilename()
+        const aiPromptPath = resolve(targetDir, aiPromptFilename)
+        FileWriter.writeSingleFile(aiPromptPath, aiPromptContent)
+        createdFiles.push(aiPromptPath)
+
         // Print summary and exit early
-        printDoctorSummary(createdFiles, targetDir)
+        printDoctorSummary(createdFiles, targetDir, aiPromptFilename)
         return
       } catch (error: unknown) {
         // If config file exists but is invalid, show error and exit
@@ -895,6 +911,7 @@ async function runDoctorMode(
       const configs = await loadConfigsForEnv(env, options, appRoot)
 
       for (const { config, metadata } of configs) {
+        detectedBundler = metadata.bundler
         const output = formatConfig(config, metadata, options, appRoot)
 
         // Adjust filename for HMR config
@@ -935,24 +952,54 @@ async function runDoctorMode(
       }
     }
 
-    printDoctorSummary(createdFiles, targetDir)
+    // Generate AI analysis prompt
+    const aiPromptGenerator = new AiPromptGenerator()
+    const fileBasenames = createdFiles.map((f) => basename(f))
+    const aiPromptContent = aiPromptGenerator.generatePrompt(
+      fileBasenames,
+      targetDir,
+      detectedBundler
+    )
+    const aiPromptFilename = aiPromptGenerator.generatePromptFilename()
+    const aiPromptPath = resolve(targetDir, aiPromptFilename)
+    FileWriter.writeSingleFile(aiPromptPath, aiPromptContent)
+    createdFiles.push(aiPromptPath)
+
+    printDoctorSummary(createdFiles, targetDir, aiPromptFilename)
   } finally {
     // Restore original environment
     restoreBuildEnvironmentVariables(savedEnv)
   }
 }
 
-function printDoctorSummary(createdFiles: string[], targetDir: string): void {
+function printDoctorSummary(
+  createdFiles: string[],
+  targetDir: string,
+  aiPromptFilename: string
+): void {
   // Print summary
   console.log(`\n${"=".repeat(80)}`)
   console.log("✅ Export Complete!")
   console.log("=".repeat(80))
-  console.log(`\nCreated ${createdFiles.length} configuration file(s) in:`)
+  console.log(`\nCreated ${createdFiles.length} file(s) in:`)
   console.log(`  ${targetDir}\n`)
-  console.log("Files:")
+  console.log("Configuration Files:")
   createdFiles.forEach((file) => {
-    console.log(`  ✓ ${basename(file)}`)
+    const name = basename(file)
+    if (name.endsWith(".md")) {
+      // Don't show AI prompt in main list, will highlight separately
+      return
+    }
+    console.log(`  ✓ ${name}`)
   })
+  console.log("")
+  console.log("AI Analysis:")
+  console.log(
+    `  🤖 ${aiPromptFilename} - Use this prompt to get AI recommendations`
+  )
+  console.log(
+    "     Copy the contents and paste into an AI assistant for configuration analysis"
+  )
 
   // Check if directory should be added to .gitignore
   const gitignorePath = resolve(process.cwd(), ".gitignore")
