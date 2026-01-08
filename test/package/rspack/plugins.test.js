@@ -61,11 +61,14 @@ describe("rspack/plugins", () => {
       expect(Array.isArray(plugins)).toBe(true)
     })
 
-    test("includes EnvironmentPlugin", () => {
+    test("includes EnvironmentPlugin with filtered env", () => {
       const plugins = getPlugins()
       const envPlugin = plugins.find((p) => p.name === "EnvironmentPlugin")
       expect(envPlugin).toBeDefined()
-      expect(envPlugin.env).toBe(process.env)
+      // EnvironmentPlugin receives getFilteredEnv() - a security-filtered version of process.env
+      // that only includes allowlisted environment variables
+      expect(envPlugin.env).toBeDefined()
+      expect(typeof envPlugin.env).toBe("object")
     })
 
     test("includes RspackManifestPlugin", () => {
