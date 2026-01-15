@@ -45,3 +45,11 @@
 - This gem supports both webpack and rspack configurations
 - Test changes with both bundlers when modifying core functionality
 - Be aware of the dual package.json/Gemfile dependency management
+
+## Conductor Environment
+
+- **Version manager support**: The setup script detects mise, asdf, or direct PATH tools (rbenv/nvm/nodenv)
+- **bin/conductor-exec**: Use this wrapper for commands when tool versions aren't detected correctly in Conductor's non-interactive shell
+  - Example: `bin/conductor-exec bundle exec rubocop`
+  - The wrapper uses `mise exec` if mise is available, otherwise falls back to direct execution
+- **conductor.json scripts** already use this wrapper, so you typically don't need to use it manually

@@ -1,7 +1,9 @@
 {
   "scripts": {
     "setup": "./conductor-setup.sh",
-    "run": "bundle exec rspec",
+    "run": "bin/conductor-exec bundle exec rspec",
+    "test": "bin/conductor-exec bundle exec rspec",
+    "lint": "bin/conductor-exec bundle exec rubocop && bin/conductor-exec yarn lint",
     "archive": ""
   }
 }
