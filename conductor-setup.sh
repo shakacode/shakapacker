@@ -31,6 +31,15 @@ else
     echo "   (Assuming rbenv/nvm/nodenv or system tools are already configured)"
 fi
 
+# Ensure version config exists for asdf/mise users
+if [[ "$VERSION_MANAGER" != "none" ]] && [[ ! -f .tool-versions ]] && [[ ! -f .mise.toml ]]; then
+    echo "📝 Creating .tool-versions with default versions..."
+    cat > .tool-versions << 'EOF'
+ruby 3.3.4
+nodejs 20.18.0
+EOF
+fi
+
 # Helper function to run commands with the detected version manager
 run_cmd() {
     if [[ "$VERSION_MANAGER" == "mise" ]] && [[ -x "bin/conductor-exec" ]]; then
