@@ -32,11 +32,27 @@ fi
 
 # Ensure version config exists for asdf/mise users
 if [[ "$VERSION_MANAGER" != "none" ]] && [[ ! -f .tool-versions ]] && [[ ! -f .mise.toml ]]; then
-    echo "📝 Creating .tool-versions with default versions..."
-    cat > .tool-versions << 'EOF'
-ruby 3.3.4
-nodejs 20.18.0
+    echo "📝 Creating .tool-versions from project version files..."
+
+    # Read Ruby version from .ruby-version or use default
+    if [[ -f .ruby-version ]]; then
+        RUBY_VER=$(cat .ruby-version | tr -d '[:space:]')
+    else
+        RUBY_VER="3.3.4"  # Default: recent stable Ruby
+    fi
+
+    # Read Node version from .node-version or use default
+    if [[ -f .node-version ]]; then
+        NODE_VER=$(cat .node-version | tr -d '[:space:]')
+    else
+        NODE_VER="20.18.0"  # Default: LTS Node
+    fi
+
+    cat > .tool-versions << EOF
+ruby $RUBY_VER
+nodejs $NODE_VER
 EOF
+    echo "   Using Ruby $RUBY_VER, Node $NODE_VER"
 fi
 
 # Install tools via mise (after .tool-versions exists)
