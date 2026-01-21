@@ -78,10 +78,10 @@ module Shakapacker
       # This ensures the bundler override (from --bundler or build config) is respected
       ENV["SHAKAPACKER_ASSETS_BUNDLER"] = build_config[:bundler]
 
-      puts "[Shakapacker] Running dev server for build: #{build_config[:name]}"
-      puts "[Shakapacker] Description: #{build_config[:description]}" if build_config[:description]
-      puts "[Shakapacker] Bundler: #{build_config[:bundler]}"
-      puts "[Shakapacker] Config file: #{build_config[:config_file]}" if build_config[:config_file]
+      $stderr.puts "[Shakapacker] Running dev server for build: #{build_config[:name]}"
+      $stderr.puts "[Shakapacker] Description: #{build_config[:description]}" if build_config[:description]
+      $stderr.puts "[Shakapacker] Bundler: #{build_config[:bundler]}"
+      $stderr.puts "[Shakapacker] Config file: #{build_config[:config_file]}" if build_config[:config_file]
 
       # Pass bundler override so Configuration.assets_bundler reflects the build
       new(argv, build_config, build_config[:bundler]).run

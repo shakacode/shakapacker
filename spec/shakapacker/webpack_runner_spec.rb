@@ -158,7 +158,7 @@ describe "WebpackRunner" do
           true
         end
 
-        output = capture_stdout { klass.run([]) }
+        output = capture_stderr { klass.run([]) }
 
         # Time format can be either "X.XXs" or "M:SS.SSs" for the display, always "X.XXs" in parentheses
         expect(output).to match(/\[Shakapacker\] Completed webpack build in (\d+:\d+\.\d+s|\d+\.\d+s) \(\d+\.\d+s\)/)
@@ -178,7 +178,7 @@ describe "WebpackRunner" do
           true
         end
 
-        output = capture_stdout { klass.run(["--watch"]) }
+        output = capture_stderr { klass.run(["--watch"]) }
 
         expect(output).not_to match(/Completed webpack build/)
       end
@@ -197,7 +197,7 @@ describe "WebpackRunner" do
           true
         end
 
-        output = capture_stdout { klass.run([]) }
+        output = capture_stderr { klass.run([]) }
 
         # Should show format like "3.29s (3.29s)" without minutes
         expect(output).to match(/\[Shakapacker\] Completed webpack build in \d+\.\d+s \(\d+\.\d+s\)/)
@@ -208,13 +208,13 @@ describe "WebpackRunner" do
 
   private
 
-    def capture_stdout
-      old_stdout = $stdout
-      $stdout = StringIO.new
+    def capture_stderr
+      old_stderr = $stderr
+      $stderr = StringIO.new
       yield
-      $stdout.string
+      $stderr.string
     ensure
-      $stdout = old_stdout
+      $stderr = old_stderr
     end
 
     def verify_command(cmd, argv: [])
