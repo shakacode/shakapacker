@@ -10,6 +10,7 @@ AllCops:
     - "node_modules/**/*"
     - "_actions/**/*"
     - "spec/dummy-rspack/**/*"
+    - "bin/conductor-exec" # Shell script, not Ruby
 
 # Prefer &&/|| over and/or.
 Style/AndOr:
