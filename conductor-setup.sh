@@ -12,9 +12,8 @@ echo "📋 Detecting version manager..."
 if command -v mise &> /dev/null; then
     VERSION_MANAGER="mise"
     echo "✅ Found mise"
-    # Trust mise config for current directory only and install tools
+    # Trust mise config for current directory only
     mise trust 2>/dev/null || true
-    mise install
 elif [[ -f ~/.asdf/asdf.sh ]]; then
     VERSION_MANAGER="asdf"
     source ~/.asdf/asdf.sh
@@ -38,6 +37,12 @@ if [[ "$VERSION_MANAGER" != "none" ]] && [[ ! -f .tool-versions ]] && [[ ! -f .m
 ruby 3.3.4
 nodejs 20.18.0
 EOF
+fi
+
+# Install tools via mise (after .tool-versions exists)
+if [[ "$VERSION_MANAGER" == "mise" ]]; then
+    echo "📦 Installing tools via mise..."
+    mise install
 fi
 
 # Helper function to run commands with the detected version manager
