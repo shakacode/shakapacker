@@ -1,4 +1,4 @@
-#!/usr/bin/env zsh
+#!/bin/zsh
 # Wrapper script to run commands in Conductor with proper tool versions
 # Usage: bin/conductor-exec <command> [args...]
 #

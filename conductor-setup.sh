@@ -1,5 +1,5 @@
 #!/bin/zsh
-set -e
+set -euo pipefail
 
 echo "🔧 Setting up Shakapacker workspace..."
 
