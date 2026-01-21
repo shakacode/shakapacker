@@ -107,8 +107,8 @@ EOF
     chmod +x .husky/pre-commit
 fi
 
-# Run initial linting checks
-echo "✅ Running initial linting checks..."
+# Verify linting tools are available
+echo "✅ Verifying linting tools..."
 run_cmd bundle exec rubocop --version
 
 echo "✨ Workspace setup complete!"
