@@ -37,8 +37,16 @@ If you're experiencing FOUC where content briefly appears unstyled before CSS lo
    # Export EVERYTHING for troubleshooting (dev + prod, annotated YAML)
    bin/shakapacker-config --doctor
    # Creates: webpack-development-client.yaml, webpack-development-server.yaml,
-   #          webpack-production-client.yaml, webpack-production-server.yaml
+   #          webpack-production-client.yaml, webpack-production-server.yaml,
+   #          AI-ANALYSIS-PROMPT.md (prompt file for AI analysis)
    ```
+
+   The `--doctor` mode also creates an `AI-ANALYSIS-PROMPT.md` file in the export directory. This file contains a comprehensive prompt you can copy and paste into AI assistants (like ChatGPT, Claude, or Gemini) along with your exported configuration files. The prompt guides the AI to analyze your configuration for:
+   - Migration issues (webpack ↔ rspack compatibility)
+   - Build errors and warnings
+   - Client vs server bundle optimizations
+   - Development vs production optimizations
+   - Best practices and performance improvements
 
    **Other usage examples:**
 
