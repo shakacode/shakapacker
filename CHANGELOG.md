@@ -37,6 +37,7 @@ Changes since the last non-beta release.
 ### Fixed
 
 - **Fixed NODE_ENV=test causing DefinePlugin warnings**. [PR #870](https://github.com/shakacode/shakapacker/pull/870) by [justin808](https://github.com/justin808). When RAILS_ENV=test, Shakapacker now sets NODE_ENV=development instead of NODE_ENV=test. This prevents webpack/rspack DefinePlugin conflicts since these bundlers only recognize "development" and "production" as valid NODE_ENV values.
+- **Fixed `--json` flag output being corrupted by log messages**. [PR #869](https://github.com/shakacode/shakapacker/pull/869) by [justin808](https://github.com/justin808). `[Shakapacker]` log messages are now written to stderr instead of stdout, allowing `bin/shakapacker --profile --json` to produce valid JSON output that can be piped to tools like `webpack-bundle-analyzer`. Resolves [#868](https://github.com/shakacode/shakapacker/issues/868).
 
 ### Documentation
 
