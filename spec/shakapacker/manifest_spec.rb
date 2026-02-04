@@ -3,10 +3,11 @@ require_relative "spec_helper_initializer"
 describe "Shakapacker::Manifest" do
   let(:manifest_path) { File.expand_path File.join(File.dirname(__FILE__), "./test_app/public/packs", "manifest.json").to_s }
 
-  context "when manifest is empty" do
+  context "when manifest file exists but is empty" do
     it "#lookup! raises an error indicating the bundler is still compiling" do
       allow(Shakapacker.config).to receive(:compile?).and_return(false)
       allow(Shakapacker.manifest).to receive(:data).and_return({})
+      allow(Shakapacker.config.manifest_path).to receive(:exist?).and_return(true)
 
       expect {
         Shakapacker.manifest.lookup!("application.js")
@@ -16,10 +17,35 @@ describe "Shakapacker::Manifest" do
     it "#lookup_pack_with_chunks! raises an error indicating the bundler is still compiling" do
       allow(Shakapacker.config).to receive(:compile?).and_return(false)
       allow(Shakapacker.manifest).to receive(:data).and_return({})
+      allow(Shakapacker.config.manifest_path).to receive(:exist?).and_return(true)
 
       expect {
         Shakapacker.manifest.lookup_pack_with_chunks!("application", type: :javascript)
       }.to raise_error(Shakapacker::Manifest::MissingEntryError, /manifest is empty.*still compiling/i)
+    end
+  end
+
+  context "when manifest file does not exist" do
+    let(:fake_manifest_path) { instance_double(Pathname, exist?: false, to_s: "/fake/manifest.json") }
+
+    it "#lookup! raises an error indicating the manifest file is not found" do
+      allow(Shakapacker.config).to receive(:compile?).and_return(false)
+      allow(Shakapacker.manifest).to receive(:data).and_return({})
+      allow(Shakapacker.config).to receive(:manifest_path).and_return(fake_manifest_path)
+
+      expect {
+        Shakapacker.manifest.lookup!("application.js")
+      }.to raise_error(Shakapacker::Manifest::MissingEntryError, /manifest file not found.*has not yet built/i)
+    end
+
+    it "#lookup_pack_with_chunks! raises an error indicating the manifest file is not found" do
+      allow(Shakapacker.config).to receive(:compile?).and_return(false)
+      allow(Shakapacker.manifest).to receive(:data).and_return({})
+      allow(Shakapacker.config).to receive(:manifest_path).and_return(fake_manifest_path)
+
+      expect {
+        Shakapacker.manifest.lookup_pack_with_chunks!("application", type: :javascript)
+      }.to raise_error(Shakapacker::Manifest::MissingEntryError, /manifest file not found.*has not yet built/i)
     end
   end
 
