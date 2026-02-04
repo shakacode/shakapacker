@@ -233,6 +233,7 @@ module.exports = [
     // Remaining utils files that need type safety improvements
     // These use dynamic requires and helper functions that return `any`
     files: [
+      "package/utils/bundlerUtils.ts",
       "package/utils/inliningCss.ts",
       "package/utils/errorCodes.ts",
       "package/utils/errorHelpers.ts",
