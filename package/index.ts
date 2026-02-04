@@ -10,6 +10,16 @@ import devServer from "./dev_server"
 import env from "./env"
 import { moduleExists, canProcess } from "./utils/helpers"
 import inliningCss from "./utils/inliningCss"
+import {
+  isRspack,
+  isWebpack,
+  getBundler,
+  getCssExtractPlugin,
+  getCssExtractPluginLoader,
+  getDefinePlugin,
+  getEnvironmentPlugin,
+  getProvidePlugin
+} from "./utils/bundlerUtils"
 
 const rulesPath = resolve(__dirname, "rules", `${config.assets_bundler}.js`)
 /** Array of webpack/rspack loader rules */
@@ -73,6 +83,22 @@ export = {
   canProcess,
   /** Whether CSS should be inlined (dev server with HMR) */
   inliningCss,
+  /** Whether the current bundler is Rspack */
+  isRspack,
+  /** Whether the current bundler is Webpack */
+  isWebpack,
+  /** Get the bundler module (webpack or @rspack/core) */
+  getBundler,
+  /** Get the CSS extraction plugin for the current bundler */
+  getCssExtractPlugin,
+  /** Get the CSS extraction plugin loader for the current bundler */
+  getCssExtractPluginLoader,
+  /** Get the DefinePlugin for the current bundler */
+  getDefinePlugin,
+  /** Get the EnvironmentPlugin for the current bundler */
+  getEnvironmentPlugin,
+  /** Get the ProvidePlugin for the current bundler */
+  getProvidePlugin,
   /** webpack-merge functions (merge, mergeWithCustomize, mergeWithRules, unique) */
   ...webpackMerge
 }

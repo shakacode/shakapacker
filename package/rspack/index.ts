@@ -15,6 +15,16 @@ const devServer = require("../dev_server")
 const env = require("../env")
 const { moduleExists, canProcess } = require("../utils/helpers")
 const inliningCss = require("../utils/inliningCss")
+const {
+  isRspack,
+  isWebpack,
+  getBundler,
+  getCssExtractPlugin,
+  getCssExtractPluginLoader,
+  getDefinePlugin,
+  getEnvironmentPlugin,
+  getProvidePlugin
+} = require("../utils/bundlerUtils")
 const { getPlugins } = require("../plugins/rspack")
 const { getOptimization } = require("../optimization/rspack")
 const { validateRspackDependencies } = require("../utils/validateDependencies")
@@ -69,5 +79,14 @@ export {
   rules,
   moduleExists,
   canProcess,
-  inliningCss
+  inliningCss,
+  // Bundler utilities
+  isRspack,
+  isWebpack,
+  getBundler,
+  getCssExtractPlugin,
+  getCssExtractPluginLoader,
+  getDefinePlugin,
+  getEnvironmentPlugin,
+  getProvidePlugin
 }
