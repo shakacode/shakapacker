@@ -4,6 +4,8 @@ This guide shows you how to use HTTP 103 Early Hints with Shakapacker to optimiz
 
 > **📚 Related Documentation:** For advanced manual control using `send_pack_early_hints` in controllers before expensive work, see [early_hints_manual_api.md](early_hints_manual_api.md).
 
+> ⚠️ **CDN Limitation**: Most CDNs (Cloudflare, AWS CloudFront, AWS ALB, etc.) strip HTTP 103 Early Hints before they reach end users. While Shakapacker sends early hints correctly, and your application server (Puma/Thruster) forwards them properly, **CDNs typically strip the 103 response**. End users will only receive the 200 response with Link headers (which arrive too late to provide early hints benefits). This is an industry-wide limitation—even major sites like GitHub, Google, and Shopify don't serve 103 in production through CDNs. For full early hints delivery, you need either direct connections without a CDN, or specific CDN configuration (e.g., Cloudflare's Early Hints feature on paid plans, which works differently by caching Link headers). See [Troubleshooting](#troubleshooting) for details.
+
 ## What are Early Hints?
 
 HTTP 103 Early Hints is emitted **after** Rails has finished rendering but **before** the final response is sent, allowing browsers to begin fetching resources (JS, CSS) prior to receiving the full HTML response. This may significantly improve page load performance or cause an equally significant regression, depending on the page's content.
@@ -336,8 +338,12 @@ See the [Manual API Guide](early_hints_manual_api.md) for detailed examples and 
 - **Modern browsers:**
   - Chrome/Edge/Firefox 103+ ✅
   - Safari 16.4+ ✅
+- **Infrastructure that preserves 103 responses:**
+  - Direct connections (no CDN) ✅
+  - Cloudflare with Early Hints enabled (paid plans, works via Link header caching) ✅
+  - Most CDNs/load balancers ❌ (strip 103 responses - see [CDN Limitation](#troubleshooting) above)
 
-If requirements not met, feature gracefully degrades with no errors.
+If requirements not met, feature gracefully degrades with no errors. The Link headers will still be present in the 200 response, which may provide some browser prefetching benefits even when 103 is stripped.
 
 ## Quick Reference
 
@@ -377,8 +383,9 @@ Debug mode adds HTML comments to your page showing:
 - What pack names were processed
 - What Link headers were sent
 - HTTP/2 support status
+- CDN warning reminder (since most CDNs strip 103 responses)
 
-View page source and look for `<!-- Shakapacker Early Hints Debug -->` comments.
+View page source and look for `<!-- Shakapacker Early Hints -->` comments.
 
 **Early hints not appearing:**
 
