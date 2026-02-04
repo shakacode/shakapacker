@@ -50,6 +50,14 @@ export type {
   ReactRefreshRspackPlugin
 } from "../environments/types"
 
+// Bundler utility types
+export type {
+  PluginConstructor,
+  CssExtractPluginOptions,
+  CssExtractPluginConstructor,
+  BundlerModule
+} from "../utils/bundlerUtils"
+
 // Node.js error type (re-exported for convenience)
 export type NodeJSError = NodeJS.ErrnoException
 

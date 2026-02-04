@@ -11,6 +11,23 @@
 
 Changes since the last non-beta release.
 
+### Added
+
+- **Export bundler utility functions for Webpack/Rspack compatibility**. [PR #880](https://github.com/shakacode/shakapacker/pull/880) by [justin808](https://github.com/justin808). New utility functions that make it easier to write bundler-agnostic configuration code: `isRspack`, `isWebpack`, `getBundler()`, `getCssExtractPlugin()`, `getCssExtractPluginLoader()`, `getDefinePlugin()`, `getEnvironmentPlugin()`, and `getProvidePlugin()`. Users no longer need to write conditional logic to handle differences between Webpack and Rspack.
+
+  ```javascript
+  // Before: manual conditional logic
+  const { config } = require("shakapacker")
+  const CssPlugin =
+    config.assets_bundler === "rspack"
+      ? require("@rspack/core").CssExtractRspackPlugin
+      : require("mini-css-extract-plugin")
+
+  // After: use bundler utilities
+  const { getCssExtractPlugin } = require("shakapacker")
+  const CssPlugin = getCssExtractPlugin()
+  ```
+
 ### Fixed
 
 - **Fixed NODE_ENV=test causing DefinePlugin warnings**. [PR #870](https://github.com/shakacode/shakapacker/pull/870) by [justin808](https://github.com/justin808). When RAILS_ENV=test, Shakapacker now sets NODE_ENV=development instead of NODE_ENV=test. This prevents webpack/rspack DefinePlugin conflicts since these bundlers only recognize "development" and "production" as valid NODE_ENV values.
