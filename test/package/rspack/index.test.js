@@ -99,7 +99,7 @@ describe("rspack/index", () => {
       expect(config).toHaveProperty("optimization")
     })
 
-    test("returns an immutable object", () => {
+    test("returns a new object instance on each call", () => {
       const config1 = rspackIndex.generateRspackConfig()
       const config2 = rspackIndex.generateRspackConfig()
 
@@ -214,10 +214,25 @@ describe("rspack/index", () => {
       expect(typeof result).toBe("boolean")
     })
 
-    test("canProcess returns boolean or function", () => {
-      const result = rspackIndex.canProcess("test", "some-module")
-      // canProcess can return a boolean or a function depending on the context
-      expect(["boolean", "object", "function"]).toContain(typeof result)
+    test("canProcess invokes callback when module exists", () => {
+      // canProcess takes a package name and a callback function
+      // It returns null if the module doesn't exist, or the callback result if it does
+      const callback = jest.fn((modulePath) => ({
+        processed: true,
+        path: modulePath
+      }))
+      const result = rspackIndex.canProcess("jest", callback)
+
+      // Since jest exists, the callback should be invoked with the resolved module path
+      if (result !== null) {
+        expect(callback).toHaveBeenCalledWith(expect.any(String))
+        expect(result).toHaveProperty("processed", true)
+        expect(result).toHaveProperty("path")
+      } else {
+        // If module doesn't exist, callback should not be called and result is null
+        expect(callback).not.toHaveBeenCalledWith(expect.anything())
+        expect(result).toBeNull()
+      }
     })
   })
 
