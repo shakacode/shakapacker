@@ -156,7 +156,7 @@ class Shakapacker::Manifest
 
     def handle_missing_entry(name, pack_type)
       if data.empty?
-        raise Shakapacker::Manifest::MissingEntryError, manifest_empty_error
+        raise Shakapacker::Manifest::MissingEntryError, manifest_empty_error(config.manifest_path.exist?)
       end
 
       raise Shakapacker::Manifest::MissingEntryError, missing_file_from_manifest_error(full_pack_name(name, pack_type[:type]))
@@ -203,24 +203,45 @@ Your manifest contains:
       MSG
     end
 
-    def manifest_empty_error
+    def manifest_empty_error(manifest_exists)
       bundler_name = config.assets_bundler
-      <<~MSG
 
-        Shakapacker manifest is empty. #{bundler_name} is likely still compiling.
+      if manifest_exists
+        <<~MSG
 
-        This typically happens when:
-        1. You just started the dev server and it's still compiling
-        2. The dev server crashed during startup
-        3. #{bundler_name} compilation hasn't completed yet
+          Shakapacker manifest is empty. #{bundler_name} is likely still compiling.
 
-        What to do:
-        - Wait a few seconds and refresh the page
-        - Check your terminal for #{bundler_name} build progress
-        - Look for errors in the #{bundler_name} output
+          This typically happens when:
+          1. You just started the dev server and it's still compiling
+          2. The dev server crashed during startup
+          3. #{bundler_name} compilation hasn't completed yet
 
-        Manifest path: #{config.manifest_path}
+          What to do:
+          - Wait a few seconds and refresh the page
+          - Check your terminal for #{bundler_name} build progress
+          - Look for errors in the #{bundler_name} output
 
-      MSG
+          Manifest path: #{config.manifest_path}
+
+        MSG
+      else
+        <<~MSG
+
+          Shakapacker manifest file not found. #{bundler_name} has not yet built assets.
+
+          This typically happens when:
+          1. You haven't started the dev server yet
+          2. The compile process hasn't created the manifest file
+          3. The manifest_path configuration is incorrect
+
+          What to do:
+          - Start the dev server: bin/shakapacker-dev-server
+          - Or run a manual build: bin/shakapacker
+          - Verify manifest_path in config/shakapacker.yml
+
+          Expected manifest path: #{config.manifest_path}
+
+        MSG
+      end
     end
 end
