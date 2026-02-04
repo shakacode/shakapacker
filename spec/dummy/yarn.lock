@@ -3789,10 +3789,10 @@ react-is@^16.13.1:
   resolved "https://registry.npmjs.org/react-is/-/react-is-16.13.1.tgz"
   integrity sha512-24e6ynE2H+OKt4kqsOvNd8kBpV65zoxbA4BVsEOB3ARVWQki/DHzaUoC5KuON/BiccDaCCTZBuOcfZs70kR8bQ==
 
-react-on-rails@^16.1.0:
-  version "16.1.1"
-  resolved "https://registry.npmjs.org/react-on-rails/-/react-on-rails-16.1.1.tgz"
-  integrity sha512-Ntw/4HSB/p9QJ1V2kc0aETzK0W0Vy0suSh0Ugs3Ctfso2ovIT2YUegJJyPtFzX9jUZSR6Q/tkmkgNgzASkO0pw==
+react-on-rails@^16.2.1:
+  version "16.2.1"
+  resolved "https://registry.npmjs.org/react-on-rails/-/react-on-rails-16.2.1.tgz"
+  integrity sha512-47hZ5y69sU6H8RK8H0RDBvBnl4N314DibxsmRVtFIKeoIvvd6nlPyNCqp54jgNehB/mA15VG2H7EeVMHL0u8kA==
 
 react-refresh@^0.17.0, "react-refresh@>=0.10.0 <1.0.0":
   version "0.17.0"
@@ -4070,7 +4070,7 @@ setprototypeof@1.2.0:
   integrity sha512-E5LDX7Wrp85Kil5bhZv46j8jOeboKq5JMmYM3gVGdGH8xFpPWXUMsNrlODCrkoxMEeNi/XZIwuRvY4XNwYMJpw==
 
 "shakapacker@file:.yalc/shakapacker":
-  version "9.3.0-beta.1"
+  version "9.5.0"
   resolved "file:.yalc/shakapacker"
   dependencies:
     js-yaml "^4.1.0"
