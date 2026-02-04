@@ -155,6 +155,10 @@ class Shakapacker::Manifest
     end
 
     def handle_missing_entry(name, pack_type)
+      if data.empty?
+        raise Shakapacker::Manifest::MissingEntryError, manifest_empty_error
+      end
+
       raise Shakapacker::Manifest::MissingEntryError, missing_file_from_manifest_error(full_pack_name(name, pack_type[:type]))
     end
 
@@ -196,6 +200,27 @@ Shakapacker can't find #{bundle_name} in #{config.manifest_path}. Possible cause
 
 Your manifest contains:
 #{JSON.pretty_generate(@data)}
+      MSG
+    end
+
+    def manifest_empty_error
+      bundler_name = config.assets_bundler
+      <<~MSG
+
+        Shakapacker manifest is empty. #{bundler_name} is likely still compiling.
+
+        This typically happens when:
+        1. You just started the dev server and it's still compiling
+        2. The dev server crashed during startup
+        3. #{bundler_name} compilation hasn't completed yet
+
+        What to do:
+        - Wait a few seconds and refresh the page
+        - Check your terminal for #{bundler_name} build progress
+        - Look for errors in the #{bundler_name} output
+
+        Manifest path: #{config.manifest_path}
+
       MSG
     end
 end
