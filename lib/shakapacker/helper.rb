@@ -657,7 +657,7 @@ module Shakapacker::Helper
         end
         store[:debug_buffer] << "<!--   Note: Browsers only process the FIRST 103 response -->"
         store[:debug_buffer] << "<!--   Note: Puma only supports HTTP/1.1 Early Hints (not HTTP/2) -->"
-        store[:debug_buffer] << "<!--   CDN Warning: Most CDNs (Cloudflare, CloudFront, ALB) strip 103 responses. -->"
+        store[:debug_buffer] << "<!--   CDN Warning: Most CDNs (Cloudflare, AWS CloudFront, AWS ALB) strip 103 responses. -->"
         store[:debug_buffer] << "<!--   Link headers in the 200 response may still provide some browser hints. -->"
       end
     end
