@@ -15,6 +15,10 @@ Changes since the last non-beta release.
 
 - **Fixed NODE_ENV=test causing DefinePlugin warnings**. [PR #870](https://github.com/shakacode/shakapacker/pull/870) by [justin808](https://github.com/justin808). When RAILS_ENV=test, Shakapacker now sets NODE_ENV=development instead of NODE_ENV=test. This prevents webpack/rspack DefinePlugin conflicts since these bundlers only recognize "development" and "production" as valid NODE_ENV values.
 
+### Documentation
+
+- **Added CDN limitation warnings for Early Hints feature**. [PR #878](https://github.com/shakacode/shakapacker/pull/878) by [justin808](https://github.com/justin808). The early hints documentation now prominently notes that most CDNs (Cloudflare, AWS CloudFront, AWS ALB) strip HTTP 103 responses before they reach end users. Debug mode also includes CDN warnings in HTML comments.
+
 ## [v9.5.0] - January 7, 2026
 
 ### Security
