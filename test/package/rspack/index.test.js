@@ -108,9 +108,8 @@ describe("rspack/index", () => {
       config1.output.path = "new path"
 
       expect(config2).not.toHaveProperty("newKey")
-      if (config2.output) {
-        expect(config2.output.path).not.toBe("new path")
-      }
+      expect(config2.output).toBeDefined()
+      expect(config2.output.path).not.toBe("new path")
     })
 
     test("merges extra config", () => {
@@ -131,6 +130,8 @@ describe("rspack/index", () => {
       expect(config.module).toBeDefined()
       expect(config.module.rules).toBeDefined()
       expect(Array.isArray(config.module.rules)).toBe(true)
+      // The exact number of rules depends on which optional loaders are installed,
+      // so we only verify that at least some rules exist
       expect(config.module.rules.length).toBeGreaterThan(0)
     })
 

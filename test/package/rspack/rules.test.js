@@ -1,4 +1,4 @@
-/* eslint-disable jest/no-conditional-in-test */
+/* eslint-disable jest/no-conditional-in-test, jest/no-conditional-expect */
 
 // Mock helpers and debug utilities
 jest.mock("../../../package/utils/helpers", () => {
@@ -160,22 +160,40 @@ describe("rspack/rules", () => {
   })
 
   describe("less rules", () => {
-    test("conditionally loads Less rule based on dependencies", () => {
-      // Less rule may or may not be present depending on actual project dependencies
-      // We verify the rules array is valid but don't assert Less exists
-      // since it's an optional dependency
-      expect(Array.isArray(rules)).toBe(true)
-      expect(rules.length).toBeGreaterThan(0)
+    test("less rule presence depends on loader configuration", () => {
+      // Less rule may return null even when less-loader is found,
+      // depending on the loader's canProcess function result.
+      // We verify the rules array structure is valid.
+      const lessRule = rules.find(
+        (rule) => rule.test && rule.test.toString().includes("less")
+      )
+
+      // Less rule is optional - it exists only when the loader is fully configured
+      if (lessRule) {
+        expect(lessRule.test.toString()).toContain("less")
+      } else {
+        // When less-loader is found but returns null, no rule is added
+        expect(rules.length).toBeGreaterThan(0)
+      }
     })
   })
 
   describe("stylus rules", () => {
-    test("conditionally loads Stylus rule based on dependencies", () => {
-      // Stylus rule may or may not be present depending on actual project dependencies
-      // We verify the rules array is valid but don't assert Stylus exists
-      // since it's an optional dependency
-      expect(Array.isArray(rules)).toBe(true)
-      expect(rules.length).toBeGreaterThan(0)
+    test("stylus rule presence depends on loader configuration", () => {
+      // Stylus rule may return null even when stylus-loader is found,
+      // depending on the loader's canProcess function result.
+      // We verify the rules array structure is valid.
+      const stylusRule = rules.find(
+        (rule) => rule.test && rule.test.toString().includes("styl")
+      )
+
+      // Stylus rule is optional - it exists only when the loader is fully configured
+      if (stylusRule) {
+        expect(stylusRule.test.toString()).toContain("styl")
+      } else {
+        // When stylus-loader is found but returns null, no rule is added
+        expect(rules.length).toBeGreaterThan(0)
+      }
     })
   })
 

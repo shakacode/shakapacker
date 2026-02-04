@@ -82,16 +82,5 @@ describe("rspack/optimization", () => {
         "LightningCssMinimizerRspackPlugin"
       )
     })
-
-    test("error handling is implemented", () => {
-      // Verify the function has try-catch for error handling
-      // We can't easily test the error path without complex mocking,
-      // but we verify the happy path works correctly
-      const optimization = getOptimization()
-
-      expect(optimization).toBeDefined()
-      expect(optimization.minimize).toBe(true)
-      expect(optimization.minimizer).toBeDefined()
-    })
   })
 })
