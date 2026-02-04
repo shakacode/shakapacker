@@ -11,6 +11,29 @@
 
 Changes since the last non-beta release.
 
+### Changed
+
+- **BREAKING: sass-loader now defaults to modern Sass API**. [PR #879](https://github.com/shakacode/shakapacker/pull/879) by [justin808](https://github.com/justin808). The sass-loader configuration now uses `api: "modern"` instead of the deprecated legacy API. This improves compatibility with plugins like sass-resources-loader that require the modern API. If you experience issues after upgrading, you can revert to the legacy API by customizing your webpack config:
+
+  ```javascript
+  // config/webpack/webpack.config.js
+  const { generateWebpackConfig } = require("shakapacker")
+  const config = generateWebpackConfig()
+
+  // Find and modify sass-loader options
+  config.module.rules.forEach((rule) => {
+    if (rule.use) {
+      rule.use.forEach((loader) => {
+        if (loader.loader?.includes("sass-loader")) {
+          loader.options.api = "legacy"
+        }
+      })
+    }
+  })
+
+  module.exports = config
+  ```
+
 ### Fixed
 
 - **Fixed NODE_ENV=test causing DefinePlugin warnings**. [PR #870](https://github.com/shakacode/shakapacker/pull/870) by [justin808](https://github.com/justin808). When RAILS_ENV=test, Shakapacker now sets NODE_ENV=development instead of NODE_ENV=test. This prevents webpack/rspack DefinePlugin conflicts since these bundlers only recognize "development" and "production" as valid NODE_ENV values.
