@@ -18,6 +18,49 @@
 
 import type { Config } from "../types"
 
+/**
+ * Common interface for bundler plugin constructors.
+ * Works with both webpack and rspack plugins.
+ */
+export interface PluginConstructor {
+  new (...args: unknown[]): unknown
+}
+
+/**
+ * Options for CSS extraction plugins (MiniCssExtractPlugin / CssExtractRspackPlugin).
+ */
+export interface CssExtractPluginOptions {
+  filename?: string
+  chunkFilename?: string
+  ignoreOrder?: boolean
+  insert?: string | ((linkTag: unknown) => void)
+  attributes?: Record<string, string>
+  linkType?: string | false
+  runtime?: boolean
+  experimentalUseImportModule?: boolean
+}
+
+/**
+ * CSS extraction plugin constructor interface.
+ */
+export interface CssExtractPluginConstructor {
+  new (options?: CssExtractPluginOptions): unknown
+  loader: string
+}
+
+/**
+ * Common interface for the bundler module (webpack or @rspack/core).
+ * Contains the commonly used plugins that exist in both bundlers.
+ */
+export interface BundlerModule {
+  DefinePlugin: PluginConstructor
+  EnvironmentPlugin: PluginConstructor
+  ProvidePlugin: PluginConstructor
+  HotModuleReplacementPlugin: PluginConstructor
+  ProgressPlugin: PluginConstructor
+  [key: string]: unknown
+}
+
 const config = require("../config") as Config
 const { requireOrError } = require("./requireOrError")
 
@@ -46,7 +89,7 @@ const isWebpack: boolean = config.assets_bundler !== "rspack"
 /**
  * Get the current bundler module (webpack or @rspack/core).
  *
- * @returns The bundler module
+ * @returns The bundler module with common plugin constructors
  * @throws {Error} If the required bundler package is not installed
  *
  * @example
@@ -57,8 +100,10 @@ const isWebpack: boolean = config.assets_bundler !== "rspack"
  * new bundler.DefinePlugin({ VERSION: JSON.stringify('1.0.0') })
  * new bundler.EnvironmentPlugin(['NODE_ENV'])
  */
-const getBundler = (): unknown =>
-  isRspack ? requireOrError("@rspack/core") : requireOrError("webpack")
+const getBundler = (): BundlerModule =>
+  (isRspack
+    ? requireOrError("@rspack/core")
+    : requireOrError("webpack")) as BundlerModule
 
 /**
  * Get the CSS extraction plugin for the current bundler.
@@ -81,12 +126,16 @@ const getBundler = (): unknown =>
  *   ]
  * }
  */
-const getCssExtractPlugin = (): unknown => {
+const getCssExtractPlugin = (): CssExtractPluginConstructor => {
   if (isRspack) {
-    const rspack = requireOrError("@rspack/core")
+    const rspack = requireOrError("@rspack/core") as {
+      CssExtractRspackPlugin: CssExtractPluginConstructor
+    }
     return rspack.CssExtractRspackPlugin
   }
-  return requireOrError("mini-css-extract-plugin")
+  return requireOrError(
+    "mini-css-extract-plugin"
+  ) as CssExtractPluginConstructor
 }
 
 /**
@@ -136,10 +185,7 @@ const getCssExtractPluginLoader = (): string => {
  *   ]
  * }
  */
-const getDefinePlugin = (): unknown => {
-  const bundler = getBundler() as { DefinePlugin: unknown }
-  return bundler.DefinePlugin
-}
+const getDefinePlugin = (): PluginConstructor => getBundler().DefinePlugin
 
 /**
  * Get the EnvironmentPlugin for the current bundler.
@@ -157,10 +203,8 @@ const getDefinePlugin = (): unknown => {
  *   ]
  * }
  */
-const getEnvironmentPlugin = (): unknown => {
-  const bundler = getBundler() as { EnvironmentPlugin: unknown }
-  return bundler.EnvironmentPlugin
-}
+const getEnvironmentPlugin = (): PluginConstructor =>
+  getBundler().EnvironmentPlugin
 
 /**
  * Get the ProvidePlugin for the current bundler.
@@ -181,10 +225,7 @@ const getEnvironmentPlugin = (): unknown => {
  *   ]
  * }
  */
-const getProvidePlugin = (): unknown => {
-  const bundler = getBundler() as { ProvidePlugin: unknown }
-  return bundler.ProvidePlugin
-}
+const getProvidePlugin = (): PluginConstructor => getBundler().ProvidePlugin
 
 export {
   isRspack,
