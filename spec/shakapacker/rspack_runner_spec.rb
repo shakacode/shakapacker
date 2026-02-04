@@ -143,7 +143,7 @@ describe "RspackRunner" do
           true
         end
 
-        output = capture_stdout { klass.run([]) }
+        output = capture_stderr { klass.run([]) }
 
         # The test app may have webpack config, so bundler name could be either
         # Time format can be either "X.XXs" or "M:SS.SSs" for the display, always "X.XXs" in parentheses
@@ -164,7 +164,7 @@ describe "RspackRunner" do
           true
         end
 
-        output = capture_stdout { klass.run(["--watch"]) }
+        output = capture_stderr { klass.run(["--watch"]) }
 
         expect(output).not_to match(/Completed (webpack|rspack) build/)
       end
@@ -183,7 +183,7 @@ describe "RspackRunner" do
           true
         end
 
-        output = capture_stdout { klass.run(["-w"]) }
+        output = capture_stderr { klass.run(["-w"]) }
 
         expect(output).not_to match(/Completed (webpack|rspack) build/)
       end
@@ -192,13 +192,13 @@ describe "RspackRunner" do
 
   private
 
-    def capture_stdout
-      old_stdout = $stdout
-      $stdout = StringIO.new
+    def capture_stderr
+      old_stderr = $stderr
+      $stderr = StringIO.new
       yield
-      $stdout.string
+      $stderr.string
     ensure
-      $stdout = old_stdout
+      $stderr = old_stderr
     end
 
     def verify_command(cmd, argv: [])
