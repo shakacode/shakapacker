@@ -49,6 +49,12 @@ class Shakapacker::Manifest
 
   def handle_missing_entry: (String name, Hash[Symbol, untyped] pack_type) -> void
 
+  def manifest_empty_error: (bool manifest_exists) -> String
+
+  def missing_file_from_manifest_error: (String bundle_name) -> String
+
+  def full_pack_name: (String name, Symbol? pack_type) -> String
+
   def manifest_type: (Symbol? type) -> String
 
   def manifest_name: (String name, String manifest_type) -> String
