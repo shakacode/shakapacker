@@ -480,8 +480,8 @@ module Shakapacker
         config_path = loader.config_file_path
 
         if loader.exists?
-          puts "[Shakapacker] Config file already exists: #{config_path}"
-          puts "Use --list-builds to see available builds"
+          $stderr.puts "[Shakapacker] Config file already exists: #{config_path}"
+          $stderr.puts "Use --list-builds to see available builds"
           return
         end
 
@@ -508,8 +508,8 @@ module Shakapacker
         loader = BuildConfigLoader.new
 
         unless loader.exists?
-          puts "[Shakapacker] No config file found: #{loader.config_file_path}"
-          puts "Run 'bin/shakapacker --init' to create one"
+          $stderr.puts "[Shakapacker] No config file found: #{loader.config_file_path}"
+          $stderr.puts "Run 'bin/shakapacker --init' to create one"
           return
         end
 
