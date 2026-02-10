@@ -23,6 +23,24 @@ describe "Shakapacker::Manifest" do
         Shakapacker.manifest.lookup_pack_with_chunks!("application", type: :javascript)
       }.to raise_error(Shakapacker::Manifest::MissingEntryError, /manifest is empty.*still compiling/i)
     end
+
+    it "#lookup! handles a 0-byte manifest file without JSON parse errors" do
+      manifest_path = Shakapacker.config.manifest_path.to_s
+      original = File.read(manifest_path)
+
+      begin
+        File.write(manifest_path, "")
+        allow(Shakapacker.config).to receive(:compile?).and_return(false)
+        Shakapacker.manifest.refresh
+
+        expect {
+          Shakapacker.manifest.lookup!("application.js")
+        }.to raise_error(Shakapacker::Manifest::MissingEntryError, /manifest is empty.*still compiling/i)
+      ensure
+        File.write(manifest_path, original)
+        Shakapacker.manifest.refresh
+      end
+    end
   end
 
   context "when manifest file does not exist" do
