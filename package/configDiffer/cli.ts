@@ -13,7 +13,7 @@ interface CliOptions extends DiffOptions {
   help?: boolean
 }
 
-export async function run(args: string[]): Promise<number> {
+export function run(args: string[]): number {
   try {
     const options = parseArguments(args)
 
@@ -166,13 +166,15 @@ function loadConfigFile(filePath: string): any {
 
   if (ext === ".json") {
     return JSON.parse(content)
-  } else if (ext === ".yaml" || ext === ".yml") {
+  }
+  if (ext === ".yaml" || ext === ".yml") {
     return loadYaml(content)
-  } else if (ext === ".js" || ext === ".ts") {
+  }
+  if (ext === ".js" || ext === ".ts") {
     if (ext === ".ts") {
       try {
         require("ts-node/register/transpile-only")
-      } catch (error) {
+      } catch {
         throw new Error(
           "TypeScript config detected but ts-node is not available. " +
             "Install ts-node as a dev dependency: npm install --save-dev ts-node"
@@ -188,11 +190,10 @@ function loadConfigFile(filePath: string): any {
     }
 
     return loaded
-  } else {
-    throw new Error(
-      `Unsupported file format: ${ext}. Supported formats: .json, .yaml, .yml, .js, .ts`
-    )
   }
+  throw new Error(
+    `Unsupported file format: ${ext}. Supported formats: .json, .yaml, .yml, .js, .ts`
+  )
 }
 
 function showHelp(): void {
