@@ -1,6 +1,6 @@
 import { dump as dumpYaml } from "js-yaml"
 import { DiffResult, DiffEntry, DiffOperation } from "./types"
-import { getDocForKey, hasDocumentation } from "./configDocs"
+import { getDocForKey } from "./configDocs"
 
 export class DiffFormatter {
   formatJson(result: DiffResult): string {
@@ -121,7 +121,7 @@ export class DiffFormatter {
 
     // Fall back to basename without extension, shortened
     if (withoutExt.length > 20) {
-      return withoutExt.substring(0, 17) + "..."
+      return `${withoutExt.substring(0, 17)}...`
     }
 
     return withoutExt
@@ -151,12 +151,12 @@ export class DiffFormatter {
     rightLabel: string
   ): string {
     const lines: string[] = []
-    const symbol =
-      entry.operation === "added"
-        ? "[+]"
-        : entry.operation === "removed"
-          ? "[-]"
-          : "[~]"
+    const symbolMap: Record<string, string> = {
+      added: "[+]",
+      removed: "[-]",
+      changed: "[~]"
+    }
+    const symbol = symbolMap[entry.operation] || "[~]"
 
     lines.push(`${index}. ${symbol} ${entry.path.humanPath}`)
     lines.push("")
@@ -210,14 +210,14 @@ export class DiffFormatter {
 
   private analyzeImpact(entry: DiffEntry): string | null {
     const path = entry.path.humanPath
-    const oldVal = entry.oldValue
     const newVal = entry.newValue
 
     // Specific impact analysis
     if (path === "mode") {
       if (newVal === "production") {
         return "Enabling production optimizations (minification, tree-shaking)"
-      } else if (newVal === "development") {
+      }
+      if (newVal === "development") {
         return "Enabling development features (better error messages, faster builds)"
       }
     }
@@ -225,20 +225,18 @@ export class DiffFormatter {
     if (path === "optimization.minimize") {
       if (newVal === true || newVal === "true") {
         return "Code will be minified - smaller bundles but slower builds"
-      } else {
-        return "Minification disabled - larger bundles but faster builds"
       }
+      return "Minification disabled - larger bundles but faster builds"
     }
 
     if (path === "devtool") {
       if (newVal === "source-map") {
         return "Full source maps - best debugging but slower builds"
-      } else if (newVal === "eval") {
+      }
+      if (newVal === "eval") {
         return "Fastest builds but poor debugging experience"
-      } else if (
-        String(newVal).includes("cheap") ||
-        String(newVal).includes("eval")
-      ) {
+      }
+      if (String(newVal).includes("cheap") || String(newVal).includes("eval")) {
         return "Faster builds with some debugging capability"
       }
     }

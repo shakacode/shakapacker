@@ -48,7 +48,7 @@ export class PathNormalizer {
     const relativePath = relative(this.basePath, absolutePath)
 
     if (relativePath && !relativePath.startsWith("..")) {
-      return "./" + relativePath.split(sep).join("/")
+      return `./${relativePath.split(sep).join("/")}`
     }
 
     return str
@@ -151,9 +151,9 @@ export class PathNormalizer {
     }
 
     const splitPaths = paths.map((p) => p.split(sep))
-    let prefix: string[] = []
+    const prefix: string[] = []
 
-    for (let i = 0; i < splitPaths[0].length; i++) {
+    for (let i = 0; i < splitPaths[0].length; i += 1) {
       const segment = splitPaths[0][i]
       if (splitPaths.every((p) => p[i] === segment)) {
         prefix.push(segment)

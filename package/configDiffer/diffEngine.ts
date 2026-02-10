@@ -8,6 +8,7 @@ import {
 
 export class DiffEngine {
   private options: Required<DiffOptions>
+
   private entries: DiffEntry[] = []
 
   constructor(options: DiffOptions = {}) {
@@ -104,12 +105,10 @@ export class DiffEngine {
     const allKeys = new Set([...Object.keys(left), ...Object.keys(right)])
 
     for (const key of allKeys) {
-      if (this.options.ignoreKeys.includes(key)) {
-        continue
+      if (!this.options.ignoreKeys.includes(key)) {
+        const newPath = [...path, key]
+        this.compareValues(left[key], right[key], newPath, depth + 1)
       }
-
-      const newPath = [...path, key]
-      this.compareValues(left[key], right[key], newPath, depth + 1)
     }
   }
 
@@ -121,7 +120,7 @@ export class DiffEngine {
   ): void {
     const maxLength = Math.max(left.length, right.length)
 
-    for (let i = 0; i < maxLength; i++) {
+    for (let i = 0; i < maxLength; i += 1) {
       const newPath = [...path, `[${i}]`]
       this.compareValues(left[i], right[i], newPath, depth + 1)
     }
@@ -167,10 +166,10 @@ export class DiffEngine {
         const escapedPattern = ignorePath
           .replace(/\./g, "\\.")
           .replace(/\*/g, ".*")
-        const pattern = new RegExp("^" + escapedPattern + "$")
+        const pattern = new RegExp(`^${escapedPattern}$`)
         return pattern.test(humanPath)
       }
-      return humanPath === ignorePath || humanPath.startsWith(ignorePath + ".")
+      return humanPath === ignorePath || humanPath.startsWith(`${ignorePath}.`)
     })
   }
 
@@ -276,17 +275,17 @@ export class DiffEngine {
 
     for (const entry of this.entries) {
       if (entry.operation === "added") {
-        summary.added++
+        summary.added += 1
       } else if (entry.operation === "removed") {
-        summary.removed++
+        summary.removed += 1
       } else if (entry.operation === "changed") {
-        summary.changed++
+        summary.changed += 1
       } else if (entry.operation === "unchanged") {
         summary.unchanged = (summary.unchanged || 0) + 1
       }
 
       if (entry.operation !== "unchanged") {
-        summary.totalChanges++
+        summary.totalChanges += 1
       }
     }
 

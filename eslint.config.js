@@ -230,6 +230,44 @@ module.exports = [
     }
   },
   {
+    // configDiffer: Config diff engine works with arbitrary webpack/rspack config objects
+    // Similar patterns to configExporter - dynamic config loading requires `any` types
+    // - diffEngine.ts: Compares arbitrary config values of unknown shape
+    // - pathNormalizer.ts: Normalizes paths in arbitrary config objects
+    // - cli.ts: Loads config files dynamically
+    // - formatter.ts: Formats arbitrary config values for display
+    files: ["package/configDiffer/**/*.ts"],
+    rules: {
+      // Code organization (functions before use due to large file)
+      "@typescript-eslint/no-use-before-define": "off",
+      // Import style (CommonJS require for dynamic imports)
+      "import/no-dynamic-require": "off",
+      // Class methods that are part of public API
+      "class-methods-use-this": "off",
+      // Style preferences
+      "import/prefer-default-export": "off"
+    }
+  },
+  {
+    // configDiffer: Dynamic config loading and comparison requires `any` types
+    // Config objects can have any shape - this is inherent to the problem domain
+    files: [
+      "package/configDiffer/diffEngine.ts",
+      "package/configDiffer/pathNormalizer.ts",
+      "package/configDiffer/cli.ts",
+      "package/configDiffer/formatter.ts",
+      "package/configDiffer/types.ts"
+    ],
+    rules: {
+      "@typescript-eslint/no-explicit-any": "off",
+      "@typescript-eslint/no-unsafe-assignment": "off",
+      "@typescript-eslint/no-unsafe-member-access": "off",
+      "@typescript-eslint/no-unsafe-call": "off",
+      "@typescript-eslint/no-unsafe-return": "off",
+      "@typescript-eslint/no-unsafe-argument": "off"
+    }
+  },
+  {
     // Remaining utils files that need type safety improvements
     // These use dynamic requires and helper functions that return `any`
     files: [
