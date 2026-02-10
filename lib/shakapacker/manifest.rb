@@ -164,7 +164,8 @@ class Shakapacker::Manifest
 
     def load
       if config.manifest_path.exist?
-        JSON.parse config.manifest_path.read
+        contents = config.manifest_path.read
+        contents.strip.empty? ? {} : JSON.parse(contents)
       else
         {}
       end
