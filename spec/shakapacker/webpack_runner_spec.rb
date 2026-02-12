@@ -112,10 +112,11 @@ describe "WebpackRunner" do
         allow(klass).to receive(:new).and_return(instance)
         allow(Shakapacker::Utils::Manager).to receive(:error_unless_package_manager_is_obvious!)
 
-        # Stub system to simulate failure
-        allow(instance).to receive(:system) do |*args|
+        # Stub spawn to simulate failure
+        allow(instance).to receive(:spawn).and_return(12345)
+        allow(instance).to receive(:trap)
+        allow(Process).to receive(:wait).with(12345) do
           system("exit 5")  # Sets $? to exit code 5
-          false
         end
 
         expect { klass.run([]) }.to raise_error(SystemExit) do |error|
@@ -132,10 +133,11 @@ describe "WebpackRunner" do
         allow(klass).to receive(:new).and_return(instance)
         allow(Shakapacker::Utils::Manager).to receive(:error_unless_package_manager_is_obvious!)
 
-        # Stub system to simulate success
-        allow(instance).to receive(:system) do |*args|
+        # Stub spawn to simulate success
+        allow(instance).to receive(:spawn).and_return(12345)
+        allow(instance).to receive(:trap)
+        allow(Process).to receive(:wait).with(12345) do
           system("true")  # Sets $? to successful status
-          true
         end
 
         expect { klass.run([]) }.not_to raise_error
@@ -152,10 +154,11 @@ describe "WebpackRunner" do
         allow(klass).to receive(:new).and_return(instance)
         allow(Shakapacker::Utils::Manager).to receive(:error_unless_package_manager_is_obvious!)
 
-        allow(instance).to receive(:system) do |*args|
+        allow(instance).to receive(:spawn).and_return(12345)
+        allow(instance).to receive(:trap)
+        allow(Process).to receive(:wait).with(12345) do
           sleep(0.1)  # Simulate build time
           system("true")
-          true
         end
 
         output = capture_stdout { klass.run([]) }
@@ -173,9 +176,10 @@ describe "WebpackRunner" do
         allow(klass).to receive(:new).and_return(instance)
         allow(Shakapacker::Utils::Manager).to receive(:error_unless_package_manager_is_obvious!)
 
-        allow(instance).to receive(:system) do |*args|
+        allow(instance).to receive(:spawn).and_return(12345)
+        allow(instance).to receive(:trap)
+        allow(Process).to receive(:wait).with(12345) do
           system("true")
-          true
         end
 
         output = capture_stdout { klass.run(["--watch"]) }
@@ -192,9 +196,10 @@ describe "WebpackRunner" do
         allow(klass).to receive(:new).and_return(instance)
         allow(Shakapacker::Utils::Manager).to receive(:error_unless_package_manager_is_obvious!)
 
-        allow(instance).to receive(:system) do |*args|
+        allow(instance).to receive(:spawn).and_return(12345)
+        allow(instance).to receive(:trap)
+        allow(Process).to receive(:wait).with(12345) do
           system("true")
-          true
         end
 
         output = capture_stdout { klass.run([]) }
@@ -223,15 +228,15 @@ describe "WebpackRunner" do
         instance = klass.new(argv)
 
         allow(klass).to receive(:new).and_return(instance)
-        # Stub system to set $? to successful status
-        allow(instance).to receive(:system) do |*args|
+        allow(instance).to receive(:spawn).and_return(12345)
+        allow(instance).to receive(:trap)
+        allow(Process).to receive(:wait).with(12345) do
           system("true")  # Sets $? to successful status
-          true
         end
 
         klass.run(argv)
 
-        expect(instance).to have_received(:system).with(Shakapacker::Compiler.env, *cmd)
+        expect(instance).to have_received(:spawn).with(Shakapacker::Compiler.env, *cmd)
         expect(Shakapacker::Utils::Manager).to have_received(:error_unless_package_manager_is_obvious!)
       end
     end
