@@ -279,12 +279,17 @@ module Shakapacker
       start_time = Time.now unless watch_mode
 
       Dir.chdir(@app_path) do
-        child_pid = spawn(env, *cmd)
+        child_pid = nil
         trap("TERM") do
-          Process.kill("TERM", child_pid)
+          if child_pid
+            Process.kill("TERM", child_pid)
+          else
+            raise SignalException, "TERM" # if there is no child_pid we never spawned the process and can quit as normal
+          end
         rescue Errno::ESRCH
           nil
         end
+        child_pid = spawn(env, *cmd)
         Process.wait(child_pid)
       end
 
