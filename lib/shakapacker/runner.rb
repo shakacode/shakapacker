@@ -279,7 +279,13 @@ module Shakapacker
       start_time = Time.now unless watch_mode
 
       Dir.chdir(@app_path) do
-        system(env, *cmd)
+        child_pid = spawn(env, *cmd)
+        trap("TERM") do
+          Process.kill("TERM", child_pid)
+        rescue Errno::ESRCH
+          nil
+        end
+        Process.wait(child_pid)
       end
 
       if !watch_mode && start_time
