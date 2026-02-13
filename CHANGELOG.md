@@ -36,6 +36,7 @@ Changes since the last non-beta release.
 
 ### Fixed
 
+- **Improved error message when manifest is empty or missing**. [PR #872](https://github.com/shakacode/shakapacker/pull/872) by [justin808](https://github.com/justin808). When the bundler is still compiling (empty manifest) or hasn't run yet (missing manifest file), users now see clear, actionable error messages instead of the generic 7-point checklist.
 - **Fixed NODE_ENV=test causing DefinePlugin warnings**. [PR #870](https://github.com/shakacode/shakapacker/pull/870) by [justin808](https://github.com/justin808). When RAILS_ENV=test, Shakapacker now sets NODE_ENV=development instead of NODE_ENV=test. This prevents webpack/rspack DefinePlugin conflicts since these bundlers only recognize "development" and "production" as valid NODE_ENV values.
 
 ### Documentation

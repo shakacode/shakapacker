@@ -155,12 +155,17 @@ class Shakapacker::Manifest
     end
 
     def handle_missing_entry(name, pack_type)
+      if data.empty?
+        raise Shakapacker::Manifest::MissingEntryError, manifest_empty_error(config.manifest_path.exist?)
+      end
+
       raise Shakapacker::Manifest::MissingEntryError, missing_file_from_manifest_error(full_pack_name(name, pack_type[:type]))
     end
 
     def load
       if config.manifest_path.exist?
-        JSON.parse config.manifest_path.read
+        contents = config.manifest_path.read
+        contents.strip.empty? ? {} : JSON.parse(contents)
       else
         {}
       end
@@ -197,5 +202,47 @@ Shakapacker can't find #{bundle_name} in #{config.manifest_path}. Possible cause
 Your manifest contains:
 #{JSON.pretty_generate(@data)}
       MSG
+    end
+
+    def manifest_empty_error(manifest_exists)
+      bundler_name = config.assets_bundler
+
+      if manifest_exists
+        <<~MSG
+
+          Shakapacker manifest is empty. #{bundler_name} is likely still compiling.
+
+          This typically happens when:
+          1. You just started the dev server and it's still compiling
+          2. The dev server crashed during startup
+          3. #{bundler_name} compilation hasn't completed yet
+
+          What to do:
+          - Wait a few seconds and refresh the page
+          - Check your terminal for #{bundler_name} build progress
+          - Look for errors in the #{bundler_name} output
+
+          Manifest path: #{config.manifest_path}
+
+        MSG
+      else
+        <<~MSG
+
+          Shakapacker manifest file not found. #{bundler_name} has not yet built assets.
+
+          This typically happens when:
+          1. You haven't started the dev server yet
+          2. The compile process hasn't created the manifest file
+          3. The manifest_path configuration is incorrect
+
+          What to do:
+          - Start the dev server: bin/shakapacker-dev-server
+          - Or run a manual build: bin/shakapacker
+          - Verify manifest_path in config/shakapacker.yml
+
+          Expected manifest path: #{config.manifest_path}
+
+        MSG
+      end
     end
 end
