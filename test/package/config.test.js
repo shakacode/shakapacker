@@ -55,6 +55,13 @@ describe("Config", () => {
     )
   })
 
+  test("should return privateOutputPath as absolute path", () => {
+    const config = require("../../package/config")
+    expect(config.privateOutputPath).toStrictEqual(
+      resolve("ssr-generated")
+    )
+  })
+
   test("should have integrity disabled by default", () => {
     const config = require("../../package/config")
     expect(config.integrity.enabled).toBe(false)
