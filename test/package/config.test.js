@@ -62,6 +62,12 @@ describe("Config", () => {
     )
   })
 
+  test("should not set privateOutputPath when not configured", () => {
+    process.env.SHAKAPACKER_CONFIG = "config/shakapacker_manifest_path.yml"
+    const config = require("../../package/config")
+    expect(config.privateOutputPath).toBeUndefined()
+  })
+
   test("should have integrity disabled by default", () => {
     const config = require("../../package/config")
     expect(config.integrity.enabled).toBe(false)
