@@ -57,9 +57,7 @@ describe("Config", () => {
 
   test("should return privateOutputPath as absolute path", () => {
     const config = require("../../package/config")
-    expect(config.privateOutputPath).toStrictEqual(
-      resolve("ssr-generated")
-    )
+    expect(config.privateOutputPath).toStrictEqual(resolve("ssr-generated"))
   })
 
   test("should not set privateOutputPath when not configured", () => {
