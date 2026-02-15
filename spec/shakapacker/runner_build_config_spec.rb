@@ -46,7 +46,11 @@ describe "Runner with build configs" do
         instance = klass.new([], nil)
 
         allow(klass).to receive(:new).and_return(instance)
-        allow(instance).to receive(:system).and_return(true)
+        allow(instance).to receive(:spawn).and_return(12345)
+        allow(instance).to receive(:trap)
+        allow(Process).to receive(:wait).with(12345) do
+          system("true")
+        end
 
         output = capture_stdout do
           klass.run(["--build", "prod"])
@@ -112,7 +116,11 @@ describe "Runner with build configs" do
         instance = klass.new(["nonexistent"], nil)
 
         allow(klass).to receive(:new).and_return(instance)
-        allow(instance).to receive(:system).and_return(true)
+        allow(instance).to receive(:spawn).and_return(12345)
+        allow(instance).to receive(:trap)
+        allow(Process).to receive(:wait).with(12345) do
+          system("true")
+        end
 
         output = capture_stdout do
           klass.run(["nonexistent"])
@@ -130,7 +138,11 @@ describe "Runner with build configs" do
         instance = klass.new([], nil)
 
         allow(klass).to receive(:new).and_return(instance)
-        allow(instance).to receive(:system).and_return(true)
+        allow(instance).to receive(:spawn).and_return(12345)
+        allow(instance).to receive(:trap)
+        allow(Process).to receive(:wait).with(12345) do
+          system("true")
+        end
 
         output = capture_stdout do
           klass.run([])
