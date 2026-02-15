@@ -35,6 +35,10 @@ describe("file", () => {
     types.forEach((type) => expect(file.exclude.test(type)).toBe(true))
   })
 
+  test("uses webpack asset module type by default", () => {
+    expect(file.type).toBe("asset")
+  })
+
   test("correct generated output path is returned for top level files", () => {
     const pathData = {
       filename: "app/javascript/image.svg"
