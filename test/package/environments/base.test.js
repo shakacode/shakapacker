@@ -54,6 +54,7 @@ describe("Base config", () => {
         resolve("app", "javascript", "entrypoints", "multi_entry.js")
       ])
       expect(baseConfig.entry["generated/something"]).toBeUndefined()
+      expect(baseConfig.entry[".hidden"]).toBeUndefined()
     })
 
     test("should returns top level and nested entry points with config.nested_entries == true", () => {
@@ -73,6 +74,8 @@ describe("Base config", () => {
       expect(baseConfig2.entry["generated/something"]).toStrictEqual(
         resolve("app", "javascript", "entrypoints", "generated", "something.js")
       )
+      expect(baseConfig2.entry[".hidden"]).toBeUndefined()
+      expect(baseConfig2.entry[".hidden_dir/hidden_nested"]).toBeUndefined()
     })
 
     test("should return output", () => {
