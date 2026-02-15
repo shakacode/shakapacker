@@ -316,6 +316,7 @@ At its core, Shakapacker's essential function is to:
 ### Configuration and Code
 
 **📖 For a comprehensive guide to all configuration options, see the [Configuration Guide](./docs/configuration.md)**
+**📦 For Node package exports and config object docs, see the [Node Package API Guide](./docs/node_package_api.md)**
 
 This includes documentation for:
 
