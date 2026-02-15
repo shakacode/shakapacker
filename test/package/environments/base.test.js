@@ -56,6 +56,17 @@ describe("Base config", () => {
       expect(baseConfig.entry["generated/something"]).toBeUndefined()
     })
 
+    test("keeps entry value shapes stable for TypeScript narrowing", () => {
+      expect(typeof baseConfig.entry.application).toBe("string")
+      expect(Array.isArray(baseConfig.entry.multi_entry)).toBe(true)
+      expect(baseConfig.entry.multi_entry).toEqual(
+        expect.arrayContaining([
+          expect.any(String),
+          expect.any(String)
+        ])
+      )
+    })
+
     test("should returns top level and nested entry points with config.nested_entries == true", () => {
       process.env.SHAKAPACKER_CONFIG = "config/shakapacker_nested_entries.yml"
       const config2 = require("../../../package/config")
