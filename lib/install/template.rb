@@ -141,6 +141,9 @@ if (setup_path = Rails.root.join("bin/setup")).exist?
 end
 
 Dir.chdir(Rails.root) do
+  npm_version = Shakapacker::Utils::VersionSyntaxConverter.new.rubygem_to_npm(Shakapacker::VERSION)
+  shakapacker_dependency_value = nil
+
   # In CI, use the pre-packed tarball if available
   if ENV["SHAKAPACKER_NPM_PACKAGE"]
     package_path = ENV["SHAKAPACKER_NPM_PACKAGE"]
@@ -167,6 +170,7 @@ Dir.chdir(Rails.root) do
         say "📦 Installing shakapacker from local package: #{absolute_path}", :cyan
         begin
           @package_json.manager.add!([absolute_path], type: :production)
+          shakapacker_dependency_value = absolute_path
         rescue PackageJson::Error
           say "Shakapacker installation failed 😭 See above for details.", :red
           exit 1
@@ -174,9 +178,9 @@ Dir.chdir(Rails.root) do
       else
         say "⚠️  SHAKAPACKER_NPM_PACKAGE set but file not found: #{absolute_path}", :yellow
         say "Falling back to npm registry...", :yellow
-        npm_version = Shakapacker::Utils::VersionSyntaxConverter.new.rubygem_to_npm(Shakapacker::VERSION)
         begin
           @package_json.manager.add!(["shakapacker@#{npm_version}"], type: :production)
+          shakapacker_dependency_value = npm_version
         rescue PackageJson::Error
           say "Shakapacker installation failed 😭 See above for details.", :red
           exit 1
@@ -187,10 +191,10 @@ Dir.chdir(Rails.root) do
       exit 1
     end
   else
-    npm_version = Shakapacker::Utils::VersionSyntaxConverter.new.rubygem_to_npm(Shakapacker::VERSION)
     say "Installing shakapacker@#{npm_version}"
     begin
       @package_json.manager.add!(["shakapacker@#{npm_version}"], type: :production)
+      shakapacker_dependency_value = npm_version
     rescue PackageJson::Error
       say "Shakapacker installation failed 😭 See above for details.", :red
       exit 1
@@ -201,8 +205,8 @@ Dir.chdir(Rails.root) do
     if pj["dependencies"] && pj["dependencies"]["shakapacker"]
       {
         "dependencies" => pj["dependencies"].merge({
-          # TODO: workaround for test suite - long-run need to actually account for diff pkg manager behaviour
-          "shakapacker" => pj["dependencies"]["shakapacker"].delete_prefix("^")
+          # Keep package.json aligned with the exact source/version this installer requested.
+          "shakapacker" => shakapacker_dependency_value || pj["dependencies"]["shakapacker"].delete_prefix("^")
         })
       }
     else
