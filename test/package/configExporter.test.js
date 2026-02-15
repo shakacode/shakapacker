@@ -455,5 +455,37 @@ describe("configExporter", () => {
         parseArguments(["--all-builds", "--save-dir=./configs"])
       }).not.toThrow()
     })
+
+    test("run rejects --all-builds with annotate and non-yaml format", async () => {
+      const { run } = require("../../package/configExporter/cli")
+      const mockConsoleError = jest
+        .spyOn(console, "error")
+        .mockImplementation(() => {})
+
+      const result = await run(["--all-builds", "--annotate", "--format=json"])
+
+      expect(result).toBe(1)
+      expect(mockConsoleError).toHaveBeenCalledWith(
+        expect.stringContaining("Annotation requires YAML format")
+      )
+
+      mockConsoleError.mockRestore()
+    })
+
+    test("run validates --all-builds save-dir path traversal", async () => {
+      const { run } = require("../../package/configExporter/cli")
+      const mockConsoleError = jest
+        .spyOn(console, "error")
+        .mockImplementation(() => {})
+
+      const result = await run(["--all-builds", "--save-dir=../outside"])
+
+      expect(result).toBe(1)
+      expect(mockConsoleError).toHaveBeenCalledWith(
+        expect.stringContaining("[SHAKAPACKER SECURITY] Path traversal attempt")
+      )
+
+      mockConsoleError.mockRestore()
+    })
   })
 })
