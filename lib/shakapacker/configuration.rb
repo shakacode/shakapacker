@@ -189,7 +189,7 @@ class Shakapacker::Configuration
   # @return [Pathname, nil] the absolute private output path or nil
   def private_output_path
     private_path = fetch(:private_output_path)
-    return nil unless private_path
+    return nil if private_path.blank?
     validate_output_paths!
     root_path.join(private_path)
   end
