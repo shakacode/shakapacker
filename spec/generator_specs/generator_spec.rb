@@ -39,6 +39,7 @@ describe "Generator" do
           bundle add shakapacker --path "#{GEM_ROOT}"
         ))
       end
+
     end
   end
 
@@ -381,6 +382,41 @@ describe "Generator" do
             expect(existing_files).to eq expected_files
           end
         end
+      end
+    end
+
+    context "when JAVASCRIPT_TRANSPILER=babel is set" do
+      before :all do
+        sh_opts = { fallback_manager: "npm" }
+        @babel_only_app_path = SPEC_PATH.join("temp-rails-app-babel-only")
+
+        sh_in_dir(sh_opts, SPEC_PATH, "cp -r '#{BASE_RAILS_APP_PATH}' '#{@babel_only_app_path}'")
+
+        Bundler.with_unbundled_env do
+          npm_package_env = ENV["SHAKAPACKER_NPM_PACKAGE"] ? "SHAKAPACKER_NPM_PACKAGE='#{ENV["SHAKAPACKER_NPM_PACKAGE"]}' " : ""
+          install_cmd = "#{npm_package_env}SHAKAPACKER_ASSETS_BUNDLER=webpack JAVASCRIPT_TRANSPILER=babel FORCE=true " \
+                        "bundle exec rake shakapacker:install"
+          sh_in_dir(sh_opts, @babel_only_app_path, install_cmd)
+        end
+      end
+
+      after :all do
+        Dir.chdir(SPEC_PATH)
+        FileUtils.rm_rf(@babel_only_app_path)
+      end
+
+      it "installs babel dependencies" do
+        package_json = PackageJson.read(@babel_only_app_path)
+        dependencies = package_json.fetch("dependencies", {}).keys
+
+        expect(dependencies).to include("@babel/core", "babel-loader")
+      end
+
+      it "does not install swc dependencies" do
+        package_json = PackageJson.read(@babel_only_app_path)
+        dependencies = package_json.fetch("dependencies", {}).keys
+
+        expect(dependencies).not_to include("@swc/core", "swc-loader")
       end
     end
   end
