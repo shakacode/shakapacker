@@ -111,6 +111,10 @@ if (existsSync(configPath)) {
 
 config.outputPath = resolve(config.public_root_path, config.public_output_path)
 
+if (config.private_output_path) {
+  config.privateOutputPath = resolve(config.private_output_path)
+}
+
 // Ensure that the publicPath includes our asset host so dynamic imports
 // (code-splitting chunks and static assets) load from the CDN instead of a relative path.
 const getPublicPath = (): string => {

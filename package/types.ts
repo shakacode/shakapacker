@@ -30,6 +30,7 @@ export interface Config {
   useContentHash: boolean
   compile: boolean
   outputPath: string
+  privateOutputPath?: string
   publicPath: string
   publicPathWithoutCDN: string
   manifestPath: string
