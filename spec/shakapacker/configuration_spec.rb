@@ -83,6 +83,30 @@ describe "Shakapacker::Configuration" do
       expect(config.private_output_path.to_s).to eq private_output_path
     end
 
+    it "#private_output_path returns nil for empty string" do
+      test_config = Tempfile.new(["shakapacker", ".yml"])
+      test_config.write(<<~YAML)
+        test:
+          source_path: app/javascript
+          source_entry_path: entrypoints
+          public_root_path: public
+          public_output_path: packs
+          private_output_path: ""
+      YAML
+      test_config.rewind
+
+      config = Shakapacker::Configuration.new(
+        root_path: ROOT_PATH,
+        config_path: Pathname.new(test_config.path),
+        env: "test"
+      )
+
+      expect(config.private_output_path).to be_nil
+
+      test_config.close
+      test_config.unlink
+    end
+
     it "validates private_output_path is different from public_output_path" do
       # Create a test config file with same paths
       test_config = Tempfile.new(["shakapacker", ".yml"])
