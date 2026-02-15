@@ -7,7 +7,13 @@ require "json"
 
 # Install Shakapacker
 
-force_option = ENV["FORCE"] ? { force: true } : {}
+force_option = if ENV["FORCE"]
+  { force: true }
+elsif ENV["SKIP"]
+  { skip: true }
+else
+  {}
+end
 
 # Initialize variables for use throughout the template
 # Using instance variable to avoid method definition issues in Rails templates
