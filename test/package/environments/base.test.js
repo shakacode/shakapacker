@@ -59,7 +59,7 @@ describe("Base config", () => {
     test("keeps entry value shapes stable for TypeScript narrowing", () => {
       expect(typeof baseConfig.entry.application).toBe("string")
       expect(Array.isArray(baseConfig.entry.multi_entry)).toBe(true)
-      expect(baseConfig.entry.multi_entry).toEqual(
+      expect(baseConfig.entry.multi_entry).toStrictEqual(
         expect.arrayContaining([
           expect.any(String),
           expect.any(String)
