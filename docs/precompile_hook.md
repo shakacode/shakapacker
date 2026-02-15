@@ -23,6 +23,52 @@ The precompile hook is especially useful when you need to run commands like:
 - **Development**: Runs before `bin/shakapacker --watch` or dev server starts
 - **Production**: Runs before `bundle exec rake assets:precompile`
 
+## Choosing an Approach
+
+Use `precompile_hook` when your setup should always run preparatory commands right
+before Shakapacker compiles. For React on Rails projects, this is often the
+simplest default.
+
+For projects with more custom startup needs (for example, additional build steps
+or strict process ordering in `bin/dev`), you can run those commands explicitly
+before launching long-running processes instead of using `precompile_hook`.
+
+### Comparison
+
+| Aspect | `precompile_hook` | Explicit setup in `bin/dev` |
+|--------|-------------------|-------------------------------|
+| Best for | Default/consistent pre-build tasks | Custom multi-step dev boot flows |
+| Runs when | Immediately before compilation starts | Wherever you place it in startup script |
+| Production integration | Automatic via `assets:precompile` | Requires explicit production wiring |
+| Process manager complexity | Lower | Higher (you own orchestration) |
+| Debugging | Centralized hook command | Fully explicit command-by-command flow |
+
+### `shakapacker_precompile` Interaction
+
+`shakapacker_precompile` controls whether Shakapacker compilation is included in
+`assets:precompile`, while `precompile_hook` controls whether a preparatory command
+runs before compilation.
+
+```yaml
+# Option A: Default behavior
+shakapacker_precompile: true
+precompile_hook: "bin/shakapacker-precompile-hook"
+
+# Option B: You manage compilation elsewhere
+shakapacker_precompile: false
+precompile_hook: "bin/shakapacker-precompile-hook"
+
+# Option C: Fully explicit startup flow (no hook)
+shakapacker_precompile: false
+# precompile_hook: not set
+```
+
+To temporarily skip only the hook, set:
+
+```bash
+SHAKAPACKER_SKIP_PRECOMPILE_HOOK=true
+```
+
 ## Configuration
 
 Add the `precompile_hook` option to your `config/shakapacker.yml`:
