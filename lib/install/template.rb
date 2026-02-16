@@ -7,7 +7,7 @@ require "json"
 
 # Install Shakapacker
 
-force_option = if ENV["FORCE"]
+conflict_option = if ENV["FORCE"]
   { force: true }
 elsif ENV["SKIP"]
   { skip: true }
@@ -40,7 +40,7 @@ else
 end
 
 # Copy config file
-copy_file "#{install_dir}/config/shakapacker.yml", "config/shakapacker.yml", force_option
+copy_file "#{install_dir}/config/shakapacker.yml", "config/shakapacker.yml", conflict_option
 
 # Update config to match the selected transpiler
 if @transpiler_to_install != "swc"
@@ -61,7 +61,7 @@ source_config = "#{install_dir}/config/#{assets_bundler}/#{config_file}"
 dest_config = "config/#{assets_bundler}/#{config_file}"
 
 empty_directory "config/#{assets_bundler}"
-copy_file source_config, dest_config, force_option
+copy_file source_config, dest_config, conflict_option
 
 if @use_typescript
   say "   ✨ Using TypeScript config for enhanced type safety", :green
