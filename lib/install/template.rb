@@ -7,9 +7,13 @@ require "json"
 
 # Install Shakapacker
 
-conflict_option = if ENV["FORCE"]
+def truthy_env?(name)
+  %w[true 1 yes].include?(ENV[name].to_s.downcase)
+end
+
+conflict_option = if truthy_env?("FORCE")
   { force: true }
-elsif ENV["SKIP"]
+elsif truthy_env?("SKIP")
   { skip: true }
 else
   {}

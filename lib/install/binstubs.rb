@@ -1,6 +1,6 @@
-conflict_option = if ENV["FORCE"]
+conflict_option = if truthy_env?("FORCE")
   { force: true }
-elsif ENV["SKIP"]
+elsif truthy_env?("SKIP")
   { skip: true }
 else
   {}
