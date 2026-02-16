@@ -4070,7 +4070,7 @@ setprototypeof@1.2.0:
   integrity sha512-E5LDX7Wrp85Kil5bhZv46j8jOeboKq5JMmYM3gVGdGH8xFpPWXUMsNrlODCrkoxMEeNi/XZIwuRvY4XNwYMJpw==
 
 "shakapacker@file:.yalc/shakapacker":
-  version "9.5.0"
+  version "9.3.0-beta.1"
   resolved "file:.yalc/shakapacker"
   dependencies:
     js-yaml "^4.1.0"
