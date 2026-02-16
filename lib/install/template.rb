@@ -36,11 +36,10 @@ end
 # Copy config file
 copy_file "#{install_dir}/config/shakapacker.yml", "config/shakapacker.yml", force_option
 
-# Update config if USE_BABEL_PACKAGES is set to ensure babel is used at runtime
-if @transpiler_to_install == "babel" && !ENV["JAVASCRIPT_TRANSPILER"]
-  # When USE_BABEL_PACKAGES is set, update the config to use babel
-  gsub_file "config/shakapacker.yml", "javascript_transpiler: 'swc'", "javascript_transpiler: 'babel'"
-  say "   📝 Updated config/shakapacker.yml to use Babel transpiler", :green
+# Update config to match the selected transpiler
+if @transpiler_to_install != "swc"
+  gsub_file "config/shakapacker.yml", 'javascript_transpiler: "swc"', "javascript_transpiler: \"#{@transpiler_to_install}\""
+  say "   📝 Updated config/shakapacker.yml to use #{@transpiler_to_install} transpiler", :green
 end
 
 # Detect TypeScript usage

@@ -113,7 +113,7 @@ describe "Generator" do
           expected_content = read(path_in_the_gem(config_file_relative_path))
 
           # When USE_BABEL_PACKAGES=true, the config should be updated to use babel
-          expected_content_with_babel = expected_content.gsub("javascript_transpiler: 'swc'", "javascript_transpiler: 'babel'")
+          expected_content_with_babel = expected_content.gsub('javascript_transpiler: "swc"', 'javascript_transpiler: "babel"')
 
           expect(actual_content).to eq expected_content_with_babel
         end
@@ -417,6 +417,13 @@ describe "Generator" do
         dependencies = package_json.fetch("dependencies", {}).keys
 
         expect(dependencies).not_to include("@swc/core", "swc-loader")
+      end
+
+      it "updates shakapacker.yml to use babel transpiler" do
+        config_content = File.read(File.join(@babel_only_app_path, "config/shakapacker.yml"))
+
+        expect(config_content).to include('javascript_transpiler: "babel"')
+        expect(config_content).not_to include('javascript_transpiler: "swc"')
       end
     end
   end
