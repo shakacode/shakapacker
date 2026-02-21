@@ -161,7 +161,7 @@ describe "WebpackRunner" do
           system("true")
         end
 
-        output = capture_stdout { klass.run([]) }
+        output = capture_stderr { klass.run([]) }
 
         # Time format can be either "X.XXs" or "M:SS.SSs" for the display, always "X.XXs" in parentheses
         expect(output).to match(/\[Shakapacker\] Completed webpack build in (\d+:\d+\.\d+s|\d+\.\d+s) \(\d+\.\d+s\)/)
@@ -182,7 +182,7 @@ describe "WebpackRunner" do
           system("true")
         end
 
-        output = capture_stdout { klass.run(["--watch"]) }
+        output = capture_stderr { klass.run(["--watch"]) }
 
         expect(output).not_to match(/Completed webpack build/)
       end
@@ -202,7 +202,7 @@ describe "WebpackRunner" do
           system("true")
         end
 
-        output = capture_stdout { klass.run([]) }
+        output = capture_stderr { klass.run([]) }
 
         # Should show format like "3.29s (3.29s)" without minutes
         expect(output).to match(/\[Shakapacker\] Completed webpack build in \d+\.\d+s \(\d+\.\d+s\)/)
@@ -211,15 +211,73 @@ describe "WebpackRunner" do
     end
   end
 
+  describe "stdout/stderr separation for JSON output" do
+    it "does not write [Shakapacker] log messages to stdout" do
+      Dir.chdir(test_app_path) do
+        klass = Shakapacker::WebpackRunner
+        instance = klass.new(["--json"])
+
+        allow(klass).to receive(:new).and_return(instance)
+        allow(Shakapacker::Utils::Manager).to receive(:error_unless_package_manager_is_obvious!)
+
+        allow(instance).to receive(:system) do |*args|
+          system("true")
+          true
+        end
+
+        stdout_output, stderr_output = capture_stdout_and_stderr { klass.run(["--json"]) }
+
+        # Stdout should NOT contain [Shakapacker] log messages
+        expect(stdout_output).not_to match(/\[Shakapacker\]/)
+
+        # Stderr SHOULD contain [Shakapacker] log messages
+        expect(stderr_output).to match(/\[Shakapacker\]/)
+      end
+    end
+
+    it "keeps stdout clean for valid JSON output when using --json flag" do
+      Dir.chdir(test_app_path) do
+        klass = Shakapacker::WebpackRunner
+        instance = klass.new(["--profile", "--json"])
+
+        allow(klass).to receive(:new).and_return(instance)
+        allow(Shakapacker::Utils::Manager).to receive(:error_unless_package_manager_is_obvious!)
+
+        allow(instance).to receive(:system) do |*args|
+          system("true")
+          true
+        end
+
+        stdout_output, = capture_stdout_and_stderr { klass.run(["--profile", "--json"]) }
+
+        # Stdout should be empty (no log messages polluting it)
+        # The actual JSON would come from webpack itself, not shakapacker
+        expect(stdout_output).to be_empty
+      end
+    end
+  end
+
   private
 
-    def capture_stdout
+    def capture_stdout_and_stderr
       old_stdout = $stdout
+      old_stderr = $stderr
       $stdout = StringIO.new
+      $stderr = StringIO.new
       yield
-      $stdout.string
+      [$stdout.string, $stderr.string]
     ensure
       $stdout = old_stdout
+      $stderr = old_stderr
+    end
+
+    def capture_stderr
+      old_stderr = $stderr
+      $stderr = StringIO.new
+      yield
+      $stderr.string
+    ensure
+      $stderr = old_stderr
     end
 
     def verify_command(cmd, argv: [])

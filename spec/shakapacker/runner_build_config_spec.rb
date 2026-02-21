@@ -52,7 +52,7 @@ describe "Runner with build configs" do
           system("true")
         end
 
-        output = capture_stdout do
+        output = capture_stderr do
           klass.run(["--build", "prod"])
         end
 
@@ -89,7 +89,7 @@ describe "Runner with build configs" do
         allow(dev_server_klass).to receive(:new).and_return(dev_server_instance)
         allow(dev_server_instance).to receive(:run).and_return(nil)
 
-        output = capture_stdout do
+        output = capture_stderr do
           klass.run(["--build", "dev-hmr"])
         end
 
@@ -122,7 +122,7 @@ describe "Runner with build configs" do
           system("true")
         end
 
-        output = capture_stdout do
+        output = capture_stderr do
           klass.run(["nonexistent"])
         end
 
@@ -144,7 +144,7 @@ describe "Runner with build configs" do
           system("true")
         end
 
-        output = capture_stdout do
+        output = capture_stderr do
           klass.run([])
         end
 
@@ -210,7 +210,7 @@ describe "Runner with build configs" do
         allow(klass).to receive(:new).and_return(instance)
         allow(instance).to receive(:run).and_return(nil)
 
-        output = capture_stdout do
+        output = capture_stderr do
           klass.run(["--build", "dev"])
         end
 
@@ -276,7 +276,7 @@ describe "Runner with build configs" do
         allow(dev_server_klass).to receive(:new).and_return(dev_server_instance)
         allow(dev_server_instance).to receive(:run).and_return(nil)
 
-        output = capture_stdout do
+        output = capture_stderr do
           klass.run(["--build", "dev-hmr"])
         end
 
@@ -288,15 +288,6 @@ describe "Runner with build configs" do
   end
 
   private
-
-    def capture_stdout
-      old_stdout = $stdout
-      $stdout = StringIO.new
-      yield
-      $stdout.string
-    ensure
-      $stdout = old_stdout
-    end
 
     def capture_stderr
       old_stderr = $stderr
