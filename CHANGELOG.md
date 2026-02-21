@@ -11,6 +11,23 @@
 
 Changes since the last non-beta release.
 
+### Added
+
+- **Export bundler utility functions for Webpack/Rspack compatibility**. [PR #880](https://github.com/shakacode/shakapacker/pull/880) by [justin808](https://github.com/justin808). New utility functions that make it easier to write bundler-agnostic configuration code: `isRspack`, `isWebpack`, `getBundler()`, `getCssExtractPlugin()`, `getCssExtractPluginLoader()`, `getDefinePlugin()`, `getEnvironmentPlugin()`, and `getProvidePlugin()`. Users no longer need to write conditional logic to handle differences between Webpack and Rspack.
+
+  ```javascript
+  // Before: manual conditional logic
+  const { config } = require("shakapacker")
+  const CssPlugin =
+    config.assets_bundler === "rspack"
+      ? require("@rspack/core").CssExtractRspackPlugin
+      : require("mini-css-extract-plugin")
+
+  // After: use bundler utilities
+  const { getCssExtractPlugin } = require("shakapacker")
+  const CssPlugin = getCssExtractPlugin()
+  ```
+
 ### Changed
 
 - **BREAKING: sass-loader now defaults to modern Sass API**. [PR #879](https://github.com/shakacode/shakapacker/pull/879) by [justin808](https://github.com/justin808). The sass-loader configuration now uses `api: "modern"` instead of the deprecated legacy API. This improves compatibility with plugins like sass-resources-loader that require the modern API. If you experience issues after upgrading, you can revert to the legacy API by customizing your webpack config:
