@@ -317,6 +317,8 @@ At its core, Shakapacker's essential function is to:
 
 **📖 For a comprehensive guide to all configuration options, see the [Configuration Guide](./docs/configuration.md)**
 
+**📦 For Node package exports and config object docs, see the [Node Package API Guide](./docs/node_package_api.md)**
+
 This includes documentation for:
 
 - All `config/shakapacker.yml` options (including `assets_bundler_config_path`)
