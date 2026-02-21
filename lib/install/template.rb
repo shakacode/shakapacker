@@ -19,25 +19,27 @@ install_dir = File.expand_path(File.dirname(__FILE__))
 # - Otherwise install only the specified transpiler
 if ENV["USE_BABEL_PACKAGES"] == "true" || ENV["USE_BABEL_PACKAGES"] == "1"
   @transpiler_to_install = "babel"
+  @install_swc_compat_packages = true
   say "📦 Installing Babel packages (USE_BABEL_PACKAGES is set)", :yellow
   say "✨ Also installing SWC packages for default config compatibility", :green
 elsif ENV["JAVASCRIPT_TRANSPILER"]
   @transpiler_to_install = ENV["JAVASCRIPT_TRANSPILER"]
+  @install_swc_compat_packages = false
   say "📦 Installing #{@transpiler_to_install} packages", :blue
 else
   # Default to swc (matches the default in shakapacker.yml)
   @transpiler_to_install = "swc"
+  @install_swc_compat_packages = false
   say "✨ Installing SWC packages (20x faster than Babel)", :green
 end
 
 # Copy config file
 copy_file "#{install_dir}/config/shakapacker.yml", "config/shakapacker.yml", force_option
 
-# Update config if USE_BABEL_PACKAGES is set to ensure babel is used at runtime
-if @transpiler_to_install == "babel" && !ENV["JAVASCRIPT_TRANSPILER"]
-  # When USE_BABEL_PACKAGES is set, update the config to use babel
-  gsub_file "config/shakapacker.yml", "javascript_transpiler: 'swc'", "javascript_transpiler: 'babel'"
-  say "   📝 Updated config/shakapacker.yml to use Babel transpiler", :green
+# Update config to match the selected transpiler
+if @transpiler_to_install != "swc"
+  gsub_file "config/shakapacker.yml", 'javascript_transpiler: "swc"', "javascript_transpiler: \"#{@transpiler_to_install}\""
+  say "   📝 Updated config/shakapacker.yml to use #{@transpiler_to_install} transpiler", :green
 end
 
 # Detect TypeScript usage
@@ -223,22 +225,21 @@ Dir.chdir(Rails.root) do
   # Inline the logic here since methods can't be called before they're defined in Rails templates
 
   # Install transpiler-specific dependencies
-  # When USE_BABEL_PACKAGES is set, install both babel AND swc
-  # This ensures backward compatibility while supporting the default config
   if @transpiler_to_install == "babel"
     # Install babel packages
     babel_deps = PackageJson.read(install_dir).fetch("babel")
     peers = peers.merge(babel_deps)
 
-    # Also install SWC since that's what the default config uses
-    # This ensures the runtime works regardless of config
-    swc_deps = PackageJson.read(install_dir).fetch("swc")
-    peers = peers.merge(swc_deps)
+    # Also install SWC only when USE_BABEL_PACKAGES requested compatibility mode.
+    if @install_swc_compat_packages
+      swc_deps = PackageJson.read(install_dir).fetch("swc")
+      peers = peers.merge(swc_deps)
 
-    say "ℹ️  Installing both Babel and SWC packages for compatibility:", :blue
-    say "   - Babel packages are installed as requested via USE_BABEL_PACKAGES", :blue
-    say "   - SWC packages are also installed to ensure the default config works", :blue
-    say "   - Your actual transpiler will be determined by your shakapacker.yml configuration", :blue
+      say "ℹ️  Installing both Babel and SWC packages for compatibility:", :blue
+      say "   - Babel packages are installed as requested via USE_BABEL_PACKAGES", :blue
+      say "   - SWC packages are also installed to ensure the default config works", :blue
+      say "   - Your actual transpiler will be determined by your shakapacker.yml configuration", :blue
+    end
   elsif @transpiler_to_install == "swc"
     swc_deps = PackageJson.read(install_dir).fetch("swc")
     peers = peers.merge(swc_deps)
