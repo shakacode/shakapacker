@@ -5,9 +5,9 @@ RSpec.describe "Env" do
     expect(Shakapacker.env).to eq Rails.env
   end
 
-  it "uses development env without config" do
+  it "uses production env when config for current env is missing" do
     with_rails_env("foo") do
-      expect(Shakapacker.env).to eq "development"
+      expect(Shakapacker.env).to eq "production"
     end
   end
 

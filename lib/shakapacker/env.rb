@@ -1,4 +1,6 @@
 class Shakapacker::Env
+  FALLBACK_ENV = "production".freeze
+
   delegate :config_path, :logger, to: :@instance
 
   def self.inquire(instance)
@@ -11,7 +13,7 @@ class Shakapacker::Env
 
   def inquire
     fallback_env_warning if config_path.exist? && !current
-    current || Shakapacker::DEFAULT_ENV.inquiry
+    current || FALLBACK_ENV.inquiry
   end
 
   private
@@ -20,7 +22,7 @@ class Shakapacker::Env
     end
 
     def fallback_env_warning
-      logger.info "RAILS_ENV=#{Rails.env} environment is not defined in #{config_path}, falling back to #{Shakapacker::DEFAULT_ENV} environment"
+      logger.info "RAILS_ENV=#{Rails.env} environment is not defined in #{config_path}, falling back to #{FALLBACK_ENV} environment"
     end
 
     def available_environments
