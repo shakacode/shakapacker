@@ -1,10 +1,9 @@
-import { existsSync, mkdirSync, writeFileSync } from "fs"
-import { dirname } from "path"
 import type { Config } from "../types"
 
 import { getFilteredEnv } from "./envFilter"
 
 const { requireOrError } = require("../utils/requireOrError")
+const ensureManifestExists = require("../utils/ensureManifestExists").default
 // TODO: Change to `const { WebpackAssetsManifest }` when dropping 'webpack-assets-manifest < 6.0.0' (Node >=20.10.0) support
 const WebpackAssetsManifest = requireOrError("webpack-assets-manifest")
 const webpack = requireOrError("webpack")
@@ -12,20 +11,7 @@ const config = require("../config") as Config
 const { isProduction } = require("../env")
 const { moduleExists } = require("../utils/helpers")
 
-const ensureManifestExists = (manifestPath: string): void => {
-  if (!existsSync(manifestPath)) {
-    mkdirSync(dirname(manifestPath), { recursive: true })
-    try {
-      writeFileSync(manifestPath, "{}", { flag: "wx" })
-    } catch (err) {
-      if ((err as NodeJS.ErrnoException).code !== "EEXIST") throw err
-    }
-  }
-}
-
 const getPlugins = (): unknown[] => {
-  // webpack-assets-manifest v6 crashes with ENOENT when merge: true
-  // and the manifest file doesn't exist yet (clean builds, Docker, CI).
   ensureManifestExists(config.manifestPath)
 
   // TODO: Remove WebpackAssetsManifestConstructor workaround when dropping 'webpack-assets-manifest < 6.0.0' (Node >=20.10.0) support
