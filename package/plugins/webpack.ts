@@ -1,6 +1,8 @@
 import type { Config } from "../types"
 import { getFilteredEnv } from "./envFilter"
 
+const fs = require("fs")
+const path = require("path")
 const { requireOrError } = require("../utils/requireOrError")
 // TODO: Change to `const { WebpackAssetsManifest }` when dropping 'webpack-assets-manifest < 6.0.0' (Node >=20.10.0) support
 const WebpackAssetsManifest = requireOrError("webpack-assets-manifest")
@@ -9,12 +11,24 @@ const config = require("../config") as Config
 const { isProduction } = require("../env")
 const { moduleExists } = require("../utils/helpers")
 
+const ensureManifestExists = (manifestPath: string): void => {
+  if (!fs.existsSync(manifestPath)) {
+    fs.mkdirSync(path.dirname(manifestPath), { recursive: true })
+    fs.writeFileSync(manifestPath, "{}")
+  }
+}
+
 const getPlugins = (): unknown[] => {
   // TODO: Remove WebpackAssetsManifestConstructor workaround when dropping 'webpack-assets-manifest < 6.0.0' (Node >=20.10.0) support
   const WebpackAssetsManifestConstructor =
     "WebpackAssetsManifest" in WebpackAssetsManifest
       ? WebpackAssetsManifest.WebpackAssetsManifest
       : WebpackAssetsManifest
+
+  // webpack-assets-manifest v6 crashes with ENOENT when merge: true
+  // and the manifest file doesn't exist yet (clean builds, Docker, CI).
+  ensureManifestExists(config.manifestPath)
+
   const plugins = [
     // SECURITY: Only expose allowlisted environment variables to prevent secrets leaking
     // into client-side bundles. See envFilter.ts for the allowlist configuration.
