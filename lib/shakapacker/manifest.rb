@@ -156,7 +156,7 @@ class Shakapacker::Manifest
 
     def handle_missing_entry(name, pack_type)
       if data.empty?
-        raise Shakapacker::Manifest::MissingEntryError, manifest_empty_error(config.manifest_path.exist?)
+        raise Shakapacker::Manifest::MissingEntryError, manifest_unavailable_error
       end
 
       raise Shakapacker::Manifest::MissingEntryError, missing_file_from_manifest_error(full_pack_name(name, pack_type[:type]))
@@ -164,9 +164,11 @@ class Shakapacker::Manifest
 
     def load
       if config.manifest_path.exist?
+        @manifest_existed = true
         contents = config.manifest_path.read
         contents.strip.empty? ? {} : JSON.parse(contents)
       else
+        @manifest_existed = false
         {}
       end
     end
@@ -204,10 +206,10 @@ Your manifest contains:
       MSG
     end
 
-    def manifest_empty_error(manifest_exists)
+    def manifest_unavailable_error
       bundler_name = config.assets_bundler
 
-      if manifest_exists
+      if @manifest_existed
         <<-MSG
 Shakapacker manifest is empty. #{bundler_name} is likely still compiling.
 
