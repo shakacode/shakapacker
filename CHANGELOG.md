@@ -19,6 +19,10 @@ Changes since the last non-beta release.
 
 - **Added `SKIP=true` installer mode to preserve existing files**. [PR #893](https://github.com/shakacode/shakapacker/pull/893) by [justin808](https://github.com/justin808). Running `rails shakapacker:install SKIP=true` now skips conflicting files instead of overwriting them. This is useful for CI/CD pipelines and automated setups where you want to install only missing files without touching existing configuration.
 
+### Fixed
+
+- **Require explicit truthy values for `SKIP` and `FORCE` installer env vars**. [PR #926](https://github.com/shakacode/shakapacker/pull/926) by [justin808](https://github.com/justin808). Previously, any set value (including `"false"` or `"0"`) would activate skip/force mode. Now only explicit truthy values (`true`, `1`, `yes`, case-insensitive) are recognized.
+
 ### Changed
 
 - **BREAKING: sass-loader now defaults to modern Sass API**. [PR #879](https://github.com/shakacode/shakapacker/pull/879) by [justin808](https://github.com/justin808). The sass-loader configuration now uses `api: "modern"` instead of the deprecated legacy API. This improves compatibility with plugins like sass-resources-loader that require the modern API. If you experience issues after upgrading, you can revert to the legacy API by customizing your webpack config:
