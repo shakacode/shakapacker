@@ -1,4 +1,4 @@
-import { existsSync, mkdirSync, writeFileSync } from "fs"
+import { mkdirSync, writeFileSync } from "fs"
 import { dirname } from "path"
 
 // Note: This is only needed for webpack-assets-manifest (used in webpack.ts)
@@ -6,13 +6,11 @@ import { dirname } from "path"
 // exist yet. rspack.ts uses rspack-manifest-plugin without merge: true,
 // so it is not affected.
 const ensureManifestExists = (manifestPath: string): void => {
-  if (!existsSync(manifestPath)) {
-    mkdirSync(dirname(manifestPath), { recursive: true })
-    try {
-      writeFileSync(manifestPath, "{}", { flag: "wx" })
-    } catch (err) {
-      if ((err as NodeJS.ErrnoException).code !== "EEXIST") throw err
-    }
+  mkdirSync(dirname(manifestPath), { recursive: true })
+  try {
+    writeFileSync(manifestPath, "{}", { flag: "wx" })
+  } catch (err) {
+    if ((err as NodeJS.ErrnoException).code !== "EEXIST") throw err
   }
 }
 
