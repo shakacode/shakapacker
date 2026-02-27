@@ -52,7 +52,7 @@ describe "Runner with build configs" do
           system("true")
         end
 
-        output = capture_stderr do
+        output = capture_stdout do
           klass.run(["--build", "prod"])
         end
 
@@ -89,7 +89,7 @@ describe "Runner with build configs" do
         allow(dev_server_klass).to receive(:new).and_return(dev_server_instance)
         allow(dev_server_instance).to receive(:run).and_return(nil)
 
-        output = capture_stderr do
+        output = capture_stdout do
           klass.run(["--build", "dev-hmr"])
         end
 
@@ -122,7 +122,7 @@ describe "Runner with build configs" do
           system("true")
         end
 
-        output = capture_stderr do
+        output = capture_stdout do
           klass.run(["nonexistent"])
         end
 
@@ -144,7 +144,7 @@ describe "Runner with build configs" do
           system("true")
         end
 
-        output = capture_stderr do
+        output = capture_stdout do
           klass.run([])
         end
 
@@ -210,7 +210,7 @@ describe "Runner with build configs" do
         allow(klass).to receive(:new).and_return(instance)
         allow(instance).to receive(:run).and_return(nil)
 
-        output = capture_stderr do
+        output = capture_stdout do
           klass.run(["--build", "dev"])
         end
 
@@ -241,7 +241,7 @@ describe "Runner with build configs" do
         klass = Shakapacker::DevServerRunner
 
         expect do
-          capture_stderr do
+          capture_stdout do
             klass.run(["--build", "prod"])
           end
         end.to raise_error(SystemExit)
@@ -276,7 +276,7 @@ describe "Runner with build configs" do
         allow(dev_server_klass).to receive(:new).and_return(dev_server_instance)
         allow(dev_server_instance).to receive(:run).and_return(nil)
 
-        output = capture_stderr do
+        output = capture_stdout do
           klass.run(["--build", "dev-hmr"])
         end
 
@@ -289,12 +289,12 @@ describe "Runner with build configs" do
 
   private
 
-    def capture_stderr
-      old_stderr = $stderr
-      $stderr = StringIO.new
+    def capture_stdout
+      old_stdout = $stdout
+      $stdout = StringIO.new
       yield
-      $stderr.string
+      $stdout.string
     ensure
-      $stderr = old_stderr
+      $stdout = old_stdout
     end
 end
