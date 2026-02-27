@@ -235,6 +235,26 @@ describe "WebpackRunner" do
       end
     end
 
+    it "does not write [Shakapacker] log messages to stdout when using -j short flag" do
+      Dir.chdir(test_app_path) do
+        klass = Shakapacker::WebpackRunner
+        instance = klass.new(["-j"])
+
+        allow(klass).to receive(:new).and_return(instance)
+        allow(Shakapacker::Utils::Manager).to receive(:error_unless_package_manager_is_obvious!)
+
+        allow(instance).to receive(:system) do |*args|
+          system("true")
+          true
+        end
+
+        stdout_output, stderr_output = capture_stdout_and_stderr { klass.run(["-j"]) }
+
+        expect(stdout_output).not_to match(/\[Shakapacker\]/)
+        expect(stderr_output).to match(/\[Shakapacker\]/)
+      end
+    end
+
     it "keeps stdout clean for valid JSON output when using --json flag" do
       Dir.chdir(test_app_path) do
         klass = Shakapacker::WebpackRunner

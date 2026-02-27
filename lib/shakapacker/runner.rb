@@ -25,8 +25,12 @@ module Shakapacker
       "info",
       "i"
     ].freeze
+    def self.json_output?(argv)
+      argv.include?("--json") || argv.include?("-j")
+    end
+
     def self.log_output_for(argv)
-      argv.include?("--json") ? $stderr : $stdout
+      json_output?(argv) ? $stderr : $stdout
     end
 
     def self.run(argv)
@@ -221,7 +225,7 @@ module Shakapacker
       @argv = argv
       @build_config = build_config
       @bundler_override = bundler_override
-      @json_output = argv.include?("--json")
+      @json_output = self.class.json_output?(argv)
 
       @app_path           = File.expand_path(".", Dir.pwd)
       @shakapacker_config = ENV["SHAKAPACKER_CONFIG"] || File.join(@app_path, "config/shakapacker.yml")
