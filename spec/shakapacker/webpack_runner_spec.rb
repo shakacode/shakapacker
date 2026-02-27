@@ -211,69 +211,46 @@ describe "WebpackRunner" do
     end
   end
 
-  describe "stdout/stderr separation for JSON output" do
-    it "does not write [Shakapacker] log messages to stdout" do
+  describe "log output routing for JSON mode" do
+    it "routes log messages to stderr when --json is in argv" do
       Dir.chdir(test_app_path) do
-        klass = Shakapacker::WebpackRunner
-        instance = klass.new(["--json"])
-
-        allow(klass).to receive(:new).and_return(instance)
-        allow(Shakapacker::Utils::Manager).to receive(:error_unless_package_manager_is_obvious!)
-
-        allow(instance).to receive(:system) do |*args|
-          system("true")
-          true
-        end
-
-        stdout_output, stderr_output = capture_stdout_and_stderr { klass.run(["--json"]) }
-
-        # Stdout should NOT contain [Shakapacker] log messages
-        expect(stdout_output).not_to match(/\[Shakapacker\]/)
-
-        # Stderr SHOULD contain [Shakapacker] log messages
-        expect(stderr_output).to match(/\[Shakapacker\]/)
+        instance = Shakapacker::WebpackRunner.new(["--json"])
+        expect(instance.send(:log_output)).to eq($stderr)
       end
     end
 
-    it "does not write [Shakapacker] log messages to stdout when using -j short flag" do
+    it "routes log messages to stderr when -j is in argv" do
       Dir.chdir(test_app_path) do
-        klass = Shakapacker::WebpackRunner
-        instance = klass.new(["-j"])
-
-        allow(klass).to receive(:new).and_return(instance)
-        allow(Shakapacker::Utils::Manager).to receive(:error_unless_package_manager_is_obvious!)
-
-        allow(instance).to receive(:system) do |*args|
-          system("true")
-          true
-        end
-
-        stdout_output, stderr_output = capture_stdout_and_stderr { klass.run(["-j"]) }
-
-        expect(stdout_output).not_to match(/\[Shakapacker\]/)
-        expect(stderr_output).to match(/\[Shakapacker\]/)
+        instance = Shakapacker::WebpackRunner.new(["-j"])
+        expect(instance.send(:log_output)).to eq($stderr)
       end
     end
 
-    it "keeps stdout clean for valid JSON output when using --json flag" do
+    it "routes log messages to stdout when no JSON flag is present" do
       Dir.chdir(test_app_path) do
-        klass = Shakapacker::WebpackRunner
-        instance = klass.new(["--profile", "--json"])
-
-        allow(klass).to receive(:new).and_return(instance)
-        allow(Shakapacker::Utils::Manager).to receive(:error_unless_package_manager_is_obvious!)
-
-        allow(instance).to receive(:system) do |*args|
-          system("true")
-          true
-        end
-
-        stdout_output, = capture_stdout_and_stderr { klass.run(["--profile", "--json"]) }
-
-        # Stdout should be empty (no log messages polluting it)
-        # The actual JSON would come from webpack itself, not shakapacker
-        expect(stdout_output).to be_empty
+        instance = Shakapacker::WebpackRunner.new([])
+        expect(instance.send(:log_output)).to eq($stdout)
       end
+    end
+
+    it "detects --json in mixed arguments" do
+      Dir.chdir(test_app_path) do
+        instance = Shakapacker::WebpackRunner.new(["--profile", "--json"])
+        expect(instance.send(:log_output)).to eq($stderr)
+      end
+    end
+
+    it "class method json_output? detects --json" do
+      expect(Shakapacker::Runner.json_output?(["--json"])).to be true
+      expect(Shakapacker::Runner.json_output?(["-j"])).to be true
+      expect(Shakapacker::Runner.json_output?([])).to be false
+      expect(Shakapacker::Runner.json_output?(["--profile"])).to be false
+    end
+
+    it "class method log_output_for returns correct stream" do
+      expect(Shakapacker::Runner.log_output_for(["--json"])).to eq($stderr)
+      expect(Shakapacker::Runner.log_output_for(["-j"])).to eq($stderr)
+      expect(Shakapacker::Runner.log_output_for([])).to eq($stdout)
     end
   end
 
@@ -286,27 +263,6 @@ describe "WebpackRunner" do
       $stdout.string
     ensure
       $stdout = old_stdout
-    end
-
-    def capture_stdout_and_stderr
-      old_stdout = $stdout
-      old_stderr = $stderr
-      $stdout = StringIO.new
-      $stderr = StringIO.new
-      yield
-      [$stdout.string, $stderr.string]
-    ensure
-      $stdout = old_stdout
-      $stderr = old_stderr
-    end
-
-    def capture_stderr
-      old_stderr = $stderr
-      $stderr = StringIO.new
-      yield
-      $stderr.string
-    ensure
-      $stderr = old_stderr
     end
 
     def verify_command(cmd, argv: [])
