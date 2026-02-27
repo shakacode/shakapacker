@@ -35,13 +35,13 @@ before launching long-running processes instead of using `precompile_hook`.
 
 ### Comparison
 
-| Aspect | `precompile_hook` | Explicit setup in `bin/dev` |
-|--------|-------------------|-------------------------------|
-| Best for | Default/consistent pre-build tasks | Custom multi-step dev boot flows |
-| Runs when | Immediately before compilation starts | Wherever you place it in startup script |
-| Production integration | Automatic via `assets:precompile` | Requires explicit production wiring |
-| Process manager complexity | Lower | Higher (you own orchestration) |
-| Debugging | Centralized hook command | Fully explicit command-by-command flow |
+| Aspect                     | `precompile_hook`                     | Explicit setup in `bin/dev`             |
+| -------------------------- | ------------------------------------- | --------------------------------------- |
+| Best for                   | Default/consistent pre-build tasks    | Custom multi-step dev boot flows        |
+| Runs when                  | Immediately before compilation starts | Wherever you place it in startup script |
+| Production integration     | Automatic via `assets:precompile`     | Requires explicit production wiring     |
+| Process manager complexity | Lower                                 | Higher (you own orchestration)          |
+| Debugging                  | Centralized hook command              | Fully explicit command-by-command flow  |
 
 ### `shakapacker_precompile` Interaction
 
