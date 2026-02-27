@@ -33,6 +33,10 @@ class Shakapacker::Manifest
   # Raised when an asset cannot be found in the manifest
   class MissingEntryError < StandardError; end
 
+  # Holds the result of loading the manifest file, keeping data and
+  # file-existence state in a single atomic value.
+  LoadResult = Struct.new(:data, :manifest_existed, keyword_init: true)
+
   delegate :config, :compiler, :dev_server, to: :@instance
 
   # Creates a new manifest instance
@@ -50,7 +54,7 @@ class Shakapacker::Manifest
   #
   # @return [Hash] the loaded manifest data
   def refresh
-    @data = load
+    @load_result = load
   end
 
   # Looks up an entry point with all its chunks (split code)
@@ -132,12 +136,20 @@ class Shakapacker::Manifest
       Shakapacker.logger.tagged("Shakapacker") { compiler.compile }
     end
 
-    def data
+    def load_result
       if config.cache_manifest?
-        @data ||= load
+        @load_result ||= load
       else
         refresh
       end
+    end
+
+    def data
+      load_result.data
+    end
+
+    def manifest_existed?
+      load_result.manifest_existed
     end
 
     def find(name)
@@ -164,12 +176,11 @@ class Shakapacker::Manifest
 
     def load
       if config.manifest_path.exist?
-        @manifest_existed = true
         contents = config.manifest_path.read
-        contents.strip.empty? ? {} : JSON.parse(contents)
+        parsed = contents.strip.empty? ? {} : JSON.parse(contents)
+        LoadResult.new(data: parsed, manifest_existed: true)
       else
-        @manifest_existed = false
-        {}
+        LoadResult.new(data: {}, manifest_existed: false)
       end
     end
 
@@ -202,14 +213,14 @@ Shakapacker can't find #{bundle_name} in #{config.manifest_path}. Possible cause
 7. Ensure the 'assets_bundler' in config/shakapacker.yml is set correctly (currently: #{bundler_name}).
 
 Your manifest contains:
-#{JSON.pretty_generate(@data)}
+#{JSON.pretty_generate(data)}
       MSG
     end
 
     def manifest_unavailable_error
       bundler_name = config.assets_bundler
 
-      if @manifest_existed
+      if manifest_existed?
         <<-MSG
 Shakapacker manifest is empty. #{bundler_name} is likely still compiling.
 

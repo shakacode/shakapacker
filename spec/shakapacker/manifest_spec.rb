@@ -4,66 +4,57 @@ describe "Shakapacker::Manifest" do
   let(:manifest_path) { File.expand_path File.join(File.dirname(__FILE__), "./test_app/public/packs", "manifest.json").to_s }
 
   context "when manifest file exists but is empty" do
+    let(:manifest_file) { Shakapacker.config.manifest_path.to_s }
+    let(:original_contents) { File.read(manifest_file) }
+
     before do
       allow(Shakapacker.config).to receive(:compile?).and_return(false)
+      original_contents # capture before overwriting
+      File.write(manifest_file, "")
+      Shakapacker.manifest.refresh
+    end
+
+    after do
+      File.write(manifest_file, original_contents)
+      Shakapacker.manifest.refresh
     end
 
     it "#lookup! raises an error indicating the bundler is still compiling" do
-      allow(Shakapacker.manifest).to receive(:data).and_return({})
-      Shakapacker.manifest.instance_variable_set(:@manifest_existed, true)
-
       expect {
         Shakapacker.manifest.lookup!("application.js")
       }.to raise_error(Shakapacker::Manifest::MissingEntryError, /manifest is empty.*still compiling/i)
     end
 
     it "#lookup_pack_with_chunks! raises an error indicating the bundler is still compiling" do
-      allow(Shakapacker.manifest).to receive(:data).and_return({})
-      Shakapacker.manifest.instance_variable_set(:@manifest_existed, true)
-
       expect {
         Shakapacker.manifest.lookup_pack_with_chunks!("application", type: :javascript)
       }.to raise_error(Shakapacker::Manifest::MissingEntryError, /manifest is empty.*still compiling/i)
     end
-
-    it "#lookup! handles a 0-byte manifest file without JSON parse errors" do
-      manifest_path = Shakapacker.config.manifest_path.to_s
-      original = File.read(manifest_path)
-
-      begin
-        File.write(manifest_path, "")
-        Shakapacker.manifest.refresh
-
-        expect {
-          Shakapacker.manifest.lookup!("application.js")
-        }.to raise_error(Shakapacker::Manifest::MissingEntryError, /manifest is empty.*still compiling/i)
-      ensure
-        File.write(manifest_path, original)
-        Shakapacker.manifest.refresh
-      end
-    end
   end
 
   context "when manifest file does not exist" do
-    let(:fake_manifest_path) { instance_double(Pathname, exist?: false, to_s: "/fake/manifest.json") }
+    let(:manifest_file) { Shakapacker.config.manifest_path.to_s }
+    let(:original_contents) { File.read(manifest_file) }
+
+    before do
+      allow(Shakapacker.config).to receive(:compile?).and_return(false)
+      original_contents # capture before deleting
+      File.delete(manifest_file)
+      Shakapacker.manifest.refresh
+    end
+
+    after do
+      File.write(manifest_file, original_contents)
+      Shakapacker.manifest.refresh
+    end
 
     it "#lookup! raises an error indicating the manifest file is not found" do
-      allow(Shakapacker.config).to receive(:compile?).and_return(false)
-      allow(Shakapacker.manifest).to receive(:data).and_return({})
-      allow(Shakapacker.config).to receive(:manifest_path).and_return(fake_manifest_path)
-      Shakapacker.manifest.instance_variable_set(:@manifest_existed, false)
-
       expect {
         Shakapacker.manifest.lookup!("application.js")
       }.to raise_error(Shakapacker::Manifest::MissingEntryError, /manifest file not found.*has not yet built/i)
     end
 
     it "#lookup_pack_with_chunks! raises an error indicating the manifest file is not found" do
-      allow(Shakapacker.config).to receive(:compile?).and_return(false)
-      allow(Shakapacker.manifest).to receive(:data).and_return({})
-      allow(Shakapacker.config).to receive(:manifest_path).and_return(fake_manifest_path)
-      Shakapacker.manifest.instance_variable_set(:@manifest_existed, false)
-
       expect {
         Shakapacker.manifest.lookup_pack_with_chunks!("application", type: :javascript)
       }.to raise_error(Shakapacker::Manifest::MissingEntryError, /manifest file not found.*has not yet built/i)
