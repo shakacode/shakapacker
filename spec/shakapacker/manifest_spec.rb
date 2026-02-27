@@ -4,21 +4,19 @@ describe "Shakapacker::Manifest" do
   let(:manifest_path) { File.expand_path File.join(File.dirname(__FILE__), "./test_app/public/packs", "manifest.json").to_s }
 
   context "when manifest file exists but is empty" do
-    it "#lookup! raises an error indicating the bundler is still compiling" do
+    before do
       allow(Shakapacker.config).to receive(:compile?).and_return(false)
       allow(Shakapacker.manifest).to receive(:data).and_return({})
       allow(Shakapacker.config.manifest_path).to receive(:exist?).and_return(true)
+    end
 
+    it "#lookup! raises an error indicating the bundler is still compiling" do
       expect {
         Shakapacker.manifest.lookup!("application.js")
       }.to raise_error(Shakapacker::Manifest::MissingEntryError, /manifest is empty.*still compiling/i)
     end
 
     it "#lookup_pack_with_chunks! raises an error indicating the bundler is still compiling" do
-      allow(Shakapacker.config).to receive(:compile?).and_return(false)
-      allow(Shakapacker.manifest).to receive(:data).and_return({})
-      allow(Shakapacker.config.manifest_path).to receive(:exist?).and_return(true)
-
       expect {
         Shakapacker.manifest.lookup_pack_with_chunks!("application", type: :javascript)
       }.to raise_error(Shakapacker::Manifest::MissingEntryError, /manifest is empty.*still compiling/i)

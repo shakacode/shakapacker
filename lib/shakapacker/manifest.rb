@@ -208,41 +208,37 @@ Your manifest contains:
       bundler_name = config.assets_bundler
 
       if manifest_exists
-        <<~MSG
+        <<-MSG
+Shakapacker manifest is empty. #{bundler_name} is likely still compiling.
 
-          Shakapacker manifest is empty. #{bundler_name} is likely still compiling.
+This typically happens when:
+1. You just started the dev server and it's still compiling
+2. The dev server crashed during startup
+3. #{bundler_name} compilation hasn't completed yet
 
-          This typically happens when:
-          1. You just started the dev server and it's still compiling
-          2. The dev server crashed during startup
-          3. #{bundler_name} compilation hasn't completed yet
+What to do:
+- Wait a few seconds and refresh the page
+- Check your terminal for #{bundler_name} build progress
+- Look for errors in the #{bundler_name} output
 
-          What to do:
-          - Wait a few seconds and refresh the page
-          - Check your terminal for #{bundler_name} build progress
-          - Look for errors in the #{bundler_name} output
-
-          Manifest path: #{config.manifest_path}
-
-        MSG
+Manifest path: #{config.manifest_path}
+      MSG
       else
-        <<~MSG
+        <<-MSG
+Shakapacker manifest file not found. #{bundler_name} has not yet built assets.
 
-          Shakapacker manifest file not found. #{bundler_name} has not yet built assets.
+This typically happens when:
+1. You haven't started the dev server yet
+2. The compile process hasn't created the manifest file
+3. The manifest_path configuration is incorrect
 
-          This typically happens when:
-          1. You haven't started the dev server yet
-          2. The compile process hasn't created the manifest file
-          3. The manifest_path configuration is incorrect
+What to do:
+- Start the dev server: bin/shakapacker-dev-server
+- Or run a manual build: bin/shakapacker
+- Verify manifest_path in config/shakapacker.yml
 
-          What to do:
-          - Start the dev server: bin/shakapacker-dev-server
-          - Or run a manual build: bin/shakapacker
-          - Verify manifest_path in config/shakapacker.yml
-
-          Expected manifest path: #{config.manifest_path}
-
-        MSG
+Expected manifest path: #{config.manifest_path}
+      MSG
       end
     end
 end
