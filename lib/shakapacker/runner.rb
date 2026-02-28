@@ -25,6 +25,7 @@ module Shakapacker
       "info",
       "i"
     ].freeze
+
     def self.json_output?(argv)
       argv.include?("--json") || argv.include?("-j")
     end
