@@ -362,9 +362,10 @@ dev_server:
     #   pathname: '/ws'
     #   port: 8080
 
-  # Headers for CORS
-  headers:
-    "Access-Control-Allow-Origin": "*"
+  # Custom headers for dev server responses
+  # Uncomment to enable CORS (e.g., when loading assets cross-origin):
+  # headers:
+  #   "Access-Control-Allow-Origin": "*"
 
   # Static file serving
   static:

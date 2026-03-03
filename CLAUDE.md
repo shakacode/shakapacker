@@ -40,6 +40,14 @@
 - **Version management**: Run `bundle exec rake update_changelog` after releases to update version headers
 - **Examples**: Run `grep -A 3 "^### " CHANGELOG.md | head -30` to see real formatting examples
 
+## Open Source Maintainability
+
+- **Prefer removing complexity over adding configuration.** If a default causes problems, consider removing the default rather than adding an option to disable it.
+- **Every config option is maintenance surface.** Prefer convention over configuration. Don't add options for <10% of users — let them customize via existing extension points (e.g., custom webpack config).
+- **"No is temporary, yes is forever."** Adding a feature creates a permanent maintenance obligation. Reject features that solve one user's niche problem but add complexity for everyone.
+- **Security-safe defaults over convenient defaults.** Don't ship permissive defaults (e.g., `Access-Control-Allow-Origin: *`) just for convenience — make users opt in to less-secure configurations.
+- **Don't refactor adjacent code in feature PRs.** Keep PRs focused. If you spot something to clean up, do it in a separate PR.
+
 ## Shakapacker-Specific
 
 - This gem supports both webpack and rspack configurations
