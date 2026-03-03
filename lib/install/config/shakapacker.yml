@@ -161,6 +161,8 @@ development:
     allowed_hosts: "auto"
     # Shows progress and colorizes output of bin/shakapacker[-dev-server]
     pretty: true
+    # Uncomment to enable CORS (e.g., when webpack-dev-server runs on a different
+    # port than your Rails server and the browser blocks cross-origin asset requests):
     # headers:
     #   "Access-Control-Allow-Origin": "*"
     static:

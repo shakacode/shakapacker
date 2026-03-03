@@ -363,7 +363,8 @@ dev_server:
     #   port: 8080
 
   # Custom headers for dev server responses
-  # Uncomment to enable CORS (e.g., when loading assets cross-origin):
+  # Uncomment to enable CORS (e.g., when webpack-dev-server runs on a different
+  # port than your Rails server and the browser blocks cross-origin asset requests):
   # headers:
   #   "Access-Control-Allow-Origin": "*"
 
