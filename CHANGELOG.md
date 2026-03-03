@@ -13,6 +13,7 @@ Changes since the last non-beta release.
 
 ### Changed
 
+- Allow `compression-webpack-plugin` v12. [PR #937](https://github.com/shakacode/shakapacker/pull/937) by [G-Rath](https://github.com/G-Rath).
 - **BREAKING: sass-loader now defaults to modern Sass API**. [PR #879](https://github.com/shakacode/shakapacker/pull/879) by [justin808](https://github.com/justin808). The sass-loader configuration now uses `api: "modern"` instead of the deprecated legacy API. This improves compatibility with plugins like sass-resources-loader that require the modern API. If you experience issues after upgrading, you can revert to the legacy API by customizing your webpack config:
 
   ```javascript
