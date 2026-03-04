@@ -108,9 +108,10 @@ module Shakapacker
 
           # If this build uses dev server, delegate to DevServerRunner
           if loader.uses_dev_server?(build_config)
-            log_output_for(argv).puts "[Shakapacker] Build '#{build_name}' requires dev server"
-            log_output_for(argv).puts "[Shakapacker] Running: bin/shakapacker-dev-server --build #{build_name}"
-            log_output_for(argv).puts ""
+            log = log_output_for(argv)
+            log.puts "[Shakapacker] Build '#{build_name}' requires dev server"
+            log.puts "[Shakapacker] Running: bin/shakapacker-dev-server --build #{build_name}"
+            log.puts ""
             require_relative "dev_server_runner"
             DevServerRunner.run_with_build_config(remaining_argv, build_config)
             return
