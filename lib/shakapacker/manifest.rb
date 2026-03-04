@@ -142,6 +142,7 @@ class Shakapacker::Manifest
         @load_result ||= load
       else
         refresh
+        @load_result
       end
     end
 
