@@ -23,8 +23,8 @@ describe "Installer environment variable handling" do
     original_skip = ENV["SKIP"]
     example.run
   ensure
-    ENV["FORCE"] = original_force
-    ENV["SKIP"] = original_skip
+    original_force.nil? ? ENV.delete("FORCE") : ENV["FORCE"] = original_force
+    original_skip.nil? ? ENV.delete("SKIP") : ENV["SKIP"] = original_skip
   end
 
   describe "truthy_env?" do

@@ -13,7 +13,7 @@ def truthy_env?(name)
   %w[true 1 yes].include?(ENV[name].to_s.downcase)
 end
 
-conflict_option = if truthy_env?("FORCE")
+@conflict_option = if truthy_env?("FORCE")
   { force: true }
 elsif truthy_env?("SKIP")
   { skip: true }
@@ -46,10 +46,11 @@ else
 end
 
 # Copy config file
-copy_file "#{install_dir}/config/shakapacker.yml", "config/shakapacker.yml", conflict_option
+copy_file "#{install_dir}/config/shakapacker.yml", "config/shakapacker.yml", @conflict_option
 
 # Update config to match the selected transpiler
-if @transpiler_to_install != "swc"
+# Skip modification when SKIP mode preserved the user's existing file
+if @transpiler_to_install != "swc" && !@conflict_option[:skip]
   gsub_file "config/shakapacker.yml", 'javascript_transpiler: "swc"', "javascript_transpiler: \"#{@transpiler_to_install}\""
   say "   📝 Updated config/shakapacker.yml to use #{@transpiler_to_install} transpiler", :green
 end
@@ -67,7 +68,7 @@ source_config = "#{install_dir}/config/#{assets_bundler}/#{config_file}"
 dest_config = "config/#{assets_bundler}/#{config_file}"
 
 empty_directory "config/#{assets_bundler}"
-copy_file source_config, dest_config, conflict_option
+copy_file source_config, dest_config, @conflict_option
 
 if @use_typescript
   say "   ✨ Using TypeScript config for enhanced type safety", :green

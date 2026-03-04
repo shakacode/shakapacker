@@ -166,7 +166,7 @@ Then run the following to install Shakapacker:
 bundle exec rake shakapacker:install
 ```
 
-Before initiating the installation process, ensure you have committed all the changes. While installing Shakapacker, there might be some conflict between the existing file content and what Shakapacker tries to copy. You can either approve all the prompts for overriding these files, use `FORCE=true` to overwrite without prompting, or use `SKIP=true` to preserve existing files and only create missing ones. If both are set, `FORCE=true` takes precedence.
+Before initiating the installation process, ensure you have committed all changes. During install, Shakapacker may encounter conflicts with existing files. You can approve prompts interactively, use `FORCE=true` to overwrite without prompting, or use `SKIP=true` to preserve existing files and only create missing ones. Accepted truthy values are `true`, `1`, and `yes` (case-insensitive). If both are set, `FORCE` takes precedence.
 
 Shakapacker uses the [`package_json`](https://github.com/shakacode/package_json) gem to handle updating the `package.json` and interacting with the underlying package manager of choice for managing dependencies and running commands; the package manager is managed using the [`packageManager`](https://nodejs.org/api/packages.html#packagemanager) property in the `package.json`, otherwise falling back to the value of `PACKAGE_JSON_FALLBACK_MANAGER` if set or otherwise `npm`.
 
