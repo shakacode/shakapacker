@@ -13,7 +13,7 @@ Changes since the last non-beta release.
 
 ### Security
 
-- Removed default `Access-Control-Allow-Origin: *` header from dev server configuration. This header allowed any website to access dev server resources. **If your setup runs webpack-dev-server on a different port from Rails, uncomment the `headers` section in `config/shakapacker.yml` to restore cross-origin asset loading.** Users who need CORS can re-enable it by uncommenting the `headers` section in `config/shakapacker.yml`. [PR #936](https://github.com/shakacode/shakapacker/pull/936) by [justin808](https://github.com/justin808). Fixes [#935](https://github.com/shakacode/shakapacker/issues/935).
+- Removed default `Access-Control-Allow-Origin: *` header from dev server configuration. This header allowed any website to access dev server resources. **If your setup runs webpack-dev-server on a different port from your Rails server, uncomment the `headers` section in `config/shakapacker.yml` to restore cross-origin asset loading.** [PR #936](https://github.com/shakacode/shakapacker/pull/936) by [justin808](https://github.com/justin808). Fixes [#935](https://github.com/shakacode/shakapacker/issues/935).
 
 ### Changed
 
