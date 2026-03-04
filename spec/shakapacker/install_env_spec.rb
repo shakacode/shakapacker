@@ -1,7 +1,9 @@
 require "spec_helper"
 
 describe "Installer environment variable handling" do
-  # Mirrors the truthy_env? helper defined in lib/install/template.rb
+  # NOTE: The methods below mirror lib/install/template.rb rather than loading it directly,
+  # because Rails generator templates can't be required in isolation. If you change the
+  # production truthy_env? or conflict_option logic, update both template.rb and this spec.
   def truthy_env?(name)
     %w[true 1 yes].include?(ENV[name].to_s.downcase)
   end

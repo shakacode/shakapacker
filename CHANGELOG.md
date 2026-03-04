@@ -19,10 +19,6 @@ Changes since the last non-beta release.
 
 - **Added `SKIP=true` installer mode to preserve existing files**. [PR #893](https://github.com/shakacode/shakapacker/pull/893) by [justin808](https://github.com/justin808). Running `rails shakapacker:install SKIP=true` now skips conflicting files instead of overwriting them. This is useful for CI/CD pipelines and automated setups where you want to install only missing files without touching existing configuration.
 
-### Fixed
-
-- **Require explicit truthy values for `SKIP` and `FORCE` installer env vars**. [PR #926](https://github.com/shakacode/shakapacker/pull/926) by [justin808](https://github.com/justin808). Previously, any set value (including `"false"` or `"0"`) would activate skip/force mode. Now only explicit truthy values (`true`, `1`, `yes`, case-insensitive) are recognized.
-
 ### Changed
 
 - **BREAKING: sass-loader now defaults to modern Sass API**. [PR #879](https://github.com/shakacode/shakapacker/pull/879) by [justin808](https://github.com/justin808). The sass-loader configuration now uses `api: "modern"` instead of the deprecated legacy API. This improves compatibility with plugins like sass-resources-loader that require the modern API. If you experience issues after upgrading, you can revert to the legacy API by customizing your webpack config:
@@ -55,6 +51,7 @@ Changes since the last non-beta release.
 - **Fixed ENOENT crash on clean builds when using `webpack-assets-manifest` v6 with `merge: true`**. [PR #931](https://github.com/shakacode/shakapacker/pull/931) by [justin808](https://github.com/justin808). Seeds an empty `{}` manifest file before instantiating the plugin, so the merge read succeeds on first build rather than throwing an unhandled ENOENT.
 - **Fixed NODE_ENV=test causing DefinePlugin warnings**. [PR #870](https://github.com/shakacode/shakapacker/pull/870) by [justin808](https://github.com/justin808). When RAILS_ENV=test, Shakapacker now sets NODE_ENV=development instead of NODE_ENV=test. This prevents webpack/rspack DefinePlugin conflicts since these bundlers only recognize "development" and "production" as valid NODE_ENV values.
 - **Fixed `--json` flag output being corrupted by log messages**. [PR #869](https://github.com/shakacode/shakapacker/pull/869) by [justin808](https://github.com/justin808). When `--json` is in the command arguments, `[Shakapacker]` log messages are now written to stderr instead of stdout, keeping stdout clean for valid JSON output. This allows `bin/shakapacker --profile --json` to be piped to tools like `webpack-bundle-analyzer`. Normal (non-JSON) usage is unchanged. Resolves [#868](https://github.com/shakacode/shakapacker/issues/868).
+- **Require explicit truthy values for `SKIP` and `FORCE` installer env vars**. [PR #926](https://github.com/shakacode/shakapacker/pull/926) by [justin808](https://github.com/justin808). Previously, any set value (including `"false"` or `"0"`) would activate skip/force mode. Now only explicit truthy values (`true`, `1`, `yes`, case-insensitive) are recognized.
 
 ### Documentation
 
