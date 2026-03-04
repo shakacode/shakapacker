@@ -18,7 +18,7 @@ class Shakapacker::Manifest
   def initialize: (Instance instance) -> void
 
   # Reloads the manifest data from disk
-  def refresh: () -> LoadResult
+  def refresh: () -> Hash[String, untyped]
 
   # Looks up an entry point with all its chunks (split code)
   def lookup_pack_with_chunks: (String name, ?Hash[Symbol, untyped] pack_type) -> Array[String]?
