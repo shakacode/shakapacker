@@ -200,7 +200,7 @@ class Shakapacker::Manifest
       end
     end
 
-    def missing_file_from_manifest_error(bundle_name, manifest_data = data)
+    def missing_file_from_manifest_error(bundle_name, manifest_data)
       bundler_name = config.assets_bundler
       <<-MSG
 Shakapacker can't find #{bundle_name} in #{config.manifest_path}. Possible causes:
