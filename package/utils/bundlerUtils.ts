@@ -37,7 +37,7 @@ export interface CssExtractPluginOptions {
   attributes?: Record<string, string>
   linkType?: string | false
   runtime?: boolean
-  experimentalUseImportModule?: boolean
+  experimentalUseImportModule?: boolean // webpack only
 }
 
 /**
@@ -84,7 +84,7 @@ const isRspack: boolean = config.assets_bundler === "rspack"
  *   // Webpack-specific configuration
  * }
  */
-const isWebpack: boolean = config.assets_bundler !== "rspack"
+const isWebpack: boolean = config.assets_bundler === "webpack"
 
 /**
  * Get the current bundler module (webpack or @rspack/core).
@@ -158,14 +158,7 @@ const getCssExtractPlugin = (): CssExtractPluginConstructor => {
  *   }
  * }
  */
-const getCssExtractPluginLoader = (): string => {
-  if (isRspack) {
-    const rspack = requireOrError("@rspack/core")
-    return rspack.CssExtractRspackPlugin.loader
-  }
-  const MiniCssExtractPlugin = requireOrError("mini-css-extract-plugin")
-  return MiniCssExtractPlugin.loader
-}
+const getCssExtractPluginLoader = (): string => getCssExtractPlugin().loader
 
 /**
  * Get the DefinePlugin for the current bundler.

@@ -80,7 +80,6 @@ export {
   moduleExists,
   canProcess,
   inliningCss,
-  // Bundler utilities
   isRspack,
   isWebpack,
   getBundler,
