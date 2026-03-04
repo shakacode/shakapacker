@@ -8,11 +8,17 @@ class Shakapacker::Manifest
   class MissingEntryError < StandardError
   end
 
+  # Holds the result of loading the manifest file
+  class LoadResult < Struct[untyped]
+    attr_accessor data: Hash[String, untyped]
+    attr_accessor manifest_existed: bool
+  end
+
   # Creates a new manifest instance
   def initialize: (Instance instance) -> void
 
   # Reloads the manifest data from disk
-  def refresh: () -> Hash[String, untyped]
+  def refresh: () -> LoadResult
 
   # Looks up an entry point with all its chunks (split code)
   def lookup_pack_with_chunks: (String name, ?Hash[Symbol, untyped] pack_type) -> Array[String]?
@@ -41,15 +47,17 @@ class Shakapacker::Manifest
 
   def compile: () -> bool
 
+  def load_result: () -> LoadResult
+
   def data: () -> Hash[String, untyped]
 
-  def load: () -> Hash[String, untyped]
+  def load: () -> LoadResult
 
   def find: (String key) -> (String | Hash[String, untyped] | nil)
 
   def handle_missing_entry: (String name, Hash[Symbol, untyped] pack_type) -> void
 
-  def manifest_unavailable_error: () -> String
+  def manifest_unavailable_error: (LoadResult result) -> String
 
   def missing_file_from_manifest_error: (String bundle_name) -> String
 
