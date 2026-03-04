@@ -52,7 +52,7 @@ class Shakapacker::Manifest
   # Forces a fresh read of the manifest.json file, bypassing any cache.
   # This is useful when you know the manifest has been updated.
   #
-  # @return [Hash] the loaded manifest data
+  # @return [LoadResult] the loaded manifest result
   def refresh
     @load_result = load
   end
@@ -165,11 +165,14 @@ class Shakapacker::Manifest
     def handle_missing_entry(name, pack_type)
       result = load_result
 
+      # An empty data hash covers both a 0-byte / whitespace-only manifest file
+      # and a missing manifest file. Either way the bundler has not produced
+      # usable output yet, so we show a targeted "unavailable" message.
       if result.data.empty?
         raise Shakapacker::Manifest::MissingEntryError, manifest_unavailable_error(result)
       end
 
-      raise Shakapacker::Manifest::MissingEntryError, missing_file_from_manifest_error(full_pack_name(name, pack_type[:type]))
+      raise Shakapacker::Manifest::MissingEntryError, missing_file_from_manifest_error(full_pack_name(name, pack_type[:type]), result.data)
     end
 
     def load
@@ -197,7 +200,7 @@ class Shakapacker::Manifest
       end
     end
 
-    def missing_file_from_manifest_error(bundle_name)
+    def missing_file_from_manifest_error(bundle_name, manifest_data = data)
       bundler_name = config.assets_bundler
       <<-MSG
 Shakapacker can't find #{bundle_name} in #{config.manifest_path}. Possible causes:
@@ -211,7 +214,7 @@ Shakapacker can't find #{bundle_name} in #{config.manifest_path}. Possible cause
 7. Ensure the 'assets_bundler' in config/shakapacker.yml is set correctly (currently: #{bundler_name}).
 
 Your manifest contains:
-#{JSON.pretty_generate(data)}
+#{JSON.pretty_generate(manifest_data)}
       MSG
     end
 

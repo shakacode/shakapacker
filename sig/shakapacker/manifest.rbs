@@ -59,7 +59,7 @@ class Shakapacker::Manifest
 
   def manifest_unavailable_error: (LoadResult result) -> String
 
-  def missing_file_from_manifest_error: (String bundle_name) -> String
+  def missing_file_from_manifest_error: (String bundle_name, ?Hash[String, untyped] manifest_data) -> String
 
   def full_pack_name: (String name, Symbol? pack_type) -> String
 

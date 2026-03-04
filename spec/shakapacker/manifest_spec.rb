@@ -5,11 +5,10 @@ describe "Shakapacker::Manifest" do
 
   context "when manifest file exists but is empty" do
     let(:manifest_file) { Shakapacker.config.manifest_path.to_s }
-    let(:original_contents) { File.read(manifest_file) }
+    let!(:original_contents) { File.read(manifest_file) }
 
     before do
       allow(Shakapacker.config).to receive(:compile?).and_return(false)
-      original_contents # capture before overwriting
       File.write(manifest_file, "")
       Shakapacker.manifest.refresh
     end
@@ -34,11 +33,10 @@ describe "Shakapacker::Manifest" do
 
   context "when manifest file does not exist" do
     let(:manifest_file) { Shakapacker.config.manifest_path.to_s }
-    let(:original_contents) { File.read(manifest_file) }
+    let!(:original_contents) { File.read(manifest_file) }
 
     before do
       allow(Shakapacker.config).to receive(:compile?).and_return(false)
-      original_contents # capture before deleting
       File.delete(manifest_file)
       Shakapacker.manifest.refresh
     end
