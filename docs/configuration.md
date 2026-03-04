@@ -362,9 +362,11 @@ dev_server:
     #   pathname: '/ws'
     #   port: 8080
 
-  # Headers for CORS
-  headers:
-    "Access-Control-Allow-Origin": "*"
+  # Custom headers for dev server responses
+  # Uncomment to enable CORS (e.g., when webpack-dev-server runs on a different
+  # port than your Rails server and the browser blocks cross-origin asset requests):
+  # headers:
+  #   "Access-Control-Allow-Origin": "*"
 
   # Static file serving
   static:

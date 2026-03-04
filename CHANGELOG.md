@@ -11,6 +11,10 @@
 
 Changes since the last non-beta release.
 
+### Security
+
+- Removed default `Access-Control-Allow-Origin: *` header from dev server configuration. This header allowed any website to access dev server resources. **If your setup runs webpack-dev-server on a different port from your Rails server, uncomment the `headers` section in `config/shakapacker.yml` to restore cross-origin asset loading.** [PR #936](https://github.com/shakacode/shakapacker/pull/936) by [justin808](https://github.com/justin808). Fixes [#935](https://github.com/shakacode/shakapacker/issues/935).
+
 ### Changed
 
 - **BREAKING: sass-loader now defaults to modern Sass API**. [PR #879](https://github.com/shakacode/shakapacker/pull/879) by [justin808](https://github.com/justin808). The sass-loader configuration now uses `api: "modern"` instead of the deprecated legacy API. This improves compatibility with plugins like sass-resources-loader that require the modern API. If you experience issues after upgrading, you can revert to the legacy API by customizing your webpack config:
