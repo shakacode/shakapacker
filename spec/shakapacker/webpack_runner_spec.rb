@@ -211,6 +211,49 @@ describe "WebpackRunner" do
     end
   end
 
+  describe "log output routing for JSON mode" do
+    it "routes log messages to stderr when --json is in argv" do
+      Dir.chdir(test_app_path) do
+        instance = Shakapacker::WebpackRunner.new(["--json"])
+        expect(instance.send(:log_output)).to eq($stderr)
+      end
+    end
+
+    it "routes log messages to stderr when -j is in argv" do
+      Dir.chdir(test_app_path) do
+        instance = Shakapacker::WebpackRunner.new(["-j"])
+        expect(instance.send(:log_output)).to eq($stderr)
+      end
+    end
+
+    it "routes log messages to stdout when no JSON flag is present" do
+      Dir.chdir(test_app_path) do
+        instance = Shakapacker::WebpackRunner.new([])
+        expect(instance.send(:log_output)).to eq($stdout)
+      end
+    end
+
+    it "detects --json in mixed arguments" do
+      Dir.chdir(test_app_path) do
+        instance = Shakapacker::WebpackRunner.new(["--profile", "--json"])
+        expect(instance.send(:log_output)).to eq($stderr)
+      end
+    end
+
+    it "class method json_output? detects --json" do
+      expect(Shakapacker::Runner.json_output?(["--json"])).to be true
+      expect(Shakapacker::Runner.json_output?(["-j"])).to be true
+      expect(Shakapacker::Runner.json_output?([])).to be false
+      expect(Shakapacker::Runner.json_output?(["--profile"])).to be false
+    end
+
+    it "class method log_output_for returns correct stream" do
+      expect(Shakapacker::Runner.log_output_for(["--json"])).to eq($stderr)
+      expect(Shakapacker::Runner.log_output_for(["-j"])).to eq($stderr)
+      expect(Shakapacker::Runner.log_output_for([])).to eq($stdout)
+    end
+  end
+
   private
 
     def capture_stdout

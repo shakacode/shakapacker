@@ -25,6 +25,15 @@ module Shakapacker
       "info",
       "i"
     ].freeze
+
+    def self.json_output?(argv)
+      argv.include?("--json") || argv.include?("-j")
+    end
+
+    def self.log_output_for(argv)
+      json_output?(argv) ? $stderr : $stdout
+    end
+
     def self.run(argv)
       $stdout.sync = true
 
@@ -99,9 +108,10 @@ module Shakapacker
 
           # If this build uses dev server, delegate to DevServerRunner
           if loader.uses_dev_server?(build_config)
-            $stdout.puts "[Shakapacker] Build '#{build_name}' requires dev server"
-            $stdout.puts "[Shakapacker] Running: bin/shakapacker-dev-server --build #{build_name}"
-            $stdout.puts ""
+            log = log_output_for(argv)
+            log.puts "[Shakapacker] Build '#{build_name}' requires dev server"
+            log.puts "[Shakapacker] Running: bin/shakapacker-dev-server --build #{build_name}"
+            log.puts ""
             require_relative "dev_server_runner"
             DevServerRunner.run_with_build_config(remaining_argv, build_config)
             return
@@ -179,10 +189,11 @@ module Shakapacker
       # This ensures the bundler override (from --bundler or build config) is respected
       ENV["SHAKAPACKER_ASSETS_BUNDLER"] = build_config[:bundler]
 
-      puts "[Shakapacker] Running build: #{build_config[:name]}"
-      puts "[Shakapacker] Description: #{build_config[:description]}" if build_config[:description]
-      puts "[Shakapacker] Bundler: #{build_config[:bundler]}"
-      puts "[Shakapacker] Config file: #{build_config[:config_file]}" if build_config[:config_file]
+      log = log_output_for(argv)
+      log.puts "[Shakapacker] Running build: #{build_config[:name]}"
+      log.puts "[Shakapacker] Description: #{build_config[:description]}" if build_config[:description]
+      log.puts "[Shakapacker] Bundler: #{build_config[:bundler]}"
+      log.puts "[Shakapacker] Config file: #{build_config[:config_file]}" if build_config[:config_file]
 
       # Create runner with modified argv and bundler from build_config
       # The build_config[:bundler] already has any CLI --bundler override applied
@@ -216,6 +227,7 @@ module Shakapacker
       @argv = argv
       @build_config = build_config
       @bundler_override = bundler_override
+      @json_output = self.class.json_output?(argv)
 
       @app_path           = File.expand_path(".", Dir.pwd)
       @shakapacker_config = ENV["SHAKAPACKER_CONFIG"] || File.join(@app_path, "config/shakapacker.yml")
@@ -240,40 +252,40 @@ module Shakapacker
     end
 
     def run
-      puts "[Shakapacker] Preparing environment for assets bundler execution..."
+      log_output.puts "[Shakapacker] Preparing environment for assets bundler execution..."
       env = Shakapacker::Compiler.env
       env["SHAKAPACKER_CONFIG"] = @shakapacker_config
       env["NODE_OPTIONS"] = ENV["NODE_OPTIONS"] || ""
 
       cmd = build_cmd
-      puts "[Shakapacker] Base command: #{cmd.join(" ")}"
+      log_output.puts "[Shakapacker] Base command: #{cmd.join(" ")}"
 
       if @argv.delete("--debug-shakapacker")
-        puts "[Shakapacker] Debug mode enabled (--debug-shakapacker)"
+        log_output.puts "[Shakapacker] Debug mode enabled (--debug-shakapacker)"
         env["NODE_OPTIONS"] = "#{env["NODE_OPTIONS"]} --inspect-brk"
       end
 
       if @argv.delete "--trace-deprecation"
-        puts "[Shakapacker] Trace deprecation enabled (--trace-deprecation)"
+        log_output.puts "[Shakapacker] Trace deprecation enabled (--trace-deprecation)"
         env["NODE_OPTIONS"] = "#{env["NODE_OPTIONS"]} --trace-deprecation"
       end
 
       if @argv.delete "--no-deprecation"
-        puts "[Shakapacker] Deprecation warnings disabled (--no-deprecation)"
+        log_output.puts "[Shakapacker] Deprecation warnings disabled (--no-deprecation)"
         env["NODE_OPTIONS"] = "#{env["NODE_OPTIONS"]} --no-deprecation"
       end
 
       # Commands are not compatible with --config option.
       if (@argv & assets_bundler_commands).empty?
-        puts "[Shakapacker] Adding config file: #{@webpack_config}"
+        log_output.puts "[Shakapacker] Adding config file: #{@webpack_config}"
         cmd += ["--config", @webpack_config]
       else
-        puts "[Shakapacker] Skipping config file (running assets bundler command: #{(@argv & assets_bundler_commands).join(", ")})"
+        log_output.puts "[Shakapacker] Skipping config file (running assets bundler command: #{(@argv & assets_bundler_commands).join(", ")})"
       end
 
       cmd += @argv
-      puts "[Shakapacker] Final command: #{cmd.join(" ")}"
-      puts "[Shakapacker] Working directory: #{@app_path}"
+      log_output.puts "[Shakapacker] Final command: #{cmd.join(" ")}"
+      log_output.puts "[Shakapacker] Working directory: #{@app_path}"
 
       watch_mode = @argv.include?("--watch") || @argv.include?("-w")
       start_time = Time.now unless watch_mode
@@ -299,7 +311,7 @@ module Shakapacker
         minutes = (elapsed_time / 60).floor
         seconds = (elapsed_time % 60).round(2)
         time_display = minutes > 0 ? "#{minutes}:#{format('%05.2f', seconds)}s" : "#{elapsed_time.round(2)}s"
-        puts "[Shakapacker] Completed #{bundler_name} build in #{time_display} (#{elapsed_time.round(2)}s)"
+        log_output.puts "[Shakapacker] Completed #{bundler_name} build in #{time_display} (#{elapsed_time.round(2)}s)"
       end
       exit($?.exitstatus || 1) unless $?.success?
     end
@@ -588,6 +600,13 @@ module Shakapacker
 
     private
 
+      # Returns the appropriate output stream for log messages.
+      # When --json is used, log messages go to stderr to keep stdout clean for JSON.
+      # Otherwise, log messages go to stdout as normal.
+      def log_output
+        @json_output ? $stderr : $stdout
+      end
+
       def find_webpack_config_from_build_or_default
         if @build_config && @build_config[:config_file]
           File.join(@app_path, @build_config[:config_file])
@@ -612,10 +631,10 @@ module Shakapacker
           File.join(@app_path, config_dir, "rspack.config.#{ext}")
         end
 
-        puts "[Shakapacker] Looking for Rspack config in: #{rspack_paths.join(", ")}"
+        log_output.puts "[Shakapacker] Looking for Rspack config in: #{rspack_paths.join(", ")}"
         rspack_path = rspack_paths.find { |f| File.exist?(f) }
         if rspack_path
-          puts "[Shakapacker] Found Rspack config: #{rspack_path}"
+          log_output.puts "[Shakapacker] Found Rspack config: #{rspack_path}"
           return rspack_path
         end
 
@@ -624,7 +643,7 @@ module Shakapacker
           File.join(@app_path, config_dir, "webpack.config.#{ext}")
         end
 
-        puts "[Shakapacker] Rspack config not found, checking for webpack config fallback..."
+        log_output.puts "[Shakapacker] Rspack config not found, checking for webpack config fallback..."
         webpack_path = webpack_paths.find { |f| File.exist?(f) }
         if webpack_path
           $stderr.puts "⚠️  DEPRECATION WARNING: Using webpack config file for Rspack assets bundler."
@@ -640,7 +659,7 @@ module Shakapacker
             File.join(@app_path, "config/webpack", "webpack.config.#{ext}")
           end
 
-          puts "[Shakapacker] Checking config/webpack/ for backward compatibility..."
+          log_output.puts "[Shakapacker] Checking config/webpack/ for backward compatibility..."
           webpack_dir_path = webpack_dir_paths.find { |f| File.exist?(f) }
           if webpack_dir_path
             $stderr.puts "⚠️  DEPRECATION WARNING: Found webpack config in config/webpack/ but assets_bundler is set to 'rspack'."
@@ -667,13 +686,13 @@ module Shakapacker
         possible_paths = %w[ts js].map do |ext|
           File.join(@app_path, config_dir, "webpack.config.#{ext}")
         end
-        puts "[Shakapacker] Looking for Webpack config in: #{possible_paths.join(", ")}"
+        log_output.puts "[Shakapacker] Looking for Webpack config in: #{possible_paths.join(", ")}"
         path = possible_paths.find { |f| File.exist?(f) }
         unless path
           print_config_not_found_error("webpack", possible_paths.last, config_dir)
           exit(1)
         end
-        puts "[Shakapacker] Found Webpack config: #{path}"
+        log_output.puts "[Shakapacker] Found Webpack config: #{path}"
         path
       end
   end
