@@ -1,7 +1,11 @@
-# truthy_env? is defined in template.rb (the parent template).
-# It is accessible here because apply shares the same generator instance.
-# However, conflict_option must be recomputed because apply creates a new local variable scope.
-# IMPORTANT: Keep this logic in sync with the conflict_option block in lib/install/template.rb.
+# Define truthy_env? here so binstubs.rb works both standalone (e.g., rake
+# shakapacker:binstubs) and when called via `apply` from template.rb.
+# Keep in sync with the identical definition in lib/install/template.rb.
+def truthy_env?(name)
+  %w[true 1 yes].include?(ENV[name].to_s.downcase)
+end
+
+# conflict_option must be computed here because apply creates a new local variable scope.
 conflict_option = if truthy_env?("FORCE")
   { force: true }
 elsif truthy_env?("SKIP")
