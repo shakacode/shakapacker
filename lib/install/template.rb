@@ -7,6 +7,8 @@ require "json"
 
 # Install Shakapacker
 
+# Helper for checking env vars - shared with binstubs.rb via apply
+# (apply evaluates in the same generator instance, so methods are shared)
 def truthy_env?(name)
   %w[true 1 yes].include?(ENV[name].to_s.downcase)
 end

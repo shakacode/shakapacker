@@ -1,7 +1,6 @@
-def truthy_env?(name)
-  %w[true 1 yes].include?(ENV[name].to_s.downcase)
-end
-
+# truthy_env? is defined in template.rb (the parent template).
+# It is accessible here because apply shares the same generator instance.
+# However, conflict_option must be recomputed because apply creates a new local variable scope.
 conflict_option = if truthy_env?("FORCE")
   { force: true }
 elsif truthy_env?("SKIP")
