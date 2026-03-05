@@ -11,6 +11,8 @@
 
 Changes since the last non-beta release.
 
+## [v9.6.0-rc.0] - March 5, 2026
+
 ### Security
 
 - Removed default `Access-Control-Allow-Origin: *` header from dev server configuration. This header allowed any website to access dev server resources. **If your setup runs webpack-dev-server on a different port from your Rails server, uncomment the `headers` section in `config/shakapacker.yml` to restore cross-origin asset loading.** [PR #936](https://github.com/shakacode/shakapacker/pull/936) by [justin808](https://github.com/justin808). Fixes [#935](https://github.com/shakacode/shakapacker/issues/935).
@@ -116,7 +118,7 @@ Changes since the last non-beta release.
 
 - **Added `SHAKAPACKER_SKIP_PRECOMPILE_HOOK` environment variable to skip precompile hook**. [PR #850](https://github.com/shakacode/shakapacker/pull/850) by [justin808](https://github.com/justin808). Set `SHAKAPACKER_SKIP_PRECOMPILE_HOOK=true` to skip the precompile hook during compilation. This is useful when using process managers like Foreman or Overmind to run the hook once before starting multiple webpack processes, preventing duplicate hook execution. **Migration tip:** If you have a custom `bin/dev` script that starts multiple webpack processes, you can now run the precompile hook once in the script and set this environment variable to prevent each webpack process from running the hook again. See the [precompile hook documentation](./docs/precompile_hook.md#skipping-the-hook) for implementation examples.
 
-## [v9.3.4-beta.0] - November 17, 2025
+## [v9.3.4] - November 17, 2025
 
 ### Fixed
 
@@ -864,10 +866,11 @@ Note: [Rubygem is 6.3.0.pre.rc.1](https://rubygems.org/gems/shakapacker/versions
 
 See [CHANGELOG.md in rails/webpacker (up to v5.4.3)](https://github.com/rails/webpacker/blob/master/CHANGELOG.md)
 
-[Unreleased]: https://github.com/shakacode/shakapacker/compare/v9.5.0...main
+[Unreleased]: https://github.com/shakacode/shakapacker/compare/v9.6.0-rc.0...main
+[v9.6.0-rc.0]: https://github.com/shakacode/shakapacker/compare/v9.5.0...v9.6.0-rc.0
 [v9.5.0]: https://github.com/shakacode/shakapacker/compare/v9.4.0...v9.5.0
 [v9.4.0]: https://github.com/shakacode/shakapacker/compare/v9.3.4...v9.4.0
-[v9.3.4-beta.0]: https://github.com/shakacode/shakapacker/compare/v9.3.3...v9.3.4-beta.0
+[v9.3.4]: https://github.com/shakacode/shakapacker/compare/v9.3.3...v9.3.4
 [v9.3.3]: https://github.com/shakacode/shakapacker/compare/v9.3.2...v9.3.3
 [v9.3.2]: https://github.com/shakacode/shakapacker/compare/v9.3.1...v9.3.2
 [v9.3.1]: https://github.com/shakacode/shakapacker/compare/v9.3.0...v9.3.1
