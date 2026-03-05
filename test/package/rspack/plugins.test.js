@@ -94,10 +94,11 @@ describe("rspack/plugins", () => {
       const manifestPlugin = plugins.find(
         (p) => p.name === "RspackManifestPlugin"
       )
+      const { publicPath } = manifestPlugin.options
 
       const files = [
-        { name: "app.js", path: "/packs/app-123.js" },
-        { name: "app.css", path: "/packs/app-456.css" }
+        { name: "app.js", path: `${publicPath}app-123.js` },
+        { name: "app.css", path: `${publicPath}app-456.css` }
       ]
 
       const entrypoints = {
@@ -106,8 +107,8 @@ describe("rspack/plugins", () => {
 
       const manifest = manifestPlugin.options.generate(null, files, entrypoints)
 
-      expect(manifest["app.js"]).toBe("/packs/app-123.js")
-      expect(manifest["app.css"]).toBe("/packs/app-456.css")
+      expect(manifest["app.js"]).toBe(`${publicPath}app-123.js`)
+      expect(manifest["app.css"]).toBe(`${publicPath}app-456.css`)
       expect(manifest).toHaveProperty("entrypoints")
       expect(manifest.entrypoints).toHaveProperty("app")
       expect(manifest.entrypoints.app).toHaveProperty("assets")
