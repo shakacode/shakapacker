@@ -134,6 +134,16 @@ describe Shakapacker::Install::Env do
       ).to be true
     end
 
+    it "updates config when FORCE=true even if config already exists" do
+      expect(
+        described_class.update_transpiler_config?(
+          transpiler_to_install: "babel",
+          conflict_option: { force: true },
+          config_preexisting: true
+        )
+      ).to be true
+    end
+
     it "updates config on fresh install even when SKIP=true" do
       expect(
         described_class.update_transpiler_config?(

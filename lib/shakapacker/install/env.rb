@@ -23,6 +23,7 @@ module Shakapacker
       # update newly-copied files on fresh installs.
       def update_transpiler_config?(transpiler_to_install:, conflict_option:, config_preexisting:)
         return false if transpiler_to_install == "swc"
+        return true if conflict_option[:force]
         return true unless conflict_option[:skip]
 
         !config_preexisting
