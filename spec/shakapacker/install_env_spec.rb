@@ -124,6 +124,16 @@ describe Shakapacker::Install::Env do
       ).to be false
     end
 
+    it "skips updates for default swc transpiler even when FORCE=true" do
+      expect(
+        described_class.update_transpiler_config?(
+          transpiler_to_install: "swc",
+          conflict_option: { force: true },
+          config_preexisting: true
+        )
+      ).to be false
+    end
+
     it "updates config when transpiler is non-default and skip mode is off" do
       expect(
         described_class.update_transpiler_config?(
