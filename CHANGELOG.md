@@ -18,6 +18,20 @@ Changes since the last non-beta release.
 ### Added
 
 - **Added `SKIP=true` installer mode to preserve existing files**. [PR #926](https://github.com/shakacode/shakapacker/pull/926) by [justin808](https://github.com/justin808). Running `rails shakapacker:install SKIP=true` now skips conflicting files instead of overwriting them. This is useful for CI/CD pipelines and automated setups where you want to install only missing files without touching existing configuration.
+- **Export bundler utility functions for Webpack/Rspack compatibility**. [PR #922](https://github.com/shakacode/shakapacker/pull/922) by [justin808](https://github.com/justin808). New utility functions that make it easier to write bundler-agnostic configuration code: `isRspack`, `isWebpack`, `getBundler()`, `getCssExtractPlugin()`, `getCssExtractPluginLoader()`, `getDefinePlugin()`, `getEnvironmentPlugin()`, and `getProvidePlugin()`. Users no longer need to write conditional logic to handle differences between Webpack and Rspack.
+
+  ```javascript
+  // Before: manual conditional logic
+  const { config } = require("shakapacker")
+  const CssPlugin =
+    config.assets_bundler === "rspack"
+      ? require("@rspack/core").CssExtractRspackPlugin
+      : require("mini-css-extract-plugin")
+
+  // After: use bundler utilities
+  const { getCssExtractPlugin } = require("shakapacker")
+  const CssPlugin = getCssExtractPlugin()
+  ```
 
 ### Changed
 

@@ -36,7 +36,7 @@ describe("file", () => {
   })
 
   test("uses webpack asset module type by default", () => {
-    expect(file.type).toBe("asset")
+    expect(file.type).toBe("asset/resource")
   })
 
   test("correct generated output path is returned for top level files", () => {
