@@ -7,6 +7,9 @@ const mapping = {
 }
 
 const repoRoot = resolve(__dirname, "..")
+// Keep this map explicit to avoid accidentally rewriting third-party imports.
+// If a new local rspack TS module is required via its compiled .js path in tests,
+// add the corresponding mapping here.
 const rspackModuleAliasMap = {
   [resolve(repoRoot, "package/plugins/rspack.js")]: resolve(
     repoRoot,

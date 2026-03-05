@@ -88,7 +88,7 @@ describe("rspack/index", () => {
     })
 
     test("exports inliningCss value", () => {
-      expect(rspackIndex.inliningCss).toBeDefined()
+      expect(typeof rspackIndex.inliningCss).toBe("boolean")
     })
   })
 

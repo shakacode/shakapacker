@@ -43,9 +43,11 @@ jest.mock("../../../package/utils/requireOrError", () => ({
 describe("rspack/plugins", () => {
   let getPlugins
   let moduleExists
+  let config
 
   beforeEach(() => {
     jest.resetModules()
+    config = require("../../../package/config")
     moduleExists = require("../../../package/utils/helpers").moduleExists
     const pluginsModule = require("../../../package/plugins/rspack")
     getPlugins = pluginsModule.getPlugins
@@ -144,9 +146,7 @@ describe("rspack/plugins", () => {
     test("includes CssExtractRspackPlugin when css-loader exists", () => {
       moduleExists.mockReturnValue(true)
 
-      const pluginsModule = require("../../../package/plugins/rspack")
-      const plugins = pluginsModule.getPlugins()
-
+      const plugins = getPlugins()
       const cssPlugin = plugins.find((p) => p.name === "CssExtractRspackPlugin")
       expect(cssPlugin).toBeDefined()
       expect(cssPlugin.options.filename).toMatch(/^css\//)
@@ -156,11 +156,30 @@ describe("rspack/plugins", () => {
     test("does not include CssExtractRspackPlugin when css-loader is missing", () => {
       moduleExists.mockReturnValue(false)
 
-      const pluginsModule = require("../../../package/plugins/rspack")
-      const plugins = pluginsModule.getPlugins()
-
+      const plugins = getPlugins()
       const cssPlugin = plugins.find((p) => p.name === "CssExtractRspackPlugin")
       expect(cssPlugin).toBeUndefined()
+    })
+
+    test("includes SubresourceIntegrityPlugin when integrity is enabled", () => {
+      const originalIntegrity = config.integrity
+      config.integrity = {
+        ...originalIntegrity,
+        enabled: true,
+        hash_functions: ["sha256"]
+      }
+
+      try {
+        const plugins = getPlugins()
+        const sriPlugin = plugins.find(
+          (p) => p.name === "SubresourceIntegrityPlugin"
+        )
+
+        expect(sriPlugin).toBeDefined()
+        expect(sriPlugin.options.hashFuncNames).toEqual(["sha256"])
+      } finally {
+        config.integrity = originalIntegrity
+      }
     })
   })
 })
