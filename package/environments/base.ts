@@ -35,6 +35,10 @@ const getFilesInDirectory = (dir: string, includeNested: boolean): string[] => {
   }
 
   return readdirSync(dir, { withFileTypes: true }).flatMap((dirent: Dirent) => {
+    if (dirent.name.startsWith(".")) {
+      return []
+    }
+
     const filePath = join(dir, dirent.name)
 
     if (dirent.isDirectory() && includeNested) {
