@@ -2,13 +2,21 @@ require "spec_helper"
 require "shakapacker/install/env"
 
 describe Shakapacker::Install::Env do
+  tracked_env_vars = %w[
+    FORCE
+    SKIP
+    USE_BABEL_PACKAGES
+    SHAKAPACKER_USE_TYPESCRIPT
+    SKIP_COMMON_LOADERS
+  ].freeze
+
   around do |example|
-    original_force = ENV["FORCE"]
-    original_skip = ENV["SKIP"]
+    original_values = tracked_env_vars.to_h { |name| [name, ENV[name]] }
     example.run
   ensure
-    original_force.nil? ? ENV.delete("FORCE") : ENV["FORCE"] = original_force
-    original_skip.nil? ? ENV.delete("SKIP") : ENV["SKIP"] = original_skip
+    original_values.each do |name, value|
+      value.nil? ? ENV.delete(name) : ENV[name] = value
+    end
   end
 
   describe "truthy_env?" do
@@ -60,6 +68,28 @@ describe Shakapacker::Install::Env do
     it "rejects nil (unset) as not truthy" do
       ENV.delete("FORCE")
       expect(described_class.truthy_env?("FORCE")).to be false
+    end
+  end
+
+  describe "truthy_env? for installer flags" do
+    %w[USE_BABEL_PACKAGES SHAKAPACKER_USE_TYPESCRIPT SKIP_COMMON_LOADERS].each do |env_name|
+      context "when checking #{env_name}" do
+        it "accepts lower/upper truthy values" do
+          %w[true TRUE 1 yes YES].each do |value|
+            ENV[env_name] = value
+            expect(described_class.truthy_env?(env_name)).to be true
+          end
+        end
+
+        it "rejects falsey values and unset" do
+          ["false", "0", ""].each do |value|
+            ENV[env_name] = value
+            expect(described_class.truthy_env?(env_name)).to be false
+          end
+          ENV.delete(env_name)
+          expect(described_class.truthy_env?(env_name)).to be false
+        end
+      end
     end
   end
 
