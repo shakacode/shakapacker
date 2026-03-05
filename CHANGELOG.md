@@ -15,6 +15,10 @@ Changes since the last non-beta release.
 
 - Removed default `Access-Control-Allow-Origin: *` header from dev server configuration. This header allowed any website to access dev server resources. **If your setup runs webpack-dev-server on a different port from your Rails server, uncomment the `headers` section in `config/shakapacker.yml` to restore cross-origin asset loading.** [PR #936](https://github.com/shakacode/shakapacker/pull/936) by [justin808](https://github.com/justin808). Fixes [#935](https://github.com/shakacode/shakapacker/issues/935).
 
+### Added
+
+- **Added `SKIP=true` installer mode to preserve existing files**. [PR #926](https://github.com/shakacode/shakapacker/pull/926) by [justin808](https://github.com/justin808). Running `rails shakapacker:install SKIP=true` now skips conflicting files instead of overwriting them. This is useful for CI/CD pipelines and automated setups where you want to install only missing files without touching existing configuration.
+
 ### Changed
 
 - Allow `compression-webpack-plugin` v12. [PR #937](https://github.com/shakacode/shakapacker/pull/937) by [G-Rath](https://github.com/G-Rath).
@@ -49,6 +53,7 @@ Changes since the last non-beta release.
 - **Improved error message when manifest is empty or missing**. [PR #872](https://github.com/shakacode/shakapacker/pull/872) by [justin808](https://github.com/justin808). When the bundler is still compiling (empty manifest) or hasn't run yet (missing manifest file), users now see clear, actionable error messages instead of the generic 7-point checklist.
 - **Fixed NODE_ENV=test causing DefinePlugin warnings**. [PR #870](https://github.com/shakacode/shakapacker/pull/870) by [justin808](https://github.com/justin808). When RAILS_ENV=test, Shakapacker now sets NODE_ENV=development instead of NODE_ENV=test. This prevents webpack/rspack DefinePlugin conflicts since these bundlers only recognize "development" and "production" as valid NODE_ENV values.
 - **Fixed `--json` flag output being corrupted by log messages**. [PR #869](https://github.com/shakacode/shakapacker/pull/869) by [justin808](https://github.com/justin808). When `--json` is in the command arguments, `[Shakapacker]` log messages are now written to stderr instead of stdout, keeping stdout clean for valid JSON output. This allows `bin/shakapacker --profile --json` to be piped to tools like `webpack-bundle-analyzer`. Normal (non-JSON) usage is unchanged. Resolves [#868](https://github.com/shakacode/shakapacker/issues/868).
+- **Require explicit truthy values for `SKIP` and `FORCE` installer env vars**. [PR #926](https://github.com/shakacode/shakapacker/pull/926) by [justin808](https://github.com/justin808). Previously, any set value (including `"false"` or `"0"`) would activate skip/force mode. Now only explicit truthy values (`true`, `1`, `yes`, case-insensitive) are recognized. This behavior change may require CI/scripts that relied on `FORCE=<any non-empty value>` to switch to `FORCE=true`.
 
 ### Documentation
 
