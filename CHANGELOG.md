@@ -17,7 +17,7 @@ Changes since the last non-beta release.
 
 ### Added
 
-- **Added `SKIP=true` installer mode to preserve existing files**. [PR #893](https://github.com/shakacode/shakapacker/pull/893) by [justin808](https://github.com/justin808). Running `rails shakapacker:install SKIP=true` now skips conflicting files instead of overwriting them. This is useful for CI/CD pipelines and automated setups where you want to install only missing files without touching existing configuration.
+- **Added `SKIP=true` installer mode to preserve existing files**. [PR #926](https://github.com/shakacode/shakapacker/pull/926) by [justin808](https://github.com/justin808). Running `rails shakapacker:install SKIP=true` now skips conflicting files instead of overwriting them. This is useful for CI/CD pipelines and automated setups where you want to install only missing files without touching existing configuration.
 
 ### Changed
 

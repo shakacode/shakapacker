@@ -1,25 +1,14 @@
 require "shakapacker/utils/misc"
 require "shakapacker/utils/manager"
 require "shakapacker/utils/version_syntax_converter"
+require "shakapacker/install/env"
 require "package_json"
 require "yaml"
 require "json"
 
 # Install Shakapacker
 
-# Helper for checking env vars - shared with binstubs.rb via apply
-# (apply evaluates in the same generator instance, so methods are shared)
-def truthy_env?(name)
-  %w[true 1 yes].include?(ENV[name].to_s.downcase)
-end
-
-@conflict_option = if truthy_env?("FORCE")
-  { force: true }
-elsif truthy_env?("SKIP")
-  { skip: true }
-else
-  {}
-end
+@conflict_option = Shakapacker::Install::Env.conflict_option
 
 # Initialize variables for use throughout the template
 # Using instance variable to avoid method definition issues in Rails templates
@@ -46,11 +35,16 @@ else
 end
 
 # Copy config file
+shakapacker_config_preexisting = Rails.root.join("config/shakapacker.yml").exist?
 copy_file "#{install_dir}/config/shakapacker.yml", "config/shakapacker.yml", @conflict_option
 
 # Update config to match the selected transpiler
-# Skip modification when SKIP mode preserved the user's existing file
-if @transpiler_to_install != "swc" && !@conflict_option[:skip]
+# Skip modification only when SKIP mode preserved a pre-existing user file
+if Shakapacker::Install::Env.update_transpiler_config?(
+  transpiler_to_install: @transpiler_to_install,
+  conflict_option: @conflict_option,
+  config_preexisting: shakapacker_config_preexisting
+)
   gsub_file "config/shakapacker.yml", 'javascript_transpiler: "swc"', "javascript_transpiler: \"#{@transpiler_to_install}\""
   say "   📝 Updated config/shakapacker.yml to use #{@transpiler_to_install} transpiler", :green
 end
