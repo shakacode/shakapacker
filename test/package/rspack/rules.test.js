@@ -19,10 +19,6 @@ jest.mock("../../../package/utils/debug", () => ({
 describe("rspack/rules", () => {
   let rules
 
-  beforeEach(() => {
-    jest.clearAllMocks()
-  })
-
   beforeAll(() => {
     rules = require("../../../package/rules/rspack")
   })

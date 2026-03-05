@@ -118,6 +118,7 @@ describe("rspack/plugins", () => {
       const manifestPlugin = plugins.find(
         (p) => p.name === "RspackManifestPlugin"
       )
+      const { publicPath } = manifestPlugin.options
 
       const files = []
       const entrypoints = {
@@ -131,9 +132,11 @@ describe("rspack/plugins", () => {
 
       const manifest = manifestPlugin.options.generate(null, files, entrypoints)
 
-      expect(manifest.entrypoints.app.assets.js).toEqual(["/packs/app-123.js"])
+      expect(manifest.entrypoints.app.assets.js).toEqual([
+        `${publicPath}app-123.js`
+      ])
       expect(manifest.entrypoints.app.assets.css).toEqual([
-        "/packs/app-456.css"
+        `${publicPath}app-456.css`
       ])
     })
 
@@ -146,24 +149,17 @@ describe("rspack/plugins", () => {
       const cssPlugin = plugins.find((p) => p.name === "CssExtractRspackPlugin")
       expect(cssPlugin).toBeDefined()
       expect(cssPlugin.options.filename).toMatch(/^css\//)
+      expect(cssPlugin.options.emit).toBe(true)
     })
 
-    test("conditionally includes CssExtractRspackPlugin based on css-loader", () => {
-      // CssExtractRspackPlugin should be present since moduleExists is mocked to return true
-      const plugins = getPlugins()
-      const cssPlugin = plugins.find((p) => p.name === "CssExtractRspackPlugin")
-      expect(cssPlugin).toBeDefined()
-    })
-
-    test("cssExtractRspackPlugin forces emit in all environments", () => {
-      moduleExists.mockReturnValue(true)
+    test("does not include CssExtractRspackPlugin when css-loader is missing", () => {
+      moduleExists.mockReturnValue(false)
 
       const pluginsModule = require("../../../package/plugins/rspack")
       const plugins = pluginsModule.getPlugins()
 
       const cssPlugin = plugins.find((p) => p.name === "CssExtractRspackPlugin")
-      expect(cssPlugin).toBeDefined()
-      expect(cssPlugin.options.emit).toBe(true)
+      expect(cssPlugin).toBeUndefined()
     })
   })
 })

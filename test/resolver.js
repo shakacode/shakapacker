@@ -6,21 +6,36 @@ const mapping = {
   "nonexistent/package.json": "../../__mocks__/nonexistent/package.json"
 }
 
+const repoRoot = resolve(__dirname, "..")
+const rspackModuleAliasMap = {
+  [resolve(repoRoot, "package/plugins/rspack.js")]: resolve(
+    repoRoot,
+    "package/plugins/rspack.ts"
+  ),
+  [resolve(repoRoot, "package/rules/rspack.js")]: resolve(
+    repoRoot,
+    "package/rules/rspack.ts"
+  ),
+  [resolve(repoRoot, "package/optimization/rspack.js")]: resolve(
+    repoRoot,
+    "package/optimization/rspack.ts"
+  )
+}
+
 function resolver(module, options) {
-  // Handle .js imports that should resolve to .ts files for rspack
-  if (module.endsWith("/plugins/rspack.js")) {
-    return resolve(__dirname, "../package/plugins/rspack.ts")
-  }
-  if (module.endsWith("/rules/rspack.js")) {
-    return resolve(__dirname, "../package/rules/rspack.ts")
-  }
-  if (module.endsWith("/optimization/rspack.js")) {
-    return resolve(__dirname, "../package/optimization/rspack.ts")
+  if (mapping[module]) {
+    return mapping[module]
   }
 
-  // If the path corresponds to a key in the mapping object, returns the fakely resolved path
-  // otherwise it calls the Jest's default resolver
-  return mapping[module] || options.defaultResolver(module, options)
+  // Remap only this repository's known rspack JS targets to TS sources.
+  if (options.basedir) {
+    const requestedPath = resolve(options.basedir, module)
+    if (rspackModuleAliasMap[requestedPath]) {
+      return rspackModuleAliasMap[requestedPath]
+    }
+  }
+
+  return options.defaultResolver(module, options)
 }
 
 module.exports = resolver

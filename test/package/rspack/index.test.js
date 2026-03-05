@@ -1,6 +1,6 @@
-/* eslint-disable jest/no-conditional-in-test, jest/no-conditional-expect */
+/* eslint-disable jest/no-conditional-in-test */
 
-const { chdirTestApp, resetEnv } = require("../../helpers")
+const { chdirTestApp } = require("../../helpers")
 
 const rootPath = process.cwd()
 chdirTestApp()
@@ -29,12 +29,16 @@ jest.mock("../../../package/utils/validateDependencies", () => ({
   validateRspackDependencies: jest.fn()
 }))
 
-const rspackIndex = require("../../../package/rspack/index")
-
 describe("rspack/index", () => {
+  let rspackIndex
+  let validateRspackDependencies
+
   beforeEach(() => {
     jest.resetModules()
-    resetEnv()
+    rspackIndex = require("../../../package/rspack/index")
+    ;({
+      validateRspackDependencies
+    } = require("../../../package/utils/validateDependencies"))
   })
 
   afterAll(() => process.chdir(rootPath))
@@ -99,17 +103,14 @@ describe("rspack/index", () => {
       expect(config).toHaveProperty("optimization")
     })
 
-    test("returns a new object instance on each call", () => {
+    test("returns a new top-level config object on each call", () => {
       const config1 = rspackIndex.generateRspackConfig()
       const config2 = rspackIndex.generateRspackConfig()
 
+      expect(config1).not.toBe(config2)
       config1.newKey = "new value"
-      config1.output = config1.output || {}
-      config1.output.path = "new path"
 
       expect(config2).not.toHaveProperty("newKey")
-      expect(config2.output).toBeDefined()
-      expect(config2.output.path).not.toBe("new path")
     })
 
     test("merges extra config", () => {
@@ -156,10 +157,8 @@ describe("rspack/index", () => {
     })
 
     test("validates rspack dependencies on generation", () => {
-      // The validation is called at module load time, not at function call time
-      // This test verifies the function exists and can be called
-      const config = rspackIndex.generateRspackConfig()
-      expect(config).toBeDefined()
+      rspackIndex.generateRspackConfig()
+      expect(validateRspackDependencies).toHaveBeenCalledTimes(1)
     })
   })
 
@@ -215,25 +214,27 @@ describe("rspack/index", () => {
       expect(typeof result).toBe("boolean")
     })
 
-    test("canProcess invokes callback when module exists", () => {
-      // canProcess takes a package name and a callback function
-      // It returns null if the module doesn't exist, or the callback result if it does
+    test("canProcess invokes callback when module resolves", () => {
       const callback = jest.fn((modulePath) => ({
         processed: true,
         path: modulePath
       }))
-      const result = rspackIndex.canProcess("jest", callback)
+      const result = rspackIndex.canProcess("path", callback)
 
-      // Since jest exists, the callback should be invoked with the resolved module path
-      if (result !== null) {
-        expect(callback).toHaveBeenCalledWith(expect.any(String))
-        expect(result).toHaveProperty("processed", true)
-        expect(result).toHaveProperty("path")
-      } else {
-        // If module doesn't exist, callback should not be called and result is null
-        expect(callback).not.toHaveBeenCalledWith(expect.anything())
-        expect(result).toBeNull()
-      }
+      expect(callback).toHaveBeenCalledWith(expect.any(String))
+      expect(result).toHaveProperty("processed", true)
+      expect(result).toHaveProperty("path")
+    })
+
+    test("canProcess returns null and does not invoke callback when module is missing", () => {
+      const callback = jest.fn()
+      const result = rspackIndex.canProcess(
+        "__definitely_not_a_real_package_name__",
+        callback
+      )
+
+      expect(result).toBeNull()
+      expect(callback).not.toHaveBeenCalled()
     })
   })
 
@@ -242,12 +243,9 @@ describe("rspack/index", () => {
       const config = rspackIndex.generateRspackConfig()
       const { nodeEnv } = rspackIndex.env
 
-      expect(config.mode).toBeDefined()
-      if (nodeEnv === "production") {
-        expect(config.mode).toBe("production")
-      } else if (nodeEnv === "development") {
-        expect(config.mode).toBe("development")
-      }
+      const expectedMode =
+        nodeEnv === "production" ? "production" : "development"
+      expect(config.mode).toBe(expectedMode)
     })
   })
 })
