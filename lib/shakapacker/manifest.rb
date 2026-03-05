@@ -33,6 +33,10 @@ class Shakapacker::Manifest
   # Raised when an asset cannot be found in the manifest
   class MissingEntryError < StandardError; end
 
+  # Holds the result of loading the manifest file, keeping data and
+  # file-existence state in a single atomic value.
+  LoadResult = Struct.new(:data, :manifest_existed, keyword_init: true)
+
   delegate :config, :compiler, :dev_server, to: :@instance
 
   # Creates a new manifest instance
@@ -50,7 +54,8 @@ class Shakapacker::Manifest
   #
   # @return [Hash] the loaded manifest data
   def refresh
-    @data = load
+    @load_result = load
+    @load_result.data
   end
 
   # Looks up an entry point with all its chunks (split code)
@@ -132,12 +137,17 @@ class Shakapacker::Manifest
       Shakapacker.logger.tagged("Shakapacker") { compiler.compile }
     end
 
-    def data
+    def load_result
       if config.cache_manifest?
-        @data ||= load
+        @load_result ||= load
       else
         refresh
+        @load_result
       end
+    end
+
+    def data
+      load_result.data
     end
 
     def find(name)
@@ -155,14 +165,27 @@ class Shakapacker::Manifest
     end
 
     def handle_missing_entry(name, pack_type)
-      raise Shakapacker::Manifest::MissingEntryError, missing_file_from_manifest_error(full_pack_name(name, pack_type[:type]))
+      # @load_result is always set by the preceding data call (even in
+      # non-cached mode), so we read it directly to avoid a second file read.
+      result = @load_result
+
+      # An empty data hash covers both a 0-byte / whitespace-only manifest file
+      # and a missing manifest file. Either way the bundler has not produced
+      # usable output yet, so we show a targeted "unavailable" message.
+      if result.data.empty?
+        raise Shakapacker::Manifest::MissingEntryError, manifest_unavailable_error(result)
+      end
+
+      raise Shakapacker::Manifest::MissingEntryError, missing_file_from_manifest_error(full_pack_name(name, pack_type[:type]), result.data)
     end
 
     def load
       if config.manifest_path.exist?
-        JSON.parse config.manifest_path.read
+        contents = config.manifest_path.read
+        parsed = contents.strip.empty? ? {} : JSON.parse(contents)
+        LoadResult.new(data: parsed, manifest_existed: true)
       else
-        {}
+        LoadResult.new(data: {}, manifest_existed: false)
       end
     end
 
@@ -181,21 +204,59 @@ class Shakapacker::Manifest
       end
     end
 
-    def missing_file_from_manifest_error(bundle_name)
+    def missing_file_from_manifest_error(bundle_name, manifest_data)
       bundler_name = config.assets_bundler
-      <<-MSG
-Shakapacker can't find #{bundle_name} in #{config.manifest_path}. Possible causes:
-1. You forgot to install javascript packages or are running an incompatible javascript runtime version
-2. Your app has code with a non-standard extension (like a `.jsx` file) but the extension is not in the `extensions` config in `config/shakapacker.yml`
-3. You have set compile: false (see `config/shakapacker.yml`) for this environment
-   (unless you are using the `bin/shakapacker -w` or the `bin/shakapacker-dev-server`, in which case maybe you aren't running the dev server in the background?)
-4. Your #{bundler_name} has not yet FINISHED running to reflect updates.
-5. You have misconfigured Shakapacker's `config/shakapacker.yml` file.
-6. Your #{bundler_name} configuration is not creating a manifest with the expected structure.
-7. Ensure the 'assets_bundler' in config/shakapacker.yml is set correctly (currently: #{bundler_name}).
+      <<~MSG
+        Shakapacker can't find #{bundle_name} in #{config.manifest_path}. Possible causes:
+        1. You forgot to install javascript packages or are running an incompatible javascript runtime version
+        2. Your app has code with a non-standard extension (like a `.jsx` file) but the extension is not in the `extensions` config in `config/shakapacker.yml`
+        3. You have set compile: false (see `config/shakapacker.yml`) for this environment
+           (unless you are using the `bin/shakapacker -w` or the `bin/shakapacker-dev-server`, in which case maybe you aren't running the dev server in the background?)
+        4. Your #{bundler_name} has not yet FINISHED running to reflect updates.
+        5. You have misconfigured Shakapacker's `config/shakapacker.yml` file.
+        6. Your #{bundler_name} configuration is not creating a manifest with the expected structure.
+        7. Ensure the 'assets_bundler' in config/shakapacker.yml is set correctly (currently: #{bundler_name}).
 
-Your manifest contains:
-#{JSON.pretty_generate(@data)}
+        Your manifest contains:
+        #{JSON.pretty_generate(manifest_data)}
       MSG
+    end
+
+    def manifest_unavailable_error(result)
+      bundler_name = config.assets_bundler
+
+      if result.manifest_existed
+        <<~MSG
+          Shakapacker manifest is empty. #{bundler_name} is likely still compiling.
+
+          This typically happens when:
+          1. You just started the dev server and it's still compiling
+          2. The dev server crashed during startup
+          3. #{bundler_name} compilation hasn't completed yet
+
+          What to do:
+          - Wait a few seconds and refresh the page
+          - Check your terminal for #{bundler_name} build progress
+          - Look for errors in the #{bundler_name} output
+
+          Manifest path: #{config.manifest_path}
+        MSG
+      else
+        <<~MSG
+          Shakapacker manifest file not found. #{bundler_name} has not yet built assets.
+
+          This typically happens when:
+          1. You haven't started the dev server yet
+          2. The compile process hasn't created the manifest file
+          3. The manifest_path configuration is incorrect
+
+          What to do:
+          - Start the dev server: bin/shakapacker-dev-server
+          - Or run a manual build: bin/shakapacker
+          - Verify manifest_path in config/shakapacker.yml
+
+          Expected manifest path: #{config.manifest_path}
+        MSG
+      end
     end
 end
