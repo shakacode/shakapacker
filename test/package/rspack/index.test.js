@@ -17,7 +17,7 @@ jest.mock("../../../package/config", () => {
 // Mock helpers before requiring the rspack module
 jest.mock("../../../package/utils/helpers", () => {
   const original = jest.requireActual("../../../package/utils/helpers")
-  const moduleExists = () => true
+  const moduleExists = jest.fn(() => true)
   return {
     ...original,
     moduleExists
@@ -80,7 +80,7 @@ describe("rspack/index", () => {
     })
 
     test("exports moduleExists function", () => {
-      expect(rspackIndex.moduleExists).toBeInstanceOf(Function)
+      expect(typeof rspackIndex.moduleExists).toBe("function")
     })
 
     test("exports canProcess function", () => {
