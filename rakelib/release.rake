@@ -1,20 +1,8 @@
 require_relative File.join("..", "lib", "shakapacker", "utils", "version_syntax_converter")
 require_relative File.join("..", "lib", "shakapacker", "utils", "misc")
-
-def verify_npm_auth(registry_url = "https://registry.npmjs.org/")
-  result = `npm whoami --registry #{registry_url} 2>&1`
-  unless $CHILD_STATUS.success?
-    puts "⚠️  NPM authentication required!"
-    puts "Please run: npm login --registry #{registry_url}"
-    puts ""
-    system("npm login --registry #{registry_url}")
-    result = `npm whoami --registry #{registry_url} 2>&1`
-    unless $CHILD_STATUS.success?
-      abort "❌ NPM login failed! Please authenticate with npm before running the release."
-    end
-  end
-  puts "✓ Logged in to NPM as: #{result.strip}"
-end
+require "shellwords"
+require "tempfile"
+require "tmpdir"
 
 class RaisingMessageHandler
   def add_error(error)
@@ -22,102 +10,344 @@ class RaisingMessageHandler
   end
 end
 
-desc("Releases both the gem and node package using the given version.
-
-IMPORTANT: the gem version must be in valid rubygem format (no dashes).
-It will be automatically converted to a valid yarn semver by the rake task
-for the node package version. This only makes a difference for pre-release
-versions such as `3.0.0.beta.1` (yarn version would be `3.0.0-beta.1`).
-
-This task depends on the gem-release (ruby gem) and release-it (node package)
-which are installed via `bundle install` and `yarn global add release-it`
-
-1st argument: The new version in rubygem format (no dashes). Pass no argument to
-              automatically perform a patch version bump.
-2nd argument: Perform a dry run by passing 'true' as a second argument.
-
-The task will:
-1. Pull latest changes and bump versions
-2. Publish to npm (requires OTP)
-3. Publish to RubyGems (requires OTP)
-4. Update spec/dummy lockfiles (runs bundle install and npm install)
-5. Commit and push the lockfile updates
-
-Note, accept defaults for npmjs options. Script will pause to get 2FA tokens.
-
-Example: `rake create_release[2.1.0,false]`")
-task :create_release, %i[gem_version dry_run] do |_t, args|
-  # Check if there are uncommitted changes
+def ensure_clean_worktree!
   Shakapacker::Utils::Misc.uncommitted_changes?(RaisingMessageHandler.new)
-  args_hash = args.to_hash
+end
 
-  is_dry_run = Shakapacker::Utils::Misc.object_to_boolean(args_hash[:dry_run])
+def github_repo_slug(gem_root)
+  origin_url = `git -C #{Shellwords.escape(gem_root)} remote get-url origin 2>&1`.strip
+  abort "❌ Unable to determine git origin URL for GitHub release checks.\n\n#{origin_url}" unless $CHILD_STATUS.success?
 
-  # Pre-flight check: verify npm authentication before any changes
-  unless is_dry_run
+  match = origin_url.match(%r{github\.com[:/](?<repo>[^/]+/[^/]+?)(?:\.git)?\z})
+  abort "❌ Unable to determine GitHub repository from origin URL #{origin_url.inspect}" unless match
+
+  match[:repo]
+end
+
+def verify_npm_auth(registry_url = "https://registry.npmjs.org/")
+  display_registry_url = registry_url
+  escaped_registry_url = Shellwords.escape(registry_url)
+  result = `npm whoami --registry #{escaped_registry_url} 2>&1`
+  unless $CHILD_STATUS.success?
+    puts "⚠️  NPM authentication required!"
+    puts "Please run: npm login --registry #{display_registry_url}"
+    puts ""
+    system("npm login --registry #{escaped_registry_url}")
+    result = `npm whoami --registry #{escaped_registry_url} 2>&1`
+    unless $CHILD_STATUS.success?
+      abort "❌ NPM login failed! Please authenticate with npm before running the release."
+    end
+  end
+  puts "✓ Logged in to NPM as: #{result.strip}"
+end
+
+def verify_gh_auth(gem_root:)
+  result = `gh auth status 2>&1`
+  unless $CHILD_STATUS.success?
+    abort "❌ GitHub CLI authentication required! Run `gh auth login` and retry.\n\n#{result}"
+  end
+
+  repo_slug = github_repo_slug(gem_root)
+  permissions_result = `gh api repos/#{repo_slug} --jq '.permissions.push' 2>&1`.strip
+  unless $CHILD_STATUS.success?
+    abort "❌ GitHub CLI authenticated, but failed to verify write access to #{repo_slug}.\n\n#{permissions_result}"
+  end
+  unless permissions_result == "true"
+    abort "❌ GitHub CLI authenticated, but your account/token does not have write access to #{repo_slug}."
+  end
+
+  puts "✓ GitHub CLI authenticated with write access to #{repo_slug}"
+end
+
+def current_gem_version(gem_root)
+  version_file = File.join(gem_root, "lib", "shakapacker", "version.rb")
+  content = File.read(version_file)
+  match = content.match(/VERSION = "([^"]+)"/)
+  abort "❌ Unable to read current gem version from #{version_file}" unless match
+
+  match[1]
+end
+
+def target_gem_version(gem_root:, requested_gem_version:)
+  version = requested_gem_version.to_s.strip
+  return version unless version.empty?
+
+  current_version = current_gem_version(gem_root)
+  match = current_version.match(/\A(\d+)\.(\d+)\.(\d+)\z/)
+  unless match
+    abort "❌ Automatic patch bumps require the current version to use major.minor.patch format. Pass an explicit version instead."
+  end
+
+  major, minor, patch = match.captures.map(&:to_i)
+  "#{major}.#{minor}.#{patch + 1}"
+end
+
+def prerelease_gem_version?(gem_version)
+  gem_version.match?(/\A\d+\.\d+\.\d+\.(beta|rc)\.\d+\z/)
+end
+
+def validate_requested_gem_version!(requested_gem_version)
+  return if requested_gem_version.empty?
+  return if requested_gem_version.match?(/\A\d+\.\d+\.\d+(\.(beta|rc)\.\d+)?\z/)
+
+  abort "❌ gem_version must be in RubyGems format (no dashes), e.g. 9.6.0 or 9.6.0.rc.0. Got: #{requested_gem_version.inspect}"
+end
+
+def extract_changelog_section(changelog_path:, npm_version:)
+  lines = File.readlines(changelog_path)
+  section_header = /^## \[v#{Regexp.escape(npm_version)}\]/
+  start_index = lines.index { |line| line.match?(section_header) }
+  return nil unless start_index
+
+  end_index = ((start_index + 1)...lines.length).find { |idx| lines[idx].start_with?("## [") } || lines.length
+  lines[start_index...end_index].join.rstrip
+end
+
+def prepare_github_release_context(gem_root:, npm_version:, gem_version:)
+  return if Shakapacker::Utils::Misc.object_to_boolean(ENV["SKIP_GITHUB_RELEASE"])
+
+  prerelease = prerelease_gem_version?(gem_version)
+  changelog_path = File.join(gem_root, "CHANGELOG.md")
+  notes = extract_changelog_section(changelog_path: changelog_path, npm_version: npm_version)
+  unless notes
+    format_hint = if prerelease
+      " For prerelease versions, CHANGELOG headers must use npm semver format, e.g. `## [v#{npm_version}]`."
+    end
+    abort "❌ Could not find `## [v#{npm_version}]` in CHANGELOG.md.#{format_hint} Add that section or set SKIP_GITHUB_RELEASE=true."
+  end
+
+  {
+    notes: notes,
+    prerelease: prerelease,
+    tag: "v#{npm_version}",
+    title: "v#{npm_version}"
+  }
+end
+
+def publish_or_update_github_release(gem_root:, release_context:, dry_run:)
+  return if dry_run || release_context.nil?
+
+  Tempfile.create(["shakapacker-release-notes-", ".md"]) do |tmp|
+    tmp.write(release_context[:notes])
+    tmp.flush
+
+    tag_escaped = Shellwords.escape(release_context[:tag])
+    title_escaped = Shellwords.escape(release_context[:title])
+    notes_file_escaped = Shellwords.escape(tmp.path)
+    # The view probe only needs a boolean result, so use array-form system to avoid an extra shell layer.
+    release_exists = system("gh", "release", "view", release_context[:tag], chdir: gem_root, out: File::NULL, err: File::NULL)
+
+    release_command = if release_exists
+      # `gh release edit` accepts `--prerelease=true|false`; there is no `--no-prerelease` flag.
+      prerelease_flag = " --prerelease=#{release_context[:prerelease]}"
+      "gh release edit #{tag_escaped} --title #{title_escaped} --notes-file #{notes_file_escaped}#{prerelease_flag}"
+    else
+      prerelease_flag = release_context[:prerelease] ? " --prerelease" : ""
+      "gh release create #{tag_escaped} --title #{title_escaped} --notes-file #{notes_file_escaped}#{prerelease_flag}"
+    end
+
+    puts "ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ"
+    puts "Publishing GitHub release #{release_context[:tag]}#{release_context[:prerelease] ? ' (prerelease)' : ''}"
+    puts "ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ"
+    # Keep `sh_in_dir` here because the helper takes shell strings and raises failures the same way as the rest of the task.
+    Shakapacker::Utils::Misc.sh_in_dir(gem_root, release_command)
+  end
+end
+
+def with_release_checkout(gem_root:, dry_run:)
+  return yield(gem_root) unless dry_run
+
+  Dir.mktmpdir("shakapacker-release-dry-run") do |tmpdir|
+    worktree_dir = File.join(tmpdir, "worktree")
+    escaped_worktree_dir = Shellwords.escape(worktree_dir)
+
+    # Dry runs should exercise the release flow without dirtying the maintainer's checkout.
+    Shakapacker::Utils::Misc.sh_in_dir(gem_root, "git worktree add --detach #{escaped_worktree_dir} HEAD")
+    begin
+      yield(worktree_dir)
+    ensure
+      Shakapacker::Utils::Misc.sh_in_dir(gem_root, "git worktree remove --force #{escaped_worktree_dir}")
+    end
+  end
+end
+
+def next_prerelease_gem_version(gem_root:, base_version:, prerelease_type:)
+  normalized_type = prerelease_type.to_s.strip
+  unless %w[beta rc].include?(normalized_type)
+    abort "❌ prerelease_type must be one of: beta, rc"
+  end
+
+  unless base_version.match?(/\A\d+\.\d+\.\d+\z/)
+    abort "❌ base_version must be in major.minor.patch format, for example 9.6.0"
+  end
+
+  Shakapacker::Utils::Misc.sh_in_dir(gem_root, "git fetch --tags --quiet")
+  # Git tags use npm semver format (dashes) because release-it creates the tag from the npm version.
+  # e.g., v9.6.0-rc.0, not v9.6.0.rc.0
+  tag_pattern = "v#{base_version}-#{normalized_type}.*"
+  existing_tags = `git -C #{Shellwords.escape(gem_root)} tag -l #{Shellwords.escape(tag_pattern)}`
+  abort "❌ Unable to list existing tags for prerelease calculation" unless $CHILD_STATUS.success?
+
+  tag_regex = /\Av#{Regexp.escape(base_version)}-#{Regexp.escape(normalized_type)}\.(\d+)\z/
+  max_existing_index = existing_tags.lines.map(&:strip).filter_map { |tag| tag.match(tag_regex)&.captures&.first&.to_i }.max
+  next_index = max_existing_index.nil? ? 0 : max_existing_index + 1
+
+  "#{base_version}.#{normalized_type}.#{next_index}"
+end
+
+def confirm_or_abort!(prompt)
+  return if Shakapacker::Utils::Misc.object_to_boolean(ENV["AUTO_CONFIRM"])
+
+  print "#{prompt} [y/N]: "
+  answer = $stdin.gets.to_s.strip.downcase
+  abort "❌ Aborted by user." unless %w[y yes].include?(answer)
+end
+
+def perform_release(gem_version:, dry_run:, check_uncommitted: true)
+  ensure_clean_worktree! if check_uncommitted
+  gem_root = File.expand_path("..", __dir__)
+
+  unless dry_run
     puts "ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ"
     puts "PRE-FLIGHT CHECKS"
     puts "ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ"
     verify_npm_auth
+    verify_gh_auth(gem_root: gem_root) unless Shakapacker::Utils::Misc.object_to_boolean(ENV["SKIP_GITHUB_RELEASE"])
   end
 
-  gem_version = args_hash.fetch(:gem_version, "")
+  requested_gem_version = gem_version.to_s.strip
+  validate_requested_gem_version!(requested_gem_version)
 
+  with_release_checkout(gem_root: gem_root, dry_run: dry_run) do |release_root|
+    Shakapacker::Utils::Misc.sh_in_dir(release_root, "git pull --rebase") unless dry_run
+
+    # The release root may change after `git pull --rebase`, so patch-bump inference must happen after that step.
+    resolved_target_gem_version = target_gem_version(gem_root: release_root, requested_gem_version: requested_gem_version)
+    # Dry runs still validate release-note prerequisites so missing changelog entries surface before a real release.
+    # Use SKIP_GITHUB_RELEASE=true if you want to rehearse the rest of the flow before that section exists.
+    release_context = prepare_github_release_context(
+      gem_root: release_root,
+      npm_version: Shakapacker::Utils::VersionSyntaxConverter.new.rubygem_to_npm(resolved_target_gem_version),
+      gem_version: resolved_target_gem_version
+    )
+
+    bump_command = if requested_gem_version.empty?
+      "gem bump --no-commit"
+    else
+      "gem bump --no-commit --version #{Shellwords.escape(requested_gem_version)}"
+    end
+    Shakapacker::Utils::Misc.sh_in_dir(release_root, bump_command)
+    Shakapacker::Utils::Misc.sh_in_dir(release_root, "bundle install")
+
+    resolved_gem_version = current_gem_version(release_root)
+    npm_version = Shakapacker::Utils::VersionSyntaxConverter.new.rubygem_to_npm(resolved_gem_version)
+    unless resolved_gem_version == resolved_target_gem_version
+      abort "❌ Expected gem bump to produce #{resolved_target_gem_version}, but found #{resolved_gem_version}."
+    end
+
+    release_it_command = +"release-it #{Shellwords.escape(npm_version)}"
+    release_it_command << " --npm.publish --no-git.requireCleanWorkingDir"
+    release_it_command << " --dry-run --verbose" if dry_run
+    puts "ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ"
+    puts "Use the OTP for NPM!"
+    puts "ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ"
+    Shakapacker::Utils::Misc.sh_in_dir(release_root, release_it_command)
+
+    puts "ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ"
+    puts "Use the OTP for RubyGems!"
+    puts "ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ"
+    Shakapacker::Utils::Misc.sh_in_dir(release_root, "gem release") unless dry_run
+
+    spec_dummy_dir = File.join(release_root, "spec", "dummy")
+    puts "ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ"
+    puts "Updating spec/dummy dependencies"
+    puts "ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ"
+    Shakapacker::Utils::Misc.sh_in_dir(spec_dummy_dir, "bundle install") unless dry_run
+    Shakapacker::Utils::Misc.sh_in_dir(spec_dummy_dir, "npm install") unless dry_run
+
+    lockfiles = ["spec/dummy/Gemfile.lock", "spec/dummy/package-lock.json", "spec/dummy/yarn.lock"]
+    existing_lockfiles = lockfiles.select { |f| File.exist?(File.join(release_root, f)) }
+    changed_lockfiles = existing_lockfiles.select do |lockfile|
+      changes_output = `git -C #{Shellwords.escape(release_root)} status --porcelain -- #{Shellwords.escape(lockfile)}`
+      !changes_output.strip.empty?
+    end
+
+    if !changed_lockfiles.empty? && !dry_run
+      puts "ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ"
+      puts "Committing and pushing spec/dummy lockfile changes: #{changed_lockfiles.join(', ')}"
+      puts "ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ"
+      escaped_lockfiles = changed_lockfiles.map { |path| Shellwords.escape(path) }.join(" ")
+      Shakapacker::Utils::Misc.sh_in_dir(release_root, "git add -- #{escaped_lockfiles}")
+      Shakapacker::Utils::Misc.sh_in_dir(release_root, "git commit -m 'Update spec/dummy lockfiles after release'")
+      Shakapacker::Utils::Misc.sh_in_dir(release_root, "git push")
+    end
+
+    publish_or_update_github_release(gem_root: release_root, release_context: release_context, dry_run: dry_run)
+  end
+end
+
+desc("Releases both the gem and node package using the given version.
+
+IMPORTANT: the gem version must be in valid rubygem format (no dashes).
+It will be automatically converted to npm semver by the rake task.
+
+GitHub releases are created/updated from CHANGELOG.md.
+For beta/rc versions, GitHub release is marked as prerelease automatically.
+
+Arguments:
+1st argument: The new version in rubygem format (example: 9.6.0.rc.0).
+              Pass no argument to perform a patch bump.
+2nd argument: Perform a dry run by passing 'true' as second argument.
+
+Examples:
+- rake create_release[9.6.0]
+- rake create_release[9.6.0.rc.0]
+- rake create_release[9.6.0,true]
+")
+task :create_release, %i[gem_version dry_run] do |_t, args|
+  args_hash = args.to_hash
+  is_dry_run = Shakapacker::Utils::Misc.object_to_boolean(args_hash[:dry_run])
+  perform_release(gem_version: args_hash[:gem_version], dry_run: is_dry_run)
+end
+
+desc("Creates the next prerelease automatically and then runs create_release.
+
+Examples:
+- rake create_prerelease[9.6.0,rc]       # -> 9.6.0.rc.0 or next rc index
+- rake create_prerelease[9.6.0,beta]     # -> 9.6.0.beta.0 or next beta index
+- rake create_prerelease[9.6.0,rc,true]  # dry run
+
+Notes:
+- Prompts for confirmation before continuing (set AUTO_CONFIRM=true to skip).
+- Uses git tags to compute the next prerelease index.
+")
+task :create_prerelease, %i[base_version prerelease_type dry_run] do |_t, args|
+  args_hash = args.to_hash
+  is_dry_run = Shakapacker::Utils::Misc.object_to_boolean(args_hash[:dry_run])
   gem_root = File.expand_path("..", __dir__)
+  ensure_clean_worktree!
 
-  npm_version = if gem_version.strip.empty?
-    ""
-                else
-                  Shakapacker::Utils::VersionSyntaxConverter.new.rubygem_to_npm(gem_version)
+  base_version = args_hash[:base_version].to_s.strip
+  if base_version.empty?
+    current_version = current_gem_version(gem_root)
+    base_match = current_version.match(/\A(\d+\.\d+\.\d+)/)
+    abort "❌ Could not infer base_version from current version #{current_version.inspect}" unless base_match
+
+    base_version = base_match[1]
   end
 
-  # See https://github.com/svenfuchs/gem-release
-  Shakapacker::Utils::Misc.sh_in_dir(gem_root, "git pull --rebase")
-  Shakapacker::Utils::Misc.sh_in_dir(gem_root, "gem bump --no-commit #{gem_version.strip.empty? ? '' : %(--version #{gem_version})}")
-  Shakapacker::Utils::Misc.sh_in_dir(gem_root, "bundle install")
-
-  # Will bump the yarn version, commit, tag the commit, push to repo, and release on yarn
-  release_it_command = +"release-it"
-  release_it_command << " #{npm_version}" unless npm_version.strip.empty?
-  release_it_command << " --npm.publish --no-git.requireCleanWorkingDir"
-  release_it_command << " --dry-run --verbose" if is_dry_run
-  puts "ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ"
-  puts "Use the OTP for NPM!"
-  puts "ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ"
-  Shakapacker::Utils::Misc.sh_in_dir(gem_root, release_it_command)
-
-  # Release the new gem version
-  puts "ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ"
-  puts "Use the OTP for RubyGems!"
-  puts "ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ"
-
-  Shakapacker::Utils::Misc.sh_in_dir(gem_root, "gem release") unless is_dry_run
-
-  # Update spec/dummy lockfiles to use the new version
-  spec_dummy_dir = File.join(gem_root, "spec", "dummy")
-  puts "ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ"
-  puts "Updating spec/dummy dependencies"
-  puts "ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ"
-  Shakapacker::Utils::Misc.sh_in_dir(spec_dummy_dir, "bundle install") unless is_dry_run
-  # Note: spec/dummy uses npm (matching CI configuration)
-  Shakapacker::Utils::Misc.sh_in_dir(spec_dummy_dir, "npm install") unless is_dry_run
-
-  # Check if there are changes to spec/dummy lockfiles and commit them
-  # Note: We check both npm and yarn lockfiles since the project supports multiple package managers for testing
-  require "shellwords"
-  lockfiles = ["spec/dummy/Gemfile.lock", "spec/dummy/package-lock.json", "spec/dummy/yarn.lock"]
-  existing_lockfiles = lockfiles.select { |f| File.exist?(File.join(gem_root, f)) }
-  changed_lockfiles = existing_lockfiles.select do |lockfile|
-    changes_output = `git -C #{Shellwords.escape(gem_root)} status --porcelain -- #{Shellwords.escape(lockfile)}`
-    !changes_output.strip.empty?
+  prerelease_type = args_hash[:prerelease_type].to_s.strip
+  if prerelease_type.empty?
+    abort "❌ prerelease_type is required. Usage: rake create_prerelease[9.6.0,rc] or rake create_prerelease[9.6.0,beta]"
   end
+  next_version = next_prerelease_gem_version(
+    gem_root: gem_root,
+    base_version: base_version,
+    prerelease_type: prerelease_type
+  )
 
-  if !changed_lockfiles.empty? && !is_dry_run
-    puts "ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ"
-    puts "Committing and pushing spec/dummy lockfile changes: #{changed_lockfiles.join(', ')}"
-    puts "ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ"
-    Shakapacker::Utils::Misc.sh_in_dir(gem_root, "git add -- #{changed_lockfiles.join(' ')}")
-    Shakapacker::Utils::Misc.sh_in_dir(gem_root, "git commit -m 'Update spec/dummy lockfiles after release'")
-    Shakapacker::Utils::Misc.sh_in_dir(gem_root, "git push")
-  end
+  puts "Computed next prerelease version: #{next_version}"
+  confirm_or_abort!("Proceed with prerelease #{next_version}?") unless is_dry_run
+
+  perform_release(gem_version: next_version, dry_run: is_dry_run, check_uncommitted: false)
 end
