@@ -30,6 +30,7 @@ Before running the release task:
 
 1. Ensure all desired changes are merged to `main` branch
 2. Update `CHANGELOG.md` with the new version and release notes
+   - For prerelease entries, use the npm semver header format with dashes, for example `## [v9.6.0-rc.0]`
 3. Commit the CHANGELOG changes
 4. Ensure your working directory is clean (`git status` shows no uncommitted changes)
 
@@ -68,6 +69,7 @@ The `create_release` task automatically:
    - Verifies npm authentication
    - Verifies GitHub CLI authentication unless `SKIP_GITHUB_RELEASE=true`
    - Verifies the matching `CHANGELOG.md` section exists for the target version
+   - For prereleases, expects the changelog header to use npm semver format, such as `## [v9.6.0-rc.0]`
 2. **Pulls latest changes** from the repository
 3. **Bumps version numbers** in:
    - `lib/shakapacker/version.rb` (Ruby gem version)
@@ -114,6 +116,8 @@ bundle exec rake create_release[10.0.0.rc.1]  # Gem: 10.0.0.rc.1, npm: 10.0.0-rc
 # Auto-next prerelease (recommended)
 bundle exec rake create_prerelease[10.0.0,rc]  # picks rc.0 then rc.1, etc., with confirmation
 ```
+
+The `create_prerelease` task requires the prerelease type argument explicitly: use `rc` or `beta`.
 
 ### 5. During the Release
 

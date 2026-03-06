@@ -11,13 +11,14 @@ class RaisingMessageHandler
 end
 
 def verify_npm_auth(registry_url = "https://registry.npmjs.org/")
-  result = `npm whoami --registry #{registry_url} 2>&1`
+  escaped_registry_url = Shellwords.escape(registry_url)
+  result = `npm whoami --registry #{escaped_registry_url} 2>&1`
   unless $CHILD_STATUS.success?
     puts "⚠️  NPM authentication required!"
-    puts "Please run: npm login --registry #{registry_url}"
+    puts "Please run: npm login --registry #{escaped_registry_url}"
     puts ""
-    system("npm login --registry #{registry_url}")
-    result = `npm whoami --registry #{registry_url} 2>&1`
+    system("npm login --registry #{escaped_registry_url}")
+    result = `npm whoami --registry #{escaped_registry_url} 2>&1`
     unless $CHILD_STATUS.success?
       abort "❌ NPM login failed! Please authenticate with npm before running the release."
     end
@@ -73,13 +74,15 @@ end
 def prepare_github_release_context(gem_root:, npm_version:, gem_version:)
   return if Shakapacker::Utils::Misc.object_to_boolean(ENV["SKIP_GITHUB_RELEASE"])
 
+  prerelease = prerelease_gem_version?(gem_version)
   changelog_path = File.join(gem_root, "CHANGELOG.md")
   notes = extract_changelog_section(changelog_path:, npm_version:)
   unless notes
-    abort "❌ Could not find `## [v#{npm_version}]` in CHANGELOG.md. Add that section or set SKIP_GITHUB_RELEASE=true."
+    format_hint = if prerelease
+      " For prerelease versions, CHANGELOG headers must use npm semver format, e.g. `## [v#{npm_version}]`."
+    end
+    abort "❌ Could not find `## [v#{npm_version}]` in CHANGELOG.md.#{format_hint} Add that section or set SKIP_GITHUB_RELEASE=true."
   end
-
-  prerelease = prerelease_gem_version?(gem_version)
 
   {
     notes:,
@@ -236,7 +239,8 @@ def perform_release(gem_version:, dry_run:)
       puts "ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ"
       puts "Committing and pushing spec/dummy lockfile changes: #{changed_lockfiles.join(', ')}"
       puts "ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ"
-      Shakapacker::Utils::Misc.sh_in_dir(release_root, "git add -- #{changed_lockfiles.join(' ')}")
+      escaped_lockfiles = changed_lockfiles.map { |path| Shellwords.escape(path) }.join(" ")
+      Shakapacker::Utils::Misc.sh_in_dir(release_root, "git add -- #{escaped_lockfiles}")
       Shakapacker::Utils::Misc.sh_in_dir(release_root, "git commit -m 'Update spec/dummy lockfiles after release'")
       Shakapacker::Utils::Misc.sh_in_dir(release_root, "git push")
     end
@@ -295,7 +299,9 @@ task :create_prerelease, %i[base_version prerelease_type dry_run] do |_t, args|
   end
 
   prerelease_type = args_hash[:prerelease_type].to_s.strip
-  prerelease_type = "rc" if prerelease_type.empty?
+  if prerelease_type.empty?
+    abort "❌ prerelease_type is required. Usage: rake create_prerelease[9.6.0,rc] or rake create_prerelease[9.6.0,beta]"
+  end
   next_version = next_prerelease_gem_version(gem_root:, base_version:, prerelease_type:)
 
   puts "Computed next prerelease version: #{next_version}"
