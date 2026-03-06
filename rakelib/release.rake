@@ -359,9 +359,9 @@ task :sync_github_release, %i[gem_version dry_run] do |_t, args|
   validate_requested_gem_version!(requested_gem_version)
 
   gem_root = File.expand_path("..", __dir__)
+  puts "ℹ️ sync_github_release reads local committed CHANGELOG.md; run `git pull --rebase` first if you want the latest remote notes." unless is_dry_run
   ensure_changelog_committed!(gem_root: gem_root) unless is_dry_run
   verify_gh_auth(gem_root: gem_root) unless is_dry_run
-  puts "ℹ️ sync_github_release reads local committed CHANGELOG.md; run `git pull --rebase` first if you want the latest remote notes." unless is_dry_run
 
   npm_version = Shakapacker::Utils::VersionSyntaxConverter.new.rubygem_to_npm(requested_gem_version)
   release_context = prepare_github_release_context(
