@@ -124,12 +124,21 @@ def prepare_github_release_context(gem_root:, npm_version:, gem_version:)
   }
 end
 
+def ensure_changelog_committed!(gem_root:)
+  changes_output = `git -C #{Shellwords.escape(gem_root)} status --porcelain -- CHANGELOG.md`
+  abort "❌ Unable to check CHANGELOG.md status" unless $CHILD_STATUS.success?
+  return if changes_output.strip.empty?
+
+  abort "❌ CHANGELOG.md has uncommitted changes. Commit or stash CHANGELOG.md before running sync_github_release."
+end
+
 def ensure_git_tag_exists!(gem_root:, tag:)
+  system("git", "-C", gem_root, "fetch", "--tags", "--quiet")
   tag_ref = "refs/tags/#{tag}"
   tag_exists = system("git", "-C", gem_root, "rev-parse", "--verify", "--quiet", tag_ref, out: File::NULL, err: File::NULL)
   return if tag_exists
 
-  abort "❌ Git tag #{tag.inspect} was not found locally. Run `git fetch --tags` and verify the tag exists before syncing GitHub release."
+  abort "❌ Git tag #{tag.inspect} was not found locally or remotely. Verify the tag exists before syncing GitHub release."
 end
 
 def publish_or_update_github_release(gem_root:, release_context:, dry_run:)
@@ -144,26 +153,25 @@ def publish_or_update_github_release(gem_root:, release_context:, dry_run:)
     tmp.write(release_context[:notes])
     tmp.flush
 
-    tag_escaped = Shellwords.escape(release_context[:tag])
-    title_escaped = Shellwords.escape(release_context[:title])
-    notes_file_escaped = Shellwords.escape(tmp.path)
     # The view probe only needs a boolean result, so use array-form system to avoid an extra shell layer.
     release_exists = system("gh", "release", "view", release_context[:tag], chdir: gem_root, out: File::NULL, err: File::NULL)
 
     release_command = if release_exists
       # `gh release edit` accepts `--prerelease=true|false`; there is no `--no-prerelease` flag.
-      prerelease_flag = " --prerelease=#{release_context[:prerelease]}"
-      "gh release edit #{tag_escaped} --title #{title_escaped} --notes-file #{notes_file_escaped}#{prerelease_flag}"
+      ["gh", "release", "edit", release_context[:tag], "--title", release_context[:title], "--notes-file", tmp.path,
+       "--prerelease=#{release_context[:prerelease]}"]
     else
-      prerelease_flag = release_context[:prerelease] ? " --prerelease" : ""
-      "gh release create #{tag_escaped} --verify-tag --title #{title_escaped} --notes-file #{notes_file_escaped}#{prerelease_flag}"
+      command = ["gh", "release", "create", release_context[:tag], "--verify-tag", "--title", release_context[:title],
+                 "--notes-file", tmp.path]
+      command << "--prerelease" if release_context[:prerelease]
+      command
     end
 
     puts "ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ"
     puts "Publishing GitHub release #{release_context[:tag]}#{release_context[:prerelease] ? ' (prerelease)' : ''}"
     puts "ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ"
-    # Keep `sh_in_dir` here because the helper takes shell strings and raises failures the same way as the rest of the task.
-    Shakapacker::Utils::Misc.sh_in_dir(gem_root, release_command)
+    success = system(*release_command, chdir: gem_root)
+    abort "❌ Failed to publish GitHub release #{release_context[:tag]}." unless success
   end
 end
 
@@ -329,14 +337,16 @@ Examples:
 task :sync_github_release, %i[gem_version dry_run] do |_t, args|
   args_hash = args.to_hash
   is_dry_run = Shakapacker::Utils::Misc.object_to_boolean(args_hash[:dry_run])
-  gem_root = File.expand_path("..", __dir__)
-  verify_gh_auth(gem_root: gem_root)
 
   requested_gem_version = args_hash[:gem_version].to_s.strip
   if requested_gem_version.empty?
     abort "❌ gem_version is required. Usage: rake \"sync_github_release[9.6.0]\" or rake \"sync_github_release[9.6.0.rc.1]\""
   end
   validate_requested_gem_version!(requested_gem_version)
+
+  gem_root = File.expand_path("..", __dir__)
+  ensure_changelog_committed!(gem_root: gem_root)
+  verify_gh_auth(gem_root: gem_root) unless is_dry_run
 
   npm_version = Shakapacker::Utils::VersionSyntaxConverter.new.rubygem_to_npm(requested_gem_version)
   release_context = prepare_github_release_context(
