@@ -11,11 +11,12 @@ class RaisingMessageHandler
 end
 
 def verify_npm_auth(registry_url = "https://registry.npmjs.org/")
+  display_registry_url = registry_url
   escaped_registry_url = Shellwords.escape(registry_url)
   result = `npm whoami --registry #{escaped_registry_url} 2>&1`
   unless $CHILD_STATUS.success?
     puts "⚠️  NPM authentication required!"
-    puts "Please run: npm login --registry #{escaped_registry_url}"
+    puts "Please run: npm login --registry #{display_registry_url}"
     puts ""
     system("npm login --registry #{escaped_registry_url}")
     result = `npm whoami --registry #{escaped_registry_url} 2>&1`
@@ -61,6 +62,13 @@ def prerelease_gem_version?(gem_version)
   gem_version.match?(/\A\d+\.\d+\.\d+\.(beta|rc)\.\d+\z/)
 end
 
+def validate_requested_gem_version!(requested_gem_version)
+  return if requested_gem_version.empty?
+  return if requested_gem_version.match?(/\A\d+\.\d+\.\d+(\.(beta|rc)\.\d+)?\z/)
+
+  abort "❌ gem_version must be in RubyGems format (no dashes), e.g. 9.6.0 or 9.6.0.rc.0. Got: #{requested_gem_version.inspect}"
+end
+
 def extract_changelog_section(changelog_path:, npm_version:)
   lines = File.readlines(changelog_path)
   section_header = /^## \[v#{Regexp.escape(npm_version)}\]/
@@ -102,8 +110,7 @@ def publish_or_update_github_release(gem_root:, release_context:, dry_run:)
     tag_escaped = Shellwords.escape(release_context[:tag])
     title_escaped = Shellwords.escape(release_context[:title])
     notes_file_escaped = Shellwords.escape(tmp.path)
-    view_command = "cd #{Shellwords.escape(gem_root)} && gh release view #{tag_escaped} >/dev/null 2>&1"
-    release_exists = system(view_command)
+    release_exists = system("gh", "release", "view", release_context[:tag], chdir: gem_root, out: File::NULL, err: File::NULL)
 
     release_command = if release_exists
       prerelease_flag = " --prerelease=#{release_context[:prerelease]}"
@@ -182,10 +189,12 @@ def perform_release(gem_version:, dry_run:)
   end
 
   requested_gem_version = gem_version.to_s.strip
+  validate_requested_gem_version!(requested_gem_version)
 
   with_release_checkout(gem_root:, dry_run:) do |release_root|
     Shakapacker::Utils::Misc.sh_in_dir(release_root, "git pull --rebase") unless dry_run
 
+    # The release root may change after `git pull --rebase`, so patch-bump inference must happen after that step.
     resolved_target_gem_version = target_gem_version(gem_root: release_root, requested_gem_version:)
     target_npm_version = Shakapacker::Utils::VersionSyntaxConverter.new.rubygem_to_npm(resolved_target_gem_version)
     release_context = prepare_github_release_context(
