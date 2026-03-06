@@ -108,7 +108,7 @@ def prepare_github_release_context(gem_root:, npm_version:, gem_version:)
 
   prerelease = prerelease_gem_version?(gem_version)
   changelog_path = File.join(gem_root, "CHANGELOG.md")
-  notes = extract_changelog_section(changelog_path:, npm_version:)
+  notes = extract_changelog_section(changelog_path: changelog_path, npm_version: npm_version)
   unless notes
     format_hint = if prerelease
       " For prerelease versions, CHANGELOG headers must use npm semver format, e.g. `## [v#{npm_version}]`."
@@ -117,8 +117,8 @@ def prepare_github_release_context(gem_root:, npm_version:, gem_version:)
   end
 
   {
-    notes:,
-    prerelease:,
+    notes: notes,
+    prerelease: prerelease,
     tag: "v#{npm_version}",
     title: "v#{npm_version}"
   }
@@ -212,17 +212,17 @@ def perform_release(gem_version:, dry_run:, check_uncommitted: true)
     puts "PRE-FLIGHT CHECKS"
     puts "ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ"
     verify_npm_auth
-    verify_gh_auth(gem_root:) unless Shakapacker::Utils::Misc.object_to_boolean(ENV["SKIP_GITHUB_RELEASE"])
+    verify_gh_auth(gem_root: gem_root) unless Shakapacker::Utils::Misc.object_to_boolean(ENV["SKIP_GITHUB_RELEASE"])
   end
 
   requested_gem_version = gem_version.to_s.strip
   validate_requested_gem_version!(requested_gem_version)
 
-  with_release_checkout(gem_root:, dry_run:) do |release_root|
+  with_release_checkout(gem_root: gem_root, dry_run: dry_run) do |release_root|
     Shakapacker::Utils::Misc.sh_in_dir(release_root, "git pull --rebase") unless dry_run
 
     # The release root may change after `git pull --rebase`, so patch-bump inference must happen after that step.
-    resolved_target_gem_version = target_gem_version(gem_root: release_root, requested_gem_version:)
+    resolved_target_gem_version = target_gem_version(gem_root: release_root, requested_gem_version: requested_gem_version)
     # Dry runs still validate release-note prerequisites so missing changelog entries surface before a real release.
     # Use SKIP_GITHUB_RELEASE=true if you want to rehearse the rest of the flow before that section exists.
     release_context = prepare_github_release_context(
@@ -282,7 +282,7 @@ def perform_release(gem_version:, dry_run:, check_uncommitted: true)
       Shakapacker::Utils::Misc.sh_in_dir(release_root, "git push")
     end
 
-    publish_or_update_github_release(gem_root: release_root, release_context:, dry_run:)
+    publish_or_update_github_release(gem_root: release_root, release_context: release_context, dry_run: dry_run)
   end
 end
 
@@ -340,7 +340,11 @@ task :create_prerelease, %i[base_version prerelease_type dry_run] do |_t, args|
   if prerelease_type.empty?
     abort "❌ prerelease_type is required. Usage: rake create_prerelease[9.6.0,rc] or rake create_prerelease[9.6.0,beta]"
   end
-  next_version = next_prerelease_gem_version(gem_root:, base_version:, prerelease_type:)
+  next_version = next_prerelease_gem_version(
+    gem_root: gem_root,
+    base_version: base_version,
+    prerelease_type: prerelease_type
+  )
 
   puts "Computed next prerelease version: #{next_version}"
   confirm_or_abort!("Proceed with prerelease #{next_version}?") unless is_dry_run
