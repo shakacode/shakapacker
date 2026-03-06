@@ -42,6 +42,20 @@ def current_gem_version(gem_root)
   match[1]
 end
 
+def target_gem_version(gem_root:, requested_gem_version:)
+  version = requested_gem_version.to_s.strip
+  return version unless version.empty?
+
+  current_version = current_gem_version(gem_root)
+  match = current_version.match(/\A(\d+)\.(\d+)\.(\d+)\z/)
+  unless match
+    abort "❌ Automatic patch bumps require the current version to use major.minor.patch format. Pass an explicit version instead."
+  end
+
+  major, minor, patch = match.captures.map(&:to_i)
+  "#{major}.#{minor}.#{patch + 1}"
+end
+
 def prerelease_gem_version?(gem_version)
   gem_version.match?(/\A\d+\.\d+\.\d+\.(beta|rc)\.\d+\z/)
 end
@@ -58,8 +72,6 @@ end
 
 def prepare_github_release_context(gem_root:, npm_version:, gem_version:)
   return if Shakapacker::Utils::Misc.object_to_boolean(ENV["SKIP_GITHUB_RELEASE"])
-
-  verify_gh_auth
 
   changelog_path = File.join(gem_root, "CHANGELOG.md")
   notes = extract_changelog_section(changelog_path:, npm_version:)
@@ -133,6 +145,8 @@ def next_prerelease_gem_version(gem_root:, base_version:, prerelease_type:)
   end
 
   Shakapacker::Utils::Misc.sh_in_dir(gem_root, "git fetch --tags --quiet")
+  # Git tags use npm semver format (dashes) because release-it creates the tag from the npm version.
+  # e.g., v9.6.0-rc.0, not v9.6.0.rc.0
   tag_pattern = "v#{base_version}-#{normalized_type}.*"
   existing_tags = `git -C #{Shellwords.escape(gem_root)} tag -l #{Shellwords.escape(tag_pattern)}`
   abort "❌ Unable to list existing tags for prerelease calculation" unless $CHILD_STATUS.success?
@@ -161,12 +175,21 @@ def perform_release(gem_version:, dry_run:)
     puts "PRE-FLIGHT CHECKS"
     puts "ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ"
     verify_npm_auth
+    verify_gh_auth unless Shakapacker::Utils::Misc.object_to_boolean(ENV["SKIP_GITHUB_RELEASE"])
   end
 
   requested_gem_version = gem_version.to_s.strip
 
   with_release_checkout(gem_root:, dry_run:) do |release_root|
     Shakapacker::Utils::Misc.sh_in_dir(release_root, "git pull --rebase") unless dry_run
+
+    resolved_target_gem_version = target_gem_version(gem_root: release_root, requested_gem_version:)
+    target_npm_version = Shakapacker::Utils::VersionSyntaxConverter.new.rubygem_to_npm(resolved_target_gem_version)
+    release_context = prepare_github_release_context(
+      gem_root: release_root,
+      npm_version: target_npm_version,
+      gem_version: resolved_target_gem_version
+    )
 
     bump_command = if requested_gem_version.empty?
       "gem bump --no-commit"
@@ -178,9 +201,11 @@ def perform_release(gem_version:, dry_run:)
 
     resolved_gem_version = current_gem_version(release_root)
     npm_version = Shakapacker::Utils::VersionSyntaxConverter.new.rubygem_to_npm(resolved_gem_version)
-    release_context = prepare_github_release_context(gem_root: release_root, npm_version:, gem_version: resolved_gem_version)
+    unless resolved_gem_version == resolved_target_gem_version
+      abort "❌ Expected gem bump to produce #{resolved_target_gem_version}, but found #{resolved_gem_version}."
+    end
 
-    release_it_command = +"release-it #{npm_version}"
+    release_it_command = +"release-it #{Shellwords.escape(npm_version)}"
     release_it_command << " --npm.publish --no-git.requireCleanWorkingDir"
     release_it_command << " --dry-run --verbose" if dry_run
     puts "ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ"
