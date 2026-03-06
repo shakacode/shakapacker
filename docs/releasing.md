@@ -83,10 +83,11 @@ The `create_release` task automatically:
 
 If you want GitHub Releases, do that as a separate step after publishing:
 
-1. Update `CHANGELOG.md` with the published version section
+1. Run `bundle exec rake update_changelog`
+2. Update `CHANGELOG.md` with the published version section
    - For prerelease entries, use npm semver header format with dashes, for example `## [v9.6.0-rc.1]`
-2. Commit `CHANGELOG.md`
-3. Run:
+3. Commit `CHANGELOG.md`
+4. Run:
 
 ```bash
 # Stable
