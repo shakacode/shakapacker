@@ -125,15 +125,17 @@ def prepare_github_release_context(gem_root:, npm_version:, gem_version:)
 end
 
 def ensure_changelog_committed!(gem_root:)
-  changes_output = `git -C #{Shellwords.escape(gem_root)} status --porcelain -- CHANGELOG.md`
-  abort "❌ Unable to check CHANGELOG.md status" unless $CHILD_STATUS.success?
+  changes_output, status = Open3.capture2e("git", "-C", gem_root, "status", "--porcelain", "--", "CHANGELOG.md")
+  abort "❌ Unable to check CHANGELOG.md status" unless status.success?
   return if changes_output.strip.empty?
 
   abort "❌ CHANGELOG.md has uncommitted changes. Commit or stash CHANGELOG.md before running sync_github_release."
 end
 
 def ensure_git_tag_exists!(gem_root:, tag:)
-  system("git", "-C", gem_root, "fetch", "--tags", "--quiet")
+  fetched = system("git", "-C", gem_root, "fetch", "--tags", "--quiet", out: File::NULL, err: File::NULL)
+  abort "❌ Unable to fetch git tags before verifying #{tag.inspect}." unless fetched
+
   tag_ref = "refs/tags/#{tag}"
   tag_exists = system("git", "-C", gem_root, "rev-parse", "--verify", "--quiet", tag_ref, out: File::NULL, err: File::NULL)
   return if tag_exists
@@ -227,6 +229,7 @@ end
 def perform_release(gem_version:, dry_run:, check_uncommitted: true)
   ensure_clean_worktree! if check_uncommitted
   gem_root = File.expand_path("..", __dir__)
+  released_gem_version = nil
 
   unless dry_run
     puts "ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ"
@@ -252,6 +255,7 @@ def perform_release(gem_version:, dry_run:, check_uncommitted: true)
     Shakapacker::Utils::Misc.sh_in_dir(release_root, "bundle install")
 
     resolved_gem_version = current_gem_version(release_root)
+    released_gem_version = resolved_gem_version
     npm_version = Shakapacker::Utils::VersionSyntaxConverter.new.rubygem_to_npm(resolved_gem_version)
     unless resolved_gem_version == resolved_target_gem_version
       abort "❌ Expected gem bump to produce #{resolved_target_gem_version}, but found #{resolved_gem_version}."
@@ -294,6 +298,13 @@ def perform_release(gem_version:, dry_run:, check_uncommitted: true)
       Shakapacker::Utils::Misc.sh_in_dir(release_root, "git push")
     end
 
+  end
+
+  unless dry_run
+    puts "ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ"
+    puts "Reminder: after updating and committing CHANGELOG.md, run:"
+    puts "bundle exec rake \"sync_github_release[#{released_gem_version}]\""
+    puts "ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ"
   end
 end
 
