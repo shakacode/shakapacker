@@ -104,8 +104,6 @@ def extract_changelog_section(changelog_path:, npm_version:)
 end
 
 def prepare_github_release_context(gem_root:, npm_version:, gem_version:)
-  return if Shakapacker::Utils::Misc.object_to_boolean(ENV["SKIP_GITHUB_RELEASE"])
-
   prerelease = prerelease_gem_version?(gem_version)
   changelog_path = File.join(gem_root, "CHANGELOG.md")
   notes = extract_changelog_section(changelog_path: changelog_path, npm_version: npm_version)
@@ -113,7 +111,7 @@ def prepare_github_release_context(gem_root:, npm_version:, gem_version:)
     format_hint = if prerelease
       " For prerelease versions, CHANGELOG headers must use npm semver format, e.g. `## [v#{npm_version}]`."
     end
-    abort "❌ Could not find `## [v#{npm_version}]` in CHANGELOG.md.#{format_hint} Add that section or set SKIP_GITHUB_RELEASE=true."
+    abort "❌ Could not find `## [v#{npm_version}]` in CHANGELOG.md.#{format_hint} Add that section and retry."
   end
 
   {
@@ -212,7 +210,6 @@ def perform_release(gem_version:, dry_run:, check_uncommitted: true)
     puts "PRE-FLIGHT CHECKS"
     puts "ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ"
     verify_npm_auth
-    verify_gh_auth(gem_root: gem_root) unless Shakapacker::Utils::Misc.object_to_boolean(ENV["SKIP_GITHUB_RELEASE"])
   end
 
   requested_gem_version = gem_version.to_s.strip
@@ -223,14 +220,6 @@ def perform_release(gem_version:, dry_run:, check_uncommitted: true)
 
     # The release root may change after `git pull --rebase`, so patch-bump inference must happen after that step.
     resolved_target_gem_version = target_gem_version(gem_root: release_root, requested_gem_version: requested_gem_version)
-    # Dry runs still validate release-note prerequisites so missing changelog entries surface before a real release.
-    # Use SKIP_GITHUB_RELEASE=true if you want to rehearse the rest of the flow before that section exists.
-    release_context = prepare_github_release_context(
-      gem_root: release_root,
-      npm_version: Shakapacker::Utils::VersionSyntaxConverter.new.rubygem_to_npm(resolved_target_gem_version),
-      gem_version: resolved_target_gem_version
-    )
-
     bump_command = if requested_gem_version.empty?
       "gem bump --no-commit"
     else
@@ -282,7 +271,6 @@ def perform_release(gem_version:, dry_run:, check_uncommitted: true)
       Shakapacker::Utils::Misc.sh_in_dir(release_root, "git push")
     end
 
-    publish_or_update_github_release(gem_root: release_root, release_context: release_context, dry_run: dry_run)
   end
 end
 
@@ -291,8 +279,7 @@ desc("Releases both the gem and node package using the given version.
 IMPORTANT: the gem version must be in valid rubygem format (no dashes).
 It will be automatically converted to npm semver by the rake task.
 
-GitHub releases are created/updated from CHANGELOG.md.
-For beta/rc versions, GitHub release is marked as prerelease automatically.
+GitHub release sync is a separate step via `sync_github_release`.
 
 Arguments:
 1st argument: The new version in rubygem format (example: 9.6.0.rc.0).
@@ -308,6 +295,42 @@ task :create_release, %i[gem_version dry_run] do |_t, args|
   args_hash = args.to_hash
   is_dry_run = Shakapacker::Utils::Misc.object_to_boolean(args_hash[:dry_run])
   perform_release(gem_version: args_hash[:gem_version], dry_run: is_dry_run)
+end
+
+desc("Creates or updates a GitHub release from CHANGELOG.md for an already-published gem version.
+
+IMPORTANT: pass gem version in RubyGems format (e.g. 9.6.0.rc.1), and ensure matching changelog
+header exists in npm format (e.g. ## [v9.6.0-rc.1]).
+
+Arguments:
+1st argument: Gem version in RubyGems format (required).
+2nd argument: Perform a dry run by passing 'true'.
+
+Examples:
+- rake sync_github_release[9.6.0]
+- rake sync_github_release[9.6.0.rc.1]
+- rake sync_github_release[9.6.0.rc.1,true]
+")
+task :sync_github_release, %i[gem_version dry_run] do |_t, args|
+  args_hash = args.to_hash
+  is_dry_run = Shakapacker::Utils::Misc.object_to_boolean(args_hash[:dry_run])
+  gem_root = File.expand_path("..", __dir__)
+  ensure_clean_worktree!
+  verify_gh_auth(gem_root: gem_root)
+
+  requested_gem_version = args_hash[:gem_version].to_s.strip
+  if requested_gem_version.empty?
+    abort "❌ gem_version is required. Usage: rake sync_github_release[9.6.0] or rake sync_github_release[9.6.0.rc.1]"
+  end
+  validate_requested_gem_version!(requested_gem_version)
+
+  npm_version = Shakapacker::Utils::VersionSyntaxConverter.new.rubygem_to_npm(requested_gem_version)
+  release_context = prepare_github_release_context(
+    gem_root: gem_root,
+    npm_version: npm_version,
+    gem_version: requested_gem_version
+  )
+  publish_or_update_github_release(gem_root: gem_root, release_context: release_context, dry_run: is_dry_run)
 end
 
 desc("Creates the next prerelease automatically and then runs create_release.
