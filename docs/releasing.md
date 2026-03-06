@@ -58,28 +58,34 @@ bundle exec rake create_release
 bundle exec rake create_release[9.1.0,true]
 ```
 
+Dry runs use a temporary git worktree so version bumps and installs do not modify your current checkout.
+
 ### 3. What the Release Task Does
 
 The `create_release` task automatically:
 
-1. **Pulls latest changes** from the repository
-2. **Bumps version numbers** in:
+1. **Validates release prerequisites**:
+   - Verifies npm authentication
+   - Verifies GitHub CLI authentication unless `SKIP_GITHUB_RELEASE=true`
+   - Verifies the matching `CHANGELOG.md` section exists for the target version
+2. **Pulls latest changes** from the repository
+3. **Bumps version numbers** in:
    - `lib/shakapacker/version.rb` (Ruby gem version)
    - `package.json` (npm package version - converted from Ruby format)
-3. **Publishes to npm:**
+4. **Publishes to npm:**
    - Prompts for npm OTP (2FA code)
    - Creates git tag
    - Pushes to GitHub
-4. **Publishes to RubyGems:**
+5. **Publishes to RubyGems:**
    - Prompts for RubyGems OTP (2FA code)
-5. **Creates or updates GitHub release:**
-   - Uses `gh release create` / `gh release edit`
-   - Reads release notes from `CHANGELOG.md` section `## [vX.Y.Z...]`
-   - Automatically sets `--prerelease` for beta/rc versions
 6. **Updates spec/dummy lockfiles:**
    - Runs `bundle install` to update `Gemfile.lock`
    - Runs `npm install` to update `package-lock.json` (yarn.lock may also be updated for multi-package-manager compatibility testing)
 7. **Commits and pushes lockfile changes** automatically
+8. **Creates or updates GitHub release:**
+   - Uses `gh release create` / `gh release edit`
+   - Reads release notes from `CHANGELOG.md` section `## [vX.Y.Z...]`
+   - Automatically sets prerelease state for beta/rc versions and clears it for stable edits
 
 ### 4. Version Format
 

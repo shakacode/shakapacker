@@ -2,6 +2,7 @@ require_relative File.join("..", "lib", "shakapacker", "utils", "version_syntax_
 require_relative File.join("..", "lib", "shakapacker", "utils", "misc")
 require "shellwords"
 require "tempfile"
+require "tmpdir"
 
 class RaisingMessageHandler
   def add_error(error)
@@ -55,8 +56,7 @@ def extract_changelog_section(changelog_path:, npm_version:)
   lines[start_index...end_index].join.rstrip
 end
 
-def publish_or_update_github_release(gem_root:, npm_version:, gem_version:, dry_run:)
-  return if dry_run
+def prepare_github_release_context(gem_root:, npm_version:, gem_version:)
   return if Shakapacker::Utils::Misc.object_to_boolean(ENV["SKIP_GITHUB_RELEASE"])
 
   verify_gh_auth
@@ -67,30 +67,58 @@ def publish_or_update_github_release(gem_root:, npm_version:, gem_version:, dry_
     abort "❌ Could not find `## [v#{npm_version}]` in CHANGELOG.md. Add that section or set SKIP_GITHUB_RELEASE=true."
   end
 
-  tag = "v#{npm_version}"
-  title = tag
-  prerelease_flag = prerelease_gem_version?(gem_version) ? " --prerelease" : ""
+  prerelease = prerelease_gem_version?(gem_version)
+
+  {
+    notes:,
+    prerelease:,
+    tag: "v#{npm_version}",
+    title: "v#{npm_version}"
+  }
+end
+
+def publish_or_update_github_release(gem_root:, release_context:, dry_run:)
+  return if dry_run || release_context.nil?
 
   Tempfile.create(["shakapacker-release-notes-", ".md"]) do |tmp|
-    tmp.write(notes)
+    tmp.write(release_context[:notes])
     tmp.flush
 
-    tag_escaped = Shellwords.escape(tag)
-    title_escaped = Shellwords.escape(title)
+    tag_escaped = Shellwords.escape(release_context[:tag])
+    title_escaped = Shellwords.escape(release_context[:title])
     notes_file_escaped = Shellwords.escape(tmp.path)
     view_command = "cd #{Shellwords.escape(gem_root)} && gh release view #{tag_escaped} >/dev/null 2>&1"
     release_exists = system(view_command)
 
     release_command = if release_exists
+      prerelease_flag = " --prerelease=#{release_context[:prerelease]}"
       "gh release edit #{tag_escaped} --title #{title_escaped} --notes-file #{notes_file_escaped}#{prerelease_flag}"
     else
+      prerelease_flag = release_context[:prerelease] ? " --prerelease" : ""
       "gh release create #{tag_escaped} --title #{title_escaped} --notes-file #{notes_file_escaped}#{prerelease_flag}"
     end
 
     puts "ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ"
-    puts "Publishing GitHub release #{tag}#{prerelease_gem_version?(gem_version) ? ' (prerelease)' : ''}"
+    puts "Publishing GitHub release #{release_context[:tag]}#{release_context[:prerelease] ? ' (prerelease)' : ''}"
     puts "ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ"
     Shakapacker::Utils::Misc.sh_in_dir(gem_root, release_command)
+  end
+end
+
+def with_release_checkout(gem_root:, dry_run:)
+  return yield(gem_root) unless dry_run
+
+  Dir.mktmpdir("shakapacker-release-dry-run") do |tmpdir|
+    worktree_dir = File.join(tmpdir, "worktree")
+    escaped_worktree_dir = Shellwords.escape(worktree_dir)
+
+    # Dry runs should exercise the release flow without dirtying the maintainer's checkout.
+    Shakapacker::Utils::Misc.sh_in_dir(gem_root, "git worktree add --detach #{escaped_worktree_dir} HEAD")
+    begin
+      yield(worktree_dir)
+    ensure
+      Shakapacker::Utils::Misc.sh_in_dir(gem_root, "git worktree remove --force #{escaped_worktree_dir}")
+    end
   end
 end
 
@@ -137,55 +165,59 @@ def perform_release(gem_version:, dry_run:)
 
   requested_gem_version = gem_version.to_s.strip
 
-  Shakapacker::Utils::Misc.sh_in_dir(gem_root, "git pull --rebase")
-  bump_command = if requested_gem_version.empty?
-    "gem bump --no-commit"
-  else
-    "gem bump --no-commit --version #{requested_gem_version}"
-  end
-  Shakapacker::Utils::Misc.sh_in_dir(gem_root, bump_command)
-  Shakapacker::Utils::Misc.sh_in_dir(gem_root, "bundle install")
+  with_release_checkout(gem_root:, dry_run:) do |release_root|
+    Shakapacker::Utils::Misc.sh_in_dir(release_root, "git pull --rebase") unless dry_run
 
-  resolved_gem_version = current_gem_version(gem_root)
-  npm_version = Shakapacker::Utils::VersionSyntaxConverter.new.rubygem_to_npm(resolved_gem_version)
+    bump_command = if requested_gem_version.empty?
+      "gem bump --no-commit"
+    else
+      "gem bump --no-commit --version #{Shellwords.escape(requested_gem_version)}"
+    end
+    Shakapacker::Utils::Misc.sh_in_dir(release_root, bump_command)
+    Shakapacker::Utils::Misc.sh_in_dir(release_root, "bundle install")
 
-  release_it_command = +"release-it #{npm_version}"
-  release_it_command << " --npm.publish --no-git.requireCleanWorkingDir"
-  release_it_command << " --dry-run --verbose" if dry_run
-  puts "ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ"
-  puts "Use the OTP for NPM!"
-  puts "ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ"
-  Shakapacker::Utils::Misc.sh_in_dir(gem_root, release_it_command)
+    resolved_gem_version = current_gem_version(release_root)
+    npm_version = Shakapacker::Utils::VersionSyntaxConverter.new.rubygem_to_npm(resolved_gem_version)
+    release_context = prepare_github_release_context(gem_root: release_root, npm_version:, gem_version: resolved_gem_version)
 
-  puts "ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ"
-  puts "Use the OTP for RubyGems!"
-  puts "ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ"
-  Shakapacker::Utils::Misc.sh_in_dir(gem_root, "gem release") unless dry_run
-
-  spec_dummy_dir = File.join(gem_root, "spec", "dummy")
-  puts "ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ"
-  puts "Updating spec/dummy dependencies"
-  puts "ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ"
-  Shakapacker::Utils::Misc.sh_in_dir(spec_dummy_dir, "bundle install") unless dry_run
-  Shakapacker::Utils::Misc.sh_in_dir(spec_dummy_dir, "npm install") unless dry_run
-
-  lockfiles = ["spec/dummy/Gemfile.lock", "spec/dummy/package-lock.json", "spec/dummy/yarn.lock"]
-  existing_lockfiles = lockfiles.select { |f| File.exist?(File.join(gem_root, f)) }
-  changed_lockfiles = existing_lockfiles.select do |lockfile|
-    changes_output = `git -C #{Shellwords.escape(gem_root)} status --porcelain -- #{Shellwords.escape(lockfile)}`
-    !changes_output.strip.empty?
-  end
-
-  if !changed_lockfiles.empty? && !dry_run
+    release_it_command = +"release-it #{npm_version}"
+    release_it_command << " --npm.publish --no-git.requireCleanWorkingDir"
+    release_it_command << " --dry-run --verbose" if dry_run
     puts "ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ"
-    puts "Committing and pushing spec/dummy lockfile changes: #{changed_lockfiles.join(', ')}"
+    puts "Use the OTP for NPM!"
     puts "ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ"
-    Shakapacker::Utils::Misc.sh_in_dir(gem_root, "git add -- #{changed_lockfiles.join(' ')}")
-    Shakapacker::Utils::Misc.sh_in_dir(gem_root, "git commit -m 'Update spec/dummy lockfiles after release'")
-    Shakapacker::Utils::Misc.sh_in_dir(gem_root, "git push")
-  end
+    Shakapacker::Utils::Misc.sh_in_dir(release_root, release_it_command)
 
-  publish_or_update_github_release(gem_root:, npm_version:, gem_version: resolved_gem_version, dry_run:)
+    puts "ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ"
+    puts "Use the OTP for RubyGems!"
+    puts "ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ"
+    Shakapacker::Utils::Misc.sh_in_dir(release_root, "gem release") unless dry_run
+
+    spec_dummy_dir = File.join(release_root, "spec", "dummy")
+    puts "ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ"
+    puts "Updating spec/dummy dependencies"
+    puts "ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ"
+    Shakapacker::Utils::Misc.sh_in_dir(spec_dummy_dir, "bundle install") unless dry_run
+    Shakapacker::Utils::Misc.sh_in_dir(spec_dummy_dir, "npm install") unless dry_run
+
+    lockfiles = ["spec/dummy/Gemfile.lock", "spec/dummy/package-lock.json", "spec/dummy/yarn.lock"]
+    existing_lockfiles = lockfiles.select { |f| File.exist?(File.join(release_root, f)) }
+    changed_lockfiles = existing_lockfiles.select do |lockfile|
+      changes_output = `git -C #{Shellwords.escape(release_root)} status --porcelain -- #{Shellwords.escape(lockfile)}`
+      !changes_output.strip.empty?
+    end
+
+    if !changed_lockfiles.empty? && !dry_run
+      puts "ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ"
+      puts "Committing and pushing spec/dummy lockfile changes: #{changed_lockfiles.join(', ')}"
+      puts "ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ"
+      Shakapacker::Utils::Misc.sh_in_dir(release_root, "git add -- #{changed_lockfiles.join(' ')}")
+      Shakapacker::Utils::Misc.sh_in_dir(release_root, "git commit -m 'Update spec/dummy lockfiles after release'")
+      Shakapacker::Utils::Misc.sh_in_dir(release_root, "git push")
+    end
+
+    publish_or_update_github_release(gem_root: release_root, release_context:, dry_run:)
+  end
 end
 
 desc("Releases both the gem and node package using the given version.
