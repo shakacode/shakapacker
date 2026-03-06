@@ -137,8 +137,10 @@ def ensure_changelog_committed!(gem_root:)
 end
 
 def ensure_git_tag_exists!(gem_root:, tag:)
-  fetched = system("git", "-C", gem_root, "fetch", "--tags", "--quiet", out: File::NULL, err: File::NULL)
-  abort "❌ Unable to fetch git tags before verifying #{tag.inspect}." unless fetched
+  fetch_output, fetch_status = Open3.capture2e("git", "-C", gem_root, "fetch", "--tags", "--quiet")
+  unless fetch_status.success?
+    abort "❌ Unable to fetch git tags before verifying #{tag.inspect}.\n\n#{fetch_output.strip}"
+  end
 
   tag_ref = "refs/tags/#{tag}"
   tag_exists = system("git", "-C", gem_root, "rev-parse", "--verify", "--quiet", tag_ref, out: File::NULL, err: File::NULL)
@@ -367,13 +369,12 @@ task :sync_github_release, %i[gem_version dry_run] do |_t, args|
   puts "ℹ️ sync_github_release reads local committed CHANGELOG.md; run `git pull --rebase` first if you want the latest remote notes." unless is_dry_run
   if is_dry_run
     if changelog_dirty?(gem_root: gem_root)
-      puts "⚠️ DRY RUN: CHANGELOG.md has uncommitted changes; real sync_github_release will abort until CHANGELOG.md is committed or stashed."
+      abort "⚠️ DRY RUN: CHANGELOG.md has uncommitted changes. Commit or stash CHANGELOG.md before running sync_github_release."
     end
     puts "DRY RUN: Validating CHANGELOG.md section exists for the requested version..."
   else
     ensure_changelog_committed!(gem_root: gem_root)
   end
-  verify_gh_auth(gem_root: gem_root) unless is_dry_run
 
   npm_version = Shakapacker::Utils::VersionSyntaxConverter.new.rubygem_to_npm(requested_gem_version)
   release_context = prepare_github_release_context(
@@ -381,6 +382,7 @@ task :sync_github_release, %i[gem_version dry_run] do |_t, args|
     npm_version: npm_version,
     gem_version: requested_gem_version
   )
+  verify_gh_auth(gem_root: gem_root) unless is_dry_run
   publish_or_update_github_release(gem_root: gem_root, release_context: release_context, dry_run: is_dry_run)
 end
 
