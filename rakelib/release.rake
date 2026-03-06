@@ -1,6 +1,7 @@
 require_relative File.join("..", "lib", "shakapacker", "utils", "version_syntax_converter")
 require_relative File.join("..", "lib", "shakapacker", "utils", "misc")
 require "shellwords"
+require "open3"
 require "tempfile"
 require "tmpdir"
 
@@ -48,8 +49,9 @@ def verify_gh_auth(gem_root:)
   end
 
   repo_slug = github_repo_slug(gem_root)
-  permissions_result = `gh api repos/#{repo_slug} --jq '.permissions.push' 2>&1`.strip
-  unless $CHILD_STATUS.success?
+  permissions_result, status = Open3.capture2e("gh", "api", "repos/#{repo_slug}", "--jq", ".permissions.push")
+  permissions_result = permissions_result.strip
+  unless status.success?
     abort "❌ GitHub CLI authenticated, but failed to verify write access to #{repo_slug}.\n\n#{permissions_result}"
   end
   unless permissions_result == "true"
@@ -123,7 +125,11 @@ def prepare_github_release_context(gem_root:, npm_version:, gem_version:)
 end
 
 def publish_or_update_github_release(gem_root:, release_context:, dry_run:)
-  return if dry_run || release_context.nil?
+  return if release_context.nil?
+  if dry_run
+    puts "DRY RUN: Would create or update GitHub release #{release_context[:tag]}#{release_context[:prerelease] ? ' (prerelease)' : ''}"
+    return
+  end
 
   Tempfile.create(["shakapacker-release-notes-", ".md"]) do |tmp|
     tmp.write(release_context[:notes])
@@ -141,7 +147,7 @@ def publish_or_update_github_release(gem_root:, release_context:, dry_run:)
       "gh release edit #{tag_escaped} --title #{title_escaped} --notes-file #{notes_file_escaped}#{prerelease_flag}"
     else
       prerelease_flag = release_context[:prerelease] ? " --prerelease" : ""
-      "gh release create #{tag_escaped} --title #{title_escaped} --notes-file #{notes_file_escaped}#{prerelease_flag}"
+      "gh release create #{tag_escaped} --verify-tag --title #{title_escaped} --notes-file #{notes_file_escaped}#{prerelease_flag}"
     end
 
     puts "ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ"
@@ -287,9 +293,9 @@ Arguments:
 2nd argument: Perform a dry run by passing 'true' as second argument.
 
 Examples:
-- rake create_release[9.6.0]
-- rake create_release[9.6.0.rc.0]
-- rake create_release[9.6.0,true]
+- rake \"create_release[9.6.0]\"
+- rake \"create_release[9.6.0.rc.0]\"
+- rake \"create_release[9.6.0,true]\"
 ")
 task :create_release, %i[gem_version dry_run] do |_t, args|
   args_hash = args.to_hash
@@ -307,9 +313,9 @@ Arguments:
 2nd argument: Perform a dry run by passing 'true'.
 
 Examples:
-- rake sync_github_release[9.6.0]
-- rake sync_github_release[9.6.0.rc.1]
-- rake sync_github_release[9.6.0.rc.1,true]
+- rake \"sync_github_release[9.6.0]\"
+- rake \"sync_github_release[9.6.0.rc.1]\"
+- rake \"sync_github_release[9.6.0.rc.1,true]\"
 ")
 task :sync_github_release, %i[gem_version dry_run] do |_t, args|
   args_hash = args.to_hash
@@ -320,7 +326,7 @@ task :sync_github_release, %i[gem_version dry_run] do |_t, args|
 
   requested_gem_version = args_hash[:gem_version].to_s.strip
   if requested_gem_version.empty?
-    abort "❌ gem_version is required. Usage: rake sync_github_release[9.6.0] or rake sync_github_release[9.6.0.rc.1]"
+    abort "❌ gem_version is required. Usage: rake \"sync_github_release[9.6.0]\" or rake \"sync_github_release[9.6.0.rc.1]\""
   end
   validate_requested_gem_version!(requested_gem_version)
 
@@ -336,9 +342,9 @@ end
 desc("Creates the next prerelease automatically and then runs create_release.
 
 Examples:
-- rake create_prerelease[9.6.0,rc]       # -> 9.6.0.rc.0 or next rc index
-- rake create_prerelease[9.6.0,beta]     # -> 9.6.0.beta.0 or next beta index
-- rake create_prerelease[9.6.0,rc,true]  # dry run
+- rake \"create_prerelease[9.6.0,rc]\"       # -> 9.6.0.rc.0 or next rc index
+- rake \"create_prerelease[9.6.0,beta]\"     # -> 9.6.0.beta.0 or next beta index
+- rake \"create_prerelease[9.6.0,rc,true]\"  # dry run
 
 Notes:
 - Prompts for confirmation before continuing (set AUTO_CONFIRM=true to skip).
@@ -352,16 +358,12 @@ task :create_prerelease, %i[base_version prerelease_type dry_run] do |_t, args|
 
   base_version = args_hash[:base_version].to_s.strip
   if base_version.empty?
-    current_version = current_gem_version(gem_root)
-    base_match = current_version.match(/\A(\d+\.\d+\.\d+)/)
-    abort "❌ Could not infer base_version from current version #{current_version.inspect}" unless base_match
-
-    base_version = base_match[1]
+    abort "❌ base_version is required. Usage: rake \"create_prerelease[9.6.0,rc]\" or rake \"create_prerelease[9.6.0,beta]\""
   end
 
   prerelease_type = args_hash[:prerelease_type].to_s.strip
   if prerelease_type.empty?
-    abort "❌ prerelease_type is required. Usage: rake create_prerelease[9.6.0,rc] or rake create_prerelease[9.6.0,beta]"
+    abort "❌ prerelease_type is required. Usage: rake \"create_prerelease[9.6.0,rc]\" or rake \"create_prerelease[9.6.0,beta]\""
   end
   next_version = next_prerelease_gem_version(
     gem_root: gem_root,

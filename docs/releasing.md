@@ -37,23 +37,23 @@ The automated release task handles the entire release process:
 
 ```bash
 # For a specific version (e.g., 9.1.0)
-bundle exec rake create_release[9.1.0]
+bundle exec rake "create_release[9.1.0]"
 
 # For a beta release (note: use period, not dash)
-bundle exec rake create_release[9.2.0.beta.1]  # Creates npm package 9.2.0-beta.1
+bundle exec rake "create_release[9.2.0.beta.1]"  # Creates npm package 9.2.0-beta.1
 
 # For a release candidate
-bundle exec rake create_release[9.6.0.rc.0]
+bundle exec rake "create_release[9.6.0.rc.0]"
 
 # Auto-calculate next prerelease and confirm before publishing
-bundle exec rake create_prerelease[9.6.0,rc]   # -> 9.6.0.rc.0 or 9.6.0.rc.1, etc.
-bundle exec rake create_prerelease[9.6.0,beta] # -> 9.6.0.beta.0 or 9.6.0.beta.1, etc.
+bundle exec rake "create_prerelease[9.6.0,rc]"   # -> 9.6.0.rc.0 or 9.6.0.rc.1, etc.
+bundle exec rake "create_prerelease[9.6.0,beta]" # -> 9.6.0.beta.0 or 9.6.0.beta.1, etc.
 
 # For a patch version bump (auto-increments)
 bundle exec rake create_release
 
 # Dry run to test without publishing
-bundle exec rake create_release[9.1.0,true]
+bundle exec rake "create_release[9.1.0,true]"
 ```
 
 Dry runs use a temporary git worktree so version bumps and installs do not modify your current checkout.
@@ -90,10 +90,10 @@ If you want GitHub Releases, do that as a separate step after publishing:
 
 ```bash
 # Stable
-bundle exec rake sync_github_release[9.6.0]
+bundle exec rake "sync_github_release[9.6.0]"
 
 # Prerelease
-bundle exec rake sync_github_release[9.6.0.rc.1]
+bundle exec rake "sync_github_release[9.6.0.rc.1]"
 ```
 
 `sync_github_release` reads release notes from the matching `CHANGELOG.md` section and creates/updates the GitHub release for the corresponding tag.
@@ -114,16 +114,16 @@ The task automatically converts Ruby gem format to npm semver format:
 
 ```bash
 # Regular release
-bundle exec rake create_release[9.1.0]  # Gem: 9.1.0, npm: 9.1.0
+bundle exec rake "create_release[9.1.0]"  # Gem: 9.1.0, npm: 9.1.0
 
 # Beta release
-bundle exec rake create_release[9.2.0.beta.1]  # Gem: 9.2.0.beta.1, npm: 9.2.0-beta.1
+bundle exec rake "create_release[9.2.0.beta.1]"  # Gem: 9.2.0.beta.1, npm: 9.2.0-beta.1
 
 # Release candidate
-bundle exec rake create_release[10.0.0.rc.1]  # Gem: 10.0.0.rc.1, npm: 10.0.0-rc.1
+bundle exec rake "create_release[10.0.0.rc.1]"  # Gem: 10.0.0.rc.1, npm: 10.0.0-rc.1
 
 # Auto-next prerelease (recommended)
-bundle exec rake create_prerelease[10.0.0,rc]  # picks rc.0 then rc.1, etc., with confirmation
+bundle exec rake "create_prerelease[10.0.0,rc]"  # picks rc.0 then rc.1, etc., with confirmation
 ```
 
 The `create_prerelease` task requires the prerelease type argument explicitly: use `rc` or `beta`.
@@ -187,7 +187,7 @@ If package publishing succeeds but `sync_github_release` fails:
 3. Rerun only:
 
    ```bash
-   bundle exec rake sync_github_release[<gem_version>]
+   bundle exec rake "sync_github_release[<gem_version>]"
    ```
 
 ### Wrong Version Format
