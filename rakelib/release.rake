@@ -142,6 +142,7 @@ def ensure_git_tag_exists!(gem_root:, tag:)
 
   tag_ref = "refs/tags/#{tag}"
   tag_exists = system("git", "-C", gem_root, "rev-parse", "--verify", "--quiet", tag_ref, out: File::NULL, err: File::NULL)
+  abort "❌ Unable to run git to verify tag #{tag.inspect}. Ensure git is installed and on PATH." if tag_exists.nil?
   return if tag_exists
 
   abort "❌ Git tag #{tag.inspect} was not found locally or remotely. Verify the tag exists before syncing GitHub release."
