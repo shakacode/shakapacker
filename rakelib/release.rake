@@ -124,12 +124,21 @@ def prepare_github_release_context(gem_root:, npm_version:, gem_version:)
   }
 end
 
+def ensure_git_tag_exists!(gem_root:, tag:)
+  tag_ref = "refs/tags/#{tag}"
+  tag_exists = system("git", "-C", gem_root, "rev-parse", "--verify", "--quiet", tag_ref, out: File::NULL, err: File::NULL)
+  return if tag_exists
+
+  abort "❌ Git tag #{tag.inspect} was not found locally. Run `git fetch --tags` and verify the tag exists before syncing GitHub release."
+end
+
 def publish_or_update_github_release(gem_root:, release_context:, dry_run:)
-  return if release_context.nil?
   if dry_run
     puts "DRY RUN: Would create or update GitHub release #{release_context[:tag]}#{release_context[:prerelease] ? ' (prerelease)' : ''}"
     return
   end
+
+  ensure_git_tag_exists!(gem_root: gem_root, tag: release_context[:tag])
 
   Tempfile.create(["shakapacker-release-notes-", ".md"]) do |tmp|
     tmp.write(release_context[:notes])
@@ -321,7 +330,6 @@ task :sync_github_release, %i[gem_version dry_run] do |_t, args|
   args_hash = args.to_hash
   is_dry_run = Shakapacker::Utils::Misc.object_to_boolean(args_hash[:dry_run])
   gem_root = File.expand_path("..", __dir__)
-  ensure_clean_worktree!
   verify_gh_auth(gem_root: gem_root)
 
   requested_gem_version = args_hash[:gem_version].to_s.strip
