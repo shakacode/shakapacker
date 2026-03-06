@@ -20,7 +20,7 @@ This guide is for Shakapacker maintainers who need to publish a new release.
    - npm: 2FA is required for publishing
    - RubyGems: 2FA is required for publishing
 4. **Authenticate GitHub CLI:**
-   - Run `gh auth login` and ensure you can create/edit releases on this repository
+   - Run `gh auth login` and ensure your account/token has write access to this repository
 
 ## Release Process
 
@@ -60,6 +60,7 @@ bundle exec rake create_release[9.1.0,true]
 ```
 
 Dry runs use a temporary git worktree so version bumps and installs do not modify your current checkout.
+Dry runs still validate GitHub-release prerequisites, including the matching `CHANGELOG.md` section. Use `SKIP_GITHUB_RELEASE=true` if you want to rehearse the rest of the flow before that section exists.
 
 ### 3. What the Release Task Does
 

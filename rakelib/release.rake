@@ -10,6 +10,20 @@ class RaisingMessageHandler
   end
 end
 
+def ensure_clean_worktree!
+  Shakapacker::Utils::Misc.uncommitted_changes?(RaisingMessageHandler.new)
+end
+
+def github_repo_slug(gem_root)
+  origin_url = `git -C #{Shellwords.escape(gem_root)} remote get-url origin 2>&1`.strip
+  abort "❌ Unable to determine git origin URL for GitHub release checks.\n\n#{origin_url}" unless $CHILD_STATUS.success?
+
+  match = origin_url.match(%r{github\.com[:/](?<repo>[^/]+/[^/]+?)(?:\.git)?\z})
+  abort "❌ Unable to determine GitHub repository from origin URL #{origin_url.inspect}" unless match
+
+  match[:repo]
+end
+
 def verify_npm_auth(registry_url = "https://registry.npmjs.org/")
   display_registry_url = registry_url
   escaped_registry_url = Shellwords.escape(registry_url)
@@ -27,12 +41,22 @@ def verify_npm_auth(registry_url = "https://registry.npmjs.org/")
   puts "✓ Logged in to NPM as: #{result.strip}"
 end
 
-def verify_gh_auth
+def verify_gh_auth(gem_root:)
   result = `gh auth status 2>&1`
   unless $CHILD_STATUS.success?
     abort "❌ GitHub CLI authentication required! Run `gh auth login` and retry.\n\n#{result}"
   end
-  puts "✓ GitHub CLI authenticated"
+
+  repo_slug = github_repo_slug(gem_root)
+  permissions_result = `gh api repos/#{repo_slug} --jq '.permissions.push' 2>&1`.strip
+  unless $CHILD_STATUS.success?
+    abort "❌ GitHub CLI authenticated, but failed to verify write access to #{repo_slug}.\n\n#{permissions_result}"
+  end
+  unless permissions_result == "true"
+    abort "❌ GitHub CLI authenticated, but your account/token does not have write access to #{repo_slug}."
+  end
+
+  puts "✓ GitHub CLI authenticated with write access to #{repo_slug}"
 end
 
 def current_gem_version(gem_root)
@@ -125,7 +149,7 @@ def publish_or_update_github_release(gem_root:, release_context:, dry_run:)
     puts "ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ"
     puts "Publishing GitHub release #{release_context[:tag]}#{release_context[:prerelease] ? ' (prerelease)' : ''}"
     puts "ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ"
-    # Keep `sh_in_dir` here so release create/edit failures still raise through the same helper path as the rest of the task.
+    # Keep `sh_in_dir` here because the helper takes shell strings and raises failures the same way as the rest of the task.
     Shakapacker::Utils::Misc.sh_in_dir(gem_root, release_command)
   end
 end
@@ -179,8 +203,8 @@ def confirm_or_abort!(prompt)
   abort "❌ Aborted by user." unless %w[y yes].include?(answer)
 end
 
-def perform_release(gem_version:, dry_run:)
-  Shakapacker::Utils::Misc.uncommitted_changes?(RaisingMessageHandler.new)
+def perform_release(gem_version:, dry_run:, check_uncommitted: true)
+  ensure_clean_worktree! if check_uncommitted
   gem_root = File.expand_path("..", __dir__)
 
   unless dry_run
@@ -188,7 +212,7 @@ def perform_release(gem_version:, dry_run:)
     puts "PRE-FLIGHT CHECKS"
     puts "ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ"
     verify_npm_auth
-    verify_gh_auth unless Shakapacker::Utils::Misc.object_to_boolean(ENV["SKIP_GITHUB_RELEASE"])
+    verify_gh_auth(gem_root:) unless Shakapacker::Utils::Misc.object_to_boolean(ENV["SKIP_GITHUB_RELEASE"])
   end
 
   requested_gem_version = gem_version.to_s.strip
@@ -199,6 +223,8 @@ def perform_release(gem_version:, dry_run:)
 
     # The release root may change after `git pull --rebase`, so patch-bump inference must happen after that step.
     resolved_target_gem_version = target_gem_version(gem_root: release_root, requested_gem_version:)
+    # Dry runs still validate release-note prerequisites so missing changelog entries surface before a real release.
+    # Use SKIP_GITHUB_RELEASE=true if you want to rehearse the rest of the flow before that section exists.
     release_context = prepare_github_release_context(
       gem_root: release_root,
       npm_version: Shakapacker::Utils::VersionSyntaxConverter.new.rubygem_to_npm(resolved_target_gem_version),
@@ -299,7 +325,7 @@ task :create_prerelease, %i[base_version prerelease_type dry_run] do |_t, args|
   args_hash = args.to_hash
   is_dry_run = Shakapacker::Utils::Misc.object_to_boolean(args_hash[:dry_run])
   gem_root = File.expand_path("..", __dir__)
-  Shakapacker::Utils::Misc.uncommitted_changes?(RaisingMessageHandler.new)
+  ensure_clean_worktree!
 
   base_version = args_hash[:base_version].to_s.strip
   if base_version.empty?
@@ -319,5 +345,5 @@ task :create_prerelease, %i[base_version prerelease_type dry_run] do |_t, args|
   puts "Computed next prerelease version: #{next_version}"
   confirm_or_abort!("Proceed with prerelease #{next_version}?") unless is_dry_run
 
-  perform_release(gem_version: next_version, dry_run: is_dry_run)
+  perform_release(gem_version: next_version, dry_run: is_dry_run, check_uncommitted: false)
 end
