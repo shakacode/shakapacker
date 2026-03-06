@@ -16,8 +16,9 @@ def ensure_clean_worktree!
 end
 
 def github_repo_slug(gem_root)
-  origin_url = `git -C #{Shellwords.escape(gem_root)} remote get-url origin 2>&1`.strip
-  abort "❌ Unable to determine git origin URL for GitHub release checks.\n\n#{origin_url}" unless $CHILD_STATUS.success?
+  origin_url, status = Open3.capture2e("git", "-C", gem_root, "remote", "get-url", "origin")
+  origin_url = origin_url.strip
+  abort "❌ Unable to determine git origin URL for GitHub release checks.\n\n#{origin_url}" unless status.success?
 
   match = origin_url.match(%r{github\.com[:/](?<repo>[^/]+/[^/]+?)(?:\.git)?\z})
   abort "❌ Unable to determine GitHub repository from origin URL #{origin_url.inspect}" unless match
@@ -43,8 +44,8 @@ def verify_npm_auth(registry_url = "https://registry.npmjs.org/")
 end
 
 def verify_gh_auth(gem_root:)
-  result = `gh auth status 2>&1`
-  unless $CHILD_STATUS.success?
+  result, status = Open3.capture2e("gh", "auth", "status")
+  unless status.success?
     abort "❌ GitHub CLI authentication required! Run `gh auth login` and retry.\n\n#{result}"
   end
 
@@ -229,6 +230,7 @@ end
 def perform_release(gem_version:, dry_run:, check_uncommitted: true)
   ensure_clean_worktree! if check_uncommitted
   gem_root = File.expand_path("..", __dir__)
+  # This is filled inside the release checkout block and used for the post-release sync reminder.
   released_gem_version = nil
 
   unless dry_run
@@ -356,8 +358,9 @@ task :sync_github_release, %i[gem_version dry_run] do |_t, args|
   validate_requested_gem_version!(requested_gem_version)
 
   gem_root = File.expand_path("..", __dir__)
-  ensure_changelog_committed!(gem_root: gem_root)
+  ensure_changelog_committed!(gem_root: gem_root) unless is_dry_run
   verify_gh_auth(gem_root: gem_root) unless is_dry_run
+  puts "ℹ️ sync_github_release reads local committed CHANGELOG.md; run `git pull --rebase` first if you want the latest remote notes." unless is_dry_run
 
   npm_version = Shakapacker::Utils::VersionSyntaxConverter.new.rubygem_to_npm(requested_gem_version)
   release_context = prepare_github_release_context(
