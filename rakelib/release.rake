@@ -125,11 +125,14 @@ def prepare_github_release_context(gem_root:, npm_version:, gem_version:)
   }
 end
 
-def ensure_changelog_committed!(gem_root:)
+def changelog_dirty?(gem_root:)
   changes_output, status = Open3.capture2e("git", "-C", gem_root, "status", "--porcelain", "--", "CHANGELOG.md")
   abort "❌ Unable to check CHANGELOG.md status" unless status.success?
-  return if changes_output.strip.empty?
+  !changes_output.strip.empty?
+end
 
+def ensure_changelog_committed!(gem_root:)
+  return unless changelog_dirty?(gem_root: gem_root)
   abort "❌ CHANGELOG.md has uncommitted changes. Commit or stash CHANGELOG.md before running sync_github_release."
 end
 
@@ -360,7 +363,13 @@ task :sync_github_release, %i[gem_version dry_run] do |_t, args|
 
   gem_root = File.expand_path("..", __dir__)
   puts "ℹ️ sync_github_release reads local committed CHANGELOG.md; run `git pull --rebase` first if you want the latest remote notes." unless is_dry_run
-  ensure_changelog_committed!(gem_root: gem_root) unless is_dry_run
+  if is_dry_run
+    if changelog_dirty?(gem_root: gem_root)
+      puts "⚠️ DRY RUN: CHANGELOG.md has uncommitted changes; real sync_github_release will abort until CHANGELOG.md is committed or stashed."
+    end
+  else
+    ensure_changelog_committed!(gem_root: gem_root)
+  end
   verify_gh_auth(gem_root: gem_root) unless is_dry_run
 
   npm_version = Shakapacker::Utils::VersionSyntaxConverter.new.rubygem_to_npm(requested_gem_version)
