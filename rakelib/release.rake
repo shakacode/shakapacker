@@ -368,6 +368,7 @@ task :sync_github_release, %i[gem_version dry_run] do |_t, args|
     if changelog_dirty?(gem_root: gem_root)
       puts "⚠️ DRY RUN: CHANGELOG.md has uncommitted changes; real sync_github_release will abort until CHANGELOG.md is committed or stashed."
     end
+    puts "DRY RUN: Validating CHANGELOG.md section exists for the requested version..."
   else
     ensure_changelog_committed!(gem_root: gem_root)
   end
