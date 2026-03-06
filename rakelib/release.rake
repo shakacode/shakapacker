@@ -110,9 +110,11 @@ def publish_or_update_github_release(gem_root:, release_context:, dry_run:)
     tag_escaped = Shellwords.escape(release_context[:tag])
     title_escaped = Shellwords.escape(release_context[:title])
     notes_file_escaped = Shellwords.escape(tmp.path)
+    # The view probe only needs a boolean result, so use array-form system to avoid an extra shell layer.
     release_exists = system("gh", "release", "view", release_context[:tag], chdir: gem_root, out: File::NULL, err: File::NULL)
 
     release_command = if release_exists
+      # `gh release edit` accepts `--prerelease=true|false`; there is no `--no-prerelease` flag.
       prerelease_flag = " --prerelease=#{release_context[:prerelease]}"
       "gh release edit #{tag_escaped} --title #{title_escaped} --notes-file #{notes_file_escaped}#{prerelease_flag}"
     else
@@ -123,6 +125,7 @@ def publish_or_update_github_release(gem_root:, release_context:, dry_run:)
     puts "ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ"
     puts "Publishing GitHub release #{release_context[:tag]}#{release_context[:prerelease] ? ' (prerelease)' : ''}"
     puts "ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ"
+    # Keep `sh_in_dir` here so release create/edit failures still raise through the same helper path as the rest of the task.
     Shakapacker::Utils::Misc.sh_in_dir(gem_root, release_command)
   end
 end
@@ -196,10 +199,9 @@ def perform_release(gem_version:, dry_run:)
 
     # The release root may change after `git pull --rebase`, so patch-bump inference must happen after that step.
     resolved_target_gem_version = target_gem_version(gem_root: release_root, requested_gem_version:)
-    target_npm_version = Shakapacker::Utils::VersionSyntaxConverter.new.rubygem_to_npm(resolved_target_gem_version)
     release_context = prepare_github_release_context(
       gem_root: release_root,
-      npm_version: target_npm_version,
+      npm_version: Shakapacker::Utils::VersionSyntaxConverter.new.rubygem_to_npm(resolved_target_gem_version),
       gem_version: resolved_target_gem_version
     )
 
@@ -297,6 +299,7 @@ task :create_prerelease, %i[base_version prerelease_type dry_run] do |_t, args|
   args_hash = args.to_hash
   is_dry_run = Shakapacker::Utils::Misc.object_to_boolean(args_hash[:dry_run])
   gem_root = File.expand_path("..", __dir__)
+  Shakapacker::Utils::Misc.uncommitted_changes?(RaisingMessageHandler.new)
 
   base_version = args_hash[:base_version].to_s.strip
   if base_version.empty?
