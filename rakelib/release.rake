@@ -306,7 +306,8 @@ def perform_release(gem_version:, dry_run:, check_uncommitted: true)
   end
 
   unless dry_run
-    sync_gem_version = released_gem_version || current_gem_version(gem_root)
+    sync_gem_version = released_gem_version || gem_version.to_s.strip
+    sync_gem_version = "<released_gem_version>" if sync_gem_version.empty?
     puts "ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ"
     puts "Reminder: after updating and committing CHANGELOG.md, run:"
     puts "bundle exec rake \"sync_github_release[#{sync_gem_version}]\""
