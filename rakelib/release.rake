@@ -215,6 +215,7 @@ def validate_release_version_policy!(gem_root:, target_gem_version:, allow_overr
       message: "❌ Requested version #{target_gem_version} is not a major/minor/patch bump over latest stable #{latest_stable_version}.",
       allow_override: allow_override
     )
+    # With override enabled, this bump shape is intentionally accepted; skip changelog bump matching.
     return if allow_override
   end
 
@@ -277,8 +278,9 @@ end
 
 def changelog_dirty?(gem_root:)
   changes_output, status = Open3.capture2e("git", "-C", gem_root, "status", "--porcelain", "--", "CHANGELOG.md")
-  abort "❌ Unable to check CHANGELOG.md status\n\n#{changes_output.strip}" unless status.success?
-  !changes_output.strip.empty?
+  stripped = changes_output.strip
+  abort "❌ Unable to check CHANGELOG.md status\n\n#{stripped}" unless status.success?
+  !stripped.empty?
 end
 
 def ensure_changelog_committed!(gem_root:)
