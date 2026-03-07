@@ -398,6 +398,10 @@ def perform_release(gem_version:, dry_run:, check_uncommitted: true, allow_versi
       target_gem_version: resolved_target_gem_version,
       allow_override: allow_version_policy_override
     )
+    if requested_gem_version.empty?
+      puts "Computed next patch version: #{resolved_target_gem_version}"
+      confirm_or_abort!("Proceed with patch release #{resolved_target_gem_version}?") unless dry_run
+    end
 
     bump_command = if requested_gem_version.empty?
       "gem bump --no-commit"

@@ -51,7 +51,7 @@ bundle exec rake "create_prerelease[9.6.0,rc]"   # -> 9.6.0.rc.0 or 9.6.0.rc.1, 
 bundle exec rake "create_prerelease[9.6.0,beta]" # -> 9.6.0.beta.0 or 9.6.0.beta.1, etc.
 
 # For a patch version bump (auto-increments)
-bundle exec rake create_release
+bundle exec rake create_release  # prompts to confirm computed patch version
 
 # Dry run to test without publishing
 bundle exec rake "create_release[9.1.0,true]"
@@ -150,8 +150,9 @@ The `create_prerelease` task defaults to `rc` if prerelease type is omitted. Use
 1. When prompted for **npm OTP**, enter your 2FA code from your authenticator app
 2. Accept defaults for release-it options
 3. When prompted for **RubyGems OTP**, enter your 2FA code
-4. If using `create_prerelease`, confirm the computed next version when prompted
-5. The script will automatically commit and push lockfile updates
+4. If using patch auto-bump (`create_release` with no version), confirm the computed patch version when prompted
+5. If using `create_prerelease`, confirm the computed next prerelease version when prompted
+6. The script will automatically commit and push lockfile updates
 
 ### 7. After Release
 
