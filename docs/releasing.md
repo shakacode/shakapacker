@@ -114,7 +114,6 @@ bundle exec rake "sync_github_release[9.6.0.rc.1]"
 ```
 
 `sync_github_release` reads release notes from the matching `CHANGELOG.md` section and creates/updates the GitHub release for the corresponding tag.
-Before syncing, it prompts for confirmation that your local branch is up to date.
 
 ### 5. Version Format
 
