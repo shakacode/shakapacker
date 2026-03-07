@@ -367,8 +367,8 @@ def next_prerelease_gem_version(gem_root:, base_version:, prerelease_type:)
   # Git tags use npm semver format (dashes) because release-it creates the tag from the npm version.
   # e.g., v9.6.0-rc.0, not v9.6.0.rc.0
   tag_pattern = "v#{base_version}-#{normalized_type}.*"
-  existing_tags = `git -C #{Shellwords.escape(gem_root)} tag -l #{Shellwords.escape(tag_pattern)}`
-  abort "❌ Unable to list existing tags for prerelease calculation" unless $CHILD_STATUS.success?
+  existing_tags, status = Open3.capture2e("git", "-C", gem_root, "tag", "-l", tag_pattern)
+  abort "❌ Unable to list existing tags for prerelease calculation.\n\n#{existing_tags}" unless status.success?
 
   tag_regex = /\Av#{Regexp.escape(base_version)}-#{Regexp.escape(normalized_type)}\.(\d+)\z/
   max_existing_index = existing_tags.lines.map(&:strip).filter_map { |tag| tag.match(tag_regex)&.captures&.first&.to_i }.max
@@ -412,11 +412,13 @@ def perform_release(
 
     # The release root may change after `git pull --rebase`, so patch-bump inference must happen after that step.
     resolved_target_gem_version = target_gem_version(gem_root: release_root, requested_gem_version: requested_gem_version)
+    # Non-dry-run already executed `git pull --rebase`, so tag fetching here is only needed for dry-run flows.
+    should_fetch_tags_for_policy = fetch_tags_for_policy && dry_run
     validate_release_version_policy!(
       gem_root: release_root,
       target_gem_version: resolved_target_gem_version,
       allow_override: allow_version_policy_override,
-      fetch_tags: fetch_tags_for_policy
+      fetch_tags: should_fetch_tags_for_policy
     )
     if requested_gem_version.empty?
       puts "Computed next patch version: #{resolved_target_gem_version}"
