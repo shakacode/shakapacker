@@ -256,20 +256,12 @@ When the user passes `rc` or `beta` as an argument (or when creating a prereleas
    - RC: `## [v9.6.0-rc.1]`
    - Beta: `## [v9.6.0-beta.2]`
 
-4. **Ask the user which approach to take**:
-
-   **Option 1: Process changes since last prerelease**
-   - Only add entries for commits since the previous prerelease tag
-   - Maintains detailed history of what changed in each prerelease
-   - Good when each prerelease has distinct, meaningful changes
-
-   **Option 2: Collapse all prior prereleases into current prerelease**
-   - Combine all prerelease changelog entries into the new prerelease version
-   - Removes previous prerelease version sections
-   - Cleaner changelog with less version noise
-   - Good when approaching stable release
-
-   After the user chooses, proceed with that approach.
+4. **Always collapse prior prereleases into the current prerelease** (this is the default behavior):
+   - Combine all prior prerelease changelog entries into the new prerelease version section
+   - Remove previous prerelease version sections (e.g., remove `## [v9.6.0-rc.0]` when creating `## [v9.6.0-rc.1]`)
+   - Add any new user-visible changes from commits since the last prerelease
+   - Update version diff links to point from the last stable version to the new prerelease
+   - This keeps the changelog clean with a single prerelease section that accumulates all changes since the last stable release
 
 ### For Prerelease to Stable Version Release
 
