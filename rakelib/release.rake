@@ -146,8 +146,9 @@ def expected_bump_type_from_changelog_section(changelog_section)
   downcased_section = section.downcase
   return :major if downcased_section.match?(/\bbreaking\b/) || section.match?(/^###\s+.*breaking/i)
   return :minor if section.match?(/^###\s+Added\b/i)
+  return :patch if section.match?(/^###\s+(Fixed|Security|Changed|Improved|Documentation)\b/i)
 
-  :patch
+  nil
 end
 
 def version_policy_override_enabled?(override_flag)
@@ -179,12 +180,10 @@ def validate_release_version_policy!(gem_root:, target_gem_version:, allow_overr
   npm_version = Shakapacker::Utils::VersionSyntaxConverter.new.rubygem_to_npm(target_gem_version)
   changelog_path = File.join(gem_root, "CHANGELOG.md")
   changelog_section = extract_changelog_section(changelog_path: changelog_path, npm_version: npm_version)
+  changelog_source = "v#{npm_version}"
   unless changelog_section
-    handle_version_policy_violation!(
-      message: "❌ CHANGELOG.md is missing `## [v#{npm_version}]`. Add the section before release, or override explicitly.",
-      allow_override: allow_override
-    )
-    return
+    changelog_section = extract_unreleased_changelog_section(changelog_path: changelog_path)
+    changelog_source = "Unreleased" if changelog_section
   end
 
   if prerelease_gem_version?(target_gem_version) && latest_tagged_version
@@ -209,11 +208,20 @@ def validate_release_version_policy!(gem_root:, target_gem_version:, allow_overr
     return
   end
 
+  unless changelog_section
+    puts "ℹ️ VERSION POLICY: No changelog content found for v#{npm_version} or [Unreleased]; skipping changelog bump-consistency check."
+    return
+  end
+
   expected_bump_type = expected_bump_type_from_changelog_section(changelog_section)
+  unless expected_bump_type
+    puts "ℹ️ VERSION POLICY: CHANGELOG section #{changelog_source} does not declare bump level; skipping changelog bump-consistency check."
+    return
+  end
   return if actual_bump_type == expected_bump_type
 
   handle_version_policy_violation!(
-    message: "❌ Version bump mismatch for #{target_gem_version}: CHANGELOG implies #{expected_bump_type}, but version bump is #{actual_bump_type} from #{latest_stable_version}.",
+    message: "❌ Version bump mismatch for #{target_gem_version}: CHANGELOG section #{changelog_source} implies #{expected_bump_type}, but version bump is #{actual_bump_type} from #{latest_stable_version}.",
     allow_override: allow_override
   )
 end
@@ -222,6 +230,15 @@ def extract_changelog_section(changelog_path:, npm_version:)
   lines = File.readlines(changelog_path)
   section_header = /^## \[v#{Regexp.escape(npm_version)}\]/
   start_index = lines.index { |line| line.match?(section_header) }
+  return nil unless start_index
+
+  end_index = ((start_index + 1)...lines.length).find { |idx| lines[idx].start_with?("## [") } || lines.length
+  lines[start_index...end_index].join.rstrip
+end
+
+def extract_unreleased_changelog_section(changelog_path:)
+  lines = File.readlines(changelog_path)
+  start_index = lines.index { |line| line.match?(/^## \[Unreleased\]/i) }
   return nil unless start_index
 
   end_index = ((start_index + 1)...lines.length).find { |idx| lines[idx].start_with?("## [") } || lines.length
