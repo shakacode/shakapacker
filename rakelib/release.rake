@@ -188,6 +188,8 @@ def validate_release_version_policy!(gem_root:, target_gem_version:, allow_overr
     same_release_base = target_components[:major] == latest_components[:major] &&
       target_components[:minor] == latest_components[:minor] &&
       target_components[:patch] == latest_components[:patch]
+    # Successive prerelease iterations for the same base (for example rc.0 -> rc.1)
+    # intentionally skip changelog bump-shape inference; the base bump was validated on first prerelease.
     return if same_release_base && prerelease_gem_version?(latest_tagged_version)
   end
 
@@ -295,6 +297,7 @@ def publish_or_update_github_release(gem_root:, release_context:, dry_run:)
 
     # The view probe only needs a boolean result, so use array-form system to avoid an extra shell layer.
     release_exists = system("gh", "release", "view", release_context[:tag], chdir: gem_root, out: File::NULL, err: File::NULL)
+    abort "❌ Unable to run `gh`. Ensure GitHub CLI is installed and on PATH." if release_exists.nil?
 
     release_command = if release_exists
       # `gh release edit` accepts `--prerelease=true|false`; there is no `--no-prerelease` flag.
