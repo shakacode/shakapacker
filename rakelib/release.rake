@@ -29,17 +29,16 @@ end
 
 def verify_npm_auth(registry_url = "https://registry.npmjs.org/")
   display_registry_url = registry_url
-  escaped_registry_url = Shellwords.escape(registry_url)
-  result = `npm whoami --registry #{escaped_registry_url} 2>&1`
-  unless $CHILD_STATUS.success?
+  result, status = Open3.capture2e("npm", "whoami", "--registry", registry_url)
+  unless status.success?
     puts "⚠️  NPM authentication required!"
     puts "Please run: npm login --registry #{display_registry_url}"
     puts ""
-    system("npm login --registry #{escaped_registry_url}")
-    result = `npm whoami --registry #{escaped_registry_url} 2>&1`
-    unless $CHILD_STATUS.success?
-      abort "❌ NPM login failed! Please authenticate with npm before running the release."
-    end
+    login_success = system("npm", "login", "--registry", registry_url)
+    abort "❌ NPM login failed! Please authenticate with npm before running the release." unless login_success
+
+    result, status = Open3.capture2e("npm", "whoami", "--registry", registry_url)
+    abort "❌ NPM login failed! Please authenticate with npm before running the release.\n\n#{result}" unless status.success?
   end
   puts "✓ Logged in to NPM as: #{result.strip}"
 end
@@ -448,7 +447,8 @@ def perform_release(
     lockfiles = ["spec/dummy/Gemfile.lock", "spec/dummy/package-lock.json", "spec/dummy/yarn.lock"]
     existing_lockfiles = lockfiles.select { |f| File.exist?(File.join(release_root, f)) }
     changed_lockfiles = existing_lockfiles.select do |lockfile|
-      changes_output = `git -C #{Shellwords.escape(release_root)} status --porcelain -- #{Shellwords.escape(lockfile)}`
+      changes_output, status = Open3.capture2e("git", "-C", release_root, "status", "--porcelain", "--", lockfile)
+      abort "❌ Failed to check git status for #{lockfile}.\n\n#{changes_output}" unless status.success?
       !changes_output.strip.empty?
     end
 
