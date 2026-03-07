@@ -247,6 +247,63 @@ def validate_release_version_policy!(gem_root:, target_gem_version:, allow_overr
   )
 end
 
+def extract_latest_changelog_version(gem_root:)
+  changelog_path = File.join(gem_root, "CHANGELOG.md")
+  return nil unless File.exist?(changelog_path)
+
+  converter = Shakapacker::Utils::VersionSyntaxConverter.new
+  File.readlines(changelog_path).each do |line|
+    # Match versioned headers like ## [v9.6.0] or ## [v9.6.0-rc.1], skip ## [Unreleased]
+    match = line.match(/^## \[v([^\]]+)\]/)
+    next unless match
+
+    npm_version = match[1]
+    gem_version = converter.npm_to_rubygem(npm_version)
+    return gem_version if gem_version
+  end
+
+  nil
+end
+
+def warn_changelog_missing(gem_root:, npm_version:)
+  changelog_path = File.join(gem_root, "CHANGELOG.md")
+  section = extract_changelog_section(changelog_path: changelog_path, npm_version: npm_version)
+  return if section
+
+  puts "ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ"
+  puts "WARNING: No CHANGELOG.md section found for v#{npm_version}."
+  puts "Consider running /update-changelog to add entries before releasing."
+  puts "sync_github_release will fail without a changelog section."
+  puts "ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ"
+end
+
+def sync_github_release_after_publish(gem_root:, gem_version:, dry_run:)
+  npm_version = Shakapacker::Utils::VersionSyntaxConverter.new.rubygem_to_npm(gem_version)
+  changelog_path = File.join(gem_root, "CHANGELOG.md")
+  section = extract_changelog_section(changelog_path: changelog_path, npm_version: npm_version)
+
+  unless section
+    puts "ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ"
+    puts "Skipping GitHub release: no CHANGELOG.md section for v#{npm_version}."
+    puts "After adding the changelog section, run:"
+    puts "bundle exec rake \"sync_github_release[#{gem_version}]\""
+    puts "ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ"
+    return
+  end
+
+  puts "ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ"
+  puts "Creating GitHub release for v#{npm_version}"
+  puts "ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ"
+
+  verify_gh_auth(gem_root: gem_root)
+  release_context = prepare_github_release_context(
+    gem_root: gem_root,
+    npm_version: npm_version,
+    gem_version: gem_version
+  )
+  publish_or_update_github_release(gem_root: gem_root, release_context: release_context, dry_run: dry_run)
+end
+
 def extract_changelog_section(changelog_path:, npm_version:)
   lines = File.readlines(changelog_path)
   section_header = /^## \[v#{Regexp.escape(npm_version)}\]/
@@ -394,7 +451,7 @@ def perform_release(
 )
   ensure_clean_worktree! if check_uncommitted
   gem_root = File.expand_path("..", __dir__)
-  # This is filled inside the release checkout block and used for the post-release sync reminder.
+  # This is filled inside the release checkout block and used for the post-release GitHub sync.
   released_gem_version = nil
 
   unless dry_run
@@ -412,6 +469,10 @@ def perform_release(
 
     # The release root may change after `git pull --rebase`, so patch-bump inference must happen after that step.
     resolved_target_gem_version = target_gem_version(gem_root: release_root, requested_gem_version: requested_gem_version)
+
+    # Warn if changelog section is missing for the target version.
+    target_npm_version = Shakapacker::Utils::VersionSyntaxConverter.new.rubygem_to_npm(resolved_target_gem_version)
+    warn_changelog_missing(gem_root: release_root, npm_version: target_npm_version)
     # Non-dry-run already executed `git pull --rebase`, so tag fetching here is only needed for dry-run flows.
     should_fetch_tags_for_policy = fetch_tags_for_policy && dry_run
     validate_release_version_policy!(
@@ -481,14 +542,10 @@ def perform_release(
   end
 
   unless dry_run
-    # This reminder should always print a usable command, even if earlier flow changes
-    # prevent `released_gem_version` from being assigned in the checkout block.
     sync_gem_version = released_gem_version || gem_version.to_s.strip
-    sync_gem_version = "<released_gem_version>" if sync_gem_version.empty?
-    puts "ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ"
-    puts "Reminder: after updating and committing CHANGELOG.md, run:"
-    puts "bundle exec rake \"sync_github_release[#{sync_gem_version}]\""
-    puts "ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ"
+    if sync_gem_version && !sync_gem_version.empty?
+      sync_github_release_after_publish(gem_root: gem_root, gem_version: sync_gem_version, dry_run: dry_run)
+    end
   end
 end
 
@@ -497,16 +554,20 @@ desc("Releases both the gem and node package using the given version.
 IMPORTANT: the gem version must be in valid rubygem format (no dashes).
 It will be automatically converted to npm semver by the rake task.
 
-GitHub release sync is a separate step via `sync_github_release`.
+After publishing, automatically creates a GitHub release from CHANGELOG.md
+if a matching section exists. If no section is found, prints a reminder
+to update CHANGELOG.md and run sync_github_release manually.
 
 Arguments:
 1st argument: The new version in rubygem format (example: 9.6.0.rc.0).
-              Pass no argument to perform a patch bump.
+              Pass no argument to use the latest version from CHANGELOG.md,
+              or fall back to a patch bump if CHANGELOG.md has no new version.
 2nd argument: Perform a dry run by passing 'true' as second argument.
 3rd argument: Override release version policy checks by passing 'true'.
               Equivalent to setting RELEASE_VERSION_POLICY_OVERRIDE=true.
 
 Examples:
+- rake \"create_release\"                      # uses CHANGELOG.md version or patch bump
 - rake \"create_release[9.6.0]\"
 - rake \"create_release[9.6.0.rc.0]\"
 - rake \"create_release[9.6.0,true]\"
@@ -516,7 +577,24 @@ task :create_release, %i[gem_version dry_run override_version_policy] do |_t, ar
   args_hash = args.to_hash
   is_dry_run = Shakapacker::Utils::Misc.object_to_boolean(args_hash[:dry_run])
   allow_override = version_policy_override_enabled?(args_hash[:override_version_policy])
-  perform_release(gem_version: args_hash[:gem_version], dry_run: is_dry_run, allow_version_policy_override: allow_override)
+
+  requested_version = args_hash[:gem_version].to_s.strip
+  if requested_version.empty?
+    gem_root = File.expand_path("..", __dir__)
+    changelog_version = extract_latest_changelog_version(gem_root: gem_root)
+    current_version = current_gem_version(gem_root)
+
+    if changelog_version && Gem::Version.new(changelog_version) > Gem::Version.new(current_version)
+      puts "Found CHANGELOG.md version: #{changelog_version} (current: #{current_version})"
+      confirm_or_abort!("Release #{changelog_version} from CHANGELOG.md?") unless is_dry_run
+      requested_version = changelog_version
+    else
+      puts "No new version found in CHANGELOG.md (latest: #{changelog_version || 'none'}, current: #{current_version})."
+      puts "Falling back to patch bump."
+    end
+  end
+
+  perform_release(gem_version: requested_version, dry_run: is_dry_run, allow_version_policy_override: allow_override)
 end
 
 desc("Creates or updates a GitHub release from CHANGELOG.md for an already-published gem version.
