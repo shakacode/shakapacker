@@ -11,7 +11,7 @@
 
 Changes since the last non-beta release.
 
-## [v9.6.0-rc.0] - March 5, 2026
+## [v9.6.0-rc.1] - March 7, 2026
 
 ### Security
 
@@ -72,7 +72,7 @@ Changes since the last non-beta release.
 - **Improved error message when manifest is empty or missing**. [PR #872](https://github.com/shakacode/shakapacker/pull/872) by [justin808](https://github.com/justin808). When the bundler is still compiling (empty manifest) or hasn't run yet (missing manifest file), users now see clear, actionable error messages instead of the generic 7-point checklist.
 - **Fixed NODE_ENV=test causing DefinePlugin warnings**. [PR #870](https://github.com/shakacode/shakapacker/pull/870) by [justin808](https://github.com/justin808). When RAILS_ENV=test, Shakapacker now sets NODE_ENV=development instead of NODE_ENV=test. This prevents webpack/rspack DefinePlugin conflicts since these bundlers only recognize "development" and "production" as valid NODE_ENV values.
 - **Fixed `--json` flag output being corrupted by log messages**. [PR #869](https://github.com/shakacode/shakapacker/pull/869) by [justin808](https://github.com/justin808). When `--json` is in the command arguments, `[Shakapacker]` log messages are now written to stderr instead of stdout, keeping stdout clean for valid JSON output. This allows `bin/shakapacker --profile --json` to be piped to tools like `webpack-bundle-analyzer`. Normal (non-JSON) usage is unchanged. Resolves [#868](https://github.com/shakacode/shakapacker/issues/868).
-- **Require explicit truthy values for `SKIP` and `FORCE` installer env vars**. [PR #926](https://github.com/shakacode/shakapacker/pull/926) by [justin808](https://github.com/justin808). Previously, any set value (including `"false"` or `"0"`) would activate skip/force mode. Now only explicit truthy values (`true`, `1`, `yes`, case-insensitive) are recognized. This behavior change may require CI/scripts that relied on `FORCE=<any non-empty value>` to switch to `FORCE=true`.
+- **Require explicit truthy values for all installer env vars**. [PR #926](https://github.com/shakacode/shakapacker/pull/926), [PR #943](https://github.com/shakacode/shakapacker/pull/943) by [justin808](https://github.com/justin808). Previously, any set value (including `"false"` or `"0"`) would activate these flags. Now only explicit truthy values (`true`, `1`, `yes`, case-insensitive) are recognized for `SKIP`, `FORCE`, `USE_BABEL_PACKAGES`, `SHAKAPACKER_USE_TYPESCRIPT`, and `SKIP_COMMON_LOADERS`. This behavior change may require CI/scripts that relied on arbitrary non-empty values to switch to recognized truthy values like `true`.
 
 ### Documentation
 
@@ -868,8 +868,8 @@ Note: [Rubygem is 6.3.0.pre.rc.1](https://rubygems.org/gems/shakapacker/versions
 
 See [CHANGELOG.md in rails/webpacker (up to v5.4.3)](https://github.com/rails/webpacker/blob/master/CHANGELOG.md)
 
-[Unreleased]: https://github.com/shakacode/shakapacker/compare/v9.6.0-rc.0...main
-[v9.6.0-rc.0]: https://github.com/shakacode/shakapacker/compare/v9.5.0...v9.6.0-rc.0
+[Unreleased]: https://github.com/shakacode/shakapacker/compare/v9.6.0-rc.1...main
+[v9.6.0-rc.1]: https://github.com/shakacode/shakapacker/compare/v9.5.0...v9.6.0-rc.1
 [v9.5.0]: https://github.com/shakacode/shakapacker/compare/v9.4.0...v9.5.0
 [v9.4.0]: https://github.com/shakacode/shakapacker/compare/v9.3.4...v9.4.0
 [v9.3.4]: https://github.com/shakacode/shakapacker/compare/v9.3.3...v9.3.4
