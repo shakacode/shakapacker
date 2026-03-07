@@ -541,9 +541,11 @@ def perform_release(
 
   end
 
-  sync_gem_version = released_gem_version || gem_version.to_s.strip
-  if sync_gem_version && !sync_gem_version.empty?
-    sync_github_release_after_publish(gem_root: gem_root, gem_version: sync_gem_version, dry_run: dry_run)
+  unless dry_run
+    sync_gem_version = released_gem_version || gem_version.to_s.strip
+    if sync_gem_version && !sync_gem_version.empty?
+      sync_github_release_after_publish(gem_root: gem_root, gem_version: sync_gem_version, dry_run: dry_run)
+    end
   end
 end
 
