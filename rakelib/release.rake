@@ -143,10 +143,10 @@ end
 
 def expected_bump_type_from_changelog_section(changelog_section)
   section = changelog_section.to_s
-  downcased_section = section.downcase
-  return :major if downcased_section.match?(/\bbreaking\b/) || section.match?(/^###\s+.*breaking/i)
+  # Keep bump inference conservative to avoid prose-triggered false positives.
+  return :major if section.match?(/^###\s+(?:⚠️\s*)?Breaking(?:\s+Changes?)?\b/i)
   return :minor if section.match?(/^###\s+Added\b/i)
-  return :patch if section.match?(/^###\s+(Fixed|Security|Changed|Improved|Documentation)\b/i)
+  return :patch if section.match?(/^###\s+(Fixed|Security|Changed|Improved)\b/i)
 
   nil
 end
@@ -175,16 +175,13 @@ def validate_release_version_policy!(gem_root:, target_gem_version:, allow_overr
       message: "❌ Requested version #{target_gem_version} must be greater than latest tagged version #{latest_tagged_version}.",
       allow_override: allow_override
     )
+    return if allow_override
   end
 
   npm_version = Shakapacker::Utils::VersionSyntaxConverter.new.rubygem_to_npm(target_gem_version)
   changelog_path = File.join(gem_root, "CHANGELOG.md")
   changelog_section = extract_changelog_section(changelog_path: changelog_path, npm_version: npm_version)
   changelog_source = "v#{npm_version}"
-  unless changelog_section
-    changelog_section = extract_unreleased_changelog_section(changelog_path: changelog_path)
-    changelog_source = "Unreleased" if changelog_section
-  end
 
   if prerelease_gem_version?(target_gem_version) && latest_tagged_version
     target_components = parse_gem_version_components(target_gem_version)
@@ -209,7 +206,7 @@ def validate_release_version_policy!(gem_root:, target_gem_version:, allow_overr
   end
 
   unless changelog_section
-    puts "ℹ️ VERSION POLICY: No changelog content found for v#{npm_version} or [Unreleased]; skipping changelog bump-consistency check."
+    puts "ℹ️ VERSION POLICY: No changelog content found for v#{npm_version}; skipping changelog bump-consistency check."
     return
   end
 
@@ -230,15 +227,6 @@ def extract_changelog_section(changelog_path:, npm_version:)
   lines = File.readlines(changelog_path)
   section_header = /^## \[v#{Regexp.escape(npm_version)}\]/
   start_index = lines.index { |line| line.match?(section_header) }
-  return nil unless start_index
-
-  end_index = ((start_index + 1)...lines.length).find { |idx| lines[idx].start_with?("## [") } || lines.length
-  lines[start_index...end_index].join.rstrip
-end
-
-def extract_unreleased_changelog_section(changelog_path:)
-  lines = File.readlines(changelog_path)
-  start_index = lines.index { |line| line.match?(/^## \[Unreleased\]/i) }
   return nil unless start_index
 
   end_index = ((start_index + 1)...lines.length).find { |idx| lines[idx].start_with?("## [") } || lines.length
@@ -266,7 +254,7 @@ end
 
 def changelog_dirty?(gem_root:)
   changes_output, status = Open3.capture2e("git", "-C", gem_root, "status", "--porcelain", "--", "CHANGELOG.md")
-  abort "❌ Unable to check CHANGELOG.md status" unless status.success?
+  abort "❌ Unable to check CHANGELOG.md status\n\n#{changes_output.strip}" unless status.success?
   !changes_output.strip.empty?
 end
 
@@ -522,20 +510,20 @@ task :sync_github_release, %i[gem_version dry_run] do |_t, args|
   puts "ℹ️ sync_github_release reads local committed CHANGELOG.md; run `git pull --rebase` first if you want the latest remote notes." unless is_dry_run
   if is_dry_run
     if changelog_dirty?(gem_root: gem_root)
-      abort "⚠️ DRY RUN: CHANGELOG.md has uncommitted changes. Commit or stash CHANGELOG.md before running sync_github_release."
+      abort "❌ DRY RUN: CHANGELOG.md has uncommitted changes. Commit or stash CHANGELOG.md before running sync_github_release."
     end
     puts "DRY RUN: Validating CHANGELOG.md section exists for the requested version..."
   else
     ensure_changelog_committed!(gem_root: gem_root)
   end
 
+  verify_gh_auth(gem_root: gem_root) unless is_dry_run
   npm_version = Shakapacker::Utils::VersionSyntaxConverter.new.rubygem_to_npm(requested_gem_version)
   release_context = prepare_github_release_context(
     gem_root: gem_root,
     npm_version: npm_version,
     gem_version: requested_gem_version
   )
-  verify_gh_auth(gem_root: gem_root) unless is_dry_run
   publish_or_update_github_release(gem_root: gem_root, release_context: release_context, dry_run: is_dry_run)
 end
 

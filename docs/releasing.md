@@ -65,7 +65,7 @@ Dry runs use a temporary git worktree so version bumps and installs do not modif
 
 `create_release` and `create_prerelease` validate release-version policy before publishing:
 - Target version must be greater than the latest tagged release.
-- If changelog content is available (target section or `[Unreleased]`), it maps to expected bump type:
+- If the target changelog section exists, it maps to expected bump type:
   - Breaking changes => major bump
   - Added features => minor bump
   - Otherwise => patch bump
