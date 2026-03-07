@@ -45,7 +45,11 @@ def verify_npm_auth(registry_url = "https://registry.npmjs.org/")
 end
 
 def verify_gh_auth(gem_root:)
-  result, status = Open3.capture2e("gh", "auth", "status")
+  begin
+    result, status = Open3.capture2e("gh", "auth", "status")
+  rescue Errno::ENOENT
+    abort "❌ GitHub CLI is not installed or not available on PATH. Install `gh` and retry."
+  end
   unless status.success?
     abort "❌ GitHub CLI authentication required! Run `gh auth login` and retry.\n\n#{result}"
   end
@@ -178,11 +182,6 @@ def validate_release_version_policy!(gem_root:, target_gem_version:, allow_overr
     return if allow_override
   end
 
-  npm_version = Shakapacker::Utils::VersionSyntaxConverter.new.rubygem_to_npm(target_gem_version)
-  changelog_path = File.join(gem_root, "CHANGELOG.md")
-  changelog_section = extract_changelog_section(changelog_path: changelog_path, npm_version: npm_version)
-  changelog_source = "v#{npm_version}"
-
   if prerelease_gem_version?(target_gem_version) && latest_tagged_version
     target_components = parse_gem_version_components(target_gem_version)
     latest_components = parse_gem_version_components(latest_tagged_version)
@@ -202,8 +201,13 @@ def validate_release_version_policy!(gem_root:, target_gem_version:, allow_overr
       message: "❌ Requested version #{target_gem_version} is not a major/minor/patch bump over latest stable #{latest_stable_version}.",
       allow_override: allow_override
     )
-    return
+    return if allow_override
   end
+
+  npm_version = Shakapacker::Utils::VersionSyntaxConverter.new.rubygem_to_npm(target_gem_version)
+  changelog_path = File.join(gem_root, "CHANGELOG.md")
+  changelog_section = extract_changelog_section(changelog_path: changelog_path, npm_version: npm_version)
+  changelog_source = "v#{npm_version}"
 
   unless changelog_section
     puts "ℹ️ VERSION POLICY: No changelog content found for v#{npm_version}; skipping changelog bump-consistency check."
