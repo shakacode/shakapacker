@@ -9,6 +9,8 @@ describe Shakapacker::Install::Env do
     SHAKAPACKER_USE_TYPESCRIPT
     SKIP_COMMON_LOADERS
   ].freeze
+  installer_flag_truthy_values = %w[true TRUE 1 yes YES].freeze
+  installer_flag_falsey_values = ["false", "0", ""].freeze
 
   around do |example|
     original_values = tracked_env_vars.to_h { |name| [name, ENV[name]] }
@@ -75,14 +77,14 @@ describe Shakapacker::Install::Env do
     %w[USE_BABEL_PACKAGES SHAKAPACKER_USE_TYPESCRIPT SKIP_COMMON_LOADERS].each do |env_name|
       context "when checking #{env_name}" do
         it "accepts lower/upper truthy values" do
-          %w[true TRUE 1 yes YES].each do |value|
+          installer_flag_truthy_values.each do |value|
             ENV[env_name] = value
             expect(described_class.truthy_env?(env_name)).to be true
           end
         end
 
         it "rejects falsey values and unset" do
-          ["false", "0", ""].each do |value|
+          installer_flag_falsey_values.each do |value|
             ENV[env_name] = value
             expect(described_class.truthy_env?(env_name)).to be false
           end
