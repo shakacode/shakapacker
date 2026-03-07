@@ -29,15 +29,27 @@ end
 
 def verify_npm_auth(registry_url = "https://registry.npmjs.org/")
   display_registry_url = registry_url
-  result, status = Open3.capture2e("npm", "whoami", "--registry", registry_url)
+  begin
+    result, status = Open3.capture2e("npm", "whoami", "--registry", registry_url)
+  rescue Errno::ENOENT
+    abort "❌ npm is not installed or not available on PATH. Install npm and retry."
+  end
   unless status.success?
     puts "⚠️  NPM authentication required!"
     puts "Please run: npm login --registry #{display_registry_url}"
     puts ""
-    login_success = system("npm", "login", "--registry", registry_url)
+    begin
+      login_success = system("npm", "login", "--registry", registry_url)
+    rescue Errno::ENOENT
+      abort "❌ npm is not installed or not available on PATH. Install npm and retry."
+    end
     abort "❌ NPM login failed! Please authenticate with npm before running the release." unless login_success
 
-    result, status = Open3.capture2e("npm", "whoami", "--registry", registry_url)
+    begin
+      result, status = Open3.capture2e("npm", "whoami", "--registry", registry_url)
+    rescue Errno::ENOENT
+      abort "❌ npm is not installed or not available on PATH. Install npm and retry."
+    end
     abort "❌ NPM login failed! Please authenticate with npm before running the release.\n\n#{result}" unless status.success?
   end
   puts "✓ Logged in to NPM as: #{result.strip}"
