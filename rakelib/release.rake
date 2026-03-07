@@ -317,9 +317,7 @@ def publish_or_update_github_release(gem_root:, release_context:, dry_run:)
       command
     end
 
-    puts "ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ"
     puts "Publishing GitHub release #{release_context[:tag]}#{release_context[:prerelease] ? ' (prerelease)' : ''}"
-    puts "ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ"
     success = system(*release_command, chdir: gem_root)
     abort "❌ Failed to publish GitHub release #{release_context[:tag]}." unless success
   end
@@ -540,7 +538,7 @@ task :sync_github_release, %i[gem_version dry_run] do |_t, args|
     ensure_changelog_committed!(gem_root: gem_root)
   end
 
-  verify_gh_auth(gem_root: gem_root) unless is_dry_run
+  verify_gh_auth(gem_root: gem_root)
   npm_version = Shakapacker::Utils::VersionSyntaxConverter.new.rubygem_to_npm(requested_gem_version)
   release_context = prepare_github_release_context(
     gem_root: gem_root,
