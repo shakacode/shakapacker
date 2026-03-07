@@ -18,7 +18,7 @@ install_dir = File.expand_path(File.dirname(__FILE__))
 # Installation strategy:
 # - USE_BABEL_PACKAGES installs both babel AND swc for compatibility
 # - Otherwise install only the specified transpiler
-if ENV["USE_BABEL_PACKAGES"] == "true" || ENV["USE_BABEL_PACKAGES"] == "1"
+if Shakapacker::Install::Env.truthy_env?("USE_BABEL_PACKAGES")
   @transpiler_to_install = "babel"
   @install_swc_compat_packages = true
   say "📦 Installing Babel packages (USE_BABEL_PACKAGES is set)", :yellow
@@ -52,7 +52,7 @@ end
 # Detect TypeScript usage
 # Auto-detect from tsconfig.json or explicit via SHAKAPACKER_USE_TYPESCRIPT env var
 @use_typescript = File.exist?(Rails.root.join("tsconfig.json")) ||
-  ENV["SHAKAPACKER_USE_TYPESCRIPT"] == "true"
+  Shakapacker::Install::Env.truthy_env?("SHAKAPACKER_USE_TYPESCRIPT")
 assets_bundler = ENV["SHAKAPACKER_ASSETS_BUNDLER"] || "webpack"
 config_extension = @use_typescript ? "ts" : "js"
 
@@ -225,7 +225,7 @@ Dir.chdir(Rails.root) do
 
   # Inline fetch_peer_dependencies and fetch_common_dependencies
   peers = PackageJson.read(install_dir).fetch(ENV["SHAKAPACKER_ASSETS_BUNDLER"] || "webpack")
-  common_deps = ENV["SKIP_COMMON_LOADERS"] ? {} : PackageJson.read(install_dir).fetch("common")
+  common_deps = Shakapacker::Install::Env.truthy_env?("SKIP_COMMON_LOADERS") ? {} : PackageJson.read(install_dir).fetch("common")
   peers = peers.merge(common_deps)
 
   # Add transpiler-specific dependencies based on detected/configured transpiler
