@@ -163,7 +163,7 @@ def expected_bump_type_from_changelog_section(changelog_section)
   # Keep bump inference conservative to avoid prose-triggered false positives.
   return :major if section.match?(/^###\s+(?:⚠️\s*)?Breaking(?:\s+Changes?)?\b/i)
   return :minor if section.match?(/^###\s+(Added|New\s+Features?|Features?|Enhancements?)\b/i)
-  return :patch if section.match?(/^###\s+(Fixed|Fixes|Bug\s+Fixes?|Security|Changed|Improved|Deprecated)\b/i)
+  return :patch if section.match?(/^###\s+(Fixed|Fixes|Bug\s+Fixes?|Security|Improved|Deprecated)\b/i)
 
   nil
 end
