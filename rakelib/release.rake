@@ -200,8 +200,8 @@ def validate_release_version_policy!(gem_root:, target_gem_version:, allow_overr
     same_release_base = target_components[:major] == latest_components[:major] &&
       target_components[:minor] == latest_components[:minor] &&
       target_components[:patch] == latest_components[:patch]
-    # Successive prerelease iterations for the same base (for example rc.0 -> rc.1)
-    # intentionally skip changelog bump-shape inference; the base bump was validated on first prerelease.
+    # Any prerelease-to-prerelease move on the same base (for example rc.0 -> rc.1 or beta.0 -> rc.0)
+    # intentionally skips changelog bump-shape inference; the base bump was validated on first prerelease.
     return if same_release_base && prerelease_gem_version?(latest_tagged_version)
   end
 
