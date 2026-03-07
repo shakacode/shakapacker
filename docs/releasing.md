@@ -46,6 +46,7 @@ bundle exec rake "create_release[9.2.0.beta.1]"  # Creates npm package 9.2.0-bet
 bundle exec rake "create_release[9.6.0.rc.0]"
 
 # Auto-calculate next prerelease and confirm before publishing
+bundle exec rake "create_prerelease[9.6.0]"      # defaults to rc -> 9.6.0.rc.0 or 9.6.0.rc.1, etc.
 bundle exec rake "create_prerelease[9.6.0,rc]"   # -> 9.6.0.rc.0 or 9.6.0.rc.1, etc.
 bundle exec rake "create_prerelease[9.6.0,beta]" # -> 9.6.0.beta.0 or 9.6.0.beta.1, etc.
 
@@ -143,7 +144,7 @@ bundle exec rake "create_release[10.0.0.rc.1]"  # Gem: 10.0.0.rc.1, npm: 10.0.0-
 bundle exec rake "create_prerelease[10.0.0,rc]"  # picks rc.0 then rc.1, etc., with confirmation
 ```
 
-The `create_prerelease` task requires the prerelease type argument explicitly: use `rc` or `beta`.
+The `create_prerelease` task defaults to `rc` if prerelease type is omitted. Use `beta` explicitly when needed.
 
 ### 6. During the Release
 

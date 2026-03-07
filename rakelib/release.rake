@@ -521,11 +521,13 @@ end
 desc("Creates the next prerelease automatically and then runs create_release.
 
 Examples:
+- rake \"create_prerelease[9.6.0]\"          # defaults to rc -> 9.6.0.rc.0 or next rc index
 - rake \"create_prerelease[9.6.0,rc]\"       # -> 9.6.0.rc.0 or next rc index
 - rake \"create_prerelease[9.6.0,beta]\"     # -> 9.6.0.beta.0 or next beta index
 - rake \"create_prerelease[9.6.0,rc,true]\"  # dry run
 
 Notes:
+- If prerelease_type is omitted, it defaults to 'rc'.
 - Prompts for confirmation before continuing (set AUTO_CONFIRM=true to skip).
 - Uses git tags to compute the next prerelease index.
 - Release version policy checks can be overridden via 4th arg 'true' or RELEASE_VERSION_POLICY_OVERRIDE=true.
@@ -539,12 +541,13 @@ task :create_prerelease, %i[base_version prerelease_type dry_run override_versio
 
   base_version = args_hash[:base_version].to_s.strip
   if base_version.empty?
-    abort "❌ base_version is required. Usage: rake \"create_prerelease[9.6.0,rc]\" or rake \"create_prerelease[9.6.0,beta]\""
+    abort "❌ base_version is required. Usage: rake \"create_prerelease[9.6.0]\" or rake \"create_prerelease[9.6.0,beta]\""
   end
 
   prerelease_type = args_hash[:prerelease_type].to_s.strip
   if prerelease_type.empty?
-    abort "❌ prerelease_type is required. Usage: rake \"create_prerelease[9.6.0,rc]\" or rake \"create_prerelease[9.6.0,beta]\""
+    prerelease_type = "rc"
+    puts "No prerelease_type provided, defaulting to rc."
   end
   next_version = next_prerelease_gem_version(
     gem_root: gem_root,
