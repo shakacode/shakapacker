@@ -290,6 +290,7 @@ def ensure_git_tag_exists!(gem_root:, tag:)
 end
 
 def publish_or_update_github_release(gem_root:, release_context:, dry_run:)
+  # Keep this check before the dry-run return so preflight runs catch missing tags.
   ensure_git_tag_exists!(gem_root: gem_root, tag: release_context[:tag])
 
   if dry_run

@@ -99,6 +99,8 @@ The `create_release` task automatically:
 
 If you want GitHub Releases, do that as a separate step after publishing:
 
+Legacy note: `SKIP_GITHUB_RELEASE=true` is no longer used by release tasks. GitHub release creation is now an explicit, separate step via `sync_github_release`.
+
 1. Run `bundle exec rake update_changelog`
 2. Update `CHANGELOG.md` with the published version section
    - For prerelease entries, use npm semver header format with dashes, for example `## [v9.6.0-rc.1]`
@@ -159,7 +161,7 @@ The `create_prerelease` task defaults to `rc` if prerelease type is omitted. Use
 1. Verify the release on:
    - [npm](https://www.npmjs.com/package/shakapacker)
    - [RubyGems](https://rubygems.org/gems/shakapacker)
-   - [GitHub releases](https://github.com/shakacode/shakapacker/releases)
+   - [GitHub releases](https://github.com/shakacode/shakapacker/releases) if you ran `sync_github_release`
 
 2. Check that the lockfile commit was pushed:
 
@@ -207,6 +209,14 @@ If package publishing succeeds but `sync_github_release` fails:
    ```bash
    bundle exec rake "sync_github_release[<gem_version>]"
    ```
+
+### Legacy `SKIP_GITHUB_RELEASE` Usage
+
+If your CI or local runbook still sets `SKIP_GITHUB_RELEASE=true`:
+
+1. `create_release` and `create_prerelease` now always skip GitHub release creation by design
+2. Remove `SKIP_GITHUB_RELEASE` from scripts to avoid confusion
+3. Run `sync_github_release` explicitly when you want to create or update a GitHub release
 
 ### Wrong Version Format
 
