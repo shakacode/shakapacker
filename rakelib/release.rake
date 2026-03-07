@@ -180,7 +180,6 @@ def validate_release_version_policy!(gem_root:, target_gem_version:, allow_overr
       message: "❌ Requested version #{target_gem_version} must be greater than latest tagged version #{latest_tagged_version}.",
       allow_override: allow_override
     )
-    return if allow_override
   end
 
   if prerelease_gem_version?(target_gem_version) && latest_tagged_version
