@@ -124,9 +124,11 @@ def parse_release_tag_to_gem_version(tag)
   nil
 end
 
-def tagged_release_gem_versions(gem_root)
-  fetch_output, fetch_status = Open3.capture2e("git", "-C", gem_root, "fetch", "--tags", "--quiet")
-  abort "❌ Unable to fetch tags for version policy validation.\n\n#{fetch_output.strip}" unless fetch_status.success?
+def tagged_release_gem_versions(gem_root, fetch_tags: true)
+  if fetch_tags
+    fetch_output, fetch_status = Open3.capture2e("git", "-C", gem_root, "fetch", "--tags", "--quiet")
+    abort "❌ Unable to fetch tags for version policy validation.\n\n#{fetch_output.strip}" unless fetch_status.success?
+  end
 
   tags_output, tags_status = Open3.capture2e("git", "-C", gem_root, "tag", "-l", "v*")
   abort "❌ Unable to list git tags for version policy validation.\n\n#{tags_output.strip}" unless tags_status.success?
@@ -170,8 +172,8 @@ def handle_version_policy_violation!(message:, allow_override:)
   abort message
 end
 
-def validate_release_version_policy!(gem_root:, target_gem_version:, allow_override:)
-  tagged_versions = tagged_release_gem_versions(gem_root)
+def validate_release_version_policy!(gem_root:, target_gem_version:, allow_override:, fetch_tags: true)
+  tagged_versions = tagged_release_gem_versions(gem_root, fetch_tags: fetch_tags)
   latest_tagged_version = tagged_versions.max_by { |version| Gem::Version.new(version) }
 
   if latest_tagged_version && Gem::Version.new(target_gem_version) <= Gem::Version.new(latest_tagged_version)
@@ -204,6 +206,11 @@ def validate_release_version_policy!(gem_root:, target_gem_version:, allow_overr
       allow_override: allow_override
     )
     return if allow_override
+  end
+
+  if prerelease_gem_version?(target_gem_version)
+    puts "ℹ️ VERSION POLICY: Skipping changelog bump-consistency check for prerelease #{target_gem_version}."
+    return
   end
 
   npm_version = Shakapacker::Utils::VersionSyntaxConverter.new.rubygem_to_npm(target_gem_version)
@@ -367,7 +374,13 @@ def confirm_or_abort!(prompt)
   abort "❌ Aborted by user." unless %w[y yes].include?(answer)
 end
 
-def perform_release(gem_version:, dry_run:, check_uncommitted: true, allow_version_policy_override: false)
+def perform_release(
+  gem_version:,
+  dry_run:,
+  check_uncommitted: true,
+  allow_version_policy_override: false,
+  fetch_tags_for_policy: true
+)
   ensure_clean_worktree! if check_uncommitted
   gem_root = File.expand_path("..", __dir__)
   # This is filled inside the release checkout block and used for the post-release sync reminder.
@@ -391,7 +404,8 @@ def perform_release(gem_version:, dry_run:, check_uncommitted: true, allow_versi
     validate_release_version_policy!(
       gem_root: release_root,
       target_gem_version: resolved_target_gem_version,
-      allow_override: allow_version_policy_override
+      allow_override: allow_version_policy_override,
+      fetch_tags: fetch_tags_for_policy
     )
     if requested_gem_version.empty?
       puts "Computed next patch version: #{resolved_target_gem_version}"
@@ -522,6 +536,7 @@ task :sync_github_release, %i[gem_version dry_run] do |_t, args|
     puts "DRY RUN: Validating CHANGELOG.md section exists for the requested version..."
   else
     ensure_changelog_committed!(gem_root: gem_root)
+    confirm_or_abort!("Confirm your local branch is up to date (run `git pull --rebase`) before syncing GitHub release?")
   end
 
   verify_gh_auth(gem_root: gem_root) unless is_dry_run
@@ -578,6 +593,7 @@ task :create_prerelease, %i[base_version prerelease_type dry_run override_versio
     gem_version: next_version,
     dry_run: is_dry_run,
     check_uncommitted: false,
-    allow_version_policy_override: allow_override
+    allow_version_policy_override: allow_override,
+    fetch_tags_for_policy: false
   )
 end
