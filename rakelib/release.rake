@@ -105,6 +105,13 @@ def prerelease_gem_version?(gem_version)
   gem_version.match?(/\A\d+\.\d+\.\d+\.(beta|rc)\.\d+\z/)
 end
 
+def npm_dist_tag_for_version(npm_version)
+  prerelease_part = npm_version.to_s.split("-", 2)[1]
+  return "latest" if prerelease_part.nil? || prerelease_part.empty?
+
+  prerelease_part.split(".", 2).first
+end
+
 def validate_requested_gem_version!(requested_gem_version)
   return if requested_gem_version.empty?
   return if requested_gem_version.match?(/\A\d+\.\d+\.\d+(\.(beta|rc)\.\d+)?\z/)
@@ -443,7 +450,9 @@ def perform_release(
     release_it_command = +"release-it #{Shellwords.escape(npm_version)}"
     release_it_command << " --npm.publish --no-git.requireCleanWorkingDir"
     release_it_command << " --dry-run --verbose" if dry_run
+    npm_dist_tag = npm_dist_tag_for_version(npm_version)
     puts "ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ"
+    puts "NPM target: shakapacker@#{npm_version} (dist-tag: #{npm_dist_tag})"
     puts "Use the OTP for NPM!"
     puts "ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ"
     Shakapacker::Utils::Misc.sh_in_dir(release_root, release_it_command)
