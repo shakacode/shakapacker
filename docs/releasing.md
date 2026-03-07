@@ -9,7 +9,7 @@ This guide is for Shakapacker maintainers who need to publish a new release.
    ```bash
    bundle install              # Installs gem-release
    yarn global add release-it  # Installs release-it for npm publishing
-   gh --version                # Required only if you plan to run sync_github_release
+   gh --version                # Required for automatic GitHub release creation
    ```
 
 2. **Ensure you have publishing access:**
@@ -19,24 +19,37 @@ This guide is for Shakapacker maintainers who need to publish a new release.
 3. **Enable 2FA on both platforms:**
    - npm: 2FA is required for publishing
    - RubyGems: 2FA is required for publishing
-4. **If you plan to run `sync_github_release`, authenticate GitHub CLI:**
+
+4. **Authenticate GitHub CLI:**
    - Run `gh auth login` and ensure your account/token has write access to this repository
+   - Required for automatic GitHub release creation after publishing
 
 ## Release Process
 
-### 1. Prepare the Release
+### 1. Update the Changelog
 
-Before running the release task:
+**Always update CHANGELOG.md before running the release task.** The release task reads the version from CHANGELOG.md and automatically creates a GitHub release from the changelog section.
 
 1. Ensure all desired changes are merged to `main` branch
-2. Ensure your working directory is clean (`git status` shows no uncommitted changes)
+2. Run `/update-changelog release` (or `rc` or `beta` for prereleases) to:
+   - Find merged PRs missing from the changelog
+   - Add changelog entries under the appropriate category headings
+   - Auto-compute the next version based on changes (breaking → major, features → minor, fixes → patch)
+   - Stamp the version header (e.g., `## [v9.6.0] - March 7, 2026`)
+3. Review the changelog entries and verify the computed version
+4. Commit and push CHANGELOG.md
+
+If you forget this step, the release task will print a warning and the GitHub release will need to be created manually afterward using `sync_github_release`.
 
 ### 2. Run the Release Task
 
-The automated release task handles the entire release process:
+The simplest way to release is with no arguments — the task reads the version from CHANGELOG.md:
 
 ```bash
-# For a specific version (e.g., 9.1.0)
+# Recommended: reads version from CHANGELOG.md (requires step 1)
+bundle exec rake create_release
+
+# For a specific version (overrides CHANGELOG.md detection)
 bundle exec rake "create_release[9.1.0]"
 
 # For a beta release (note: use period, not dash)
@@ -50,9 +63,6 @@ bundle exec rake "create_prerelease[9.6.0]"      # defaults to rc -> 9.6.0.rc.0 
 bundle exec rake "create_prerelease[9.6.0,rc]"   # -> 9.6.0.rc.0 or 9.6.0.rc.1, etc.
 bundle exec rake "create_prerelease[9.6.0,beta]" # -> 9.6.0.beta.0 or 9.6.0.beta.1, etc.
 
-# For a patch version bump (auto-increments)
-bundle exec rake create_release  # prompts to confirm computed patch version
-
 # Dry run to test without publishing
 bundle exec rake "create_release[9.1.0,true]"
 
@@ -61,9 +71,17 @@ RELEASE_VERSION_POLICY_OVERRIDE=true bundle exec rake "create_release[9.1.0]"
 bundle exec rake "create_release[9.1.0,false,true]"
 ```
 
+When called with no arguments, `create_release`:
+
+1. Reads the first versioned header from CHANGELOG.md (e.g., `## [v9.6.0]`)
+2. Compares it to the current gem version
+3. If the changelog version is newer, prompts for confirmation and uses it
+4. If no new version is found, falls back to a patch bump
+
 Dry runs use a temporary git worktree so version bumps and installs do not modify your current checkout.
 
 `create_release` and `create_prerelease` validate release-version policy before publishing:
+
 - Target version must be greater than the latest tagged release.
 - If the versioned target changelog section exists (`## [vX.Y.Z...]`; not `UNRELEASED`), it maps to expected bump type:
   - Breaking changes => major bump
@@ -72,6 +90,7 @@ Dry runs use a temporary git worktree so version bumps and installs do not modif
   - Other headings => no inferred bump level (consistency check is skipped)
 
 Use override only when needed:
+
 - `RELEASE_VERSION_POLICY_OVERRIDE=true`
 - Or task arg override (`create_release[..., ..., true]`, `create_prerelease[..., ..., ..., true]`)
 
@@ -81,6 +100,7 @@ The `create_release` task automatically:
 
 1. **Validates release prerequisites**:
    - Verifies npm authentication
+   - Warns if CHANGELOG.md section is missing for the target version
 2. **Pulls latest changes** from the repository
 3. **Bumps version numbers** in:
    - `lib/shakapacker/version.rb` (Ruby gem version)
@@ -95,31 +115,9 @@ The `create_release` task automatically:
    - Runs `bundle install` to update `Gemfile.lock`
    - Runs `npm install` to update `package-lock.json` (yarn.lock may also be updated for multi-package-manager compatibility testing)
 7. **Commits and pushes lockfile changes** automatically
+8. **Creates GitHub release** from CHANGELOG.md (if the matching section exists)
 
-### 4. Sync GitHub Release (Optional, After Publish)
-
-If you want GitHub Releases, do that as a separate step after publishing.
-Requires GitHub CLI (`gh`) with write access to this repository:
-
-Legacy note: `SKIP_GITHUB_RELEASE=true` is no longer used by release tasks. GitHub release creation is now an explicit, separate step via `sync_github_release`.
-
-1. Run `bundle exec rake update_changelog`
-2. Update `CHANGELOG.md` with the published version section
-   - For prerelease entries, use npm semver header format with dashes, for example `## [v9.6.0-rc.1]`
-3. Commit `CHANGELOG.md`
-4. Run:
-
-```bash
-# Stable
-bundle exec rake "sync_github_release[9.6.0]"
-
-# Prerelease
-bundle exec rake "sync_github_release[9.6.0.rc.1]"
-```
-
-`sync_github_release` reads release notes from the matching `CHANGELOG.md` section and creates/updates the GitHub release for the corresponding tag.
-
-### 5. Version Format
+### 4. Version Format
 
 **Important:** Use Ruby gem version format (no dashes):
 
@@ -130,6 +128,11 @@ The task automatically converts Ruby gem format to npm semver format:
 
 - Ruby: `9.2.0.beta.1` → npm: `9.2.0-beta.1`
 - Ruby: `9.0.0.rc.2` → npm: `9.0.0-rc.2`
+
+**CHANGELOG.md headers** use npm semver format (with dashes):
+
+- `## [v9.6.0-rc.1]` — correct (matches git tag format)
+- `## [v9.6.0.rc.1]` — wrong (RubyGems format, will not be found by release tasks)
 
 **Examples:**
 
@@ -149,21 +152,22 @@ bundle exec rake "create_prerelease[10.0.0,rc]"  # picks rc.0 then rc.1, etc., w
 
 The `create_prerelease` task defaults to `rc` if prerelease type is omitted. Use `beta` explicitly when needed.
 
-### 6. During the Release
+### 5. During the Release
 
 1. When prompted for **npm OTP**, enter your 2FA code from your authenticator app
 2. Accept defaults for release-it options
 3. When prompted for **RubyGems OTP**, enter your 2FA code
-4. If using patch auto-bump (`create_release` with no version), confirm the computed patch version when prompted
+4. If using `create_release` with no version, confirm the version detected from CHANGELOG.md (or the computed patch version)
 5. If using `create_prerelease`, confirm the computed next prerelease version when prompted
 6. The script will automatically commit and push lockfile updates
+7. The script will automatically create a GitHub release (if CHANGELOG.md section exists)
 
-### 7. After Release
+### 6. After Release
 
 1. Verify the release on:
    - [npm](https://www.npmjs.com/package/shakapacker)
    - [RubyGems](https://rubygems.org/gems/shakapacker)
-   - [GitHub releases](https://github.com/shakacode/shakapacker/releases) if you ran `sync_github_release`
+   - [GitHub releases](https://github.com/shakacode/shakapacker/releases)
 
 2. Check that the lockfile commit was pushed:
 
@@ -176,6 +180,25 @@ The `create_prerelease` task defaults to `rc` if prerelease type is omitted. Use
    - Post in relevant Slack/Discord channels
    - Tweet about major releases
    - Update documentation if needed
+
+### Syncing GitHub Releases Manually
+
+If the automatic GitHub release creation was skipped (e.g., CHANGELOG.md section was missing during release), you can create it manually after updating the changelog:
+
+1. Update `CHANGELOG.md` with the published version section
+   - For prerelease entries, use npm semver header format with dashes, for example `## [v9.6.0-rc.1]`
+2. Commit and push `CHANGELOG.md`
+3. Run:
+
+```bash
+# Stable
+bundle exec rake "sync_github_release[9.6.0]"
+
+# Prerelease
+bundle exec rake "sync_github_release[9.6.0.rc.1]"
+```
+
+`sync_github_release` reads release notes from the matching `CHANGELOG.md` section and creates/updates the GitHub release for the corresponding tag.
 
 ## Troubleshooting
 
@@ -202,7 +225,7 @@ If publishing fails partway through:
 
 ### GitHub Release Sync Fails
 
-If package publishing succeeds but `sync_github_release` fails:
+If package publishing succeeds but GitHub release creation fails:
 
 1. Fix GitHub auth (`gh auth login`) or permissions
 2. Ensure `CHANGELOG.md` has matching header `## [vX.Y.Z...]` (npm format for prereleases)
@@ -211,14 +234,6 @@ If package publishing succeeds but `sync_github_release` fails:
    ```bash
    bundle exec rake "sync_github_release[<gem_version>]"
    ```
-
-### Legacy `SKIP_GITHUB_RELEASE` Usage
-
-If your CI or local runbook still sets `SKIP_GITHUB_RELEASE=true`:
-
-1. `create_release` and `create_prerelease` now always skip GitHub release creation by design
-2. Remove `SKIP_GITHUB_RELEASE` from scripts to avoid confusion
-3. Run `sync_github_release` explicitly when you want to create or update a GitHub release
 
 ### Wrong Version Format
 
