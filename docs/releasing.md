@@ -54,9 +54,25 @@ bundle exec rake create_release
 
 # Dry run to test without publishing
 bundle exec rake "create_release[9.1.0,true]"
+
+# Override version policy checks (monotonic + changelog/bump consistency)
+RELEASE_VERSION_POLICY_OVERRIDE=true bundle exec rake "create_release[9.1.0]"
+bundle exec rake "create_release[9.1.0,false,true]"
 ```
 
 Dry runs use a temporary git worktree so version bumps and installs do not modify your current checkout.
+
+`create_release` and `create_prerelease` validate release-version policy before publishing:
+- Target version must be greater than the latest tagged release.
+- CHANGELOG entry must exist for the target version.
+- Changelog content maps to expected bump type:
+  - Breaking changes => major bump
+  - Added features => minor bump
+  - Otherwise => patch bump
+
+Use override only when needed:
+- `RELEASE_VERSION_POLICY_OVERRIDE=true`
+- Or task arg override (`create_release[..., ..., true]`, `create_prerelease[..., ..., ..., true]`)
 
 ### 3. What the Release Task Does
 

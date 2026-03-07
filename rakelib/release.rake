@@ -1,5 +1,6 @@
 require_relative File.join("..", "lib", "shakapacker", "utils", "version_syntax_converter")
 require_relative File.join("..", "lib", "shakapacker", "utils", "misc")
+require "rubygems/version"
 require "shellwords"
 require "open3"
 require "tempfile"
@@ -94,6 +95,127 @@ def validate_requested_gem_version!(requested_gem_version)
   return if requested_gem_version.match?(/\A\d+\.\d+\.\d+(\.(beta|rc)\.\d+)?\z/)
 
   abort "❌ gem_version must be in RubyGems format (no dashes), e.g. 9.6.0 or 9.6.0.rc.0. Got: #{requested_gem_version.inspect}"
+end
+
+def parse_gem_version_components(gem_version)
+  match = gem_version.to_s.strip.match(/\A(\d+)\.(\d+)\.(\d+)(?:\.(beta|rc)\.(\d+))?\z/)
+  abort "❌ Unsupported gem version format for release validation: #{gem_version.inspect}" unless match
+
+  {
+    major: match[1].to_i,
+    minor: match[2].to_i,
+    patch: match[3].to_i,
+    prerelease_type: match[4],
+    prerelease_index: match[5]&.to_i
+  }
+end
+
+def parse_release_tag_to_gem_version(tag)
+  stable_match = tag.match(/\Av(\d+\.\d+\.\d+)\z/)
+  return stable_match[1] if stable_match
+
+  prerelease_match = tag.match(/\Av(\d+\.\d+\.\d+)-(beta|rc)\.(\d+)\z/)
+  return "#{prerelease_match[1]}.#{prerelease_match[2]}.#{prerelease_match[3]}" if prerelease_match
+
+  nil
+end
+
+def tagged_release_gem_versions(gem_root)
+  fetch_output, fetch_status = Open3.capture2e("git", "-C", gem_root, "fetch", "--tags", "--quiet")
+  abort "❌ Unable to fetch tags for version policy validation.\n\n#{fetch_output.strip}" unless fetch_status.success?
+
+  tags_output, tags_status = Open3.capture2e("git", "-C", gem_root, "tag", "-l", "v*")
+  abort "❌ Unable to list git tags for version policy validation.\n\n#{tags_output.strip}" unless tags_status.success?
+
+  tags_output.lines.map(&:strip).filter_map { |tag| parse_release_tag_to_gem_version(tag) }.uniq
+end
+
+def version_bump_type(previous_stable_gem_version:, target_gem_version:)
+  previous = parse_gem_version_components(previous_stable_gem_version)
+  target = parse_gem_version_components(target_gem_version)
+
+  return :major if target[:major] > previous[:major]
+  return :minor if target[:major] == previous[:major] && target[:minor] > previous[:minor]
+  return :patch if target[:major] == previous[:major] && target[:minor] == previous[:minor] && target[:patch] > previous[:patch]
+
+  :none
+end
+
+def expected_bump_type_from_changelog_section(changelog_section)
+  section = changelog_section.to_s
+  downcased_section = section.downcase
+  return :major if downcased_section.match?(/\bbreaking\b/) || section.match?(/^###\s+.*breaking/i)
+  return :minor if section.match?(/^###\s+Added\b/i)
+
+  :patch
+end
+
+def version_policy_override_enabled?(override_flag)
+  Shakapacker::Utils::Misc.object_to_boolean(override_flag) ||
+    Shakapacker::Utils::Misc.object_to_boolean(ENV["RELEASE_VERSION_POLICY_OVERRIDE"])
+end
+
+def handle_version_policy_violation!(message:, allow_override:)
+  if allow_override
+    normalized = message.sub(/\A❌\s*/, "")
+    puts "⚠️ VERSION POLICY OVERRIDE enabled: #{normalized}"
+    return
+  end
+
+  abort message
+end
+
+def validate_release_version_policy!(gem_root:, target_gem_version:, allow_override:)
+  tagged_versions = tagged_release_gem_versions(gem_root)
+  latest_tagged_version = tagged_versions.max_by { |version| Gem::Version.new(version) }
+
+  if latest_tagged_version && Gem::Version.new(target_gem_version) <= Gem::Version.new(latest_tagged_version)
+    handle_version_policy_violation!(
+      message: "❌ Requested version #{target_gem_version} must be greater than latest tagged version #{latest_tagged_version}.",
+      allow_override: allow_override
+    )
+  end
+
+  npm_version = Shakapacker::Utils::VersionSyntaxConverter.new.rubygem_to_npm(target_gem_version)
+  changelog_path = File.join(gem_root, "CHANGELOG.md")
+  changelog_section = extract_changelog_section(changelog_path: changelog_path, npm_version: npm_version)
+  unless changelog_section
+    handle_version_policy_violation!(
+      message: "❌ CHANGELOG.md is missing `## [v#{npm_version}]`. Add the section before release, or override explicitly.",
+      allow_override: allow_override
+    )
+    return
+  end
+
+  if prerelease_gem_version?(target_gem_version) && latest_tagged_version
+    target_components = parse_gem_version_components(target_gem_version)
+    latest_components = parse_gem_version_components(latest_tagged_version)
+    same_release_base = target_components[:major] == latest_components[:major] &&
+      target_components[:minor] == latest_components[:minor] &&
+      target_components[:patch] == latest_components[:patch]
+    return if same_release_base && prerelease_gem_version?(latest_tagged_version)
+  end
+
+  latest_stable_version = tagged_versions.reject { |version| prerelease_gem_version?(version) }
+    .max_by { |version| Gem::Version.new(version) }
+  return unless latest_stable_version
+
+  actual_bump_type = version_bump_type(previous_stable_gem_version: latest_stable_version, target_gem_version: target_gem_version)
+  if actual_bump_type == :none
+    handle_version_policy_violation!(
+      message: "❌ Requested version #{target_gem_version} is not a major/minor/patch bump over latest stable #{latest_stable_version}.",
+      allow_override: allow_override
+    )
+    return
+  end
+
+  expected_bump_type = expected_bump_type_from_changelog_section(changelog_section)
+  return if actual_bump_type == expected_bump_type
+
+  handle_version_policy_violation!(
+    message: "❌ Version bump mismatch for #{target_gem_version}: CHANGELOG implies #{expected_bump_type}, but version bump is #{actual_bump_type} from #{latest_stable_version}.",
+    allow_override: allow_override
+  )
 end
 
 def extract_changelog_section(changelog_path:, npm_version:)
@@ -233,7 +355,7 @@ def confirm_or_abort!(prompt)
   abort "❌ Aborted by user." unless %w[y yes].include?(answer)
 end
 
-def perform_release(gem_version:, dry_run:, check_uncommitted: true)
+def perform_release(gem_version:, dry_run:, check_uncommitted: true, allow_version_policy_override: false)
   ensure_clean_worktree! if check_uncommitted
   gem_root = File.expand_path("..", __dir__)
   # This is filled inside the release checkout block and used for the post-release sync reminder.
@@ -254,6 +376,12 @@ def perform_release(gem_version:, dry_run:, check_uncommitted: true)
 
     # The release root may change after `git pull --rebase`, so patch-bump inference must happen after that step.
     resolved_target_gem_version = target_gem_version(gem_root: release_root, requested_gem_version: requested_gem_version)
+    validate_release_version_policy!(
+      gem_root: release_root,
+      target_gem_version: resolved_target_gem_version,
+      allow_override: allow_version_policy_override
+    )
+
     bump_command = if requested_gem_version.empty?
       "gem bump --no-commit"
     else
@@ -329,16 +457,20 @@ Arguments:
 1st argument: The new version in rubygem format (example: 9.6.0.rc.0).
               Pass no argument to perform a patch bump.
 2nd argument: Perform a dry run by passing 'true' as second argument.
+3rd argument: Override release version policy checks by passing 'true'.
+              Equivalent to setting RELEASE_VERSION_POLICY_OVERRIDE=true.
 
 Examples:
 - rake \"create_release[9.6.0]\"
 - rake \"create_release[9.6.0.rc.0]\"
 - rake \"create_release[9.6.0,true]\"
+- rake \"create_release[9.6.0,false,true]\"
 ")
-task :create_release, %i[gem_version dry_run] do |_t, args|
+task :create_release, %i[gem_version dry_run override_version_policy] do |_t, args|
   args_hash = args.to_hash
   is_dry_run = Shakapacker::Utils::Misc.object_to_boolean(args_hash[:dry_run])
-  perform_release(gem_version: args_hash[:gem_version], dry_run: is_dry_run)
+  allow_override = version_policy_override_enabled?(args_hash[:override_version_policy])
+  perform_release(gem_version: args_hash[:gem_version], dry_run: is_dry_run, allow_version_policy_override: allow_override)
 end
 
 desc("Creates or updates a GitHub release from CHANGELOG.md for an already-published gem version.
@@ -396,10 +528,12 @@ Examples:
 Notes:
 - Prompts for confirmation before continuing (set AUTO_CONFIRM=true to skip).
 - Uses git tags to compute the next prerelease index.
+- Release version policy checks can be overridden via 4th arg 'true' or RELEASE_VERSION_POLICY_OVERRIDE=true.
 ")
-task :create_prerelease, %i[base_version prerelease_type dry_run] do |_t, args|
+task :create_prerelease, %i[base_version prerelease_type dry_run override_version_policy] do |_t, args|
   args_hash = args.to_hash
   is_dry_run = Shakapacker::Utils::Misc.object_to_boolean(args_hash[:dry_run])
+  allow_override = version_policy_override_enabled?(args_hash[:override_version_policy])
   gem_root = File.expand_path("..", __dir__)
   ensure_clean_worktree!
 
@@ -421,5 +555,10 @@ task :create_prerelease, %i[base_version prerelease_type dry_run] do |_t, args|
   puts "Computed next prerelease version: #{next_version}"
   confirm_or_abort!("Proceed with prerelease #{next_version}?") unless is_dry_run
 
-  perform_release(gem_version: next_version, dry_run: is_dry_run, check_uncommitted: false)
+  perform_release(
+    gem_version: next_version,
+    dry_run: is_dry_run,
+    check_uncommitted: false,
+    allow_version_policy_override: allow_override
+  )
 end
