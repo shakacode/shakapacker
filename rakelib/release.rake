@@ -290,12 +290,12 @@ def ensure_git_tag_exists!(gem_root:, tag:)
 end
 
 def publish_or_update_github_release(gem_root:, release_context:, dry_run:)
+  ensure_git_tag_exists!(gem_root: gem_root, tag: release_context[:tag])
+
   if dry_run
     puts "DRY RUN: Would create or update GitHub release #{release_context[:tag]}#{release_context[:prerelease] ? ' (prerelease)' : ''}"
     return
   end
-
-  ensure_git_tag_exists!(gem_root: gem_root, tag: release_context[:tag])
 
   Tempfile.create(["shakapacker-release-notes-", ".md"]) do |tmp|
     tmp.write(release_context[:notes])
