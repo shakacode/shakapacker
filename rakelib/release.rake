@@ -162,8 +162,8 @@ def expected_bump_type_from_changelog_section(changelog_section)
   section = changelog_section.to_s
   # Keep bump inference conservative to avoid prose-triggered false positives.
   return :major if section.match?(/^###\s+(?:⚠️\s*)?Breaking(?:\s+Changes?)?\b/i)
-  return :minor if section.match?(/^###\s+Added\b/i)
-  return :patch if section.match?(/^###\s+(Fixed|Security|Changed|Improved|Deprecated)\b/i)
+  return :minor if section.match?(/^###\s+(Added|New\s+Features?|Features?|Enhancements?)\b/i)
+  return :patch if section.match?(/^###\s+(Fixed|Fixes|Bug\s+Fixes?|Security|Changed|Improved|Deprecated)\b/i)
 
   nil
 end
@@ -542,7 +542,7 @@ task :sync_github_release, %i[gem_version dry_run] do |_t, args|
   validate_requested_gem_version!(requested_gem_version)
 
   gem_root = File.expand_path("..", __dir__)
-  puts "ℹ️ sync_github_release reads local committed CHANGELOG.md; run `git pull --rebase` first if you want the latest remote notes." unless is_dry_run
+  puts "ℹ️ sync_github_release reads local committed CHANGELOG.md; run `git pull --rebase` first if you want the latest remote notes."
   if is_dry_run
     if changelog_dirty?(gem_root: gem_root)
       abort "❌ DRY RUN: CHANGELOG.md has uncommitted changes. Commit or stash CHANGELOG.md before running sync_github_release."
