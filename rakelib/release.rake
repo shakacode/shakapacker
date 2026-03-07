@@ -152,7 +152,8 @@ def expected_bump_type_from_changelog_section(changelog_section)
   # Keep bump inference conservative to avoid prose-triggered false positives.
   return :major if section.match?(/^###\s+(?:⚠️\s*)?Breaking(?:\s+Changes?)?\b/i)
   return :minor if section.match?(/^###\s+Added\b/i)
-  return :patch if section.match?(/^###\s+(Fixed|Security|Changed|Improved)\b/i)
+  return :major if section.match?(/^###\s+Removed\b/i)
+  return :patch if section.match?(/^###\s+(Fixed|Security|Changed|Improved|Deprecated)\b/i)
 
   nil
 end
@@ -536,7 +537,7 @@ task :sync_github_release, %i[gem_version dry_run] do |_t, args|
     puts "DRY RUN: Validating CHANGELOG.md section exists for the requested version..."
   else
     ensure_changelog_committed!(gem_root: gem_root)
-    confirm_or_abort!("Confirm your local branch is up to date (run `git pull --rebase`) before syncing GitHub release?")
+    confirm_or_abort!("Have you run `git pull --rebase` to ensure your branch is up to date before syncing the GitHub release?")
   end
 
   verify_gh_auth(gem_root: gem_root) unless is_dry_run
