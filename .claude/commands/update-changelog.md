@@ -2,6 +2,68 @@
 
 You are helping to add an entry to the CHANGELOG.md file for the Shakapacker project.
 
+## Arguments
+
+This command accepts an optional argument: `$ARGUMENTS`
+
+- **No argument** (`/update-changelog`): Add entries to `[Unreleased]` without stamping a version header. Use this during development.
+- **`release`** (`/update-changelog release`): Add entries and stamp a version header. Auto-compute the next version based on changes (breaking → major, added features → minor, fixes → patch). Then `rake create_release` (with no args) will pick up this version automatically.
+- **`rc`** (`/update-changelog rc`): Same as `release`, but stamps an RC prerelease version (e.g., `v9.7.0-rc.0`). Auto-increments the RC index if prior RCs exist for the same base version.
+- **`beta`** (`/update-changelog beta`): Same as `rc`, but stamps a beta prerelease version (e.g., `v9.7.0-beta.0`).
+
+## When to Use This
+
+This command serves three use cases at different points in the release lifecycle:
+
+**During development** — Add entries to `[Unreleased]` as PRs merge:
+
+- Run `/update-changelog` to find merged PRs missing from the changelog
+- Entries accumulate under `## [Unreleased]`
+
+**Before a release** — Stamp a version header and prepare for release:
+
+- Run `/update-changelog release` (or `rc` or `beta`) to add entries AND stamp the version header
+- The version is auto-computed from changelog content (see "Auto-Computing the Next Version" below)
+- Commit and push CHANGELOG.md
+- Then run `rake create_release` (no args needed — it reads the version from CHANGELOG.md)
+- The release task automatically creates a GitHub release from the changelog section
+
+**After a release you forgot to update the changelog for** — Catch-up mode:
+
+- The command can retroactively find commits between tags and add missing entries
+- Ask the user whether to stamp a version header or add to `[Unreleased]`
+
+### Why changelog comes BEFORE the release
+
+- `create_release` automatically creates a GitHub release if a changelog section exists — no separate `sync_github_release` step needed
+- The release task warns if no changelog section is found for the target version
+- A premature version header (if release fails) is harmless — you'll release eventually
+- A missing changelog after release means GitHub release must be created manually
+
+## Auto-Computing the Next Version
+
+When stamping a version header (`release`, `rc`, or `beta`), compute the next version as follows:
+
+1. **Find the latest stable version tag** using semver sort:
+
+   ```bash
+   git tag -l 'v*' --sort=-v:refname | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | head -1
+   ```
+
+2. **Determine bump type from changelog content**:
+   - If changes include `### Breaking Changes` or `### ⚠️ Breaking Changes` → **major** bump
+   - If changes include `### Added` or `### New Features` → **minor** bump
+   - If changes only include `### Fixed`, `### Security`, `### Improved`, `### Changed`, `### Deprecated` → **patch** bump
+
+3. **Compute the version**:
+   - For `release`: Apply the bump to the latest stable tag (e.g., `9.5.0` + minor → `9.6.0`)
+   - For `rc`: Apply the bump, then find the next RC index (e.g., if `v9.6.0-rc.0` tag exists → `v9.6.0-rc.1`)
+   - For `beta`: Same as RC but with beta suffix
+
+4. **Verify**: Check that the computed version is newer than ALL existing tags (stable and prerelease). If not, ask the user what to do.
+
+5. **Show the computed version to the user** and ask for confirmation before stamping the header.
+
 ## Critical Requirements
 
 1. **User-visible changes only**: Only add changelog entries for user-visible changes:
@@ -74,6 +136,21 @@ Entries should be organized under these section headings. The project uses both 
 
 **Only include section headings that have entries.**
 
+### Version Header Format
+
+**Stable releases**: `## [v9.6.0] - March 7, 2026`
+
+**Prerelease versions** (RC and beta): Use npm semver format with dashes, NOT RubyGems dot format:
+
+- Correct: `## [v9.6.0-rc.1]` (npm semver — this is what `sync_github_release` expects)
+- Wrong: `## [v9.6.0.rc.1]` (RubyGems format — do NOT use this in CHANGELOG.md headers)
+
+This matters because the release rake tasks convert between formats:
+
+- Git tags use npm format: `v9.6.0-rc.1`
+- Gem versions use RubyGems format: `9.6.0.rc.1`
+- CHANGELOG.md headers must match git tag format: `## [v9.6.0-rc.1]`
+
 ### Version Management
 
 After adding entries, use the rake task to manage version headers:
@@ -110,16 +187,17 @@ When a new version is released:
 ### For Regular Changelog Updates
 
 1. **ALWAYS fetch latest changes first**:
-   - **CRITICAL**: Run `git fetch origin main` to ensure you have the latest commits
+   - **CRITICAL**: Run `git fetch origin main --tags` to ensure you have the latest commits AND tags
    - The workspace may be behind origin/main, causing you to miss recently merged PRs
    - After fetching, use `origin/main` for all comparisons, NOT local `main` branch
 
 2. **Determine the correct version tag to compare against**:
-   - First, check the tag dates: `git log --tags --simplify-by-decoration --pretty="format:%ai %d" | head -10`
-   - Find the latest version tag and its date
-   - Compare origin/main branch date to the tag date
-   - If the tag is NEWER than origin/main, it means the branch needs to be updated to include the tag's commits
-   - **CRITICAL**: Always use `git log TAG..BRANCH` to find commits that are in the tag but not in the branch, as the tag may be ahead
+   - List all version tags sorted by semver: `git tag -l 'v*' --sort=-v:refname | head -10`
+   - This correctly sorts RC/beta tags (e.g., `v9.6.0-rc.1` sorts after `v9.6.0-rc.0` and before `v9.6.0`)
+   - The latest tag may be a stable release, RC, or beta — handle all cases
+   - Compare origin/main branch date to the tag date using: `git log -1 --format="%ai" origin/main` and `git log -1 --format="%ai" <tag>`
+   - If the tag is NEWER than origin/main, the branch needs updating to include the tag's commits
+   - **CRITICAL**: Always use `git log TAG..BRANCH` to find commits in the branch but not the tag, AND `git log BRANCH..TAG` to check if the tag is ahead
 
 3. **Check commits and version boundaries**:
    - **IMPORTANT**: Use `origin/main` in all commands below, not local `main`
@@ -162,37 +240,52 @@ When a new version is released:
 
 10. **Show the user** the added or moved entries and explain what was done.
 
-### For Beta to Non-Beta Version Release
+### For Prerelease Versions (RC and Beta)
 
-When releasing from beta to a stable version (e.g., v9.1.0-beta.3 → v9.1.0):
+When the user passes `rc` or `beta` as an argument (or when creating a prerelease section manually):
 
-1. **Remove all beta version labels** from the changelog:
-   - Change `## [v9.1.0-beta.1]`, `## [v9.1.0-beta.2]`, etc. to a single `## [v9.1.0]` section
-   - Combine all beta entries into the stable release section
+1. **Find the latest tag** (stable or prerelease) using semver sort:
+
+   ```bash
+   git tag -l 'v*' --sort=-v:refname | head -10
+   ```
+
+2. **Auto-compute the next prerelease version** using the process in "Auto-Computing the Next Version" above.
+
+3. **Use npm semver format** for the version header:
+   - RC: `## [v9.6.0-rc.1]`
+   - Beta: `## [v9.6.0-beta.2]`
+
+4. **Ask the user which approach to take**:
+
+   **Option 1: Process changes since last prerelease**
+   - Only add entries for commits since the previous prerelease tag
+   - Maintains detailed history of what changed in each prerelease
+   - Good when each prerelease has distinct, meaningful changes
+
+   **Option 2: Collapse all prior prereleases into current prerelease**
+   - Combine all prerelease changelog entries into the new prerelease version
+   - Removes previous prerelease version sections
+   - Cleaner changelog with less version noise
+   - Good when approaching stable release
+
+   After the user chooses, proceed with that approach.
+
+### For Prerelease to Stable Version Release
+
+When releasing from prerelease to a stable version (e.g., v9.6.0-rc.1 → v9.6.0):
+
+1. **Remove all prerelease version labels** from the changelog:
+   - Change `## [v9.6.0-rc.0]`, `## [v9.6.0-rc.1]`, etc. to a single `## [v9.6.0]` section
+   - Also handle beta versions: `## [v9.6.0-beta.1]` etc.
+   - Combine all prerelease entries into the stable release section
 
 2. **Consolidate duplicate entries**:
-   - If bug fixes or changes were made to features introduced in earlier betas, keep only the final state
-   - Remove redundant changelog entries for fixes to beta features
+   - If bug fixes or changes were made to features introduced in earlier prereleases, keep only the final state
+   - Remove redundant changelog entries for fixes to prerelease features
    - Keep the most recent/accurate description of each change
 
 3. **Update version diff links** at the bottom to point to the stable version
-
-### For New Beta Version Release
-
-When creating a new beta version, ask the user which approach to take:
-
-**Option 1: Process changes since last beta**
-
-- Only add entries for commits since the previous beta version
-- Maintains detailed history of what changed in each beta
-
-**Option 2: Collapse all prior betas into current beta**
-
-- Combine all beta changelog entries into the new beta version
-- Removes previous beta version sections
-- Cleaner changelog with less version noise
-
-After the user chooses, proceed with that approach.
 
 ## Examples
 
