@@ -58,11 +58,6 @@ bundle exec rake "create_release[9.2.0.beta.1]"  # Creates npm package 9.2.0-bet
 # For a release candidate
 bundle exec rake "create_release[9.6.0.rc.0]"
 
-# Auto-calculate next prerelease and confirm before publishing
-bundle exec rake "create_prerelease[9.6.0]"      # defaults to rc -> 9.6.0.rc.0 or 9.6.0.rc.1, etc.
-bundle exec rake "create_prerelease[9.6.0,rc]"   # -> 9.6.0.rc.0 or 9.6.0.rc.1, etc.
-bundle exec rake "create_prerelease[9.6.0,beta]" # -> 9.6.0.beta.0 or 9.6.0.beta.1, etc.
-
 # Dry run to test without publishing
 bundle exec rake "create_release[9.1.0,true]"
 
@@ -80,7 +75,7 @@ When called with no arguments, `create_release`:
 
 Dry runs use a temporary git worktree so version bumps and installs do not modify your current checkout.
 
-`create_release` and `create_prerelease` validate release-version policy before publishing:
+`create_release` validates release-version policy before publishing:
 
 - Target version must be greater than the latest tagged release.
 - If the versioned target changelog section exists (`## [vX.Y.Z...]`; not `UNRELEASED`), it maps to expected bump type:
@@ -92,7 +87,7 @@ Dry runs use a temporary git worktree so version bumps and installs do not modif
 Use override only when needed:
 
 - `RELEASE_VERSION_POLICY_OVERRIDE=true`
-- Or task arg override (`create_release[..., ..., true]`, `create_prerelease[..., ..., ..., true]`)
+- Or task arg override (`create_release[..., ..., true]`)
 
 ### 3. What the Release Task Does
 
@@ -146,11 +141,9 @@ bundle exec rake "create_release[9.2.0.beta.1]"  # Gem: 9.2.0.beta.1, npm: 9.2.0
 # Release candidate
 bundle exec rake "create_release[10.0.0.rc.1]"  # Gem: 10.0.0.rc.1, npm: 10.0.0-rc.1
 
-# Auto-next prerelease (recommended)
-bundle exec rake "create_prerelease[10.0.0,rc]"  # picks rc.0 then rc.1, etc., with confirmation
+# Prerelease: use /update-changelog rc first, then create_release reads it
+bundle exec rake create_release  # reads v10.0.0-rc.0 from CHANGELOG.md
 ```
-
-The `create_prerelease` task defaults to `rc` if prerelease type is omitted. Use `beta` explicitly when needed.
 
 ### 5. During the Release
 
@@ -158,9 +151,8 @@ The `create_prerelease` task defaults to `rc` if prerelease type is omitted. Use
 2. Accept defaults for release-it options
 3. When prompted for **RubyGems OTP**, enter your 2FA code
 4. If using `create_release` with no version, confirm the version detected from CHANGELOG.md (or the computed patch version)
-5. If using `create_prerelease`, confirm the computed next prerelease version when prompted
-6. The script will automatically commit and push lockfile updates
-7. The script will automatically create a GitHub release (if CHANGELOG.md section exists)
+5. The script will automatically commit and push lockfile updates
+6. The script will automatically create a GitHub release (if CHANGELOG.md section exists)
 
 ### 6. After Release
 

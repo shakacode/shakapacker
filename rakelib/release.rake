@@ -410,30 +410,6 @@ def with_release_checkout(gem_root:, dry_run:)
   end
 end
 
-def next_prerelease_gem_version(gem_root:, base_version:, prerelease_type:)
-  normalized_type = prerelease_type.to_s.strip
-  unless %w[beta rc].include?(normalized_type)
-    abort "❌ prerelease_type must be one of: beta, rc"
-  end
-
-  unless base_version.match?(/\A\d+\.\d+\.\d+\z/)
-    abort "❌ base_version must be in major.minor.patch format, for example 9.6.0"
-  end
-
-  Shakapacker::Utils::Misc.sh_in_dir(gem_root, "git fetch --tags --quiet")
-  # Git tags use npm semver format (dashes) because release-it creates the tag from the npm version.
-  # e.g., v9.6.0-rc.0, not v9.6.0.rc.0
-  tag_pattern = "v#{base_version}-#{normalized_type}.*"
-  existing_tags, status = Open3.capture2e("git", "-C", gem_root, "tag", "-l", tag_pattern)
-  abort "❌ Unable to list existing tags for prerelease calculation.\n\n#{existing_tags}" unless status.success?
-
-  tag_regex = /\Av#{Regexp.escape(base_version)}-#{Regexp.escape(normalized_type)}\.(\d+)\z/
-  max_existing_index = existing_tags.lines.map(&:strip).filter_map { |tag| tag.match(tag_regex)&.captures&.first&.to_i }.max
-  next_index = max_existing_index.nil? ? 0 : max_existing_index + 1
-
-  "#{base_version}.#{normalized_type}.#{next_index}"
-end
-
 def confirm_or_abort!(prompt)
   return if Shakapacker::Utils::Misc.object_to_boolean(ENV["AUTO_CONFIRM"])
 
@@ -551,6 +527,10 @@ end
 
 desc("Releases both the gem and node package using the given version.
 
+Handles both stable and prerelease versions. For prereleases, run
+/update-changelog rc (or beta) first to stamp the version in CHANGELOG.md,
+then run this task with no arguments to pick it up automatically.
+
 IMPORTANT: the gem version must be in valid rubygem format (no dashes).
 It will be automatically converted to npm semver by the rake task.
 
@@ -559,7 +539,7 @@ if a matching section exists. If no section is found, prints a reminder
 to update CHANGELOG.md and run sync_github_release manually.
 
 Arguments:
-1st argument: The new version in rubygem format (example: 9.6.0.rc.0).
+1st argument: The new version in rubygem format (example: 9.6.0 or 9.6.0.rc.0).
               Pass no argument to use the latest version from CHANGELOG.md,
               or fall back to a patch bump if CHANGELOG.md has no new version.
 2nd argument: Perform a dry run by passing 'true' as second argument.
@@ -640,53 +620,4 @@ task :sync_github_release, %i[gem_version dry_run] do |_t, args|
     gem_version: requested_gem_version
   )
   publish_or_update_github_release(gem_root: gem_root, release_context: release_context, dry_run: is_dry_run)
-end
-
-desc("Creates the next prerelease automatically and then runs create_release.
-
-Examples:
-- rake \"create_prerelease[9.6.0]\"          # defaults to rc -> 9.6.0.rc.0 or next rc index
-- rake \"create_prerelease[9.6.0,rc]\"       # -> 9.6.0.rc.0 or next rc index
-- rake \"create_prerelease[9.6.0,beta]\"     # -> 9.6.0.beta.0 or next beta index
-- rake \"create_prerelease[9.6.0,rc,true]\"  # dry run
-
-Notes:
-- If prerelease_type is omitted, it defaults to 'rc'.
-- Prompts for confirmation before continuing (set AUTO_CONFIRM=true to skip).
-- Uses git tags to compute the next prerelease index.
-- Release version policy checks can be overridden via 4th arg 'true' or RELEASE_VERSION_POLICY_OVERRIDE=true.
-")
-task :create_prerelease, %i[base_version prerelease_type dry_run override_version_policy] do |_t, args|
-  args_hash = args.to_hash
-  is_dry_run = Shakapacker::Utils::Misc.object_to_boolean(args_hash[:dry_run])
-  allow_override = version_policy_override_enabled?(args_hash[:override_version_policy])
-  gem_root = File.expand_path("..", __dir__)
-  ensure_clean_worktree!
-
-  base_version = args_hash[:base_version].to_s.strip
-  if base_version.empty?
-    abort "❌ base_version is required. Usage: rake \"create_prerelease[9.6.0]\" or rake \"create_prerelease[9.6.0,beta]\""
-  end
-
-  prerelease_type = args_hash[:prerelease_type].to_s.strip
-  if prerelease_type.empty?
-    prerelease_type = "rc"
-    puts "No prerelease_type provided, defaulting to rc."
-  end
-  next_version = next_prerelease_gem_version(
-    gem_root: gem_root,
-    base_version: base_version,
-    prerelease_type: prerelease_type
-  )
-
-  puts "Computed next prerelease version: #{next_version}"
-  confirm_or_abort!("Proceed with prerelease #{next_version}?") unless is_dry_run
-
-  perform_release(
-    gem_version: next_version,
-    dry_run: is_dry_run,
-    check_uncommitted: false,
-    allow_version_policy_override: allow_override,
-    fetch_tags_for_policy: false
-  )
 end
