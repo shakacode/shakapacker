@@ -9,7 +9,7 @@ This guide is for Shakapacker maintainers who need to publish a new release.
    ```bash
    bundle install              # Installs gem-release
    yarn global add release-it  # Installs release-it for npm publishing
-   gh --version                # Ensure GitHub CLI is installed for GitHub releases
+   gh --version                # Required only if you plan to run sync_github_release
    ```
 
 2. **Ensure you have publishing access:**
@@ -19,7 +19,7 @@ This guide is for Shakapacker maintainers who need to publish a new release.
 3. **Enable 2FA on both platforms:**
    - npm: 2FA is required for publishing
    - RubyGems: 2FA is required for publishing
-4. **Authenticate GitHub CLI:**
+4. **If you plan to run `sync_github_release`, authenticate GitHub CLI:**
    - Run `gh auth login` and ensure your account/token has write access to this repository
 
 ## Release Process
@@ -97,7 +97,8 @@ The `create_release` task automatically:
 
 ### 4. Sync GitHub Release (Optional, After Publish)
 
-If you want GitHub Releases, do that as a separate step after publishing:
+If you want GitHub Releases, do that as a separate step after publishing.
+Requires GitHub CLI (`gh`) with write access to this repository:
 
 Legacy note: `SKIP_GITHUB_RELEASE=true` is no longer used by release tasks. GitHub release creation is now an explicit, separate step via `sync_github_release`.
 
