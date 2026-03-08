@@ -318,7 +318,8 @@ def extract_changelog_section(changelog_path:, npm_version:)
   return nil unless start_index
 
   end_index = ((start_index + 1)...lines.length).find { |idx| lines[idx].start_with?("## [") } || lines.length
-  lines[start_index...end_index].join.rstrip
+  # Skip the version header line itself — GitHub releases display the title separately.
+  lines[(start_index + 1)...end_index].join.strip
 end
 
 def prepare_github_release_context(gem_root:, npm_version:, gem_version:)
