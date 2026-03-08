@@ -44,10 +44,10 @@ describe "Shakapacker::Env without Rails" do
       expect(env).to eq "production"
     end
 
-    it "falls back to production when no env is available" do
+    it "defaults to development when no env vars are set" do
       stub_const("ENV", ENV.to_h.merge("RAILS_ENV" => nil, "RACK_ENV" => nil))
       env = Shakapacker::Env.inquire(instance)
-      expect(env).to eq "production"
+      expect(env).to eq "development"
     end
 
     it "does not raise NameError" do
