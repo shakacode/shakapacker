@@ -118,8 +118,8 @@ describe "Shakapacker::Compiler" do
       webpack_status = OpenStruct.new(success?: true)
       hook_command = "bin/verbose-hook"
 
-      allow(Open3).to receive(:capture3) do |*args|
-        if args[1] == hook_command
+      allow(Open3).to receive(:capture3) do |env, *args|
+        if args[0] == hook_command
           ["Standard output", "Warning message", hook_status]
         else
           ["", "", webpack_status]
@@ -174,8 +174,8 @@ describe "Shakapacker::Compiler" do
       hook_command = "'bin/my script' --arg1 --arg2"
       hook_executable = "bin/my script"
 
-      allow(Open3).to receive(:capture3) do |*args|
-        if args[1] == hook_executable
+      allow(Open3).to receive(:capture3) do |env, *args|
+        if args[0] == hook_executable
           ["", "", hook_status]
         else
           ["", "", webpack_status]
@@ -199,8 +199,8 @@ describe "Shakapacker::Compiler" do
       webpack_status = OpenStruct.new(success?: true)
       hook_command = "bin/nonexistent-hook"
 
-      allow(Open3).to receive(:capture3) do |*args|
-        if args[1] == hook_command
+      allow(Open3).to receive(:capture3) do |env, *args|
+        if args[0] == hook_command
           ["", "", hook_status]
         else
           ["", "", webpack_status]
