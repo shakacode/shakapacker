@@ -9,9 +9,7 @@
 
 ## [Unreleased]
 
-Changes since the last non-beta release.
-
-## [v9.6.0-rc.3] - March 7, 2026
+## [v9.6.0] - March 7, 2026
 
 ### Security
 
@@ -868,8 +866,8 @@ Note: [Rubygem is 6.3.0.pre.rc.1](https://rubygems.org/gems/shakapacker/versions
 
 See [CHANGELOG.md in rails/webpacker (up to v5.4.3)](https://github.com/rails/webpacker/blob/master/CHANGELOG.md)
 
-[Unreleased]: https://github.com/shakacode/shakapacker/compare/v9.6.0-rc.3...main
-[v9.6.0-rc.3]: https://github.com/shakacode/shakapacker/compare/v9.5.0...v9.6.0-rc.3
+[Unreleased]: https://github.com/shakacode/shakapacker/compare/v9.6.0...main
+[v9.6.0]: https://github.com/shakacode/shakapacker/compare/v9.5.0...v9.6.0
 [v9.5.0]: https://github.com/shakacode/shakapacker/compare/v9.4.0...v9.5.0
 [v9.4.0]: https://github.com/shakacode/shakapacker/compare/v9.3.4...v9.4.0
 [v9.3.4]: https://github.com/shakacode/shakapacker/compare/v9.3.3...v9.3.4
