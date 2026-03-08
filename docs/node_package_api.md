@@ -15,33 +15,33 @@ const rspack = require("shakapacker/rspack")
 
 ## Webpack Exports (`shakapacker`)
 
-| Export | Type | Description |
-|--------|------|-------------|
-| `config` | object | Parsed `config/shakapacker.yml` plus computed fields |
-| `devServer` | object | Dev server configuration |
-| `generateWebpackConfig(extraConfig?)` | function | Generates final webpack config and merges optional overrides |
-| `baseConfig` | object | Base config object from `package/environments/base` |
-| `env` | object | Environment metadata (`railsEnv`, `nodeEnv`, booleans) |
-| `rules` | array | Loader rules for current bundler |
-| `moduleExists(name)` | function | Returns whether module can be resolved |
-| `canProcess(rule, fn)` | function | Runs callback only if loader dependency is available |
-| `inliningCss` | boolean | Whether CSS should be inlined in current dev-server mode |
-| `merge`, `mergeWithCustomize`, `mergeWithRules`, `unique` | functions | Re-exported from `webpack-merge` |
+| Export                                                    | Type      | Description                                                  |
+| --------------------------------------------------------- | --------- | ------------------------------------------------------------ |
+| `config`                                                  | object    | Parsed `config/shakapacker.yml` plus computed fields         |
+| `devServer`                                               | object    | Dev server configuration                                     |
+| `generateWebpackConfig(extraConfig?)`                     | function  | Generates final webpack config and merges optional overrides |
+| `baseConfig`                                              | object    | Base config object from `package/environments/base`          |
+| `env`                                                     | object    | Environment metadata (`railsEnv`, `nodeEnv`, booleans)       |
+| `rules`                                                   | array     | Loader rules for current bundler                             |
+| `moduleExists(name)`                                      | function  | Returns whether module can be resolved                       |
+| `canProcess(rule, fn)`                                    | function  | Runs callback only if loader dependency is available         |
+| `inliningCss`                                             | boolean   | Whether CSS should be inlined in current dev-server mode     |
+| `merge`, `mergeWithCustomize`, `mergeWithRules`, `unique` | functions | Re-exported from `webpack-merge`                             |
 
 ## Rspack Exports (`shakapacker/rspack`)
 
-| Export | Type | Description |
-|--------|------|-------------|
-| `config` | object | Parsed `config/shakapacker.yml` plus computed fields |
-| `devServer` | object | Dev server configuration |
-| `generateRspackConfig(extraConfig?)` | function | Generates final rspack config and merges optional overrides |
-| `baseConfig` | object | Base config object |
-| `env` | object | Environment metadata (`railsEnv`, `nodeEnv`, booleans) |
-| `rules` | array | Rspack loader rules |
-| `moduleExists(name)` | function | Returns whether module can be resolved |
-| `canProcess(rule, fn)` | function | Runs callback only if loader dependency is available |
-| `inliningCss` | boolean | Whether CSS should be inlined in current dev-server mode |
-| `merge`, `mergeWithCustomize`, `mergeWithRules`, `unique` | functions | Re-exported from `webpack-merge` |
+| Export                                                    | Type      | Description                                                 |
+| --------------------------------------------------------- | --------- | ----------------------------------------------------------- |
+| `config`                                                  | object    | Parsed `config/shakapacker.yml` plus computed fields        |
+| `devServer`                                               | object    | Dev server configuration                                    |
+| `generateRspackConfig(extraConfig?)`                      | function  | Generates final rspack config and merges optional overrides |
+| `baseConfig`                                              | object    | Base config object                                          |
+| `env`                                                     | object    | Environment metadata (`railsEnv`, `nodeEnv`, booleans)      |
+| `rules`                                                   | array     | Rspack loader rules                                         |
+| `moduleExists(name)`                                      | function  | Returns whether module can be resolved                      |
+| `canProcess(rule, fn)`                                    | function  | Runs callback only if loader dependency is available        |
+| `inliningCss`                                             | boolean   | Whether CSS should be inlined in current dev-server mode    |
+| `merge`, `mergeWithCustomize`, `mergeWithRules`, `unique` | functions | Re-exported from `webpack-merge`                            |
 
 ## `config` Object
 
@@ -68,4 +68,3 @@ Installer defaults include support for:
 Dependency presets used by the installer are defined in:
 
 - [`lib/install/package.json`](../lib/install/package.json)
-
