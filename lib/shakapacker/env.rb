@@ -13,25 +13,25 @@ class Shakapacker::Env
 
   def inquire
     fallback_env_warning if config_path.exist? && !current
-    current || FALLBACK_ENV.inquiry
+    (current || FALLBACK_ENV).inquiry
   end
 
   private
     def current
       env = if defined?(Rails) && Rails.respond_to?(:env)
-              Rails.env.to_s
-            else
-              ENV["RAILS_ENV"].presence || ENV["RACK_ENV"].presence || Shakapacker::DEFAULT_ENV
-            end
+        Rails.env
+      else
+        ENV["RAILS_ENV"].presence || ENV["RACK_ENV"].presence || Shakapacker::DEFAULT_ENV
+      end
       env.presence_in(available_environments)
     end
 
     def fallback_env_warning
       env_value = if defined?(Rails) && Rails.respond_to?(:env)
-                    Rails.env
-                  else
-                    ENV["RAILS_ENV"].presence || ENV["RACK_ENV"].presence || "(unknown)"
-                  end
+        Rails.env
+      else
+        ENV["RAILS_ENV"].presence || ENV["RACK_ENV"].presence || "(unknown)"
+      end
       logger.info "RAILS_ENV=#{env_value} environment is not defined in #{config_path}, falling back to #{FALLBACK_ENV} environment"
     rescue NameError, NoMethodError
       # Logger may not be fully functional without Rails (e.g., ActiveSupport::IsolatedExecutionState
