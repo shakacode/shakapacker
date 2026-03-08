@@ -30,7 +30,7 @@ class Shakapacker::Env
       env_value = if defined?(Rails) && Rails.respond_to?(:env)
         Rails.env
       else
-        ENV["RAILS_ENV"].presence || ENV["RACK_ENV"].presence || "(unknown)"
+        ENV["RAILS_ENV"].presence || ENV["RACK_ENV"].presence || Shakapacker::DEFAULT_ENV
       end
       logger.info "RAILS_ENV=#{env_value} environment is not defined in #{config_path}, falling back to #{FALLBACK_ENV} environment"
     rescue NameError, NoMethodError
