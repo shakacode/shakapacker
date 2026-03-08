@@ -477,6 +477,14 @@ def perform_release(
     Shakapacker::Utils::Misc.sh_in_dir(release_root, bump_command)
     Shakapacker::Utils::Misc.sh_in_dir(release_root, "bundle install")
 
+    # Update spec/dummy lockfiles BEFORE release-it so they are included in the release commit.
+    # spec/dummy is Yarn-managed, but we also commit package-lock.json for npm compatibility/testing.
+    # release-it does `git add .` which picks up all working tree changes.
+    spec_dummy_dir = File.join(release_root, "spec", "dummy")
+    Shakapacker::Utils::Misc.sh_in_dir(spec_dummy_dir, "bundle install")
+    Shakapacker::Utils::Misc.sh_in_dir(spec_dummy_dir, "yarn install")
+    Shakapacker::Utils::Misc.sh_in_dir(spec_dummy_dir, "npm install")
+
     resolved_gem_version = current_gem_version(release_root)
     released_gem_version = resolved_gem_version
     npm_version = Shakapacker::Utils::VersionSyntaxConverter.new.rubygem_to_npm(resolved_gem_version)
@@ -498,31 +506,6 @@ def perform_release(
     puts "Use the OTP for RubyGems!"
     puts "ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ"
     Shakapacker::Utils::Misc.sh_in_dir(release_root, "gem release") unless dry_run
-
-    spec_dummy_dir = File.join(release_root, "spec", "dummy")
-    puts "ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ"
-    puts "Updating spec/dummy dependencies"
-    puts "ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ"
-    Shakapacker::Utils::Misc.sh_in_dir(spec_dummy_dir, "bundle install") unless dry_run
-    Shakapacker::Utils::Misc.sh_in_dir(spec_dummy_dir, "npm install") unless dry_run
-
-    lockfiles = ["spec/dummy/Gemfile.lock", "spec/dummy/package-lock.json", "spec/dummy/yarn.lock"]
-    existing_lockfiles = lockfiles.select { |f| File.exist?(File.join(release_root, f)) }
-    changed_lockfiles = existing_lockfiles.select do |lockfile|
-      changes_output, status = Open3.capture2e("git", "-C", release_root, "status", "--porcelain", "--", lockfile)
-      abort "❌ Failed to check git status for #{lockfile}.\n\n#{changes_output}" unless status.success?
-      !changes_output.strip.empty?
-    end
-
-    if !changed_lockfiles.empty? && !dry_run
-      puts "ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ"
-      puts "Committing and pushing spec/dummy lockfile changes: #{changed_lockfiles.join(', ')}"
-      puts "ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ"
-      escaped_lockfiles = changed_lockfiles.map { |path| Shellwords.escape(path) }.join(" ")
-      Shakapacker::Utils::Misc.sh_in_dir(release_root, "git add -- #{escaped_lockfiles}")
-      Shakapacker::Utils::Misc.sh_in_dir(release_root, "git commit -m 'Update spec/dummy lockfiles after release'")
-      Shakapacker::Utils::Misc.sh_in_dir(release_root, "git push")
-    end
 
   end
 

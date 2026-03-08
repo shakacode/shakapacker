@@ -108,7 +108,8 @@ The `create_release` task automatically:
    - Prompts for RubyGems OTP (2FA code)
 6. **Updates spec/dummy lockfiles:**
    - Runs `bundle install` to update `Gemfile.lock`
-   - Runs `npm install` to update `package-lock.json` (yarn.lock may also be updated for multi-package-manager compatibility testing)
+   - Runs `yarn install` to refresh the Yarn-managed dummy app lockfile
+   - Runs `npm install` to keep `package-lock.json` in sync for npm compatibility/testing
 7. **Commits and pushes lockfile changes** automatically
 8. **Creates GitHub release** from CHANGELOG.md (if the matching section exists)
 
