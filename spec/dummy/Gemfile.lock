@@ -1,7 +1,7 @@
 PATH
   remote: ../..
   specs:
-    shakapacker (9.6.0.rc.3)
+    shakapacker (9.6.0)
       activesupport (>= 5.2)
       package_json
       rack-proxy (>= 0.6.1)
@@ -336,4 +336,4 @@ DEPENDENCIES
   web-console (>= 3.3.0)
 
 BUNDLED WITH
-   2.5.23
+   4.0.7
