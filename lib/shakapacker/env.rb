@@ -30,12 +30,12 @@ class Shakapacker::Env
       env_value = if defined?(Rails) && Rails.respond_to?(:env)
                     Rails.env
                   else
-                    ENV["RAILS_ENV"] || ENV["RACK_ENV"] || "(unknown)"
+                    ENV["RAILS_ENV"].presence || ENV["RACK_ENV"].presence || "(unknown)"
                   end
       logger.info "RAILS_ENV=#{env_value} environment is not defined in #{config_path}, falling back to #{FALLBACK_ENV} environment"
     rescue NameError, NoMethodError
       # Logger may not be fully functional without Rails (e.g., ActiveSupport::IsolatedExecutionState
-      # is not available). Fall through silently — the env fallback still works correctly.
+      # is not available). Fall back to puts, matching Configuration#log_fallback.
       puts "RAILS_ENV=#{env_value} environment is not defined in #{config_path}, falling back to #{FALLBACK_ENV} environment"
     end
 

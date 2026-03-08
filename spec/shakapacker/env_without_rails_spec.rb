@@ -29,7 +29,7 @@ describe "Shakapacker::Env without Rails" do
     end
 
     before do
-      stub_const("Rails", nil) if defined?(Rails)
+      hide_const("Rails")
     end
 
     it "falls back to RAILS_ENV environment variable" do
@@ -50,9 +50,10 @@ describe "Shakapacker::Env without Rails" do
       expect(env).to eq "development"
     end
 
-    it "does not raise NameError" do
-      stub_const("ENV", ENV.to_h.merge("RAILS_ENV" => nil, "RACK_ENV" => nil))
-      expect { Shakapacker::Env.inquire(instance) }.not_to raise_error
+    it "falls back to production without raising when env is missing from config" do
+      stub_const("ENV", ENV.to_h.merge("RAILS_ENV" => "staging", "RACK_ENV" => nil))
+      env = Shakapacker::Env.inquire(instance)
+      expect(env).to eq "production"
     end
   end
 end
