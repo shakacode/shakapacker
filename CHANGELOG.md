@@ -9,6 +9,8 @@
 
 ## [Unreleased]
 
+## [v9.6.1] - March 8, 2026
+
 ### Fixed
 
 - **Fixed `Env#current` crashing when Rails is not loaded**. [PR #963](https://github.com/shakacode/shakapacker/pull/963) by [ihabadham](https://github.com/ihabadham). Added `defined?(Rails)` guard to `Shakapacker::Env#current` so it falls back to `RAILS_ENV`/`RACK_ENV` environment variables when called from non-Rails Ruby processes (e.g., `bin/dev` scripts). Previously, this would raise a `NameError` and silently fall back to `"production"`.
@@ -874,7 +876,8 @@ Note: [Rubygem is 6.3.0.pre.rc.1](https://rubygems.org/gems/shakapacker/versions
 
 See [CHANGELOG.md in rails/webpacker (up to v5.4.3)](https://github.com/rails/webpacker/blob/master/CHANGELOG.md)
 
-[Unreleased]: https://github.com/shakacode/shakapacker/compare/v9.6.0...main
+[Unreleased]: https://github.com/shakacode/shakapacker/compare/v9.6.1...main
+[v9.6.1]: https://github.com/shakacode/shakapacker/compare/v9.6.0...v9.6.1
 [v9.6.0]: https://github.com/shakacode/shakapacker/compare/v9.5.0...v9.6.0
 [v9.5.0]: https://github.com/shakacode/shakapacker/compare/v9.4.0...v9.5.0
 [v9.4.0]: https://github.com/shakacode/shakapacker/compare/v9.3.4...v9.4.0
