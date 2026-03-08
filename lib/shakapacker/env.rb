@@ -18,11 +18,21 @@ class Shakapacker::Env
 
   private
     def current
-      Rails.env.presence_in(available_environments)
+      env = if defined?(Rails) && Rails.respond_to?(:env)
+              Rails.env.to_s
+            else
+              ENV["RAILS_ENV"].presence || ENV["RACK_ENV"].presence
+            end
+      env&.presence_in(available_environments)
     end
 
     def fallback_env_warning
-      logger.info "RAILS_ENV=#{Rails.env} environment is not defined in #{config_path}, falling back to #{FALLBACK_ENV} environment"
+      env_value = if defined?(Rails) && Rails.respond_to?(:env)
+                    Rails.env
+                  else
+                    ENV["RAILS_ENV"] || ENV["RACK_ENV"] || "(unknown)"
+                  end
+      logger.info "RAILS_ENV=#{env_value} environment is not defined in #{config_path}, falling back to #{FALLBACK_ENV} environment"
     end
 
     def available_environments
