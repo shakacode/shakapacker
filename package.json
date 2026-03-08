@@ -1,6 +1,6 @@
 {
   "name": "shakapacker",
-  "version": "9.6.0-rc.3",
+  "version": "9.6.0-rc.2",
   "description": "Use webpack to manage app-like JavaScript modules in Rails",
   "homepage": "https://github.com/shakacode/shakapacker",
   "bugs": {
