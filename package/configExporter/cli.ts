@@ -714,6 +714,7 @@ async function runAllBuildsCommand(options: ExportOptions): Promise<number> {
 
     // Validate paths for security in all-builds mode
     if (resolvedOptions.saveDir) {
+      // Validates for path traversal; throws on unsafe paths. Return value intentionally discarded.
       safeResolvePath(appRoot, resolvedOptions.saveDir)
     }
 

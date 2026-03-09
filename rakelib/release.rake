@@ -443,6 +443,7 @@ def perform_release(
     puts "PRE-FLIGHT CHECKS"
     puts "ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ"
     verify_npm_auth
+    verify_gh_auth(gem_root: gem_root)
   end
 
   requested_gem_version = gem_version.to_s.strip
