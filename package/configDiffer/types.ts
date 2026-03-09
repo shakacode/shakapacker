@@ -8,8 +8,8 @@ export interface DiffPath {
 export interface DiffEntry {
   operation: DiffOperation
   path: DiffPath
-  oldValue?: any
-  newValue?: any
+  oldValue?: unknown
+  newValue?: unknown
   valueType?: string
 }
 
@@ -26,8 +26,8 @@ export interface DiffResult {
     comparedAt: string
     leftFile?: string
     rightFile?: string
-    leftMetadata?: any
-    rightMetadata?: any
+    leftMetadata?: unknown
+    rightMetadata?: unknown
   }
 }
 
@@ -42,7 +42,7 @@ export interface DiffOptions {
 }
 
 export interface NormalizedConfig {
-  original: any
-  normalized: any
+  original: unknown
+  normalized: unknown
   basePath?: string
 }

@@ -81,8 +81,9 @@ export function run(args: string[]): number {
     }
 
     return result.summary.totalChanges > 0 ? 1 : 0
-  } catch (error: any) {
-    console.error(`Error: ${error.message}`)
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : String(error)
+    console.error(`Error: ${message}`)
     return 1
   }
 }
@@ -163,7 +164,7 @@ function parseArguments(args: string[]): CliOptions {
   return options
 }
 
-function loadConfigFile(filePath: string): any {
+function loadConfigFile(filePath: string): unknown {
   const resolvedPath = resolve(process.cwd(), filePath)
 
   if (!existsSync(resolvedPath)) {
@@ -192,14 +193,18 @@ function loadConfigFile(filePath: string): any {
     }
 
     delete require.cache[resolvedPath]
-    let loaded = require(resolvedPath)
+    let loaded: unknown = require(resolvedPath) as unknown
 
     if (typeof loaded === "object" && loaded !== null && "default" in loaded) {
-      loaded = loaded.default
+      loaded = (loaded as { default: unknown }).default
     }
 
     if (typeof loaded === "function") {
-      loaded = loaded({}, {})
+      const configFactory = loaded as (
+        env: Record<string, unknown>,
+        argv: Record<string, unknown>
+      ) => unknown
+      loaded = configFactory({}, {})
     }
 
     return loaded

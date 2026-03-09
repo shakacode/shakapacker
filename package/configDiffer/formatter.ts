@@ -276,7 +276,7 @@ export class DiffFormatter {
     return null
   }
 
-  private formatValue(value: any): string {
+  private formatValue(value: unknown): string {
     if (value === null) return "null"
     if (value === undefined) return "undefined"
 

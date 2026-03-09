@@ -249,14 +249,10 @@ module.exports = [
     }
   },
   {
-    // configDiffer: Dynamic config loading and comparison requires `any` types
-    // Config objects can have any shape - this is inherent to the problem domain
+    // configDiffer: Core comparison logic needs dynamic values of unknown shape
     files: [
       "package/configDiffer/diffEngine.ts",
-      "package/configDiffer/pathNormalizer.ts",
-      "package/configDiffer/cli.ts",
-      "package/configDiffer/formatter.ts",
-      "package/configDiffer/types.ts"
+      "package/configDiffer/pathNormalizer.ts"
     ],
     rules: {
       "@typescript-eslint/no-explicit-any": "off",
