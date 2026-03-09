@@ -127,6 +127,23 @@ describe("PathNormalizer", () => {
         "C:\\\\app\\\\project\\\\src\\\\index.js"
       )
     })
+
+    test("does not normalize class instances as plain objects", () => {
+      class Plugin {
+        constructor() {
+          this.path = "/app/project/plugin.js"
+        }
+      }
+
+      const normalizer = new PathNormalizer("/app/project")
+      const plugin = new Plugin()
+      const config = { plugin }
+
+      const result = normalizer.normalize(config)
+
+      expect(result.normalized.plugin).toBe(plugin)
+      expect(result.normalized.plugin.path).toBe("/app/project/plugin.js")
+    })
   })
 
   describe("detectBasePath", () => {

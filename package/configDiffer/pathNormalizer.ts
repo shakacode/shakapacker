@@ -128,24 +128,8 @@ export class PathNormalizer {
     return false
   }
 
-  private isPlainObject(value: any): boolean {
-    if (value === null || typeof value !== "object") {
-      return false
-    }
-
-    if (Array.isArray(value)) {
-      return false
-    }
-
-    if (value instanceof Date || value instanceof RegExp) {
-      return false
-    }
-
-    if (typeof value === "function") {
-      return false
-    }
-
-    return true
+  private isPlainObject(value: unknown): value is Record<string, unknown> {
+    return PathNormalizer.isPlainObjectValue(value)
   }
 
   static detectBasePath(config: any): string | undefined {
@@ -163,7 +147,7 @@ export class PathNormalizer {
         }
       } else if (Array.isArray(value)) {
         value.forEach(extractPaths)
-      } else if (value && typeof value === "object") {
+      } else if (this.isPlainObjectValue(value)) {
         Object.values(value).forEach(extractPaths)
       }
     }
@@ -270,5 +254,22 @@ export class PathNormalizer {
 
   private static isAbsolutePath(value: string): boolean {
     return posixPath.isAbsolute(value) || win32Path.isAbsolute(value)
+  }
+
+  private static isPlainObjectValue(
+    value: unknown
+  ): value is Record<string, unknown> {
+    if (
+      value === null ||
+      typeof value !== "object" ||
+      Array.isArray(value) ||
+      value instanceof Date ||
+      value instanceof RegExp
+    ) {
+      return false
+    }
+
+    const prototype = Object.getPrototypeOf(value)
+    return prototype === Object.prototype || prototype === null
   }
 }
