@@ -63,13 +63,17 @@ export class DiffFormatter {
       return a.path.humanPath.localeCompare(b.path.humanPath)
     })
 
-    sortedEntries.forEach((entry, index) => {
-      if (entry.operation === "unchanged") return
+    let displayIndex = 1
+    sortedEntries.forEach((entry) => {
+      if (entry.operation === "unchanged") {
+        return
+      }
 
       lines.push(
-        this.formatContextualEntry(entry, index + 1, leftLabel, rightLabel)
+        this.formatContextualEntry(entry, displayIndex, leftLabel, rightLabel)
       )
       lines.push("")
+      displayIndex += 1
     })
 
     lines.push("=".repeat(80))
@@ -94,7 +98,7 @@ export class DiffFormatter {
     //   webpack-development-client.yaml -> dev-client
     //   webpack-production-server.yaml -> prod-server
     //   shakapacker-config-exports/webpack-development-client.yaml -> dev-client
-    const basename = filename.split("/").pop() || filename
+    const basename = filename.split(/[\\/]/).pop() || filename
     const withoutExt = basename.replace(/\.(yaml|yml|json|js|ts)$/, "")
 
     // Try to extract env-type pattern
@@ -162,7 +166,7 @@ export class DiffFormatter {
     lines.push("")
 
     // Add documentation if available
-    const doc = getDocForKey(entry.path.humanPath)
+    const doc = this.getDocumentationForPath(entry.path.path)
     if (doc) {
       lines.push(`   What it does:`)
       lines.push(`   ${doc.description}`)
@@ -206,6 +210,28 @@ export class DiffFormatter {
     }
 
     return lines.join("\n")
+  }
+
+  private getDocumentationForPath(pathSegments: string[]) {
+    const exactPath = pathSegments.join(".")
+    const exactDoc = getDocForKey(exactPath)
+    if (exactDoc) {
+      return exactDoc
+    }
+
+    const normalizedSegments = pathSegments.filter(
+      (segment) => !/^\[\d+\]$/.test(segment)
+    )
+
+    for (let i = normalizedSegments.length; i > 0; i -= 1) {
+      const candidate = normalizedSegments.slice(0, i).join(".")
+      const doc = getDocForKey(candidate)
+      if (doc) {
+        return doc
+      }
+    }
+
+    return undefined
   }
 
   private analyzeImpact(entry: DiffEntry): string | null {

@@ -126,5 +126,76 @@ describe("DiffFormatter", () => {
       // Should have left/right labels or extracted short names
       expect(output).toMatch(/(left|right|config\d):/i)
     })
+
+    test("does not leave numbering gaps when unchanged entries are hidden", () => {
+      const formatter = new DiffFormatter()
+      const resultWithUnchanged = {
+        summary: { totalChanges: 1, added: 0, removed: 0, changed: 1 },
+        entries: [
+          {
+            operation: "unchanged",
+            path: { path: ["a"], humanPath: "a" },
+            oldValue: 1,
+            newValue: 1,
+            valueType: "number"
+          },
+          {
+            operation: "changed",
+            path: { path: ["b"], humanPath: "b" },
+            oldValue: 1,
+            newValue: 2,
+            valueType: "number"
+          }
+        ],
+        metadata: mockResult.metadata
+      }
+
+      const output = formatter.formatDetailed(resultWithUnchanged)
+
+      expect(output).toContain("1. [~] b")
+      expect(output).not.toContain("2. [~] b")
+    })
+
+    test("extracts short labels from Windows-style paths", () => {
+      const formatter = new DiffFormatter()
+      const windowsPathsResult = {
+        ...mockResult,
+        metadata: {
+          ...mockResult.metadata,
+          leftFile: "C:\\\\repo\\\\webpack-development-client.yaml",
+          rightFile: "C:\\\\repo\\\\webpack-production-client.yaml"
+        }
+      }
+
+      const output = formatter.formatDetailed(windowsPathsResult)
+
+      expect(output).toContain("dev-client:")
+      expect(output).toContain("prod-client:")
+    })
+
+    test("uses parent documentation for array-indexed paths", () => {
+      const formatter = new DiffFormatter()
+      const arrayPathResult = {
+        summary: { totalChanges: 1, added: 0, removed: 0, changed: 1 },
+        entries: [
+          {
+            operation: "changed",
+            path: {
+              path: ["optimization", "minimizer", "[0]"],
+              humanPath: "optimization.minimizer.[0]"
+            },
+            oldValue: "TerserPlugin",
+            newValue: "EsbuildPlugin",
+            valueType: "string"
+          }
+        ],
+        metadata: mockResult.metadata
+      }
+
+      const output = formatter.formatDetailed(arrayPathResult)
+
+      expect(output).toContain("Array of plugins to use for minification.")
+      expect(output).toContain("Documentation:")
+    })
   })
 })

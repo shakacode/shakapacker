@@ -326,7 +326,7 @@ The diff tool can compare files in the following formats:
 
 ## Complete Command Reference
 
-```
+```text
 bin/diff-bundler-config --left=<file1> --right=<file2> [options]
 
 Required:
@@ -367,17 +367,19 @@ bin/diff-bundler-config --left=expected.yaml --right=actual.yaml || exit 1
 You can also use the diff engine programmatically in your own scripts:
 
 ```javascript
-const { DiffEngine } = require("shakapacker/configDiffer")
+const { DiffEngine, DiffFormatter } = require("shakapacker/configDiffer")
 
 const engine = new DiffEngine({
   includeUnchanged: false,
-  ignoreKeys: ["timestamp"],
-  format: "json"
+  ignoreKeys: ["timestamp"]
 })
 
 const result = engine.compare(config1, config2)
+const formatter = new DiffFormatter()
+const jsonOutput = formatter.formatJson(result)
 
 console.log(`Found ${result.summary.totalChanges} changes`)
+console.log(jsonOutput)
 ```
 
 ## Examples
@@ -429,6 +431,7 @@ bin/diff-bundler-config \
 3. **Normalize paths** (enabled by default) to make diffs more readable
 4. **Save diffs to files** for later reference or sharing with your team
 5. **Use wildcards** in `--ignore-paths` to ignore entire sections (e.g., `plugins.*`)
+6. **Array comparisons are index-based**; inserting/removing an element can shift later entries in the diff output
 
 ## See Also
 

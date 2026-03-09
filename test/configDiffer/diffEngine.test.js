@@ -139,6 +139,37 @@ describe("DiffEngine", () => {
       expect(result.entries[0].path.humanPath).toBe("other")
     })
 
+    test("respects custom path separator for ignorePaths descendants", () => {
+      const engine = new DiffEngine({
+        ignorePaths: ["nested/ignored"],
+        pathSeparator: "/"
+      })
+      const result = engine.compare(
+        { nested: { ignored: "old", kept: 1 } },
+        { nested: { ignored: "new", kept: 2 } }
+      )
+
+      expect(result.summary.totalChanges).toBe(1)
+      expect(result.entries[0].path.humanPath).toBe("nested/kept")
+    })
+
+    test("escapes regex metacharacters in wildcard ignorePaths", () => {
+      const engine = new DiffEngine({ ignorePaths: ["module.rules.[0].*"] })
+      const result = engine.compare(
+        {
+          module: { rules: [{ test: "js", use: "babel-loader" }] },
+          other: 1
+        },
+        {
+          module: { rules: [{ test: "js", use: "swc-loader" }] },
+          other: 2
+        }
+      )
+
+      expect(result.summary.totalChanges).toBe(1)
+      expect(result.entries[0].path.humanPath).toBe("other")
+    })
+
     test("respects maxDepth option", () => {
       const engine = new DiffEngine({ maxDepth: 1 })
       const result = engine.compare(
@@ -201,6 +232,23 @@ describe("DiffEngine", () => {
 
       expect(result.summary.totalChanges).toBe(1)
     })
+
+    test("does not deep-compare arbitrary class instances", () => {
+      class Plugin {
+        constructor() {
+          this.name = "same"
+        }
+      }
+
+      const engine = new DiffEngine()
+      const result = engine.compare(
+        { plugin: new Plugin() },
+        { plugin: new Plugin() }
+      )
+
+      expect(result.summary.totalChanges).toBe(1)
+      expect(result.entries[0].path.humanPath).toBe("plugin")
+    })
   })
 
   describe("metadata", () => {
@@ -209,7 +257,7 @@ describe("DiffEngine", () => {
       const result = engine.compare({ a: 1 }, { a: 1 })
 
       expect(result.metadata.comparedAt).toBeDefined()
-      expect(new Date(result.metadata.comparedAt)).toBeInstanceOf(Date)
+      expect(Number.isNaN(Date.parse(result.metadata.comparedAt))).toBe(false)
     })
 
     test("includes custom metadata", () => {

@@ -1,5 +1,8 @@
-import { resolve, isAbsolute, relative, sep } from "path"
+import { homedir } from "os"
+import { posix as posixPath, win32 as win32Path } from "path"
 import { NormalizedConfig } from "./types"
+
+type PathFlavor = "posix" | "win32"
 
 export class PathNormalizer {
   private basePath: string
@@ -43,12 +46,39 @@ export class PathNormalizer {
       return str
     }
 
-    const absolutePath = isAbsolute(str) ? str : resolve(this.basePath, str)
+    const normalizedPath = this.expandHomePath(str)
+    const normalizedBasePath = this.expandHomePath(this.basePath)
 
-    const relativePath = relative(this.basePath, absolutePath)
+    const baseFlavor = this.detectPathFlavor(normalizedBasePath)
+    const inputFlavor = this.detectPathFlavor(normalizedPath)
+    const inputIsAbsolute = PathNormalizer.isAbsolutePath(normalizedPath)
+
+    if (inputIsAbsolute && inputFlavor !== baseFlavor) {
+      return str
+    }
+
+    if (
+      !inputIsAbsolute &&
+      normalizedPath.includes("\\") &&
+      baseFlavor !== "win32"
+    ) {
+      return str
+    }
+
+    const effectiveFlavor = inputIsAbsolute ? inputFlavor : baseFlavor
+    const pathModule = this.getPathModule(effectiveFlavor)
+    const absolutePath = inputIsAbsolute
+      ? normalizedPath
+      : pathModule.resolve(normalizedBasePath, normalizedPath)
+
+    const relativePath = pathModule.relative(normalizedBasePath, absolutePath)
+
+    if (relativePath === "") {
+      return "./"
+    }
 
     if (relativePath && !relativePath.startsWith("..")) {
-      return `./${relativePath.split(sep).join("/")}`
+      return `./${relativePath.split(pathModule.sep).join("/")}`
     }
 
     return str
@@ -86,7 +116,7 @@ export class PathNormalizer {
     }
 
     // Home directory paths
-    if (str.startsWith("~/")) {
+    if (str === "~" || str.startsWith("~/") || str.startsWith("~\\")) {
       return true
     }
 
@@ -119,11 +149,18 @@ export class PathNormalizer {
   }
 
   static detectBasePath(config: any): string | undefined {
-    const paths: string[] = []
+    const pathsByFlavor: Record<PathFlavor, string[]> = {
+      posix: [],
+      win32: []
+    }
 
     const extractPaths = (value: any): void => {
-      if (typeof value === "string" && isAbsolute(value)) {
-        paths.push(value)
+      if (typeof value === "string") {
+        const expandedPath = this.expandHomePath(value)
+        if (this.isAbsolutePath(expandedPath)) {
+          const flavor = this.detectPathFlavor(expandedPath)
+          pathsByFlavor[flavor].push(expandedPath)
+        }
       } else if (Array.isArray(value)) {
         value.forEach(extractPaths)
       } else if (value && typeof value === "object") {
@@ -133,35 +170,105 @@ export class PathNormalizer {
 
     extractPaths(config)
 
+    const preferredFlavor: PathFlavor =
+      pathsByFlavor.posix.length >= pathsByFlavor.win32.length
+        ? "posix"
+        : "win32"
+    const paths = pathsByFlavor[preferredFlavor]
+
     if (paths.length === 0) {
       return undefined
     }
 
-    const commonPrefix = this.findCommonPrefix(paths)
+    const commonPrefix = this.findCommonPrefix(paths, preferredFlavor)
     return commonPrefix || undefined
   }
 
-  private static findCommonPrefix(paths: string[]): string {
+  private static findCommonPrefix(paths: string[], flavor: PathFlavor): string {
     if (paths.length === 0) {
       return ""
     }
 
-    if (paths.length === 1) {
-      return paths[0].split(sep).slice(0, -1).join(sep)
-    }
+    const pathModule = this.getPathModule(flavor)
+    let prefix = pathModule.dirname(paths[0])
 
-    const splitPaths = paths.map((p) => p.split(sep))
-    const prefix: string[] = []
+    for (const candidatePath of paths.slice(1)) {
+      while (
+        prefix &&
+        !this.isWithinBasePath(pathModule, prefix, candidatePath)
+      ) {
+        const parent = pathModule.dirname(prefix)
+        if (parent === prefix) {
+          return ""
+        }
+        prefix = parent
+      }
 
-    for (let i = 0; i < splitPaths[0].length; i += 1) {
-      const segment = splitPaths[0][i]
-      if (splitPaths.every((p) => p[i] === segment)) {
-        prefix.push(segment)
-      } else {
-        break
+      if (!prefix) {
+        return ""
       }
     }
 
-    return prefix.join(sep)
+    return prefix
+  }
+
+  private static isWithinBasePath(
+    pathModule: typeof posixPath,
+    basePath: string,
+    candidatePath: string
+  ): boolean {
+    const relativePath = pathModule.relative(basePath, candidatePath)
+    return (
+      relativePath === "" ||
+      (!relativePath.startsWith("..") && !pathModule.isAbsolute(relativePath))
+    )
+  }
+
+  private getPathModule(flavor: PathFlavor): typeof posixPath {
+    return PathNormalizer.getPathModule(flavor)
+  }
+
+  private static getPathModule(flavor: PathFlavor): typeof posixPath {
+    return flavor === "win32" ? win32Path : posixPath
+  }
+
+  private detectPathFlavor(value: string): PathFlavor {
+    return PathNormalizer.detectPathFlavor(value)
+  }
+
+  private static detectPathFlavor(value: string): PathFlavor {
+    if (/^[A-Za-z]:[\\/]/.test(value) || value.startsWith("\\\\")) {
+      return "win32"
+    }
+
+    if (value.includes("\\")) {
+      return "win32"
+    }
+
+    return "posix"
+  }
+
+  private expandHomePath(value: string): string {
+    return PathNormalizer.expandHomePath(value)
+  }
+
+  private static expandHomePath(value: string): string {
+    if (value === "~") {
+      return homedir()
+    }
+
+    if (value.startsWith("~/") || value.startsWith("~\\")) {
+      const home = homedir()
+      const homeFlavor = this.detectPathFlavor(home)
+      const pathModule = this.getPathModule(homeFlavor)
+      const relativeHomePath = value.slice(2).replace(/[\\/]+/g, pathModule.sep)
+      return pathModule.join(home, relativeHomePath)
+    }
+
+    return value
+  }
+
+  private static isAbsolutePath(value: string): boolean {
+    return posixPath.isAbsolute(value) || win32Path.isAbsolute(value)
   }
 }

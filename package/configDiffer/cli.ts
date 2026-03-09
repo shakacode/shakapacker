@@ -1,4 +1,4 @@
-import { existsSync, readFileSync } from "fs"
+import { existsSync, readFileSync, writeFileSync } from "fs"
 import { resolve, extname } from "path"
 import { load as loadYaml } from "js-yaml"
 import { DiffEngine } from "./diffEngine"
@@ -74,8 +74,7 @@ export function run(args: string[]): number {
     }
 
     if (options.output) {
-      const fs = require("fs")
-      fs.writeFileSync(options.output, output, "utf8")
+      writeFileSync(options.output, output, "utf8")
       console.log(`Diff written to: ${options.output}`)
     } else {
       console.log(output)
@@ -137,7 +136,17 @@ function parseArguments(args: string[]): CliOptions {
       options.includeUnchanged = true
     } else if (arg.startsWith("--max-depth=")) {
       const depth = parseValue(arg, "--max-depth=")
-      options.maxDepth = depth === "null" ? null : parseInt(depth, 10)
+      if (depth === "null") {
+        options.maxDepth = null
+      } else {
+        const parsedDepth = parseInt(depth, 10)
+        if (Number.isNaN(parsedDepth)) {
+          throw new Error(
+            `Invalid max-depth value '${depth}'. Must be a number or 'null'.`
+          )
+        }
+        options.maxDepth = parsedDepth
+      }
     } else if (arg.startsWith("--ignore-keys=")) {
       const keys = parseValue(arg, "--ignore-keys=")
       options.ignoreKeys = keys.split(",").map((k) => k.trim())
@@ -185,8 +194,12 @@ function loadConfigFile(filePath: string): any {
     delete require.cache[resolvedPath]
     let loaded = require(resolvedPath)
 
-    if (typeof loaded === "object" && "default" in loaded) {
+    if (typeof loaded === "object" && loaded !== null && "default" in loaded) {
       loaded = loaded.default
+    }
+
+    if (typeof loaded === "function") {
+      loaded = loaded({}, {})
     }
 
     return loaded

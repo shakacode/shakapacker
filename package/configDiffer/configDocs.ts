@@ -161,7 +161,3 @@ const WEBPACK_CONFIG_DOCS: Record<string, ConfigDoc> = {
 export function getDocForKey(keyPath: string): ConfigDoc | undefined {
   return WEBPACK_CONFIG_DOCS[keyPath]
 }
-
-export function hasDocumentation(keyPath: string): boolean {
-  return keyPath in WEBPACK_CONFIG_DOCS
-}

@@ -1,3 +1,4 @@
+const os = require("os")
 const { PathNormalizer } = require("../../package/configDiffer/pathNormalizer")
 
 describe("PathNormalizer", () => {
@@ -86,6 +87,45 @@ describe("PathNormalizer", () => {
       const result = normalizer.normalize(config)
 
       expect(result.normalized.path).toContain("./")
+    })
+
+    test("normalizes exact base path to ./", () => {
+      const normalizer = new PathNormalizer("/app/project")
+
+      const config = {
+        path: "/app/project"
+      }
+
+      const result = normalizer.normalize(config)
+
+      expect(result.normalized.path).toBe("./")
+    })
+
+    test("expands home paths before normalization", () => {
+      const homePath = os.homedir()
+      const normalizer = new PathNormalizer(homePath)
+
+      const config = {
+        path: "~/src/index.js"
+      }
+
+      const result = normalizer.normalize(config)
+
+      expect(result.normalized.path).toBe("./src/index.js")
+    })
+
+    test("preserves Windows absolute paths on POSIX base paths", () => {
+      const normalizer = new PathNormalizer("/app/project")
+
+      const config = {
+        path: "C:\\\\app\\\\project\\\\src\\\\index.js"
+      }
+
+      const result = normalizer.normalize(config)
+
+      expect(result.normalized.path).toBe(
+        "C:\\\\app\\\\project\\\\src\\\\index.js"
+      )
     })
   })
 

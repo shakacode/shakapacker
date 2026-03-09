@@ -84,7 +84,7 @@ export class DiffEngine {
       return
     }
 
-    if (this.isObject(left) && this.isObject(right)) {
+    if (this.isPlainObject(left) && this.isPlainObject(right)) {
       this.compareObjects(left, right, path, depth)
       return
     }
@@ -164,13 +164,26 @@ export class DiffEngine {
     return this.options.ignorePaths.some((ignorePath) => {
       if (ignorePath.includes("*")) {
         const escapedPattern = ignorePath
-          .replace(/\./g, "\\.")
-          .replace(/\*/g, ".*")
-        const pattern = new RegExp(`^${escapedPattern}$`)
-        return pattern.test(humanPath)
+          .split("*")
+          .map((segment) => this.escapeRegExp(segment))
+          .join(".*")
+
+        try {
+          const pattern = new RegExp(`^${escapedPattern}$`)
+          return pattern.test(humanPath)
+        } catch {
+          return false
+        }
       }
-      return humanPath === ignorePath || humanPath.startsWith(`${ignorePath}.`)
+      return (
+        humanPath === ignorePath ||
+        humanPath.startsWith(`${ignorePath}${this.options.pathSeparator}`)
+      )
     })
+  }
+
+  private escapeRegExp(value: string): string {
+    return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
   }
 
   private isPrimitive(value: any): boolean {
@@ -185,14 +198,19 @@ export class DiffEngine {
     )
   }
 
-  private isObject(value: any): boolean {
-    return (
-      value !== null &&
-      typeof value === "object" &&
-      !Array.isArray(value) &&
-      !(value instanceof RegExp) &&
-      !(value instanceof Date)
-    )
+  private isPlainObject(value: any): boolean {
+    if (
+      value === null ||
+      typeof value !== "object" ||
+      Array.isArray(value) ||
+      value instanceof RegExp ||
+      value instanceof Date
+    ) {
+      return false
+    }
+
+    const prototype = Object.getPrototypeOf(value)
+    return prototype === Object.prototype || prototype === null
   }
 
   private areEqual(left: any, right: any): boolean {
@@ -250,9 +268,13 @@ export class DiffEngine {
       return `[Array(${value.length})]`
     }
 
-    if (this.isObject(value)) {
+    if (this.isPlainObject(value)) {
       const keys = Object.keys(value)
       return `[Object: ${keys.length} keys]`
+    }
+
+    if (value && typeof value === "object" && value.constructor?.name) {
+      return `[Instance: ${value.constructor.name}]`
     }
 
     return value
