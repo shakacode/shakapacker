@@ -117,9 +117,10 @@ describe "Shakapacker::Compiler" do
       hook_status = OpenStruct.new(success?: true, exitstatus: 0)
       webpack_status = OpenStruct.new(success?: true)
       hook_command = "bin/verbose-hook"
+      hook_executable = hook_command
 
       allow(Open3).to receive(:capture3) do |env, *args|
-        if args[0] == hook_command
+        if args[0] == hook_executable
           ["Standard output", "Warning message", hook_status]
         else
           ["", "", webpack_status]
@@ -129,6 +130,7 @@ describe "Shakapacker::Compiler" do
       allow(Shakapacker.config).to receive(:precompile_hook).and_return(hook_command)
 
       expect(Shakapacker.compiler.compile).to be true
+      expect(Open3).to have_received(:capture3).with(hash_including, hook_executable, hash_including).once
     end
 
     it "validates hook is within project root" do
@@ -188,6 +190,7 @@ describe "Shakapacker::Compiler" do
       allow(File).to receive(:exist?).with(anything).and_return(true)
 
       expect(Shakapacker.compiler.compile).to be true
+      expect(Open3).to have_received(:capture3).with(hash_including, hook_executable, anything, anything, hash_including).once
     end
 
     it "warns when hook executable does not exist" do
@@ -198,9 +201,10 @@ describe "Shakapacker::Compiler" do
       hook_status = OpenStruct.new(success?: true, exitstatus: 0)
       webpack_status = OpenStruct.new(success?: true)
       hook_command = "bin/nonexistent-hook"
+      hook_executable = hook_command
 
       allow(Open3).to receive(:capture3) do |env, *args|
-        if args[0] == hook_command
+        if args[0] == hook_executable
           ["", "", hook_status]
         else
           ["", "", webpack_status]
