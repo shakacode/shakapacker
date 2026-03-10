@@ -480,11 +480,15 @@ def perform_release(
 
     # Update spec/dummy lockfiles BEFORE release-it so they are included in the release commit.
     # spec/dummy is Yarn-managed, but we also commit package-lock.json for npm compatibility/testing.
-    # release-it does `git add .` which picks up all working tree changes.
     spec_dummy_dir = File.join(release_root, "spec", "dummy")
     Shakapacker::Utils::Misc.sh_in_dir(spec_dummy_dir, "bundle install")
     Shakapacker::Utils::Misc.sh_in_dir(spec_dummy_dir, "yarn install")
     Shakapacker::Utils::Misc.sh_in_dir(spec_dummy_dir, "npm install")
+
+    # Explicitly stage all release-related changes so release-it includes them in its commit.
+    # release-it only reliably stages files it modifies (package.json); other working tree
+    # changes (version.rb, Gemfile.lock, spec/dummy lockfiles) must be pre-staged.
+    Shakapacker::Utils::Misc.sh_in_dir(release_root, "git add -A")
 
     resolved_gem_version = current_gem_version(release_root)
     released_gem_version = resolved_gem_version
