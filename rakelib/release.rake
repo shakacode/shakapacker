@@ -488,7 +488,7 @@ def perform_release(
     # Explicitly stage all release-related changes so release-it includes them in its commit.
     # release-it only reliably stages files it modifies (package.json); other working tree
     # changes (version.rb, Gemfile.lock, spec/dummy lockfiles) must be pre-staged.
-    Shakapacker::Utils::Misc.sh_in_dir(release_root, "git add -A")
+    Shakapacker::Utils::Misc.sh_in_dir(release_root, "git add version.rb Gemfile.lock spec/dummy/Gemfile.lock spec/dummy/yarn.lock spec/dummy/package-lock.json")
 
     resolved_gem_version = current_gem_version(release_root)
     released_gem_version = resolved_gem_version
