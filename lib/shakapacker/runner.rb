@@ -296,7 +296,8 @@ module Shakapacker
           if child_pid
             Process.kill("TERM", child_pid)
           else
-            raise SignalException, "TERM" # if there is no child_pid we never spawned the process and can quit as normal
+            # Signal arrived before spawn completed; re-raise so the process exits normally.
+            raise SignalException, "TERM"
           end
         rescue Errno::ESRCH
           nil
