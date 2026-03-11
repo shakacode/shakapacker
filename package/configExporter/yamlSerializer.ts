@@ -1,6 +1,6 @@
 import { relative, isAbsolute } from "path"
 import { ConfigMetadata } from "./types"
-import { getDocForKey } from "./configDocs"
+import { getDocDescription } from "../configDocs"
 
 /**
  * Serializes webpack/rspack config to YAML format with optional inline documentation.
@@ -218,7 +218,7 @@ export class YamlSerializer {
 
       // Add documentation for array items if available
       if (this.annotate) {
-        const doc = getDocForKey(itemPath)
+        const doc = getDocDescription(itemPath)
         if (doc) {
           lines.push(`${itemIndent}# ${doc}`)
         }
@@ -291,7 +291,7 @@ export class YamlSerializer {
 
       // Add documentation comment if available and annotation is enabled
       if (this.annotate) {
-        const doc = getDocForKey(fullKeyPath)
+        const doc = getDocDescription(fullKeyPath)
         if (doc) {
           lines.push(`${keyIndent}# ${doc}`)
         }

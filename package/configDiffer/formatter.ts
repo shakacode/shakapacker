@@ -1,6 +1,6 @@
 import { dump as dumpYaml } from "js-yaml"
 import { DiffResult, DiffEntry, DiffOperation } from "./types"
-import { getDocForKey } from "./configDocs"
+import { getDocForKey } from "../configDocs"
 
 export class DiffFormatter {
   formatJson(result: DiffResult): string {

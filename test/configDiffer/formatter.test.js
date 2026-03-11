@@ -194,7 +194,9 @@ describe("DiffFormatter", () => {
 
       const output = formatter.formatDetailed(arrayPathResult)
 
-      expect(output).toContain("Array of plugins to use for minification.")
+      expect(output).toContain(
+        "Array of minimizer plugins (e.g., TerserPlugin, CssMinimizerPlugin)."
+      )
       expect(output).toContain("Documentation:")
     })
   })
