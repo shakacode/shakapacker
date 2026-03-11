@@ -1,0 +1,41 @@
+#!/usr/bin/env node
+
+const { spawnSync } = require("child_process")
+
+function runViaNpx() {
+  const result = spawnSync(
+    "npx",
+    ["-y", "github:shakacode/pack-config-diff", ...process.argv.slice(2)],
+    { stdio: "inherit" }
+  )
+
+  if (result.error) {
+    console.error(
+      `[Shakapacker] Failed to run pack-config-diff via npx: ${result.error.message}`
+    )
+    process.exit(1)
+  }
+
+  process.exit(result.status ?? 1)
+}
+
+let run
+
+try {
+  const loadedModule = require("pack-config-diff")
+  run = loadedModule.run
+} catch (error) {
+  if (error && error.code === "MODULE_NOT_FOUND") {
+    runViaNpx()
+  }
+
+  throw error
+}
+
+try {
+  const exitCode = run(process.argv.slice(2))
+  process.exit(exitCode)
+} catch (error) {
+  console.error(error.message)
+  process.exit(1)
+}

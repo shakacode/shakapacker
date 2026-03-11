@@ -44,6 +44,7 @@
   },
   "dependencies": {
     "js-yaml": "^4.1.0",
+    "pack-config-diff": "github:shakacode/pack-config-diff",
     "path-complete-extname": "^1.0.0",
     "webpack-merge": "^5.8.0",
     "yargs": "^17.7.2"

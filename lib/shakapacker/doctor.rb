@@ -391,7 +391,8 @@ module Shakapacker
         expected_binstubs = {
           "bin/shakapacker" => "Main Shakapacker binstub",
           "bin/shakapacker-dev-server" => "Development server binstub",
-          "bin/shakapacker-config" => "Config export binstub"
+          "bin/shakapacker-config" => "Config export binstub",
+          "bin/diff-bundler-config" => "Config diff binstub"
         }
 
         expected_binstubs.each do |path, description|
@@ -1014,7 +1015,8 @@ module Shakapacker
               "bin/shakapacker",
               "bin/shakapacker-dev-server",
               "bin/shakapacker-config",
-              "bin/shakapacker-watch"
+              "bin/shakapacker-watch",
+              "bin/diff-bundler-config"
             ]
 
             existing_binstubs = binstubs.select { |b| doctor.root_path.join(b).exist? }

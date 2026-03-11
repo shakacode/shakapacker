@@ -56,7 +56,10 @@ If you're experiencing FOUC where content briefly appears unstyled before CSS lo
 
    # Compare development vs production configs
    bin/shakapacker-config --save --save-dir=./configs
-   diff configs/webpack-development-client.yaml configs/webpack-production-client.yaml
+   bin/diff-bundler-config \
+     --left=configs/webpack-development-client.yaml \
+     --right=configs/webpack-production-client.yaml \
+     --format=summary
 
    # View config in terminal (no files created)
    bin/shakapacker-config
@@ -72,8 +75,10 @@ If you're experiencing FOUC where content briefly appears unstyled before CSS lo
    - Examples: `webpack-development-client.yaml`, `rspack-production-server.yaml`
    - YAML format includes inline documentation explaining each config key
    - Separate files for client and server bundles (cleaner than combined)
+   - Pair with `bin/diff-bundler-config` for semantic comparisons
 
    See `bin/shakapacker-config --help` for all available options.
+   For semantic comparisons, see the [Configuration Diff Guide](./config-diff.md).
 
 6. **Validate your webpack/rspack builds**: Use `bin/shakapacker-config --validate` to test that all your build configurations compile successfully. This is especially useful for:
    - **CI/CD pipelines**: Catch configuration errors before deployment
