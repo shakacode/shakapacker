@@ -947,6 +947,32 @@ This exports development and production configurations for both client and serve
 
 For more options and usage examples, see the [Troubleshooting Guide](./docs/troubleshooting.md#exporting-webpack--rspack-configuration).
 
+#### Comparing Configurations
+
+Once you've exported configurations, compare them semantically with `bin/diff-bundler-config` (powered by [`pack-config-diff`](https://github.com/shakacode/pack-config-diff)):
+
+```bash
+# Compare development vs production configs
+bin/diff-bundler-config \
+  --left=shakapacker-config-exports/webpack-development-client.yaml \
+  --right=shakapacker-config-exports/webpack-production-client.yaml
+
+# Get a quick summary
+bin/diff-bundler-config \
+  --left=config1.yaml \
+  --right=config2.yaml \
+  --format=summary
+```
+
+This is useful for:
+
+- Understanding environment-specific config changes
+- Debugging unexpected behavior differences
+- Migration validation (webpack -> rspack)
+- Reviewing bundler config changes in PRs
+
+For full usage, see the [Configuration Diff Guide](./docs/config-diff.md).
+
 ### Integrations
 
 Shakapacker out of the box supports JS and static assets (fonts, images etc.) compilation. To enable support for CoffeeScript or TypeScript install relevant packages:

@@ -839,9 +839,11 @@ bundle exec rake shakapacker:switch_bundler rspack --install-deps
 # Export rspack configs to compare
 bin/shakapacker-config --doctor
 
-# Compare the files in shakapacker-config-exports/
-diff shakapacker-config-exports/webpack-production-client.yaml \
-     shakapacker-config-exports/rspack-production-client.yaml
+# Compare with semantic config diffing
+bin/diff-bundler-config \
+  --left=shakapacker-config-exports/webpack-production-client.yaml \
+  --right=shakapacker-config-exports/rspack-production-client.yaml \
+  --format=summary
 ```
 
 The config export utility creates annotated YAML files that make it easy to:
@@ -852,6 +854,7 @@ The config export utility creates annotated YAML files that make it easy to:
 - Debug configuration issues
 
 See the [Troubleshooting Guide](./troubleshooting.md#exporting-webpack--rspack-configuration) for more details.
+For semantic diff workflows, see the [Configuration Diff Guide](./config-diff.md).
 
 ## Resources
 
