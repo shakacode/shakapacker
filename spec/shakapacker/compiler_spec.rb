@@ -190,7 +190,7 @@ describe "Shakapacker::Compiler" do
       allow(File).to receive(:exist?).with(anything).and_return(true)
 
       expect(Shakapacker.compiler.compile).to be true
-      expect(Open3).to have_received(:capture3).with(hash_including, hook_executable, anything, anything, hash_including).once
+      expect(Open3).to have_received(:capture3).with(hash_including, hook_executable, "--arg1", "--arg2", hash_including).once
     end
 
     it "warns when hook executable does not exist" do
@@ -218,6 +218,7 @@ describe "Shakapacker::Compiler" do
       expect(Shakapacker.logger).to receive(:warn).with(/executable not found/).at_least(:once)
       expect(Shakapacker.logger).to receive(:warn).at_least(:once)
       expect(Shakapacker.compiler.compile).to be true
+      expect(Open3).to have_received(:capture3).with(hash_including, hook_executable, hash_including).once
     end
 
     it "raises error for malformed hook command with unmatched quotes" do
