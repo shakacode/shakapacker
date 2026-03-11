@@ -1,0 +1,12 @@
+#!/usr/bin/env node
+
+// Minimal shim - all logic is in the TypeScript module
+const { run } = require("shakapacker/configDiffer")
+
+try {
+  const exitCode = run(process.argv.slice(2))
+  process.exit(exitCode)
+} catch (error) {
+  console.error(error.message)
+  process.exit(1)
+}
