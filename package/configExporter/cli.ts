@@ -712,6 +712,17 @@ async function runAllBuildsCommand(options: ExportOptions): Promise<number> {
     // Apply defaults
     const resolvedOptions = applyDefaults(options)
 
+    // Validate paths for security in all-builds mode.
+    // saveDir is always set by applyDefaults(); --output is not used in --all-builds mode.
+    safeResolvePath(appRoot, resolvedOptions.saveDir!)
+
+    // Keep in sync with validation in run()
+    if (resolvedOptions.annotate && resolvedOptions.format !== "yaml") {
+      throw new Error(
+        "Annotation requires YAML format. Use --no-annotate or --format=yaml."
+      )
+    }
+
     const loader = new ConfigFileLoader(resolvedOptions.configFile)
     if (!loader.exists()) {
       const configPath = resolvedOptions.configFile || DEFAULT_CONFIG_FILE
