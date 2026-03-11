@@ -116,20 +116,21 @@ describe "Shakapacker::Compiler" do
 
       hook_status = OpenStruct.new(success?: true, exitstatus: 0)
       webpack_status = OpenStruct.new(success?: true)
+      hook_command = "bin/verbose-hook"
+      hook_executable = hook_command
 
-      call_count = 0
-      allow(Open3).to receive(:capture3) do |*args|
-        call_count += 1
-        if call_count == 1
+      allow(Open3).to receive(:capture3) do |env, *args|
+        if args[0] == hook_executable
           ["Standard output", "Warning message", hook_status]
         else
           ["", "", webpack_status]
         end
       end
 
-      allow(Shakapacker.config).to receive(:precompile_hook).and_return("bin/verbose-hook")
+      allow(Shakapacker.config).to receive(:precompile_hook).and_return(hook_command)
 
       expect(Shakapacker.compiler.compile).to be true
+      expect(Open3).to have_received(:capture3).with(hash_including, hook_executable, hash_including).once
     end
 
     it "validates hook is within project root" do
@@ -172,11 +173,11 @@ describe "Shakapacker::Compiler" do
 
       hook_status = OpenStruct.new(success?: true, exitstatus: 0)
       webpack_status = OpenStruct.new(success?: true)
+      hook_command = "'bin/my script' --arg1 --arg2"
+      hook_executable = "bin/my script"
 
-      call_count = 0
-      allow(Open3).to receive(:capture3) do |*args|
-        call_count += 1
-        if call_count == 1
+      allow(Open3).to receive(:capture3) do |env, *args|
+        if args[0] == hook_executable
           ["", "", hook_status]
         else
           ["", "", webpack_status]
@@ -184,11 +185,12 @@ describe "Shakapacker::Compiler" do
       end
 
       # Hook command with quoted path containing spaces
-      allow(Shakapacker.config).to receive(:precompile_hook).and_return("'bin/my script' --arg1 --arg2")
+      allow(Shakapacker.config).to receive(:precompile_hook).and_return(hook_command)
       allow(File).to receive(:exist?).and_call_original
       allow(File).to receive(:exist?).with(anything).and_return(true)
 
       expect(Shakapacker.compiler.compile).to be true
+      expect(Open3).to have_received(:capture3).with(hash_including, hook_executable, "--arg1", "--arg2", hash_including).once
     end
 
     it "warns when hook executable does not exist" do
@@ -198,24 +200,25 @@ describe "Shakapacker::Compiler" do
 
       hook_status = OpenStruct.new(success?: true, exitstatus: 0)
       webpack_status = OpenStruct.new(success?: true)
+      hook_command = "bin/nonexistent-hook"
+      hook_executable = hook_command
 
-      call_count = 0
-      allow(Open3).to receive(:capture3) do |*args|
-        call_count += 1
-        if call_count == 1
+      allow(Open3).to receive(:capture3) do |env, *args|
+        if args[0] == hook_executable
           ["", "", hook_status]
         else
           ["", "", webpack_status]
         end
       end
 
-      allow(Shakapacker.config).to receive(:precompile_hook).and_return("bin/nonexistent-hook")
+      allow(Shakapacker.config).to receive(:precompile_hook).and_return(hook_command)
       allow(File).to receive(:exist?).and_call_original
       allow(File).to receive(:exist?).with(anything).and_return(false)
 
       expect(Shakapacker.logger).to receive(:warn).with(/executable not found/).at_least(:once)
       expect(Shakapacker.logger).to receive(:warn).at_least(:once)
       expect(Shakapacker.compiler.compile).to be true
+      expect(Open3).to have_received(:capture3).with(hash_including, hook_executable, hash_including).once
     end
 
     it "raises error for malformed hook command with unmatched quotes" do
@@ -245,13 +248,13 @@ describe "Shakapacker::Compiler" do
 
       hook_status = OpenStruct.new(success?: true, exitstatus: 0)
       webpack_status = OpenStruct.new(success?: true)
+      hook_command = "bin/prepare && rm -rf /"
+      hook_executable = "bin/prepare"
 
-      call_count = 0
       captured_args = []
       allow(Open3).to receive(:capture3) do |env, *args|
-        call_count += 1
-        captured_args << args if call_count == 1
-        if call_count == 1
+        captured_args << args if args[0] == hook_executable
+        if args[0] == hook_executable
           ["", "", hook_status]
         else
           ["", "", webpack_status]
@@ -260,7 +263,7 @@ describe "Shakapacker::Compiler" do
 
       # This malicious command would execute "rm -rf /" if passed to a shell
       # With shell-free execution, it's treated as arguments to bin/prepare
-      allow(Shakapacker.config).to receive(:precompile_hook).and_return("bin/prepare && rm -rf /")
+      allow(Shakapacker.config).to receive(:precompile_hook).and_return(hook_command)
       allow(File).to receive(:exist?).and_call_original
       allow(File).to receive(:exist?).with(anything).and_return(true)
 
@@ -278,20 +281,20 @@ describe "Shakapacker::Compiler" do
 
       hook_status = OpenStruct.new(success?: true, exitstatus: 0)
       webpack_status = OpenStruct.new(success?: true)
+      hook_command = "FOO=bar BAZ=qux bin/hook --arg"
+      hook_executable = "bin/hook"
 
-      call_count = 0
       captured_env = nil
       allow(Open3).to receive(:capture3) do |env, *args|
-        call_count += 1
-        captured_env = env if call_count == 1
-        if call_count == 1
+        captured_env = env if args[0] == hook_executable
+        if args[0] == hook_executable
           ["", "", hook_status]
         else
           ["", "", webpack_status]
         end
       end
 
-      allow(Shakapacker.config).to receive(:precompile_hook).and_return("FOO=bar BAZ=qux bin/hook --arg")
+      allow(Shakapacker.config).to receive(:precompile_hook).and_return(hook_command)
       allow(File).to receive(:exist?).and_call_original
       allow(File).to receive(:exist?).with(anything).and_return(true)
 
