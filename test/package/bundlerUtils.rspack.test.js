@@ -5,6 +5,36 @@
  * then re-require bundlerUtils to exercise the rspack branches.
  */
 
+// Mock requireOrError to provide a fake @rspack/core (v2 is pure ESM, can't be require()'d by Jest)
+jest.mock("../../package/utils/requireOrError", () => {
+  function CssExtractRspackPlugin(options) {
+    this.options = options
+  }
+  CssExtractRspackPlugin.loader = "css-extract-rspack-loader"
+
+  return {
+    requireOrError: (moduleName) => {
+      if (moduleName === "@rspack/core") {
+        return {
+          DefinePlugin: function DefinePlugin(definitions) {
+            this.definitions = definitions
+          },
+          EnvironmentPlugin: function EnvironmentPlugin(env) {
+            this.env = env
+          },
+          ProvidePlugin: function ProvidePlugin(definitions) {
+            this.definitions = definitions
+          },
+          HotModuleReplacementPlugin: function HotModuleReplacementPlugin() {},
+          ProgressPlugin: function ProgressPlugin() {},
+          CssExtractRspackPlugin
+        }
+      }
+      throw new Error(`Module ${moduleName} not found`)
+    }
+  }
+})
+
 let bundlerUtils
 
 describe("bundlerUtils with rspack", () => {

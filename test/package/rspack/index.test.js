@@ -1,4 +1,4 @@
-/* eslint-disable jest/no-conditional-in-test */
+/* eslint-disable func-names, jest/no-conditional-in-test */
 
 const { chdirTestApp } = require("../../helpers")
 
@@ -27,6 +27,48 @@ jest.mock("../../../package/utils/helpers", () => {
 // Mock validateDependencies to prevent actual validation
 jest.mock("../../../package/utils/validateDependencies", () => ({
   validateRspackDependencies: jest.fn()
+}))
+
+// Mock requireOrError to provide a fake @rspack/core (v2 is pure ESM, can't be require()'d by Jest)
+jest.mock("../../../package/utils/requireOrError", () => ({
+  requireOrError: (moduleName) => {
+    if (moduleName === "@rspack/core") {
+      const CssExtractRspackPlugin = jest.fn(function (options) {
+        this.options = options
+      })
+      CssExtractRspackPlugin.loader = "css-extract-rspack-loader"
+
+      return {
+        DefinePlugin: jest.fn(function (definitions) {
+          this.definitions = definitions
+        }),
+        EnvironmentPlugin: jest.fn(function (env) {
+          this.env = env
+        }),
+        ProvidePlugin: jest.fn(function (definitions) {
+          this.definitions = definitions
+        }),
+        HotModuleReplacementPlugin: jest.fn(),
+        ProgressPlugin: jest.fn(),
+        CssExtractRspackPlugin,
+        SubresourceIntegrityPlugin: jest.fn(function (options) {
+          this.options = options
+        }),
+        SwcJsMinimizerRspackPlugin: jest.fn(),
+        LightningCssMinimizerRspackPlugin: jest.fn()
+      }
+    }
+    if (moduleName === "rspack-manifest-plugin") {
+      return {
+        RspackManifestPlugin: jest.fn(function (options) {
+          this.options = options
+        })
+      }
+    }
+    return jest
+      .requireActual("../../../package/utils/requireOrError")
+      .requireOrError(moduleName)
+  }
 }))
 
 describe("rspack/index", () => {

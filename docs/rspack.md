@@ -4,9 +4,27 @@ Shakapacker supports [Rspack](https://rspack.rs) as an alternative assets bundle
 
 **📖 For configuration options, see the [Configuration Guide](./configuration.md)**
 
+## Version Compatibility
+
+Shakapacker supports both Rspack v1 (`^1.0.0`) and Rspack v2 (`^2.0.0`). No configuration changes are needed when upgrading between rspack versions — shakapacker's generated config works with both.
+
+**Rspack v2 note:** Rspack v2 ships as a pure ESM package and requires **Node.js 20.19.0+**. If you're using rspack v1, any Node.js 20+ version works.
+
+### Why upgrade to Rspack v2?
+
+- **Persistent cache with proper invalidation** — Rspack v2 promotes persistent caching (`cache.type: 'filesystem'`) from experimental to stable, with portable cache support (`cache.portable`) and read-only cache for CI (`cache.readonly`). This means fast rebuilds that survive process restarts and are properly invalidated when dependencies change.
+- **Incremental compilation (stable)** — The `incremental` option moves from `experiments` to a top-level config, signaling it's production-ready. Incremental builds skip unchanged work in the dependency graph.
+- **Better tree shaking** — CJS `require()` destructuring and variable property access are now tree-shaken, and Module Federation shares can be tree-shaken.
+- **Unified target configuration** — A single `target` setting now propagates defaults to SWC and LightningCSS automatically, eliminating redundant per-loader configuration.
+- **Stricter export validation** — `exportsPresence` defaults to `'error'`, catching missing or misspelled exports at build time instead of silently producing broken bundles.
+- **React Server Components** — Built-in RSC support for frameworks.
+- **Performance** — Dozens of Rust-level optimizations across every beta release (hash caching, regex fast paths, reduced allocations, rayon parallelism).
+
+See the [Rspack v2 breaking changes discussion](https://github.com/web-infra-dev/rspack/discussions/9270) for full details.
+
 ## Installation
 
-First, install the required Rspack dependencies:
+Install the required Rspack dependencies:
 
 ```bash
 npm install @rspack/core @rspack/cli -D
