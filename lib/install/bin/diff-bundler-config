@@ -31,6 +31,17 @@ function exitWithCode(exitCode) {
 }
 
 function runViaNpx() {
+  if (
+    (process.env.CI === "true" || process.env.GITHUB_ACTIONS === "true") &&
+    !process.stdin.isTTY
+  ) {
+    console.error(
+      `[Shakapacker] ${PACK_CONFIG_DIFF_PACKAGE} is not installed locally, and npx fallback requires an interactive prompt. ` +
+        `Install ${PACK_CONFIG_DIFF_PACKAGE} locally before running in CI.`
+    )
+    process.exit(1)
+  }
+
   console.error(
     `[Shakapacker] ${PACK_CONFIG_DIFF_PACKAGE} is not installed locally. ` +
       "Falling back to npx and prompting before download."
@@ -58,7 +69,7 @@ try {
   run = loadedModule.run
 } catch (error) {
   if (isMissingPackConfigDiff(error)) {
-    runViaNpx()
+    return runViaNpx()
   } else {
     console.error(
       `[Shakapacker] Failed to load ${PACK_CONFIG_DIFF_PACKAGE}: ${formatError(error)}`
