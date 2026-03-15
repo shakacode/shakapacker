@@ -6,9 +6,13 @@ Shakapacker supports [Rspack](https://rspack.rs) as an alternative assets bundle
 
 ## Version Compatibility
 
-Shakapacker supports both Rspack v1 (`^1.0.0`) and Rspack v2 (`^2.0.0`). No configuration changes are needed when upgrading between rspack versions — shakapacker's generated config works with both.
+Shakapacker supports both Rspack v1 (`^1.0.0`) and Rspack v2 (`^2.0.0-0`). No configuration changes are needed when upgrading between rspack versions — shakapacker's generated config works with both.
 
-**Rspack v2 note:** Rspack v2 ships as a pure ESM package and requires **Node.js 20.19.0+**. If you're using rspack v1, any Node.js 20+ version works.
+**Rspack v2 note:** Rspack v2 ships as a pure ESM package and requires **Node.js 20.19.0+**.
+
+**Rspack v1 note:** Rspack v1 itself supports older Node versions, but Shakapacker requires Node 20+.
+
+**React refresh plugin note:** `@rspack/plugin-react-refresh` currently remains on the v1 line in Shakapacker peer deps.
 
 ### Why upgrade to Rspack v2?
 

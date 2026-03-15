@@ -7,30 +7,32 @@
 
 // Mock requireOrError to provide a fake @rspack/core (v2 is pure ESM, can't be require()'d by Jest)
 jest.mock("../../package/utils/requireOrError", () => {
-  function CssExtractRspackPlugin(options) {
+  const CssExtractRspackPlugin = jest.fn(function (options) {
     this.options = options
-  }
+  })
   CssExtractRspackPlugin.loader = "css-extract-rspack-loader"
 
   return {
     requireOrError: (moduleName) => {
       if (moduleName === "@rspack/core") {
         return {
-          DefinePlugin: function DefinePlugin(definitions) {
+          DefinePlugin: jest.fn(function (definitions) {
             this.definitions = definitions
-          },
-          EnvironmentPlugin: function EnvironmentPlugin(env) {
+          }),
+          EnvironmentPlugin: jest.fn(function (env) {
             this.env = env
-          },
-          ProvidePlugin: function ProvidePlugin(definitions) {
+          }),
+          ProvidePlugin: jest.fn(function (definitions) {
             this.definitions = definitions
-          },
-          HotModuleReplacementPlugin: function HotModuleReplacementPlugin() {},
-          ProgressPlugin: function ProgressPlugin() {},
+          }),
+          HotModuleReplacementPlugin: jest.fn(),
+          ProgressPlugin: jest.fn(),
           CssExtractRspackPlugin
         }
       }
-      throw new Error(`Module ${moduleName} not found`)
+      return jest
+        .requireActual("../../package/utils/requireOrError")
+        .requireOrError(moduleName)
     }
   }
 })
@@ -110,7 +112,7 @@ describe("bundlerUtils with rspack", () => {
     test("returns rspack DefinePlugin", () => {
       const DefinePlugin = bundlerUtils.getDefinePlugin()
       expect(DefinePlugin).toBeDefined()
-      expect(DefinePlugin).toBeInstanceOf(Function)
+      expect(jest.isMockFunction(DefinePlugin)).toBe(true)
     })
   })
 
@@ -118,7 +120,7 @@ describe("bundlerUtils with rspack", () => {
     test("returns rspack EnvironmentPlugin", () => {
       const EnvironmentPlugin = bundlerUtils.getEnvironmentPlugin()
       expect(EnvironmentPlugin).toBeDefined()
-      expect(EnvironmentPlugin).toBeInstanceOf(Function)
+      expect(jest.isMockFunction(EnvironmentPlugin)).toBe(true)
     })
   })
 
@@ -126,7 +128,7 @@ describe("bundlerUtils with rspack", () => {
     test("returns rspack ProvidePlugin", () => {
       const ProvidePlugin = bundlerUtils.getProvidePlugin()
       expect(ProvidePlugin).toBeDefined()
-      expect(ProvidePlugin).toBeInstanceOf(Function)
+      expect(jest.isMockFunction(ProvidePlugin)).toBe(true)
     })
   })
 })
