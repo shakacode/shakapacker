@@ -27,7 +27,12 @@ jest.mock("../../package/utils/requireOrError", () => {
           }),
           HotModuleReplacementPlugin: jest.fn(),
           ProgressPlugin: jest.fn(),
-          CssExtractRspackPlugin
+          CssExtractRspackPlugin,
+          SubresourceIntegrityPlugin: jest.fn(function (options) {
+            this.options = options
+          }),
+          SwcJsMinimizerRspackPlugin: jest.fn(),
+          LightningCssMinimizerRspackPlugin: jest.fn()
         }
       }
       return jest
@@ -112,7 +117,9 @@ describe("bundlerUtils with rspack", () => {
     test("returns rspack DefinePlugin", () => {
       const DefinePlugin = bundlerUtils.getDefinePlugin()
       expect(DefinePlugin).toBeDefined()
-      expect(jest.isMockFunction(DefinePlugin)).toBe(true)
+
+      const instance = new DefinePlugin({ FOO: "bar" })
+      expect(instance.definitions).toStrictEqual({ FOO: "bar" })
     })
   })
 
@@ -120,7 +127,9 @@ describe("bundlerUtils with rspack", () => {
     test("returns rspack EnvironmentPlugin", () => {
       const EnvironmentPlugin = bundlerUtils.getEnvironmentPlugin()
       expect(EnvironmentPlugin).toBeDefined()
-      expect(jest.isMockFunction(EnvironmentPlugin)).toBe(true)
+
+      const instance = new EnvironmentPlugin(["NODE_ENV"])
+      expect(instance.env).toStrictEqual(["NODE_ENV"])
     })
   })
 
@@ -128,7 +137,9 @@ describe("bundlerUtils with rspack", () => {
     test("returns rspack ProvidePlugin", () => {
       const ProvidePlugin = bundlerUtils.getProvidePlugin()
       expect(ProvidePlugin).toBeDefined()
-      expect(jest.isMockFunction(ProvidePlugin)).toBe(true)
+
+      const instance = new ProvidePlugin({ React: "react" })
+      expect(instance.definitions).toStrictEqual({ React: "react" })
     })
   })
 })
