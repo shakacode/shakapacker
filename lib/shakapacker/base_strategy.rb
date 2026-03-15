@@ -1,7 +1,7 @@
 module Shakapacker
   class BaseStrategy
-    def initialize
-      @config = Shakapacker.config
+    def initialize(instance)
+      @instance = instance
     end
 
     def after_compile_hook
@@ -10,7 +10,13 @@ module Shakapacker
 
     private
 
-      attr_reader :config
+      def config
+        @instance.config
+      end
+
+      def env
+        @instance.env
+      end
 
       def default_watched_paths
         [
@@ -18,7 +24,7 @@ module Shakapacker
           "#{config.source_path}{,/**/*}",
           "package.json", "package-lock.json", "yarn.lock",
           "pnpm-lock.yaml", "bun.lockb",
-          "config/webpack{,/**/*}"
+          "config/{webpack,rspack}{,/**/*}"
         ].freeze
       end
   end
