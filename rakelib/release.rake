@@ -367,11 +367,13 @@ def ensure_git_tag_exists!(gem_root:, tag:)
   abort "❌ Git tag #{tag.inspect} was not found locally or remotely. Verify the tag exists before syncing GitHub release."
 end
 
-def github_release_command(gem_root:, release_context:, notes_file_path:, probe_existing: true)
+def github_release_command(gem_root: nil, release_context:, notes_file_path:, probe_existing: true)
   create_command = ["gh", "release", "create", release_context[:tag], "--verify-tag", "--title", release_context[:title],
                     "--notes-file", notes_file_path]
   create_command << "--prerelease" if release_context[:prerelease]
   return create_command unless probe_existing
+
+  abort "❌ Internal error: github_release_command requires gem_root when probe_existing is true." unless gem_root
 
   release_exists = system("gh", "release", "view", release_context[:tag], chdir: gem_root, out: File::NULL, err: File::NULL)
   abort "❌ Unable to run `gh`. Ensure GitHub CLI is installed and on PATH." if release_exists.nil?
@@ -391,9 +393,8 @@ def publish_or_update_github_release(gem_root:, release_context:, dry_run:)
 
   if dry_run
     preview_command = github_release_command(
-      gem_root: gem_root,
       release_context: release_context,
-      notes_file_path: "<release-notes-file>",
+      notes_file_path: "release-notes-file",
       probe_existing: false
     )
     puts "DRY RUN: Would create or update GitHub release #{release_context[:tag]}#{release_context[:prerelease] ? ' (prerelease)' : ''}"
