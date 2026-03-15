@@ -734,14 +734,21 @@ describe Shakapacker::Doctor do
 
       it "adds missing binstubs warning" do
         doctor.send(:check_binstub)
-        expect(warning_messages).to include(match(/Missing binstubs:.*bin\/diff-bundler-config/))
+        expect(warning_messages).to include(
+          match(/Missing bin\/diff-bundler-config \(Optional config diff binstub\)/)
+        )
       end
     end
 
     context "when no binstubs exist" do
       it "adds missing binstubs warning for all configured binstubs" do
         doctor.send(:check_binstub)
-        expect(warning_messages).to include(match(/Missing binstubs:.*bin\/shakapacker.*bin\/shakapacker-dev-server.*bin\/shakapacker-config.*bin\/diff-bundler-config/))
+        expect(warning_messages).to include(
+          match(/Missing binstubs:.*bin\/shakapacker.*bin\/shakapacker-dev-server.*bin\/shakapacker-config/)
+        )
+        expect(warning_messages).to include(
+          match(/Missing bin\/diff-bundler-config \(Optional config diff binstub\)/)
+        )
       end
     end
   end

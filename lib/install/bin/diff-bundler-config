@@ -19,10 +19,25 @@ function isMissingPackConfigDiff(error) {
   )
 }
 
+function exitWithCode(exitCode) {
+  if (!Number.isInteger(exitCode)) {
+    console.error(
+      `[Shakapacker] ${PACK_CONFIG_DIFF_PACKAGE} returned a non-integer exit code: ${String(exitCode)}`
+    )
+    process.exit(1)
+  }
+
+  process.exit(exitCode)
+}
+
 function runViaNpx() {
+  console.error(
+    `[Shakapacker] ${PACK_CONFIG_DIFF_PACKAGE} is not installed locally. ` +
+      "Falling back to npx and prompting before download."
+  )
   const result = spawnSync(
     "npx",
-    ["-y", PACK_CONFIG_DIFF_REF, ...process.argv.slice(2)],
+    [PACK_CONFIG_DIFF_REF, ...process.argv.slice(2)],
     { stdio: "inherit" }
   )
 
@@ -60,8 +75,18 @@ if (typeof run !== "function") {
 }
 
 try {
-  const exitCode = run(process.argv.slice(2))
-  process.exit(exitCode)
+  const runResult = run(process.argv.slice(2))
+
+  if (runResult && typeof runResult.then === "function") {
+    runResult
+      .then((exitCode) => exitWithCode(exitCode))
+      .catch((error) => {
+        console.error(formatError(error))
+        process.exit(1)
+      })
+  } else {
+    exitWithCode(runResult)
+  }
 } catch (error) {
   console.error(formatError(error))
   process.exit(1)

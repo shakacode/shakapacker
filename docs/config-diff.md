@@ -129,7 +129,7 @@ bin/diff-bundler-config --left=a.yaml --right=b.yaml --format=yaml
 - `0`: no differences found
 - `1`: differences found or error occurred
 
-This makes the tool easy to use in CI checks.
+For CI usage, treat non-zero as "configs are not identical" and inspect stderr/output for error details.
 
 ## Programmatic Usage
 
