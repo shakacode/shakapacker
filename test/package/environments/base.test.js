@@ -62,17 +62,22 @@ describe("Base config", () => {
         (entryValue) => typeof entryValue === "string"
       )
       const arrayEntries = entryValues.filter(Array.isArray)
+      const flattenedArrayEntries = arrayEntries.flat()
 
       expect(stringEntries.length + arrayEntries.length).toBe(
         entryValues.length
       )
-
-      arrayEntries.forEach((entryValue) => {
-        expect(entryValue.length).toBeGreaterThan(0)
-        entryValue.forEach((value) => {
-          expect(typeof value).toBe("string")
-        })
-      })
+      expect(stringEntries.length).toBeGreaterThan(0)
+      expect(arrayEntries.length).toBeGreaterThan(0)
+      expect(stringEntries.every((entryValue) => entryValue.length > 0)).toBe(
+        true
+      )
+      expect(flattenedArrayEntries.length).toBeGreaterThan(0)
+      expect(
+        flattenedArrayEntries.every(
+          (entryValue) => typeof entryValue === "string"
+        )
+      ).toBe(true)
     })
 
     test("should returns top level and nested entry points with config.nested_entries == true", () => {
