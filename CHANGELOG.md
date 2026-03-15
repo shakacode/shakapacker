@@ -9,6 +9,10 @@
 
 ## [Unreleased]
 
+### Fixed
+
+- **Fixed compiler strategies ignoring the instance config of custom `Shakapacker::Instance` objects.** [PR #976](https://github.com/shakacode/shakapacker/pull/976) by [brunodccarvalho](https://github.com/brunodccarvalho). Strategies now read the instance specific config.
+
 ## [v10.0.0-rc.0] - April 1, 2026
 
 ### Added
