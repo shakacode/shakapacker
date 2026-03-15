@@ -127,9 +127,10 @@ bin/diff-bundler-config --left=a.yaml --right=b.yaml --format=yaml
 ## Exit Codes
 
 - `0`: no differences found
-- `1`: differences found or error occurred
+- `1`: differences found
+- `2`: wrapper/runtime error (module load error, invalid return code, npx fallback failure)
 
-For CI usage, treat non-zero as "configs are not identical" and inspect stderr/output for error details.
+For CI usage, treat `1` as "configs differ" and `2` as "tool/runtime failure".
 
 ## Programmatic Usage
 

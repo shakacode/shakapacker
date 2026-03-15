@@ -24,7 +24,7 @@ function exitWithCode(exitCode) {
     console.error(
       `[Shakapacker] ${PACK_CONFIG_DIFF_PACKAGE} returned a non-integer exit code: ${String(exitCode)}`
     )
-    process.exit(1)
+    process.exit(2)
   }
 
   process.exit(exitCode)
@@ -39,7 +39,7 @@ function runViaNpx() {
       `[Shakapacker] ${PACK_CONFIG_DIFF_PACKAGE} is not installed locally, and npx fallback requires an interactive prompt. ` +
         `Install ${PACK_CONFIG_DIFF_PACKAGE} locally before running in CI.`
     )
-    process.exit(1)
+    process.exit(2)
   }
 
   console.error(
@@ -56,7 +56,7 @@ function runViaNpx() {
     console.error(
       `[Shakapacker] Failed to run ${PACK_CONFIG_DIFF_PACKAGE} via npx: ${formatError(result.error)}`
     )
-    process.exit(1)
+    process.exit(2)
   }
 
   process.exit(result.status ?? 1)
@@ -74,7 +74,7 @@ try {
     console.error(
       `[Shakapacker] Failed to load ${PACK_CONFIG_DIFF_PACKAGE}: ${formatError(error)}`
     )
-    process.exit(1)
+    process.exit(2)
   }
 }
 
@@ -82,7 +82,7 @@ if (typeof run !== "function") {
   console.error(
     `[Shakapacker] ${PACK_CONFIG_DIFF_PACKAGE} did not export a run() function`
   )
-  process.exit(1)
+  process.exit(2)
 }
 
 try {
@@ -93,12 +93,12 @@ try {
       .then((exitCode) => exitWithCode(exitCode))
       .catch((error) => {
         console.error(formatError(error))
-        process.exit(1)
+        process.exit(2)
       })
   } else {
     exitWithCode(runResult)
   }
 } catch (error) {
   console.error(formatError(error))
-  process.exit(1)
+  process.exit(2)
 }
