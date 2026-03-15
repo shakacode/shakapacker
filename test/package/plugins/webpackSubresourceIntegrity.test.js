@@ -52,7 +52,6 @@ const loadPluginsWithSriModule = (sriModule) => {
 
 describe("webpack plugins - webpack-subresource-integrity compatibility", () => {
   afterEach(() => {
-    jest.resetModules()
     jest.clearAllMocks()
   })
 

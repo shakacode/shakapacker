@@ -58,7 +58,7 @@ const getPlugins = (): unknown[] => {
     config.integrity?.enabled &&
     moduleExists("webpack-subresource-integrity")
   ) {
-    // webpack-subresource-integrity >=5.1 exports the plugin as a named export.
+    // webpack-subresource-integrity v5+ exports the plugin as a named export.
     const subresourceIntegrityModule = requireOrError(
       "webpack-subresource-integrity"
     )
