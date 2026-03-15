@@ -394,10 +394,6 @@ module Shakapacker
           "bin/shakapacker-config" => "Config export binstub"
         }
 
-        optional_binstubs = {
-          "bin/diff-bundler-config" => "Optional config diff binstub"
-        }
-
         required_binstubs.each do |path, description|
           unless root_path.join(path).exist?
             missing_binstubs << "#{path} (#{description})"
@@ -407,12 +403,6 @@ module Shakapacker
         unless missing_binstubs.empty?
           add_action_required("Missing binstubs: #{missing_binstubs.join(', ')}.")
           add_action_required("  Fix: Run 'bundle exec rake shakapacker:binstubs' to create them.")
-        end
-
-        optional_binstubs.each do |path, description|
-          next if root_path.join(path).exist?
-
-          add_warning("Missing #{path} (#{description}). Run 'bundle exec rake shakapacker:binstubs' to add it.")
         end
       end
 
