@@ -679,7 +679,6 @@ describe Shakapacker::Doctor do
     let(:binstub_path) { root_path.join("bin/shakapacker") }
     let(:dev_server_binstub_path) { root_path.join("bin/shakapacker-dev-server") }
     let(:export_config_binstub_path) { root_path.join("bin/shakapacker-config") }
-    let(:diff_config_binstub_path) { root_path.join("bin/diff-bundler-config") }
 
     context "when all binstubs exist" do
       before do
@@ -687,7 +686,6 @@ describe Shakapacker::Doctor do
         File.write(binstub_path, "#!/usr/bin/env ruby")
         File.write(dev_server_binstub_path, "#!/usr/bin/env ruby")
         File.write(export_config_binstub_path, "#!/usr/bin/env node")
-        File.write(diff_config_binstub_path, "#!/usr/bin/env node")
       end
 
       it "does not add warnings" do
@@ -701,7 +699,6 @@ describe Shakapacker::Doctor do
         FileUtils.mkdir_p(binstub_path.dirname)
         File.write(dev_server_binstub_path, "#!/usr/bin/env ruby")
         File.write(export_config_binstub_path, "#!/usr/bin/env node")
-        File.write(diff_config_binstub_path, "#!/usr/bin/env node")
       end
 
       it "adds missing binstubs warning" do
@@ -715,7 +712,6 @@ describe Shakapacker::Doctor do
         FileUtils.mkdir_p(binstub_path.dirname)
         File.write(binstub_path, "#!/usr/bin/env ruby")
         File.write(dev_server_binstub_path, "#!/usr/bin/env ruby")
-        File.write(diff_config_binstub_path, "#!/usr/bin/env node")
       end
 
       it "adds missing binstubs warning" do
@@ -724,30 +720,11 @@ describe Shakapacker::Doctor do
       end
     end
 
-    context "when diff-bundler-config binstub does not exist" do
-      before do
-        FileUtils.mkdir_p(binstub_path.dirname)
-        File.write(binstub_path, "#!/usr/bin/env ruby")
-        File.write(dev_server_binstub_path, "#!/usr/bin/env ruby")
-        File.write(export_config_binstub_path, "#!/usr/bin/env node")
-      end
-
-      it "adds missing binstubs warning" do
-        doctor.send(:check_binstub)
-        expect(warning_messages).to include(
-          match(/Missing bin\/diff-bundler-config \(Optional config diff binstub\)/)
-        )
-      end
-    end
-
     context "when no binstubs exist" do
       it "adds missing binstubs warning for all configured binstubs" do
         doctor.send(:check_binstub)
         expect(warning_messages).to include(
           match(/Missing binstubs:.*bin\/shakapacker.*bin\/shakapacker-dev-server.*bin\/shakapacker-config/)
-        )
-        expect(warning_messages).to include(
-          match(/Missing bin\/diff-bundler-config \(Optional config diff binstub\)/)
         )
       end
     end
