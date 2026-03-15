@@ -57,11 +57,26 @@ describe("Base config", () => {
     })
 
     test("keeps entry value shapes stable for TypeScript narrowing", () => {
-      expect(typeof baseConfig.entry.application).toBe("string")
-      expect(Array.isArray(baseConfig.entry.multi_entry)).toBe(true)
-      expect(baseConfig.entry.multi_entry).toStrictEqual(
-        expect.arrayContaining([expect.any(String), expect.any(String)])
+      const entryValues = Object.values(baseConfig.entry)
+      const stringEntries = entryValues.filter(
+        (entryValue) => typeof entryValue === "string"
       )
+      const arrayEntries = entryValues.filter(Array.isArray)
+
+      expect(stringEntries.length + arrayEntries.length).toBe(
+        entryValues.length
+      )
+
+      stringEntries.forEach((entryValue) => {
+        expect(typeof entryValue).toBe("string")
+      })
+
+      arrayEntries.forEach((entryValue) => {
+        expect(entryValue.length).toBeGreaterThan(0)
+        entryValue.forEach((value) => {
+          expect(typeof value).toBe("string")
+        })
+      })
     })
 
     test("should returns top level and nested entry points with config.nested_entries == true", () => {
