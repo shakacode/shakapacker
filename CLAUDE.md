@@ -1,5 +1,16 @@
 # Shakapacker Project Guidelines
 
+## Rules Directory
+
+Always-on execution rules are mirrored in `.claude/rules/`:
+
+- `.claude/rules/coding-style.md`
+- `.claude/rules/testing.md`
+- `.claude/rules/git-workflow.md`
+- `.claude/rules/open-source.md`
+
+Use these rule files as the canonical, Claude Code-native structure for persistent guidance.
+
 ## Critical Requirements
 
 - **ALWAYS end all files with a trailing newline character.** This is required by the project's linting rules.
