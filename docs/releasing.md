@@ -61,6 +61,9 @@ bundle exec rake "create_release[9.6.0.rc.0]"
 # Dry run to test without publishing
 bundle exec rake "create_release[9.1.0,true]"
 
+# Skip interactive confirmations (for scripted maintainer runs)
+AUTO_CONFIRM=true bundle exec rake create_release
+
 # Override version policy checks (monotonic + changelog/bump consistency)
 RELEASE_VERSION_POLICY_OVERRIDE=true bundle exec rake "create_release[9.1.0]"
 bundle exec rake "create_release[9.1.0,false,true]"
@@ -74,6 +77,7 @@ When called with no arguments, `create_release`:
 4. If no new version is found, falls back to a patch bump
 
 Dry runs use a temporary git worktree so version bumps and installs do not modify your current checkout.
+Dry runs now also print explicit "skipping confirmation" messages and the would-run GitHub release command.
 
 `create_release` validates release-version policy before publishing:
 
@@ -147,6 +151,8 @@ bundle exec rake create_release  # reads v10.0.0-rc.0 from CHANGELOG.md
 ```
 
 ### 5. During the Release
+
+If you are running non-interactively, set `AUTO_CONFIRM=true` to skip confirmation prompts.
 
 1. When prompted for **npm OTP**, enter your 2FA code from your authenticator app
 2. Accept defaults for release-it options

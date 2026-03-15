@@ -367,12 +367,34 @@ def ensure_git_tag_exists!(gem_root:, tag:)
   abort "❌ Git tag #{tag.inspect} was not found locally or remotely. Verify the tag exists before syncing GitHub release."
 end
 
+def github_release_command(gem_root:, release_context:, notes_file_path:)
+  release_exists = system("gh", "release", "view", release_context[:tag], chdir: gem_root, out: File::NULL, err: File::NULL)
+  abort "❌ Unable to run `gh`. Ensure GitHub CLI is installed and on PATH." if release_exists.nil?
+
+  if release_exists
+    # `gh release edit` accepts `--prerelease=true|false`; there is no `--no-prerelease` flag.
+    ["gh", "release", "edit", release_context[:tag], "--title", release_context[:title], "--notes-file", notes_file_path,
+     "--prerelease=#{release_context[:prerelease]}"]
+  else
+    command = ["gh", "release", "create", release_context[:tag], "--verify-tag", "--title", release_context[:title],
+               "--notes-file", notes_file_path]
+    command << "--prerelease" if release_context[:prerelease]
+    command
+  end
+end
+
 def publish_or_update_github_release(gem_root:, release_context:, dry_run:)
   # Keep this check before the dry-run return so preflight runs catch missing tags.
   ensure_git_tag_exists!(gem_root: gem_root, tag: release_context[:tag])
 
   if dry_run
+    preview_command = github_release_command(
+      gem_root: gem_root,
+      release_context: release_context,
+      notes_file_path: "<release-notes-file>"
+    )
     puts "DRY RUN: Would create or update GitHub release #{release_context[:tag]}#{release_context[:prerelease] ? ' (prerelease)' : ''}"
+    puts "DRY RUN: Would run: #{Shellwords.join(preview_command)}"
     return
   end
 
@@ -380,20 +402,11 @@ def publish_or_update_github_release(gem_root:, release_context:, dry_run:)
     tmp.write(release_context[:notes])
     tmp.flush
 
-    # The view probe only needs a boolean result, so use array-form system to avoid an extra shell layer.
-    release_exists = system("gh", "release", "view", release_context[:tag], chdir: gem_root, out: File::NULL, err: File::NULL)
-    abort "❌ Unable to run `gh`. Ensure GitHub CLI is installed and on PATH." if release_exists.nil?
-
-    release_command = if release_exists
-      # `gh release edit` accepts `--prerelease=true|false`; there is no `--no-prerelease` flag.
-      ["gh", "release", "edit", release_context[:tag], "--title", release_context[:title], "--notes-file", tmp.path,
-       "--prerelease=#{release_context[:prerelease]}"]
-    else
-      command = ["gh", "release", "create", release_context[:tag], "--verify-tag", "--title", release_context[:title],
-                 "--notes-file", tmp.path]
-      command << "--prerelease" if release_context[:prerelease]
-      command
-    end
+    release_command = github_release_command(
+      gem_root: gem_root,
+      release_context: release_context,
+      notes_file_path: tmp.path
+    )
 
     puts "Publishing GitHub release #{release_context[:tag]}#{release_context[:prerelease] ? ' (prerelease)' : ''}"
     success = system(*release_command, chdir: gem_root)
@@ -468,7 +481,11 @@ def perform_release(
     )
     if requested_gem_version.empty?
       puts "Computed next patch version: #{resolved_target_gem_version}"
-      confirm_or_abort!("Proceed with patch release #{resolved_target_gem_version}?") unless dry_run
+      if dry_run
+        puts "DRY RUN: Skipping confirmation prompt for patch release #{resolved_target_gem_version}."
+      else
+        confirm_or_abort!("Proceed with patch release #{resolved_target_gem_version}?")
+      end
     end
 
     bump_command = if requested_gem_version.empty?
@@ -564,7 +581,11 @@ task :create_release, %i[gem_version dry_run override_version_policy] do |_t, ar
 
     if changelog_version && Gem::Version.new(changelog_version) > Gem::Version.new(current_version)
       puts "Found CHANGELOG.md version: #{changelog_version} (current: #{current_version})"
-      confirm_or_abort!("Release #{changelog_version} from CHANGELOG.md?") unless is_dry_run
+      if is_dry_run
+        puts "DRY RUN: Skipping confirmation prompt for CHANGELOG.md version #{changelog_version}."
+      else
+        confirm_or_abort!("Release #{changelog_version} from CHANGELOG.md?")
+      end
       requested_version = changelog_version
     else
       puts "No new version found in CHANGELOG.md (latest: #{changelog_version || 'none'}, current: #{current_version})."
