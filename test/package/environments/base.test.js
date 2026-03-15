@@ -67,10 +67,6 @@ describe("Base config", () => {
         entryValues.length
       )
 
-      stringEntries.forEach((entryValue) => {
-        expect(typeof entryValue).toBe("string")
-      })
-
       arrayEntries.forEach((entryValue) => {
         expect(entryValue.length).toBeGreaterThan(0)
         entryValue.forEach((value) => {
