@@ -202,10 +202,10 @@ When a new version is released:
 
 1. Get the latest git tag: `git tag -l 'v*' --sort=-v:refname | head -5`
 2. Get the most recent version header in CHANGELOG.md (the first `## [vVERSION]` after `## [Unreleased]`)
-3. **Compare them.** If the latest git tag does NOT match the latest changelog version header, there are tagged releases missing from the changelog. For example:
-   - Latest tag: `v9.6.0-rc.4`
-   - Latest changelog version: `## [v9.6.0-rc.3]`
+3. **Compare them.** If the latest git tag does NOT appear anywhere in the changelog version headers, there are tagged releases missing from the changelog. **Important**: Don't just compare against the _top_ changelog header — a version header may exist _above_ the latest tag if it was stamped as a draft before tagging. Check whether the tag's version appears in _any_ `## [vX.Y.Z]` header. For example:
+   - Latest tag: `v9.6.0-rc.4`, and no `## [v9.6.0-rc.4]` header exists anywhere in CHANGELOG.md
    - **Result: `v9.6.0-rc.4` is missing and needs its own section**
+   - But if `## [v9.7.0-rc.0]` is the top header (a draft, not yet tagged) and `## [v9.6.0-rc.4]` exists below it, then nothing is missing — the top header is simply a pre-release draft
 
 4. For EACH missing tagged version (there may be multiple):
    a. Find commits in that tag vs the previous tag: `git log --oneline PREV_TAG..MISSING_TAG`
@@ -222,10 +222,9 @@ When a new version is released:
 
 1. Run `git log --oneline LATEST_TAG..origin/main` to find commits after the latest tag (LATEST_TAG is the most recent git tag, i.e., the same one identified in Step 2)
 2. **Extract ALL PR numbers** from commit messages: `git log --oneline LATEST_TAG..origin/main | grep -oE "#[0-9]+" | sort -u`
-3. Also check `git log --oneline origin/main..LATEST_TAG` to see if the tag is ahead of origin/main
-4. If the tag is ahead, entries in "Unreleased" section may actually belong to that tagged version
-5. For each PR number, check if it's already in CHANGELOG.md: `grep "PR #XXX" CHANGELOG.md`
-6. For PRs not yet in the changelog:
+3. If Step 2 found no missing tagged versions, verify no tag is ahead of main: `git log --oneline origin/main..LATEST_TAG` should be empty. If not, entries in "Unreleased" may belong to that tagged version — Step 2 should have caught this, so re-check.
+4. For each PR number, check if it's already in CHANGELOG.md: `grep "PR #XXX" CHANGELOG.md`
+5. For PRs not yet in the changelog:
    - Get PR details: `gh pr view NUMBER --json title,body,author --repo shakacode/shakapacker`
    - **Never ask the user for PR details** — get them from git history or the GitHub API
    - Validate that the change is user-visible (per the criteria above). Skip CI, lint, refactoring, test-only changes.
@@ -237,7 +236,7 @@ If the user passed `release`, `rc`, `beta`, or an explicit version string as an 
 
 1. Auto-compute the next version (see "Auto-Computing the Next Version" above), or use the explicit version provided
 2. Insert the version header immediately after `## [Unreleased]`
-3. For `rc`/`beta`: collapse prior prerelease sections of the same base version into the new section
+3. For `rc`/`beta` or an explicit prerelease version (e.g., `9.7.0-rc.10`): collapse prior prerelease sections of the same base version into the new section
 4. Update version diff links at the bottom of the file
 5. **Verify** the computed version looks correct
 
@@ -269,7 +268,7 @@ If no argument was passed, skip this step — entries stay in `## [Unreleased]`.
    - Verify the working tree only has `CHANGELOG.md` changes; if there are other uncommitted changes, warn the user and stop
    - Verify the current branch is `main` (`git branch --show-current`); if not, warn the user and stop
    - Create a feature branch (e.g., `changelog-v9.6.0-rc.1`)
-   - Stage only `CHANGELOG.md` (`git add CHANGELOG.md`) and commit
+   - Stage only `CHANGELOG.md` (`git add CHANGELOG.md`) and commit with message `Update CHANGELOG.md for vX.Y.Z` (using the stamped version)
    - Push and open a PR with the changelog diff as the body
    - If the push or PR creation fails, the CHANGELOG is already stamped locally — fix the issue and retry manually
    - Remind the user to run `bundle exec rake create_release` (no args) after merge to publish and auto-create the GitHub release
