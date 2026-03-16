@@ -10,7 +10,7 @@ This command accepts an optional argument: `$ARGUMENTS`
 - **`release`** (`/update-changelog release`): Add entries and stamp a version header. Auto-compute the next version based on changes (breaking → major, added features → minor, fixes → patch). Then `rake create_release` (with no args) will pick up this version automatically.
 - **`rc`** (`/update-changelog rc`): Same as `release`, but stamps an RC prerelease version (e.g., `v9.7.0-rc.0`). Auto-increments the RC index if prior RCs exist for the same base version.
 - **`beta`** (`/update-changelog beta`): Same as `rc`, but stamps a beta prerelease version (e.g., `v9.7.0-beta.0`).
-- **Explicit version** (`/update-changelog 9.7.0-rc.10` or `/update-changelog v9.7.0-rc.10`): Add entries and stamp the exact version provided. Skips auto-computation — use this when you already know the target version. The version string must use npm semver format with optional `-rc.N` or `-beta.N` suffix (e.g., `9.7.0-rc.10`, `9.7.0`). A `v` prefix is optional and will be added automatically if missing. If passed in RubyGems dot format (e.g., `9.7.0.rc.10`), convert to npm semver dash format (`v9.7.0-rc.10`) for the changelog header.
+- **Explicit version** (`/update-changelog 9.7.0-rc.10` or `/update-changelog v9.7.0-rc.10`): Add entries and stamp the exact version provided. Skips auto-computation — use this when you already know the target version. The version string must use npm semver format with optional `-rc.N` or `-beta.N` suffix (e.g., `9.7.0-rc.10`, `9.7.0`). A `v` prefix is optional and will be added automatically if missing. If passed in RubyGems dot format (e.g., `9.7.0.rc.10` or `9.7.0.beta.2`), convert to npm semver dash format (`v9.7.0-rc.10` or `v9.7.0-beta.2`) for the changelog header.
 
 ## When to Use This
 
@@ -220,7 +220,7 @@ When a new version is released:
 
 #### Step 3: Add new entries for post-tag commits
 
-1. Run `git log --oneline LATEST_TAG..origin/main` to find commits after the latest tag
+1. Run `git log --oneline LATEST_TAG..origin/main` to find commits after the latest tag (LATEST_TAG is the most recent git tag, i.e., the same one identified in Step 2)
 2. **Extract ALL PR numbers** from commit messages: `git log --oneline LATEST_TAG..origin/main | grep -oE "#[0-9]+" | sort -u`
 3. Also check `git log --oneline origin/main..LATEST_TAG` to see if the tag is ahead of origin/main
 4. If the tag is ahead, entries in "Unreleased" section may actually belong to that tagged version
@@ -267,6 +267,7 @@ If no argument was passed, skip this step — entries stay in `## [Unreleased]`.
    - Which PRs were skipped (and why)
 6. If in `release`/`rc`/`beta` mode or explicit-version mode, **automatically commit, push, and open a PR**:
    - Verify the working tree only has `CHANGELOG.md` changes; if there are other uncommitted changes, warn the user and stop
+   - Verify the current branch is `main` (`git branch --show-current`); if not, warn the user and stop
    - Create a feature branch (e.g., `changelog-v9.6.0-rc.1`)
    - Stage only `CHANGELOG.md` (`git add CHANGELOG.md`) and commit
    - Push and open a PR with the changelog diff as the body
@@ -298,7 +299,7 @@ When the user passes `rc` or `beta` as an argument (or when creating a prereleas
    - Update version diff links to point from the last stable version to the new prerelease
    - This keeps the changelog clean with a single prerelease section that accumulates all changes since the last stable release
 
-**CRITICAL**: The new version header must be inserted **immediately after `## [Unreleased]`**, NOT after any descriptive text. This ensures correct ordering of version headers.
+**Note**: The new version header must be inserted **immediately after `## [Unreleased]`** (see Step 4). This ensures correct ordering of version headers.
 
 ### For Prerelease to Stable Version Release
 
