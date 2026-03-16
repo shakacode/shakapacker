@@ -9,6 +9,16 @@
 
 ## [Unreleased]
 
+## [v9.7.0-rc.0] - March 15, 2026
+
+### Added
+
+- **Added rspack v2 support**. [PR #975](https://github.com/shakacode/shakapacker/pull/975) by [justin808](https://github.com/justin808). Peer dependencies now accept both rspack v1 and v2 (`^1.0.0 || ^2.0.0-0`). No source code changes were needed — all existing APIs work identically in v2. Note that rspack v2 requires Node.js 20.19.0+.
+
+### Fixed
+
+- **Fixed config exporter path traversal and annotation format validation**. [PR #914](https://github.com/shakacode/shakapacker/pull/914) by [justin808](https://github.com/justin808). Added `safeResolvePath` security check to prevent path traversal in export save paths, and enforced YAML format when using annotations with build exports.
+
 ## [v9.6.1] - March 8, 2026
 
 ### Fixed
@@ -876,7 +886,8 @@ Note: [Rubygem is 6.3.0.pre.rc.1](https://rubygems.org/gems/shakapacker/versions
 
 See [CHANGELOG.md in rails/webpacker (up to v5.4.3)](https://github.com/rails/webpacker/blob/master/CHANGELOG.md)
 
-[Unreleased]: https://github.com/shakacode/shakapacker/compare/v9.6.1...main
+[Unreleased]: https://github.com/shakacode/shakapacker/compare/v9.7.0-rc.0...main
+[v9.7.0-rc.0]: https://github.com/shakacode/shakapacker/compare/v9.6.1...v9.7.0-rc.0
 [v9.6.1]: https://github.com/shakacode/shakapacker/compare/v9.6.0...v9.6.1
 [v9.6.0]: https://github.com/shakacode/shakapacker/compare/v9.5.0...v9.6.0
 [v9.5.0]: https://github.com/shakacode/shakapacker/compare/v9.4.0...v9.5.0
