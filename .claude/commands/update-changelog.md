@@ -10,6 +10,7 @@ This command accepts an optional argument: `$ARGUMENTS`
 - **`release`** (`/update-changelog release`): Add entries and stamp a version header. Auto-compute the next version based on changes (breaking → major, added features → minor, fixes → patch). Then `rake create_release` (with no args) will pick up this version automatically.
 - **`rc`** (`/update-changelog rc`): Same as `release`, but stamps an RC prerelease version (e.g., `v9.7.0-rc.0`). Auto-increments the RC index if prior RCs exist for the same base version.
 - **`beta`** (`/update-changelog beta`): Same as `rc`, but stamps a beta prerelease version (e.g., `v9.7.0-beta.0`).
+- **Explicit version** (`/update-changelog 9.7.0-rc.10` or `/update-changelog v9.7.0-rc.10`): Add entries and stamp the exact version provided. Skips auto-computation — use this when you already know the target version. The version string must use npm semver format with optional `-rc.N` or `-beta.N` suffix (e.g., `9.7.0-rc.10`, `9.7.0`). A `v` prefix is optional and will be added automatically if missing. If passed in RubyGems dot format (e.g., `9.7.0.rc.10` or `9.7.0.beta.2`), convert to npm semver dash format (`v9.7.0-rc.10` or `v9.7.0-beta.2`) for the changelog header.
 
 ## When to Use This
 
@@ -57,12 +58,12 @@ When stamping a version header (`release`, `rc`, or `beta`), compute the next ve
 
 3. **Compute the version**:
    - For `release`: Apply the bump to the latest stable tag (e.g., `9.5.0` + minor → `9.6.0`)
-   - For `rc`: Apply the bump, then find the next RC index (e.g., if `v9.6.0-rc.0` tag exists → `v9.6.0-rc.1`)
+   - For `rc`: Apply the bump, then find the next RC index based **only on git tags** (e.g., if `v9.6.0-rc.0` tag exists → `v9.6.0-rc.1`). **Do NOT use changelog headers** to determine the next index — a version header in the changelog is a draft that may not have been released yet. Only git tags represent shipped versions.
    - For `beta`: Same as RC but with beta suffix
 
 4. **Verify**: Check that the computed version is newer than ALL existing tags (stable and prerelease). If not, ask the user what to do.
 
-5. **Show the computed version to the user** and ask for confirmation before stamping the header.
+5. **Show the computed version to the user and ask for confirmation** before stamping the header. If the bump type is ambiguous (e.g., changes could reasonably be classified as patch vs minor, or the changelog headings don't clearly signal the bump level), explain your reasoning for the suggested bump and ask the user to confirm or override before proceeding.
 
 ## Critical Requirements
 
@@ -168,6 +169,8 @@ This will:
 
 After adding an entry to the `## [Unreleased]` section, ensure the version diff links at the bottom of the file are correct.
 
+**IMPORTANT**: Compare links at the bottom MUST use the `v` prefix to match git tags (e.g., `.../compare/v9.2.0...v9.3.0`). This is consistent with Shakapacker's changelog headers which also include the `v` prefix (e.g., `## [v9.3.0]`).
+
 The format at the bottom should be:
 
 ```markdown
@@ -186,59 +189,89 @@ When a new version is released:
 
 ### For Regular Changelog Updates
 
-1. **ALWAYS fetch latest changes first**:
-   - **CRITICAL**: Run `git fetch origin main --tags` to ensure you have the latest commits AND tags
-   - The workspace may be behind origin/main, causing you to miss recently merged PRs
-   - After fetching, use `origin/main` for all comparisons, NOT local `main` branch
+#### Step 1: Fetch and read current state
 
-2. **Determine the correct version tag to compare against**:
-   - List all version tags sorted by semver: `git tag -l 'v*' --sort=-v:refname | head -10`
-   - This correctly sorts RC/beta tags (e.g., `v9.6.0-rc.1` sorts after `v9.6.0-rc.0` and before `v9.6.0`)
-   - The latest tag may be a stable release, RC, or beta — handle all cases
-   - Compare origin/main branch date to the tag date using: `git log -1 --format="%ai" origin/main` and `git log -1 --format="%ai" <tag>`
-   - If the tag is NEWER than origin/main, the branch needs updating to include the tag's commits
-   - **CRITICAL**: Always use `git log TAG..BRANCH` to find commits in the branch but not the tag, AND `git log BRANCH..TAG` to check if the tag is ahead
+- **CRITICAL**: Run `git fetch origin main --tags` to ensure you have the latest commits AND tags
+- The workspace may be behind origin/main, causing you to miss recently merged PRs
+- After fetching, use `origin/main` for all comparisons, NOT local `main` branch
+- Read the current CHANGELOG.md to understand the existing structure
 
-3. **Check commits and version boundaries**:
-   - **IMPORTANT**: Use `origin/main` in all commands below, not local `main`
-   - Run `git log --oneline LAST_TAG..origin/main` to see commits since the last release
-   - Also check `git log --oneline origin/main..LAST_TAG` to see if the tag is ahead of origin/main
-   - If the tag is ahead, entries in "Unreleased" section may actually belong to that tagged version
-   - **Extract ALL PR numbers** from commit messages using grep: `git log --oneline LAST_TAG..origin/main | grep -oE "#[0-9]+" | sort -u`
-   - For each PR number found, check if it's already in CHANGELOG.md using: `grep "PR #XXX" CHANGELOG.md`
-   - Identify which commits contain user-visible changes (look for keywords like "Fix", "Add", "Feature", "Bug", etc.)
-   - Extract author information from commit messages
-   - **Never ask the user for PR details** - get them from the git history or use WebFetch on the PR URL
+#### Step 2: Reconcile tags with changelog sections (DO THIS FIRST)
 
-4. **Validate** that changes are user-visible (per the criteria above). If not user-visible, skip those commits.
+**This step catches missing version sections and is the #1 source of errors when skipped.**
 
-5. **Read the current CHANGELOG.md** to understand the existing structure and formatting.
+1. Get the latest git tag: `git tag -l 'v*' --sort=-v:refname | head -5`
+2. Get the most recent version header in CHANGELOG.md (the first `## [vVERSION]` after `## [Unreleased]`)
+3. **Compare them.** If the latest git tag does NOT appear anywhere in the changelog version headers, there are tagged releases missing from the changelog. **Important**: Don't just compare against the _top_ changelog header — a version header may exist _above_ the latest tag if it was stamped as a draft before tagging. Check whether the tag's version appears in _any_ `## [vX.Y.Z]` header. For example:
+   - Latest tag: `v9.6.0-rc.4`, and no `## [v9.6.0-rc.4]` header exists anywhere in CHANGELOG.md
+   - **Result: `v9.6.0-rc.4` is missing and needs its own section**
+   - But if `## [v9.7.0-rc.0]` is the top header (a draft, not yet tagged) and `## [v9.6.0-rc.4]` exists below it, then nothing is missing — the top header is simply a pre-release draft
 
-6. **Determine where entries should go**:
-   - If the latest version tag is NEWER than origin/main branch, move entries from "Unreleased" to that version section
-   - If origin/main is ahead of the latest tag, add new entries to "Unreleased"
-   - Always verify the version date in CHANGELOG.md matches the actual tag date
+4. For EACH missing tagged version (there may be multiple):
+   a. Find commits in that tag vs the previous tag: `git log --oneline PREV_TAG..MISSING_TAG`
+   b. Extract PR numbers and fetch details for user-visible changes
+   c. Check which entries currently in `## [Unreleased]` actually belong to this tagged version (compare PR numbers against the commit list)
+   d. **Create a new version section** immediately before the previous version section
+   e. **Move** matching entries from Unreleased into the new section
+   f. **Add** any new entries for PRs in that tag that aren't in the changelog at all
+   g. **Update version diff links** at the bottom of the file
 
-7. **Add or move entries** to the appropriate section under appropriate category headings.
-   - **CRITICAL**: When moving entries from "Unreleased" to a version section, merge them with existing entries under the same category heading
-   - **NEVER create duplicate section headings** (e.g., don't create two "### Fixed" sections)
-   - If the version section already has a category heading (e.g., "### Fixed"), add the moved entries to that existing section
-   - Maintain the category order as defined above
+5. Get the tag date with: `git log -1 --format="%Y-%m-%d" TAG_NAME`
 
-8. **Verify formatting**:
+#### Step 3: Add new entries for post-tag commits
+
+1. Run `git log --oneline LATEST_TAG..origin/main` to find commits after the latest tag (LATEST_TAG is the most recent git tag, i.e., the same one identified in Step 2)
+2. **Extract ALL PR numbers** from commit messages: `git log --oneline LATEST_TAG..origin/main | grep -oE "#[0-9]+" | sort -u`
+3. If Step 2 found no missing tagged versions, verify no tag is ahead of main: `git log --oneline origin/main..LATEST_TAG` should be empty. If not, entries in "Unreleased" may belong to that tagged version — Step 2 should have caught this, so re-check.
+4. For each PR number, check if it's already in CHANGELOG.md: `grep "PR #XXX" CHANGELOG.md`
+5. For PRs not yet in the changelog:
+   - Get PR details: `gh pr view NUMBER --json title,body,author --repo shakacode/shakapacker`
+   - **Never ask the user for PR details** — get them from git history or the GitHub API
+   - Validate that the change is user-visible (per the criteria above). Skip CI, lint, refactoring, test-only changes.
+   - Add the entry to `## [Unreleased]` under the appropriate category heading
+
+#### Step 4: Stamp version header (only when a version mode or explicit version is given)
+
+If the user passed `release`, `rc`, `beta`, or an explicit version string as an argument:
+
+1. Auto-compute the next version (see "Auto-Computing the Next Version" above), or use the explicit version provided
+2. Insert the version header immediately after `## [Unreleased]`
+3. For `rc`/`beta` or an explicit prerelease version (e.g., `9.7.0-rc.10`): collapse prior prerelease sections of the same base version into the new section
+4. Update version diff links at the bottom of the file
+5. **Verify** the computed version looks correct
+
+If no argument was passed, skip this step — entries stay in `## [Unreleased]`.
+
+#### Step 5: Verify and finalize
+
+1. **Verify formatting**:
    - Bold description with period
-   - Proper PR link
+   - Proper PR link (with `#` prefix for Shakapacker)
    - Proper author link
    - Consistent with existing entries
    - File ends with a newline character
-
-9. **Run linting** after making changes:
+   - **No duplicate section headings** (e.g., don't create two `### Fixed` sections — merge entries into the existing heading)
+2. **Verify version sections are in order** (Unreleased → newest tag → older tags)
+3. **Verify version diff links** at the bottom of the file are correct (compare links MUST use the `v` prefix to match git tags)
+4. **Run linting** after making changes:
 
    ```bash
    yarn lint
    ```
 
-10. **Show the user** the added or moved entries and explain what was done.
+5. **Show the user** a summary of what was done:
+   - Which version sections were created
+   - Which entries were moved from Unreleased
+   - Which new entries were added
+   - Which PRs were skipped (and why)
+6. If in `release`/`rc`/`beta` mode or explicit-version mode, **automatically commit, push, and open a PR**:
+   - Verify the working tree only has `CHANGELOG.md` changes; if there are other uncommitted changes, warn the user and stop
+   - Verify the current branch is `main` (`git branch --show-current`); if not, warn the user and stop
+   - Create a feature branch (e.g., `changelog-v9.6.0-rc.1`)
+   - Stage only `CHANGELOG.md` (`git add CHANGELOG.md`) and commit with message `Update CHANGELOG.md for vX.Y.Z` (using the stamped version)
+   - Push and open a PR with the changelog diff as the body
+   - If the push or PR creation fails, the CHANGELOG is already stamped locally — fix the issue and retry manually
+   - Remind the user to run `bundle exec rake create_release` (no args) after merge to publish and auto-create the GitHub release
 
 ### For Prerelease Versions (RC and Beta)
 
@@ -259,9 +292,13 @@ When the user passes `rc` or `beta` as an argument (or when creating a prereleas
 4. **Always collapse prior prereleases into the current prerelease** (this is the default behavior):
    - Combine all prior prerelease changelog entries into the new prerelease version section
    - Remove previous prerelease version sections (e.g., remove `## [v9.6.0-rc.0]` when creating `## [v9.6.0-rc.1]`)
+   - When collapsing, **consolidate duplicate category headings** — if both the Unreleased section and a prior prerelease section have `### Fixed`, merge all entries under a single `### Fixed` heading
+   - **Remove orphaned version diff links** at the bottom of the file for collapsed prerelease sections
    - Add any new user-visible changes from commits since the last prerelease
    - Update version diff links to point from the last stable version to the new prerelease
    - This keeps the changelog clean with a single prerelease section that accumulates all changes since the last stable release
+
+**Note**: The new version header must be inserted **immediately after `## [Unreleased]`** (see Step 4). This ensures correct ordering of version headers.
 
 ### For Prerelease to Stable Version Release
 
