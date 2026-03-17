@@ -7,7 +7,7 @@ You are helping to add an entry to the CHANGELOG.md file for the Shakapacker pro
 This command accepts an optional argument: `$ARGUMENTS`
 
 - **No argument** (`/update-changelog`): Add entries to `[Unreleased]` without stamping a version header. Use this during development.
-- **`release`** (`/update-changelog release`): Add entries and stamp a version header. Auto-compute the next version based on changes (breaking → major, added features → minor, fixes → patch). Then `rake create_release` (with no args) will pick up this version automatically.
+- **`release`** (`/update-changelog release`): Add entries and stamp a version header. Auto-compute the next version based on changes (breaking → major, added features → minor, fixes → patch). Then `rake release` (with no args) will pick up this version automatically.
 - **`rc`** (`/update-changelog rc`): Same as `release`, but stamps an RC prerelease version (e.g., `v9.7.0-rc.0`). Auto-increments the RC index if prior RCs exist for the same base version.
 - **`beta`** (`/update-changelog beta`): Same as `rc`, but stamps a beta prerelease version (e.g., `v9.7.0-beta.0`).
 - **Explicit version** (`/update-changelog 9.7.0-rc.10` or `/update-changelog v9.7.0-rc.10`): Add entries and stamp the exact version provided. Skips auto-computation — use this when you already know the target version. The version string must use npm semver format with optional `-rc.N` or `-beta.N` suffix (e.g., `9.7.0-rc.10`, `9.7.0`). A `v` prefix is optional and will be added automatically if missing. If passed in RubyGems dot format (e.g., `9.7.0.rc.10` or `9.7.0.beta.2`), convert to npm semver dash format (`v9.7.0-rc.10` or `v9.7.0-beta.2`) for the changelog header.
@@ -26,7 +26,7 @@ This command serves three use cases at different points in the release lifecycle
 - Run `/update-changelog release` (or `rc` or `beta`) to add entries AND stamp the version header
 - The version is auto-computed from changelog content (see "Auto-Computing the Next Version" below)
 - Commit and push CHANGELOG.md
-- Then run `rake create_release` (no args needed — it reads the version from CHANGELOG.md)
+- Then run `rake release` (no args needed — it reads the version from CHANGELOG.md)
 - The release task automatically creates a GitHub release from the changelog section
 
 **After a release you forgot to update the changelog for** — Catch-up mode:
@@ -36,7 +36,7 @@ This command serves three use cases at different points in the release lifecycle
 
 ### Why changelog comes BEFORE the release
 
-- `create_release` automatically creates a GitHub release if a changelog section exists — no separate `sync_github_release` step needed
+- `release` automatically creates a GitHub release if a changelog section exists — no separate `sync_github_release` step needed
 - The release task warns if no changelog section is found for the target version
 - A premature version header (if release fails) is harmless — you'll release eventually
 - A missing changelog after release means GitHub release must be created manually
@@ -271,7 +271,7 @@ If no argument was passed, skip this step — entries stay in `## [Unreleased]`.
    - Stage only `CHANGELOG.md` (`git add CHANGELOG.md`) and commit with message `Update CHANGELOG.md for vX.Y.Z` (using the stamped version)
    - Push and open a PR with the changelog diff as the body
    - If the push or PR creation fails, the CHANGELOG is already stamped locally — fix the issue and retry manually
-   - Remind the user to run `bundle exec rake create_release` (no args) after merge to publish and auto-create the GitHub release
+   - Remind the user to run `bundle exec rake release` (no args) after merge to publish and auto-create the GitHub release
 
 ### For Prerelease Versions (RC and Beta)
 
