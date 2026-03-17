@@ -47,29 +47,29 @@ The simplest way to release is with no arguments — the task reads the version 
 
 ```bash
 # Recommended: reads version from CHANGELOG.md (requires step 1)
-bundle exec rake create_release
+bundle exec rake release
 
 # For a specific version (overrides CHANGELOG.md detection)
-bundle exec rake "create_release[9.1.0]"
+bundle exec rake "release[9.1.0]"
 
 # For a beta release (note: use period, not dash)
-bundle exec rake "create_release[9.2.0.beta.1]"  # Creates npm package 9.2.0-beta.1
+bundle exec rake "release[9.2.0.beta.1]"  # Creates npm package 9.2.0-beta.1
 
 # For a release candidate
-bundle exec rake "create_release[9.6.0.rc.0]"
+bundle exec rake "release[9.6.0.rc.0]"
 
 # Dry run to test without publishing
-bundle exec rake "create_release[9.1.0,true]"
+bundle exec rake "release[9.1.0,true]"
 
 # Skip interactive confirmations (for scripted maintainer runs)
-AUTO_CONFIRM=true bundle exec rake create_release
+AUTO_CONFIRM=true bundle exec rake release
 
 # Override version policy checks (monotonic + changelog/bump consistency)
-RELEASE_VERSION_POLICY_OVERRIDE=true bundle exec rake "create_release[9.1.0]"
-bundle exec rake "create_release[9.1.0,false,true]"
+RELEASE_VERSION_POLICY_OVERRIDE=true bundle exec rake "release[9.1.0]"
+bundle exec rake "release[9.1.0,false,true]"
 ```
 
-When called with no arguments, `create_release`:
+When called with no arguments, `release`:
 
 1. Reads the first versioned header from CHANGELOG.md (e.g., `## [v9.6.0]`)
 2. Compares it to the current gem version
@@ -79,7 +79,7 @@ When called with no arguments, `create_release`:
 Dry runs use a temporary git worktree so version bumps and installs do not modify your current checkout.
 Dry runs now also print explicit "skipping confirmation" messages and the would-run GitHub release command.
 
-`create_release` validates release-version policy before publishing:
+`release` validates release-version policy before publishing:
 
 - Target version must be greater than the latest tagged release.
 - If the versioned target changelog section exists (`## [vX.Y.Z...]`; not `UNRELEASED`), it maps to expected bump type:
@@ -91,11 +91,11 @@ Dry runs now also print explicit "skipping confirmation" messages and the would-
 Use override only when needed:
 
 - `RELEASE_VERSION_POLICY_OVERRIDE=true`
-- Or task arg override (`create_release[..., ..., true]`)
+- Or task arg override (`release[..., ..., true]`)
 
 ### 3. What the Release Task Does
 
-The `create_release` task automatically:
+The `release` task automatically:
 
 1. **Validates release prerequisites**:
    - Verifies npm authentication
@@ -138,16 +138,16 @@ The task automatically converts Ruby gem format to npm semver format:
 
 ```bash
 # Regular release
-bundle exec rake "create_release[9.1.0]"  # Gem: 9.1.0, npm: 9.1.0
+bundle exec rake "release[9.1.0]"  # Gem: 9.1.0, npm: 9.1.0
 
 # Beta release
-bundle exec rake "create_release[9.2.0.beta.1]"  # Gem: 9.2.0.beta.1, npm: 9.2.0-beta.1
+bundle exec rake "release[9.2.0.beta.1]"  # Gem: 9.2.0.beta.1, npm: 9.2.0-beta.1
 
 # Release candidate
-bundle exec rake "create_release[10.0.0.rc.1]"  # Gem: 10.0.0.rc.1, npm: 10.0.0-rc.1
+bundle exec rake "release[10.0.0.rc.1]"  # Gem: 10.0.0.rc.1, npm: 10.0.0-rc.1
 
-# Prerelease: use /update-changelog rc first, then create_release reads it
-bundle exec rake create_release  # reads v10.0.0-rc.0 from CHANGELOG.md
+# Prerelease: use /update-changelog rc first, then release reads it
+bundle exec rake release  # reads v10.0.0-rc.0 from CHANGELOG.md
 ```
 
 ### 5. During the Release
@@ -157,7 +157,7 @@ If you are running non-interactively, set `AUTO_CONFIRM=true` to skip confirmati
 1. When prompted for **npm OTP**, enter your 2FA code from your authenticator app
 2. Accept defaults for release-it options
 3. When prompted for **RubyGems OTP**, enter your 2FA code
-4. If using `create_release` with no version, confirm the version detected from CHANGELOG.md (or the computed patch version)
+4. If using `release` with no version, confirm the version detected from CHANGELOG.md (or the computed patch version)
 5. The script will automatically commit and push lockfile updates
 6. The script will automatically create a GitHub release (if CHANGELOG.md section exists)
 

@@ -2,6 +2,11 @@
 require "bundler/gem_tasks"
 require "pathname"
 
+# Remove Bundler's default `release` task — it bypasses the custom release flow
+# (CHANGELOG version detection, npm publish, GitHub release sync, etc.).
+# The custom `release` task in rakelib/release.rake replaces it.
+Rake::Task[:release].clear
+
 desc "Run all specs"
 task test: ["run_spec:all_specs"]
 

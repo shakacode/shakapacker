@@ -511,7 +511,7 @@ def perform_release(
     # Explicitly stage all release-related changes so release-it includes them in its commit.
     # release-it only reliably stages files it modifies (package.json); other working tree
     # changes (version.rb, Gemfile.lock, spec/dummy lockfiles) must be pre-staged.
-    Shakapacker::Utils::Misc.sh_in_dir(release_root, "git add version.rb Gemfile.lock spec/dummy/Gemfile.lock spec/dummy/yarn.lock spec/dummy/package-lock.json")
+    Shakapacker::Utils::Misc.sh_in_dir(release_root, "git add lib/shakapacker/version.rb Gemfile.lock spec/dummy/Gemfile.lock spec/dummy/yarn.lock spec/dummy/package-lock.json")
 
     resolved_gem_version = current_gem_version(release_root)
     released_gem_version = resolved_gem_version
@@ -567,13 +567,13 @@ Arguments:
               Equivalent to setting RELEASE_VERSION_POLICY_OVERRIDE=true.
 
 Examples:
-- rake \"create_release\"                      # uses CHANGELOG.md version or patch bump
-- rake \"create_release[9.6.0]\"
-- rake \"create_release[9.6.0.rc.0]\"
-- rake \"create_release[9.6.0,true]\"
-- rake \"create_release[9.6.0,false,true]\"
+- rake \"release\"                      # uses CHANGELOG.md version or patch bump
+- rake \"release[9.6.0]\"
+- rake \"release[9.6.0.rc.0]\"
+- rake \"release[9.6.0,true]\"
+- rake \"release[9.6.0,false,true]\"
 ")
-task :create_release, %i[gem_version dry_run override_version_policy] do |_t, args|
+task :release, %i[gem_version dry_run override_version_policy] do |_t, args|
   args_hash = args.to_hash
   is_dry_run = Shakapacker::Utils::Misc.object_to_boolean(args_hash[:dry_run])
   allow_override = version_policy_override_enabled?(args_hash[:override_version_policy])
