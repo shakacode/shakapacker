@@ -2,6 +2,22 @@
 require "bundler/gem_tasks"
 require "pathname"
 
+# Remove Bundler's default `release` task — it bypasses the custom release flow
+# (CHANGELOG version detection, npm publish, GitHub release sync, etc.).
+# Use `rake create_release` instead.
+Rake::Task[:release].clear
+desc "Disabled — use `rake create_release` instead (run `rake -D create_release` for usage)"
+task :release do
+  abort <<~MSG
+    ❌ `rake release` is disabled. Use `rake create_release` instead.
+
+    `create_release` handles version detection from CHANGELOG.md, npm publish,
+    GitHub release sync, and version policy checks.
+
+    Run `rake -D create_release` for full usage details.
+  MSG
+end
+
 desc "Run all specs"
 task test: ["run_spec:all_specs"]
 
