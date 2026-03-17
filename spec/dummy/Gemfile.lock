@@ -1,7 +1,7 @@
 PATH
   remote: ../..
   specs:
-    shakapacker (9.6.1)
+    shakapacker (9.7.0)
       activesupport (>= 5.2)
       package_json
       rack-proxy (>= 0.6.1)
