@@ -9,6 +9,10 @@
 
 ## [Unreleased]
 
+### Added
+
+- Allow `webpack-cli` v7. [PR #1021](https://github.com/shakacode/shakapacker/pull/1021) by [justin808](https://github.com/justin808). Fixes [#1020](https://github.com/shakacode/shakapacker/issues/1020).
+
 ## [v9.7.0] - March 15, 2026
 
 ### Added
