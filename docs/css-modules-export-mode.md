@@ -211,7 +211,7 @@ const overrideCssModulesConfig = (config) => {
     if (cssLoaderUse && cssLoaderUse.options && cssLoaderUse.options.modules) {
       // Override v9 default to use v8-style default exports
       cssLoaderUse.options.modules.namedExport = false
-      cssLoaderUse.options.modules.exportLocalsConvention = "asIs"
+      cssLoaderUse.options.modules.exportLocalsConvention = "camelCase"
     }
   }
 
@@ -232,48 +232,7 @@ const commonWebpackConfig = () => {
 module.exports = commonWebpackConfig
 ```
 
-### Option 3: Create `config/webpack/environment.js` (Alternative)
-
-If you prefer using a separate environment file:
-
-```js
-// config/webpack/environment.js
-const { environment } = require("@shakacode/shakapacker")
-const getStyleRule = require("@shakacode/shakapacker/package/utils/getStyleRule")
-
-// CSS Modules rule for *.module.css with v8-style default export
-const cssModulesRule = getStyleRule(/\.module\.css$/i, [], {
-  sourceMap: true,
-  importLoaders: 2,
-  modules: {
-    auto: true,
-    namedExport: false, // <-- override v9 default
-    exportLocalsConvention: "asIs" // keep class names as-is instead of camelCase
-  }
-})
-
-// Ensure this rule wins for *.module.css
-if (cssModulesRule) {
-  environment.loaders.prepend("css-modules", cssModulesRule)
-}
-
-// Plain CSS rule for non-modules
-const plainCssRule = getStyleRule(/(?<!\.module)\.css$/i, [], {
-  sourceMap: true,
-  importLoaders: 2,
-  modules: false
-})
-
-if (plainCssRule) {
-  environment.loaders.append("css", plainCssRule)
-}
-
-module.exports = environment
-```
-
-Then reference this in your environment-specific configs (development.js, production.js, etc.).
-
-### Option 4: (Optional) Sass Modules
+### Option 3: (Optional) Sass Modules
 
 If you also use Sass modules, add similar configuration for SCSS files:
 
@@ -300,7 +259,7 @@ const overrideCssModulesConfig = (config) => {
         cssLoaderUse.options.modules
       ) {
         cssLoaderUse.options.modules.namedExport = false
-        cssLoaderUse.options.modules.exportLocalsConvention = "asIs"
+        cssLoaderUse.options.modules.exportLocalsConvention = "camelCase"
       }
     }
   })

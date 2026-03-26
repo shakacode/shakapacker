@@ -240,7 +240,7 @@ The task will:
 **Custom Dependencies:** You can customize which dependencies are installed by creating a `.shakapacker-switch-bundler-dependencies.yml` file:
 
 ```bash
-bundle exec rake shakapacker:switch_bundler --init-config
+bin/rake shakapacker:switch_bundler -- --init-config
 ```
 
 ### Manual Migration Steps
@@ -379,36 +379,20 @@ For applications with SSR, follow this verification order:
 
 ### Configuration Organization
 
-**Recommended approach**: Keep webpack and rspack configs in the same directory with conditional logic:
+**Recommended approach**: Keep webpack and rspack configs in their default directories:
 
-```javascript
-// config/webpack/webpack.config.js (works for both bundlers)
-const { config } = require("shakapacker")
-const bundler =
-  config.assets_bundler === "rspack"
-    ? require("@rspack/core")
-    : require("webpack")
+- `config/webpack/webpack.config.js` for webpack
+- `config/rspack/rspack.config.js` (or `.ts`) for rspack
 
-// Use for plugins
-clientConfig.plugins.push(
-  new bundler.ProvidePlugin({
-    /* ... */
-  })
-)
-
-serverConfig.plugins.unshift(
-  new bundler.optimize.LimitChunkCountPlugin({ maxChunks: 1 })
-)
-```
-
-**Avoid**: Creating separate `config/rspack/` directory unless configs diverge significantly.
+Shakapacker looks for `rspack.config.js` / `rspack.config.ts` first when
+`assets_bundler: rspack`. Falling back to `config/webpack/webpack.config.js` is
+still supported for backward compatibility, but it is deprecated.
 
 **Benefits**:
 
-- Smaller diff when comparing configurations
-- Easy to see what's different between bundlers
-- Single source of truth for webpack/rspack config
-- Easier maintenance and debugging
+- Keeps bundler-specific plugins explicit
+- Avoids deprecated fallback behavior
+- Makes migration diffs easier to debug
 
 ### CSS Modules Configuration Placement
 
@@ -834,7 +818,7 @@ To compare your webpack and rspack configurations during migration:
 bin/shakapacker-config --doctor
 
 # Switch to rspack
-bundle exec rake shakapacker:switch_bundler rspack --install-deps
+bin/rake shakapacker:switch_bundler rspack -- --install-deps
 
 # Export rspack configs to compare
 bin/shakapacker-config --doctor

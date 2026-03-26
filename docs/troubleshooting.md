@@ -254,11 +254,20 @@ NoMethodError: undefined method 'deep_symbolize_keys' for nil:NilClass
 
 This happens when deploying to a custom Rails environment (like `staging`) that isn't explicitly defined in your `config/shakapacker.yml` file.
 
-**Solution:** This was fixed in Shakapacker v9.1.1+. Upgrade to the latest version:
+**Solution:** This was fixed in Shakapacker v9.1.1+. Upgrade both the gem and npm package to the same version:
 
 ```ruby
 # Gemfile
 gem 'shakapacker', '~> 9.1'
+```
+
+```json
+// package.json
+{
+  "dependencies": {
+    "shakapacker": "^9.1.1"
+  }
+}
 ```
 
 After upgrading, Shakapacker will automatically fall back to sensible defaults when your environment isn't defined:
@@ -342,8 +351,8 @@ for the scripts generated in `bin/shakapacker` and `bin/shakapacker-dev-server`.
 manually with Ruby:
 
 ```
-C:\path>ruby bin\webpack
-C:\path>ruby bin\webpack-dev-server
+C:\path>ruby bin\shakapacker
+C:\path>ruby bin\shakapacker-dev-server
 ```
 
 ## Invalid configuration object. webpack has been initialised using a configuration object that does not match the API schema.

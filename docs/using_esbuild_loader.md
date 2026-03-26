@@ -98,7 +98,7 @@ This file should have a single default export which is an object with an `option
 
 Inside the `options` key, you can use any options available to the esbuild-loader. For the options reference, please refer to [esbuild-loader docs](https://github.com/privatenumber/esbuild-loader#%EF%B8%8F-options).
 
-See some examples below of potential `config/babel.config.js`.
+See some examples below of potential `config/esbuild.config.js`.
 
 ### Example: Specifying esnext target environment
 

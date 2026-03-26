@@ -35,8 +35,8 @@ See the [TypeScript Documentation](./typescript.md) for usage examples.
 **New behavior:**
 
 - When `RAILS_ENV=production` → `NODE_ENV` defaults to `"production"`
-- When `RAILS_ENV=development` or unset → `NODE_ENV` defaults to `"development"`
-- When `RAILS_ENV` is any other value (test, staging, etc.) → `NODE_ENV` defaults to `"development"`
+- When `RAILS_ENV=development` or `RAILS_ENV=test` → `NODE_ENV` defaults to `"development"`
+- When `RAILS_ENV` is unset or any other custom value (staging, qa, etc.) → `NODE_ENV` defaults to `"production"`
 
 **Benefits:**
 
@@ -158,7 +158,7 @@ import * as styles from './Component.module.css';
 
    If you need more control over the configuration, you can override the css-loader settings directly in your webpack config.
 
-   **Where to add this:** Create or modify `config/webpack/webpack.config.js`. If this file doesn't exist, create it and ensure your `config/webpacker.yml` or build process loads it. See [Webpack Configuration](./webpack.md) for details on customizing webpack.
+   **Where to add this:** Create or modify `config/webpack/webpack.config.js`. If this file doesn't exist, create it and ensure your `config/shakapacker.yml` points to the right bundler config directory. See [Bundler Configuration](./configuration.md#assets_bundler_config_path) for details.
 
    ```javascript
    // config/webpack/webpack.config.js
