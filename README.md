@@ -21,7 +21,7 @@ _Official, actively maintained successor to [rails/webpacker](https://github.com
 [![Rubocop](https://github.com/shakacode/shakapacker/workflows/Rubocop/badge.svg)](https://github.com/shakacode/shakapacker/actions)
 [![JS lint](https://github.com/shakacode/shakapacker/workflows/JS%20lint/badge.svg)](https://github.com/shakacode/shakapacker/actions)
 
-[![node.js](https://img.shields.io/badge/node-%3E%3D%2012.0.0-brightgreen.svg)](https://www.npmjs.com/package/shakapacker)
+[![node.js](https://img.shields.io/badge/node-%3E%3D%2020-brightgreen.svg)](https://www.npmjs.com/package/shakapacker)
 [![Gem](https://img.shields.io/gem/v/shakapacker.svg)](https://rubygems.org/gems/shakapacker)
 [![npm version](https://badge.fury.io/js/shakapacker.svg)](https://badge.fury.io/js/shakapacker)
 
@@ -94,7 +94,7 @@ Here's a testimonial from Jon Rajavuori of [Academia.edu](https://www.academia.e
     - [View Helper: `image_pack_tag`](#view-helper-image_pack_tag)
     - [View Helper: `favicon_pack_tag`](#view-helper-favicon_pack_tag)
     - [View Helper: `preload_pack_asset`](#view-helper-preload_pack_asset)
-    - [View Helper: `send_pack_early_hints`](#view-helper-send_pack_early_hints)
+    - [HTTP 103 Early Hints](#http-103-early-hints)
   - [Images in Stylesheets](#images-in-stylesheets)
   - [Server-Side Rendering (SSR)](#server-side-rendering-ssr)
   - [Development](#development)
@@ -133,7 +133,7 @@ Here's a testimonial from Jon Rajavuori of [Academia.edu](https://www.academia.e
 
 - Ruby 2.7+
 - Rails 5.2+
-- Node.js 14+
+- Node.js 20+
 
 ## Features
 
@@ -207,24 +207,16 @@ If you wish to use [Yarn PnP](https://yarnpkg.com/features/pnp) you will need to
 > a particular package manager requires a very different command; otherwise it should be safe to just replace `npm` with the name of your
 > preferred package manager when running the command
 
-Note, in v6+, most JS packages are peer dependencies. Thus, the installer will add the packages:
+Note, in v6+, most JS packages are peer dependencies. During `shakapacker:install`, Shakapacker
+adds the subset required for your chosen bundler/transpiler setup rather than forcing every
+supported package into every app.
 
-- `@babel/core`
-- `@babel/plugin-transform-runtime`
-- `@babel/preset-env`
-- `@babel/runtime`
-- `babel-loader`
-- `compression-webpack-plugin`
-- `terser-webpack-plugin`
-- `webpack`
-- `webpack-assets-manifest`
-- `webpack-cli`
-- `webpack-merge`
-- `webpack-sources`
-- `webpack-dev-server`
+See:
 
-Previously, these "webpack" and "babel" packages were direct dependencies for `shakapacker`. By
-making these peer dependencies, you have control over the versions used in your webpack and babel configs.
+- [Optional Peer Dependencies](./docs/optional-peer-dependencies.md) for how optional peers work
+- [Shakapacker's Peer Dependencies](./docs/peer-dependencies.md) for the current supported version ranges
+
+This keeps installation flexible while still making the supported dependency ranges explicit.
 
 ### Optional Peer Dependencies
 
@@ -981,14 +973,21 @@ See also [Customizing Babel Config](./docs/customizing_babel_config.md) for an e
 **📚 TypeScript Support:** See the **[TypeScript Documentation](./docs/typescript.md)** for type-safe configuration.
 
 ```bash
-npm install typescript @babel/preset-typescript
+npm install --save-dev typescript
+
+# If you explicitly use `javascript_transpiler: babel`
+npm install --save-dev @babel/preset-typescript
 ```
 
-Babel won't perform any type-checking on TypeScript code. To optionally use type-checking run:
+Shakapacker does not type-check TypeScript during builds. For webpack projects, you can optionally
+add type-checking during builds with:
 
 ```bash
-npm install fork-ts-checker-webpack-plugin
+npm install --save-dev fork-ts-checker-webpack-plugin
 ```
+
+You can also run `tsc --noEmit` separately in CI or local development if you prefer not to wire
+type-checking into the bundler.
 
 Add tsconfig.json
 

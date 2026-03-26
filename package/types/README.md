@@ -75,7 +75,7 @@ const config: Config = {
   source_path: "app/javascript",
   source_entry_path: "packs",
   public_root_path: "public",
-  public_output_path: "packs"
+  public_output_path: "packs",
   // ... other config
 }
 
@@ -83,8 +83,8 @@ const webpackConfig: WebpackConfigWithDevServer = {
   mode: "development",
   devServer: {
     hot: true,
-    port: 3035
-  }
+    port: 3035,
+  },
   // ... other webpack config
 }
 ```

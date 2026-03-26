@@ -24,16 +24,13 @@ Shakapacker v9 transpiler defaults depend on the bundler and installation:
 Set the transpiler in your `config/shakapacker.yml`:
 
 ```yaml
-default: &default
-  # SWC is the default (recommended - 20x faster than Babel)
-  javascript_transpiler: swc
+default: &default # Choose one transpiler:
+  javascript_transpiler: swc # default, recommended
+  # javascript_transpiler: babel
+  # javascript_transpiler: esbuild
 
-  # To use Babel for backward compatibility
-  javascript_transpiler: babel
-
-  # For rspack users (defaults to swc if not specified)
-  assets_bundler: rspack
-  # javascript_transpiler can be set, but rspack defaults to swc
+  # Rspack defaults to swc if `javascript_transpiler` is omitted
+  assets_bundler: webpack
 ```
 
 ## Migration Guide
@@ -66,10 +63,12 @@ If you need custom transpilation settings, create `config/swc.config.js`:
 // See: https://swc.rs/docs/configuration/compilation
 
 module.exports = {
-  jsc: {
-    transform: {
-      react: {
-        runtime: "automatic"
+  options: {
+    jsc: {
+      transform: {
+        react: {
+          runtime: "automatic"
+        }
       }
     }
   }
@@ -151,8 +150,8 @@ default: &default
 Then rebuild your application:
 
 ```bash
-bin/shakapacker clobber
-bin/shakapacker compile
+bundle exec rake shakapacker:clobber
+bundle exec rake shakapacker:compile
 ```
 
 ## Environment Variables
@@ -161,10 +160,10 @@ You can also control the transpiler via environment variables:
 
 ```bash
 # Override config file setting
-SHAKAPACKER_JAVASCRIPT_TRANSPILER=swc bin/shakapacker compile
+SHAKAPACKER_JAVASCRIPT_TRANSPILER=swc bundle exec rake shakapacker:compile
 
 # For debugging
-SHAKAPACKER_DEBUG_CACHE=true bin/shakapacker compile
+SHAKAPACKER_DEBUG_CACHE=true bundle exec rake shakapacker:compile
 ```
 
 ## Troubleshooting
@@ -196,10 +195,12 @@ yarn add --dev @rspack/plugin-react-refresh
 ```javascript
 // config/swc.config.js
 module.exports = {
-  jsc: {
-    parser: {
-      decorators: true,
-      decoratorsBeforeExport: true
+  options: {
+    jsc: {
+      parser: {
+        decorators: true,
+        decoratorsBeforeExport: true
+      }
     }
   }
 }
