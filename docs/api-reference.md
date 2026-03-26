@@ -175,10 +175,10 @@ config.nested_entries?       # => false
 
 ```ruby
 dev_server = config.dev_server
-dev_server["host"]           # => "localhost"
-dev_server["port"]           # => 3035
-dev_server["hmr"]            # => true
-dev_server["server"]         # => "http"
+dev_server[:host]            # => "localhost"
+dev_server[:port]            # => 3035
+dev_server[:hmr]             # => true
+dev_server[:server]          # => "http"
 ```
 
 ## View Helpers

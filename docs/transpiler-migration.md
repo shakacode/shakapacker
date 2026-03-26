@@ -29,8 +29,7 @@ default: &default # Choose one transpiler:
   # javascript_transpiler: babel
   # javascript_transpiler: esbuild
 
-  # Rspack defaults to swc if `javascript_transpiler` is omitted
-  assets_bundler: webpack
+  # assets_bundler: webpack  # default; for rspack, set: assets_bundler: rspack
 ```
 
 ## Migration Guide
