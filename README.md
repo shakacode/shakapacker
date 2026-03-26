@@ -57,7 +57,7 @@ Here's a testimonial of how ShakaCode can help from [Florian Gößler](https://g
 
 Read the [full review here](https://clutch.co/profile/shakacode#reviews?sort_by=date_DESC#review-2118154).
 
-Here's a testimonial on Shakapacker's rspack support from Jon Rajavuori of [Academia.edu](https://www.academia.edu/), March 2026:
+Here's a testimonial on migrating to rspack with ShakaCode's help from Jon Rajavuori of [Academia.edu](https://www.academia.edu/), March 2026:
 
 > We've been running [rspack](https://rspack.rs/) most of the week now for frontend builds! It's a performance-focused drop-in replacement for Webpack that apparently works as advertised. The impact has been between a **2-4x build speed increase** depending on the environment and conditions.
 >
