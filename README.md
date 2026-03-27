@@ -64,14 +64,14 @@ Here's a testimonial from Jon Rajavuori of [Academia.edu](https://www.academia.e
 > The typical case of first startup with a warm cache has gone from roughly 1m with Webpack down to about **20s** — close to the amount of time other dev components take to startup.
 >
 > As for production builds, they now take around 10s when only a few lines in one bundle have changed!
-
-Additional reported stats from the same migration:
-
-- Warm-cache and incremental builds saw the biggest gains: **2-4x faster** depending on environment and conditions
-- Dev server warm-cache startup: **1 minute → 20 seconds** (3x faster)
-- Cold-cache startup: **4m30s → 3m30s** (~22% faster)
-- Production incremental builds: **~10 seconds**
-- HMR rebuild time: unchanged at ~8s (bottleneck is orchestration, not compilation)
+>
+> Additional reported stats from the same migration:
+>
+> - Warm-cache and incremental builds saw the biggest gains: **2-4x faster** depending on environment and conditions
+> - Dev server warm-cache startup: **1 minute → 20 seconds** (3x faster)
+> - Cold-cache startup: **4m30s → 3m30s** (~22% faster)
+> - Production incremental builds: **~10 seconds**
+> - HMR rebuild time: unchanged at ~8s (bottleneck is orchestration, not compilation)
 
 ---
 
