@@ -59,6 +59,20 @@ Here's a testimonial of how ShakaCode can help from [Florian Gößler](https://g
 
 Read the [full review here](https://clutch.co/profile/shakacode#reviews?sort_by=date_DESC#review-2118154).
 
+Here's a testimonial from Jon Rajavuori of [Academia.edu](https://www.academia.edu/) about migrating frontend builds from Webpack to [rspack](https://rspack.rs/) with ShakaCode's help, shared in March 2026:
+
+> We've been running [rspack](https://rspack.rs/) most of the week now for frontend builds! It's a performance-focused drop-in replacement for Webpack that apparently works as advertised. The impact has been between a **2-4x build speed increase** depending on the environment and conditions.
+>
+> The typical case of first startup with a warm cache has gone from roughly 1m with Webpack down to about **20s** — close to the amount of time other dev components take to startup.
+>
+> As for production **incremental** builds, they now take around 10s when only a few lines in one bundle have changed!
+>
+> Additional stats from follow-up conversation with Jon:
+>
+> - Cold-cache startup: **4m30s → 3m30s** (~22% faster; 2-4x gains apply to warm-cache and incremental builds)
+> - Production incremental builds: **~10 seconds**
+> - HMR rebuild time: unchanged at ~8s (bottleneck is orchestration, not compilation)
+
 ---
 
 <!-- START doctoc generated TOC please keep comment here to allow auto update -->
