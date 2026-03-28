@@ -1,0 +1,102 @@
+#!/usr/bin/env node
+
+const { spawnSync } = require("child_process")
+
+const PACK_CONFIG_DIFF_PACKAGE = "pack-config-diff"
+const PACK_CONFIG_DIFF_REF =
+  "github:shakacode/pack-config-diff#6bb09f4ba933ef5978c534b1c278156e438dce2e"
+
+function formatError(error) {
+  return error instanceof Error ? error.message : String(error)
+}
+
+function isMissingPackConfigDiff(error) {
+  return (
+    error &&
+    error.code === "MODULE_NOT_FOUND" &&
+    typeof error.message === "string" &&
+    error.message.includes(`'${PACK_CONFIG_DIFF_PACKAGE}'`)
+  )
+}
+
+function exitWithCode(exitCode) {
+  if (!Number.isInteger(exitCode)) {
+    console.error(
+      `[Shakapacker] ${PACK_CONFIG_DIFF_PACKAGE} returned a non-integer exit code: ${String(exitCode)}`
+    )
+    process.exit(2)
+  }
+
+  process.exit(exitCode)
+}
+
+function runViaNpx() {
+  if (process.env.CI && !process.stdin.isTTY) {
+    console.error(
+      `[Shakapacker] ${PACK_CONFIG_DIFF_PACKAGE} is not installed locally, and npx fallback requires an interactive prompt. ` +
+        `Install ${PACK_CONFIG_DIFF_PACKAGE} locally before running in CI.`
+    )
+    process.exit(2)
+  }
+
+  console.error(
+    `[Shakapacker] ${PACK_CONFIG_DIFF_PACKAGE} is not installed locally. ` +
+      "Falling back to npx and prompting before download."
+  )
+  const result = spawnSync(
+    "npx",
+    [PACK_CONFIG_DIFF_REF, ...process.argv.slice(2)],
+    { stdio: "inherit" }
+  )
+
+  if (result.error) {
+    console.error(
+      `[Shakapacker] Failed to run ${PACK_CONFIG_DIFF_PACKAGE} via npx: ${formatError(result.error)}`
+    )
+    process.exit(2)
+  }
+
+  process.exit(result.status ?? 2)
+}
+
+let run
+
+try {
+  const loadedModule = require(PACK_CONFIG_DIFF_PACKAGE)
+  run = loadedModule.run
+} catch (error) {
+  if (isMissingPackConfigDiff(error)) {
+    runViaNpx()
+    process.exit(2)
+  } else {
+    console.error(
+      `[Shakapacker] Failed to load ${PACK_CONFIG_DIFF_PACKAGE}: ${formatError(error)}`
+    )
+    process.exit(2)
+  }
+}
+
+if (typeof run !== "function") {
+  console.error(
+    `[Shakapacker] ${PACK_CONFIG_DIFF_PACKAGE} did not export a run() function`
+  )
+  process.exit(2)
+}
+
+try {
+  const runResult = run(process.argv.slice(2))
+
+  if (runResult && typeof runResult.then === "function") {
+    runResult
+      .then((exitCode) => exitWithCode(exitCode))
+      .catch((error) => {
+        console.error(formatError(error))
+        process.exit(2)
+      })
+  } else {
+    exitWithCode(runResult)
+  }
+} catch (error) {
+  console.error(formatError(error))
+  process.exit(2)
+}

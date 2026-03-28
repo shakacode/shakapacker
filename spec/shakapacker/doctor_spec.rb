@@ -721,9 +721,11 @@ describe Shakapacker::Doctor do
     end
 
     context "when no binstubs exist" do
-      it "adds missing binstubs warning for all three" do
+      it "adds missing binstubs warning for all configured binstubs" do
         doctor.send(:check_binstub)
-        expect(warning_messages).to include(match(/Missing binstubs:.*bin\/shakapacker.*bin\/shakapacker-dev-server.*bin\/shakapacker-config/))
+        expect(warning_messages).to include(
+          match(/Missing binstubs:.*bin\/shakapacker.*bin\/shakapacker-dev-server.*bin\/shakapacker-config/)
+        )
       end
     end
   end
