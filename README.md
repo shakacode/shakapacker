@@ -607,7 +607,7 @@ Note, if you are using server-side rendering of JavaScript with dynamic code-spl
 
 ### Development
 
-Shakapacker ships with two binstubs: `./bin/shakapacker` and `./bin/shakapacker-dev-server`. Both are thin wrappers around the standard `webpack.js` and `webpack-dev-server.js` executables to ensure that the right configuration files and environmental variables are loaded based on your environment.
+Shakapacker ships with three binstubs: `./bin/shakapacker`, `./bin/shakapacker-dev-server`, and `./bin/shakapacker-watch`. The first two are thin wrappers around the standard `webpack.js` and `webpack-dev-server.js` executables to ensure that the right configuration files and environmental variables are loaded based on your environment. `./bin/shakapacker-watch` is a shell wrapper around `./bin/shakapacker` that traps INT/TERM signals for clean shutdown — use it in Procfile-based workflows (e.g., `foreman`, `bin/dev`) to avoid Ruby interrupt backtraces when pressing Ctrl-C.
 
 _Note: older Shakapacker installations had set a missing NODE_ENV in the binstubs. Please remove this for versions 6.5.2 and newer._
 
@@ -642,7 +642,10 @@ If you want to use live code reloading, or you have enough JavaScript that on-de
 # webpack dev server
 ./bin/shakapacker-dev-server
 
-# watcher
+# watcher (use in Procfiles for clean Ctrl-C shutdown)
+./bin/shakapacker-watch --watch --progress
+
+# watcher (standalone, without signal handling)
 ./bin/shakapacker --watch --progress
 
 # standalone build
