@@ -256,8 +256,8 @@ Depending on your setup, you'll need different subsets of the optional peer depe
     "terser-webpack-plugin": "^5.3.1",
     "webpack": "^5.101.0",
     "webpack-assets-manifest": "^5.0.6",
-    "webpack-cli": "^5.0.0",
-    "webpack-dev-server": "^5.0.0"
+    "webpack-cli": "^7.0.0",
+    "webpack-dev-server": "^5.2.2"
   }
 }
 ```
@@ -274,8 +274,8 @@ Depending on your setup, you'll need different subsets of the optional peer depe
     "terser-webpack-plugin": "^5.3.1",
     "webpack": "^5.101.0",
     "webpack-assets-manifest": "^5.0.6",
-    "webpack-cli": "^5.0.0",
-    "webpack-dev-server": "^5.0.0"
+    "webpack-cli": "^7.0.0",
+    "webpack-dev-server": "^5.2.2"
   }
 }
 ```

@@ -55,7 +55,7 @@ Type-only imports are erased during compilation and don't trigger module resolut
   "dependencies": {
     "shakapacker": "^9.0.0",
     "webpack": "^5.101.0",
-    "webpack-cli": "^5.0.0",
+    "webpack-cli": "^7.0.0",
     "babel-loader": "^8.2.4",
     "@babel/core": "^7.17.9",
     "@babel/preset-env": "^7.16.11"
@@ -70,7 +70,7 @@ Type-only imports are erased during compilation and don't trigger module resolut
   "dependencies": {
     "shakapacker": "^9.0.0",
     "webpack": "^5.101.0",
-    "webpack-cli": "^5.0.0",
+    "webpack-cli": "^7.0.0",
     "@swc/core": "^1.3.0",
     "swc-loader": "^0.2.0"
   }
