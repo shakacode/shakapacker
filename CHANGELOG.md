@@ -12,7 +12,13 @@
 ### Added
 
 - **Added `bin/shakapacker-watch` binstub for clean Ctrl-C shutdown in Procfile-based workflows**. [PR #1026](https://github.com/shakacode/shakapacker/pull/1026) by [justin808](https://github.com/justin808). The new wrapper script traps INT/TERM signals and forwards TERM to the underlying `bin/shakapacker --watch` process, preventing Ruby interrupt backtraces when stopping `bin/dev`. Use `bin/shakapacker-watch --watch` in Procfiles instead of `bin/shakapacker --watch`.
-- Allow `webpack-cli` v7, update webpack minimum to `^5.101.0`, and require `webpack-dev-server` `^5.2.2` for webpack setups. [PR #1021](https://github.com/shakacode/shakapacker/pull/1021) by [justin808](https://github.com/justin808). Fixes [#1020](https://github.com/shakacode/shakapacker/issues/1020).
+- Allow `webpack-cli` v7 (`^7.0.0`) in peer dependencies. [PR #1021](https://github.com/shakacode/shakapacker/pull/1021) by [justin808](https://github.com/justin808). Fixes [#1020](https://github.com/shakacode/shakapacker/issues/1020). Note: `webpack-cli` v7 requires Node.js >= 20.9.0.
+
+### Changed
+
+- Bump minimum `webpack` version to `^5.101.0` (was `^5.76.0`). [PR #1021](https://github.com/shakacode/shakapacker/pull/1021) by [justin808](https://github.com/justin808).
+- Require `webpack-dev-server` `^5.2.2`; support for v4 (`^4.15.2`) has been dropped. [PR #1021](https://github.com/shakacode/shakapacker/pull/1021) by [justin808](https://github.com/justin808).
+- Remove deprecated `onBeforeSetupMiddleware` and `onAfterSetupMiddleware` from dev server config mapping (removed in webpack-dev-server v5). [PR #1021](https://github.com/shakacode/shakapacker/pull/1021) by [justin808](https://github.com/justin808).
 
 ### Fixed
 
