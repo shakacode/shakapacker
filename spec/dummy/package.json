@@ -1,6 +1,6 @@
 {
   "engines": {
-    "node": ">=18.0.0",
+    "node": ">=20.9.0",
     "npm": ">=8.0.0"
   },
   "packageManager": "yarn@1.22.22",

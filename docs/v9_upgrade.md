@@ -338,8 +338,8 @@ assets_bundler: "rspack" # or 'webpack' (default)
     "@swc/core": "^1.3.0",
     "swc-loader": "^0.2.0",
     "webpack": "^5.101.0",
-    "webpack-cli": "^5.0.0",
-    "webpack-dev-server": "^5.0.0"
+    "webpack-cli": "^7.0.0",
+    "webpack-dev-server": "^5.2.2"
   }
 }
 ```
