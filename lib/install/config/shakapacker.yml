@@ -165,9 +165,6 @@ development:
     # port than your Rails server and the browser blocks cross-origin asset requests):
     # headers:
     #   "Access-Control-Allow-Origin": "*"
-    static:
-      watch:
-        ignored: "**/node_modules/**"
 
 test:
   <<: *default

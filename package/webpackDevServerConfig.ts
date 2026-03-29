@@ -4,8 +4,7 @@ const snakeToCamelCase = require("./utils/snakeToCamelCase")
 
 const shakapackerDevServerYamlConfig =
   require("./dev_server") as DevServerConfig
-const { outputPath: contentBase, publicPath } = require("./config") as {
-  outputPath: string
+const { publicPath } = require("./config") as {
   publicPath: string
 }
 
@@ -20,10 +19,12 @@ interface WebpackDevServerConfig {
     | {
         disableDotRule?: boolean
       }
-  static?: {
-    publicPath?: string
-    [key: string]: unknown
-  }
+  static?:
+    | false
+    | {
+        publicPath?: string
+        [key: string]: unknown
+      }
   client?: Record<string, unknown>
   allowedHosts?: string | string[]
   bonjour?: boolean | Record<string, unknown>
@@ -96,18 +97,18 @@ function createDevServerConfig(): WebpackDevServerConfig {
     historyApiFallback: {
       disableDotRule: true
     },
-    static: {
-      publicPath: contentBase
-    }
+    static: false
   }
   delete devServerYamlConfig.hmr
 
-  if (devServerYamlConfig.static) {
-    config.static = {
-      ...config.static,
-      ...(typeof devServerYamlConfig.static === "object"
-        ? (devServerYamlConfig.static as Record<string, unknown>)
-        : {})
+  if (devServerYamlConfig.static !== undefined) {
+    if (devServerYamlConfig.static === false) {
+      config.static = false
+    } else if (
+      typeof devServerYamlConfig.static === "object" &&
+      devServerYamlConfig.static !== null
+    ) {
+      config.static = devServerYamlConfig.static as Record<string, unknown>
     }
     delete devServerYamlConfig.static
   }
