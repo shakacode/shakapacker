@@ -71,6 +71,10 @@
 
 - **Ensured `shakapacker:install` installs the latest `compression-webpack-plugin`**. [PR #1035](https://github.com/shakacode/shakapacker/pull/1035) by [G-Rath](https://github.com/G-Rath).
 
+### Fixed
+
+- **Fixed webpack-dev-server `static` config defaulting to watch `public/` directory unnecessarily**. [PR #XXXX](https://github.com/shakacode/shakapacker/pull/XXXX) by [ihabadham](https://github.com/ihabadham). Three bugs fixed: (1) `static` now defaults to `false` instead of a misconfigured object that caused webpack-dev-server to watch the `public/` directory, which is already served by Rails via `ActionDispatch::Static`; (2) setting `static: false` in `shakapacker.yml` is no longer silently ignored; (3) the default template no longer includes `static.watch`, which was a v3→v4 migration artifact. Fixes [#1031](https://github.com/shakacode/shakapacker/issues/1031).
+
 ## [v9.7.0] - March 15, 2026
 
 ### Added
