@@ -23,7 +23,7 @@ As of Shakapacker v9, all peer dependencies are marked as optional via `peerDepe
     "webpack-merge": "^5.8.0" // Direct dependency - always available
   },
   "peerDependencies": {
-    "webpack": "^5.76.0",
+    "webpack": "^5.101.0",
     "@rspack/core": "^1.0.0"
     // ... all build tools
   },
@@ -54,7 +54,7 @@ Type-only imports are erased during compilation and don't trigger module resolut
 {
   "dependencies": {
     "shakapacker": "^9.0.0",
-    "webpack": "^5.76.0",
+    "webpack": "^5.101.0",
     "webpack-cli": "^5.0.0",
     "babel-loader": "^8.2.4",
     "@babel/core": "^7.17.9",
@@ -69,7 +69,7 @@ Type-only imports are erased during compilation and don't trigger module resolut
 {
   "dependencies": {
     "shakapacker": "^9.0.0",
-    "webpack": "^5.76.0",
+    "webpack": "^5.101.0",
     "webpack-cli": "^5.0.0",
     "@swc/core": "^1.3.0",
     "swc-loader": "^0.2.0"
@@ -112,7 +112,7 @@ The installer (`bundle exec rake shakapacker:install`) only adds packages needed
 
 Version ranges are carefully chosen for compatibility:
 
-- **Broader ranges for peer deps** - Allows flexibility (e.g., `^5.76.0` for webpack)
+- **Broader ranges for peer deps** - Allows flexibility (e.g., `^5.101.0` for webpack)
 - **Specific versions in devDeps** - Ensures testing against known versions
 - **Forward compatibility** - Ranges include future minor versions (e.g., `^5.0.0 || ^6.0.0`)
 
