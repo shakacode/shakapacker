@@ -18,10 +18,11 @@ The precompile hook is especially useful when you need to run commands like:
 - `bin/rake react_on_rails:locale` - Generate locale files
 - Any custom script that prepares files before asset compilation
 
-**Important:** The hook runs in **both development and production**:
+**Important:** The hook runs before **Shakapacker-managed compilation paths**:
 
-- **Development**: Runs before `bin/shakapacker --watch` or dev server starts
-- **Production**: Runs before `bundle exec rake assets:precompile`
+- **On-demand development compilation** when `compile: true` and assets are stale
+- **Explicit compilation tasks** such as `bundle exec rake shakapacker:compile` and `bundle exec rake assets:precompile`
+- It does **not** run when starting `bin/shakapacker-dev-server` or when invoking the bundler directly with `bin/shakapacker`
 
 ## Choosing an Approach
 
@@ -85,7 +86,7 @@ development:
 
 production:
   <<: *default
-  precompile_hook: "rake react_on_rails:generate_packs"
+  precompile_hook: "bin/rake react_on_rails:generate_packs"
 ```
 
 ## Creating a Precompile Hook Script

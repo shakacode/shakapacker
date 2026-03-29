@@ -7,7 +7,8 @@ This guide is for Shakapacker maintainers who need to publish a new release.
 1. **Install required tools:**
 
    ```bash
-   bundle install              # Installs gem-release
+   bundle install
+   gem install gem-release     # Provides `gem bump` and `gem release`
    yarn global add release-it  # Installs release-it for npm publishing
    gh --version                # Required for automatic GitHub release creation
    ```
@@ -273,6 +274,7 @@ If you need to release manually (not recommended):
    cd spec/dummy
    bundle install
    npm install
+   yarn install
    cd ../..
    git add spec/dummy/Gemfile.lock spec/dummy/package-lock.json spec/dummy/yarn.lock
    git commit -m 'Update spec/dummy lockfiles after release'

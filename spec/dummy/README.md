@@ -8,14 +8,16 @@ This application supports testing with both **Webpack** and **RSpack** bundlers,
 
 ## Setup
 
-The dummy app needs to link to the local shakapacker gem for development:
+The dummy app uses the local `shakapacker` npm package via `yalc`. The Ruby gem is already
+path-pinned from this repository in `spec/dummy/Gemfile`.
 
 ```bash
 # From the repository root, publish shakapacker via yalc
 yalc publish
 
-# In spec/dummy, link to the local shakapacker
+# In spec/dummy, install Ruby deps and link the local shakapacker package
 cd spec/dummy
+bundle install
 yalc link shakapacker
 npm install
 ```
