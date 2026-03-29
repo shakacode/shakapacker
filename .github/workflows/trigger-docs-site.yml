@@ -3,7 +3,7 @@ name: Trigger docs site rebuild
 on:
   push:
     branches: [main]
-    paths: ['docs/**']
+    paths: ["docs/**"]
 
 jobs:
   notify-docs-site:

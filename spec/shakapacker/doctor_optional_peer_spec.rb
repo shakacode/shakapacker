@@ -71,6 +71,7 @@ describe "Shakapacker::Doctor with optional peer dependencies" do
             "shakapacker" => "^9.0.0",
             "webpack" => "^5.0.0",
             "webpack-cli" => "^5.0.0",
+            "webpack-dev-server" => "^5.2.2",
             "@swc/core" => "^1.3.0",
             "swc-loader" => "^0.2.0"
           }
@@ -146,6 +147,7 @@ describe "Shakapacker::Doctor with optional peer dependencies" do
             "shakapacker" => "^9.0.0",
             "webpack" => "^5.0.0",
             "webpack-cli" => "^5.0.0",
+            "webpack-dev-server" => "^5.2.2",
             "babel-loader" => "^9.0.0",
             "@babel/core" => "^7.0.0",
             "@babel/preset-env" => "^7.0.0"

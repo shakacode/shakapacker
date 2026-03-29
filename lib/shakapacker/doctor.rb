@@ -273,8 +273,9 @@ module Shakapacker
 
       def check_webpack_peer_deps(deps)
         essential_webpack = {
-          "webpack" => "^5.76.0",
-          "webpack-cli" => "^4.9.2 || ^5.0.0"
+          "webpack" => "^5.101.0",
+          "webpack-cli" => "^4.9.2 || ^5.0.0 || ^6.0.0 || ^7.0.0",
+          "webpack-dev-server" => "^5.2.2"
         }
 
         essential_webpack.each do |package, version|
