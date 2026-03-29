@@ -26,6 +26,9 @@ yalc.lock
 # Config exporter output directory
 shakapacker-config-exports/
 
+# Webpack build output
+public/packs/
+
 # TypeScript generated files
 package/**/*.d.ts
 package/**/*.d.ts.map
