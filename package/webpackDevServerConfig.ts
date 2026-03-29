@@ -34,8 +34,6 @@ interface WebpackDevServerConfig {
   https?: boolean | Record<string, unknown>
   ipc?: boolean | string
   magicHtml?: boolean
-  onAfterSetupMiddleware?: (devServer: unknown) => void
-  onBeforeSetupMiddleware?: (devServer: unknown) => void
   open?:
     | boolean
     | string
@@ -65,8 +63,6 @@ const webpackDevServerMappedKeys = new Set([
   "https",
   "ipc",
   "magicHtml",
-  "onAfterSetupMiddleware",
-  "onBeforeSetupMiddleware",
   "open",
   "port",
   "proxy",

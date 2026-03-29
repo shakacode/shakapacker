@@ -344,6 +344,8 @@ assets_bundler: "rspack" # or 'webpack' (default)
 }
 ```
 
+> **Note:** `webpack-cli` v4 through v6 are also supported. v7 requires Node.js >= 20.9.0. See the full supported range in [peer-dependencies.md](./peer-dependencies.md).
+
 You won't get warnings about missing Babel, Rspack, or esbuild packages.
 
 ## Migration Steps

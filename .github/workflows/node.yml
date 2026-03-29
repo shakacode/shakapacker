@@ -139,9 +139,8 @@ jobs:
           cd /tmp/test-types
           npx tsc --noEmit \
             --skipLibCheck \
-            --moduleResolution node \
+            --moduleResolution node16 \
             --types node \
-            --ignoreDeprecations 6.0 \
             *.d.ts
   test:
     name: Testing
