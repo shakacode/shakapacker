@@ -1013,7 +1013,8 @@ module Shakapacker
             binstubs = [
               "bin/shakapacker",
               "bin/shakapacker-dev-server",
-              "bin/shakapacker-config"
+              "bin/shakapacker-config",
+              "bin/shakapacker-watch"
             ]
 
             existing_binstubs = binstubs.select { |b| doctor.root_path.join(b).exist? }
