@@ -139,7 +139,8 @@ jobs:
           cd /tmp/test-types
           npx tsc --noEmit \
             --skipLibCheck \
-            --moduleResolution node \
+            --moduleResolution bundler \
+            --types node \
             *.d.ts
   test:
     name: Testing
