@@ -109,6 +109,9 @@ function createDevServerConfig(): WebpackDevServerConfig {
       devServerYamlConfig.static !== null
     ) {
       config.static = devServerYamlConfig.static as Record<string, unknown>
+    } else {
+      config.static =
+        devServerYamlConfig.static as WebpackDevServerConfig["static"]
     }
     delete devServerYamlConfig.static
   }

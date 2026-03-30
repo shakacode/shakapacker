@@ -29,6 +29,16 @@ describe("webpackDevServerConfig", () => {
     expect(config.static).toBe(false)
   })
 
+  test("passes through static: true from YAML config", () => {
+    const devServer = require("../../package/dev_server")
+    devServer.static = true
+
+    const createDevServerConfig = require("../../package/webpackDevServerConfig")
+    const config = createDevServerConfig()
+
+    expect(config.static).toBe(true)
+  })
+
   test("passes through static object from YAML config", () => {
     const devServer = require("../../package/dev_server")
     devServer.static = { directory: "/custom/path", watch: false }
