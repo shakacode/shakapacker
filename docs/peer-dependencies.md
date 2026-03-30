@@ -30,7 +30,7 @@ To simplify peer dependencies while supporting both webpack & rspack, we decided
 ## Highly recommended
 
 ```text
-    "compression-webpack-plugin": "^9.0.0 || ^10.0.0|| ^11.0.0",
+    "compression-webpack-plugin": "^9.0.0 || ^10.0.0 || ^11.0.0 || ^12.0.0",
     "css-loader": "^6.0.0 || ^7.0.0",
     "sass-loader": "^13.0.0 || ^14.0.0 || ^15.0.0 || ^16.0.0",
     "style-loader": "^3.0.0 || ^4.0.0",
