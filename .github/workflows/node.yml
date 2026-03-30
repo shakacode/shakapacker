@@ -140,6 +140,7 @@ jobs:
           npx tsc --noEmit \
             --skipLibCheck \
             --moduleResolution bundler \
+            --types node \
             *.d.ts
   test:
     name: Testing
