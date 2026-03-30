@@ -36,7 +36,10 @@ describe("webpackDevServerConfig", () => {
     const createDevServerConfig = require("../../package/webpackDevServerConfig")
     const config = createDevServerConfig()
 
-    expect(config.static).toStrictEqual({ directory: "/custom/path", watch: false })
+    expect(config.static).toStrictEqual({
+      directory: "/custom/path",
+      watch: false
+    })
   })
 
   test("sets devMiddleware.publicPath to URL path", () => {
