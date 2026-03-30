@@ -139,6 +139,7 @@ jobs:
           cd /tmp/test-types
           npx tsc --noEmit \
             --skipLibCheck \
+            --module node16 \
             --moduleResolution node16 \
             *.d.ts
   test:
