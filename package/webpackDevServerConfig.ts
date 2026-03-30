@@ -20,7 +20,9 @@ interface WebpackDevServerConfig {
         disableDotRule?: boolean
       }
   static?:
-    | false
+    | boolean
+    | string
+    | string[]
     | {
         publicPath?: string
         [key: string]: unknown
@@ -101,13 +103,13 @@ function createDevServerConfig(): WebpackDevServerConfig {
   }
   delete devServerYamlConfig.hmr
 
-  if (devServerYamlConfig.static !== undefined) {
+  if (
+    devServerYamlConfig.static !== undefined &&
+    devServerYamlConfig.static !== null
+  ) {
     if (devServerYamlConfig.static === false) {
       config.static = false
-    } else if (
-      typeof devServerYamlConfig.static === "object" &&
-      devServerYamlConfig.static !== null
-    ) {
+    } else if (typeof devServerYamlConfig.static === "object") {
       config.static = devServerYamlConfig.static as Record<string, unknown>
     } else {
       config.static =
