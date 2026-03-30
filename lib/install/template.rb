@@ -261,17 +261,9 @@ Dir.chdir(Rails.root) do
   dev_dependencies_to_add = []
 
   peers.each do |(package, version)|
-    # Handle versions like "^1.3.0" or ">= 4 || 5"
-    if version.start_with?("^", "~") || version.match?(/^\d+\.\d+/)
-      # Already has proper version format, use as-is
-      entry = "#{package}@#{version}"
-    else
-      # Extract major version from complex version strings like ">= 4 || 5"
-      # Fallback to "latest" if no version number found
-      version_match = version.split("||").last.match(/(\d+)/)
-      major_version = version_match ? version_match[1] : "latest"
-      entry = "#{package}@#{major_version}"
-    end
+    # constraints conventionally are from oldest to latest
+    latest_version = version.split("||").last.strip
+    entry = "#{package}@#{latest_version}"
 
     if dev_dependency_packages.include? package
       dev_dependencies_to_add << entry
