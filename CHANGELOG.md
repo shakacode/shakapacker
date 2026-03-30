@@ -13,6 +13,10 @@
 
 - **Added `bin/shakapacker-watch` binstub for clean Ctrl-C shutdown in Procfile-based workflows**. [PR #1026](https://github.com/shakacode/shakapacker/pull/1026) by [justin808](https://github.com/justin808). The new wrapper script traps INT/TERM signals and forwards TERM to the underlying `bin/shakapacker --watch` process, preventing Ruby interrupt backtraces when stopping `bin/dev`. Use `bin/shakapacker-watch --watch` in Procfiles instead of `bin/shakapacker --watch`.
 
+### Fixed
+
+- **Fixed webpack-dev-server `static` config defaulting to watch `public/` directory unnecessarily**. [PR #1032](https://github.com/shakacode/shakapacker/pull/1032) by [ihabadham](https://github.com/ihabadham). Three bugs fixed: (1) `static` now defaults to `false` instead of a misconfigured object that caused webpack-dev-server to watch the `public/` directory, which is already served by Rails via `ActionDispatch::Static`; (2) setting `static: false` in `shakapacker.yml` is no longer silently ignored; (3) the default template no longer includes `static.watch`, which was a v3→v4 migration artifact. Fixes [#1031](https://github.com/shakacode/shakapacker/issues/1031).
+
 ## [v9.7.0] - March 15, 2026
 
 ### Added
