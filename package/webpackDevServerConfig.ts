@@ -73,6 +73,26 @@ const webpackDevServerMappedKeys = new Set([
   "webSocketServer"
 ])
 
+const removedWebpackDevServerYamlKeys = [
+  "on_before_setup_middleware",
+  "on_after_setup_middleware"
+]
+
+function warnOnRemovedDevServerHooks(
+  devServerYamlConfig: DevServerConfig & Record<string, unknown>
+): void {
+  const removedKeys = removedWebpackDevServerYamlKeys.filter(
+    (key) => devServerYamlConfig[key] !== undefined
+  )
+
+  if (removedKeys.length === 0) return
+
+  const formattedKeys = removedKeys.map((key) => `\`${key}\``).join(", ")
+  console.warn(
+    `[Shakapacker] Deprecated dev_server setting(s) ${formattedKeys} were removed in webpack-dev-server v5 and will be ignored. Use \`setup_middlewares\` instead.`
+  )
+}
+
 function createDevServerConfig(): WebpackDevServerConfig {
   const devServerYamlConfig = {
     ...shakapackerDevServerYamlConfig
@@ -112,6 +132,8 @@ function createDevServerConfig(): WebpackDevServerConfig {
     config.client = devServerYamlConfig.client
     delete devServerYamlConfig.client
   }
+
+  warnOnRemovedDevServerHooks(devServerYamlConfig)
 
   Object.keys(devServerYamlConfig).forEach((yamlKey) => {
     const camelYamlKey = snakeToCamelCase(yamlKey)

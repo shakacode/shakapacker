@@ -262,8 +262,16 @@ Dir.chdir(Rails.root) do
 
   peers.each do |(package, version)|
     # constraints conventionally are from oldest to latest
-    latest_version = version.split("||").last.strip
-    entry = "#{package}@#{latest_version}"
+    constraints = version.split("||").map(&:strip)
+    selected_version = constraints.last
+
+    if package == "webpack-cli" && constraints.length > 1
+      # Keep installer defaults compatible with Node.js >= 20.0.0.
+      # webpack-cli v7 requires Node >= 20.9.0, so default to the latest v6 range.
+      selected_version = constraints.find { |constraint| constraint.start_with?("^6.") } || selected_version
+    end
+
+    entry = "#{package}@#{selected_version}"
 
     if dev_dependency_packages.include? package
       dev_dependencies_to_add << entry

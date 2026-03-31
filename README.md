@@ -262,7 +262,7 @@ Depending on your setup, you'll need different subsets of the optional peer depe
 }
 ```
 
-> **Note:** `webpack-cli` v7 requires Node.js >= 20.9.0. If you're on Node 18, use `"webpack-cli": "^6.0.0"` instead. See [peer-dependencies.md](./docs/peer-dependencies.md) for the full supported range.
+> **Note:** `webpack-cli` v7 requires Node.js >= 20.9.0. If you're on Node 20.0-20.8, use `"webpack-cli": "^6.0.0"` instead. See [peer-dependencies.md](./docs/peer-dependencies.md) for the full supported range.
 
 **For Webpack + SWC (faster alternative):**
 
