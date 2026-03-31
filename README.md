@@ -256,13 +256,13 @@ Depending on your setup, you'll need different subsets of the optional peer depe
     "terser-webpack-plugin": "^5.3.1",
     "webpack": "^5.101.0",
     "webpack-assets-manifest": "^5.0.6",
-    "webpack-cli": "^7.0.0",
+    "webpack-cli": "^6.0.0",
     "webpack-dev-server": "^5.2.2"
   }
 }
 ```
 
-> **Note:** `webpack-cli` v7 requires Node.js >= 20.9.0. If you're on Node 20.0-20.8, use `"webpack-cli": "^6.0.0"` instead. See [peer-dependencies.md](./docs/peer-dependencies.md) for the full supported range.
+> **Note:** `webpack-cli` v7 is also supported but requires Node.js >= 20.9.0. If you're on Node >= 20.9.0, you can use `"webpack-cli": "^7.0.0"` instead. See [peer-dependencies.md](./docs/peer-dependencies.md) for the full supported range.
 
 **For Webpack + SWC (faster alternative):**
 
@@ -276,7 +276,7 @@ Depending on your setup, you'll need different subsets of the optional peer depe
     "terser-webpack-plugin": "^5.3.1",
     "webpack": "^5.101.0",
     "webpack-assets-manifest": "^5.0.6",
-    "webpack-cli": "^7.0.0",
+    "webpack-cli": "^6.0.0",
     "webpack-dev-server": "^5.2.2"
   }
 }

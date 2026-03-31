@@ -134,6 +134,9 @@ function createDevServerConfig(): WebpackDevServerConfig {
   }
 
   warnOnRemovedDevServerHooks(devServerYamlConfig)
+  removedWebpackDevServerYamlKeys.forEach(
+    (key) => delete devServerYamlConfig[key]
+  )
 
   Object.keys(devServerYamlConfig).forEach((yamlKey) => {
     const camelYamlKey = snakeToCamelCase(yamlKey)
