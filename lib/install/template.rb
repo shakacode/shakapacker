@@ -269,6 +269,8 @@ Dir.chdir(Rails.root) do
       # Keep installer defaults compatible with Node.js >= 20.0.0.
       # webpack-cli v7 requires Node >= 20.9.0, so default to the latest v6 range.
       selected_version = constraints.find { |constraint| constraint.start_with?("^6.") } || selected_version
+      say "   ℹ️  Defaulting to webpack-cli #{selected_version} for broad Node.js compatibility.", :blue
+      say "   ℹ️  If you're on Node >= 20.9.0, you can upgrade to webpack-cli ^7.0.0 manually.", :blue
     end
 
     entry = "#{package}@#{selected_version}"
