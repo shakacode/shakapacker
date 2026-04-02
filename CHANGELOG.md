@@ -9,24 +9,26 @@
 
 ## [Unreleased]
 
+## [v10.0.0-rc.0] - April 1, 2026
+
 ### Added
 
 - **Added `bin/shakapacker-watch` binstub for clean Ctrl-C shutdown in Procfile-based workflows**. [PR #1026](https://github.com/shakacode/shakapacker/pull/1026) by [justin808](https://github.com/justin808). The new wrapper script traps INT/TERM signals and forwards TERM to the underlying `bin/shakapacker --watch` process, preventing Ruby interrupt backtraces when stopping `bin/dev`. Use `bin/shakapacker-watch --watch` in Procfiles instead of `bin/shakapacker --watch`.
-- Allow `webpack-cli` v7 (`^7.0.0`) in peer dependencies. [PR #1021](https://github.com/shakacode/shakapacker/pull/1021) by [justin808](https://github.com/justin808). Fixes [#1020](https://github.com/shakacode/shakapacker/issues/1020). Note: `webpack-cli` v7 requires Node.js >= 20.9.0.
+- **Allowed `webpack-cli` v7 (`^7.0.0`) in peer dependencies**. [PR #1021](https://github.com/shakacode/shakapacker/pull/1021) by [justin808](https://github.com/justin808). Fixes [#1020](https://github.com/shakacode/shakapacker/issues/1020). Note: `webpack-cli` v7 requires Node.js >= 20.9.0.
 
 ### ⚠️ Breaking Changes
 
-- Bump minimum `webpack` version to `^5.101.0` (was `^5.76.0`). [PR #1021](https://github.com/shakacode/shakapacker/pull/1021) by [justin808](https://github.com/justin808).
-- Require `webpack-dev-server` `^5.2.2`; support for v4 (`^4.15.2`) has been dropped. [PR #1021](https://github.com/shakacode/shakapacker/pull/1021) by [justin808](https://github.com/justin808).
+- **Breaking: bumped the minimum `webpack` version to `^5.101.0`**. [PR #1021](https://github.com/shakacode/shakapacker/pull/1021) by [justin808](https://github.com/justin808). The previous minimum was `^5.76.0`.
+- **Breaking: required `webpack-dev-server` `^5.2.2` and dropped support for v4**. [PR #1021](https://github.com/shakacode/shakapacker/pull/1021) by [justin808](https://github.com/justin808). The removed v4 range was `^4.15.2`.
 
 ### Changed
 
-- `shakapacker:install` now defaults `webpack-cli` installs to the latest v6 range to stay compatible with Node.js `20.0-20.8`; v7 remains supported via peer dependencies for Node.js >= 20.9.0. [PR #1021](https://github.com/shakacode/shakapacker/pull/1021) by [justin808](https://github.com/justin808).
-- Detect deprecated `on_before_setup_middleware` and `on_after_setup_middleware` keys in `dev_server` config, warn, and ignore them for webpack-dev-server v5 compatibility. Use `setup_middlewares` instead. [PR #1021](https://github.com/shakacode/shakapacker/pull/1021) by [justin808](https://github.com/justin808).
+- **Changed `shakapacker:install` to default `webpack-cli` installs to the latest v6 range**. [PR #1021](https://github.com/shakacode/shakapacker/pull/1021) by [justin808](https://github.com/justin808). This keeps installs compatible with Node.js `20.0-20.8`; v7 remains supported via peer dependencies for Node.js >= 20.9.0.
+- **Changed dev server config handling to warn on deprecated middleware hooks and ignore them for webpack-dev-server v5**. [PR #1021](https://github.com/shakacode/shakapacker/pull/1021) by [justin808](https://github.com/justin808). Use `setup_middlewares` instead of `on_before_setup_middleware` and `on_after_setup_middleware`.
 
 ### Fixed
 
-- **Ensure latest `compression-webpack-plugin` is installed by `shakapacker:install`** [PR #1035](https://github.com/shakacode/shakapacker/pull/1035) by [G-Rath](https://github.com/G-Rath).
+- **Ensured `shakapacker:install` installs the latest `compression-webpack-plugin`**. [PR #1035](https://github.com/shakacode/shakapacker/pull/1035) by [G-Rath](https://github.com/G-Rath).
 
 ## [v9.7.0] - March 15, 2026
 
@@ -906,7 +908,8 @@ Note: [Rubygem is 6.3.0.pre.rc.1](https://rubygems.org/gems/shakapacker/versions
 
 See [CHANGELOG.md in rails/webpacker (up to v5.4.3)](https://github.com/rails/webpacker/blob/master/CHANGELOG.md)
 
-[Unreleased]: https://github.com/shakacode/shakapacker/compare/v9.7.0...main
+[Unreleased]: https://github.com/shakacode/shakapacker/compare/v10.0.0-rc.0...main
+[v10.0.0-rc.0]: https://github.com/shakacode/shakapacker/compare/v9.7.0...v10.0.0-rc.0
 [v9.7.0]: https://github.com/shakacode/shakapacker/compare/v9.6.1...v9.7.0
 [v9.6.1]: https://github.com/shakacode/shakapacker/compare/v9.6.0...v9.6.1
 [v9.6.0]: https://github.com/shakacode/shakapacker/compare/v9.5.0...v9.6.0
