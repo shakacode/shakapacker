@@ -34,8 +34,6 @@ interface WebpackDevServerConfig {
   https?: boolean | Record<string, unknown>
   ipc?: boolean | string
   magicHtml?: boolean
-  onAfterSetupMiddleware?: (devServer: unknown) => void
-  onBeforeSetupMiddleware?: (devServer: unknown) => void
   open?:
     | boolean
     | string
@@ -65,8 +63,6 @@ const webpackDevServerMappedKeys = new Set([
   "https",
   "ipc",
   "magicHtml",
-  "onAfterSetupMiddleware",
-  "onBeforeSetupMiddleware",
   "open",
   "port",
   "proxy",
@@ -76,6 +72,26 @@ const webpackDevServerMappedKeys = new Set([
   "watchFiles",
   "webSocketServer"
 ])
+
+const removedWebpackDevServerYamlKeys = [
+  "on_before_setup_middleware",
+  "on_after_setup_middleware"
+]
+
+function warnOnRemovedDevServerHooks(
+  devServerYamlConfig: DevServerConfig & Record<string, unknown>
+): void {
+  const removedKeys = removedWebpackDevServerYamlKeys.filter(
+    (key) => devServerYamlConfig[key] !== undefined
+  )
+
+  if (removedKeys.length === 0) return
+
+  const formattedKeys = removedKeys.map((key) => `\`${key}\``).join(", ")
+  console.warn(
+    `[Shakapacker] Deprecated dev_server setting(s) ${formattedKeys} were removed in webpack-dev-server v5 and will be ignored. Use \`setup_middlewares\` instead.`
+  )
+}
 
 function createDevServerConfig(): WebpackDevServerConfig {
   const devServerYamlConfig = {
@@ -116,6 +132,11 @@ function createDevServerConfig(): WebpackDevServerConfig {
     config.client = devServerYamlConfig.client
     delete devServerYamlConfig.client
   }
+
+  warnOnRemovedDevServerHooks(devServerYamlConfig)
+  removedWebpackDevServerYamlKeys.forEach(
+    (key) => delete devServerYamlConfig[key]
+  )
 
   Object.keys(devServerYamlConfig).forEach((yamlKey) => {
     const camelYamlKey = snakeToCamelCase(yamlKey)

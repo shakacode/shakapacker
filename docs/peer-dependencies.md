@@ -18,15 +18,16 @@ releases support.
 "sass-loader": "^13.0.0 || ^14.0.0 || ^15.0.0 || ^16.0.0"
 "terser-webpack-plugin": "^5.3.1"
 "webpack-assets-manifest": "^5.0.6 || ^6.0.0"
-"webpack-cli": "^4.9.2 || ^5.0.0 || ^6.0.0"
-"webpack-dev-server": "^4.15.2 || ^5.2.2"
+"webpack-cli": "^4.9.2 || ^5.0.0 || ^6.0.0 || ^7.0.0"
+"webpack-dev-server": "^5.2.2"
 "webpack-subresource-integrity": "^5.1.0"
 ```
 
 ## Webpack
 
 ```text
-"webpack": "^5.76.0"
+"webpack": "^5.101.0"
+"webpack-merge": "^5.8.0 || ^6.0.0"
 ```
 
 ## Rspack
