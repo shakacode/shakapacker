@@ -174,12 +174,16 @@ yarn lint --cache
      yalc push # or yalc publish --push
      ```
 
-3. Run the following commands to set up the development environment.
-   ```
-   bundle install
-   yarn install
+3. Run `bin/setup` to install development dependencies.
+   ```bash
+   bin/setup
    # Optional: enable local pre-commit hooks
    npx husky
+   ```
+   Manual equivalent:
+   ```bash
+   bundle install
+   yarn install
    ```
 
 ## Understanding Optional Peer Dependencies
