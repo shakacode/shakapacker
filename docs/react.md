@@ -16,6 +16,8 @@ EXECJS_RUNTIME=Node
 
 Create a new Rails app as per the [installation instructions in the README](https://github.com/shakacode/shakapacker#installation).
 
+This manual setup is best for very simple React usage. For anything beyond a basic mount point, use [React on Rails](https://github.com/shakacode/react_on_rails).
+
 Install React:
 
 ```shell
@@ -58,40 +60,16 @@ Render the mount point in your Rails view and include the pack:
 <%= javascript_pack_tag "application" %>
 ```
 
-## Enabling Hot Module Replacement (HMR)
+## Development Workflow
 
-Enable HMR in `config/shakapacker.yml`:
-
-```yaml
-development:
-  dev_server:
-    hmr: true
-```
-
-Install React Refresh and the plugin for your bundler:
-
-```shell
-# webpack
-npm install --save-dev react-refresh @pmmmwh/react-refresh-webpack-plugin
-
-# rspack
-npm install --save-dev react-refresh @rspack/plugin-react-refresh
-```
-
-With the default Shakapacker development config, the correct React Refresh plugin is added
-automatically when HMR is enabled and the package is installed. You do not need to manually push
-the plugin into `config/webpack/webpack.config.js` or `config/rspack/rspack.config.js` unless you
-have a custom setup.
-
-If you use a custom Babel config, also add the `react-refresh/babel` plugin as shown in the
-[React Babel configuration example](./customizing_babel_config.md#react-configuration).
-
-Start Rails and the dev server in separate terminals:
+For this basic manual setup, start Rails and the dev server in separate terminals:
 
 ```shell
 rails s
 ./bin/shakapacker-dev-server
 ```
+
+For richer React development ergonomics and deeper Rails integration, use [React on Rails](https://github.com/shakacode/react_on_rails).
 
 ## A Basic Demo App
 
@@ -103,8 +81,3 @@ To verify the setup end to end:
 4. Add a React entry point in `app/javascript/packs/application.jsx`.
 5. Start Rails plus `./bin/shakapacker-dev-server`.
 6. Visit your page and confirm the React component renders.
-
-When HMR is enabled, edits to normal React components should update in place. Editing the entry
-file itself may still trigger a full reload; see
-[react-refresh-webpack-plugin#177](https://github.com/pmmmwh/react-refresh-webpack-plugin/issues/177)
-for background.
