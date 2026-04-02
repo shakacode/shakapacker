@@ -114,7 +114,7 @@ module.exports = customConfig
 
 ### Example: Enabling React Fast Refresh
 
-:warning: Remember that you still need to add [@pmmmwh/react-refresh-webpack-plugin](https://github.com/pmmmwh/react-refresh-webpack-plugin) to your webpack config. The setting below just replaces equivalent `react-refresh/babel` Babel plugin.
+:warning: Shakapacker's default development config automatically adds [@pmmmwh/react-refresh-webpack-plugin](https://github.com/pmmmwh/react-refresh-webpack-plugin) when HMR is enabled and the package is installed. Use the setting below when you need to customize the SWC React transform itself; it replaces the equivalent `react-refresh/babel` Babel plugin behavior.
 
 ```js
 const { env } = require("shakapacker")
@@ -250,7 +250,7 @@ If your Stimulus controllers aren't working after migrating to SWC:
 2. ✅ Ensure your controllers have explicit class names (not anonymous classes)
 3. ✅ Test with `console.log()` in your controller's `connect()` method to verify it's being instantiated
 4. ✅ Check that you haven't added `jsc.target` (which conflicts with Shakapacker's `env` setting)
-5. ✅ Rebuild your assets: `bin/shakapacker clobber && bin/shakapacker compile`
+5. ✅ Rebuild your assets: `bundle exec rake shakapacker:clobber && bundle exec rake shakapacker:compile`
 
 ## Known limitations
 

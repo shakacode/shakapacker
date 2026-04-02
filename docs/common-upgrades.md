@@ -394,8 +394,8 @@ default: &default
 Then rebuild:
 
 ```bash
-bin/shakapacker clobber
-bin/shakapacker compile
+bundle exec rake shakapacker:clobber
+bundle exec rake shakapacker:compile
 ```
 
 ---
@@ -646,8 +646,8 @@ default: &default
 Then rebuild:
 
 ```bash
-bin/shakapacker clobber
-bin/shakapacker compile
+bundle exec rake shakapacker:clobber
+bundle exec rake shakapacker:compile
 ```
 
 ---
