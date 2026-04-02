@@ -337,12 +337,14 @@ assets_bundler: "rspack" # or 'webpack' (default)
     "shakapacker": "^9.0.0",
     "@swc/core": "^1.3.0",
     "swc-loader": "^0.2.0",
-    "webpack": "^5.76.0",
-    "webpack-cli": "^5.0.0",
-    "webpack-dev-server": "^5.0.0"
+    "webpack": "^5.101.0",
+    "webpack-cli": "^6.0.0",
+    "webpack-dev-server": "^5.2.2"
   }
 }
 ```
+
+> **Note:** `webpack-cli` v7 is also supported but requires Node.js >= 20.9.0. v4 through v6 work on all supported Node versions. See the full supported range in [peer-dependencies.md](./peer-dependencies.md).
 
 You won't get warnings about missing Babel, Rspack, or esbuild packages.
 

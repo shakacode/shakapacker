@@ -12,10 +12,21 @@
 ### Added
 
 - **Added `bin/shakapacker-watch` binstub for clean Ctrl-C shutdown in Procfile-based workflows**. [PR #1026](https://github.com/shakacode/shakapacker/pull/1026) by [justin808](https://github.com/justin808). The new wrapper script traps INT/TERM signals and forwards TERM to the underlying `bin/shakapacker --watch` process, preventing Ruby interrupt backtraces when stopping `bin/dev`. Use `bin/shakapacker-watch --watch` in Procfiles instead of `bin/shakapacker --watch`.
+- Allow `webpack-cli` v7 (`^7.0.0`) in peer dependencies. [PR #1021](https://github.com/shakacode/shakapacker/pull/1021) by [justin808](https://github.com/justin808). Fixes [#1020](https://github.com/shakacode/shakapacker/issues/1020). Note: `webpack-cli` v7 requires Node.js >= 20.9.0.
+
+### ⚠️ Breaking Changes
+
+- Bump minimum `webpack` version to `^5.101.0` (was `^5.76.0`). [PR #1021](https://github.com/shakacode/shakapacker/pull/1021) by [justin808](https://github.com/justin808).
+- Require `webpack-dev-server` `^5.2.2`; support for v4 (`^4.15.2`) has been dropped. [PR #1021](https://github.com/shakacode/shakapacker/pull/1021) by [justin808](https://github.com/justin808).
+
+### Changed
+
+- `shakapacker:install` now defaults `webpack-cli` installs to the latest v6 range to stay compatible with Node.js `20.0-20.8`; v7 remains supported via peer dependencies for Node.js >= 20.9.0. [PR #1021](https://github.com/shakacode/shakapacker/pull/1021) by [justin808](https://github.com/justin808).
+- Detect deprecated `on_before_setup_middleware` and `on_after_setup_middleware` keys in `dev_server` config, warn, and ignore them for webpack-dev-server v5 compatibility. Use `setup_middlewares` instead. [PR #1021](https://github.com/shakacode/shakapacker/pull/1021) by [justin808](https://github.com/justin808).
 
 ### Fixed
 
-- **Ensure latest `compression-webpack-plugin` is installed by `shakapacker:install` [PR #1035](https://github.com/shakacode/shakapacker/pull/1035) by [G-Rath](https://github.com/G-Rath)
+- **Ensure latest `compression-webpack-plugin` is installed by `shakapacker:install`** [PR #1035](https://github.com/shakacode/shakapacker/pull/1035) by [G-Rath](https://github.com/G-Rath).
 
 ## [v9.7.0] - March 15, 2026
 

@@ -254,13 +254,15 @@ Depending on your setup, you'll need different subsets of the optional peer depe
     "babel-loader": "^8.2.4",
     "compression-webpack-plugin": "^9.0.0",
     "terser-webpack-plugin": "^5.3.1",
-    "webpack": "^5.76.0",
+    "webpack": "^5.101.0",
     "webpack-assets-manifest": "^5.0.6",
-    "webpack-cli": "^5.0.0",
-    "webpack-dev-server": "^5.0.0"
+    "webpack-cli": "^6.0.0",
+    "webpack-dev-server": "^5.2.2"
   }
 }
 ```
+
+> **Note:** `webpack-cli` v7 is also supported but requires Node.js >= 20.9.0. If you're on Node >= 20.9.0, you can use `"webpack-cli": "^7.0.0"` instead. See [peer-dependencies.md](./docs/peer-dependencies.md) for the full supported range.
 
 **For Webpack + SWC (faster alternative):**
 
@@ -272,10 +274,10 @@ Depending on your setup, you'll need different subsets of the optional peer depe
     "swc-loader": "^0.2.0",
     "compression-webpack-plugin": "^9.0.0",
     "terser-webpack-plugin": "^5.3.1",
-    "webpack": "^5.76.0",
+    "webpack": "^5.101.0",
     "webpack-assets-manifest": "^5.0.6",
-    "webpack-cli": "^5.0.0",
-    "webpack-dev-server": "^5.0.0"
+    "webpack-cli": "^6.0.0",
+    "webpack-dev-server": "^5.2.2"
   }
 }
 ```
