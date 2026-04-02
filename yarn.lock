@@ -802,13 +802,11 @@
   resolved "https://registry.npmjs.org/@leichtgewicht/ip-codec/-/ip-codec-2.0.5.tgz#4fc56c15c580b9adb7dc3c333a134e540b44bfb1"
   integrity sha512-Vo+PSpZG2/fmgmiNzYK9qWRh8h/CHrwD0mo1h1DzL4yzHNSfWYujGTYsWGreD000gcgmZ7K4Ys6Tx9TxtsKdDw==
 
-"@napi-rs/wasm-runtime@1.0.7":
-  version "1.0.7"
-  resolved "https://registry.npmjs.org/@napi-rs/wasm-runtime/-/wasm-runtime-1.0.7.tgz#dcfea99a75f06209a235f3d941e3460a51e9b14c"
-  integrity sha512-SeDnOO0Tk7Okiq6DbXmmBODgOAb9dp9gjlphokTUxmt8U3liIP1ZsozBahH69j/RJv+Rfs6IwUKHTgQYJ/HBAw==
+"@napi-rs/wasm-runtime@1.1.2":
+  version "1.1.2"
+  resolved "https://registry.npmjs.org/@napi-rs/wasm-runtime/-/wasm-runtime-1.1.2.tgz#e25454b4d44cfabd21d1bc801705359870e33ecc"
+  integrity sha512-sNXv5oLJ7ob93xkZ1XnxisYhGYXfaG9f65/ZgYuAu3qt7b3NadcOEhLvx28hv31PgX8SZJRYrAIPQilQmFpLVw==
   dependencies:
-    "@emnapi/core" "^1.5.0"
-    "@emnapi/runtime" "^1.5.0"
     "@tybys/wasm-util" "^0.10.1"
 
 "@napi-rs/wasm-runtime@^1.0.5":
@@ -938,88 +936,88 @@
   resolved "https://registry.npmjs.org/@oxc-resolver/binding-win32-x64-msvc/-/binding-win32-x64-msvc-11.9.0.tgz#3e8127b5c225cb2d99b991f251768188efbda25f"
   integrity sha512-gE3QJvhh0Yj9cSAkkHjRLKPmC7BTJeiaB5YyhVKVUwbnWQgTszV92lZ9pvZtNPEghP7jPbhEs4c6983A0ojQwA==
 
-"@rspack/binding-darwin-arm64@2.0.0-beta.6":
-  version "2.0.0-beta.6"
-  resolved "https://registry.npmjs.org/@rspack/binding-darwin-arm64/-/binding-darwin-arm64-2.0.0-beta.6.tgz#a9da7c16ec721ca343d000b97a05c29dda22b13a"
-  integrity sha512-FQ8zflthQJJf0cM0vDFnfnXrTOnRvwz886tiafbwu1RO5qmh+pJH+xg1eQaLPnRPqLTlcmnpngyacYFUxw+1AA==
+"@rspack/binding-darwin-arm64@2.0.0-rc.0":
+  version "2.0.0-rc.0"
+  resolved "https://registry.npmjs.org/@rspack/binding-darwin-arm64/-/binding-darwin-arm64-2.0.0-rc.0.tgz#7624bc790ab45928f72c4166479f3f356605fa4d"
+  integrity sha512-F1phoByw5bMZ44TVJevn7Yw1mn1dWQ6Z3dxMQrkXoFsxwUPSNOHBX1TSkQ3rmhw2CZpFinbLL6aYjDWM6aHO5A==
 
-"@rspack/binding-darwin-x64@2.0.0-beta.6":
-  version "2.0.0-beta.6"
-  resolved "https://registry.npmjs.org/@rspack/binding-darwin-x64/-/binding-darwin-x64-2.0.0-beta.6.tgz#3d3e84a3490670ad943c1eddcd6f704512a175e0"
-  integrity sha512-Cr4P19anOIaHtK8Z20Hl12PPUcs3LM24ZSQPfs0gPS0etzSOE4JRsqW/79GnnjZd/A+Wola/dZcnMVS44e3c3A==
+"@rspack/binding-darwin-x64@2.0.0-rc.0":
+  version "2.0.0-rc.0"
+  resolved "https://registry.npmjs.org/@rspack/binding-darwin-x64/-/binding-darwin-x64-2.0.0-rc.0.tgz#33855ab324625a1a6b0c8a5e8edeed45ce68865a"
+  integrity sha512-oVzDuXwtn1uM9ovV12gTwkTHCwN1q0U0oxfclJjEjb1EhE/a/UGGABUsLl84wSbIW1fvcd9UwAr7vBqPWsjB4Q==
 
-"@rspack/binding-linux-arm64-gnu@2.0.0-beta.6":
-  version "2.0.0-beta.6"
-  resolved "https://registry.npmjs.org/@rspack/binding-linux-arm64-gnu/-/binding-linux-arm64-gnu-2.0.0-beta.6.tgz#36ed4a1983117c0175843d34ba9c8438bdc36c34"
-  integrity sha512-MgTzspaj3v9/4T3KQ/fRuj+cit3BnEcgFe4OP+BvUWlTQvxlckDWpDymVhPuIqpx7pJvLcXwdz8mQhvZ87AD5g==
+"@rspack/binding-linux-arm64-gnu@2.0.0-rc.0":
+  version "2.0.0-rc.0"
+  resolved "https://registry.npmjs.org/@rspack/binding-linux-arm64-gnu/-/binding-linux-arm64-gnu-2.0.0-rc.0.tgz#3804f7f904c8128b6d33114cd9b755714a4971be"
+  integrity sha512-f0EQ0uBWXmknhZ7HR8ud+AhEtLSKbMK9IFHNkhMH3rN4J6wMI+uCPAs+ZlIrNk076bv8YB/z2Amx1ByDLjOBRA==
 
-"@rspack/binding-linux-arm64-musl@2.0.0-beta.6":
-  version "2.0.0-beta.6"
-  resolved "https://registry.npmjs.org/@rspack/binding-linux-arm64-musl/-/binding-linux-arm64-musl-2.0.0-beta.6.tgz#1c976a56c9682797f16ad3acb683da49f1bb172d"
-  integrity sha512-5vyjbrj3u8x4Crb77QvFJSZkq7QwOuVJff8oStbS/v7cC+NEAQQYB/6Bl0JwyDFAcMMX8ZRyaDjc1o1qQ0Q31g==
+"@rspack/binding-linux-arm64-musl@2.0.0-rc.0":
+  version "2.0.0-rc.0"
+  resolved "https://registry.npmjs.org/@rspack/binding-linux-arm64-musl/-/binding-linux-arm64-musl-2.0.0-rc.0.tgz#867bca6d0d800363d5df3ac4b43ae8bdd2f39f78"
+  integrity sha512-+OiO3x6biWU+z/H/rBzgCJuhvZj7YkGz4w7zQk2ZEHnL8nB5pzPqFiEZesbRp+WIseAONzitn7R0qk102hBi5g==
 
-"@rspack/binding-linux-x64-gnu@2.0.0-beta.6":
-  version "2.0.0-beta.6"
-  resolved "https://registry.npmjs.org/@rspack/binding-linux-x64-gnu/-/binding-linux-x64-gnu-2.0.0-beta.6.tgz#0d6fe7759dc1ce79d16e3d18fe3d5865237e8ef3"
-  integrity sha512-GmNJgFHoK5LFQ2m96HrXIgf1zZNe+4yaaOD/5qqcI163QXRqRflfZprmdr2L4R6VsU2i+YQ2Ap2s20Y/zSt6RQ==
+"@rspack/binding-linux-x64-gnu@2.0.0-rc.0":
+  version "2.0.0-rc.0"
+  resolved "https://registry.npmjs.org/@rspack/binding-linux-x64-gnu/-/binding-linux-x64-gnu-2.0.0-rc.0.tgz#96d908edf99f7dbf1a614e883ca0f732f5d3626c"
+  integrity sha512-n1XXXjTcPyCUoV+t3BPfBoF16CgsBxXI7WQuajIgQ33ifm7AEkRi8OVC2ci6908/MnYJSBFHlZvuDE42EwEstQ==
 
-"@rspack/binding-linux-x64-musl@2.0.0-beta.6":
-  version "2.0.0-beta.6"
-  resolved "https://registry.npmjs.org/@rspack/binding-linux-x64-musl/-/binding-linux-x64-musl-2.0.0-beta.6.tgz#0ee8fb1bab9db6f3b41a8cc19eb1eab659f2a052"
-  integrity sha512-tI2S3v8yXel5GL3yPnBNnFZ/dye4TyRM2j7mfJ49M6uTWjfRFyAcuxqw7z9Pyvyhsc1AoOnnXejtqqJpZkBQoA==
+"@rspack/binding-linux-x64-musl@2.0.0-rc.0":
+  version "2.0.0-rc.0"
+  resolved "https://registry.npmjs.org/@rspack/binding-linux-x64-musl/-/binding-linux-x64-musl-2.0.0-rc.0.tgz#a3b4c39f007bb1b56bcf92e27808596f97d4c482"
+  integrity sha512-EQK7SGu7FWFf1HPPvcahsk2pNL326GQY+jIg3FxGdiAWl1DtSCPrTo/eBKT3nSnXItWta1N80pN5wWVlfs/Liw==
 
-"@rspack/binding-wasm32-wasi@2.0.0-beta.6":
-  version "2.0.0-beta.6"
-  resolved "https://registry.npmjs.org/@rspack/binding-wasm32-wasi/-/binding-wasm32-wasi-2.0.0-beta.6.tgz#10663d94103575e6427f342dcb790c16f7feee51"
-  integrity sha512-Bv9o1zZIDTOzjbliyAwMOGjsL6wiGIPRttJ9CLsdRoKI5XcMTEFHjwlnm1Zs4/EP+zC+bTgseq1EFngIy+nZRg==
+"@rspack/binding-wasm32-wasi@2.0.0-rc.0":
+  version "2.0.0-rc.0"
+  resolved "https://registry.npmjs.org/@rspack/binding-wasm32-wasi/-/binding-wasm32-wasi-2.0.0-rc.0.tgz#9f6b87e4a636e5c9529d2ebfbeeae436dbb12fee"
+  integrity sha512-zu+iW0kEYJd2AEEqYMSU64f98RMOXVwevnQuPtMg3WhVL79FOfkfXOlf16ZYzB8di8hpMRss7m4traGEUEyjZA==
   dependencies:
-    "@napi-rs/wasm-runtime" "1.0.7"
+    "@napi-rs/wasm-runtime" "1.1.2"
 
-"@rspack/binding-win32-arm64-msvc@2.0.0-beta.6":
-  version "2.0.0-beta.6"
-  resolved "https://registry.npmjs.org/@rspack/binding-win32-arm64-msvc/-/binding-win32-arm64-msvc-2.0.0-beta.6.tgz#11c483d9a0b9313fdcedf8dbe789d7227921ea42"
-  integrity sha512-R/j0VTVKn3gU4a0xKAXJUX6jzmanHsuBHtLSpgnRqKW/20csFzsnsqY9PxaiAObTHVPMCrNvTG5KXHYIqYgACg==
+"@rspack/binding-win32-arm64-msvc@2.0.0-rc.0":
+  version "2.0.0-rc.0"
+  resolved "https://registry.npmjs.org/@rspack/binding-win32-arm64-msvc/-/binding-win32-arm64-msvc-2.0.0-rc.0.tgz#9e5f8a70f09408b12078acf6bf35a4e68131a11e"
+  integrity sha512-QDOVpN0SdjrW4OicHmkuj8T7PWSqEbUs20FX2pTRBw4ReU7BABAp7wwGdtQzZIaPKDv3CTNz/1DygmInbiNgJg==
 
-"@rspack/binding-win32-ia32-msvc@2.0.0-beta.6":
-  version "2.0.0-beta.6"
-  resolved "https://registry.npmjs.org/@rspack/binding-win32-ia32-msvc/-/binding-win32-ia32-msvc-2.0.0-beta.6.tgz#ffe7e54b1752d8e1d1ec857927bd7fcd14f0c4a7"
-  integrity sha512-v3Gc+gRFTBNLSmyHAgI6mE30W94T0g8jD7S1qamUfX6i50YjDylyiMG1prG/8i/YVNWQynQeQi4Cjfg+Hi7alQ==
+"@rspack/binding-win32-ia32-msvc@2.0.0-rc.0":
+  version "2.0.0-rc.0"
+  resolved "https://registry.npmjs.org/@rspack/binding-win32-ia32-msvc/-/binding-win32-ia32-msvc-2.0.0-rc.0.tgz#25805594fe72d024c1a557edf2cf19e83add7cc7"
+  integrity sha512-89CNtgzs67FRHB+lBQoNZmjVqrrd3i+cNCqn0MzCH6Xe12XrO/2eC41gbl69mfYWIYWHpKuySkSTgOOGp0PqNQ==
 
-"@rspack/binding-win32-x64-msvc@2.0.0-beta.6":
-  version "2.0.0-beta.6"
-  resolved "https://registry.npmjs.org/@rspack/binding-win32-x64-msvc/-/binding-win32-x64-msvc-2.0.0-beta.6.tgz#9fefef438bc31beb4f25d7f3b5bab1eef1d58f45"
-  integrity sha512-PjaKOG2rQqzOwsmu03EAyTb7oA52CrO1I8JXiBT07adrDysHvKV/Gi+P0XPuDLDMnxNpndoGJMmvfxsymRpwyA==
+"@rspack/binding-win32-x64-msvc@2.0.0-rc.0":
+  version "2.0.0-rc.0"
+  resolved "https://registry.npmjs.org/@rspack/binding-win32-x64-msvc/-/binding-win32-x64-msvc-2.0.0-rc.0.tgz#d05382086717e38952bc6bf0d4da58060a24a980"
+  integrity sha512-OaxuI+WHzSNoCtv0FfIw41yjCFvwt/aCoEodBSObzm8PH5YbmiYL/FfTeAOVAJbDoEmkA8qYH+gws7vOzgQzSw==
 
-"@rspack/binding@2.0.0-beta.6":
-  version "2.0.0-beta.6"
-  resolved "https://registry.npmjs.org/@rspack/binding/-/binding-2.0.0-beta.6.tgz#d0539b9b9865cb331c584d3f50d9bd9d8c7d0721"
-  integrity sha512-oJytPDJT57cz2is0e/e1myWVNxn+ZcII1/fF2Y3TiXVUIihLC/KDm6ISTgaZKr8ZyjTlVIV3V4wSO7IHlYV6aw==
+"@rspack/binding@2.0.0-rc.0":
+  version "2.0.0-rc.0"
+  resolved "https://registry.npmjs.org/@rspack/binding/-/binding-2.0.0-rc.0.tgz#6c1edf35a2125e6246f2fcab841533d0d34a9308"
+  integrity sha512-zWjMryvt8J8H/Z/sa0MHWfblUTHNCwXhw2x13Yz9Nw2P8JjZ/k/h3ni0xBBl/QubIVoA1IfN2OaiNCtFlVmDrQ==
   optionalDependencies:
-    "@rspack/binding-darwin-arm64" "2.0.0-beta.6"
-    "@rspack/binding-darwin-x64" "2.0.0-beta.6"
-    "@rspack/binding-linux-arm64-gnu" "2.0.0-beta.6"
-    "@rspack/binding-linux-arm64-musl" "2.0.0-beta.6"
-    "@rspack/binding-linux-x64-gnu" "2.0.0-beta.6"
-    "@rspack/binding-linux-x64-musl" "2.0.0-beta.6"
-    "@rspack/binding-wasm32-wasi" "2.0.0-beta.6"
-    "@rspack/binding-win32-arm64-msvc" "2.0.0-beta.6"
-    "@rspack/binding-win32-ia32-msvc" "2.0.0-beta.6"
-    "@rspack/binding-win32-x64-msvc" "2.0.0-beta.6"
+    "@rspack/binding-darwin-arm64" "2.0.0-rc.0"
+    "@rspack/binding-darwin-x64" "2.0.0-rc.0"
+    "@rspack/binding-linux-arm64-gnu" "2.0.0-rc.0"
+    "@rspack/binding-linux-arm64-musl" "2.0.0-rc.0"
+    "@rspack/binding-linux-x64-gnu" "2.0.0-rc.0"
+    "@rspack/binding-linux-x64-musl" "2.0.0-rc.0"
+    "@rspack/binding-wasm32-wasi" "2.0.0-rc.0"
+    "@rspack/binding-win32-arm64-msvc" "2.0.0-rc.0"
+    "@rspack/binding-win32-ia32-msvc" "2.0.0-rc.0"
+    "@rspack/binding-win32-x64-msvc" "2.0.0-rc.0"
 
-"@rspack/cli@2.0.0-beta.6":
-  version "2.0.0-beta.6"
-  resolved "https://registry.npmjs.org/@rspack/cli/-/cli-2.0.0-beta.6.tgz#1297034d365a96b3508f2badb863512977ed277d"
-  integrity sha512-9nprG9/DMLwfxNASkQY6Rh32dSfJWslEjetFtaogz/lJi80HCX5em550OJGSK3WJhTFoV2rOly8mpW+l2juI2g==
+"@rspack/cli@2.0.0-rc.0":
+  version "2.0.0-rc.0"
+  resolved "https://registry.npmjs.org/@rspack/cli/-/cli-2.0.0-rc.0.tgz#55f280d27f87cef4289332e417db9fd7c671e95b"
+  integrity sha512-cNYf5/uZVbdksfybusWg03D+/YyU8qRFJwWq3q3j4AsanspyY1yVT+QhFHgYq1QLw0FGxwlQNlMSXGH0vPa6Tw==
   dependencies:
     "@discoveryjs/json-ext" "^0.5.7"
     exit-hook "^4.0.0"
 
-"@rspack/core@2.0.0-beta.6":
-  version "2.0.0-beta.6"
-  resolved "https://registry.npmjs.org/@rspack/core/-/core-2.0.0-beta.6.tgz#4908d1ab34304dd7a066ad5ed8770543b44689ba"
-  integrity sha512-dvi10ijR9Rr0W75GRFqWvswAEdLBsbXCGhxzm6zXxFNSanNL9s9xPelZ8XfnIU13QZkN2VNHGl9O/8KQEmYdEw==
+"@rspack/core@2.0.0-rc.0":
+  version "2.0.0-rc.0"
+  resolved "https://registry.npmjs.org/@rspack/core/-/core-2.0.0-rc.0.tgz#f727543c74805aa0929c3b74d7872d8e37fa7152"
+  integrity sha512-hFc2284m/075etKLLNsECAwOcyNQ8NHUaBhwJCQJQ3J9iqjDoZisefGC8I457u2iieoc1KNSANB9hxZ0ZOHuJg==
   dependencies:
-    "@rspack/binding" "2.0.0-beta.6"
+    "@rspack/binding" "2.0.0-rc.0"
 
 "@rspack/lite-tapable@^1.0.1":
   version "1.0.1"
