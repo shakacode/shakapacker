@@ -520,7 +520,9 @@ def perform_release(
       abort "❌ Expected gem bump to produce #{resolved_target_gem_version}, but found #{resolved_gem_version}."
     end
 
-    release_it_command = +"release-it #{Shellwords.escape(npm_version)}"
+    # Use npx so maintainers don't need a globally installed `release-it` binary.
+    # This avoids failures from shim managers (e.g. mise) when `release-it` isn't configured.
+    release_it_command = +"npx --yes release-it #{Shellwords.escape(npm_version)}"
     release_it_command << " --npm.publish --no-git.requireCleanWorkingDir"
     release_it_command << " --dry-run --verbose" if dry_run
     npm_dist_tag = npm_dist_tag_for_version(npm_version)
