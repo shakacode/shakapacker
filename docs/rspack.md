@@ -14,7 +14,7 @@ Shakapacker supports both Rspack v1 (`^1.0.0`) and Rspack v2 (`^2.0.0-0`). No co
 
 **React refresh plugin note:** `@rspack/plugin-react-refresh` currently remains on the v1 line in Shakapacker peer deps.
 
-**Current CI coverage note:** Shakapacker currently validates rspack v2 using `2.0.0-beta.6`. The rspack v2 dev dependencies are intentionally pinned while v2 is in beta and should be revisited when stable `2.0.0` is released.
+**Current CI coverage note:** Shakapacker currently validates rspack v2 using `2.0.0-rc.0`. The rspack v2 dev dependencies are intentionally pinned while v2 is pre-release and should be revisited when stable `2.0.0` is released.
 
 ### Why upgrade to Rspack v2?
 
