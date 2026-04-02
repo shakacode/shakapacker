@@ -207,7 +207,7 @@ import("./components/HeavyComponent").then((module) => {
 2. Clear Rails cache: `bundle exec rake tmp:cache:clear`
 3. Check your rendered asset tags use the CDN host. The manifest intentionally stores pack paths without the CDN host:
    ```bash
-   curl -s https://your-app.example.com | grep /packs/
+   curl -s https://your-app.example.com | grep cdn.example.com
    ```
 
 ### CORS Errors

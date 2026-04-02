@@ -258,7 +258,7 @@ This happens when deploying to a custom Rails environment (like `staging`) that 
 
 ```ruby
 # Gemfile
-gem 'shakapacker', '~> 9.1'
+gem 'shakapacker', '~> 9.1.1'
 ```
 
 ```json
