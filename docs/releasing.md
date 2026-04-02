@@ -9,7 +9,7 @@ This guide is for Shakapacker maintainers who need to publish a new release.
    ```bash
    bundle install
    gem install gem-release     # Provides `gem bump` and `gem release`
-   yarn global add release-it  # Installs release-it for npm publishing
+   npm --version               # Required because release task uses `npx release-it`
    gh --version                # Required for automatic GitHub release creation
    ```
 
@@ -24,6 +24,9 @@ This guide is for Shakapacker maintainers who need to publish a new release.
 4. **Authenticate GitHub CLI:**
    - Run `gh auth login` and ensure your account/token has write access to this repository
    - Required for automatic GitHub release creation after publishing
+
+5. **No global `release-it` install required:**
+   - The release task runs `npx --yes release-it ...` automatically
 
 ## Release Process
 
@@ -260,7 +263,7 @@ If you need to release manually (not recommended):
 2. **Publish to npm:**
 
    ```bash
-   release-it 9.1.0 --npm.publish
+   npx --yes release-it 9.1.0 --npm.publish
    ```
 
 3. **Publish to RubyGems:**
