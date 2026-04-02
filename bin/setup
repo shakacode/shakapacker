@@ -1,0 +1,36 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+cd "$ROOT_DIR"
+
+run_cmd() {
+  if [[ -x "$ROOT_DIR/bin/conductor-exec" ]]; then
+    "$ROOT_DIR/bin/conductor-exec" "$@"
+  else
+    "$@"
+  fi
+}
+
+ensure_tool() {
+  local tool="$1"
+  if ! run_cmd "$tool" --version >/dev/null 2>&1; then
+    echo "Error: $tool is not available. Install it and run bin/setup again." >&2
+    exit 1
+  fi
+}
+
+echo "Checking required tools..."
+ensure_tool ruby
+ensure_tool bundle
+ensure_tool node
+ensure_tool yarn
+
+echo "Installing Ruby dependencies..."
+run_cmd bundle install
+
+echo "Installing JavaScript dependencies..."
+run_cmd yarn install
+
+echo "Development dependencies installed."
+echo "Optional: run 'npx husky' to enable local git hooks."
