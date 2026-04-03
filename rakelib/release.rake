@@ -284,10 +284,11 @@ def warn_changelog_missing(gem_root:, npm_version:)
   puts "ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ"
 end
 
-def sync_github_release_after_publish(gem_root:, gem_version:, dry_run:)
+def sync_github_release_after_publish(gem_root:, gem_version:, dry_run:, changelog_section: nil)
   npm_version = Shakapacker::Utils::VersionSyntaxConverter.new.rubygem_to_npm(gem_version)
-  changelog_path = File.join(gem_root, "CHANGELOG.md")
-  section = extract_changelog_section(changelog_path: changelog_path, npm_version: npm_version)
+  section = changelog_section || extract_changelog_section(
+    changelog_path: File.join(gem_root, "CHANGELOG.md"), npm_version: npm_version
+  )
 
   unless section
     puts "ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ"
@@ -444,6 +445,58 @@ def confirm_or_abort!(prompt)
   abort "❌ Aborted by user." unless %w[y yes].include?(answer)
 end
 
+def release_staged_files
+  [
+    "lib/shakapacker/version.rb",
+    "Gemfile.lock",
+    "spec/dummy/Gemfile.lock",
+    "spec/dummy/yarn.lock",
+    "spec/dummy/package-lock.json"
+  ]
+end
+
+def print_release_summary(release_result)
+  released_gem_version = release_result[:released_gem_version]
+  released_npm_version = release_result[:released_npm_version]
+  dry_run = release_result[:dry_run]
+  changelog_section_found = release_result[:changelog_section_found]
+  staged_files = release_result[:staged_files] || []
+
+  puts "\n#{'=' * 80}"
+  puts(dry_run ? "DRY RUN COMPLETE" : "RELEASE COMPLETE!")
+  puts "=" * 80
+
+  if dry_run
+    puts "Version would be bumped to: #{released_gem_version} (gem) / #{released_npm_version} (npm)"
+    puts "\nFiles that would be updated:"
+    staged_files.each { |file| puts "  - #{file}" }
+    puts "  - package.json (updated by release-it)"
+    if changelog_section_found
+      puts "\nChangelog: ✓ CHANGELOG.md section found for v#{released_npm_version}"
+    else
+      puts "\nChangelog: ⚠ No CHANGELOG.md section for v#{released_npm_version} — add one before releasing."
+    end
+    puts "\nTo actually release, run: rake \"release[#{released_gem_version}]\""
+    return
+  end
+
+  puts "Published to npmjs.org:"
+  puts "  - shakapacker@#{released_npm_version}"
+  puts ""
+  puts "Ruby Gem (RubyGems.org):"
+  puts "  - shakapacker #{released_gem_version}"
+  puts ""
+
+  if changelog_section_found
+    puts "Changelog: ✓ CHANGELOG.md section found for v#{released_npm_version}"
+    return
+  end
+
+  puts "Next steps:"
+  puts "  1. Add CHANGELOG.md entries for v#{released_npm_version}."
+  puts "  2. Run bundle exec rake \"sync_github_release[#{released_gem_version}]\""
+end
+
 def perform_release(
   gem_version:,
   dry_run:,
@@ -455,6 +508,9 @@ def perform_release(
   gem_root = File.expand_path("..", __dir__)
   # This is filled inside the release checkout block and used for the post-release GitHub sync.
   released_gem_version = nil
+  released_npm_version = nil
+  changelog_section_found = false
+  staged_files = release_staged_files
 
   unless dry_run
     puts "ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ"
@@ -511,11 +567,13 @@ def perform_release(
     # Explicitly stage all release-related changes so release-it includes them in its commit.
     # release-it only reliably stages files it modifies (package.json); other working tree
     # changes (version.rb, Gemfile.lock, spec/dummy lockfiles) must be pre-staged.
-    Shakapacker::Utils::Misc.sh_in_dir(release_root, "git add lib/shakapacker/version.rb Gemfile.lock spec/dummy/Gemfile.lock spec/dummy/yarn.lock spec/dummy/package-lock.json")
+    staged_files_command = "git add #{Shellwords.join(staged_files)}"
+    Shakapacker::Utils::Misc.sh_in_dir(release_root, staged_files_command)
 
     resolved_gem_version = current_gem_version(release_root)
     released_gem_version = resolved_gem_version
     npm_version = Shakapacker::Utils::VersionSyntaxConverter.new.rubygem_to_npm(resolved_gem_version)
+    released_npm_version = npm_version
     unless resolved_gem_version == resolved_target_gem_version
       abort "❌ Expected gem bump to produce #{resolved_target_gem_version}, but found #{resolved_gem_version}."
     end
@@ -539,12 +597,27 @@ def perform_release(
 
   end
 
-  unless dry_run
-    sync_gem_version = released_gem_version || gem_version.to_s.strip
-    if sync_gem_version && !sync_gem_version.empty?
-      sync_github_release_after_publish(gem_root: gem_root, gem_version: sync_gem_version, dry_run: dry_run)
+  # Check changelog availability for the summary (both dry-run and live paths).
+  sync_gem_version = released_gem_version || gem_version.to_s.strip
+  if sync_gem_version && !sync_gem_version.empty?
+    released_npm_version ||= Shakapacker::Utils::VersionSyntaxConverter.new.rubygem_to_npm(sync_gem_version)
+    changelog_path = File.join(gem_root, "CHANGELOG.md")
+    changelog_section = extract_changelog_section(changelog_path: changelog_path, npm_version: released_npm_version)
+    changelog_section_found = !changelog_section.nil?
+
+    unless dry_run
+      sync_github_release_after_publish(gem_root: gem_root, gem_version: sync_gem_version, dry_run: dry_run,
+                                        changelog_section: changelog_section)
     end
   end
+
+  {
+    dry_run: dry_run,
+    released_gem_version: released_gem_version,
+    released_npm_version: released_npm_version,
+    changelog_section_found: changelog_section_found,
+    staged_files: staged_files
+  }
 end
 
 desc("Releases both the gem and node package using the given version.
@@ -600,7 +673,12 @@ task :release, %i[gem_version dry_run override_version_policy] do |_t, args|
     end
   end
 
-  perform_release(gem_version: requested_version, dry_run: is_dry_run, allow_version_policy_override: allow_override)
+  release_result = perform_release(
+    gem_version: requested_version,
+    dry_run: is_dry_run,
+    allow_version_policy_override: allow_override
+  )
+  print_release_summary(release_result)
 end
 
 desc("Creates or updates a GitHub release from CHANGELOG.md for an already-published gem version.
