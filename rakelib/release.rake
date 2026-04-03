@@ -444,11 +444,22 @@ def confirm_or_abort!(prompt)
   abort "❌ Aborted by user." unless %w[y yes].include?(answer)
 end
 
+def release_staged_files
+  [
+    "lib/shakapacker/version.rb",
+    "Gemfile.lock",
+    "spec/dummy/Gemfile.lock",
+    "spec/dummy/yarn.lock",
+    "spec/dummy/package-lock.json"
+  ]
+end
+
 def print_release_summary(release_result)
   released_gem_version = release_result[:released_gem_version]
   released_npm_version = release_result[:released_npm_version]
   dry_run = release_result[:dry_run]
   changelog_section_found = release_result[:changelog_section_found]
+  staged_files = release_result[:staged_files] || []
 
   puts "\n#{'=' * 80}"
   puts(dry_run ? "DRY RUN COMPLETE" : "RELEASE COMPLETE!")
@@ -457,12 +468,8 @@ def print_release_summary(release_result)
   if dry_run
     puts "Version would be bumped to: #{released_gem_version} (gem) / #{released_npm_version} (npm)"
     puts "\nFiles that would be updated:"
-    puts "  - lib/shakapacker/version.rb"
-    puts "  - package.json"
-    puts "  - Gemfile.lock"
-    puts "  - spec/dummy/Gemfile.lock"
-    puts "  - spec/dummy/yarn.lock"
-    puts "  - spec/dummy/package-lock.json"
+    staged_files.each { |file| puts "  - #{file}" }
+    puts "  - package.json (updated by release-it)"
     puts "\nTo actually release, run: rake \"release[#{released_gem_version}]\""
     return
   end
@@ -497,6 +504,7 @@ def perform_release(
   released_gem_version = nil
   released_npm_version = nil
   changelog_section_found = false
+  staged_files = release_staged_files
 
   unless dry_run
     puts "ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ"
@@ -553,7 +561,8 @@ def perform_release(
     # Explicitly stage all release-related changes so release-it includes them in its commit.
     # release-it only reliably stages files it modifies (package.json); other working tree
     # changes (version.rb, Gemfile.lock, spec/dummy lockfiles) must be pre-staged.
-    Shakapacker::Utils::Misc.sh_in_dir(release_root, "git add lib/shakapacker/version.rb Gemfile.lock spec/dummy/Gemfile.lock spec/dummy/yarn.lock spec/dummy/package-lock.json")
+    staged_files_command = "git add #{Shellwords.join(staged_files)}"
+    Shakapacker::Utils::Misc.sh_in_dir(release_root, staged_files_command)
 
     resolved_gem_version = current_gem_version(release_root)
     released_gem_version = resolved_gem_version
@@ -596,7 +605,8 @@ def perform_release(
     dry_run: dry_run,
     released_gem_version: released_gem_version,
     released_npm_version: released_npm_version,
-    changelog_section_found: changelog_section_found
+    changelog_section_found: changelog_section_found,
+    staged_files: staged_files
   }
 end
 
