@@ -284,10 +284,11 @@ def warn_changelog_missing(gem_root:, npm_version:)
   puts "ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ"
 end
 
-def sync_github_release_after_publish(gem_root:, gem_version:, dry_run:)
+def sync_github_release_after_publish(gem_root:, gem_version:, dry_run:, changelog_section: nil)
   npm_version = Shakapacker::Utils::VersionSyntaxConverter.new.rubygem_to_npm(gem_version)
-  changelog_path = File.join(gem_root, "CHANGELOG.md")
-  section = extract_changelog_section(changelog_path: changelog_path, npm_version: npm_version)
+  section = changelog_section || extract_changelog_section(
+    changelog_path: File.join(gem_root, "CHANGELOG.md"), npm_version: npm_version
+  )
 
   unless section
     puts "ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ"
@@ -470,6 +471,11 @@ def print_release_summary(release_result)
     puts "\nFiles that would be updated:"
     staged_files.each { |file| puts "  - #{file}" }
     puts "  - package.json (updated by release-it)"
+    if changelog_section_found
+      puts "\nChangelog: ✓ CHANGELOG.md section found for v#{released_npm_version}"
+    else
+      puts "\nChangelog: ⚠ No CHANGELOG.md section for v#{released_npm_version} — add one before releasing."
+    end
     puts "\nTo actually release, run: rake \"release[#{released_gem_version}]\""
     return
   end
@@ -591,13 +597,17 @@ def perform_release(
 
   end
 
-  unless dry_run
-    sync_gem_version = released_gem_version || gem_version.to_s.strip
-    if sync_gem_version && !sync_gem_version.empty?
-      released_npm_version ||= Shakapacker::Utils::VersionSyntaxConverter.new.rubygem_to_npm(sync_gem_version)
-      changelog_path = File.join(gem_root, "CHANGELOG.md")
-      changelog_section_found = !extract_changelog_section(changelog_path: changelog_path, npm_version: released_npm_version).nil?
-      sync_github_release_after_publish(gem_root: gem_root, gem_version: sync_gem_version, dry_run: dry_run)
+  # Check changelog availability for the summary (both dry-run and live paths).
+  sync_gem_version = released_gem_version || gem_version.to_s.strip
+  if sync_gem_version && !sync_gem_version.empty?
+    released_npm_version ||= Shakapacker::Utils::VersionSyntaxConverter.new.rubygem_to_npm(sync_gem_version)
+    changelog_path = File.join(gem_root, "CHANGELOG.md")
+    changelog_section = extract_changelog_section(changelog_path: changelog_path, npm_version: released_npm_version)
+    changelog_section_found = !changelog_section.nil?
+
+    unless dry_run
+      sync_github_release_after_publish(gem_root: gem_root, gem_version: sync_gem_version, dry_run: dry_run,
+                                        changelog_section: changelog_section)
     end
   end
 
