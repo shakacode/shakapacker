@@ -21,6 +21,7 @@
 
 - **Widened `@rspack/plugin-react-refresh` peer range to `^1.0.0 || ^2.0.0-0`**. [PR #1091](https://github.com/shakacode/shakapacker/pull/1091) by [ihabadham](https://github.com/ihabadham). Fixes the `ERESOLVE` conflict when installing `@rspack/plugin-react-refresh@^2.0.0` alongside `shakapacker@10.0.0`.
 - **Fixed `NodePackageVersion#find_version` for local-path `shakapacker` installs (e.g. `yalc`, `file:`, relative paths)**. [PR #1086](https://github.com/shakacode/shakapacker/pull/1086) by [justin808](https://github.com/justin808). The version check now consults `package.json` first and short-circuits on `../` or `file:` dependencies, so stale lockfile semvers no longer trigger false gem↔node version mismatches. `package_json_dependency` also consults `devDependencies` in addition to `dependencies`. The `LOCAL_PATH_REGEX` constant replaces a duplicated inline regex and anchors both alternatives to the start of the string, removing a latent false-positive on version strings containing `..` mid-value.
+- **Fix rspack setup not reusing certain shared webpack-rspack config settings**. [PR #1085](https://github.com/shakacode/shakapacker/pull/1085) by [brunodccarvalho](https://github.com/brunodccarvalho). Default config changes include `optimization.splitChunks.chunks="all"`, `optimization.runtimeChunk="single"`, the webpack compression plugin in production, and the removal of minimization plugins in development. Fixes [#984](https://github.com/shakacode/shakapacker/issues/984).
 
 ## [v10.0.0] - April 8, 2026
 
