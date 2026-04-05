@@ -9,6 +9,10 @@
 
 ## [Unreleased]
 
+### Fixed
+
+- **Fix rspack setup not reusing certain shared webpack-rspack config settings**. [PR #1084](https://github.com/shakacode/shakapacker/pull/1084) by [brunodccarvalho](https://github.com/brunodccarvalho). Default config changes include `optimization.splitChunks.chunks="all"`, `optimization.runtimeChunk="single"`, the webpack compression plugin in production, and the removal of minimization plugins in development. Fixes [#984](https://github.com/shakacode/shakapacker/issues/984).
+
 ## [v10.0.0-rc.0] - April 1, 2026
 
 ### Added

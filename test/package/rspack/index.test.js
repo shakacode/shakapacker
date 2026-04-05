@@ -167,6 +167,16 @@ describe("rspack/index", () => {
       expect(config).toHaveProperty("output.path", "new path")
     })
 
+    test("retains environment config and plugins", () => {
+      // default sets runtimeChunk to 'single', splitChunks.chunks to 'all'
+      const config = rspackIndex.generateRspackConfig({
+        optimization: { runtimeChunk: "multiple" },
+      })
+
+      expect(config).toHaveProperty("optimization.splitChunks.chunks", "all")
+      expect(config).toHaveProperty("optimization.runtimeChunk", "multiple")
+    })
+
     test("includes module rules in config", () => {
       const config = rspackIndex.generateRspackConfig()
 
