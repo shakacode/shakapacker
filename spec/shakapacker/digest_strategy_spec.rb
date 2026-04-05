@@ -8,7 +8,7 @@ describe "DigestStrategy" do
   end
 
   before :all do
-    @digest_strategy = Shakapacker::DigestStrategy.new
+    @digest_strategy = Shakapacker::DigestStrategy.new(Shakapacker.instance)
     remove_compilation_digest_path
   end
 
