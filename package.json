@@ -44,6 +44,7 @@
   },
   "dependencies": {
     "js-yaml": "^4.1.0",
+    "pack-config-diff": "^0.1.0",
     "path-complete-extname": "^1.0.0",
     "webpack-merge": "^5.8.0",
     "yargs": "^17.7.2"
@@ -201,9 +202,6 @@
     "webpack-subresource-integrity": {
       "optional": true
     }
-  },
-  "optionalDependencies": {
-    "pack-config-diff": "^0.1.0"
   },
   "packageManager": "yarn@1.22.22",
   "lint-staged": {
