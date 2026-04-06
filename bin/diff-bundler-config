@@ -1,9 +1,23 @@
 #!/usr/bin/env node
 
 const { spawnSync } = require("child_process")
+const path = require("path")
 
 const PACK_CONFIG_DIFF_PACKAGE = "pack-config-diff"
-const PACK_CONFIG_DIFF_NPX_SPEC = "pack-config-diff@^0.1.0"
+
+function getNpxSpec() {
+  try {
+    const pkg = require(path.join(__dirname, "..", "package.json"))
+    const version =
+      (pkg.optionalDependencies &&
+        pkg.optionalDependencies[PACK_CONFIG_DIFF_PACKAGE]) ||
+      (pkg.dependencies && pkg.dependencies[PACK_CONFIG_DIFF_PACKAGE])
+    if (version) return `${PACK_CONFIG_DIFF_PACKAGE}@${version}`
+  } catch (_) {
+    // Fall through to default
+  }
+  return `${PACK_CONFIG_DIFF_PACKAGE}@^0.1.0`
+}
 
 function formatError(error) {
   return error instanceof Error ? error.message : String(error)
@@ -42,11 +56,9 @@ function runViaNpx() {
     `[Shakapacker] ${PACK_CONFIG_DIFF_PACKAGE} is not installed locally. ` +
       "Falling back to npx and prompting before download."
   )
-  const result = spawnSync(
-    "npx",
-    [PACK_CONFIG_DIFF_NPX_SPEC, ...process.argv.slice(2)],
-    { stdio: "inherit" }
-  )
+  const result = spawnSync("npx", [getNpxSpec(), ...process.argv.slice(2)], {
+    stdio: "inherit"
+  })
 
   if (result.error) {
     console.error(
@@ -55,7 +67,13 @@ function runViaNpx() {
     process.exit(2)
   }
 
-  process.exit(result.status ?? 2)
+  if (result.signal || result.status == null) {
+    process.exit(2)
+  }
+
+  // Forward only pack-config-diff's documented exit codes (0 = no diffs, 1 = diffs found).
+  // Any other code (e.g. 127 = npx not found, 126 = permission denied) is a tool failure.
+  process.exit(result.status <= 1 ? result.status : 2)
 }
 
 let run
@@ -66,7 +84,6 @@ try {
 } catch (error) {
   if (isMissingPackConfigDiff(error)) {
     runViaNpx()
-    process.exit(2)
   } else {
     console.error(
       `[Shakapacker] Failed to load ${PACK_CONFIG_DIFF_PACKAGE}: ${formatError(error)}`

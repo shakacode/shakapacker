@@ -1010,22 +1010,29 @@ module Shakapacker
           end
 
           def print_binstub_status
-            binstubs = [
-              "bin/shakapacker",
-              "bin/shakapacker-dev-server",
-              "bin/shakapacker-config",
-              "bin/shakapacker-watch",
-              "bin/diff-bundler-config"
+            required_binstubs = %w[
+              bin/shakapacker
+              bin/shakapacker-dev-server
+              bin/shakapacker-config
+            ]
+            optional_binstubs = %w[
+              bin/shakapacker-watch
+              bin/diff-bundler-config
             ]
 
-            existing_binstubs = binstubs.select { |b| doctor.root_path.join(b).exist? }
+            existing_required = required_binstubs.select { |b| doctor.root_path.join(b).exist? }
+            existing_optional = optional_binstubs.select { |b| doctor.root_path.join(b).exist? }
 
-            if existing_binstubs.length == binstubs.length
-              puts "✓ All Shakapacker binstubs found (#{existing_binstubs.join(', ')})"
-            elsif existing_binstubs.any?
-              existing_binstubs.each do |binstub|
+            if existing_required.length == required_binstubs.length
+              puts "✓ All required Shakapacker binstubs found (#{existing_required.join(', ')})"
+            elsif existing_required.any?
+              existing_required.each do |binstub|
                 puts "✓ #{binstub} found"
               end
+            end
+
+            existing_optional.each do |binstub|
+              puts "✓ #{binstub} found (optional)"
             end
           end
 
