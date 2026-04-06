@@ -3,8 +3,7 @@
 const { spawnSync } = require("child_process")
 
 const PACK_CONFIG_DIFF_PACKAGE = "pack-config-diff"
-const PACK_CONFIG_DIFF_REF =
-  "github:shakacode/pack-config-diff#6bb09f4ba933ef5978c534b1c278156e438dce2e"
+const PACK_CONFIG_DIFF_NPX_SPEC = "pack-config-diff@^0.1.0"
 
 function formatError(error) {
   return error instanceof Error ? error.message : String(error)
@@ -45,7 +44,7 @@ function runViaNpx() {
   )
   const result = spawnSync(
     "npx",
-    [PACK_CONFIG_DIFF_REF, ...process.argv.slice(2)],
+    [PACK_CONFIG_DIFF_NPX_SPEC, ...process.argv.slice(2)],
     { stdio: "inherit" }
   )
 
