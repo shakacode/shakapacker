@@ -56,6 +56,7 @@ jobs:
 
       - name: Install dependencies
         run: |
+          yarn install
           yalc add shakapacker
 
       - name: Switch to Webpack
@@ -108,6 +109,7 @@ jobs:
 
       - name: Install dependencies
         run: |
+          yarn install
           yalc add shakapacker
 
       - name: Switch to RSpack
@@ -160,6 +162,7 @@ jobs:
 
       - name: Install dependencies
         run: |
+          yarn install
           yalc add shakapacker
 
       - name: Test switching between bundlers

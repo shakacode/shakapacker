@@ -27,6 +27,7 @@ namespace :run_spec do
       sh_in_dir(".", "yalc publish")
       sh_in_dir(spec_dummy_dir, [
         "bundle install",
+        "npm install",
         "yalc add shakapacker",
         "bin/test-bundler webpack",
         "NODE_ENV=test RAILS_ENV=test bin/shakapacker",
@@ -43,6 +44,7 @@ namespace :run_spec do
       sh_in_dir(".", "yalc publish")
       sh_in_dir(spec_dummy_dir, [
         "bundle install",
+        "npm install",
         "yalc add shakapacker",
         "bin/test-bundler rspack",
         "NODE_ENV=test RAILS_ENV=test bin/shakapacker",
@@ -59,6 +61,7 @@ namespace :run_spec do
       sh_in_dir(".", "yalc publish")
       sh_in_dir(spec_dummy_dir, [
         "bundle install",
+        "npm install",
         "yalc add shakapacker",
         "NODE_ENV=test RAILS_ENV=test npm exec --no -- rspack build --config config/rspack/rspack.config.js",
         "bundle exec rspec"
