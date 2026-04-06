@@ -58,6 +58,7 @@ jobs:
         run: |
           yarn install
           yalc add shakapacker
+          yarn install
 
       - name: Switch to Webpack
         run: bin/test-bundler webpack
@@ -111,6 +112,7 @@ jobs:
         run: |
           yarn install
           yalc add shakapacker
+          yarn install
 
       - name: Switch to RSpack
         run: bin/test-bundler rspack
@@ -164,6 +166,7 @@ jobs:
         run: |
           yarn install
           yalc add shakapacker
+          yarn install
 
       - name: Test switching between bundlers
         run: |

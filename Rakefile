@@ -29,6 +29,7 @@ namespace :run_spec do
         "bundle install",
         "npm install",
         "yalc add shakapacker",
+        "yarn install",
         "bin/test-bundler webpack",
         "NODE_ENV=test RAILS_ENV=test bin/shakapacker",
         "bundle exec rspec"
@@ -46,6 +47,7 @@ namespace :run_spec do
         "bundle install",
         "npm install",
         "yalc add shakapacker",
+        "yarn install",
         "bin/test-bundler rspack",
         "NODE_ENV=test RAILS_ENV=test bin/shakapacker",
         "bundle exec rspec"
@@ -63,6 +65,7 @@ namespace :run_spec do
         "bundle install",
         "npm install",
         "yalc add shakapacker",
+        "yarn install",
         "NODE_ENV=test RAILS_ENV=test npm exec --no -- rspack build --config config/rspack/rspack.config.js",
         "bundle exec rspec"
       ])
