@@ -77,7 +77,7 @@ function runViaNpx() {
 let run
 
 try {
-  const loadedModule = require(PACK_CONFIG_DIFF_PACKAGE)
+  const loadedModule = require("pack-config-diff")
   run = loadedModule.run
 } catch (error) {
   if (isMissingPackConfigDiff(error)) {
