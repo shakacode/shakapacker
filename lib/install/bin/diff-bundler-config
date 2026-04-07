@@ -9,7 +9,8 @@ function getNpxSpec() {
   try {
     const pkg = require(path.join(__dirname, "..", "package.json"))
     const version =
-      (pkg.optionalDependencies && pkg.optionalDependencies[PACK_CONFIG_DIFF_PACKAGE]) ||
+      (pkg.optionalDependencies &&
+        pkg.optionalDependencies[PACK_CONFIG_DIFF_PACKAGE]) ||
       (pkg.dependencies && pkg.dependencies[PACK_CONFIG_DIFF_PACKAGE])
     if (version) return `${PACK_CONFIG_DIFF_PACKAGE}@${version}`
   } catch (_) {
