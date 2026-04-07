@@ -12,6 +12,17 @@ module Shakapacker
     CATEGORY_RECOMMENDED = :recommended
     CATEGORY_INFO = :info
 
+    REQUIRED_BINSTUBS = {
+      "bin/shakapacker" => "Main Shakapacker binstub",
+      "bin/shakapacker-dev-server" => "Development server binstub",
+      "bin/shakapacker-config" => "Config export binstub"
+    }.freeze
+
+    OPTIONAL_BINSTUBS = %w[
+      bin/shakapacker-watch
+      bin/diff-bundler-config
+    ].freeze
+
     def initialize(config = nil, root_path = nil, options = {})
       @config = config || Shakapacker.config
       @root_path = root_path || (defined?(Rails) ? Rails.root : Pathname.new(Dir.pwd))
@@ -388,13 +399,7 @@ module Shakapacker
       def check_binstub
         missing_binstubs = []
 
-        required_binstubs = {
-          "bin/shakapacker" => "Main Shakapacker binstub",
-          "bin/shakapacker-dev-server" => "Development server binstub",
-          "bin/shakapacker-config" => "Config export binstub"
-        }
-
-        required_binstubs.each do |path, description|
+        REQUIRED_BINSTUBS.each do |path, description|
           unless root_path.join(path).exist?
             missing_binstubs << "#{path} (#{description})"
           end
@@ -1010,20 +1015,12 @@ module Shakapacker
           end
 
           def print_binstub_status
-            required_binstubs = %w[
-              bin/shakapacker
-              bin/shakapacker-dev-server
-              bin/shakapacker-config
-            ]
-            optional_binstubs = %w[
-              bin/shakapacker-watch
-              bin/diff-bundler-config
-            ]
+            required_paths = REQUIRED_BINSTUBS.keys
 
-            existing_required = required_binstubs.select { |b| doctor.root_path.join(b).exist? }
-            existing_optional = optional_binstubs.select { |b| doctor.root_path.join(b).exist? }
+            existing_required = required_paths.select { |b| doctor.root_path.join(b).exist? }
+            existing_optional = OPTIONAL_BINSTUBS.select { |b| doctor.root_path.join(b).exist? }
 
-            if existing_required.length == required_binstubs.length
+            if existing_required.length == required_paths.length
               puts "✓ All required Shakapacker binstubs found (#{existing_required.join(', ')})"
             elsif existing_required.any?
               existing_required.each do |binstub|

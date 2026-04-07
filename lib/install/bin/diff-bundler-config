@@ -9,7 +9,8 @@ function getNpxSpec() {
   try {
     const pkg = require(path.join(__dirname, "..", "package.json"))
     const version =
-      pkg.dependencies && pkg.dependencies[PACK_CONFIG_DIFF_PACKAGE]
+      (pkg.optionalDependencies && pkg.optionalDependencies[PACK_CONFIG_DIFF_PACKAGE]) ||
+      (pkg.dependencies && pkg.dependencies[PACK_CONFIG_DIFF_PACKAGE])
     if (version) return `${PACK_CONFIG_DIFF_PACKAGE}@${version}`
   } catch (_) {
     // Fall through to default
@@ -42,7 +43,7 @@ function exitWithCode(exitCode) {
 }
 
 function runViaNpx() {
-  if (process.env.CI && !process.stdin.isTTY) {
+  if (process.env.CI) {
     console.error(
       `[Shakapacker] ${PACK_CONFIG_DIFF_PACKAGE} is not installed locally, and npx fallback requires an interactive prompt. ` +
         `Install ${PACK_CONFIG_DIFF_PACKAGE} locally before running in CI.`
