@@ -40,7 +40,9 @@ function exitWithCode(exitCode) {
     process.exit(2)
   }
 
-  process.exit(exitCode)
+  // Forward only pack-config-diff's documented exit codes (0 = no diffs, 1 = diffs found).
+  // Any other code is a tool failure — normalize to 2, matching the npx fallback path.
+  process.exit(exitCode <= 1 ? exitCode : 2)
 }
 
 function runViaNpx() {
