@@ -1,5 +1,7 @@
 #!/usr/bin/env node
 
+const { createRequire } = require("module")
+
 const PACK_CONFIG_DIFF_PACKAGE = "pack-config-diff"
 
 function formatError(error) {
@@ -22,7 +24,12 @@ function exitWithCode(exitCode) {
 let run
 
 try {
-  const loadedModule = require("pack-config-diff")
+  // Resolve pack-config-diff via shakapacker's dependency tree so strict package
+  // managers (pnpm, Yarn PnP) can find the transitive dependency.
+  const shakapackerRequire = createRequire(
+    require.resolve("shakapacker/package.json")
+  )
+  const loadedModule = shakapackerRequire("pack-config-diff")
   run = loadedModule.run
 } catch (error) {
   console.error(
