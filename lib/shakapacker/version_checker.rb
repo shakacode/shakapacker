@@ -67,7 +67,7 @@ module Shakapacker
 
       # TODO: this might as well use package_json
       class NodePackageVersion
-        LOCAL_PATH_REGEX = %r{(\.\.|\Afile:)}.freeze
+        LOCAL_PATH_REGEX = %r{\A(\.\.(/|\z)|file:)}.freeze
 
         attr_reader :package_json
 
@@ -143,8 +143,16 @@ module Shakapacker
             @package_json_contents ||= File.read(package_json)
           end
 
+          def parsed_package_json
+            @parsed_package_json ||= JSON.parse(package_json_contents)
+          end
+
           def package_json_dependency
-            @package_json_dependency ||= JSON.parse(package_json_contents).dig("dependencies", "shakapacker").to_s
+            @package_json_dependency ||= begin
+              dependency = parsed_package_json.dig("dependencies", "shakapacker")
+              dependency ||= parsed_package_json.dig("devDependencies", "shakapacker")
+              dependency.to_s
+            end
           end
 
           def find_version

@@ -404,6 +404,29 @@ describe "VersionChecker::NodePackageVersion" do
       end
     end
 
+    it "prefers a file dependency from devDependencies over a stale yarn lock version" do
+      Dir.mktmpdir do |dir|
+        package_json_path = File.join(dir, "package.json")
+        yarn_lock_path = File.join(dir, "yarn.lock")
+
+        File.write(package_json_path, JSON.generate({ "devDependencies" => { "shakapacker" => "file:.yalc/shakapacker" } }))
+        File.write(yarn_lock_path, <<~LOCK)
+          shakapacker@9.7.0:
+            version "9.7.0"
+        LOCK
+
+        node_package_version = Shakapacker::VersionChecker::NodePackageVersion.new(
+          package_json_path,
+          yarn_lock_path,
+          "file/does/not/exist",
+          "file/does/not/exist"
+        )
+
+        expect(node_package_version.raw).to eq "file:.yalc/shakapacker"
+        expect(node_package_version.skip_processing?).to be true
+      end
+    end
+
     context "when using a git url" do
       let(:node_package_version_from_git_url) { node_package_version(fixture_version: "git_url") }
 
