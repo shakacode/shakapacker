@@ -67,6 +67,8 @@ module Shakapacker
 
       # TODO: this might as well use package_json
       class NodePackageVersion
+        LOCAL_PATH_REGEX = %r{(\.\.|\Afile:)}.freeze
+
         attr_reader :package_json
 
         def self.build
@@ -126,7 +128,7 @@ module Shakapacker
           end
 
           def relative_path?
-            raw.match(%r{(\.\.|\Afile:)}).present?
+            raw.match(LOCAL_PATH_REGEX).present?
           end
 
           def git_url?
@@ -148,7 +150,8 @@ module Shakapacker
           def find_version
             # Prefer the declared package.json source for local path installs so
             # yalc/file dependencies are not mistaken for the stale semver in a lockfile.
-            return package_json_dependency if package_json_dependency.match(%r{(\.\.|\Afile:)}).present?
+            dep = package_json_dependency
+            return dep if dep.match(LOCAL_PATH_REGEX).present?
 
             if File.exist?(@yarn_lock)
               version = from_yarn_lock
