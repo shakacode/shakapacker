@@ -78,12 +78,7 @@ describe("rspack/index", () => {
   const loadRspackIndex = (nodeEnv = "development") => {
     const previousNodeEnv = process.env.NODE_ENV
     jest.resetModules()
-
-    if (nodeEnv === undefined) {
-      delete process.env.NODE_ENV
-    } else {
-      process.env.NODE_ENV = nodeEnv
-    }
+    process.env.NODE_ENV = nodeEnv
 
     const loadedRspackIndex = require("../../../package/rspack/index")
     const {
@@ -228,7 +223,8 @@ describe("rspack/index", () => {
     })
 
     test("preserves production compression plugins and minimizers", () => {
-      const { rspackIndex: productionRspackIndex } = loadRspackIndex("production")
+      const { rspackIndex: productionRspackIndex } =
+        loadRspackIndex("production")
       const config = productionRspackIndex.generateRspackConfig({
         optimization: { runtimeChunk: "multiple" }
       })
@@ -240,7 +236,9 @@ describe("rspack/index", () => {
       expect(config).toHaveProperty("optimization.runtimeChunk", "multiple")
       expect(config).toHaveProperty("optimization.minimize", true)
       expect(config.optimization.minimizer).toHaveLength(2)
-      expect(compressionPlugins).toHaveLength("brotli" in process.versions ? 2 : 1)
+      expect(compressionPlugins).toHaveLength(
+        "brotli" in process.versions ? 2 : 1
+      )
     })
 
     test("errors if multiple configs are provided", () => {

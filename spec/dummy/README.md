@@ -20,7 +20,12 @@ cd spec/dummy
 bundle install
 yalc link shakapacker
 npm install
+yalc link shakapacker
 ```
+
+The second `yalc link shakapacker` is required because `npm install`/`yarn install` restores the
+published package from the lockfiles. Re-linking ensures the dummy app runs against the locally
+published package from this repository.
 
 Now you're ready to use the dummy app!
 
