@@ -1,5 +1,6 @@
 require_relative "spec_helper_initializer"
 require "shakapacker/version"
+require "tmpdir"
 
 class NodePackageVersionDouble
   attr_reader :raw, :major_minor_patch
@@ -363,20 +364,43 @@ describe "VersionChecker::NodePackageVersion" do
     context "when using a relative path" do
       let(:node_package_version_from_relative_path) { node_package_version(fixture_version: "relative_path") }
 
-      it "#raw returns the raw version" do
-        expect(node_package_version_from_relative_path.raw).to eq "6.5.0"
+      it "#raw returns the relative path" do
+        expect(node_package_version_from_relative_path.raw).to eq "../.."
       end
 
-      it "#major_minor_patch returns an array" do
-        expect(node_package_version_from_relative_path.major_minor_patch).to eq ["6", "5", "0"]
+      it "#major_minor_patch returns nil" do
+        expect(node_package_version_from_relative_path.major_minor_patch).to be nil
       end
 
-      it "#skip_processing? returns false" do
-        expect(node_package_version_from_relative_path.skip_processing?).to be false
+      it "#skip_processing? returns true" do
+        expect(node_package_version_from_relative_path.skip_processing?).to be true
       end
 
       it "#semver_wildcard? returns false" do
         expect(node_package_version_from_relative_path.semver_wildcard?).to be false
+      end
+    end
+
+    it "prefers a file dependency from package.json over a stale yarn lock version" do
+      Dir.mktmpdir do |dir|
+        package_json_path = File.join(dir, "package.json")
+        yarn_lock_path = File.join(dir, "yarn.lock")
+
+        File.write(package_json_path, JSON.generate({ "dependencies" => { "shakapacker" => "file:.yalc/shakapacker" } }))
+        File.write(yarn_lock_path, <<~LOCK)
+          shakapacker@9.7.0:
+            version "9.7.0"
+        LOCK
+
+        node_package_version = Shakapacker::VersionChecker::NodePackageVersion.new(
+          package_json_path,
+          yarn_lock_path,
+          "file/does/not/exist",
+          "file/does/not/exist"
+        )
+
+        expect(node_package_version.raw).to eq "file:.yalc/shakapacker"
+        expect(node_package_version.skip_processing?).to be true
       end
     end
 
@@ -534,16 +558,16 @@ describe "VersionChecker::NodePackageVersion" do
     context "when using a relative path" do
       let(:node_package_version_from_relative_path) { node_package_version(fixture_version: "relative_path") }
 
-      it "#raw returns the raw version" do
-        expect(node_package_version_from_relative_path.raw).to eq "6.5.0"
+      it "#raw returns the relative path" do
+        expect(node_package_version_from_relative_path.raw).to eq "../.."
       end
 
-      it "#major_minor_patch returns an array" do
-        expect(node_package_version_from_relative_path.major_minor_patch).to eq ["6", "5", "0"]
+      it "#major_minor_patch returns nil" do
+        expect(node_package_version_from_relative_path.major_minor_patch).to be nil
       end
 
-      it "#skip_processing? returns false" do
-        expect(node_package_version_from_relative_path.skip_processing?).to be false
+      it "#skip_processing? returns true" do
+        expect(node_package_version_from_relative_path.skip_processing?).to be true
       end
 
       it "#semver_wildcard? returns false" do
@@ -706,7 +730,7 @@ describe "VersionChecker::NodePackageVersion" do
       let(:node_package_version_from_relative_path) { node_package_version(fixture_version: "relative_path") }
 
       it "#raw returns the relative path" do
-        expect(node_package_version_from_relative_path.raw).to eq "file:../.."
+        expect(node_package_version_from_relative_path.raw).to eq "../.."
       end
 
       it "#major_minor_patch returns nil" do
