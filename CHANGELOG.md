@@ -13,7 +13,7 @@
 
 ### Added
 
-- **Added `bin/diff-bundler-config` CLI for semantic bundler configuration diffs**. [PR #973](https://github.com/shakacode/shakapacker/pull/973) by [justin808](https://github.com/justin808). Wraps the extracted [`pack-config-diff`](https://github.com/shakacode/pack-config-diff) package to provide semantic diffing of webpack/rspack configurations with normalized exit codes. Supersedes #961.
+- **Added `bin/diff-bundler-config` CLI for semantic bundler configuration diffs**. [PR #973](https://github.com/shakacode/shakapacker/pull/973) by [justin808](https://github.com/justin808). Wraps the extracted [`pack-config-diff`](https://github.com/shakacode/pack-config-diff) package to provide semantic diffing of webpack/rspack configurations with normalized exit codes. Supersedes [#961](https://github.com/shakacode/shakapacker/pull/961).
 - **Added `bin/shakapacker-watch` binstub for clean Ctrl-C shutdown in Procfile-based workflows**. [PR #1026](https://github.com/shakacode/shakapacker/pull/1026) by [justin808](https://github.com/justin808). The new wrapper script traps INT/TERM signals and forwards TERM to the underlying `bin/shakapacker --watch` process, preventing Ruby interrupt backtraces when stopping `bin/dev`. Use `bin/shakapacker-watch --watch` in Procfiles instead of `bin/shakapacker --watch`.
 - **Allowed `webpack-cli` v7 (`^7.0.0`) in peer dependencies**. [PR #1021](https://github.com/shakacode/shakapacker/pull/1021) by [justin808](https://github.com/justin808). Fixes [#1020](https://github.com/shakacode/shakapacker/issues/1020). Note: `webpack-cli` v7 requires Node.js >= 20.9.0.
 
