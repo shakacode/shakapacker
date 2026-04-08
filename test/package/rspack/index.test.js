@@ -75,12 +75,35 @@ describe("rspack/index", () => {
   let rspackIndex
   let validateRspackDependencies
 
-  beforeEach(() => {
+  const loadRspackIndex = (nodeEnv = "development") => {
+    const previousNodeEnv = process.env.NODE_ENV
     jest.resetModules()
-    rspackIndex = require("../../../package/rspack/index")
-    ;({
-      validateRspackDependencies
-    } = require("../../../package/utils/validateDependencies"))
+
+    if (nodeEnv === undefined) {
+      delete process.env.NODE_ENV
+    } else {
+      process.env.NODE_ENV = nodeEnv
+    }
+
+    const loadedRspackIndex = require("../../../package/rspack/index")
+    const {
+      validateRspackDependencies: loadedValidateRspackDependencies
+    } = require("../../../package/utils/validateDependencies")
+
+    if (previousNodeEnv === undefined) {
+      delete process.env.NODE_ENV
+    } else {
+      process.env.NODE_ENV = previousNodeEnv
+    }
+
+    return {
+      rspackIndex: loadedRspackIndex,
+      validateRspackDependencies: loadedValidateRspackDependencies
+    }
+  }
+
+  beforeEach(() => {
+    ;({ rspackIndex, validateRspackDependencies } = loadRspackIndex())
   })
 
   afterAll(() => process.chdir(rootPath))
@@ -167,14 +190,14 @@ describe("rspack/index", () => {
       expect(config).toHaveProperty("output.path", "new path")
     })
 
-    test("retains environment config and plugins", () => {
-      // default sets runtimeChunk to 'single', splitChunks.chunks to 'all'
+    test("deep-merges development optimization overrides without losing shared defaults", () => {
       const config = rspackIndex.generateRspackConfig({
-        optimization: { runtimeChunk: "multiple" },
+        optimization: { runtimeChunk: "multiple" }
       })
 
       expect(config).toHaveProperty("optimization.splitChunks.chunks", "all")
       expect(config).toHaveProperty("optimization.runtimeChunk", "multiple")
+      expect(config.optimization).not.toHaveProperty("minimize")
     })
 
     test("includes module rules in config", () => {
@@ -195,11 +218,29 @@ describe("rspack/index", () => {
       expect(Array.isArray(config.plugins)).toBe(true)
     })
 
-    test("includes optimization in config", () => {
+    test("preserves development optimization defaults from the environment config", () => {
       const config = rspackIndex.generateRspackConfig()
 
       expect(config.optimization).toBeDefined()
-      expect(config.optimization).toHaveProperty("minimize")
+      expect(config).toHaveProperty("optimization.splitChunks.chunks", "all")
+      expect(config).toHaveProperty("optimization.runtimeChunk", "single")
+      expect(config.optimization).not.toHaveProperty("minimize")
+    })
+
+    test("preserves production compression plugins and minimizers", () => {
+      const { rspackIndex: productionRspackIndex } = loadRspackIndex("production")
+      const config = productionRspackIndex.generateRspackConfig({
+        optimization: { runtimeChunk: "multiple" }
+      })
+      const compressionPlugins = config.plugins.filter(
+        (plugin) => plugin.constructor?.name === "CompressionPlugin"
+      )
+
+      expect(config).toHaveProperty("optimization.splitChunks.chunks", "all")
+      expect(config).toHaveProperty("optimization.runtimeChunk", "multiple")
+      expect(config).toHaveProperty("optimization.minimize", true)
+      expect(config.optimization.minimizer).toHaveLength(2)
+      expect(compressionPlugins).toHaveLength("brotli" in process.versions ? 2 : 1)
     })
 
     test("errors if multiple configs are provided", () => {
