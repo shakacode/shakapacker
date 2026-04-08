@@ -1,35 +1,9 @@
 #!/usr/bin/env node
 
-const { spawnSync } = require("child_process")
-const path = require("path")
-
 const PACK_CONFIG_DIFF_PACKAGE = "pack-config-diff"
-
-function getNpxSpec() {
-  try {
-    const pkg = require(path.join(__dirname, "..", "package.json"))
-    const version =
-      (pkg.optionalDependencies &&
-        pkg.optionalDependencies[PACK_CONFIG_DIFF_PACKAGE]) ||
-      (pkg.dependencies && pkg.dependencies[PACK_CONFIG_DIFF_PACKAGE])
-    if (version) return `${PACK_CONFIG_DIFF_PACKAGE}@${version}`
-  } catch (_) {
-    // Fall through to default
-  }
-  return `${PACK_CONFIG_DIFF_PACKAGE}@^0.1.0`
-}
 
 function formatError(error) {
   return error instanceof Error ? error.message : String(error)
-}
-
-function isMissingPackConfigDiff(error) {
-  return (
-    error &&
-    error.code === "MODULE_NOT_FOUND" &&
-    typeof error.message === "string" &&
-    error.message.includes(`'${PACK_CONFIG_DIFF_PACKAGE}'`)
-  )
 }
 
 function exitWithCode(exitCode) {
@@ -41,41 +15,8 @@ function exitWithCode(exitCode) {
   }
 
   // Forward only pack-config-diff's documented exit codes (0 = no diffs, 1 = diffs found).
-  // Any other code is a tool failure — normalize to 2, matching the npx fallback path.
+  // Any other code is a tool failure — normalize to 2.
   process.exit(exitCode <= 1 ? exitCode : 2)
-}
-
-function runViaNpx() {
-  if (process.env.CI) {
-    console.error(
-      `[Shakapacker] ${PACK_CONFIG_DIFF_PACKAGE} is not installed locally, and npx fallback requires an interactive prompt. ` +
-        `Install ${PACK_CONFIG_DIFF_PACKAGE} locally before running in CI.`
-    )
-    process.exit(2)
-  }
-
-  console.error(
-    `[Shakapacker] ${PACK_CONFIG_DIFF_PACKAGE} is not installed locally. ` +
-      "Falling back to npx and prompting before download."
-  )
-  const result = spawnSync("npx", [getNpxSpec(), ...process.argv.slice(2)], {
-    stdio: "inherit"
-  })
-
-  if (result.error) {
-    console.error(
-      `[Shakapacker] Failed to run ${PACK_CONFIG_DIFF_PACKAGE} via npx: ${formatError(result.error)}`
-    )
-    process.exit(2)
-  }
-
-  if (result.signal || result.status == null) {
-    process.exit(2)
-  }
-
-  // Forward only pack-config-diff's documented exit codes (0 = no diffs, 1 = diffs found).
-  // Any other code (e.g. 127 = npx not found, 126 = permission denied) is a tool failure.
-  process.exit(result.status <= 1 ? result.status : 2)
 }
 
 let run
@@ -84,14 +25,10 @@ try {
   const loadedModule = require("pack-config-diff")
   run = loadedModule.run
 } catch (error) {
-  if (isMissingPackConfigDiff(error)) {
-    runViaNpx()
-  } else {
-    console.error(
-      `[Shakapacker] Failed to load ${PACK_CONFIG_DIFF_PACKAGE}: ${formatError(error)}`
-    )
-    process.exit(2)
-  }
+  console.error(
+    `[Shakapacker] Failed to load ${PACK_CONFIG_DIFF_PACKAGE}: ${formatError(error)}`
+  )
+  process.exit(2)
 }
 
 if (typeof run !== "function") {

@@ -128,7 +128,7 @@ bin/diff-bundler-config --left=a.yaml --right=b.yaml --format=yaml
 
 - `0`: no differences found
 - `1`: differences found
-- `2`: wrapper/runtime error (module load error, invalid return code, npx fallback failure)
+- `2`: wrapper/runtime error (module load error, invalid return code)
 
 For CI usage, treat `1` as "configs differ" and `2` as "tool/runtime failure".
 
