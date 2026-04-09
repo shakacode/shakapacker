@@ -9,7 +9,7 @@
 
 ## [Unreleased]
 
-## [v10.0.0-rc.1] - April 7, 2026
+## [v10.0.0] - April 8, 2026
 
 ### Added
 
@@ -909,8 +909,8 @@ Note: [Rubygem is 6.3.0.pre.rc.1](https://rubygems.org/gems/shakapacker/versions
 
 See [CHANGELOG.md in rails/webpacker (up to v5.4.3)](https://github.com/rails/webpacker/blob/master/CHANGELOG.md)
 
-[Unreleased]: https://github.com/shakacode/shakapacker/compare/v10.0.0-rc.1...main
-[v10.0.0-rc.1]: https://github.com/shakacode/shakapacker/compare/v9.7.0...v10.0.0-rc.1
+[Unreleased]: https://github.com/shakacode/shakapacker/compare/v10.0.0...main
+[v10.0.0]: https://github.com/shakacode/shakapacker/compare/v9.7.0...v10.0.0
 [v9.7.0]: https://github.com/shakacode/shakapacker/compare/v9.6.1...v9.7.0
 [v9.6.1]: https://github.com/shakacode/shakapacker/compare/v9.6.0...v9.6.1
 [v9.6.0]: https://github.com/shakacode/shakapacker/compare/v9.5.0...v9.6.0
