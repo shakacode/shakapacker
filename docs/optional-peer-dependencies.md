@@ -24,7 +24,7 @@ As of Shakapacker v9 (and continuing in v10), all peer dependencies are marked a
   },
   "peerDependencies": {
     "webpack": "^5.101.0",
-    "@rspack/core": "^1.0.0"
+    "@rspack/core": "^1.0.0 || ^2.0.0-0"
     // ... all build tools
   },
   "peerDependenciesMeta": {
@@ -85,8 +85,8 @@ Type-only imports are erased during compilation and don't trigger module resolut
 {
   "dependencies": {
     "shakapacker": "^10.0.0",
-    "@rspack/core": "^1.0.0",
-    "@rspack/cli": "^1.0.0",
+    "@rspack/core": "^2.0.0-0",
+    "@rspack/cli": "^2.0.0-0",
     "rspack-manifest-plugin": "^5.0.0"
   }
 }

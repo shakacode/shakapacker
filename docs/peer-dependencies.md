@@ -35,7 +35,7 @@ releases support.
 ```text
 "@rspack/cli": "^1.0.0 || ^2.0.0-0"
 "@rspack/core": "^1.0.0 || ^2.0.0-0"
-"@rspack/plugin-react-refresh": "^1.0.0"
+"@rspack/plugin-react-refresh": "^1.0.0 || ^2.0.0-0"
 "rspack-manifest-plugin": "^5.0.0"
 ```
 

@@ -281,8 +281,8 @@ Depending on your setup, you'll need different subsets of the optional peer depe
 {
   "dependencies": {
     "shakapacker": "^10.0.0",
-    "@rspack/core": "^1.0.0",
-    "@rspack/cli": "^1.0.0",
+    "@rspack/core": "^2.0.0-0",
+    "@rspack/cli": "^2.0.0-0",
     "@swc/core": "^1.3.0",
     "swc-loader": "^0.2.0",
     "rspack-manifest-plugin": "^5.0.0"
