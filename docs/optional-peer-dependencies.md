@@ -2,7 +2,7 @@
 
 ## Overview
 
-As of Shakapacker v10, all peer dependencies are marked as optional via `peerDependenciesMeta`. This design provides maximum flexibility while maintaining clear version constraints.
+As of Shakapacker v9 (and continuing in v10), all peer dependencies are marked as optional via `peerDependenciesMeta`. This design provides maximum flexibility while maintaining clear version constraints.
 
 ## Key Benefits
 
@@ -150,7 +150,7 @@ The test suite includes:
 
 ### Still seeing peer dependency warnings?
 
-1. Ensure you're using Shakapacker v10.0.0 or later
+1. Ensure you're using Shakapacker v9.0.0 or later
 2. Clear your package manager cache:
    - npm: `npm cache clean --force`
    - yarn: `yarn cache clean`

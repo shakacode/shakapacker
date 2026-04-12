@@ -33,7 +33,7 @@ Shakapacker consists of two components that must be updated together:
 gem "shakapacker", "10.0.0"  # or the version you want to upgrade to
 ```
 
-**Pre-release versions:** Ruby gems use dot notation (e.g., `"10.1.0.beta.1"`)
+**Pre-release versions:** Ruby gems use dot notation (e.g., `"10.0.0.beta.1"`)
 
 #### 2. Update `package.json`
 
@@ -45,7 +45,7 @@ gem "shakapacker", "10.0.0"  # or the version you want to upgrade to
 }
 ```
 
-**Pre-release versions:** npm uses hyphen notation (e.g., `"10.1.0-beta.1"`)
+**Pre-release versions:** npm uses hyphen notation (e.g., `"10.0.0-beta.1"`)
 
 #### 3. Run bundler and package manager
 
@@ -73,8 +73,8 @@ Note that pre-release versions use different formats:
 
 | Component    | Stable Version | Pre-release Version |
 | ------------ | -------------- | ------------------- |
-| Gemfile      | `"10.0.0"`     | `"10.1.0.beta.1"`   |
-| package.json | `"10.0.0"`     | `"10.1.0-beta.1"`   |
+| Gemfile      | `"10.0.0"`     | `"10.0.0.beta.1"`   |
+| package.json | `"10.0.0"`     | `"10.0.0-beta.1"`   |
 
 ### Finding the Latest Version
 

@@ -100,9 +100,9 @@ import styles from "./Foo.module.css"
 
 ---
 
-## Migrating from v8 to v10
+## Migrating from v8 to v9+ (Named Exports)
 
-When upgrading to Shakapacker v10, you'll need to update your CSS Module imports from default exports to named exports.
+When upgrading from Shakapacker v8 to v9+ (including v10), you'll need to update your CSS Module imports from default exports to named exports.
 
 ### Migration Options
 
@@ -117,7 +117,7 @@ import styles from "./Component.module.css"
   <button className={styles.button}>Click me</button>
 </div>
 
-// After (v10) - JavaScript
+// After (v9+) - JavaScript
 import { container, button } from "./Component.module.css"
 ;<div className={container}>
   <button className={button}>Click me</button>
@@ -133,7 +133,7 @@ import styles from './Component.module.css';
   <button className={styles.button}>Click me</button>
 </div>
 
-// After (v10) - TypeScript
+// After (v9+) - TypeScript
 import * as styles from './Component.module.css';
 <div className={styles.container}>
   <button className={styles.button}>Click me</button>
@@ -150,7 +150,7 @@ If you prefer to keep the v8 default export behavior during migration, you can o
 
 ## Reverting to Default Exports (v8 Behavior)
 
-To use the v8-style default exports instead of v10's named exports, you have several options:
+To use the v8-style default exports instead of v9+'s named exports, you have several options:
 
 ### Option 1: Configuration File (Easiest - Recommended)
 
@@ -272,7 +272,7 @@ const overrideCssModulesConfig = (config) => {
 
 ## Detailed Migration Guide
 
-### Migrating from v8 (Default Exports) to v10 (Named Exports)
+### Migrating from v8 (Default Exports) to v9+ (Named Exports)
 
 #### 1. Update Import Statements
 
@@ -280,7 +280,7 @@ const overrideCssModulesConfig = (config) => {
 // Old (v8 - default export)
 import styles from "./Component.module.css"
 
-// New (v10 - named exports)
+// New (v9+ - named exports)
 import { bright, container, button } from "./Component.module.css"
 ```
 
@@ -293,7 +293,7 @@ import { bright, container, button } from "./Component.module.css"
   <span className={styles.bright}>Highlighted text</span>
 </div>
 
-// New (v10)
+// New (v9+)
 <div className={container}>
   <button className={button}>Click me</button>
   <span className={bright}>Highlighted text</span>
