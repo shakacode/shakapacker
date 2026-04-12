@@ -271,7 +271,7 @@ npm run type-check
 
 ### Issue: "Cannot find module 'shakapacker/types'"
 
-**Solution**: Make sure you're using Shakapacker v9.0.0 or later:
+**Solution**: Make sure you're using Shakapacker v10.0.0 or later:
 
 ```bash
 yarn upgrade shakapacker

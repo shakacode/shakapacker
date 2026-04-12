@@ -2,7 +2,7 @@
 
 ## Overview
 
-As of Shakapacker v9, all peer dependencies are marked as optional via `peerDependenciesMeta`. This design provides maximum flexibility while maintaining clear version constraints.
+As of Shakapacker v10, all peer dependencies are marked as optional via `peerDependenciesMeta`. This design provides maximum flexibility while maintaining clear version constraints.
 
 ## Key Benefits
 
@@ -53,7 +53,7 @@ Type-only imports are erased during compilation and don't trigger module resolut
 ```json
 {
   "dependencies": {
-    "shakapacker": "^9.0.0",
+    "shakapacker": "^10.0.0",
     "webpack": "^5.101.0",
     "webpack-cli": "^6.0.0",
     "babel-loader": "^8.2.4",
@@ -68,7 +68,7 @@ Type-only imports are erased during compilation and don't trigger module resolut
 ```json
 {
   "dependencies": {
-    "shakapacker": "^9.0.0",
+    "shakapacker": "^10.0.0",
     "webpack": "^5.101.0",
     "webpack-cli": "^6.0.0",
     "@swc/core": "^1.3.0",
@@ -84,7 +84,7 @@ Type-only imports are erased during compilation and don't trigger module resolut
 ```json
 {
   "dependencies": {
-    "shakapacker": "^9.0.0",
+    "shakapacker": "^10.0.0",
     "@rspack/core": "^1.0.0",
     "@rspack/cli": "^1.0.0",
     "rspack-manifest-plugin": "^5.0.0"
@@ -94,7 +94,7 @@ Type-only imports are erased during compilation and don't trigger module resolut
 
 ## Migration Guide
 
-### From v8 to v9
+### From v8 to v10
 
 If upgrading from Shakapacker v8:
 
@@ -150,7 +150,7 @@ The test suite includes:
 
 ### Still seeing peer dependency warnings?
 
-1. Ensure you're using Shakapacker v9.0.0 or later
+1. Ensure you're using Shakapacker v10.0.0 or later
 2. Clear your package manager cache:
    - npm: `npm cache clean --force`
    - yarn: `yarn cache clean`

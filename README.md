@@ -1,8 +1,8 @@
-# Shakapacker (v9)
+# Shakapacker (v10)
 
 ---
 
-_🚀 Shakapacker 9 supports [Rspack](https://rspack.rs/)! 10x faster than webpack!_
+_🚀 Shakapacker 10 supports [Rspack](https://rspack.rs/)! 10x faster than webpack!_
 
 _📖 **Full documentation at [shakapacker.com](https://shakapacker.com)**_
 
@@ -11,7 +11,8 @@ _📖 **Full documentation at [shakapacker.com](https://shakapacker.com)**_
 _Official, actively maintained successor to [rails/webpacker](https://github.com/rails/webpacker). ShakaCode stands behind the long-term maintenance and development of this project for the Rails community._
 
 - ⚠️ See the [6-stable](https://github.com/shakacode/shakapacker/tree/6-stable) branch for Shakapacker v6.x code and documentation. :warning:
-- **See [V9 Upgrade](./docs/v9_upgrade.md) for upgrading from the v8 release.**
+- **See the [v10.0.0 release notes](https://github.com/shakacode/shakapacker/releases/tag/v10.0.0) for upgrading from v9 to v10.**
+- **See [V9 Upgrade](./docs/v9_upgrade.md) for upgrading from v8 to v9.**
 - See [V8 Upgrade](./docs/v8_upgrade.md) for upgrading from the v7 release.
 - See [V7 Upgrade](./docs/v7_upgrade.md) for upgrading from the v6 release.
 - See [V6 Upgrade](./docs/v6_upgrade.md) for upgrading from v5 or prior v6 releases.
@@ -238,7 +239,7 @@ Depending on your setup, you'll need different subsets of the optional peer depe
 ```json
 {
   "dependencies": {
-    "shakapacker": "^9.0.0",
+    "shakapacker": "^10.0.0",
     "@babel/core": "^7.17.9",
     "@babel/plugin-transform-runtime": "^7.17.0",
     "@babel/preset-env": "^7.16.11",
@@ -261,7 +262,7 @@ Depending on your setup, you'll need different subsets of the optional peer depe
 ```json
 {
   "dependencies": {
-    "shakapacker": "^9.0.0",
+    "shakapacker": "^10.0.0",
     "@swc/core": "^1.3.0",
     "swc-loader": "^0.2.0",
     "compression-webpack-plugin": "^9.0.0",
@@ -279,7 +280,7 @@ Depending on your setup, you'll need different subsets of the optional peer depe
 ```json
 {
   "dependencies": {
-    "shakapacker": "^9.0.0",
+    "shakapacker": "^10.0.0",
     "@rspack/core": "^1.0.0",
     "@rspack/cli": "^1.0.0",
     "@swc/core": "^1.3.0",
@@ -923,7 +924,7 @@ You can also change your Babel configuration by removing these lines in your `pa
 
 ### SWC configuration
 
-SWC is the recommended JavaScript transpiler in Shakapacker v9+ (20x faster than Babel). New installations use SWC by default via the installation template. You can read more at [SWC usage docs](./docs/using_swc_loader.md).
+SWC is the recommended JavaScript transpiler in Shakapacker v10 (20x faster than Babel). New installations use SWC by default via the installation template. You can read more at [SWC usage docs](./docs/using_swc_loader.md).
 
 **Note on defaults**: The installation template explicitly sets `javascript_transpiler: "swc"` for new projects. However, for backward compatibility, webpack's runtime default (when no explicit config exists) remains `"babel"`. Rspack always defaults to `"swc"`.
 

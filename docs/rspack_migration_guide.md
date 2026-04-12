@@ -53,7 +53,7 @@ When migrating from webpack to Rspack, follow this testing strategy to minimize 
 ⚠️ **If your application uses SSR**, be aware of these critical issues before migrating:
 
 1. **CSS Extraction Differences**: Rspack uses different loader paths than webpack for CSS extraction
-2. **CSS Modules Breaking Change**: Shakapacker 9 changed from default exports to named exports
+2. **CSS Modules Breaking Change**: Shakapacker changed in v9 (and keeps this in v10) from default exports to named exports
 3. **React Runtime Compatibility**: SWC's automatic runtime may not work with React on Rails SSR detection
 
 **SSR Migration Checklist** (complete before migrating):
@@ -419,7 +419,7 @@ baseConfig.module.rules.forEach((rule) => {
 
 ### Handling Breaking Changes
 
-When upgrading to Shakapacker 9 with Rspack:
+When upgrading to Shakapacker v10 with Rspack (or any v9+ app):
 
 1. **CSS Modules default exports → named exports**: This is a breaking change. Either:
    - Update your code to use named imports (recommended for new projects)
@@ -480,7 +480,7 @@ const customConfig = {
 
 ### 2. CSS Modules Configuration for Server Bundles (CRITICAL for SSR + CSS Modules)
 
-**Problem**: When configuring server bundles, you must preserve Shakapacker 9's CSS Modules settings (`namedExport: true`) while adding SSR-specific settings. Simply setting `exportOnlyLocals: true` will override the base configuration and break CSS imports.
+**Problem**: When configuring server bundles, you must preserve Shakapacker's v9+ CSS Modules settings (`namedExport: true`) while adding SSR-specific settings. Simply setting `exportOnlyLocals: true` will override the base configuration and break CSS imports.
 
 **Symptoms**:
 
@@ -505,7 +505,7 @@ if (cssLoader && cssLoader.options && cssLoader.options.modules) {
 }
 ```
 
-**Why this matters**: Shakapacker 9 changed the default CSS Modules configuration to use named exports. If you only set `exportOnlyLocals: true` without preserving the base config, you'll lose the `namedExport: true` setting, causing import/export mismatches between client and server bundles.
+**Why this matters**: Shakapacker changed the default CSS Modules configuration in v9 to use named exports. If you only set `exportOnlyLocals: true` without preserving the base config, you'll lose the `namedExport: true` setting, causing import/export mismatches between client and server bundles.
 
 **Related configuration**: You must also filter out CSS extraction loaders in server bundles:
 
@@ -597,12 +597,12 @@ module.exports = merge({}, baseConfig, commonOptions)
 
 Quick reference for the key differences that cause migration issues:
 
-| Area                       | Webpack                   | Rspack                              | Migration Action                            |
-| -------------------------- | ------------------------- | ----------------------------------- | ------------------------------------------- |
-| CSS Extraction Loader Path | `mini-css-extract-plugin` | `cssExtractLoader.js`               | Filter both paths in SSR config             |
-| React Runtime (SSR)        | Works with both           | Classic required for React on Rails | Use `runtime: 'classic'`                    |
-| ReScript Extensions        | Auto-resolves `.bs.js`    | Requires explicit config            | Add to `resolve.extensions`                 |
-| CSS Modules Default        | `namedExport: true` (v9+) | Same                                | Preserve with spread operator in SSR config |
+| Area                       | Webpack                                     | Rspack                              | Migration Action                            |
+| -------------------------- | ------------------------------------------- | ----------------------------------- | ------------------------------------------- |
+| CSS Extraction Loader Path | `mini-css-extract-plugin`                   | `cssExtractLoader.js`               | Filter both paths in SSR config             |
+| React Runtime (SSR)        | Works with both                             | Classic required for React on Rails | Use `runtime: 'classic'`                    |
+| ReScript Extensions        | Auto-resolves `.bs.js`                      | Requires explicit config            | Add to `resolve.extensions`                 |
+| CSS Modules Default        | `namedExport: true` (v10, introduced in v9) | Same                                | Preserve with spread operator in SSR config |
 
 ## Common Issues and Solutions
 
@@ -610,7 +610,7 @@ Quick reference for the key differences that cause migration issues:
 
 **Error:** `Cannot read properties of undefined (reading 'className')` in SSR or `export 'default' (imported as 'css') was not found`
 
-**Root Cause:** Shakapacker 9 changed the default CSS Modules configuration to use named exports (`namedExport: true`), which is a breaking change from v8's default export behavior.
+**Root Cause:** Shakapacker changed the default CSS Modules configuration in v9 to use named exports (`namedExport: true`), which is a breaking change from v8's default export behavior.
 
 **Solution:** If you want to keep the v8 default export behavior, override the CSS loader configuration:
 

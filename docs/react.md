@@ -24,7 +24,7 @@ Install React:
 npm install react react-dom
 ```
 
-Shakapacker v9 defaults to SWC for webpack, and Rspack uses SWC natively, so `.jsx` and `.tsx`
+Shakapacker v10 defaults to SWC for webpack, and Rspack uses SWC natively, so `.jsx` and `.tsx`
 entry points work out of the box. You only need extra JSX transpiler setup if you explicitly use
 `javascript_transpiler: "babel"`.
 

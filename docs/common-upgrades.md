@@ -30,22 +30,22 @@ Shakapacker consists of two components that must be updated together:
 #### 1. Update `Gemfile`
 
 ```ruby
-gem "shakapacker", "9.3.0"  # or the version you want to upgrade to
+gem "shakapacker", "10.0.0"  # or the version you want to upgrade to
 ```
 
-**Pre-release versions:** Ruby gems use dot notation (e.g., `"9.3.0.beta.1"`)
+**Pre-release versions:** Ruby gems use dot notation (e.g., `"10.1.0.beta.1"`)
 
 #### 2. Update `package.json`
 
 ```json
 {
   "dependencies": {
-    "shakapacker": "9.3.0"
+    "shakapacker": "10.0.0"
   }
 }
 ```
 
-**Pre-release versions:** npm uses hyphen notation (e.g., `"9.3.0-beta.1"`)
+**Pre-release versions:** npm uses hyphen notation (e.g., `"10.1.0-beta.1"`)
 
 #### 3. Run bundler and package manager
 
@@ -73,8 +73,8 @@ Note that pre-release versions use different formats:
 
 | Component    | Stable Version | Pre-release Version |
 | ------------ | -------------- | ------------------- |
-| Gemfile      | `"9.3.0"`      | `"9.3.0.beta.1"`    |
-| package.json | `"9.3.0"`      | `"9.3.0-beta.1"`    |
+| Gemfile      | `"10.0.0"`     | `"10.1.0.beta.1"`   |
+| package.json | `"10.0.0"`     | `"10.1.0-beta.1"`   |
 
 ### Finding the Latest Version
 
@@ -86,6 +86,7 @@ Note that pre-release versions use different formats:
 
 For major version upgrades, always consult the version-specific upgrade guides for breaking changes and new features:
 
+- [v10.0.0 Release Notes](https://github.com/shakacode/shakapacker/releases/tag/v10.0.0) - Upgrading from v9 to v10 (includes webpack and dev-server minimum version changes)
 - [V9 Upgrade Guide](./v9_upgrade.md) - Upgrading from v8 to v9 (includes CSS Modules changes, SWC defaults, and more)
 - [V8 Upgrade Guide](./v8_upgrade.md) - Upgrading from v7 to v8
 - [V7 Upgrade Guide](./v7_upgrade.md) - Upgrading from v6 to v7
