@@ -1,6 +1,6 @@
 # RFC: Tighten Dependencies for Shakapacker v17
 
-**Status:** Draft (Rev 2 — incorporates community feedback from [#1030](https://github.com/shakacode/shakapacker/issues/1030))
+**Status:** Draft (Rev 4 — monorepo + lockstep versioning)
 **Date:** 2026-03-28 (revised 2026-04-12)
 **Author:** Justin Gordon
 
@@ -218,15 +218,78 @@ The `shakapacker:install` rake task should be updated to:
 3. Install `shakapacker` + the appropriate `shakapacker-*` package
 4. Install **only** the required peer dependencies for the chosen combination
 
-### Package Internal Structure
+### Monorepo Structure
 
-The supplemental packages would be thin — primarily:
+All three npm packages live in the existing `shakacode/shakapacker` repository as a monorepo. The Ruby gem also stays in this repo.
+
+```
+shakapacker/
+├── package/                    # shakapacker (core npm package, existing)
+│   ├── package.json
+│   └── ...
+├── packages/
+│   ├── shakapacker-webpack/    # supplemental webpack package
+│   │   ├── package.json
+│   │   ├── index.ts            # re-exports webpack config generation
+│   │   └── ...
+│   └── shakapacker-rspack/     # supplemental rspack package
+│       ├── package.json
+│       ├── index.ts            # re-exports rspack config generation
+│       └── ...
+├── lib/                        # Ruby gem (unchanged)
+├── spec/                       # Ruby specs
+├── test/                       # JS tests
+├── shakapacker.gemspec
+└── package.json                # workspace root
+```
+
+The supplemental packages are thin — primarily:
 
 - `package.json` with the correct peer dependencies declared
 - Re-exports of the bundler-specific config generation from the core `shakapacker` package
 - Bundler-specific loader rules and plugin configurations
 
 The core `shakapacker` package retains all the shared logic. The supplemental packages are essentially "dependency declarations + bundler-specific glue."
+
+**Why monorepo, not separate repos:**
+
+- Core changes almost always affect supplemental packages (config loading, loader rule composition, plugin wiring). Separate repos would mean coordinating releases constantly.
+- Atomic commits — a single PR can update core + both supplemental packages + tests.
+- One CI pipeline tests all three packages together.
+- The supplemental packages are too thin to justify independent repos.
+
+### Versioning Strategy: Lockstep
+
+All three npm packages share the same version number, always. The Ruby gem version tracks independently (it already has its own versioning).
+
+**Rules:**
+
+1. **Same version, always.** When any package is released, all three are released at the same version. If a release only changes core, the supplemental packages still get the version bump.
+2. **Caret peer dep on core.** `shakapacker-webpack` and `shakapacker-rspack` declare `"shakapacker": "^17.0.0"` as a peer dep. This means minor bumps don't force users to update all packages on the same day, but they stay within the same major.
+3. **Start at `17.0.0-beta.1`.** All three packages begin at the same beta version. No separate versioning during beta.
+4. **Use npm workspaces** for the monorepo. The root `package.json` declares workspaces, and a single `npm version` + publish script bumps all three.
+
+**Why lockstep:**
+
+- The supplemental packages are tightly coupled to core — independent versioning would create a compatibility matrix nightmare.
+- Precedent: Next.js (`next`, `@next/env`, `@next/swc-*`), Angular (`@angular/core`, `@angular/compiler`, etc.), and Babel (`@babel/core`, `@babel/preset-env`, etc.) all use lockstep versioning across their package families.
+- Users see `"shakapacker": "^17.2.0"` and `"shakapacker-webpack": "^17.2.0"` — easy to reason about compatibility.
+- "Empty bumps" (a supplemental package gets a version bump with no code change) are a tiny cost compared to the coordination headache of independent versions.
+
+**Release process:**
+
+```bash
+# Bump all three packages to the same version
+npm version minor --workspaces   # or patch, or major
+
+# Publish all three
+npm publish --workspaces
+
+# Ruby gem is released separately via existing rake task
+bundle exec rake release
+```
+
+The existing `bundle exec rake update_changelog` task should be updated to handle the monorepo structure, noting which packages were affected in each release.
 
 ## Migration Path
 
@@ -278,12 +341,27 @@ Rejected because:
 - Users need direct access to webpack/rspack for custom config files
 - Vendoring would make it harder for users to apply webpack security patches independently
 
+### Separate repos for supplemental packages
+
+Rejected because:
+- Core changes almost always affect both supplemental packages — separate repos mean cross-repo PRs for routine changes
+- Testing a core change against both supplemental packages requires coordination across repos
+- More CI pipelines to maintain, more places for things to drift out of sync
+- Independent versioning creates a compatibility matrix problem that lockstep avoids
+- The supplemental packages are too thin (mostly `package.json` + re-exports) to justify standalone repos
+
 ### Full monorepo split (separate gem per bundler)
 
 Rejected because:
 - The Ruby gem logic is shared across both bundlers
 - Would double our release/maintenance burden on the gem side
 - The npm-only split achieves the same dependency isolation without touching the gem
+
+## Resolved Decisions
+
+- **Package naming**: `shakapacker-webpack` / `shakapacker-rspack` (unscoped, no npm org needed)
+- **Repo structure**: Monorepo in existing `shakacode/shakapacker` repo
+- **Versioning**: Lockstep — all three packages share the same version number
 
 ## Open Questions
 
@@ -294,6 +372,8 @@ Rejected because:
 3. **Should `compression-webpack-plugin` be documented** as a user-added plugin rather than removed silently?
 
 4. **Future extensibility**: Could this pattern extend to community packages? e.g., `shakapacker-vite` contributed by the community for Vite integration, as suggested by G-Rath.
+
+5. **Workspace tooling**: npm workspaces, yarn workspaces, or a dedicated tool like changesets/turborepo for the monorepo?
 
 ## References
 
