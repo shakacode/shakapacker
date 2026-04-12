@@ -14,7 +14,7 @@ For comparison between SWC and Babel, see the docs at https://swc.rs/docs/migrat
 
 ## Using SWC in your Shakapacker project
 
-For new installations of Shakapacker v10, SWC is automatically configured in the installation template.
+For new installations of Shakapacker v9+, SWC is automatically configured in the installation template.
 
 **Note**: While the installation template sets SWC as the default, webpack's runtime fallback (when no explicit config exists) remains Babel for backward compatibility. Rspack always defaults to SWC.
 
