@@ -270,7 +270,7 @@ gem 'shakapacker', '>= 9.1.1'  # or '~> 10.0' for the latest release
 // package.json
 {
   "dependencies": {
-    "shakapacker": "^9.1.1"
+    "shakapacker": ">=9.1.1" // or "^10.0.0" for the latest release
   }
 }
 ```
