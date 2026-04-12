@@ -9,8 +9,8 @@
 Shakapacker v17 should split into **three npm packages** to cleanly separate concerns:
 
 1. **`shakapacker`** — core package (config loading, manifest reading, dev server proxy, CLI). Zero bundler-specific peer deps.
-2. **`@shakapacker/webpack`** — managed webpack build. Has `webpack`, `webpack-cli`, etc. as **required** peer deps.
-3. **`@shakapacker/rspack`** — managed rspack build. Has `@rspack/core`, `@rspack/cli`, etc. as **required** peer deps.
+2. **`shakapacker-webpack`** — managed webpack build. Has `webpack`, `webpack-cli`, etc. as **required** peer deps.
+3. **`shakapacker-rspack`** — managed rspack build. Has `@rspack/core`, `@rspack/cli`, etc. as **required** peer deps.
 
 This eliminates the "conditional peer dependency" problem that `package.json` cannot express. Users install exactly one supplemental package for their bundler, or none at all for custom builds.
 
@@ -77,7 +77,7 @@ The base package that all users install. Contains:
 
 The `@types/*` packages remain as optional peer deps because they are referenced by Shakapacker's exported TypeScript types. Users who consume the types need them; others don't.
 
-#### `@shakapacker/webpack` (managed webpack build)
+#### `shakapacker-webpack` (managed webpack build)
 
 Supplemental package for the standard webpack managed build experience.
 
@@ -119,7 +119,7 @@ Supplemental package for the standard webpack managed build experience.
 | sass | `^1.50.0` | SCSS/Sass files |
 | sass-loader | `^16.0.0` | Paired with sass |
 
-#### `@shakapacker/rspack` (managed rspack build)
+#### `shakapacker-rspack` (managed rspack build)
 
 Supplemental package for the rspack managed build experience.
 
@@ -159,7 +159,7 @@ Following [G-Rath's feedback](https://github.com/shakacode/shakapacker/issues/10
 {
   "devDependencies": {
     "shakapacker": "^17.0.0",
-    "@shakapacker/webpack": "^17.0.0",
+    "shakapacker-webpack": "^17.0.0",
     "webpack": "^5.76.0",
     "webpack-cli": "^6.0.0",
     "webpack-assets-manifest": "^5.0.6",
@@ -178,7 +178,7 @@ Following [G-Rath's feedback](https://github.com/shakacode/shakapacker/issues/10
 {
   "devDependencies": {
     "shakapacker": "^17.0.0",
-    "@shakapacker/rspack": "^17.0.0",
+    "shakapacker-rspack": "^17.0.0",
     "@rspack/core": "^2.0.0",
     "@rspack/cli": "^2.0.0",
     "rspack-manifest-plugin": "^5.0.0",
@@ -215,7 +215,7 @@ The `shakapacker:install` rake task should be updated to:
 
 1. Ask which bundler (webpack or rspack) — default: webpack
 2. Ask which transpiler (swc, babel, esbuild, none) — default: swc
-3. Install `shakapacker` + the appropriate `@shakapacker/*` package
+3. Install `shakapacker` + the appropriate `shakapacker-*` package
 4. Install **only** the required peer dependencies for the chosen combination
 
 ### Package Internal Structure
@@ -233,21 +233,21 @@ The core `shakapacker` package retains all the shared logic. The supplemental pa
 ### For Webpack Users
 
 1. Update `shakapacker` gem and npm package to v17
-2. Add `@shakapacker/webpack` to devDependencies
+2. Add `shakapacker-webpack` to devDependencies
 3. Update any stale dependencies to current majors (e.g., `webpack-cli` to v6)
 4. Remove `compression-webpack-plugin` if unused (no longer a peer dep)
 
 ### For Rspack Users
 
 1. Update `shakapacker` gem and npm package to v17
-2. Add `@shakapacker/rspack` to devDependencies
+2. Add `shakapacker-rspack` to devDependencies
 3. Update `@rspack/core` and `@rspack/cli` to v2
 4. Remove any webpack-specific packages that were installed but unused
 
 ### For Custom Build Users
 
 1. Update `shakapacker` gem and npm package to v17
-2. Do NOT install any `@shakapacker/*` supplemental package
+2. Do NOT install any `shakapacker-*` supplemental package
 3. Remove any Shakapacker peer deps you installed but don't directly use
 4. Ensure your custom build outputs `manifest.json` in the configured location
 
@@ -287,15 +287,13 @@ Rejected because:
 
 ## Open Questions
 
-1. **Package naming**: `@shakapacker/webpack` and `@shakapacker/rspack`, or `shakapacker-webpack` and `shakapacker-rspack`? Scoped packages (`@shakapacker/*`) are cleaner but require npm org setup.
+1. **Should we provide a `shakapacker:upgrade` task** that automatically updates `package.json` dependencies for the v16 -> v17 migration?
 
-2. **Should we provide a `shakapacker:upgrade` task** that automatically updates `package.json` dependencies for the v16 -> v17 migration?
+2. **Should the `assets_bundler` config support `"custom"` or `"none"`** as an explicit value to make custom build mode clearer than setting `javascript_transpiler: "none"`?
 
-3. **Should the `assets_bundler` config support `"custom"` or `"none"`** as an explicit value to make custom build mode clearer than setting `javascript_transpiler: "none"`?
+3. **Should `compression-webpack-plugin` be documented** as a user-added plugin rather than removed silently?
 
-4. **Should `compression-webpack-plugin` be documented** as a user-added plugin rather than removed silently?
-
-5. **Future extensibility**: Could this pattern extend to community packages? e.g., `@shakapacker/vite` contributed by the community for Vite integration, as suggested by G-Rath.
+4. **Future extensibility**: Could this pattern extend to community packages? e.g., `shakapacker-vite` contributed by the community for Vite integration, as suggested by G-Rath.
 
 ## References
 
