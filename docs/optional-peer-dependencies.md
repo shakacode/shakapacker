@@ -94,7 +94,7 @@ Type-only imports are erased during compilation and don't trigger module resolut
 
 ## Migration Guide
 
-### From v8 to v9 (and v10)
+### From v8 to v9+
 
 If upgrading from Shakapacker v8:
 

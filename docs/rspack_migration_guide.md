@@ -597,12 +597,12 @@ module.exports = merge({}, baseConfig, commonOptions)
 
 Quick reference for the key differences that cause migration issues:
 
-| Area                       | Webpack                                     | Rspack                              | Migration Action                            |
-| -------------------------- | ------------------------------------------- | ----------------------------------- | ------------------------------------------- |
-| CSS Extraction Loader Path | `mini-css-extract-plugin`                   | `cssExtractLoader.js`               | Filter both paths in SSR config             |
-| React Runtime (SSR)        | Works with both                             | Classic required for React on Rails | Use `runtime: 'classic'`                    |
-| ReScript Extensions        | Auto-resolves `.bs.js`                      | Requires explicit config            | Add to `resolve.extensions`                 |
-| CSS Modules Default        | `namedExport: true` (v10, introduced in v9) | Same                                | Preserve with spread operator in SSR config |
+| Area                       | Webpack                   | Rspack                              | Migration Action                            |
+| -------------------------- | ------------------------- | ----------------------------------- | ------------------------------------------- |
+| CSS Extraction Loader Path | `mini-css-extract-plugin` | `cssExtractLoader.js`               | Filter both paths in SSR config             |
+| React Runtime (SSR)        | Works with both           | Classic required for React on Rails | Use `runtime: 'classic'`                    |
+| ReScript Extensions        | Auto-resolves `.bs.js`    | Requires explicit config            | Add to `resolve.extensions`                 |
+| CSS Modules Default        | `namedExport: true` (v9+) | Same                                | Preserve with spread operator in SSR config |
 
 ## Common Issues and Solutions
 
