@@ -347,7 +347,7 @@ import { 'my-button': myButton } from './styles.module.css';
 For large codebases, you can create a codemod to automate the migration:
 
 ```js
-// css-modules-v10-migration.js
+// css-modules-v9-migration.js
 module.exports = function (fileInfo, api) {
   const j = api.jscodeshift
   const root = j(fileInfo.source)
@@ -376,14 +376,14 @@ module.exports = function (fileInfo, api) {
 Run with:
 
 ```bash
-npx jscodeshift -t css-modules-v10-migration.js src/
+npx jscodeshift -t css-modules-v9-migration.js src/
 ```
 
 ---
 
 ## Version Comparison
 
-| Feature             | v8 (and earlier)           | v10                               |
+| Feature             | v8 (and earlier)           | v9+                               |
 | ------------------- | -------------------------- | --------------------------------- |
 | Default behavior    | Default export object      | Named exports                     |
 | Import syntax       | `import styles from '...'` | `import { className } from '...'` |

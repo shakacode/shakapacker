@@ -6,7 +6,7 @@
 
 Shakapacker v10 transpiler defaults depend on the bundler and installation:
 
-- **New installations (v10)**: `swc` - Installation template explicitly sets SWC (20x faster than Babel)
+- **New installations (v9+)**: `swc` - Installation template explicitly sets SWC (20x faster than Babel)
 - **Webpack runtime default**: `babel` - Used when no explicit config is provided (maintains backward compatibility)
 - **Rspack runtime default**: `swc` - Rspack defaults to SWC as it's a newer bundler with modern defaults
 
