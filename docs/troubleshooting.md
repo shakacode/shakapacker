@@ -263,14 +263,14 @@ This happens when deploying to a custom Rails environment (like `staging`) that 
 
 ```ruby
 # Gemfile
-gem 'shakapacker', '>= 9.1.1'  # or '~> 10.0' for the latest release
+gem 'shakapacker', '~> 10.0'  # or '>= 9.1.1' if still on the v9 line
 ```
 
-```json
+```jsonc
 // package.json
 {
   "dependencies": {
-    "shakapacker": ">=9.1.1" // or "^10.0.0" for the latest release
+    "shakapacker": "^10.0.0" // or ">=9.1.1" if still on the v9 line
   }
 }
 ```
