@@ -53,11 +53,14 @@ This creates:
 Restructure the repo and publish the two supplemental packages. **No changes to the core `shakapacker` package's peer deps.** Existing users are unaffected.
 
 What ships:
-- Move `package/` to `packages/shakapacker/`
+- Add `"workspaces": ["packages/*"]` to root `package.json`
 - Create `packages/shakapacker-webpack/` and `packages/shakapacker-rspack/`
-- Publish all three packages at v10.1.0
+- Core `package/` directory stays in place (NOT moved to `packages/shakapacker/`)
+- Publish supplemental packages at v10.1.0
 - Update docs and installer to recommend the new pattern for new projects
 - Core `shakapacker` still declares all existing peer deps (nothing removed)
+
+Moving `package/` to `packages/shakapacker/` is deferred to v11.0.0 because it changes the published npm package layout (potential deep-import breakage for `shakapacker/package/*` paths) and requires resolving how `lib/install/config/shakapacker.yml` is included in the npm publish.
 
 This gives the supplemental packages real-world usage before they become the required path.
 
@@ -236,6 +239,28 @@ Following [G-Rath's feedback](https://github.com/shakacode/shakapacker/issues/10
 
 All three npm packages live in the existing `shakacode/shakapacker` repository. The Ruby gem also stays in this repo.
 
+**Phase 1 (v10.1.0) — core stays in place:**
+
+```
+shakapacker/
+├── package/                    # core npm package source (unchanged)
+│   └── ...
+├── packages/
+│   ├── shakapacker-webpack/    # supplemental webpack package
+│   │   ├── package.json
+│   │   └── index.js            # re-exports shakapacker/webpack
+│   └── shakapacker-rspack/     # supplemental rspack package
+│       ├── package.json
+│       └── index.js            # re-exports shakapacker/rspack
+├── lib/                        # Ruby gem (unchanged)
+├── spec/                       # Ruby specs
+├── test/                       # JS tests
+├── shakapacker.gemspec
+└── package.json                # workspace root + core package
+```
+
+**Phase 2 (v11.0.0) — core moves into packages/:**
+
 ```
 shakapacker/
 ├── packages/
@@ -244,12 +269,10 @@ shakapacker/
 │   │   └── ...
 │   ├── shakapacker-webpack/    # supplemental webpack package
 │   │   ├── package.json
-│   │   ├── index.ts
-│   │   └── ...
+│   │   └── index.js
 │   └── shakapacker-rspack/     # supplemental rspack package
 │       ├── package.json
-│       ├── index.ts
-│       └── ...
+│       └── index.js
 ├── lib/                        # Ruby gem (unchanged)
 ├── spec/                       # Ruby specs
 ├── test/                       # JS tests

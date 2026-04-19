@@ -1,0 +1,46 @@
+{
+  "name": "shakapacker-rspack",
+  "version": "10.1.0",
+  "description": "Managed rspack build support for Shakapacker",
+  "homepage": "https://github.com/shakacode/shakapacker",
+  "bugs": {
+    "url": "https://github.com/shakacode/shakapacker/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/shakacode/shakapacker.git",
+    "directory": "packages/shakapacker-rspack"
+  },
+  "license": "MIT",
+  "main": "index.js",
+  "files": [
+    "index.js"
+  ],
+  "peerDependencies": {
+    "shakapacker": "^10.1.0",
+    "@rspack/core": "^2.0.0",
+    "@rspack/cli": "^2.0.0",
+    "rspack-manifest-plugin": "^5.0.0",
+    "@rspack/plugin-react-refresh": "^1.0.0",
+    "css-loader": "^7.0.0",
+    "sass": "^1.50.0",
+    "sass-loader": "^16.0.0"
+  },
+  "peerDependenciesMeta": {
+    "@rspack/plugin-react-refresh": {
+      "optional": true
+    },
+    "css-loader": {
+      "optional": true
+    },
+    "sass": {
+      "optional": true
+    },
+    "sass-loader": {
+      "optional": true
+    }
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}
