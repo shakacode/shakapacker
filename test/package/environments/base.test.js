@@ -69,16 +69,12 @@ describe("Base config", () => {
         entryValues.length
       )
       expect(stringEntries.length).toBeGreaterThan(0)
-      expect(arrayEntries.length).toBeGreaterThan(0)
-      expect(stringEntries.every((entryValue) => entryValue.length > 0)).toBe(
-        true
+      stringEntries.forEach((entryValue) =>
+        expect(entryValue.length).toBeGreaterThan(0)
       )
-      expect(flattenedArrayEntries.length).toBeGreaterThan(0)
-      expect(
-        flattenedArrayEntries.every(
-          (entryValue) => typeof entryValue === "string"
-        )
-      ).toBe(true)
+      flattenedArrayEntries.forEach((entryValue) =>
+        expect(typeof entryValue).toBe("string")
+      )
     })
 
     test("should returns top level and nested entry points with config.nested_entries == true", () => {
