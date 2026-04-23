@@ -100,7 +100,7 @@ For major version upgrades, always consult the version-specific upgrade guides f
 ## Automating Updates with Dependabot
 
 Because Shakapacker ships as both a Ruby gem and an npm package, both sides must
-be bumped together. Dependabot's [multi-ecosystem groups](https://docs.github.com/en/code-security/dependabot/working-with-dependabot/dependabot-options-reference#multi-ecosystem-groups--)
+be bumped together. Dependabot's [multi-ecosystem groups](https://docs.github.com/en/code-security/reference/supply-chain-security/dependabot-options-reference#multi-ecosystem-groups-)
 can open a single PR that updates both ecosystems at once.
 
 See [Dependabot configuration for Shakapacker](./dependabot.md) for an example

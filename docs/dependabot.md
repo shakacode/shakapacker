@@ -6,8 +6,11 @@ must stay in lockstep (see [Upgrading Shakapacker](./common-upgrades.md#upgradin
 these updates, but by default it opens a separate pull request for each
 ecosystem — which can land the gem and the npm package in different versions.
 
-Dependabot's [multi-ecosystem groups](https://docs.github.com/en/code-security/dependabot/working-with-dependabot/dependabot-options-reference#multi-ecosystem-groups--)
+Dependabot's [multi-ecosystem groups](https://docs.github.com/en/code-security/reference/supply-chain-security/dependabot-options-reference#multi-ecosystem-groups-)
 let you update the bundler and npm sides in a single PR.
+
+> **Note:** Multi-ecosystem groups are a relatively recent Dependabot feature
+> and may not be available on older versions of GitHub Enterprise Server.
 
 ## Example `.github/dependabot.yml`
 
@@ -21,12 +24,12 @@ multi-ecosystem-groups:
 
 updates:
   - package-ecosystem: bundler
-    directory: /
+    directory: "/"
     patterns: ["shakapacker"]
     multi-ecosystem-group: shakapacker
 
   - package-ecosystem: npm
-    directory: /
+    directory: "/"
     patterns: ["shakapacker"]
     multi-ecosystem-group: shakapacker
 
