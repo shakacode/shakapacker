@@ -9,7 +9,7 @@ const commonOptions = {
 }
 
 const constructorNamesToRemove = new Set([
-  'WebpackManifestPlugin',
+  'RspackManifestPlugin',
   'CssExtractRspackPlugin'
 ])
 
