@@ -110,6 +110,7 @@ module Shakapacker
         check_css_dependencies
         check_css_modules_configuration
         check_bundler_dependencies if config_exists?
+        check_rspack_cache_configuration if config_exists?
         check_file_type_dependencies if config_exists?
         check_sri_dependencies if config_exists?
         check_peer_dependencies
@@ -679,6 +680,94 @@ module Shakapacker
           check_dependency("@rspack/core", @issues, "Rspack")
           check_dependency("@rspack/cli", @issues, "Rspack CLI")
         end
+      end
+
+      def check_rspack_cache_configuration
+        return unless config.assets_bundler == "rspack"
+
+        rspack_major = rspack_major_version
+
+        if rspack_major == 1
+          add_warning("Rspack v1 detected: persistent caching is experimental in v1 and requires manual opt-in. " \
+                      "Upgrading to Rspack v2 enables stable persistent caching out of the box for significantly faster rebuilds.")
+          add_warning("  Fix: Bump @rspack/core and @rspack/cli to ^2.0.0-0 in package.json. See https://rspack.rs/config/cache and docs/rspack.md for details.")
+        end
+
+        rspack_config_paths.each do |path|
+          content = File.read(path)
+          relative = path.relative_path_from(root_path)
+          next unless rspack_cache_disabled?(content)
+
+          add_warning("Rspack cache appears to be disabled in #{relative} (found 'cache: false'). Disabling cache " \
+                      "causes significantly slower builds, especially on rebuilds. Rspack v2 promotes filesystem " \
+                      "caching from experimental to stable.")
+          add_warning("  Fix: Remove the 'cache: false' setting, or use 'cache: { type: \"filesystem\" }' for persistent caching. " \
+                      "See https://rspack.rs/config/cache for options.")
+        end
+      rescue Errno::ENOENT, JSON::ParserError => e
+        add_warning("Unable to validate rspack cache configuration: #{e.message}")
+      end
+
+      def rspack_config_paths
+        config_dir = config.respond_to?(:assets_bundler_config_path) ? config.assets_bundler_config_path : "config/rspack"
+        %w[js ts mjs cjs].filter_map do |ext|
+          path = root_path.join(config_dir, "rspack.config.#{ext}")
+          path if path.exist?
+        end
+      end
+
+      def rspack_cache_disabled?(content)
+        # Strip block comments, line comments, and string literals (single/double quoted
+        # and backtick template literals) so examples inside strings or comments don't
+        # trigger a false positive.
+        stripped = content
+          .gsub(%r{/\*.*?\*/}m, "")
+          .gsub(%r{//[^\n]*}, "")
+          .gsub(/`(?:\\.|[^`\\])*`/m, '""')
+          .gsub(/'(?:\\.|[^'\\])*'/, '""')
+          .gsub(/"(?:\\.|[^"\\])*"/, '""')
+
+        # Match `cache: false` at a position that looks like a top-level or object property
+        # key: preceded by `{`, `,`, or a newline. This avoids false positives like
+        # `cacheDirectory: false` in loader options.
+        stripped.match?(/(?:\{|,|\n)\s*cache\s*:\s*false\b/m)
+      end
+
+      def rspack_major_version
+        # Prefer the resolved version from node_modules, since package.json specifiers
+        # (ranges, git refs, file paths) often don't parse to a clean major number.
+        resolved = installed_rspack_major_version
+        return resolved if resolved
+
+        version = package_json_dependency_version("@rspack/core") ||
+                  package_json_dependency_version("@rspack/cli")
+        return nil unless version
+
+        # Only trust specifiers starting with a digit or ^/~ prefix followed by a digit.
+        # Skip git+, file:, npm: aliases, "latest", "*", or ranges like ">=1.5 <2".
+        cleaned = version.strip
+        return nil unless cleaned.match?(/\A[\^~]?\d/)
+
+        match = cleaned.sub(/\A[\^~]/, "").match(/\A(\d+)\./)
+        match && match[1].to_i
+      end
+
+      def installed_rspack_major_version
+        rspack_pkg = root_path.join("node_modules/@rspack/core/package.json")
+        return nil unless rspack_pkg.exist?
+
+        version = JSON.parse(File.read(rspack_pkg))["version"]
+        match = version.to_s.match(/\A(\d+)\./)
+        match && match[1].to_i
+      rescue JSON::ParserError, Errno::ENOENT
+        nil
+      end
+
+      def package_json_dependency_version(name)
+        return nil unless package_json_exists?
+
+        deps = (read_package_json["dependencies"] || {}).merge(read_package_json["devDependencies"] || {})
+        deps[name]
       end
 
       def check_file_type_dependencies

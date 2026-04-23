@@ -47,6 +47,53 @@ describe "Shakapacker::Compiler" do
     expect(mocked_strategy).to have_received(:after_compile_hook)
   end
 
+  describe "doctor hint messages" do
+    let(:mocked_strategy) do
+      spy("Strategy").tap do |s|
+        allow(s).to receive(:stale?).and_return(true)
+        allow(s).to receive(:after_compile_hook)
+      end
+    end
+
+    before do
+      allow(Shakapacker.compiler).to receive(:strategy).and_return(mocked_strategy)
+      # Reset the once-per-process flag so each test starts fresh.
+      Shakapacker::Compiler.class_variable_set(:@@doctor_hint_shown, false)
+    end
+
+    it "logs a doctor hint once per process when compilation starts" do
+      status = OpenStruct.new(success?: true)
+      allow(Open3).to receive(:capture3).and_return(["", "", status])
+      allow(Shakapacker.logger).to receive(:info)
+
+      Shakapacker.compiler.compile
+
+      expect(Shakapacker.logger).to have_received(:info).with(/shakapacker:doctor/).once
+    end
+
+    it "does not repeat the doctor hint on subsequent compiles in the same process" do
+      status = OpenStruct.new(success?: true)
+      allow(Open3).to receive(:capture3).and_return(["", "", status])
+      allow(Shakapacker.logger).to receive(:info)
+
+      Shakapacker.compiler.compile
+      Shakapacker.compiler.compile
+
+      expect(Shakapacker.logger).to have_received(:info).with(/shakapacker:doctor/).once
+    end
+
+    it "logs the doctor hint before compilation output even when compilation fails" do
+      status = OpenStruct.new(success?: false)
+      allow(Open3).to receive(:capture3).and_return(["", "build error", status])
+      allow(Shakapacker.logger).to receive(:error)
+      allow(Shakapacker.logger).to receive(:info)
+
+      Shakapacker.compiler.compile
+
+      expect(Shakapacker.logger).to have_received(:info).with(/shakapacker:doctor/).once
+    end
+  end
+
   it "accepts external env variables" do
     expect(Shakapacker.compiler.send(:webpack_env)["SHAKAPACKER_ASSET_HOST"]).to be nil
 

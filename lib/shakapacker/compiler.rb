@@ -9,6 +9,9 @@ class Shakapacker::Compiler
   # Shakapacker::Compiler.env['FRONTEND_API_KEY'] = 'your_secret_key'
   cattr_accessor(:env) { {} }
 
+  # Tracks whether the first-compile doctor tip has been shown in this process.
+  @@doctor_hint_shown = false
+
   delegate :config, :logger, :strategy, to: :instance
   delegate :fresh?, :stale?, :after_compile_hook, to: :strategy
 
@@ -167,6 +170,7 @@ class Shakapacker::Compiler
 
     def run_webpack
       logger.info "Compiling..."
+      show_doctor_hint_once
 
       stdout, stderr, status = Open3.capture3(
         webpack_env,
@@ -200,5 +204,12 @@ class Shakapacker::Compiler
 
     def bin_shakapacker_path
       config.root_path.join("bin/shakapacker")
+    end
+
+    def show_doctor_hint_once
+      return if @@doctor_hint_shown
+
+      @@doctor_hint_shown = true
+      logger.info "💡 Tip: run 'bundle exec rake shakapacker:doctor' to diagnose configuration issues."
     end
 end

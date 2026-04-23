@@ -460,6 +460,221 @@ describe Shakapacker::Doctor do
     end
   end
 
+  describe "rspack cache configuration checks" do
+    let(:rspack_config_dir) { root_path.join("config/rspack") }
+    let(:rspack_config_path) { rspack_config_dir.join("rspack.config.js") }
+
+    before do
+      allow(config).to receive(:assets_bundler).and_return("rspack")
+      allow(config).to receive(:assets_bundler_config_path).and_return("config/rspack")
+      FileUtils.mkdir_p(rspack_config_dir)
+      File.write(package_json_path, JSON.generate({
+        "devDependencies" => {
+          "@rspack/core" => "^2.0.0-rc.0",
+          "@rspack/cli" => "^2.0.0-rc.0"
+        }
+      }))
+    end
+
+    context "when bundler is webpack" do
+      before do
+        allow(config).to receive(:assets_bundler).and_return("webpack")
+        File.write(rspack_config_path, "module.exports = { cache: false }")
+      end
+
+      it "does not warn about rspack cache" do
+        doctor.send(:check_rspack_cache_configuration)
+        expect(warning_messages).not_to include(match(/Rspack cache/))
+      end
+    end
+
+    context "when rspack config has cache: false" do
+      before do
+        File.write(rspack_config_path, <<~JS)
+          const { generateRspackConfig } = require('shakapacker/rspack')
+          module.exports = generateRspackConfig({ cache: false })
+        JS
+      end
+
+      it "warns that cache is disabled" do
+        doctor.send(:check_rspack_cache_configuration)
+        expect(warning_messages).to include(match(/Rspack cache appears to be disabled.*config\/rspack\/rspack\.config\.js/))
+      end
+
+      it "suggests a filesystem cache fix" do
+        doctor.send(:check_rspack_cache_configuration)
+        expect(warning_messages).to include(match(/cache: \{ type: "filesystem" \}/))
+      end
+    end
+
+    context "when rspack config has cache enabled" do
+      before do
+        File.write(rspack_config_path, <<~JS)
+          const { generateRspackConfig } = require('shakapacker/rspack')
+          module.exports = generateRspackConfig({ cache: { type: 'filesystem' } })
+        JS
+      end
+
+      it "does not warn about cache" do
+        doctor.send(:check_rspack_cache_configuration)
+        expect(warning_messages).not_to include(match(/Rspack cache appears to be disabled/))
+      end
+    end
+
+    context "when rspack config has no explicit cache setting" do
+      before do
+        File.write(rspack_config_path, <<~JS)
+          const { generateRspackConfig } = require('shakapacker/rspack')
+          module.exports = generateRspackConfig()
+        JS
+      end
+
+      it "does not warn about cache" do
+        doctor.send(:check_rspack_cache_configuration)
+        expect(warning_messages).not_to include(match(/Rspack cache appears to be disabled/))
+      end
+    end
+
+    context "when rspack config has cacheDirectory (not top-level cache)" do
+      before do
+        File.write(rspack_config_path, <<~JS)
+          module.exports = {
+            module: {
+              rules: [{ loader: 'babel-loader', options: { cacheDirectory: false } }]
+            }
+          }
+        JS
+      end
+
+      it "does not flag cacheDirectory as disabled cache" do
+        doctor.send(:check_rspack_cache_configuration)
+        expect(warning_messages).not_to include(match(/Rspack cache appears to be disabled/))
+      end
+    end
+
+    context "when cache: false appears only inside a comment" do
+      before do
+        File.write(rspack_config_path, <<~JS)
+          // To opt out of caching, set cache: false below.
+          /* Previous config: cache: false */
+          module.exports = { cache: { type: 'filesystem' } }
+        JS
+      end
+
+      it "does not flag commented-out cache: false" do
+        doctor.send(:check_rspack_cache_configuration)
+        expect(warning_messages).not_to include(match(/Rspack cache appears to be disabled/))
+      end
+    end
+
+    context "when using rspack v1" do
+      before do
+        File.write(package_json_path, JSON.generate({
+          "devDependencies" => {
+            "@rspack/core" => "^1.0.0",
+            "@rspack/cli" => "^1.0.0"
+          }
+        }))
+      end
+
+      it "warns that v1 cache is experimental and recommends upgrading" do
+        doctor.send(:check_rspack_cache_configuration)
+        expect(warning_messages).to include(match(/Rspack v1 detected/))
+        expect(warning_messages).to include(match(/Bump @rspack\/core and @rspack\/cli/))
+      end
+    end
+
+    context "when using rspack v2" do
+      before do
+        File.write(package_json_path, JSON.generate({
+          "devDependencies" => {
+            "@rspack/core" => "^2.0.0-rc.0",
+            "@rspack/cli" => "^2.0.0-rc.0"
+          }
+        }))
+      end
+
+      it "does not warn about v1" do
+        doctor.send(:check_rspack_cache_configuration)
+        expect(warning_messages).not_to include(match(/Rspack v1 detected/))
+      end
+    end
+
+    context "when no rspack config file exists" do
+      it "does not raise and does not warn about cache" do
+        FileUtils.rm_rf(rspack_config_dir)
+        expect { doctor.send(:check_rspack_cache_configuration) }.not_to raise_error
+        expect(warning_messages).not_to include(match(/Rspack cache appears to be disabled/))
+      end
+    end
+
+    context "when the rspack config is a TypeScript file" do
+      let(:rspack_config_ts_path) { rspack_config_dir.join("rspack.config.ts") }
+
+      before do
+        FileUtils.rm_f(rspack_config_path)
+        File.write(rspack_config_ts_path, <<~TS)
+          import { generateRspackConfig } from 'shakapacker/rspack'
+          export default generateRspackConfig({ cache: false })
+        TS
+      end
+
+      it "detects cache: false in the TypeScript config" do
+        doctor.send(:check_rspack_cache_configuration)
+        expect(warning_messages).to include(match(/Rspack cache appears to be disabled.*rspack\.config\.ts/))
+      end
+    end
+
+    context "when cache: false appears only inside a template literal string" do
+      before do
+        File.write(rspack_config_path, <<~JS)
+          const message = `Set cache: false to opt out`
+          module.exports = { cache: { type: 'filesystem' } }
+        JS
+      end
+
+      it "does not flag string-literal mentions of cache: false" do
+        doctor.send(:check_rspack_cache_configuration)
+        expect(warning_messages).not_to include(match(/Rspack cache appears to be disabled/))
+      end
+    end
+
+    context "when node_modules reports a v2 install even though package.json pins v1" do
+      before do
+        node_modules_pkg = root_path.join("node_modules/@rspack/core/package.json")
+        FileUtils.mkdir_p(node_modules_pkg.dirname)
+        File.write(node_modules_pkg, JSON.generate({ "name" => "@rspack/core", "version" => "2.0.0-rc.0" }))
+
+        File.write(package_json_path, JSON.generate({
+          "devDependencies" => {
+            "@rspack/core" => "^1.0.0 || ^2.0.0-0",
+            "@rspack/cli" => "^1.0.0 || ^2.0.0-0"
+          }
+        }))
+      end
+
+      it "prefers the installed version and does not warn about v1" do
+        doctor.send(:check_rspack_cache_configuration)
+        expect(warning_messages).not_to include(match(/Rspack v1 detected/))
+      end
+    end
+
+    context "when the rspack version specifier is a git ref" do
+      before do
+        File.write(package_json_path, JSON.generate({
+          "devDependencies" => {
+            "@rspack/core" => "git+https://github.com/web-infra-dev/rspack.git#v2.0.0"
+          }
+        }))
+      end
+
+      it "does not falsely classify it as v1" do
+        doctor.send(:check_rspack_cache_configuration)
+        expect(warning_messages).not_to include(match(/Rspack v1 detected/))
+      end
+    end
+  end
+
   describe "Windows platform checks" do
     context "on Windows" do
       before do
