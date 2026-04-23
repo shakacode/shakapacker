@@ -248,7 +248,7 @@ shakapacker/
 ├── packages/
 │   ├── shakapacker-webpack/    # supplemental webpack package
 │   │   ├── package.json
-│   │   └── index.js            # re-exports shakapacker/webpack
+│   │   └── index.js            # re-exports shakapacker root (per-bundler subpath split deferred to Phase 2)
 │   └── shakapacker-rspack/     # supplemental rspack package
 │       ├── package.json
 │       └── index.js            # re-exports shakapacker/rspack
