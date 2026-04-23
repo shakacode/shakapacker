@@ -384,49 +384,45 @@ describe "VersionChecker::NodePackageVersion" do
     # Exercises yarn.lock here; npm and pnpm staleness are implicitly covered because
     # find_version short-circuits on the package.json local-path declaration before any
     # lockfile is consulted.
-    it "prefers a file dependency from package.json over a stale yarn lock version" do
-      Dir.mktmpdir do |dir|
-        package_json_path = File.join(dir, "package.json")
-        yarn_lock_path = File.join(dir, "yarn.lock")
+    %w[dependencies devDependencies].each do |section|
+      it "prefers a file dependency from #{section} over a stale yarn lock version" do
+        Dir.mktmpdir do |dir|
+          package_json_path = File.join(dir, "package.json")
+          yarn_lock_path = File.join(dir, "yarn.lock")
 
-        File.write(package_json_path, JSON.generate({ "dependencies" => { "shakapacker" => "file:.yalc/shakapacker" } }))
-        File.write(yarn_lock_path, <<~LOCK)
-          shakapacker@9.7.0:
-            version "9.7.0"
-        LOCK
+          File.write(package_json_path, JSON.generate({ section => { "shakapacker" => "file:.yalc/shakapacker" } }))
+          File.write(yarn_lock_path, <<~LOCK)
+            shakapacker@9.7.0:
+              version "9.7.0"
+          LOCK
 
-        node_package_version = Shakapacker::VersionChecker::NodePackageVersion.new(
-          package_json_path,
-          yarn_lock_path,
-          "file/does/not/exist",
-          "file/does/not/exist"
-        )
+          node_package_version = Shakapacker::VersionChecker::NodePackageVersion.new(
+            package_json_path,
+            yarn_lock_path,
+            "file/does/not/exist",
+            "file/does/not/exist"
+          )
 
-        expect(node_package_version.raw).to eq "file:.yalc/shakapacker"
-        expect(node_package_version.skip_processing?).to be true
+          expect(node_package_version.raw).to eq "file:.yalc/shakapacker"
+          expect(node_package_version.skip_processing?).to be true
+        end
       end
     end
 
-    it "prefers a file dependency from devDependencies over a stale yarn lock version" do
+    it "falls back to devDependencies when shakapacker is not declared in dependencies and no lockfile is present" do
       Dir.mktmpdir do |dir|
         package_json_path = File.join(dir, "package.json")
-        yarn_lock_path = File.join(dir, "yarn.lock")
-
-        File.write(package_json_path, JSON.generate({ "devDependencies" => { "shakapacker" => "file:.yalc/shakapacker" } }))
-        File.write(yarn_lock_path, <<~LOCK)
-          shakapacker@9.7.0:
-            version "9.7.0"
-        LOCK
+        File.write(package_json_path, JSON.generate({ "devDependencies" => { "shakapacker" => "10.0.0" } }))
 
         node_package_version = Shakapacker::VersionChecker::NodePackageVersion.new(
           package_json_path,
-          yarn_lock_path,
+          "file/does/not/exist",
           "file/does/not/exist",
           "file/does/not/exist"
         )
 
-        expect(node_package_version.raw).to eq "file:.yalc/shakapacker"
-        expect(node_package_version.skip_processing?).to be true
+        expect(node_package_version.raw).to eq "10.0.0"
+        expect(node_package_version.skip_processing?).to be false
       end
     end
 
