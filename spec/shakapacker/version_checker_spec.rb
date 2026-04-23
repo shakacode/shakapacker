@@ -381,6 +381,9 @@ describe "VersionChecker::NodePackageVersion" do
       end
     end
 
+    # Exercises yarn.lock here; npm and pnpm staleness are implicitly covered because
+    # find_version short-circuits on the package.json local-path declaration before any
+    # lockfile is consulted.
     it "prefers a file dependency from package.json over a stale yarn lock version" do
       Dir.mktmpdir do |dir|
         package_json_path = File.join(dir, "package.json")
