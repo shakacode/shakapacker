@@ -45,7 +45,7 @@ if [[ "$VERSION_MANAGER" != "none" ]] && [[ ! -f .tool-versions ]] && [[ ! -f .m
     if [[ -f .node-version ]]; then
         NODE_VER=$(cat .node-version | tr -d '[:space:]')
     else
-        NODE_VER="20.18.0"  # Default: LTS Node
+        NODE_VER="22.13.0"  # Default: LTS Node (>=22.12.0 required by @rspack/core)
     fi
 
     cat > .tool-versions << EOF
