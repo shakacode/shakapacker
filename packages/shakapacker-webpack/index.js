@@ -1,1 +1,1 @@
-module.exports = require("shakapacker/webpack");
+module.exports = require("shakapacker")

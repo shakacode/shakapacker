@@ -1,1 +1,1 @@
-module.exports = require("shakapacker/rspack");
+module.exports = require("shakapacker/rspack")
