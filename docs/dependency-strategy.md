@@ -150,7 +150,7 @@ Supplemental package for the standard webpack managed build experience.
 
 | Package                              | Range                | When needed       |
 | ------------------------------------ | -------------------- | ----------------- |
-| webpack-dev-server                   | `^5.2.2`             | Dev mode with HMR |
+| webpack-dev-server                   | `^5.2.2 \|\| ^6.0.0` | Dev mode with HMR |
 | mini-css-extract-plugin              | `^2.0.0`             | CSS extraction    |
 | webpack-subresource-integrity        | `^5.1.0`             | SRI hashes        |
 | @pmmmwh/react-refresh-webpack-plugin | `^0.5.0 \|\| ^0.6.0` | React HMR         |
@@ -225,7 +225,7 @@ The core `shakapacker` package keeps intentional optional peer ranges where comp
 {
   "devDependencies": {
     "shakapacker-webpack": "^11.0.0",
-    "webpack-dev-server": "^5.2.2",
+    "webpack-dev-server": "^6.0.0",
     "@swc/core": "^1.3.0",
     "swc-loader": "^0.2.0",
     "css-loader": "^7.0.0",
