@@ -7,6 +7,7 @@ This document provides step-by-step instructions for the most common upgrade sce
 ## Table of Contents
 
 - [Upgrading Shakapacker](#upgrading-shakapacker)
+- [Automating Updates with Dependabot](#automating-updates-with-dependabot)
 - [Migrating Package Managers](#migrating-package-managers)
   - [Yarn to npm](#yarn-to-npm)
   - [npm to Yarn](#npm-to-yarn)
@@ -93,6 +94,17 @@ For major version upgrades, always consult the version-specific upgrade guides f
 - [V6 Upgrade Guide](./v6_upgrade.md) - Upgrading from v5 to v6
 
 > **💡 Note:** Major version upgrades may include breaking changes. The steps above cover the basic gem/package updates that apply to all versions, but you should always review the version-specific guide for additional migration steps.
+
+---
+
+## Automating Updates with Dependabot
+
+Because Shakapacker ships as both a Ruby gem and an npm package, both sides must
+be bumped together. Dependabot's [multi-ecosystem groups](https://docs.github.com/en/code-security/reference/supply-chain-security/dependabot-options-reference#multi-ecosystem-groups-)
+can open a single PR that updates both ecosystems at once.
+
+See [Dependabot configuration for Shakapacker](./dependabot.md) for an example
+`.github/dependabot.yml` that keeps the gem and npm package in sync.
 
 ---
 

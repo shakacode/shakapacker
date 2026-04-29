@@ -1273,6 +1273,12 @@ npm install shakapacker@next
 
 Also, consult the [CHANGELOG](./CHANGELOG.md) for additional upgrade links.
 
+#### Automating Updates with Dependabot
+
+Shakapacker is shipped as both a Ruby gem and an npm package, so they must be
+upgraded together. See [Dependabot configuration for Shakapacker](./docs/dependabot.md)
+for a `.github/dependabot.yml` example that updates both in a single PR.
+
 #### Common Upgrade Scenarios
 
 For step-by-step guides on common migrations, see the [Common Upgrades Guide](./docs/common-upgrades.md):
