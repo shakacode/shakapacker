@@ -33,8 +33,19 @@ updates:
     patterns: ["shakapacker"]
     multi-ecosystem-group: shakapacker
 
-  # Add additional `updates` entries for the rest of your bundler and npm
-  # dependencies as needed.
+  # To keep the rest of your bundler/npm dependencies updated, add separate
+  # `updates` entries without `multi-ecosystem-group` so they get their own
+  # PRs independent of the Shakapacker group. For example:
+  #
+  # - package-ecosystem: bundler
+  #   directory: "/"
+  #   schedule:
+  #     interval: weekly
+  #
+  # - package-ecosystem: npm
+  #   directory: "/"
+  #   schedule:
+  #     interval: weekly
 ```
 
 With this configuration, Dependabot will open a single pull request that bumps
