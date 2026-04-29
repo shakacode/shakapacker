@@ -56,7 +56,7 @@ required on `updates` entries that are not bound to a multi-ecosystem group
 
 With this configuration, Dependabot will open a single pull request that bumps
 both the `shakapacker` gem and the `shakapacker` npm package together whenever
-a new release is published.
+it detects a new release during its weekly schedule run.
 
 See [this example `dependabot.yml`](https://gist.github.com/sunny/86adfc54c9e5c54b0bc745b46a0827a8#file-dependabot-yml)
 for a fuller configuration that also groups other bundler/npm updates and
