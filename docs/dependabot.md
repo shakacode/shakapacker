@@ -48,6 +48,12 @@ updates:
   #     interval: weekly
 ```
 
+Note that the bundler and npm `updates` entries bound to the multi-ecosystem
+group above don't declare their own `schedule:` — they inherit the cadence
+from the `multi-ecosystem-groups` definition. A per-entry `schedule:` is only
+required on `updates` entries that are not bound to a multi-ecosystem group
+(like the commented-out skeleton above).
+
 With this configuration, Dependabot will open a single pull request that bumps
 both the `shakapacker` gem and the `shakapacker` npm package together whenever
 a new release is published.
