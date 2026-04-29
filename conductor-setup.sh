@@ -86,10 +86,12 @@ fi
 echo "✅ Ruby version: $RUBY_VERSION"
 
 # Check Node version
+# @rspack/core v2 (used by Shakapacker v10+) requires ^20.19.0 || >=22.12.0.
+# We enforce 20.19.0 here as the floor; yarn install will reject 22.0.0–22.11.x via the package.json engines field.
 NODE_VERSION=$(run_cmd node -v | cut -d'v' -f2)
-MIN_NODE_VERSION="14.0.0"
+MIN_NODE_VERSION="20.19.0"
 if [[ $(echo -e "$MIN_NODE_VERSION\n$NODE_VERSION" | sort -V | head -n1) != "$MIN_NODE_VERSION" ]]; then
-    echo "❌ Error: Node.js version v$NODE_VERSION is too old. Shakapacker requires Node.js >= 14.0.0"
+    echo "❌ Error: Node.js version v$NODE_VERSION is too old. Shakapacker requires Node.js ^20.19.0 || >=22.12.0"
     echo "   Please upgrade Node.js using your version manager or system package manager."
     exit 1
 fi
