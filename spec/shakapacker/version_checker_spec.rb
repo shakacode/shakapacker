@@ -748,6 +748,9 @@ describe "VersionChecker::NodePackageVersion" do
       end
     end
 
+    # `raw` reflects the package.json declaration (`"../.."`) rather than the
+    # `"file:../.."` form previously read from package-lock.json v1. Both match
+    # `LOCAL_PATH_REGEX`, so `skip_processing?` stays `true` for local-path installs.
     context "when using a relative path" do
       let(:node_package_version_from_relative_path) { node_package_version(fixture_version: "relative_path") }
 

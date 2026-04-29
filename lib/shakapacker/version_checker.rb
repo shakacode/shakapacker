@@ -163,7 +163,7 @@ module Shakapacker
             # Prefer the declared package.json source for local path installs so
             # yalc/file dependencies are not mistaken for the stale semver in a lockfile.
             dep = package_json_dependency
-            return dep if dep.match(LOCAL_PATH_REGEX).present?
+            return dep if dep.match?(LOCAL_PATH_REGEX)
 
             if File.exist?(@yarn_lock)
               version = from_yarn_lock
