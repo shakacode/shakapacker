@@ -87,11 +87,19 @@ echo "✅ Ruby version: $RUBY_VERSION"
 
 # Check Node version
 # @rspack/core v2 (used by Shakapacker v10+) requires ^20.19.0 || >=22.12.0.
-# We enforce 20.19.0 here as the floor; yarn install will reject 22.0.0–22.11.x via the package.json engines field.
+# Enforce both branches here so unsupported ranges (21.x, 22.0.0–22.11.x) fail before yarn install.
 NODE_VERSION=$(run_cmd node -v | cut -d'v' -f2)
-MIN_NODE_VERSION="20.19.0"
-if [[ $(echo -e "$MIN_NODE_VERSION\n$NODE_VERSION" | sort -V | head -n1) != "$MIN_NODE_VERSION" ]]; then
-    echo "❌ Error: Node.js version v$NODE_VERSION is too old. Shakapacker requires Node.js ^20.19.0 || >=22.12.0"
+NODE_MAJOR=$(echo "$NODE_VERSION" | cut -d'.' -f1)
+MIN_NODE_20="20.19.0"
+MIN_NODE_22="22.12.0"
+node_supported=false
+if [[ "$NODE_MAJOR" == "20" ]] && [[ $(echo -e "$MIN_NODE_20\n$NODE_VERSION" | sort -V | head -n1) == "$MIN_NODE_20" ]]; then
+    node_supported=true
+elif [[ "$NODE_MAJOR" -ge 22 ]] && [[ $(echo -e "$MIN_NODE_22\n$NODE_VERSION" | sort -V | head -n1) == "$MIN_NODE_22" ]]; then
+    node_supported=true
+fi
+if [[ "$node_supported" != "true" ]]; then
+    echo "❌ Error: Node.js version v$NODE_VERSION is unsupported. Shakapacker requires Node.js ^20.19.0 || >=22.12.0"
     echo "   Please upgrade Node.js using your version manager or system package manager."
     exit 1
 fi
