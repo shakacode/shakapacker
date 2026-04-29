@@ -11,9 +11,11 @@ class Shakapacker::Compiler
 
   # Tracks whether the first-compile doctor tip has been shown in this process.
   @doctor_hint_shown = false
+  @doctor_hint_mutex = Mutex.new
 
   class << self
     attr_accessor :doctor_hint_shown
+    attr_reader :doctor_hint_mutex
   end
 
   delegate :config, :logger, :strategy, to: :instance
@@ -213,7 +215,11 @@ class Shakapacker::Compiler
     def show_doctor_hint_once
       return if self.class.doctor_hint_shown
 
-      self.class.doctor_hint_shown = true
-      logger.info "💡 Tip: run 'bundle exec rake shakapacker:doctor' to diagnose configuration issues."
+      self.class.doctor_hint_mutex.synchronize do
+        return if self.class.doctor_hint_shown
+
+        self.class.doctor_hint_shown = true
+        logger.info "Tip: run 'bundle exec rake shakapacker:doctor' to diagnose configuration issues."
+      end
     end
 end

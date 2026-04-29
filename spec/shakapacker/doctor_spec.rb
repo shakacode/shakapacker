@@ -639,6 +639,71 @@ describe Shakapacker::Doctor do
       end
     end
 
+    context "when a comment contains an unmatched quote before a real cache: false" do
+      before do
+        File.write(rspack_config_path, <<~JS)
+          // don't disable cache here
+          const path = require('path')
+          module.exports = { cache: false }
+        JS
+      end
+
+      it "still detects cache: false on a later line" do
+        doctor.send(:check_rspack_cache_configuration)
+        expect(warning_messages).to include(match(/Rspack cache appears to be disabled/))
+      end
+    end
+
+    context "when cache: false is nested inside a loader's options" do
+      before do
+        File.write(rspack_config_path, <<~JS)
+          module.exports = {
+            cache: { type: 'filesystem' },
+            module: {
+              rules: [{
+                loader: 'babel-loader',
+                options: { cache: false }
+              }]
+            }
+          }
+        JS
+      end
+
+      it "does not flag nested loader cache: false as a top-level disabled cache" do
+        doctor.send(:check_rspack_cache_configuration)
+        expect(warning_messages).not_to include(match(/Rspack cache appears to be disabled/))
+      end
+    end
+
+    context "when both rspack.config.js and rspack.config.ts exist" do
+      let(:rspack_config_ts_path) { rspack_config_dir.join("rspack.config.ts") }
+
+      before do
+        File.write(rspack_config_path, "module.exports = { cache: false }")
+        File.write(rspack_config_ts_path, "export default { cache: { type: 'filesystem' } }")
+      end
+
+      it "inspects only the active config (matching the runner's resolution)" do
+        doctor.send(:check_rspack_cache_configuration)
+        # Runner prefers .ts, which has cache enabled — no warning expected.
+        expect(warning_messages).not_to include(match(/Rspack cache appears to be disabled/))
+      end
+    end
+
+    context "when only webpack.config.js exists in rspack mode (webpack fallback)" do
+      let(:webpack_config_path) { rspack_config_dir.join("webpack.config.js") }
+
+      before do
+        FileUtils.rm_f(rspack_config_path)
+        File.write(webpack_config_path, "module.exports = { cache: false }")
+      end
+
+      it "checks the webpack fallback config and warns when cache is disabled" do
+        doctor.send(:check_rspack_cache_configuration)
+        expect(warning_messages).to include(match(/Rspack cache appears to be disabled.*webpack\.config\.js/))
+      end
+    end
+
     context "when node_modules reports a v2 install even though package.json pins v1" do
       before do
         node_modules_pkg = root_path.join("node_modules/@rspack/core/package.json")

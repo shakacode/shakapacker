@@ -693,44 +693,57 @@ module Shakapacker
           add_warning("  Fix: Bump @rspack/core and @rspack/cli to ^2.0.0-0 in package.json. See https://rspack.rs/config/cache and docs/rspack.md for details.")
         end
 
-        rspack_config_paths.each do |path|
-          content = File.read(path)
-          relative = path.relative_path_from(root_path)
-          next unless rspack_cache_disabled?(content)
+        path = active_assets_bundler_config_path
+        return unless path
 
-          add_warning("Rspack cache appears to be disabled in #{relative} (found 'cache: false'). Disabling cache " \
-                      "causes significantly slower builds, especially on rebuilds. Rspack v2 promotes filesystem " \
-                      "caching from experimental to stable.")
-          add_warning("  Fix: Remove the 'cache: false' setting, or use 'cache: { type: \"filesystem\" }' for persistent caching. " \
-                      "See https://rspack.rs/config/cache for options.")
-        end
+        content = File.read(path)
+        return unless rspack_cache_disabled?(content)
+
+        relative = path.relative_path_from(root_path)
+        add_warning("Rspack cache appears to be disabled in #{relative} (found 'cache: false'). Disabling cache " \
+                    "causes significantly slower builds, especially on rebuilds. Rspack v2 promotes filesystem " \
+                    "caching from experimental to stable.")
+        add_warning("  Fix: Remove the 'cache: false' setting, or use 'cache: { type: \"filesystem\" }' for persistent caching. " \
+                    "See https://rspack.rs/config/cache for options.")
       rescue Errno::ENOENT => e
         add_warning("Unable to validate rspack cache configuration: #{e.message}")
       end
 
-      def rspack_config_paths
+      # Returns the single active config path the runner would load, or nil. Mirrors the
+      # resolution order in Shakapacker::Runner#find_rspack_config_with_fallback so the
+      # doctor inspects the same file the build will actually use (and so unused sibling
+      # configs in the same directory don't trigger spurious warnings).
+      def active_assets_bundler_config_path
         config_dir = config.assets_bundler_config_path
-        %w[js ts mjs cjs].filter_map do |ext|
-          path = root_path.join(config_dir, "rspack.config.#{ext}")
-          path if path.exist?
+
+        candidates = %w[ts js mjs cjs].map { |ext| root_path.join(config_dir, "rspack.config.#{ext}") }
+        candidates += %w[ts js].map { |ext| root_path.join(config_dir, "webpack.config.#{ext}") }
+        if config_dir == "config/rspack"
+          candidates += %w[ts js].map { |ext| root_path.join("config/webpack", "webpack.config.#{ext}") }
         end
+
+        candidates.find(&:exist?)
       end
 
       def rspack_cache_disabled?(content)
-        # Strip block comments, line comments, and string literals (single/double quoted
-        # and backtick template literals) so examples inside strings or comments don't
-        # trigger a false positive.
+        # Strip string literals and comments so examples inside strings or comments
+        # don't trigger a false positive. Single/double-quoted JS strings cannot span
+        # newlines, so the exclusion class includes \n to prevent a runaway match when
+        # an unmatched quote appears in a comment (e.g. `// don't disable cache`).
         stripped = content
           .gsub(/`(?:\\.|[^`\\])*`/m, '""')
-          .gsub(/'(?:\\.|[^'\\])*'/, '""')
-          .gsub(/"(?:\\.|[^"\\])*"/, '""')
+          .gsub(/'(?:\\.|[^'\\\n])*'/, '""')
+          .gsub(/"(?:\\.|[^"\\\n])*"/, '""')
           .gsub(%r{/\*.*?\*/}m, "")
           .gsub(%r{//[^\n]*}, "")
 
-        # Match `cache: false` at a position that looks like a top-level or object property
-        # key: preceded by `{`, `,`, or a newline. This avoids false positives like
-        # `cacheDirectory: false` in loader options.
-        stripped.match?(/(?:\{|,|\n)\s*cache\s*:\s*false\b/m)
+        # Only match `cache: false` at brace depth 1 (the top level of the exported
+        # config object). This avoids false positives from nested loader options like
+        # `{ loader: 'babel-loader', options: { cache: false } }`.
+        stripped.to_enum(:scan, /\bcache\s*:\s*false\b/).any? do
+          pre = Regexp.last_match.pre_match
+          (pre.count("{") - pre.count("}")) == 1
+        end
       end
 
       def rspack_major_version
