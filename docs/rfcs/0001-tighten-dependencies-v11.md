@@ -24,7 +24,7 @@ This is rolled out in two phases:
 Shakapacker v10 has **23 optional peer dependencies** with extremely broad version ranges:
 
 - `esbuild`: 14 separate version ranges (`^0.14.0 || ^0.15.0 || ... || ^0.27.0`)
-- `webpack-cli`: 3 major versions (`^4.9.2 || ^5.0.0 || ^6.0.0`)
+- `webpack-cli`: 4 major versions (`^4.9.2 || ^5.0.0 || ^6.0.0 || ^7.0.0`)
 - `sass-loader`: 4 major versions (`^13.0.0 || ^14.0.0 || ^15.0.0 || ^16.0.0`)
 - `babel-loader`: 3 major versions (`^8.2.4 || ^9.0.0 || ^10.0.0`)
 
@@ -50,13 +50,14 @@ This creates:
 
 ### Phase 1: v10.1.0 (Non-Breaking, Additive)
 
-Restructure the repo and publish the two supplemental packages. **No changes to the core `shakapacker` package's peer deps.** Existing users are unaffected.
+Add the two supplemental packages. **No changes to the core `shakapacker` package's peer deps.** Existing users are unaffected.
 
 What ships:
-- Add `"workspaces": ["packages/*"]` to root `package.json`
+
 - Create `packages/shakapacker-webpack/` and `packages/shakapacker-rspack/`
 - Core `package/` directory stays in place (NOT moved to `packages/shakapacker/`)
-- Publish supplemental packages at v10.1.0
+- Do not enable root `workspaces` yet: the root `package.json` is also the publishable `shakapacker` package, and Yarn Classic requires workspace roots to be `private: true`
+- Publish core `shakapacker` 10.1.0 first, then publish supplemental packages at v10.1.0 so their core peer deps resolve
 - Update docs and installer to recommend the new pattern for new projects
 - Core `shakapacker` still declares all existing peer deps (nothing removed)
 
@@ -69,11 +70,12 @@ This gives the supplemental packages real-world usage before they become the req
 Remove bundler-specific peer deps from core `shakapacker`. Tighten version ranges. Drop EOL runtimes.
 
 What ships:
+
 - Core `shakapacker` no longer declares webpack/rspack peer deps
 - Users must install `shakapacker-webpack` or `shakapacker-rspack`
 - Drop old major versions (webpack-cli v4/v5, sass-loader v13-15, etc.)
 - Collapse esbuild from 14 ranges to `^0.24.0`
-- Ruby 3.3+, Rails 7.2+ (Ruby 3.1/3.2 are EOL; Rails 7.0/7.1 are unsupported)
+- Ruby 3.4+, Rails 7.2+ (Ruby 3.1/3.2 are EOL; Ruby 3.3 reaches EOL 2027-03; Rails 7.0/7.1 are unsupported)
 
 ### Three npm Packages
 
@@ -92,24 +94,24 @@ The base package that all users install. Contains:
 
 **Dependencies (v10.1.0 — no change from today):**
 
-| Package | Version | Type |
-|---------|---------|------|
-| js-yaml | `^4.1.0` | dependency |
-| path-complete-extname | `^1.0.0` | dependency |
-| webpack-merge | `^5.8.0` | dependency |
-| yargs | `^17.7.2` | dependency |
+| Package               | Version     | Type              |
+| --------------------- | ----------- | ----------------- |
+| js-yaml               | `^4.1.0`    | dependency        |
+| path-complete-extname | `^1.0.0`    | dependency        |
+| webpack-merge         | `^5.8.0`    | dependency        |
+| yargs                 | `^17.7.2`   | dependency        |
 | All current peer deps | (unchanged) | optional peer dep |
 
 **Dependencies (v11.0.0 — stripped down):**
 
-| Package | Version | Type |
-|---------|---------|------|
-| js-yaml | `^4.1.0` | dependency |
-| path-complete-extname | `^1.0.0` | dependency |
-| webpack-merge | `^5.8.0` | dependency |
-| yargs | `^17.7.2` | dependency |
-| @types/webpack | `^5.0.0` | optional peer dep |
-| @types/babel__core | `^7.0.0` | optional peer dep |
+| Package               | Version   | Type              |
+| --------------------- | --------- | ----------------- |
+| js-yaml               | `^4.1.0`  | dependency        |
+| path-complete-extname | `^1.0.0`  | dependency        |
+| webpack-merge         | `^5.8.0`  | dependency        |
+| yargs                 | `^17.7.2` | dependency        |
+| @types/webpack        | `^5.0.0`  | optional peer dep |
+| @types/babel\_\_core  | `^7.0.0`  | optional peer dep |
 
 **No bundler or transpiler peer deps in v11.** This package works standalone for custom build users.
 
@@ -121,40 +123,40 @@ Supplemental package for the standard webpack managed build experience.
 
 **Peer dependencies (required):**
 
-| Package | Version |
-|---------|---------|
-| shakapacker | `^10.1.0` |
-| webpack | `^5.76.0` |
-| webpack-cli | `^6.0.0` |
-| webpack-assets-manifest | `^5.0.6` |
+| Package                 | Version              |
+| ----------------------- | -------------------- |
+| shakapacker             | `^10.1.0`            |
+| webpack                 | `^5.76.0`            |
+| webpack-cli             | `^6.0.0 \|\| ^7.0.0` |
+| webpack-assets-manifest | `^5.0.6 \|\| ^6.0.0` |
 
 **Peer dependencies (optional):**
 
-| Package | Version | When needed |
-|---------|---------|-------------|
-| webpack-dev-server | `^5.2.0` | Dev mode with HMR |
-| mini-css-extract-plugin | `^2.0.0` | CSS extraction |
-| terser-webpack-plugin | `^5.3.1` | Production minification |
-| webpack-subresource-integrity | `^5.1.0` | SRI hashes |
-| @pmmmwh/react-refresh-webpack-plugin | `^0.5.0` | React HMR |
+| Package                              | Version  | When needed             |
+| ------------------------------------ | -------- | ----------------------- |
+| webpack-dev-server                   | `^5.2.0` | Dev mode with HMR       |
+| mini-css-extract-plugin              | `^2.0.0` | CSS extraction          |
+| terser-webpack-plugin                | `^5.3.1` | Production minification |
+| webpack-subresource-integrity        | `^5.1.0` | SRI hashes              |
+| @pmmmwh/react-refresh-webpack-plugin | `^0.5.0` | React HMR               |
 
 **Peer dependencies (optional — transpiler, pick one):**
 
-| Package | Version | When needed |
-|---------|---------|-------------|
-| @swc/core | `^1.3.0` | `javascript_transpiler: "swc"` (default) |
-| swc-loader | `^0.1.15 || ^0.2.0` | Paired with @swc/core |
-| @babel/core | `^7.17.9` | `javascript_transpiler: "babel"` |
-| babel-loader | `^9.0.0` | Paired with @babel/core |
-| esbuild | `^0.24.0` | `javascript_transpiler: "esbuild"` |
-| esbuild-loader | `^4.0.0` | Paired with esbuild |
+| Package        | Version               | When needed                              |
+| -------------- | --------------------- | ---------------------------------------- |
+| @swc/core      | `^1.3.0`              | `javascript_transpiler: "swc"` (default) |
+| swc-loader     | `^0.1.15 \|\| ^0.2.0` | Paired with @swc/core                    |
+| @babel/core    | `^7.17.9`             | `javascript_transpiler: "babel"`         |
+| babel-loader   | `^9.0.0`              | Paired with @babel/core                  |
+| esbuild        | `^0.24.0`             | `javascript_transpiler: "esbuild"`       |
+| esbuild-loader | `^4.0.0`              | Paired with esbuild                      |
 
 **Peer dependencies (optional — CSS preprocessors):**
 
-| Package | Version | When needed |
-|---------|---------|-------------|
-| css-loader | `^7.0.0` | CSS processing |
-| sass | `^1.50.0` | SCSS/Sass files |
+| Package     | Version   | When needed      |
+| ----------- | --------- | ---------------- |
+| css-loader  | `^7.0.0`  | CSS processing   |
+| sass        | `^1.50.0` | SCSS/Sass files  |
 | sass-loader | `^16.0.0` | Paired with sass |
 
 #### `shakapacker-rspack` (managed rspack build)
@@ -163,21 +165,21 @@ Supplemental package for the rspack managed build experience.
 
 **Peer dependencies (required):**
 
-| Package | Version |
-|---------|---------|
-| shakapacker | `^10.1.0` |
-| @rspack/core | `^1.0.0 || ^2.0.0-0` |
-| @rspack/cli | `^1.0.0 || ^2.0.0-0` |
-| rspack-manifest-plugin | `^5.0.0` |
+| Package                | Version                |
+| ---------------------- | ---------------------- |
+| shakapacker            | `^10.1.0`              |
+| @rspack/core           | `^1.0.0 \|\| ^2.0.0-0` |
+| @rspack/cli            | `^1.0.0 \|\| ^2.0.0-0` |
+| rspack-manifest-plugin | `^5.0.0`               |
 
 **Peer dependencies (optional):**
 
-| Package | Version | When needed |
-|---------|---------|-------------|
-| @rspack/plugin-react-refresh | `^1.0.0` | React HMR |
-| css-loader | `^7.0.0` | CSS processing |
-| sass | `^1.50.0` | SCSS/Sass files |
-| sass-loader | `^16.0.0` | Paired with sass |
+| Package                      | Version   | When needed      |
+| ---------------------------- | --------- | ---------------- |
+| @rspack/plugin-react-refresh | `^1.0.0`  | React HMR        |
+| css-loader                   | `^7.0.0`  | CSS processing   |
+| sass                         | `^1.50.0` | SCSS/Sass files  |
+| sass-loader                  | `^16.0.0` | Paired with sass |
 
 Note: rspack has built-in SWC transpilation, so no external transpiler deps are needed.
 
@@ -199,8 +201,8 @@ Following [G-Rath's feedback](https://github.com/shakacode/shakapacker/issues/10
     "shakapacker": "^11.0.0",
     "shakapacker-webpack": "^11.0.0",
     "webpack": "^5.76.0",
-    "webpack-cli": "^6.0.0",
-    "webpack-assets-manifest": "^5.0.6",
+    "webpack-cli": "^6.0.0 || ^7.0.0",
+    "webpack-assets-manifest": "^5.0.6 || ^6.0.0",
     "webpack-dev-server": "^5.2.0",
     "@swc/core": "^1.3.0",
     "swc-loader": "^0.2.0",
@@ -256,7 +258,7 @@ shakapacker/
 ├── spec/                       # Ruby specs
 ├── test/                       # JS tests
 ├── shakapacker.gemspec
-└── package.json                # workspace root + core package
+└── package.json                # core npm package
 ```
 
 **Phase 2 (v11.0.0) — core moves into packages/:**
@@ -304,7 +306,7 @@ All three npm packages share the same version number, always. The Ruby gem versi
 1. **Same version, always.** When any package is released, all three are released at the same version. If a release only changes core, the supplemental packages still get the version bump.
 2. **Caret peer dep on core.** `shakapacker-webpack` and `shakapacker-rspack` declare `"shakapacker": "^10.1.0"` as a peer dep. This means minor bumps don't force users to update all packages on the same day, but they stay within the same major.
 3. **Start at v10.1.0.** All three packages begin at the same version. No separate versioning at any point.
-4. **Use npm workspaces** for the monorepo. The root `package.json` declares workspaces, and a single `npm version` + publish script bumps all three.
+4. **Defer workspace tooling until the root can be private.** During Phase 1, the root `package.json` remains the publishable core package, so root workspaces are not enabled under Yarn Classic.
 
 **Why lockstep:**
 
@@ -313,28 +315,38 @@ All three npm packages share the same version number, always. The Ruby gem versi
 - Users see `"shakapacker": "^10.2.0"` and `"shakapacker-webpack": "^10.2.0"` — easy to reason about compatibility.
 - "Empty bumps" (a supplemental package gets a version bump with no code change) are a tiny cost compared to the coordination headache of independent versions.
 
-**Release process:**
+**Initial v10.1.0 release process:**
+
+> **Sequencing is load-bearing.** Both supplemental packages declare `"shakapacker": "^10.1.0"` as a required peer dep. Core `shakapacker` 10.1.0 must be published _before_ either supplemental, otherwise installers receive an unresolvable peer dependency error.
 
 ```bash
-# Bump all three packages to the same version (root + supplemental)
-npm version minor --workspaces --include-workspace-root   # or patch, or major
+# Bump the existing root package from 10.0.0 to 10.1.0.
+npm version 10.1.0 --no-git-tag-version
 
-# Publish all three
-npm publish --workspaces --include-workspace-root
+# Publish core first so supplemental peer deps resolve.
+npm publish
+
+# Publish supplemental packages, already versioned 10.1.0.
+(cd packages/shakapacker-webpack && npm publish)
+(cd packages/shakapacker-rspack && npm publish)
 
 # Ruby gem is released separately via existing rake task
 bundle exec rake release
 ```
 
+> **Why npm for publishing despite Yarn 1 for development.** The project pins `packageManager: yarn@1.22.22` and uses Yarn for all development scripts, but Yarn Classic does not have a workspace-aware publish command (and `yarn workspaces version` is not available in v1). We invoke `npm publish` per package directly until v11 picks a dedicated release tool — see Open Question #5.
+
+For later Phase 1 releases, bump all three package manifests to the same version in one release commit before publishing. A dedicated workspace or release tool remains an open question for v11, when the core package can move under `packages/shakapacker/` and the repository root can become private.
+
 The existing `bundle exec rake update_changelog` task should be updated to handle the monorepo structure, noting which packages were affected in each release.
 
 ### Ruby gemspec (v11.0.0)
 
-| Dependency | Current | v11 Proposed | Reason |
-|------------|---------|-------------|--------|
-| `required_ruby_version` | `>= 2.7.0` | `>= 3.3.0` | Ruby 3.1 (EOL 2025-03-26) and 3.2 (EOL 2026-04-01) are EOL |
-| `activesupport` | `>= 5.2` | `>= 7.2` | Rails 7.0/7.1 are unsupported (only 7.2.x, 8.0.x, 8.1.x receive security fixes) |
-| `railties` | `>= 5.2` | `>= 7.2` | Match activesupport |
+| Dependency              | Current    | v11 Proposed | Reason                                                                                                                                                                                  |
+| ----------------------- | ---------- | ------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `required_ruby_version` | `>= 2.7.0` | `>= 3.4.0`   | Ruby 3.1 (EOL 2025-03-26) and 3.2 (EOL 2026-04-01) are EOL; Ruby 3.3 (EOL 2027-03-31) leaves little headroom for v11. Ruby 3.4 (EOL ~2027-12) gives v11 a longer active-support window. |
+| `activesupport`         | `>= 5.2`   | `>= 7.2`     | Rails 7.0/7.1 are unsupported (only 7.2.x, 8.0.x, 8.1.x receive security fixes)                                                                                                         |
+| `railties`              | `>= 5.2`   | `>= 7.2`     | Match activesupport                                                                                                                                                                     |
 
 ### Node.js engines
 
@@ -356,6 +368,7 @@ The `shakapacker:install` rake task should be updated to:
 Existing users: nothing changes. Your current `package.json` continues to work.
 
 New projects or early adopters:
+
 1. Add `shakapacker-webpack` or `shakapacker-rspack` to devDependencies
 2. Both the old pattern (peer deps on core) and new pattern (supplemental package) work simultaneously
 
@@ -365,7 +378,7 @@ New projects or early adopters:
 
 1. Update `shakapacker` gem and npm package to v11
 2. Add `shakapacker-webpack` to devDependencies (if not already from v10.1)
-3. Update any stale dependencies to current majors (e.g., `webpack-cli` to v6)
+3. Update any stale dependencies to current majors (e.g., `webpack-cli` to v6 or v7)
 4. Remove `compression-webpack-plugin` if unused (no longer a peer dep)
 
 #### For Rspack Users
@@ -385,6 +398,7 @@ New projects or early adopters:
 #### For Babel Users
 
 Babel is no longer the default and hasn't been since v8. In v11:
+
 - Babel still works, but only `babel-loader` v9+ is supported
 - Consider migrating to SWC (`javascript_transpiler: "swc"`) for faster builds
 - The transpiler migration guide already exists at `docs/transpiler-migration.md`
@@ -394,6 +408,7 @@ Babel is no longer the default and hasn't been since v8. In v11:
 ### Single package with all optional peer deps (current approach)
 
 The status quo. Rejected because:
+
 - `package.json` cannot express "required if you chose webpack" — deps are either optional or required for everyone
 - 23 optional peer deps provide no guardrails for new users
 - Silenced warnings (`peerDependenciesMeta: optional`) don't help users make correct choices
@@ -405,6 +420,7 @@ Rejected because it would force webpack dependencies on rspack users and vice ve
 ### Bundle webpack/rspack as a regular dependency (Next.js model)
 
 Rejected because:
+
 - Shakapacker supports **both** webpack and rspack — we can't bundle both
 - Users need direct access to webpack/rspack for custom config files
 - Vendoring would make it harder for users to apply webpack security patches independently
@@ -412,6 +428,7 @@ Rejected because:
 ### Separate repos for supplemental packages
 
 Rejected because:
+
 - Core changes almost always affect both supplemental packages — separate repos mean cross-repo PRs for routine changes
 - Testing a core change against both supplemental packages requires coordination across repos
 - More CI pipelines to maintain, more places for things to drift out of sync
@@ -421,6 +438,7 @@ Rejected because:
 ### Full monorepo split (separate gem per bundler)
 
 Rejected because:
+
 - The Ruby gem logic is shared across both bundlers
 - Would double our release/maintenance burden on the gem side
 - The npm-only split achieves the same dependency isolation without touching the gem
@@ -428,6 +446,7 @@ Rejected because:
 ### Big bang v11 (no phased rollout)
 
 Rejected because:
+
 - v10 just shipped — bumping to v11 immediately feels rushed
 - Phased rollout lets supplemental packages get real-world usage before they become required
 - v10.1 is zero-risk for existing users
