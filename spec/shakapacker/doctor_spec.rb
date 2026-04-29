@@ -673,6 +673,21 @@ describe Shakapacker::Doctor do
         expect(warning_messages).not_to include(match(/Rspack v1 detected/))
       end
     end
+
+    context "when the rspack version specifier is a compound range" do
+      before do
+        File.write(package_json_path, JSON.generate({
+          "devDependencies" => {
+            "@rspack/core" => "^1.0.0 || ^2.0.0-0"
+          }
+        }))
+      end
+
+      it "does not falsely classify it as v1" do
+        doctor.send(:check_rspack_cache_configuration)
+        expect(warning_messages).not_to include(match(/Rspack v1 detected/))
+      end
+    end
   end
 
   describe "Windows platform checks" do

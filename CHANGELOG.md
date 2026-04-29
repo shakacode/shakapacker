@@ -29,8 +29,8 @@
 
 ### Added
 
-- **Added `shakapacker:doctor` check for disabled Rspack cache**. The doctor now inspects the Rspack config file for an explicit `cache: false`, warns when found (disabling cache causes significantly slower builds), and also flags Rspack v1 installs (where persistent cache is experimental) with a recommendation to upgrade to v2.
-- **Added a `shakapacker:doctor` hint to compiler output**. The compiler now logs a one-time tip suggesting `bundle exec rake shakapacker:doctor` when compilation starts in a process, and repeats the tip on compilation failure so users can diagnose configuration issues.
+- **Added `shakapacker:doctor` check for disabled Rspack cache**. [PR #1100](https://github.com/shakacode/shakapacker/pull/1100) by [justin808](https://github.com/justin808). The doctor now inspects the Rspack config file for an explicit `cache: false`, warns when found (disabling cache causes significantly slower builds), and also flags Rspack v1 installs (where persistent cache is experimental) with a recommendation to upgrade to v2.
+- **Added a `shakapacker:doctor` hint to compiler output**. [PR #1100](https://github.com/shakacode/shakapacker/pull/1100) by [justin808](https://github.com/justin808). The compiler now logs a one-time tip suggesting `bundle exec rake shakapacker:doctor` when compilation starts in a process.
 
 ### Changed
 

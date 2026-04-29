@@ -10,7 +10,11 @@ class Shakapacker::Compiler
   cattr_accessor(:env) { {} }
 
   # Tracks whether the first-compile doctor tip has been shown in this process.
-  @@doctor_hint_shown = false
+  @doctor_hint_shown = false
+
+  class << self
+    attr_accessor :doctor_hint_shown
+  end
 
   delegate :config, :logger, :strategy, to: :instance
   delegate :fresh?, :stale?, :after_compile_hook, to: :strategy
@@ -207,9 +211,9 @@ class Shakapacker::Compiler
     end
 
     def show_doctor_hint_once
-      return if @@doctor_hint_shown
+      return if self.class.doctor_hint_shown
 
-      @@doctor_hint_shown = true
+      self.class.doctor_hint_shown = true
       logger.info "💡 Tip: run 'bundle exec rake shakapacker:doctor' to diagnose configuration issues."
     end
 end

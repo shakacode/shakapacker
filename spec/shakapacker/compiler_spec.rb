@@ -58,7 +58,7 @@ describe "Shakapacker::Compiler" do
     before do
       allow(Shakapacker.compiler).to receive(:strategy).and_return(mocked_strategy)
       # Reset the once-per-process flag so each test starts fresh.
-      Shakapacker::Compiler.class_variable_set(:@@doctor_hint_shown, false)
+      Shakapacker::Compiler.doctor_hint_shown = false
     end
 
     it "logs a doctor hint once per process when compilation starts" do

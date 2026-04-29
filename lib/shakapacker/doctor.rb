@@ -704,12 +704,12 @@ module Shakapacker
           add_warning("  Fix: Remove the 'cache: false' setting, or use 'cache: { type: \"filesystem\" }' for persistent caching. " \
                       "See https://rspack.rs/config/cache for options.")
         end
-      rescue Errno::ENOENT, JSON::ParserError => e
+      rescue Errno::ENOENT => e
         add_warning("Unable to validate rspack cache configuration: #{e.message}")
       end
 
       def rspack_config_paths
-        config_dir = config.respond_to?(:assets_bundler_config_path) ? config.assets_bundler_config_path : "config/rspack"
+        config_dir = config.assets_bundler_config_path
         %w[js ts mjs cjs].filter_map do |ext|
           path = root_path.join(config_dir, "rspack.config.#{ext}")
           path if path.exist?
@@ -721,11 +721,11 @@ module Shakapacker
         # and backtick template literals) so examples inside strings or comments don't
         # trigger a false positive.
         stripped = content
-          .gsub(%r{/\*.*?\*/}m, "")
-          .gsub(%r{//[^\n]*}, "")
           .gsub(/`(?:\\.|[^`\\])*`/m, '""')
           .gsub(/'(?:\\.|[^'\\])*'/, '""')
           .gsub(/"(?:\\.|[^"\\])*"/, '""')
+          .gsub(%r{/\*.*?\*/}m, "")
+          .gsub(%r{//[^\n]*}, "")
 
         # Match `cache: false` at a position that looks like a top-level or object property
         # key: preceded by `{`, `,`, or a newline. This avoids false positives like
@@ -747,6 +747,8 @@ module Shakapacker
         # Skip git+, file:, npm: aliases, "latest", "*", or ranges like ">=1.5 <2".
         cleaned = version.strip
         return nil unless cleaned.match?(/\A[\^~]?\d/)
+        return nil if cleaned.match?(/(\s|\|\||[<>=:]|\A(?:git|file|link|workspace|npm):)/)
+        return nil unless cleaned.match?(/\A[\^~]?\d+(?:\.\d+){1,2}(?:-[0-9A-Za-z.-]+)?\z/)
 
         match = cleaned.sub(/\A[\^~]/, "").match(/\A(\d+)\./)
         match && match[1].to_i
@@ -766,7 +768,8 @@ module Shakapacker
       def package_json_dependency_version(name)
         return nil unless package_json_exists?
 
-        deps = (read_package_json["dependencies"] || {}).merge(read_package_json["devDependencies"] || {})
+        pkg = read_package_json
+        deps = (pkg["dependencies"] || {}).merge(pkg["devDependencies"] || {})
         deps[name]
       end
 
