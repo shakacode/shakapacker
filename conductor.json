@@ -1,8 +1,8 @@
 {
   "scripts": {
     "setup": "./conductor-setup.sh",
-    "run": "bin/conductor-exec bundle exec rspec",
-    "test": "bin/conductor-exec bundle exec rspec",
+    "run": "bin/conductor-exec bundle exec rake run_spec:gem",
+    "test": "bin/conductor-exec bundle exec rake run_spec:gem",
     "lint": "bin/conductor-exec bundle exec rubocop && bin/conductor-exec yarn lint",
     "archive": ""
   }
