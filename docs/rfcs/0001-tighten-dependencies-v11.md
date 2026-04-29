@@ -73,7 +73,7 @@ What ships:
 - Users must install `shakapacker-webpack` or `shakapacker-rspack`
 - Drop old major versions (webpack-cli v4/v5, sass-loader v13-15, etc.)
 - Collapse esbuild from 14 ranges to `^0.24.0`
-- Ruby 3.1+, Rails 7.0+
+- Ruby 3.3+, Rails 7.2+ (Ruby 3.1/3.2 are EOL; Rails 7.0/7.1 are unsupported)
 
 ### Three npm Packages
 
@@ -143,7 +143,7 @@ Supplemental package for the standard webpack managed build experience.
 | Package | Version | When needed |
 |---------|---------|-------------|
 | @swc/core | `^1.3.0` | `javascript_transpiler: "swc"` (default) |
-| swc-loader | `^0.2.0` | Paired with @swc/core |
+| swc-loader | `^0.1.15 || ^0.2.0` | Paired with @swc/core |
 | @babel/core | `^7.17.9` | `javascript_transpiler: "babel"` |
 | babel-loader | `^9.0.0` | Paired with @babel/core |
 | esbuild | `^0.24.0` | `javascript_transpiler: "esbuild"` |
@@ -166,8 +166,8 @@ Supplemental package for the rspack managed build experience.
 | Package | Version |
 |---------|---------|
 | shakapacker | `^10.1.0` |
-| @rspack/core | `^2.0.0` |
-| @rspack/cli | `^2.0.0` |
+| @rspack/core | `^1.0.0 || ^2.0.0-0` |
+| @rspack/cli | `^1.0.0 || ^2.0.0-0` |
 | rspack-manifest-plugin | `^5.0.0` |
 
 **Peer dependencies (optional):**
@@ -241,7 +241,7 @@ All three npm packages live in the existing `shakacode/shakapacker` repository. 
 
 **Phase 1 (v10.1.0) — core stays in place:**
 
-```
+```text
 shakapacker/
 ├── package/                    # core npm package source (unchanged)
 │   └── ...
@@ -261,7 +261,7 @@ shakapacker/
 
 **Phase 2 (v11.0.0) — core moves into packages/:**
 
-```
+```text
 shakapacker/
 ├── packages/
 │   ├── shakapacker/            # core npm package (moved from package/)
@@ -316,11 +316,11 @@ All three npm packages share the same version number, always. The Ruby gem versi
 **Release process:**
 
 ```bash
-# Bump all three packages to the same version
-npm version minor --workspaces   # or patch, or major
+# Bump all three packages to the same version (root + supplemental)
+npm version minor --workspaces --include-workspace-root   # or patch, or major
 
 # Publish all three
-npm publish --workspaces
+npm publish --workspaces --include-workspace-root
 
 # Ruby gem is released separately via existing rake task
 bundle exec rake release
@@ -332,9 +332,9 @@ The existing `bundle exec rake update_changelog` task should be updated to handl
 
 | Dependency | Current | v11 Proposed | Reason |
 |------------|---------|-------------|--------|
-| `required_ruby_version` | `>= 2.7.0` | `>= 3.1.0` | Ruby 2.7 and 3.0 are EOL |
-| `activesupport` | `>= 5.2` | `>= 7.0` | Rails 5.2, 6.0 are EOL |
-| `railties` | `>= 5.2` | `>= 7.0` | Match activesupport |
+| `required_ruby_version` | `>= 2.7.0` | `>= 3.3.0` | Ruby 3.1 (EOL 2025-03-26) and 3.2 (EOL 2026-04-01) are EOL |
+| `activesupport` | `>= 5.2` | `>= 7.2` | Rails 7.0/7.1 are unsupported (only 7.2.x, 8.0.x, 8.1.x receive security fixes) |
+| `railties` | `>= 5.2` | `>= 7.2` | Match activesupport |
 
 ### Node.js engines
 
