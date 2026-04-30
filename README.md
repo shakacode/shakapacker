@@ -160,6 +160,9 @@ _Requires extra packages to be installed._
 
 ## Installation
 
+For a focused installation walkthrough in the published docs, see
+[Installation](./docs/installation.md).
+
 ### Rails v6+
 
 With Rails v6+, skip JavaScript for a new app and follow below Manual Installation Steps to manually add the `shakapacker` gem to your Gemfile.
