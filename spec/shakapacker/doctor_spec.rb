@@ -56,6 +56,15 @@ describe Shakapacker::Doctor do
     doctor.warnings.map { |w| w[:message] }
   end
 
+  def capture_stdout
+    old_stdout = $stdout
+    $stdout = StringIO.new
+    yield
+    $stdout.string
+  ensure
+    $stdout = old_stdout
+  end
+
   describe "warning formatting" do
     it "formats warnings with correct indentation and spacing" do
       # Create a test scenario with warnings
@@ -721,9 +730,67 @@ describe Shakapacker::Doctor do
     end
 
     context "when no binstubs exist" do
-      it "adds missing binstubs warning for all three" do
+      it "adds missing binstubs warning for all required binstubs" do
         doctor.send(:check_binstub)
-        expect(warning_messages).to include(match(/Missing binstubs:.*bin\/shakapacker.*bin\/shakapacker-dev-server.*bin\/shakapacker-config/))
+        expect(warning_messages).to include(
+          match(/Missing binstubs:.*bin\/shakapacker.*bin\/shakapacker-dev-server.*bin\/shakapacker-config/)
+        )
+      end
+
+      it "does not warn about optional binstub diff-bundler-config" do
+        doctor.send(:check_binstub)
+        expect(warning_messages).not_to include(match(/diff-bundler-config/))
+      end
+    end
+  end
+
+  describe "binstub status display" do
+    let(:reporter) { Shakapacker::Doctor::Reporter.new(doctor) }
+    let(:binstub_path) { root_path.join("bin/shakapacker") }
+    let(:dev_server_binstub_path) { root_path.join("bin/shakapacker-dev-server") }
+    let(:export_config_binstub_path) { root_path.join("bin/shakapacker-config") }
+    let(:diff_bundler_config_path) { root_path.join("bin/diff-bundler-config") }
+
+    context "when all required binstubs exist" do
+      before do
+        FileUtils.mkdir_p(binstub_path.dirname)
+        File.write(binstub_path, "#!/usr/bin/env ruby")
+        File.write(dev_server_binstub_path, "#!/usr/bin/env ruby")
+        File.write(export_config_binstub_path, "#!/usr/bin/env node")
+      end
+
+      it "prints all required binstubs found message" do
+        output = capture_stdout { reporter.send(:print_binstub_status) }
+        expect(output).to include("All required Shakapacker binstubs found")
+      end
+    end
+
+    context "when diff-bundler-config optional binstub exists" do
+      before do
+        FileUtils.mkdir_p(binstub_path.dirname)
+        File.write(binstub_path, "#!/usr/bin/env ruby")
+        File.write(dev_server_binstub_path, "#!/usr/bin/env ruby")
+        File.write(export_config_binstub_path, "#!/usr/bin/env node")
+        File.write(diff_bundler_config_path, "#!/usr/bin/env node")
+      end
+
+      it "prints optional binstub as found" do
+        output = capture_stdout { reporter.send(:print_binstub_status) }
+        expect(output).to include("diff-bundler-config found (optional)")
+      end
+    end
+
+    context "when diff-bundler-config is absent" do
+      before do
+        FileUtils.mkdir_p(binstub_path.dirname)
+        File.write(binstub_path, "#!/usr/bin/env ruby")
+        File.write(dev_server_binstub_path, "#!/usr/bin/env ruby")
+        File.write(export_config_binstub_path, "#!/usr/bin/env node")
+      end
+
+      it "does not mention diff-bundler-config" do
+        output = capture_stdout { reporter.send(:print_binstub_status) }
+        expect(output).not_to include("diff-bundler-config")
       end
     end
   end

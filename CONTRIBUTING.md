@@ -8,7 +8,7 @@ Thank you for your interest in contributing to Shakapacker! We welcome all contr
 - [Submitting Pull Requests](#submitting-pull-requests)
 - [Setting Up a Development Environment](#setting-up-a-development-environment)
 - [Making sure your changes pass all tests](#making-sure-your-changes-pass-all-tests)
-- [Testing the generator](#testing-the-generator)
+- [Testing the installer](#46-testing-the-installer)
 
 ## Reporting Issues
 
@@ -44,8 +44,8 @@ This project includes configuration for git hooks via `husky` and `lint-staged`,
 To enable pre-commit hooks locally:
 
 ```bash
-npx husky install
-npx husky add .husky/pre-commit "npx lint-staged"
+yarn install
+npx husky
 ```
 
 ---
@@ -174,11 +174,16 @@ yarn lint --cache
      yalc push # or yalc publish --push
      ```
 
-3. Run the following commands to set up the development environment.
+3. Run `bin/setup` to install development dependencies.
+   ```bash
+   bin/setup
+   # Optional: enable local pre-commit hooks
+   npx husky
    ```
+   Manual equivalent:
+   ```bash
    bundle install
    yarn install
-   yarn prepare:husky  # Set up pre-commit hooks for linting
    ```
 
 ## Understanding Optional Peer Dependencies

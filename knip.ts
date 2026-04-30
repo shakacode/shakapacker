@@ -1,7 +1,13 @@
 import type { KnipConfig } from "knip"
 
 const config: KnipConfig = {
-  project: ["package/**/*.{ts,js}", "test/**/*.{ts,js}", "scripts/**/*.js"],
+  project: [
+    "package/**/*.{ts,js}",
+    "test/**/*.{ts,js}",
+    "scripts/**/*.js",
+    "bin/diff-bundler-config",
+    "lib/install/bin/diff-bundler-config"
+  ],
   ignore: [
     "package/**/*.d.ts",
     "package/**/*.js",
@@ -28,6 +34,8 @@ const config: KnipConfig = {
     "@rspack/cli",
     "webpack-cli",
     "husky",
+    // Used by bin/diff-bundler-config wrappers (outside knip's core package scan)
+    "pack-config-diff",
     // Optional dependencies used in webpack/rspack configs
     "mini-css-extract-plugin",
     "webpack-assets-manifest",

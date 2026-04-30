@@ -53,7 +53,7 @@ When migrating from webpack to Rspack, follow this testing strategy to minimize 
 ⚠️ **If your application uses SSR**, be aware of these critical issues before migrating:
 
 1. **CSS Extraction Differences**: Rspack uses different loader paths than webpack for CSS extraction
-2. **CSS Modules Breaking Change**: Shakapacker 9 changed from default exports to named exports
+2. **CSS Modules Breaking Change**: Shakapacker changed in v9 (and keeps this in v10) from default exports to named exports
 3. **React Runtime Compatibility**: SWC's automatic runtime may not work with React on Rails SSR detection
 
 **SSR Migration Checklist** (complete before migrating):
@@ -240,7 +240,7 @@ The task will:
 **Custom Dependencies:** You can customize which dependencies are installed by creating a `.shakapacker-switch-bundler-dependencies.yml` file:
 
 ```bash
-bundle exec rake shakapacker:switch_bundler --init-config
+bin/rake shakapacker:switch_bundler -- --init-config
 ```
 
 ### Manual Migration Steps
@@ -379,36 +379,20 @@ For applications with SSR, follow this verification order:
 
 ### Configuration Organization
 
-**Recommended approach**: Keep webpack and rspack configs in the same directory with conditional logic:
+**Recommended approach**: Keep webpack and rspack configs in their default directories:
 
-```javascript
-// config/webpack/webpack.config.js (works for both bundlers)
-const { config } = require("shakapacker")
-const bundler =
-  config.assets_bundler === "rspack"
-    ? require("@rspack/core")
-    : require("webpack")
+- `config/webpack/webpack.config.js` for webpack
+- `config/rspack/rspack.config.js` (or `.ts`) for rspack
 
-// Use for plugins
-clientConfig.plugins.push(
-  new bundler.ProvidePlugin({
-    /* ... */
-  })
-)
-
-serverConfig.plugins.unshift(
-  new bundler.optimize.LimitChunkCountPlugin({ maxChunks: 1 })
-)
-```
-
-**Avoid**: Creating separate `config/rspack/` directory unless configs diverge significantly.
+Shakapacker looks for `rspack.config.js` / `rspack.config.ts` first when
+`assets_bundler: rspack`. Falling back to `config/webpack/webpack.config.js` is
+still supported for backward compatibility, but it is deprecated.
 
 **Benefits**:
 
-- Smaller diff when comparing configurations
-- Easy to see what's different between bundlers
-- Single source of truth for webpack/rspack config
-- Easier maintenance and debugging
+- Keeps bundler-specific plugins explicit
+- Avoids deprecated fallback behavior
+- Makes migration diffs easier to debug
 
 ### CSS Modules Configuration Placement
 
@@ -435,7 +419,7 @@ baseConfig.module.rules.forEach((rule) => {
 
 ### Handling Breaking Changes
 
-When upgrading to Shakapacker 9 with Rspack:
+When upgrading to Shakapacker v10 with Rspack (or any v9+ app):
 
 1. **CSS Modules default exports → named exports**: This is a breaking change. Either:
    - Update your code to use named imports (recommended for new projects)
@@ -496,7 +480,7 @@ const customConfig = {
 
 ### 2. CSS Modules Configuration for Server Bundles (CRITICAL for SSR + CSS Modules)
 
-**Problem**: When configuring server bundles, you must preserve Shakapacker 9's CSS Modules settings (`namedExport: true`) while adding SSR-specific settings. Simply setting `exportOnlyLocals: true` will override the base configuration and break CSS imports.
+**Problem**: When configuring server bundles, you must preserve Shakapacker's v9+ CSS Modules settings (`namedExport: true`) while adding SSR-specific settings. Simply setting `exportOnlyLocals: true` will override the base configuration and break CSS imports.
 
 **Symptoms**:
 
@@ -521,7 +505,7 @@ if (cssLoader && cssLoader.options && cssLoader.options.modules) {
 }
 ```
 
-**Why this matters**: Shakapacker 9 changed the default CSS Modules configuration to use named exports. If you only set `exportOnlyLocals: true` without preserving the base config, you'll lose the `namedExport: true` setting, causing import/export mismatches between client and server bundles.
+**Why this matters**: Shakapacker changed the default CSS Modules configuration in v9 to use named exports. If you only set `exportOnlyLocals: true` without preserving the base config, you'll lose the `namedExport: true` setting, causing import/export mismatches between client and server bundles.
 
 **Related configuration**: You must also filter out CSS extraction loaders in server bundles:
 
@@ -626,7 +610,7 @@ Quick reference for the key differences that cause migration issues:
 
 **Error:** `Cannot read properties of undefined (reading 'className')` in SSR or `export 'default' (imported as 'css') was not found`
 
-**Root Cause:** Shakapacker 9 changed the default CSS Modules configuration to use named exports (`namedExport: true`), which is a breaking change from v8's default export behavior.
+**Root Cause:** Shakapacker changed the default CSS Modules configuration in v9 to use named exports (`namedExport: true`), which is a breaking change from v8's default export behavior.
 
 **Solution:** If you want to keep the v8 default export behavior, override the CSS loader configuration:
 
@@ -834,14 +818,16 @@ To compare your webpack and rspack configurations during migration:
 bin/shakapacker-config --doctor
 
 # Switch to rspack
-bundle exec rake shakapacker:switch_bundler rspack --install-deps
+bin/rake shakapacker:switch_bundler rspack -- --install-deps
 
 # Export rspack configs to compare
 bin/shakapacker-config --doctor
 
-# Compare the files in shakapacker-config-exports/
-diff shakapacker-config-exports/webpack-production-client.yaml \
-     shakapacker-config-exports/rspack-production-client.yaml
+# Compare with semantic config diffing
+bin/diff-bundler-config \
+  --left=shakapacker-config-exports/webpack-production-client.yaml \
+  --right=shakapacker-config-exports/rspack-production-client.yaml \
+  --format=summary
 ```
 
 The config export utility creates annotated YAML files that make it easy to:
@@ -852,6 +838,7 @@ The config export utility creates annotated YAML files that make it easy to:
 - Debug configuration issues
 
 See the [Troubleshooting Guide](./troubleshooting.md#exporting-webpack--rspack-configuration) for more details.
+For semantic diff workflows, see the [Configuration Diff Guide](./config-diff.md).
 
 ## Resources
 

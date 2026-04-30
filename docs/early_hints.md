@@ -395,7 +395,7 @@ View page source and look for `<!-- Shakapacker Early Hints -->` comments.
 - Verify HTTP/2 server (Puma 5+, nginx 1.13+)
 - Check Network tab shows "h2" protocol and 103 status
 
-**Reverse proxy stripping 103 responses:**
+### Reverse proxy stripping 103 responses
 
 If debug mode shows hints are sent but they're not reaching clients, configure your proxy:
 

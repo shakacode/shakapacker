@@ -22,7 +22,7 @@ See the sections below for full detail and examples.
 
 - Run corresponding RSpec tests when changing source files
 - For example, when changing `lib/shakapacker/foo.rb`, run `spec/shakapacker/foo_spec.rb`
-- Run the full test suite with `bundle exec rspec` before pushing
+- Run the full test suite with `bundle exec rake test` before pushing
 - **Use explicit RSpec spy assertions** - prefer `have_received`/`not_to have_received` over indirect counter patterns
   - Good: `expect(Open3).to have_received(:capture3).with(anything, hook_command, anything)`
   - Good: `expect(Open3).not_to have_received(:capture3).with(anything, hook_command, anything)`
@@ -48,7 +48,7 @@ See the sections below for full detail and examples.
 - **Do NOT add entries for**: linting, formatting, refactoring, tests, or documentation fixes
 - **Format**: `[PR #123](https://github.com/shakacode/shakapacker/pull/123) by [username](https://github.com/username)` (Shakapacker uses `#` in PR links)
 - **Use `/update-changelog` command** for guided changelog updates with automatic formatting
-- **Version management**: Run `bundle exec rake update_changelog` after releases to update version headers
+- **Version management**: Use the `/update-changelog` command to stamp version headers during release prep
 - **Examples**: Run `grep -A 3 "^### " CHANGELOG.md | head -30` to see real formatting examples
 
 ## Open Source Maintainability

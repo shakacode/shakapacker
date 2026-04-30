@@ -1,8 +1,8 @@
-# Shakapacker (v9)
+# Shakapacker (v10)
 
 ---
 
-_🚀 Shakapacker 9 supports [Rspack](https://rspack.rs/)! 10x faster than webpack!_
+_🚀 Shakapacker 10 supports [Rspack](https://rspack.rs/)! 10x faster than webpack!_
 
 _📖 **Full documentation at [shakapacker.com](https://shakapacker.com)**_
 
@@ -11,7 +11,8 @@ _📖 **Full documentation at [shakapacker.com](https://shakapacker.com)**_
 _Official, actively maintained successor to [rails/webpacker](https://github.com/rails/webpacker). ShakaCode stands behind the long-term maintenance and development of this project for the Rails community._
 
 - ⚠️ See the [6-stable](https://github.com/shakacode/shakapacker/tree/6-stable) branch for Shakapacker v6.x code and documentation. :warning:
-- **See [V9 Upgrade](./docs/v9_upgrade.md) for upgrading from the v8 release.**
+- **See the [v10.0.0 release notes](https://github.com/shakacode/shakapacker/releases/tag/v10.0.0) for upgrading from v9 to v10.**
+- **See [V9 Upgrade](./docs/v9_upgrade.md) for upgrading from v8 to v9.**
 - See [V8 Upgrade](./docs/v8_upgrade.md) for upgrading from the v7 release.
 - See [V7 Upgrade](./docs/v7_upgrade.md) for upgrading from the v6 release.
 - See [V6 Upgrade](./docs/v6_upgrade.md) for upgrading from v5 or prior v6 releases.
@@ -21,7 +22,7 @@ _Official, actively maintained successor to [rails/webpacker](https://github.com
 [![Rubocop](https://github.com/shakacode/shakapacker/workflows/Rubocop/badge.svg)](https://github.com/shakacode/shakapacker/actions)
 [![JS lint](https://github.com/shakacode/shakapacker/workflows/JS%20lint/badge.svg)](https://github.com/shakacode/shakapacker/actions)
 
-[![node.js](https://img.shields.io/badge/node-%3E%3D%2012.0.0-brightgreen.svg)](https://www.npmjs.com/package/shakapacker)
+[![node.js](https://img.shields.io/badge/node-%3E%3D%2020-brightgreen.svg)](https://www.npmjs.com/package/shakapacker)
 [![Gem](https://img.shields.io/gem/v/shakapacker.svg)](https://rubygems.org/gems/shakapacker)
 [![npm version](https://badge.fury.io/js/shakapacker.svg)](https://badge.fury.io/js/shakapacker)
 
@@ -94,7 +95,7 @@ Here's a testimonial from Jon Rajavuori of [Academia.edu](https://www.academia.e
     - [View Helper: `image_pack_tag`](#view-helper-image_pack_tag)
     - [View Helper: `favicon_pack_tag`](#view-helper-favicon_pack_tag)
     - [View Helper: `preload_pack_asset`](#view-helper-preload_pack_asset)
-    - [View Helper: `send_pack_early_hints`](#view-helper-send_pack_early_hints)
+    - [HTTP 103 Early Hints](#http-103-early-hints)
   - [Images in Stylesheets](#images-in-stylesheets)
   - [Server-Side Rendering (SSR)](#server-side-rendering-ssr)
   - [Development](#development)
@@ -133,7 +134,7 @@ Here's a testimonial from Jon Rajavuori of [Academia.edu](https://www.academia.e
 
 - Ruby 2.7+
 - Rails 5.2+
-- Node.js 14+
+- Node.js 20+
 
 ## Features
 
@@ -207,24 +208,16 @@ If you wish to use [Yarn PnP](https://yarnpkg.com/features/pnp) you will need to
 > a particular package manager requires a very different command; otherwise it should be safe to just replace `npm` with the name of your
 > preferred package manager when running the command
 
-Note, in v6+, most JS packages are peer dependencies. Thus, the installer will add the packages:
+Note, in v6+, most JS packages are peer dependencies. During `shakapacker:install`, Shakapacker
+adds the subset required for your chosen bundler/transpiler setup rather than forcing every
+supported package into every app.
 
-- `@babel/core`
-- `@babel/plugin-transform-runtime`
-- `@babel/preset-env`
-- `@babel/runtime`
-- `babel-loader`
-- `compression-webpack-plugin`
-- `terser-webpack-plugin`
-- `webpack`
-- `webpack-assets-manifest`
-- `webpack-cli`
-- `webpack-merge`
-- `webpack-sources`
-- `webpack-dev-server`
+See:
 
-Previously, these "webpack" and "babel" packages were direct dependencies for `shakapacker`. By
-making these peer dependencies, you have control over the versions used in your webpack and babel configs.
+- [Optional Peer Dependencies](./docs/optional-peer-dependencies.md) for how optional peers work
+- [Shakapacker's Peer Dependencies](./docs/peer-dependencies.md) for the current supported version ranges
+
+This keeps installation flexible while still making the supported dependency ranges explicit.
 
 ### Optional Peer Dependencies
 
@@ -246,7 +239,7 @@ Depending on your setup, you'll need different subsets of the optional peer depe
 ```json
 {
   "dependencies": {
-    "shakapacker": "^9.0.0",
+    "shakapacker": "^10.0.0",
     "@babel/core": "^7.17.9",
     "@babel/plugin-transform-runtime": "^7.17.0",
     "@babel/preset-env": "^7.16.11",
@@ -254,28 +247,30 @@ Depending on your setup, you'll need different subsets of the optional peer depe
     "babel-loader": "^8.2.4",
     "compression-webpack-plugin": "^9.0.0",
     "terser-webpack-plugin": "^5.3.1",
-    "webpack": "^5.76.0",
+    "webpack": "^5.101.0",
     "webpack-assets-manifest": "^5.0.6",
-    "webpack-cli": "^5.0.0",
-    "webpack-dev-server": "^5.0.0"
+    "webpack-cli": "^6.0.0",
+    "webpack-dev-server": "^5.2.2"
   }
 }
 ```
+
+> **Note:** `webpack-cli` v7 is also supported but requires Node.js >= 20.9.0. If you're on Node >= 20.9.0, you can use `"webpack-cli": "^7.0.0"` instead. See [peer-dependencies.md](./docs/peer-dependencies.md) for the full supported range.
 
 **For Webpack + SWC (faster alternative):**
 
 ```json
 {
   "dependencies": {
-    "shakapacker": "^9.0.0",
+    "shakapacker": "^10.0.0",
     "@swc/core": "^1.3.0",
     "swc-loader": "^0.2.0",
     "compression-webpack-plugin": "^9.0.0",
     "terser-webpack-plugin": "^5.3.1",
-    "webpack": "^5.76.0",
+    "webpack": "^5.101.0",
     "webpack-assets-manifest": "^5.0.6",
-    "webpack-cli": "^5.0.0",
-    "webpack-dev-server": "^5.0.0"
+    "webpack-cli": "^6.0.0",
+    "webpack-dev-server": "^5.2.2"
   }
 }
 ```
@@ -285,9 +280,9 @@ Depending on your setup, you'll need different subsets of the optional peer depe
 ```json
 {
   "dependencies": {
-    "shakapacker": "^9.0.0",
-    "@rspack/core": "^1.0.0",
-    "@rspack/cli": "^1.0.0",
+    "shakapacker": "^10.0.0",
+    "@rspack/core": "^2.0.0-0",
+    "@rspack/cli": "^2.0.0-0",
     "@swc/core": "^1.3.0",
     "swc-loader": "^0.2.0",
     "rspack-manifest-plugin": "^5.0.0"
@@ -929,7 +924,7 @@ You can also change your Babel configuration by removing these lines in your `pa
 
 ### SWC configuration
 
-SWC is the recommended JavaScript transpiler in Shakapacker v9+ (20x faster than Babel). New installations use SWC by default via the installation template. You can read more at [SWC usage docs](./docs/using_swc_loader.md).
+SWC is the recommended JavaScript transpiler in Shakapacker v10 (this default was introduced in v9; 20x faster than Babel). New installations use SWC by default via the installation template. You can read more at [SWC usage docs](./docs/using_swc_loader.md).
 
 **Note on defaults**: The installation template explicitly sets `javascript_transpiler: "swc"` for new projects. However, for backward compatibility, webpack's runtime default (when no explicit config exists) remains `"babel"`. Rspack always defaults to `"swc"`.
 
@@ -966,6 +961,32 @@ This exports development and production configurations for both client and serve
 
 For more options and usage examples, see the [Troubleshooting Guide](./docs/troubleshooting.md#exporting-webpack--rspack-configuration).
 
+#### Comparing Configurations
+
+Once you've exported configurations, compare them semantically with `bin/diff-bundler-config` (powered by [`pack-config-diff`](https://github.com/shakacode/pack-config-diff)):
+
+```bash
+# Compare development vs production configs
+bin/diff-bundler-config \
+  --left=shakapacker-config-exports/webpack-development-client.yaml \
+  --right=shakapacker-config-exports/webpack-production-client.yaml
+
+# Get a quick summary
+bin/diff-bundler-config \
+  --left=config1.yaml \
+  --right=config2.yaml \
+  --format=summary
+```
+
+This is useful for:
+
+- Understanding environment-specific config changes
+- Debugging unexpected behavior differences
+- Migration validation (webpack -> rspack)
+- Reviewing bundler config changes in PRs
+
+For full usage, see the [Configuration Diff Guide](./docs/config-diff.md).
+
 ### Integrations
 
 Shakapacker out of the box supports JS and static assets (fonts, images etc.) compilation. To enable support for CoffeeScript or TypeScript install relevant packages:
@@ -981,14 +1002,21 @@ See also [Customizing Babel Config](./docs/customizing_babel_config.md) for an e
 **📚 TypeScript Support:** See the **[TypeScript Documentation](./docs/typescript.md)** for type-safe configuration.
 
 ```bash
-npm install typescript @babel/preset-typescript
+npm install --save-dev typescript
+
+# If you explicitly use `javascript_transpiler: babel`
+npm install --save-dev @babel/preset-typescript
 ```
 
-Babel won't perform any type-checking on TypeScript code. To optionally use type-checking run:
+Shakapacker does not type-check TypeScript during builds. For webpack projects, you can optionally
+add type-checking during builds with:
 
 ```bash
-npm install fork-ts-checker-webpack-plugin
+npm install --save-dev fork-ts-checker-webpack-plugin
 ```
+
+You can also run `tsc --noEmit` separately in CI or local development if you prefer not to wire
+type-checking into the bundler.
 
 Add tsconfig.json
 
@@ -1244,6 +1272,12 @@ npm install shakapacker@next
 ```
 
 Also, consult the [CHANGELOG](./CHANGELOG.md) for additional upgrade links.
+
+#### Automating Updates with Dependabot
+
+Shakapacker is shipped as both a Ruby gem and an npm package, so they must be
+upgraded together. See [Dependabot configuration for Shakapacker](./docs/dependabot.md)
+for a `.github/dependabot.yml` example that updates both in a single PR.
 
 #### Common Upgrade Scenarios
 

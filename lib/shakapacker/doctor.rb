@@ -12,6 +12,17 @@ module Shakapacker
     CATEGORY_RECOMMENDED = :recommended
     CATEGORY_INFO = :info
 
+    REQUIRED_BINSTUBS = {
+      "bin/shakapacker" => "Main Shakapacker binstub",
+      "bin/shakapacker-dev-server" => "Development server binstub",
+      "bin/shakapacker-config" => "Config export binstub"
+    }.freeze
+
+    OPTIONAL_BINSTUBS = %w[
+      bin/shakapacker-watch
+      bin/diff-bundler-config
+    ].freeze
+
     def initialize(config = nil, root_path = nil, options = {})
       @config = config || Shakapacker.config
       @root_path = root_path || (defined?(Rails) ? Rails.root : Pathname.new(Dir.pwd))
@@ -273,8 +284,8 @@ module Shakapacker
 
       def check_webpack_peer_deps(deps)
         essential_webpack = {
-          "webpack" => "^5.76.0",
-          "webpack-cli" => "^4.9.2 || ^5.0.0"
+          "webpack" => "^5.101.0",
+          "webpack-cli" => "^4.9.2 || ^5.0.0 || ^6.0.0 || ^7.0.0"
         }
 
         essential_webpack.each do |package, version|
@@ -388,13 +399,7 @@ module Shakapacker
       def check_binstub
         missing_binstubs = []
 
-        expected_binstubs = {
-          "bin/shakapacker" => "Main Shakapacker binstub",
-          "bin/shakapacker-dev-server" => "Development server binstub",
-          "bin/shakapacker-config" => "Config export binstub"
-        }
-
-        expected_binstubs.each do |path, description|
+        REQUIRED_BINSTUBS.each do |path, description|
           unless root_path.join(path).exist?
             missing_binstubs << "#{path} (#{description})"
           end
@@ -1010,21 +1015,21 @@ module Shakapacker
           end
 
           def print_binstub_status
-            binstubs = [
-              "bin/shakapacker",
-              "bin/shakapacker-dev-server",
-              "bin/shakapacker-config",
-              "bin/shakapacker-watch"
-            ]
+            required_paths = REQUIRED_BINSTUBS.keys
 
-            existing_binstubs = binstubs.select { |b| doctor.root_path.join(b).exist? }
+            existing_required = required_paths.select { |b| doctor.root_path.join(b).exist? }
+            existing_optional = OPTIONAL_BINSTUBS.select { |b| doctor.root_path.join(b).exist? }
 
-            if existing_binstubs.length == binstubs.length
-              puts "✓ All Shakapacker binstubs found (#{existing_binstubs.join(', ')})"
-            elsif existing_binstubs.any?
-              existing_binstubs.each do |binstub|
+            if existing_required.length == required_paths.length
+              puts "✓ All required Shakapacker binstubs found (#{existing_required.join(', ')})"
+            elsif existing_required.any?
+              existing_required.each do |binstub|
                 puts "✓ #{binstub} found"
               end
+            end
+
+            existing_optional.each do |binstub|
+              puts "✓ #{binstub} found (optional)"
             end
           end
 

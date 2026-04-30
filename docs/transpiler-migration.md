@@ -4,9 +4,9 @@
 
 ## Default Transpilers
 
-Shakapacker v9 transpiler defaults depend on the bundler and installation:
+Shakapacker v10 transpiler defaults depend on the bundler and installation:
 
-- **New installations (v9+)**: `swc` - Installation template explicitly sets SWC (20x faster than Babel)
+- **New installations (v9+, including v10)**: `swc` - Installation template explicitly sets SWC (20x faster than Babel)
 - **Webpack runtime default**: `babel` - Used when no explicit config is provided (maintains backward compatibility)
 - **Rspack runtime default**: `swc` - Rspack defaults to SWC as it's a newer bundler with modern defaults
 
@@ -24,16 +24,12 @@ Shakapacker v9 transpiler defaults depend on the bundler and installation:
 Set the transpiler in your `config/shakapacker.yml`:
 
 ```yaml
-default: &default
-  # SWC is the default (recommended - 20x faster than Babel)
-  javascript_transpiler: swc
+default: &default # Choose one transpiler:
+  javascript_transpiler: swc # default, recommended
+  # javascript_transpiler: babel
+  # javascript_transpiler: esbuild
 
-  # To use Babel for backward compatibility
-  javascript_transpiler: babel
-
-  # For rspack users (defaults to swc if not specified)
-  assets_bundler: rspack
-  # javascript_transpiler can be set, but rspack defaults to swc
+  # assets_bundler: webpack  # default; for rspack, set: assets_bundler: rspack
 ```
 
 ## Migration Guide
@@ -66,10 +62,12 @@ If you need custom transpilation settings, create `config/swc.config.js`:
 // See: https://swc.rs/docs/configuration/compilation
 
 module.exports = {
-  jsc: {
-    transform: {
-      react: {
-        runtime: "automatic"
+  options: {
+    jsc: {
+      transform: {
+        react: {
+          runtime: "automatic"
+        }
       }
     }
   }
@@ -113,7 +111,7 @@ Typical build time improvements when migrating from Babel to SWC:
 - [ ] Back up your current configuration
 - [ ] Install SWC dependencies
 - [ ] Update `shakapacker.yml`
-- [ ] If using Stimulus, ensure `keepClassNames: true` is set in `config/swc.config.js` (automatically included in v9.1.0+)
+- [ ] If using Stimulus, ensure `keepClassNames: true` is set in `config/swc.config.js` (automatically included in v9.1.0+, including v10)
 - [ ] Test your build locally
 - [ ] Run your test suite
 - [ ] Check browser compatibility
@@ -136,7 +134,7 @@ module.exports = {
 }
 ```
 
-Starting with Shakapacker v9.1.0, running `rake shakapacker:migrate_to_swc` automatically creates a configuration with this setting.
+Starting with Shakapacker v9.1.0 (and continuing in v10), running `rake shakapacker:migrate_to_swc` automatically creates a configuration with this setting.
 
 ### Rollback Plan
 
@@ -151,8 +149,8 @@ default: &default
 Then rebuild your application:
 
 ```bash
-bin/shakapacker clobber
-bin/shakapacker compile
+bundle exec rake shakapacker:clobber
+bundle exec rake shakapacker:compile
 ```
 
 ## Environment Variables
@@ -161,10 +159,10 @@ You can also control the transpiler via environment variables:
 
 ```bash
 # Override config file setting
-SHAKAPACKER_JAVASCRIPT_TRANSPILER=swc bin/shakapacker compile
+SHAKAPACKER_JAVASCRIPT_TRANSPILER=swc bundle exec rake shakapacker:compile
 
 # For debugging
-SHAKAPACKER_DEBUG_CACHE=true bin/shakapacker compile
+SHAKAPACKER_DEBUG_CACHE=true bundle exec rake shakapacker:compile
 ```
 
 ## Troubleshooting
@@ -196,10 +194,12 @@ yarn add --dev @rspack/plugin-react-refresh
 ```javascript
 // config/swc.config.js
 module.exports = {
-  jsc: {
-    parser: {
-      decorators: true,
-      decoratorsBeforeExport: true
+  options: {
+    jsc: {
+      parser: {
+        decorators: true,
+        decoratorsBeforeExport: true
+      }
     }
   }
 }

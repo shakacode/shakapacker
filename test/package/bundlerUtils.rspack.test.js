@@ -7,30 +7,34 @@
 
 // Mock requireOrError to provide a fake @rspack/core (v2 is pure ESM, can't be require()'d by Jest)
 jest.mock("../../package/utils/requireOrError", () => {
-  const CssExtractRspackPlugin = jest.fn(function (options) {
-    this.options = options
-  })
+  const CssExtractRspackPlugin = jest.fn(
+    function CssExtractRspackPluginMock(options) {
+      this.options = options
+    }
+  )
   CssExtractRspackPlugin.loader = "css-extract-rspack-loader"
 
   return {
     requireOrError: (moduleName) => {
       if (moduleName === "@rspack/core") {
         return {
-          DefinePlugin: jest.fn(function (definitions) {
+          DefinePlugin: jest.fn(function DefinePluginMock(definitions) {
             this.definitions = definitions
           }),
-          EnvironmentPlugin: jest.fn(function (env) {
+          EnvironmentPlugin: jest.fn(function EnvironmentPluginMock(env) {
             this.env = env
           }),
-          ProvidePlugin: jest.fn(function (definitions) {
+          ProvidePlugin: jest.fn(function ProvidePluginMock(definitions) {
             this.definitions = definitions
           }),
           HotModuleReplacementPlugin: jest.fn(),
           ProgressPlugin: jest.fn(),
           CssExtractRspackPlugin,
-          SubresourceIntegrityPlugin: jest.fn(function (options) {
-            this.options = options
-          }),
+          SubresourceIntegrityPlugin: jest.fn(
+            function SubresourceIntegrityPluginMock(options) {
+              this.options = options
+            }
+          ),
           SwcJsMinimizerRspackPlugin: jest.fn(),
           LightningCssMinimizerRspackPlugin: jest.fn()
         }

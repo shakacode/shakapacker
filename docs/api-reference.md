@@ -1,6 +1,6 @@
 # Shakapacker API Reference
 
-This document provides a comprehensive reference for Shakapacker's public Ruby API. For JavaScript/webpack configuration, see [Webpack Configuration](./webpack-configuration.md).
+This document provides a comprehensive reference for Shakapacker's public Ruby API. For JavaScript bundler configuration, see the [Configuration Guide](./configuration.md).
 
 ## Table of Contents
 
@@ -43,7 +43,7 @@ Shakapacker.config.source_path
 # => #<Pathname:/path/to/app/javascript>
 
 Shakapacker.config.public_output_path
-# => "packs"
+# => #<Pathname:/path/to/public/packs>
 ```
 
 ### Compilation
@@ -124,12 +124,12 @@ The `Shakapacker::Configuration` class provides access to all settings from `con
 ```ruby
 config = Shakapacker.config
 
-# Get raw configuration hash (public API as of v9.1.0)
+# Get raw configuration hash (symbol-keyed)
 config.data
-# => { "source_path" => "app/javascript", ... }
+# => { source_path: "app/javascript", ... }
 
 # Access specific values
-config.data["source_path"]
+config.data[:source_path]
 # => "app/javascript"
 ```
 
@@ -141,11 +141,11 @@ config.data["source_path"]
 # Source paths
 config.source_path          # => #<Pathname:/app/app/javascript>
 config.source_entry_path    # => #<Pathname:/app/app/javascript/packs>
-config.additional_paths     # => [#<Pathname:/app/app/assets>, ...]
+config.additional_paths     # => ["app/assets", ...]
 
 # Output paths
 config.public_path          # => #<Pathname:/app/public>
-config.public_output_path   # => "packs"
+config.public_output_path   # => #<Pathname:/app/public/packs>
 config.public_manifest_path # => #<Pathname:/app/public/packs/manifest.json>
 ```
 
@@ -159,7 +159,7 @@ config.bundler    # => "webpack"
 
 # Get bundler config path
 config.assets_bundler_config_path
-# => #<Pathname:/app/config/webpack/webpack.config.js>
+# => "config/webpack"
 ```
 
 ### Compilation Settings
@@ -167,7 +167,7 @@ config.assets_bundler_config_path
 ```ruby
 config.compile?              # => true (auto-compile enabled?)
 config.cache_manifest?       # => false
-config.extract_css?          # => false (use MiniCssExtractPlugin?)
+config.javascript_transpiler # => "swc"
 config.nested_entries?       # => false
 ```
 
@@ -175,10 +175,10 @@ config.nested_entries?       # => false
 
 ```ruby
 dev_server = config.dev_server
-dev_server["host"]           # => "localhost"
-dev_server["port"]           # => 3035
-dev_server["hmr"]            # => true
-dev_server["https"]          # => false
+dev_server[:host]            # => "localhost"
+dev_server[:port]            # => 3035
+dev_server[:hmr]             # => true
+dev_server[:server]          # => "http"
 ```
 
 ## View Helpers
@@ -295,15 +295,12 @@ manifest.lookup("logo.svg")
 # => "/packs/static/logo-abc123.svg"
 ```
 
-### Full Manifest Access
+### Refreshing Manifest Data
 
 ```ruby
-# Get all entries
-manifest.data
-# => { "application.js" => "/packs/application-abc123.js", ... }
-
 # Refresh manifest from disk
 manifest.refresh
+# => { "application.js" => "/packs/application-abc123.js", ... }
 ```
 
 ## Dev Server API
@@ -319,9 +316,12 @@ dev_server = Shakapacker.dev_server
 dev_server.running?
 # => true
 
-# Get full status URL
-dev_server.status_url
-# => "http://localhost:3035"
+# Get connection info
+dev_server.protocol
+# => "http"
+
+dev_server.host_with_port
+# => "localhost:3035"
 ```
 
 ### Configuration
@@ -333,19 +333,11 @@ dev_server.host
 dev_server.port
 # => 3035
 
-dev_server.https?
-# => false
+dev_server.server
+# => "http"
 
 dev_server.hmr?
 # => true
-```
-
-### Proxying
-
-```ruby
-# Get asset URL (uses dev server if running, otherwise public path)
-dev_server.asset_url("application.js")
-# => "http://localhost:3035/packs/application.js" (or "/packs/application.js")
 ```
 
 ## Compiler API
@@ -365,21 +357,9 @@ compiler.compile
 compiler.stale?
 # => false
 
-# Get last compilation time
-compiler.last_compilation_digest
-# => "abc123..."
-```
-
-### Configuration
-
-```ruby
-# Get watched paths
-compiler.watched_paths
-# => [#<Pathname:/app/app/javascript>, ...]
-
-# Get config files
-compiler.config_files
-# => [#<Pathname:/app/config/webpack/webpack.config.js>, ...]
+# Check if assets are current
+compiler.fresh?
+# => true
 ```
 
 ## Advanced Usage
@@ -469,18 +449,16 @@ rescue Shakapacker::Manifest::MissingEntryError => e
   Rails.logger.error "Missing pack: #{e.message}"
 end
 
-# Compilation errors
-begin
-  Shakapacker.compiler.compile
-rescue Shakapacker::Compiler::CompilationError => e
-  Rails.logger.error "Compilation failed: #{e.message}"
+# Compilation returns a boolean status
+unless Shakapacker.compiler.compile
+  Rails.logger.error "Compilation failed. Check preceding Shakapacker output."
 end
 
-# Configuration errors
+# Accessing an unknown config key raises KeyError
 begin
-  config = Shakapacker::Configuration.new(...)
-rescue Shakapacker::Configuration::InvalidConfigurationError => e
-  Rails.logger.error "Invalid config: #{e.message}"
+  Shakapacker.config.fetch(:unknown_key)
+rescue KeyError => e
+  Rails.logger.error "Invalid config lookup: #{e.message}"
 end
 ```
 

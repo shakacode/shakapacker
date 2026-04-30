@@ -9,9 +9,35 @@
 
 ## [Unreleased]
 
+### Changed
+
+- **Changed `shakapacker:install` to default fresh Rspack installs to v2 (`^2.0.0-0`)**. [PR #1091](https://github.com/shakacode/shakapacker/pull/1091) by [ihabadham](https://github.com/ihabadham). `lib/install/package.json` now declares `@rspack/core` and `@rspack/cli` as `^1.0.0 || ^2.0.0-0`; fresh installs pick the v2 range. Existing apps are unaffected. Note: Rspack v2 requires Node.js 20.19.0+.
+
+### Fixed
+
+- **Widened `@rspack/plugin-react-refresh` peer range to `^1.0.0 || ^2.0.0-0`**. [PR #1091](https://github.com/shakacode/shakapacker/pull/1091) by [ihabadham](https://github.com/ihabadham). Fixes the `ERESOLVE` conflict when installing `@rspack/plugin-react-refresh@^2.0.0` alongside `shakapacker@10.0.0`.
+
+## [v10.0.0] - April 8, 2026
+
 ### Added
 
+- **Added `bin/diff-bundler-config` CLI for semantic bundler configuration diffs**. [PR #973](https://github.com/shakacode/shakapacker/pull/973) by [justin808](https://github.com/justin808). Wraps the extracted [`pack-config-diff`](https://github.com/shakacode/pack-config-diff) package to provide semantic diffing of webpack/rspack configurations with normalized exit codes. Supersedes [#961](https://github.com/shakacode/shakapacker/pull/961).
 - **Added `bin/shakapacker-watch` binstub for clean Ctrl-C shutdown in Procfile-based workflows**. [PR #1026](https://github.com/shakacode/shakapacker/pull/1026) by [justin808](https://github.com/justin808). The new wrapper script traps INT/TERM signals and forwards TERM to the underlying `bin/shakapacker --watch` process, preventing Ruby interrupt backtraces when stopping `bin/dev`. Use `bin/shakapacker-watch --watch` in Procfiles instead of `bin/shakapacker --watch`.
+- **Allowed `webpack-cli` v7 (`^7.0.0`) in peer dependencies**. [PR #1021](https://github.com/shakacode/shakapacker/pull/1021) by [justin808](https://github.com/justin808). Fixes [#1020](https://github.com/shakacode/shakapacker/issues/1020). Note: `webpack-cli` v7 requires Node.js >= 20.9.0.
+
+### ⚠️ Breaking Changes
+
+- **Breaking: bumped the minimum `webpack` version to `^5.101.0`**. [PR #1021](https://github.com/shakacode/shakapacker/pull/1021) by [justin808](https://github.com/justin808). The previous minimum was `^5.76.0`.
+- **Breaking: required `webpack-dev-server` `^5.2.2` and dropped support for v4**. [PR #1021](https://github.com/shakacode/shakapacker/pull/1021) by [justin808](https://github.com/justin808). The removed v4 range was `^4.15.2`.
+
+### Changed
+
+- **Changed `shakapacker:install` to default `webpack-cli` installs to the latest v6 range**. [PR #1021](https://github.com/shakacode/shakapacker/pull/1021) by [justin808](https://github.com/justin808). This keeps installs compatible with Node.js `20.0-20.8`; v7 remains supported via peer dependencies for Node.js >= 20.9.0.
+- **Changed dev server config handling to warn on deprecated middleware hooks and ignore them for webpack-dev-server v5**. [PR #1021](https://github.com/shakacode/shakapacker/pull/1021) by [justin808](https://github.com/justin808). Use `setup_middlewares` instead of `on_before_setup_middleware` and `on_after_setup_middleware`.
+
+### Fixed
+
+- **Ensured `shakapacker:install` installs the latest `compression-webpack-plugin`**. [PR #1035](https://github.com/shakacode/shakapacker/pull/1035) by [G-Rath](https://github.com/G-Rath).
 
 ## [v9.7.0] - March 15, 2026
 
@@ -891,7 +917,8 @@ Note: [Rubygem is 6.3.0.pre.rc.1](https://rubygems.org/gems/shakapacker/versions
 
 See [CHANGELOG.md in rails/webpacker (up to v5.4.3)](https://github.com/rails/webpacker/blob/master/CHANGELOG.md)
 
-[Unreleased]: https://github.com/shakacode/shakapacker/compare/v9.7.0...main
+[Unreleased]: https://github.com/shakacode/shakapacker/compare/v10.0.0...main
+[v10.0.0]: https://github.com/shakacode/shakapacker/compare/v9.7.0...v10.0.0
 [v9.7.0]: https://github.com/shakacode/shakapacker/compare/v9.6.1...v9.7.0
 [v9.6.1]: https://github.com/shakacode/shakapacker/compare/v9.6.0...v9.6.1
 [v9.6.0]: https://github.com/shakacode/shakapacker/compare/v9.5.0...v9.6.0

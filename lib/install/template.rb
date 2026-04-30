@@ -261,17 +261,19 @@ Dir.chdir(Rails.root) do
   dev_dependencies_to_add = []
 
   peers.each do |(package, version)|
-    # Handle versions like "^1.3.0" or ">= 4 || 5"
-    if version.start_with?("^", "~") || version.match?(/^\d+\.\d+/)
-      # Already has proper version format, use as-is
-      entry = "#{package}@#{version}"
-    else
-      # Extract major version from complex version strings like ">= 4 || 5"
-      # Fallback to "latest" if no version number found
-      version_match = version.split("||").last.match(/(\d+)/)
-      major_version = version_match ? version_match[1] : "latest"
-      entry = "#{package}@#{major_version}"
+    # constraints conventionally are from oldest to latest
+    constraints = version.split("||").map(&:strip)
+    selected_version = constraints.last
+
+    if package == "webpack-cli" && constraints.length > 1
+      # Keep installer defaults compatible with Node.js >= 20.0.0.
+      # webpack-cli v7 requires Node >= 20.9.0, so default to the latest v6 range.
+      selected_version = constraints.find { |constraint| constraint.start_with?("^6.") } || selected_version
+      say "   ℹ️  Defaulting to webpack-cli #{selected_version} for broad Node.js compatibility.", :blue
+      say "   ℹ️  If you're on Node >= 20.9.0, you can upgrade to webpack-cli ^7.0.0 manually.", :blue
     end
+
+    entry = "#{package}@#{selected_version}"
 
     if dev_dependency_packages.include? package
       dev_dependencies_to_add << entry
