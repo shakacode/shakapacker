@@ -5,7 +5,6 @@ import { resolve } from "path"
 import { existsSync } from "fs"
 import type { Configuration, RuleSetRule } from "webpack"
 import config from "./config"
-import baseConfig from "./environments/base"
 import devServer from "./dev_server"
 import env from "./env"
 import { moduleExists, canProcess } from "./utils/helpers"
@@ -24,6 +23,8 @@ import {
 const rulesPath = resolve(__dirname, "rules", `${config.assets_bundler}.js`)
 /** Array of webpack/rspack loader rules */
 const rules = require(rulesPath) as RuleSetRule[]
+
+const getBaseConfig = (): Configuration => require("./environments/base")
 
 /**
  * Generate webpack configuration with optional custom config.
@@ -52,7 +53,7 @@ const generateWebpackConfig = (
 
   const { nodeEnv } = env
   const path = resolve(__dirname, "environments", `${nodeEnv}.js`)
-  const environmentConfig = existsSync(path) ? require(path) : baseConfig
+  const environmentConfig = existsSync(path) ? require(path) : getBaseConfig()
 
   return webpackMerge.merge({}, environmentConfig, extraConfig)
 }
@@ -64,15 +65,13 @@ const generateWebpackConfig = (
  * NOTE: This pattern is temporary and will be replaced with named exports
  * once issue #641 is resolved.
  */
-export = {
+const shakapacker = {
   /** Shakapacker configuration from shakapacker.yml */
   config,
   /** Development server configuration */
   devServer,
   /** Generate webpack configuration with optional custom config */
   generateWebpackConfig,
-  /** Base webpack/rspack configuration */
-  baseConfig,
   /** Environment configuration (railsEnv, nodeEnv, etc.) */
   env,
   /** Array of webpack/rspack loader rules */
@@ -102,3 +101,10 @@ export = {
   /** webpack-merge functions (merge, mergeWithCustomize, mergeWithRules, unique) */
   ...webpackMerge
 }
+
+Object.defineProperty(shakapacker, "baseConfig", {
+  enumerable: true,
+  get: getBaseConfig
+})
+
+export = shakapacker
