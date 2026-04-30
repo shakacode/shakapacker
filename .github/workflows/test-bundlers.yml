@@ -36,7 +36,7 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          node-version: "20.19.x"
           cache: "yarn"
           cache-dependency-path: spec/dummy/yarn.lock
 
@@ -90,7 +90,7 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          node-version: "20.19.x"
           cache: "yarn"
           cache-dependency-path: spec/dummy/yarn.lock
 
@@ -144,7 +144,7 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          node-version: "20.19.x"
           cache: "yarn"
           cache-dependency-path: spec/dummy/yarn.lock
 

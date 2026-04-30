@@ -35,7 +35,7 @@ jobs:
           persist-credentials: false
       - uses: actions/setup-node@v4
         with:
-          node-version: 20.x
+          node-version: "20.19.x"
           cache: yarn
 
       - name: Install dependencies
@@ -63,7 +63,7 @@ jobs:
           persist-credentials: false
       - uses: actions/setup-node@v4
         with:
-          node-version: 20.x
+          node-version: "20.19.x"
           cache: yarn
 
       - name: Install dependencies
@@ -119,7 +119,7 @@ jobs:
           persist-credentials: false
       - uses: actions/setup-node@v4
         with:
-          node-version: 20.x
+          node-version: "20.19.x"
 
       - name: Create test directory and copy .d.ts files
         run: |
@@ -147,7 +147,7 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest]
-        node: [20.x, 22.x]
+        node: ["20.19.x", "22.13.x"]
 
     runs-on: ${{ matrix.os }}
 

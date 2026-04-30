@@ -76,7 +76,8 @@ run_cmd ruby --version >/dev/null 2>&1 || { echo "❌ Error: Ruby is not install
 run_cmd node --version >/dev/null 2>&1 || { echo "❌ Error: Node.js is not installed or not in PATH."; exit 1; }
 
 # Check Ruby version
-RUBY_VERSION=$(run_cmd ruby -v | awk '{print $2}')
+# Extract MAJOR.MINOR.PATCH; ignores any distro patch suffix (e.g., "+custom") so sort -V compares cleanly.
+RUBY_VERSION=$(run_cmd ruby -v | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -n1)
 MIN_RUBY_VERSION="2.7.0"
 if [[ $(echo -e "$MIN_RUBY_VERSION\n$RUBY_VERSION" | sort -V | head -n1) != "$MIN_RUBY_VERSION" ]]; then
     echo "❌ Error: Ruby version $RUBY_VERSION is too old. Shakapacker requires Ruby >= 2.7.0"
@@ -90,7 +91,8 @@ echo "✅ Ruby version: $RUBY_VERSION"
 # Reject unsupported ranges (21.x, 22.0.0–22.11.x) up front so they fail before yarn install.
 # The >=22.12.0 branch intentionally accepts future majors (23.x, 24.x, …) — matching the
 # upstream rspack engine constraint.
-NODE_VERSION=$(run_cmd node -v | cut -d'v' -f2)
+# Extract MAJOR.MINOR.PATCH; ignores any distro patch suffix (e.g., "v22.13.0+custom") so sort -V compares cleanly.
+NODE_VERSION=$(run_cmd node -v | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -n1)
 NODE_MAJOR=$(echo "$NODE_VERSION" | cut -d'.' -f1)
 MIN_NODE_20="20.19.0"
 MIN_NODE_22="22.12.0"
