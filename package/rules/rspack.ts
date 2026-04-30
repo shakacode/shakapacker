@@ -78,18 +78,17 @@ if (moduleExists("css-loader")) {
 
 // Sass rules
 debug("Checking for Sass loader...")
-if (moduleExists("sass") && moduleExists("sass-loader")) {
-  debug("sass and sass-loader found, loading Sass rule configuration...")
+// sass-loader resolves the user's Sass implementation (sass, sass-embedded, etc.).
+if (moduleExists("sass-loader")) {
+  debug("sass-loader found, loading Sass rule configuration...")
   const sass = require("./sass")
   if (sass) {
     debug("Successfully added Sass rule")
     rules.push(sass)
   } else {
-    warn("sass and sass-loader found but rule configuration returned null")
+    warn("sass-loader found but rule configuration returned null")
   }
-} else if (!moduleExists("sass")) {
-  info("Skipping Sass support - sass not installed")
-} else if (!moduleExists("sass-loader")) {
+} else {
   info("Skipping Sass support - sass-loader not installed")
 }
 

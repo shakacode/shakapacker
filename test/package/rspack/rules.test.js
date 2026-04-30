@@ -154,6 +154,23 @@ describe("rspack/rules", () => {
       // Sass rule should be present since moduleExists is mocked to return true
       expect(sassRule).toBeDefined()
     })
+
+    test("includes Sass rule when sass-loader is available without the sass package", () => {
+      jest.resetModules()
+
+      const helpers = require("../../../package/utils/helpers")
+      helpers.moduleExists.mockImplementation(
+        (packageName) => packageName !== "sass"
+      )
+
+      const rulesWithoutSassPackage = require("../../../package/rules/rspack")
+      const sassRule = rulesWithoutSassPackage.find(
+        (rule) => rule.test && rule.test.toString().includes("scss|sass")
+      )
+
+      expect(sassRule).toBeDefined()
+      expect(helpers.moduleExists).toHaveBeenCalledWith("sass-loader")
+    })
   })
 
   describe("less rules", () => {
