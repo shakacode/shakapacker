@@ -134,7 +134,7 @@ Supplemental package for the standard webpack managed build experience.
 
 | Package                              | Version  | When needed             |
 | ------------------------------------ | -------- | ----------------------- |
-| webpack-dev-server                   | `^5.2.0` | Dev mode with HMR       |
+| webpack-dev-server                   | `^5.2.2` | Dev mode with HMR       |
 | mini-css-extract-plugin              | `^2.0.0` | CSS extraction          |
 | terser-webpack-plugin                | `^5.3.1` | Production minification |
 | webpack-subresource-integrity        | `^5.1.0` | SRI hashes              |
@@ -203,7 +203,7 @@ Following [G-Rath's feedback](https://github.com/shakacode/shakapacker/issues/10
     "webpack": "^5.76.0",
     "webpack-cli": "^6.0.0 || ^7.0.0",
     "webpack-assets-manifest": "^5.0.6 || ^6.0.0",
-    "webpack-dev-server": "^5.2.0",
+    "webpack-dev-server": "^5.2.2",
     "@swc/core": "^1.3.0",
     "swc-loader": "^0.2.0",
     "css-loader": "^7.0.0",
