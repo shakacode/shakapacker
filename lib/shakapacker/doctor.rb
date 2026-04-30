@@ -716,7 +716,7 @@ module Shakapacker
       def active_assets_bundler_config_path
         config_dir = config.assets_bundler_config_path
 
-        candidates = %w[ts js mjs cjs].map { |ext| root_path.join(config_dir, "rspack.config.#{ext}") }
+        candidates = %w[ts js].map { |ext| root_path.join(config_dir, "rspack.config.#{ext}") }
         candidates += %w[ts js].map { |ext| root_path.join(config_dir, "webpack.config.#{ext}") }
         if config_dir == "config/rspack"
           candidates += %w[ts js].map { |ext| root_path.join("config/webpack", "webpack.config.#{ext}") }
@@ -726,11 +726,18 @@ module Shakapacker
       end
 
       def rspack_cache_disabled?(content)
+        # Preserve quoted property keys (`'cache': false` / `"cache": false`) by
+        # replacing them with the bare identifier form before stripping general
+        # string literals. Without this step the surrounding string-strip would
+        # collapse `'cache'` and `"cache"` to `""` and the regex below would miss
+        # the disabled cache.
+        stripped = content.gsub(/(['"])(\w+)\1(?=\s*:)/, '\2')
+
         # Strip string literals and comments so examples inside strings or comments
         # don't trigger a false positive. Single/double-quoted JS strings cannot span
         # newlines, so the exclusion class includes \n to prevent a runaway match when
         # an unmatched quote appears in a comment (e.g. `// don't disable cache`).
-        stripped = content
+        stripped = stripped
           .gsub(/`(?:\\.|[^`\\])*`/m, '""')
           .gsub(/'(?:\\.|[^'\\\n])*'/, '""')
           .gsub(/"(?:\\.|[^"\\\n])*"/, '""')

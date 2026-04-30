@@ -521,6 +521,28 @@ describe Shakapacker::Doctor do
       end
     end
 
+    context "when rspack config uses a single-quoted cache key" do
+      before do
+        File.write(rspack_config_path, "module.exports = { 'cache': false }")
+      end
+
+      it "warns that cache is disabled" do
+        doctor.send(:check_rspack_cache_configuration)
+        expect(warning_messages).to include(match(/Rspack cache appears to be disabled/))
+      end
+    end
+
+    context "when rspack config uses a double-quoted cache key" do
+      before do
+        File.write(rspack_config_path, 'module.exports = { "cache": false }')
+      end
+
+      it "warns that cache is disabled" do
+        doctor.send(:check_rspack_cache_configuration)
+        expect(warning_messages).to include(match(/Rspack cache appears to be disabled/))
+      end
+    end
+
     context "when rspack config has no explicit cache setting" do
       before do
         File.write(rspack_config_path, <<~JS)
@@ -699,6 +721,22 @@ describe Shakapacker::Doctor do
       end
 
       it "checks the webpack fallback config and warns when cache is disabled" do
+        doctor.send(:check_rspack_cache_configuration)
+        expect(warning_messages).to include(match(/Rspack cache appears to be disabled.*webpack\.config\.js/))
+      end
+    end
+
+    context "when only rspack.config.mjs exists alongside a webpack.config.js fallback" do
+      let(:rspack_config_mjs_path) { rspack_config_dir.join("rspack.config.mjs") }
+      let(:webpack_config_path) { rspack_config_dir.join("webpack.config.js") }
+
+      before do
+        FileUtils.rm_f(rspack_config_path)
+        File.write(rspack_config_mjs_path, "export default { cache: { type: 'filesystem' } }")
+        File.write(webpack_config_path, "module.exports = { cache: false }")
+      end
+
+      it "inspects the webpack fallback (matching the runner) instead of the unsupported .mjs" do
         doctor.send(:check_rspack_cache_configuration)
         expect(warning_messages).to include(match(/Rspack cache appears to be disabled.*webpack\.config\.js/))
       end
