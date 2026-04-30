@@ -12,6 +12,13 @@
     "directory": "packages/shakapacker-rspack"
   },
   "license": "MIT",
+  "author": "David Heinemeier Hansson <david@basecamp.com>, Justin Gordon <justin@shakacode.com>",
+  "keywords": [
+    "shakapacker",
+    "rspack",
+    "rails",
+    "webpacker"
+  ],
   "main": "index.js",
   "files": [
     "index.js"

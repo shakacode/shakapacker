@@ -33,12 +33,12 @@ if [[ "$CORE_VERSION" != "$WEBPACK_VERSION" || "$WEBPACK_VERSION" != "$RSPACK_VE
 fi
 
 echo "Publishing shakapacker @ $CORE_VERSION (core first)…"
-npm publish "${DRY_RUN[@]}"
+npm publish ${DRY_RUN[@]+"${DRY_RUN[@]}"}
 
 echo "Publishing shakapacker-webpack @ $WEBPACK_VERSION…"
-(cd packages/shakapacker-webpack && npm publish "${DRY_RUN[@]}")
+(cd packages/shakapacker-webpack && npm publish ${DRY_RUN[@]+"${DRY_RUN[@]}"})
 
 echo "Publishing shakapacker-rspack @ $RSPACK_VERSION…"
-(cd packages/shakapacker-rspack && npm publish "${DRY_RUN[@]}")
+(cd packages/shakapacker-rspack && npm publish ${DRY_RUN[@]+"${DRY_RUN[@]}"})
 
 echo "Done."

@@ -12,6 +12,13 @@
     "directory": "packages/shakapacker-webpack"
   },
   "license": "MIT",
+  "author": "David Heinemeier Hansson <david@basecamp.com>, Justin Gordon <justin@shakacode.com>",
+  "keywords": [
+    "shakapacker",
+    "webpack",
+    "rails",
+    "webpacker"
+  ],
   "main": "index.js",
   "files": [
     "index.js"
