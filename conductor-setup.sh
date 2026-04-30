@@ -87,7 +87,9 @@ echo "✅ Ruby version: $RUBY_VERSION"
 
 # Check Node version
 # @rspack/core v2 (used by Shakapacker v10+) requires ^20.19.0 || >=22.12.0.
-# Enforce both branches here so unsupported ranges (21.x, 22.0.0–22.11.x) fail before yarn install.
+# Reject unsupported ranges (21.x, 22.0.0–22.11.x) up front so they fail before yarn install.
+# The >=22.12.0 branch intentionally accepts future majors (23.x, 24.x, …) — matching the
+# upstream rspack engine constraint.
 NODE_VERSION=$(run_cmd node -v | cut -d'v' -f2)
 NODE_MAJOR=$(echo "$NODE_VERSION" | cut -d'.' -f1)
 MIN_NODE_20="20.19.0"

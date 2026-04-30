@@ -9,6 +9,10 @@
 
 ## [Unreleased]
 
+### ⚠️ Breaking Changes
+
+- **Breaking: tightened `package.json` `engines.node` to `^20.19.0 || >=22.12.0`**. [PR #1099](https://github.com/shakacode/shakapacker/pull/1099) by [justin808](https://github.com/justin808). Raised from `>= 20`, dropping support for Node 20.0.0–20.18.x and Node 21.x to match `@rspack/core@2.0.0-rc.0`. Consumers on those versions will hit an engine error with `--engine-strict` or yarn workspaces and need to upgrade. The PR also bumps `.node-version` to `22.13.0` and updates `conductor-setup.sh` to enforce the same disjoint range up front, so contributors get a clear error before `yarn install` fails with a confusing engine mismatch.
+
 ### Changed
 
 - **Changed `shakapacker:install` to default fresh Rspack installs to v2 (`^2.0.0-0`)**. [PR #1091](https://github.com/shakacode/shakapacker/pull/1091) by [ihabadham](https://github.com/ihabadham). `lib/install/package.json` now declares `@rspack/core` and `@rspack/cli` as `^1.0.0 || ^2.0.0-0`; fresh installs pick the v2 range. Existing apps are unaffected. Note: Rspack v2 requires Node.js 20.19.0+.
@@ -17,7 +21,6 @@
 
 - **Widened `@rspack/plugin-react-refresh` peer range to `^1.0.0 || ^2.0.0-0`**. [PR #1091](https://github.com/shakacode/shakapacker/pull/1091) by [ihabadham](https://github.com/ihabadham). Fixes the `ERESOLVE` conflict when installing `@rspack/plugin-react-refresh@^2.0.0` alongside `shakapacker@10.0.0`.
 - **Fixed `NodePackageVersion#find_version` for local-path `shakapacker` installs (e.g. `yalc`, `file:`, relative paths)**. [PR #1086](https://github.com/shakacode/shakapacker/pull/1086) by [justin808](https://github.com/justin808). The version check now consults `package.json` first and short-circuits on `../` or `file:` dependencies, so stale lockfile semvers no longer trigger false gem↔node version mismatches. `package_json_dependency` also consults `devDependencies` in addition to `dependencies`. The `LOCAL_PATH_REGEX` constant replaces a duplicated inline regex and anchors both alternatives to the start of the string, removing a latent false-positive on version strings containing `..` mid-value.
-- **Aligned `package.json` `engines.node` and Conductor setup with `@rspack/core` v2 requirements**. [PR #1099](https://github.com/shakacode/shakapacker/pull/1099) by [justin808](https://github.com/justin808). Bumped `.node-version` to `22.13.0`, raised the `engines.node` constraint to `^20.19.0 || >=22.12.0`, and updated `conductor-setup.sh` to enforce that same disjoint range (rejecting Node 21.x and 22.0.0–22.11.x) so contributors get a clear error before `yarn install` fails with a confusing engine mismatch.
 
 ## [v10.0.0] - April 8, 2026
 
