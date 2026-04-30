@@ -525,15 +525,23 @@ function createBinStub(binStubPath: string): void {
 ENV["RAILS_ENV"] ||= ENV["RACK_ENV"] || "development"
 ENV["NODE_ENV"] ||= "development"
 
-require "pathname"
-ENV["BUNDLE_GEMFILE"] ||= File.expand_path("../../Gemfile",
-  Pathname.new(__FILE__).realpath)
-
-require "bundler/setup"
-
 APP_ROOT = File.expand_path("..", __dir__)
+SCRIPT_PATH = File.join(
+  APP_ROOT,
+  "node_modules",
+  "shakapacker",
+  "package",
+  "bin",
+  "shakapacker-config.cjs"
+)
+
+unless File.file?(SCRIPT_PATH)
+  warn "[Shakapacker] Could not find #{SCRIPT_PATH}. Run your package manager install command and try again."
+  exit 1
+end
+
 Dir.chdir(APP_ROOT) do
-  exec "node", "./node_modules/.bin/shakapacker-config", *ARGV
+  exec "node", SCRIPT_PATH, *ARGV
 end
 `
 

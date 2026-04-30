@@ -1,0 +1,58 @@
+#!/usr/bin/env node
+
+const PACK_CONFIG_DIFF_PACKAGE = "pack-config-diff"
+
+function formatError(error) {
+  return error instanceof Error ? error.message : String(error)
+}
+
+function exitWithCode(exitCode) {
+  if (!Number.isInteger(exitCode)) {
+    console.error(
+      `[Shakapacker] ${PACK_CONFIG_DIFF_PACKAGE} returned a non-integer exit code: ${String(exitCode)}`
+    )
+    process.exit(2)
+  }
+
+  // Forward only pack-config-diff's documented exit codes (0 = no diffs, 1 = diffs found).
+  // Any other code is a tool failure; normalize to 2.
+  process.exit(exitCode <= 1 ? exitCode : 2)
+}
+
+let run
+
+try {
+  // eslint-disable-next-line global-require
+  const loadedModule = require("pack-config-diff")
+  run = loadedModule.run
+} catch (error) {
+  console.error(
+    `[Shakapacker] Failed to load ${PACK_CONFIG_DIFF_PACKAGE}: ${formatError(error)}`
+  )
+  process.exit(2)
+}
+
+if (typeof run !== "function") {
+  console.error(
+    `[Shakapacker] ${PACK_CONFIG_DIFF_PACKAGE} did not export a run() function`
+  )
+  process.exit(2)
+}
+
+try {
+  const runResult = run(process.argv.slice(2))
+
+  if (runResult && typeof runResult.then === "function") {
+    runResult
+      .then((exitCode) => exitWithCode(exitCode))
+      .catch((error) => {
+        console.error(formatError(error))
+        process.exit(2)
+      })
+  } else {
+    exitWithCode(runResult)
+  }
+} catch (error) {
+  console.error(formatError(error))
+  process.exit(2)
+}

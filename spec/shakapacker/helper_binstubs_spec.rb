@@ -1,0 +1,64 @@
+require "fileutils"
+require "json"
+require "open3"
+require "tmpdir"
+
+RSpec.describe "helper binstubs" do
+  let(:gem_root) { File.expand_path("../..", __dir__) }
+
+  def install_fake_node_script(app_path, command)
+    script_path = File.join(
+      app_path,
+      "node_modules",
+      "shakapacker",
+      "package",
+      "bin",
+      "#{command}.cjs"
+    )
+    FileUtils.mkdir_p(File.dirname(script_path))
+    File.write(script_path, <<~JS)
+      #!/usr/bin/env node
+
+      const fs = require("fs")
+
+      fs.writeFileSync(
+        process.env.SHAKAPACKER_BINSTUB_OUTPUT,
+        JSON.stringify({
+          cwd: process.cwd(),
+          argv: process.argv.slice(2)
+        })
+      )
+    JS
+    FileUtils.chmod(0o755, script_path)
+  end
+
+  %w[shakapacker-config diff-bundler-config].each do |command|
+    it "runs #{command} through a CommonJS package script when the app is ESM" do
+      Dir.mktmpdir("shakapacker-binstub-") do |app_path|
+        File.write(File.join(app_path, "Gemfile"), "")
+        File.write(File.join(app_path, "package.json"), JSON.generate("type" => "module"))
+        FileUtils.mkdir_p(File.join(app_path, "bin"))
+        install_fake_node_script(app_path, command)
+
+        binstub_path = File.join(app_path, "bin", command)
+        FileUtils.cp(File.join(gem_root, "lib", "install", "bin", command), binstub_path)
+        FileUtils.chmod(0o755, binstub_path)
+
+        output_path = File.join(app_path, "binstub-output.json")
+        _stdout, stderr, status = Open3.capture3(
+          { "SHAKAPACKER_BINSTUB_OUTPUT" => output_path },
+          binstub_path,
+          "--flag",
+          "value",
+          chdir: app_path
+        )
+
+        expect(status).to be_success, stderr
+        expect(JSON.parse(File.read(output_path))).to eq(
+          "cwd" => File.realpath(app_path),
+          "argv" => ["--flag", "value"]
+        )
+      end
+    end
+  end
+end

@@ -1,11 +1,24 @@
-#!/usr/bin/env node
+#!/usr/bin/env ruby
+# frozen_string_literal: true
 
-// Minimal shim - all logic is in the TypeScript module
-const { run } = require('shakapacker/configExporter')
+ENV["RAILS_ENV"] ||= ENV["RACK_ENV"] || "development"
+ENV["NODE_ENV"] ||= "development"
 
-run(process.argv.slice(2))
-  .then((exitCode) => process.exit(exitCode))
-  .catch((error) => {
-    console.error(error.message)
-    process.exit(1)
-  })
+APP_ROOT = File.expand_path("..", __dir__)
+SCRIPT_PATH = File.join(
+  APP_ROOT,
+  "node_modules",
+  "shakapacker",
+  "package",
+  "bin",
+  "shakapacker-config.cjs"
+)
+
+unless File.file?(SCRIPT_PATH)
+  warn "[Shakapacker] Could not find #{SCRIPT_PATH}. Run your package manager install command and try again."
+  exit 1
+end
+
+Dir.chdir(APP_ROOT) do
+  exec "node", SCRIPT_PATH, *ARGV
+end
