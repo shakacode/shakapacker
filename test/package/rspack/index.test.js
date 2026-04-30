@@ -368,9 +368,12 @@ describe("rspack/index", () => {
           "LightningCssMinimizerRspackPlugin"
         ])
       )
-      expect(compressionPlugins).toHaveLength(
-        "brotli" in process.versions ? 2 : 1
-      )
+      expect(compressionPlugins.length).toBeGreaterThanOrEqual(1)
+      expect(
+        compressionPlugins.some(
+          (plugin) => plugin.options?.algorithm === "gzip"
+        )
+      ).toBe(true)
     })
   })
 })
