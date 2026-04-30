@@ -31,7 +31,7 @@ const configureUseForServer = (use) =>
       const name = loaderName(item)
 
       return !(
-        name.match(/mini-css-extract-plugin/) ||
+        name.includes('mini-css-extract-plugin') ||
         name.includes('cssExtractLoader') ||
         name === 'style-loader'
       )
@@ -65,6 +65,8 @@ const configureRulesForServer = (rules) =>
       configuredRule.oneOf = configureRulesForServer(rule.oneOf)
     }
 
+    // rule.use can also be a function (rspack/webpack supports this form);
+    // function-based use rules are left unmodified — extend if such rules are added.
     if (Array.isArray(rule.use)) {
       configuredRule.use = configureUseForServer(rule.use)
     }
@@ -101,8 +103,10 @@ const serverConfig = () => {
     filename: 'server-bundle.js',
     globalObject: 'this'
   }
+  // Filter by constructor name — works in dev/test where names are not minified.
+  // Optional chaining guards against null/raw-function/POJO plugins.
   config.plugins = config.plugins.filter(
-    (plugin) => !constructorNamesToRemove.has(plugin.constructor.name)
+    (plugin) => !constructorNamesToRemove.has(plugin?.constructor?.name)
   )
 
   config.module.rules = configureRulesForServer(config.module.rules)

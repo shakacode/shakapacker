@@ -1,4 +1,4 @@
-/* eslint-disable func-names, jest/no-conditional-in-test */
+/* eslint-disable func-names, jest/no-conditional-in-test, max-classes-per-file */
 
 const { chdirTestApp } = require("../../helpers")
 
@@ -38,6 +38,11 @@ jest.mock("../../../package/utils/requireOrError", () => ({
       })
       CssExtractRspackPlugin.loader = "css-extract-rspack-loader"
 
+      // Named classes so `instance.constructor.name` reflects the real plugin
+      // name in tests that filter/inspect by constructor identity.
+      class SwcJsMinimizerRspackPlugin {}
+      class LightningCssMinimizerRspackPlugin {}
+
       return {
         DefinePlugin: jest.fn(function (definitions) {
           this.definitions = definitions
@@ -54,8 +59,8 @@ jest.mock("../../../package/utils/requireOrError", () => ({
         SubresourceIntegrityPlugin: jest.fn(function (options) {
           this.options = options
         }),
-        SwcJsMinimizerRspackPlugin: jest.fn(),
-        LightningCssMinimizerRspackPlugin: jest.fn()
+        SwcJsMinimizerRspackPlugin,
+        LightningCssMinimizerRspackPlugin
       }
     }
     if (moduleName === "rspack-manifest-plugin") {
@@ -70,6 +75,21 @@ jest.mock("../../../package/utils/requireOrError", () => ({
       .requireOrError(moduleName)
   }
 }))
+
+// Mocked so the production test does not depend on compression-webpack-plugin
+// being installed in the test environment.
+jest.mock(
+  "compression-webpack-plugin",
+  () => {
+    class CompressionPlugin {
+      constructor(options) {
+        this.options = options
+      }
+    }
+    return CompressionPlugin
+  },
+  { virtual: true }
+)
 
 describe("rspack/index", () => {
   let rspackIndex
@@ -222,25 +242,6 @@ describe("rspack/index", () => {
       expect(config.optimization).not.toHaveProperty("minimize")
     })
 
-    test("preserves production compression plugins and minimizers", () => {
-      const { rspackIndex: productionRspackIndex } =
-        loadRspackIndex("production")
-      const config = productionRspackIndex.generateRspackConfig({
-        optimization: { runtimeChunk: "multiple" }
-      })
-      const compressionPlugins = config.plugins.filter(
-        (plugin) => plugin.constructor?.name === "CompressionPlugin"
-      )
-
-      expect(config).toHaveProperty("optimization.splitChunks.chunks", "all")
-      expect(config).toHaveProperty("optimization.runtimeChunk", "multiple")
-      expect(config).toHaveProperty("optimization.minimize", true)
-      expect(config.optimization.minimizer).toHaveLength(2)
-      expect(compressionPlugins).toHaveLength(
-        "brotli" in process.versions ? 2 : 1
-      )
-    })
-
     test("errors if multiple configs are provided", () => {
       expect(() => rspackIndex.generateRspackConfig({}, {})).toThrow(
         "use webpack-merge to merge configs before passing them to Shakapacker"
@@ -337,6 +338,39 @@ describe("rspack/index", () => {
       const expectedMode =
         nodeEnv === "production" ? "production" : "development"
       expect(config.mode).toBe(expectedMode)
+    })
+  })
+
+  describe("generateRspackConfig in production NODE_ENV", () => {
+    let productionRspackIndex
+
+    beforeEach(() => {
+      ;({ rspackIndex: productionRspackIndex } = loadRspackIndex("production"))
+    })
+
+    test("preserves production compression plugins and minimizers", () => {
+      const config = productionRspackIndex.generateRspackConfig({
+        optimization: { runtimeChunk: "multiple" }
+      })
+      const minimizerNames = config.optimization.minimizer.map(
+        (minimizer) => minimizer.constructor?.name
+      )
+      const compressionPlugins = config.plugins.filter(
+        (plugin) => plugin.constructor?.name === "CompressionPlugin"
+      )
+
+      expect(config).toHaveProperty("optimization.splitChunks.chunks", "all")
+      expect(config).toHaveProperty("optimization.runtimeChunk", "multiple")
+      expect(config).toHaveProperty("optimization.minimize", true)
+      expect(minimizerNames).toStrictEqual(
+        expect.arrayContaining([
+          "SwcJsMinimizerRspackPlugin",
+          "LightningCssMinimizerRspackPlugin"
+        ])
+      )
+      expect(compressionPlugins).toHaveLength(
+        "brotli" in process.versions ? 2 : 1
+      )
     })
   })
 })
