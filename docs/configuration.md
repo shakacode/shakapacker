@@ -99,7 +99,7 @@ assets_bundler_config_path: "."
 Specifies which transpiler to use for JavaScript/TypeScript.
 
 ```yaml
-# Use SWC (recommended - 20x faster than Babel, set by default in new installations)
+# Use SWC (recommended faster default for new installations)
 javascript_transpiler: "swc"
 
 # Use Babel (for maximum compatibility, webpack runtime default if not configured)
@@ -115,7 +115,7 @@ javascript_transpiler: "esbuild"
 - **Webpack runtime default**: If not explicitly configured, defaults to `"babel"` for backward compatibility
 - **Rspack runtime default**: If not explicitly configured, defaults to `"swc"` as rspack is a newer bundler
 
-See [Transpiler Performance Guide](transpiler-performance.md) for benchmarks and migration guides.
+See [Transpiler Performance Guide](transpiler-performance.md) for performance tradeoffs and migration guidance.
 
 ## Source Configuration
 
@@ -674,7 +674,7 @@ console.log(process.env.FEATURE_FLAGS)
 ## Best Practices
 
 1. **Use default paths** unless you have a specific reason to change them
-2. **Enable SWC transpiler** for faster builds (20x faster than Babel)
+2. **Enable SWC transpiler** for faster builds
 3. **Use rspack** for even faster builds if compatible with your setup
 4. **Cache manifest** in production for better performance
 5. **Enable integrity hashes** in production for security

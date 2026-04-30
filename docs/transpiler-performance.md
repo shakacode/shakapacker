@@ -1,156 +1,130 @@
-# JavaScript Transpiler Performance Benchmarks
+# JavaScript Transpiler Performance Guide
 
-This document provides performance benchmarks comparing different JavaScript transpilers supported by Shakapacker.
+Shakapacker supports Babel, SWC, and esbuild for webpack-based JavaScript
+transpilation. Rspack uses its built-in SWC-based loader by default.
 
-## Executive Summary
+This guide intentionally avoids exact benchmark numbers. Build performance
+depends heavily on project size, loader configuration, source maps, minification,
+cache state, hardware, and whether the measurement covers transpilation alone or
+the full bundler pipeline.
 
-| Transpiler  | Relative Speed | Configuration    | Best For                                       |
-| ----------- | -------------- | ---------------- | ---------------------------------------------- |
-| **SWC**     | **20x faster** | Zero config      | Production builds, large codebases             |
-| **esbuild** | **15x faster** | Minimal config   | Modern browsers, simple transformations        |
-| **Babel**   | **Baseline**   | Extensive config | Legacy browser support, custom transformations |
+## Summary
 
-## Detailed Benchmarks
+| Transpiler  | Performance Profile            | Configuration Profile | Best Fit                                     |
+| ----------- | ------------------------------ | --------------------- | -------------------------------------------- |
+| **SWC**     | Usually much faster than Babel | Moderate              | Default choice for most new Shakapacker apps |
+| **esbuild** | Usually very fast              | Minimal               | Modern syntax with simple transform needs    |
+| **Babel**   | Usually slowest                | Most flexible         | Existing Babel plugins or custom transforms  |
 
-### Test Environment
+SWC is the recommended default for new Shakapacker apps because it usually gives
+large speedups over Babel while covering the common JavaScript, TypeScript, and
+React cases. esbuild can also be very fast, but its transform model is less
+compatible with Babel-style plugin workflows.
 
-- **Hardware**: MacBook Pro M1, 16GB RAM
-- **Node Version**: 20.x
-- **Project Size Categories**:
-  - Small: < 100 files
-  - Medium: 100-1000 files
-  - Large: 1000+ files
+## What Usually Affects Build Time
 
-### Build Time Comparison
+The transpiler is only one part of a Shakapacker build. Measure the whole build
+before attributing performance to one tool.
 
-#### Small Project (<100 files, ~50KB total)
+Common factors:
 
-```text
-SWC:      0.3s  (20x faster)
-esbuild:  0.4s  (15x faster)
-Babel:    6.0s  (baseline)
-```
+- Source map mode
+- TypeScript type-checking outside the transpiler
+- Minification and CSS processing
+- Babel plugin count and plugin behavior
+- Webpack vs Rspack
+- Filesystem cache state
+- Number and size of entry points
+- Number of files outside `node_modules` processed by rules
+- CI hardware and CPU concurrency
 
-#### Medium Project (500 files, ~2MB total)
+When comparing options, run the same command several times after clearing or
+warming caches intentionally. Record the command, environment, lockfile, and
+Shakapacker config alongside the results.
 
-```text
-SWC:      1.2s  (25x faster)
-esbuild:  1.8s  (17x faster)
-Babel:    30s   (baseline)
-```
+## Choosing a Transpiler
 
-#### Large Project (2000 files, ~10MB total)
+### Choose SWC When
 
-```text
-SWC:      4.5s  (22x faster)
-esbuild:  6.2s  (16x faster)
-Babel:    100s  (baseline)
-```
+- You are starting a new app.
+- You want a faster default than Babel without moving to Rspack yet.
+- You use common JavaScript, TypeScript, JSX, or TSX transforms.
+- You can configure the few project-specific SWC options you need in
+  `config/swc.config.js`.
 
-### Memory Usage
+See [Using SWC Loader](./using_swc_loader.md).
 
-| Transpiler  | Peak Memory (Small) | Peak Memory (Medium) | Peak Memory (Large) |
-| ----------- | ------------------- | -------------------- | ------------------- |
-| **SWC**     | 150MB               | 250MB                | 450MB               |
-| **esbuild** | 180MB               | 300MB                | 500MB               |
-| **Babel**   | 350MB               | 600MB                | 1200MB              |
+### Choose esbuild When
 
-## Incremental Build Performance
+- You target modern browsers or have a simple transpilation target.
+- You do not rely on Babel plugins, Babel macros, or transform behavior that
+  esbuild does not implement.
+- You want a small configuration surface.
 
-For development with watch mode enabled:
+See [Using esbuild-loader](./using_esbuild_loader.md).
 
-| Transpiler  | Initial Build | Incremental Build | HMR Update |
-| ----------- | ------------- | ----------------- | ---------- |
-| **SWC**     | 1.2s          | 0.1s              | <50ms      |
-| **esbuild** | 1.8s          | 0.15s             | <70ms      |
-| **Babel**   | 30s           | 2-5s              | 200-500ms  |
+### Choose Babel When
 
-## Feature Comparison
+- You already rely on Babel plugins or Babel macros.
+- You need custom transforms that do not have SWC or esbuild equivalents.
+- You have mature Babel configuration that is more important than raw build
+  speed.
+- You need compatibility with old browser targets that your SWC/esbuild setup
+  does not cover.
+
+See [Customizing Babel Config](./customizing_babel_config.md).
+
+## Compatibility Tradeoffs
 
 ### SWC
 
-- ✅ TypeScript support built-in
-- ✅ JSX/TSX transformation
-- ✅ Minification built-in
-- ✅ Tree-shaking support
-- ✅ Source maps
-- ⚠️ Limited plugin ecosystem
-- ⚠️ Newer, less battle-tested
+Strengths:
+
+- Fast Rust implementation
+- JavaScript, TypeScript, JSX, and TSX support
+- Good fit for React applications
+- Works well with Shakapacker's default config
+
+Watch for:
+
+- Smaller plugin ecosystem than Babel
+- Project-specific transform options may need `config/swc.config.js`
+- Stimulus apps should preserve class names; see
+  [Using SWC with Stimulus](./using_swc_loader.md#using-swc-with-stimulus)
+- `.swcrc` can override Shakapacker defaults in surprising ways; prefer
+  `config/swc.config.js`
 
 ### esbuild
 
-- ✅ TypeScript support built-in
-- ✅ JSX transformation
-- ✅ Extremely fast bundling
-- ✅ Tree-shaking support
-- ⚠️ Limited transformation options
-- ❌ No plugin system for custom transforms
+Strengths:
+
+- Very fast Go implementation
+- Simple configuration
+- Good fit for modern JavaScript and TypeScript transpilation
+
+Watch for:
+
+- Not a Babel-compatible plugin system
+- Some TypeScript and transform options are intentionally unsupported
+- Decorators and framework-specific transforms may need extra care
 
 ### Babel
 
-- ✅ Most comprehensive browser support
-- ✅ Extensive plugin ecosystem
-- ✅ Custom transformation support
-- ✅ Battle-tested in production
-- ❌ Slowest performance
-- ❌ Complex configuration
+Strengths:
 
-## Recommendations by Use Case
+- Largest plugin ecosystem
+- Mature support for custom transformations
+- Good fit for apps that already have working Babel config
 
-### Choose SWC when:
+Watch for:
 
-- Performance is critical
-- Using modern JavaScript/TypeScript
-- Building large applications
-- Need fast development feedback loops
-- Default choice for new projects
-
-### Choose esbuild when:
-
-- Need the absolute fastest builds
-- Targeting modern browsers only
-- Simple transformation requirements
-- Minimal configuration preferred
-
-### Choose Babel when:
-
-- Need extensive browser compatibility (IE11, etc.)
-- Using experimental JavaScript features
-- Require specific Babel plugins
-- Have existing Babel configuration
-
-## Migration Impact
-
-### From Babel to SWC
-
-- **Build time reduction**: 90-95%
-- **Memory usage reduction**: 50-70%
-- **Configuration simplification**: 80% less config
-- **Developer experience**: Significantly improved
-
-### Real-world Examples
-
-#### E-commerce Platform (1500 components)
-
-- **Before (Babel)**: 120s production build
-- **After (SWC)**: 5.5s production build
-- **Improvement**: 95.4% faster
-
-#### SaaS Dashboard (800 files)
-
-- **Before (Babel)**: 45s development build
-- **After (SWC)**: 2.1s development build
-- **Improvement**: 95.3% faster
-
-#### Blog Platform (200 files)
-
-- **Before (Babel)**: 15s build time
-- **After (SWC)**: 0.8s build time
-- **Improvement**: 94.7% faster
+- Slower builds on large codebases
+- More configuration to maintain
+- Plugin behavior can be hard to compare directly with SWC or esbuild
 
 ## How to Switch Transpilers
 
-### To SWC (Recommended)
+### SWC
 
 ```yaml
 # config/shakapacker.yml
@@ -161,7 +135,7 @@ javascript_transpiler: "swc"
 npm install @swc/core swc-loader
 ```
 
-### To esbuild
+### esbuild
 
 ```yaml
 # config/shakapacker.yml
@@ -172,7 +146,7 @@ javascript_transpiler: "esbuild"
 npm install esbuild esbuild-loader
 ```
 
-### To Babel
+### Babel
 
 ```yaml
 # config/shakapacker.yml
@@ -183,18 +157,50 @@ javascript_transpiler: "babel"
 npm install babel-loader @babel/core @babel/preset-env
 ```
 
-## Testing Methodology
+Replace `npm` with your app's package manager when using Yarn, pnpm, or Bun.
 
-Benchmarks were conducted using:
+## Measuring Your App
 
-1. Clean builds (no cache)
-2. Average of 10 runs
-3. Same source code for all transpilers
-4. Production optimizations enabled
-5. Source maps disabled for fair comparison
+Use your app's real build command rather than a synthetic number from another
+project:
 
-## Conclusion
+```bash
+time bin/shakapacker
+```
 
-For most projects, **SWC provides the best balance** of performance, features, and ease of use. It offers a 20x performance improvement over Babel with minimal configuration required.
+For development feedback, measure the dev server or watch workflow you actually
+use:
 
-Consider your specific requirements around browser support, plugin needs, and existing infrastructure when choosing a transpiler. The performance gains from switching to SWC or esbuild can significantly improve developer productivity and CI/CD pipeline efficiency.
+```bash
+time bin/shakapacker-dev-server
+```
+
+For CI, measure the full command sequence, including dependency install and
+asset compilation if those are part of the job.
+
+Record:
+
+- Ruby, Node.js, package manager, and Shakapacker versions
+- Bundler (`webpack` or `rspack`)
+- Transpiler (`babel`, `swc`, or `esbuild`)
+- `NODE_ENV` and `RAILS_ENV`
+- Whether caches were warm or cold
+- Source map and minification settings
+- Hardware or CI runner type
+
+## Migration Guidance
+
+For most apps, migrate incrementally:
+
+1. Commit the current working build.
+2. Switch from Babel to SWC or esbuild.
+3. Run the test suite and a production build.
+4. Compare build output and browser behavior.
+5. Keep Babel only for the paths that need Babel-specific transforms.
+
+If you want the biggest bundler-level performance change, evaluate
+[Rspack](./rspack_migration_guide.md) separately from the transpiler change so
+you can attribute any regressions to the right layer.
+
+See [Transpiler Migration](./transpiler-migration.md) for step-by-step migration
+commands.
