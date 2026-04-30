@@ -1,19 +1,22 @@
 require_relative File.join("..", "lib", "shakapacker", "utils", "version_syntax_converter")
 require_relative File.join("..", "lib", "shakapacker", "utils", "misc")
+require "English"
 require "rubygems/version"
 require "shellwords"
 require "open3"
 require "tempfile"
 require "tmpdir"
 
-class RaisingMessageHandler
+GITHUB_REPO_SLUG_PATTERN = /\A[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+\z/
+
+class AbortingMessageHandler
   def add_error(error)
-    raise error
+    abort "❌ #{error}"
   end
 end
 
 def ensure_clean_worktree!
-  Shakapacker::Utils::Misc.uncommitted_changes?(RaisingMessageHandler.new)
+  Shakapacker::Utils::Misc.uncommitted_changes?(AbortingMessageHandler.new)
 end
 
 def github_repo_slug(gem_root)
@@ -21,10 +24,18 @@ def github_repo_slug(gem_root)
   origin_url = origin_url.strip
   abort "❌ Unable to determine git origin URL for GitHub release checks.\n\n#{origin_url}" unless status.success?
 
-  match = origin_url.match(%r{github\.com[:/](?<repo>[^/]+/[^/]+?)(?:\.git)?\z})
+  match = origin_url.match(%r{\Agit@github\.com:(?<repo>[^/]+/[^/]+?)(?:\.git)?\z}) ||
+    origin_url.match(%r{\Assh://git@github\.com/(?<repo>[^/]+/[^/]+?)(?:\.git)?\z}) ||
+    origin_url.match(%r{\Ahttps://(?:[^/@]+@)?github\.com/(?<repo>[^/]+/[^/]+?)(?:\.git)?\z}) ||
+    origin_url.match(%r{\A(?:git://)?github\.com/(?<repo>[^/]+/[^/]+?)(?:\.git)?\z})
   abort "❌ Unable to determine GitHub repository from origin URL #{origin_url.inspect}" unless match
 
-  match[:repo]
+  repo_slug = match[:repo]
+  unless repo_slug.match?(GITHUB_REPO_SLUG_PATTERN)
+    abort "❌ GitHub repository slug #{repo_slug.inspect} from origin URL #{origin_url.inspect} is invalid."
+  end
+
+  repo_slug
 end
 
 def verify_npm_auth(registry_url = "https://registry.npmjs.org/")
@@ -432,7 +443,13 @@ def with_release_checkout(gem_root:, dry_run:)
     begin
       yield(worktree_dir)
     ensure
-      Shakapacker::Utils::Misc.sh_in_dir(gem_root, "git worktree remove --force #{escaped_worktree_dir}")
+      original_error = $ERROR_INFO
+      begin
+        Shakapacker::Utils::Misc.sh_in_dir(gem_root, "git worktree remove --force #{escaped_worktree_dir}")
+      rescue StandardError => cleanup_error
+        warn "⚠️ Failed to remove dry-run release worktree #{worktree_dir}: #{cleanup_error.message}"
+        raise cleanup_error unless original_error
+      end
     end
   end
 end
