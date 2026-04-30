@@ -67,11 +67,10 @@ module Shakapacker
 
       # TODO: this might as well use package_json
       class NodePackageVersion
-        # Matches package.json values that point at a local path: "../...", bare "..",
-        # or "file:..." at the start of the string. Bare "..foo" (two dots, no slash,
-        # non-empty suffix) is intentionally not matched — package managers don't emit
-        # that form.
-        LOCAL_PATH_REGEX = %r{\A(\.\.(/|\z)|file:)}.freeze
+        # Matches package.json values that point at a local path: "./...", "../...",
+        # bare "..", or "file:..." at the start of the string. Bare ".foo" or
+        # "..foo" forms are intentionally not matched.
+        LOCAL_PATH_REGEX = %r{\A(\./|\.\.(/|\z)|file:)}.freeze
 
         attr_reader :package_json
 
