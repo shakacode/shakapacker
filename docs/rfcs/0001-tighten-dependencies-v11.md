@@ -174,14 +174,16 @@ Supplemental package for the rspack managed build experience.
 
 **Peer dependencies (optional):**
 
-| Package                      | Version   | When needed      |
-| ---------------------------- | --------- | ---------------- |
-| @rspack/plugin-react-refresh | `^1.0.0`  | React HMR        |
-| css-loader                   | `^7.0.0`  | CSS processing   |
-| sass                         | `^1.50.0` | SCSS/Sass files  |
-| sass-loader                  | `^16.0.0` | Paired with sass |
+| Package                      | Version                | When needed      |
+| ---------------------------- | ---------------------- | ---------------- |
+| @rspack/plugin-react-refresh | `^1.0.0 \|\| ^2.0.0-0` | React HMR        |
+| css-loader                   | `^7.0.0`               | CSS processing   |
+| sass                         | `^1.50.0`              | SCSS/Sass files  |
+| sass-loader                  | `^16.0.0`              | Paired with sass |
 
 Note: rspack has built-in SWC transpilation, so no external transpiler deps are needed.
+
+**Why `^2.0.0-0` (the pre-release qualifier).** The `-0` suffix in the rspack peer ranges (`^1.0.0 || ^2.0.0-0`) is intentional: it explicitly admits rspack v2 alpha/beta/RC releases (e.g., `2.0.0-beta.6`, which is the pinned dev dependency in the core `package.json` at the time of writing). Without `-0`, npm/yarn would refuse to satisfy the peer range with a pre-release, blocking early adopters from testing rspack v2. When rspack v2 reaches a stable GA, this can be tightened to `^1.0.0 || ^2.0.0` in a follow-up minor release.
 
 ### Version Range Philosophy
 
@@ -322,13 +324,13 @@ All three npm packages share the same version number, always. The Ruby gem versi
 ```bash
 # Bump the existing root package from 10.0.0 to 10.1.0.
 npm version 10.1.0 --no-git-tag-version
+# Bump the supplemental packages to the same version (lockstep).
+(cd packages/shakapacker-webpack && npm version 10.1.0 --no-git-tag-version)
+(cd packages/shakapacker-rspack && npm version 10.1.0 --no-git-tag-version)
 
-# Publish core first so supplemental peer deps resolve.
-npm publish
-
-# Publish supplemental packages, already versioned 10.1.0.
-(cd packages/shakapacker-webpack && npm publish)
-(cd packages/shakapacker-rspack && npm publish)
+# Publish all three in the required order (core first, then supplementals).
+# The script verifies version lockstep before publishing anything.
+./scripts/publish-packages.sh
 
 # Ruby gem is released separately via existing rake task
 bundle exec rake release
@@ -347,6 +349,8 @@ The existing `bundle exec rake update_changelog` task should be updated to handl
 | `required_ruby_version` | `>= 2.7.0` | `>= 3.4.0`   | Ruby 3.1 (EOL 2025-03-26) and 3.2 (EOL 2026-04-01) are EOL; Ruby 3.3 (EOL 2027-03-31) leaves little headroom for v11. Ruby 3.4 (EOL ~2027-12) gives v11 a longer active-support window. |
 | `activesupport`         | `>= 5.2`   | `>= 7.2`     | Rails 7.0/7.1 are unsupported (only 7.2.x, 8.0.x, 8.1.x receive security fixes)                                                                                                         |
 | `railties`              | `>= 5.2`   | `>= 7.2`     | Match activesupport                                                                                                                                                                     |
+
+**Ruby 3.3 was considered and rejected.** Setting `>= 3.3` would still drop the clearly-EOL 3.1 and 3.2, and would give Ruby 3.3 users a longer migration window. It was rejected because Ruby 3.3's EOL is 2027-03-31, only ~5 months after a likely v11 GA in late 2026 — meaning v11 would land already supporting an EOL Ruby. Choosing 3.4 aligns the support window with the v11 active-support lifetime. If user data shows a meaningful population still on 3.3 at v11 release time, this can be relaxed.
 
 ### Node.js engines
 
