@@ -30,7 +30,12 @@ while [[ $# -gt 0 ]]; do
       shift
       ;;
     --tag=*)
-      TAG=(--tag "${1#--tag=}")
+      tag_value="${1#--tag=}"
+      if [[ -z "$tag_value" ]]; then
+        echo "Error: --tag requires a value (e.g., --tag next, --tag beta)" >&2
+        exit 1
+      fi
+      TAG=(--tag "$tag_value")
       shift
       ;;
     --tag)
