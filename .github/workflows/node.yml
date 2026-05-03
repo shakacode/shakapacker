@@ -147,7 +147,7 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest]
-        node: ["20.19.x", "22.13.x"]
+        node: ["20.19.x", "22.x"]
 
     runs-on: ${{ matrix.os }}
 
