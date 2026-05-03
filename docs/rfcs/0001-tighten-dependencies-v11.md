@@ -74,7 +74,7 @@ What ships:
 - Core `shakapacker` no longer declares webpack/rspack peer deps
 - Users must install `shakapacker-webpack` or `shakapacker-rspack`
 - Drop old major versions (webpack-cli v4/v5, sass-loader v13-15, etc.)
-- Collapse esbuild from 14 ranges to `^0.24.0`
+- Collapse esbuild from 14 ranges to `>=0.24.0 <1.0.0` (caret on 0.x locks to the minor in npm semver, so a literal `<1.0.0` ceiling is required to keep esbuild 0.25+ in scope)
 - Ruby 3.4+, Rails 7.2+ (Ruby 3.1/3.2 are EOL; Ruby 3.3 reaches EOL 2027-03; Rails 7.0/7.1 are unsupported)
 
 ### Three npm Packages
@@ -127,7 +127,7 @@ Supplemental package for the standard webpack managed build experience.
 | ----------------------- | -------------------- |
 | shakapacker             | `^10.1.0`            |
 | webpack                 | `^5.76.0`            |
-| webpack-cli             | `^6.0.0 \|\| ^7.0.0` |
+| webpack-cli             | `^4.9.2 \|\| ^5.0.0 \|\| ^6.0.0 \|\| ^7.0.0` |
 | webpack-assets-manifest | `^5.0.6 \|\| ^6.0.0` |
 
 **Peer dependencies (optional):**
@@ -148,7 +148,7 @@ Supplemental package for the standard webpack managed build experience.
 | swc-loader     | `^0.1.15 \|\| ^0.2.0` | Paired with @swc/core                    |
 | @babel/core    | `^7.17.9`             | `javascript_transpiler: "babel"`         |
 | babel-loader   | `^9.0.0`              | Paired with @babel/core                  |
-| esbuild        | `^0.24.0`             | `javascript_transpiler: "esbuild"`       |
+| esbuild        | `>=0.24.0 <1.0.0`     | `javascript_transpiler: "esbuild"`       |
 | esbuild-loader | `^4.0.0`              | Paired with esbuild                      |
 
 **Peer dependencies (optional — CSS preprocessors):**
@@ -191,7 +191,7 @@ Following [G-Rath's feedback](https://github.com/shakacode/shakapacker/issues/10
 
 - **Don't raise minor version floors without cause.** Changing webpack from `^5.76.0` to `^5.90.0` provides no advantage — package managers install the latest by default, and tightening the floor only risks breaking users who have a working older version pinned. Only raise floors when there's a specific API or bug fix we depend on.
 - **Do drop old major versions** where we no longer test or support them (webpack-cli v4/v5, sass-loader v13-15, etc.).
-- **Collapse excessive ranges** like esbuild's 14 separate ranges into a single `^0.24.0`.
+- **Collapse excessive ranges** like esbuild's 14 separate ranges into a single `>=0.24.0 <1.0.0` (caret on 0.x locks to the minor, so the explicit `<1.0.0` ceiling is required to admit esbuild 0.25+).
 
 ### What Each User Type Installs (v11+)
 
@@ -203,7 +203,7 @@ Following [G-Rath's feedback](https://github.com/shakacode/shakapacker/issues/10
     "shakapacker": "^11.0.0",
     "shakapacker-webpack": "^11.0.0",
     "webpack": "^5.76.0",
-    "webpack-cli": "^6.0.0 || ^7.0.0",
+    "webpack-cli": "^4.9.2 || ^5.0.0 || ^6.0.0 || ^7.0.0",
     "webpack-assets-manifest": "^5.0.6 || ^6.0.0",
     "webpack-dev-server": "^5.2.2",
     "@swc/core": "^1.3.0",
