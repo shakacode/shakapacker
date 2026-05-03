@@ -683,7 +683,7 @@ module Shakapacker
       end
 
       def check_rspack_cache_configuration
-        return unless config.assets_bundler == "rspack"
+        return unless config.rspack?
 
         rspack_major = rspack_major_version
 
@@ -747,6 +747,18 @@ module Shakapacker
         # Only match `cache: false` at brace depth 1 (the top level of the exported
         # config object). This avoids false positives from nested loader options like
         # `{ loader: 'babel-loader', options: { cache: false } }`.
+        #
+        # Known false-positive patterns that this heuristic does not filter (the
+        # "appears to be disabled" wording in the warning is the mitigation):
+        #   - Intermediate variable assignment, where the depth-1 object is not
+        #     the exported config:
+        #       const opts = { cache: false };
+        #       module.exports = merge(base, opts);
+        #   - Function-argument objects whose `{` is at depth 1 in the pre-match,
+        #     because parentheses are not counted:
+        #       module.exports = merge(base, { cache: false });
+        # Restricting the scan to the exported object would require a real JS
+        # parser; the conservative depth-1 heuristic is intentional.
         stripped.to_enum(:scan, /\bcache\s*:\s*false\b/).any? do
           pre = Regexp.last_match.pre_match
           (pre.count("{") - pre.count("}")) == 1

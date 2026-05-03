@@ -466,6 +466,7 @@ describe Shakapacker::Doctor do
 
     before do
       allow(config).to receive(:assets_bundler).and_return("rspack")
+      allow(config).to receive(:rspack?).and_return(true)
       allow(config).to receive(:assets_bundler_config_path).and_return("config/rspack")
       FileUtils.mkdir_p(rspack_config_dir)
       File.write(package_json_path, JSON.generate({
@@ -479,6 +480,7 @@ describe Shakapacker::Doctor do
     context "when bundler is webpack" do
       before do
         allow(config).to receive(:assets_bundler).and_return("webpack")
+        allow(config).to receive(:rspack?).and_return(false)
         File.write(rspack_config_path, "module.exports = { cache: false }")
       end
 
@@ -739,6 +741,20 @@ describe Shakapacker::Doctor do
       it "inspects the webpack fallback (matching the runner) instead of the unsupported .mjs" do
         doctor.send(:check_rspack_cache_configuration)
         expect(warning_messages).to include(match(/Rspack cache appears to be disabled.*webpack\.config\.js/))
+      end
+    end
+
+    context "when only rspack.config.mjs exists with no fallback" do
+      let(:rspack_config_mjs_path) { rspack_config_dir.join("rspack.config.mjs") }
+
+      before do
+        FileUtils.rm_f(rspack_config_path)
+        File.write(rspack_config_mjs_path, "export default { cache: false }")
+      end
+
+      it "silently skips the unsupported .mjs file and emits no cache warning" do
+        doctor.send(:check_rspack_cache_configuration)
+        expect(warning_messages).not_to include(match(/Rspack cache appears to be disabled/))
       end
     end
 
