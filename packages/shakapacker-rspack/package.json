@@ -26,13 +26,13 @@
   ],
   "peerDependencies": {
     "shakapacker": "^10.1.0",
-    "@rspack/core": "^1.0.0 || ^2.0.0-0",
-    "@rspack/cli": "^1.0.0 || ^2.0.0-0",
-    "rspack-manifest-plugin": "^5.0.0",
-    "@rspack/plugin-react-refresh": "^1.0.0 || ^2.0.0-0",
-    "css-loader": "^7.0.0",
-    "sass": "^1.50.0",
-    "sass-loader": "^16.0.0"
+    "@rspack/core": "2.0.1",
+    "@rspack/cli": "2.0.1",
+    "rspack-manifest-plugin": "5.2.1",
+    "@rspack/plugin-react-refresh": "2.0.0",
+    "css-loader": "7.1.4",
+    "sass": "1.99.0",
+    "sass-loader": "16.0.7"
   },
   "peerDependenciesMeta": {
     "@rspack/plugin-react-refresh": {
@@ -49,7 +49,7 @@
     }
   },
   "engines": {
-    "node": ">= 20"
+    "node": "^20.19.0 || >=22.12.0"
   },
   "publishConfig": {
     "access": "public"
