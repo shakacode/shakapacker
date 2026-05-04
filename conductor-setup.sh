@@ -45,7 +45,7 @@ if [[ "$VERSION_MANAGER" != "none" ]] && [[ ! -f .tool-versions ]] && [[ ! -f .m
     if [[ -f .node-version ]]; then
         NODE_VER=$(cat .node-version | tr -d '[:space:]')
     else
-        NODE_VER="20.18.0"  # Default: LTS Node
+        NODE_VER="22.20.0"  # Default: LTS Node (>=22.12.0 required by @rspack/core)
     fi
 
     cat > .tool-versions << EOF
@@ -76,9 +76,14 @@ run_cmd ruby --version >/dev/null 2>&1 || { echo "❌ Error: Ruby is not install
 run_cmd node --version >/dev/null 2>&1 || { echo "❌ Error: Node.js is not installed or not in PATH."; exit 1; }
 
 # Check Ruby version
-RUBY_VERSION=$(run_cmd ruby -v | awk '{print $2}')
+# Extract MAJOR.MINOR.PATCH; ignores any distro patch suffix (e.g., "+custom") so sort -V compares cleanly.
+RUBY_VERSION=$(run_cmd ruby -v | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -n1)
+if [[ -z "$RUBY_VERSION" ]]; then
+    echo "❌ Error: Could not parse Ruby version from \`ruby -v\`. Got: $(run_cmd ruby -v)"
+    exit 1
+fi
 MIN_RUBY_VERSION="2.7.0"
-if [[ $(echo -e "$MIN_RUBY_VERSION\n$RUBY_VERSION" | sort -V | head -n1) != "$MIN_RUBY_VERSION" ]]; then
+if [[ $(printf '%s\n' "$MIN_RUBY_VERSION" "$RUBY_VERSION" | sort -V | head -n1) != "$MIN_RUBY_VERSION" ]]; then
     echo "❌ Error: Ruby version $RUBY_VERSION is too old. Shakapacker requires Ruby >= 2.7.0"
     echo "   Please upgrade Ruby using your version manager or system package manager."
     exit 1
@@ -86,10 +91,27 @@ fi
 echo "✅ Ruby version: $RUBY_VERSION"
 
 # Check Node version
-NODE_VERSION=$(run_cmd node -v | cut -d'v' -f2)
-MIN_NODE_VERSION="14.0.0"
-if [[ $(echo -e "$MIN_NODE_VERSION\n$NODE_VERSION" | sort -V | head -n1) != "$MIN_NODE_VERSION" ]]; then
-    echo "❌ Error: Node.js version v$NODE_VERSION is too old. Shakapacker requires Node.js >= 14.0.0"
+# @rspack/core v2 (used by Shakapacker v10+) requires ^20.19.0 || >=22.12.0.
+# Reject unsupported ranges (21.x, 22.0.0–22.11.x) up front so they fail before yarn install.
+# The >=22.12.0 branch intentionally accepts future majors (23.x, 24.x, …) — matching the
+# upstream rspack engine constraint.
+# Extract MAJOR.MINOR.PATCH; ignores any distro patch suffix (e.g., "v22.20.0+custom") so sort -V compares cleanly.
+NODE_VERSION=$(run_cmd node -v | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -n1)
+if [[ -z "$NODE_VERSION" ]]; then
+    echo "❌ Error: Could not parse Node.js version from \`node -v\`. Got: $(run_cmd node -v)"
+    exit 1
+fi
+NODE_MAJOR=$(echo "$NODE_VERSION" | cut -d'.' -f1)
+MIN_NODE_20="20.19.0"
+MIN_NODE_22="22.12.0"
+node_supported=false
+if [[ "$NODE_MAJOR" == "20" ]] && [[ $(printf '%s\n' "$MIN_NODE_20" "$NODE_VERSION" | sort -V | head -n1) == "$MIN_NODE_20" ]]; then
+    node_supported=true
+elif [[ "$NODE_MAJOR" -ge 22 ]] && [[ $(printf '%s\n' "$MIN_NODE_22" "$NODE_VERSION" | sort -V | head -n1) == "$MIN_NODE_22" ]]; then
+    node_supported=true
+fi
+if [[ "$node_supported" != "true" ]]; then
+    echo "❌ Error: Node.js version v$NODE_VERSION is unsupported. Shakapacker requires Node.js ^20.19.0 || >=22.12.0"
     echo "   Please upgrade Node.js using your version manager or system package manager."
     exit 1
 fi
