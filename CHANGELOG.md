@@ -9,6 +9,10 @@
 
 ## [Unreleased]
 
+### ⚠️ Breaking Changes
+
+- **Breaking: tightened `package.json` `engines.node` to `^20.19.0 || >=22.12.0`**. [PR #1099](https://github.com/shakacode/shakapacker/pull/1099) by [justin808](https://github.com/justin808). Raised from `>= 20`, dropping support for Node 20.0.0–20.18.x and Node 21.x to match `@rspack/core@2.0.0-rc.0`. Consumers on those versions will hit an engine error with `--engine-strict` or yarn workspaces and need to upgrade. The PR also bumps `.node-version` to `22.20.0` and updates `conductor-setup.sh` to enforce the same disjoint range up front, so contributors get a clear error before `yarn install` fails with a confusing engine mismatch.
+
 ### Changed
 
 - **Changed `shakapacker:install` to default fresh Rspack installs to v2 (`^2.0.0-0`)**. [PR #1091](https://github.com/shakacode/shakapacker/pull/1091) by [ihabadham](https://github.com/ihabadham). `lib/install/package.json` now declares `@rspack/core` and `@rspack/cli` as `^1.0.0 || ^2.0.0-0`; fresh installs pick the v2 range. Existing apps are unaffected. Note: Rspack v2 requires Node.js 20.19.0+.
