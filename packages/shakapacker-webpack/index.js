@@ -22,7 +22,7 @@ const transpilerGroups = [
 
 const canResolve = (mod) => {
   try {
-    require.resolve(mod)
+    require.resolve(mod, { paths: [process.cwd()] })
     return true
   } catch {
     return false

@@ -50,7 +50,7 @@ This creates:
 
 ### Phase 1: v10.1.0 (Non-Breaking, Additive)
 
-Add the two supplemental packages. **No changes to the core `shakapacker` package's peer deps.** Existing users are unaffected. The new supplemental packages take the stricter path: exact peer pins for the managed webpack/rspack stack so compatibility is explicit and updated with each Shakapacker package release.
+Add the two supplemental packages. **No changes to the core `shakapacker` package's peer deps.** Existing users who do not adopt a supplemental package are unaffected. Early adopters of the supplemental packages opt into their exact managed stack pins so compatibility is explicit and updated with each Shakapacker package release.
 
 What ships:
 
@@ -61,6 +61,7 @@ What ships:
 - Update docs and installer to recommend the new pattern for new projects
 - Core `shakapacker` still declares all existing peer deps (nothing removed)
 - Supplemental packages use exact peer pins for managed dependencies, rather than inheriting the broad optional ranges from core
+- `shakapacker-webpack` early adopters move to `webpack-dev-server` 5.x with the supplemental package; webpack-dev-server 4.x remains tolerated only through the legacy core optional peer range during the v10.x compatibility window
 
 Moving `package/` to `packages/shakapacker/` is deferred to v11.0.0 because it changes the published npm package layout (potential deep-import breakage for `shakapacker/package/*` paths) and requires resolving how `lib/install/config/shakapacker.yml` is included in the npm publish.
 
@@ -149,7 +150,7 @@ Supplemental package for the standard webpack managed build experience.
 | swc-loader     | `0.2.7`   | Paired with @swc/core                    |
 | @babel/core    | `7.29.0`  | `javascript_transpiler: "babel"`         |
 | babel-loader   | `10.1.1`  | Paired with @babel/core                  |
-| esbuild        | `0.28.0`  | `javascript_transpiler: "esbuild"`       |
+| esbuild        | `0.27.7`  | `javascript_transpiler: "esbuild"`       |
 | esbuild-loader | `4.4.3`   | Paired with esbuild                      |
 
 **Peer dependencies (optional — CSS preprocessors):**

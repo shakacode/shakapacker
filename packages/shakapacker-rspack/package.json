@@ -22,7 +22,8 @@
   "main": "index.js",
   "files": [
     "index.js",
-    "LICENSE"
+    "LICENSE",
+    "README.md"
   ],
   "peerDependencies": {
     "shakapacker": "^10.1.0",

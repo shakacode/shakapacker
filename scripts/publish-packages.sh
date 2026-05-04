@@ -75,6 +75,18 @@ if [[ "$CORE_VERSION" == *-* && ${#TAG[@]} -eq 0 ]]; then
   exit 1
 fi
 
+if [[ ${#DRY_RUN[@]} -eq 0 ]]; then
+  if [[ -n "$(git status --porcelain)" ]]; then
+    echo "Error: Uncommitted changes detected. Commit or stash before publishing." >&2
+    exit 1
+  fi
+
+  if ! npm whoami --registry https://registry.npmjs.org >/dev/null 2>&1; then
+    echo "Error: not logged in to npm. Run 'npm login' first." >&2
+    exit 1
+  fi
+fi
+
 echo "Publishing shakapacker @ $CORE_VERSION (core first)…"
 npm publish ${DRY_RUN[@]+"${DRY_RUN[@]}"} ${TAG[@]+"${TAG[@]}"}
 

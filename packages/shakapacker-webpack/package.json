@@ -22,7 +22,8 @@
   "main": "index.js",
   "files": [
     "index.js",
-    "LICENSE"
+    "LICENSE",
+    "README.md"
   ],
   "peerDependencies": {
     "shakapacker": "^10.1.0",
@@ -38,7 +39,7 @@
     "swc-loader": "0.2.7",
     "@babel/core": "7.29.0",
     "babel-loader": "10.1.1",
-    "esbuild": "0.28.0",
+    "esbuild": "0.27.7",
     "esbuild-loader": "4.4.3",
     "css-loader": "7.1.4",
     "sass": "1.99.0",
