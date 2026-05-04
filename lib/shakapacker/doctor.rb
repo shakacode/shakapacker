@@ -60,6 +60,13 @@ module Shakapacker
         add_warning(message, CATEGORY_INFO)
       end
 
+      # Records a "Fix: ..." hint as an indented sub-item attached to the
+      # preceding warning. The doctor's printer treats messages starting with
+      # two spaces as subitems and renders them aligned under the parent.
+      def add_fix_hint(message)
+        add_warning("  Fix: #{message}")
+      end
+
       def print_help
         puts <<~HELP
           Shakapacker Doctor - Diagnostic tool for Shakapacker configuration
@@ -690,7 +697,7 @@ module Shakapacker
         if rspack_major == 1
           add_warning("Rspack v1 detected: persistent caching is experimental in v1 and requires manual opt-in. " \
                       "Upgrading to Rspack v2 enables stable persistent caching out of the box for significantly faster rebuilds.")
-          add_warning("  Fix: Bump @rspack/core and @rspack/cli to ^2.0.0-0 in package.json. See https://rspack.rs/config/cache and docs/rspack.md for details.")
+          add_fix_hint("Bump @rspack/core and @rspack/cli to ^2.0.0-0 in package.json. See https://rspack.rs/config/cache and docs/rspack.md for details.")
         end
 
         path = active_assets_bundler_config_path
@@ -703,8 +710,8 @@ module Shakapacker
         add_warning("Rspack cache appears to be disabled in #{relative} (found 'cache: false'). Disabling cache " \
                     "causes significantly slower builds, especially on rebuilds. Rspack v2 promotes filesystem " \
                     "caching from experimental to stable.")
-        add_warning("  Fix: Remove the 'cache: false' setting, or use 'cache: { type: \"filesystem\" }' for persistent caching. " \
-                    "See https://rspack.rs/config/cache for options.")
+        add_fix_hint("Remove the 'cache: false' setting, or use 'cache: { type: \"filesystem\" }' for persistent caching. " \
+                     "See https://rspack.rs/config/cache for options.")
       rescue Errno::ENOENT => e
         add_warning("Unable to validate rspack cache configuration: #{e.message}")
       end
@@ -748,17 +755,19 @@ module Shakapacker
         # config object). This avoids false positives from nested loader options like
         # `{ loader: 'babel-loader', options: { cache: false } }`.
         #
-        # Known false-positive patterns that this heuristic does not filter (the
-        # "appears to be disabled" wording in the warning is the mitigation):
-        #   - Intermediate variable assignment, where the depth-1 object is not
-        #     the exported config:
-        #       const opts = { cache: false };
-        #       module.exports = merge(base, opts);
-        #   - Function-argument objects whose `{` is at depth 1 in the pre-match,
-        #     because parentheses are not counted:
-        #       module.exports = merge(base, { cache: false });
-        # Restricting the scan to the exported object would require a real JS
-        # parser; the conservative depth-1 heuristic is intentional.
+        # The heuristic also flags depth-1 objects that aren't the literal
+        # `module.exports = { ... }` object — e.g. an intermediate variable or a
+        # function-argument object:
+        #   const opts = { cache: false };
+        #   module.exports = merge(base, opts);
+        #
+        #   module.exports = merge(base, { cache: false });
+        # In typical use these still disable the build's cache (so the warning is
+        # appropriate), but if `opts` is unused or the merge function ignores
+        # `cache`, the warning could fire when caching is not actually disabled.
+        # The "appears to be disabled" wording is the mitigation. Distinguishing
+        # these cases would require a real JS parser; the conservative depth-1
+        # heuristic is intentional.
         stripped.to_enum(:scan, /\bcache\s*:\s*false\b/).any? do
           pre = Regexp.last_match.pre_match
           (pre.count("{") - pre.count("}")) == 1

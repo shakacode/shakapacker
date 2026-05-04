@@ -211,6 +211,10 @@ class Shakapacker::Compiler
       config.root_path.join("bin/shakapacker")
     end
 
+    # Logs the doctor tip once per process. Called from `run_webpack`, which
+    # only runs when `compile` finds the build stale, so users whose bundle is
+    # already up-to-date won't see the tip in that process — by design, since
+    # the hint is most useful when an actual build is happening.
     def show_doctor_hint_once
       return if self.class.doctor_hint_shown
 
