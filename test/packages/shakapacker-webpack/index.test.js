@@ -3,7 +3,8 @@ const {
   mkdirSync,
   writeFileSync,
   copyFileSync,
-  symlinkSync
+  symlinkSync,
+  rmSync
 } = require("fs")
 const { tmpdir } = require("os")
 const { join, resolve } = require("path")
@@ -11,6 +12,11 @@ const { spawnSync } = require("child_process")
 
 const repoRoot = resolve(__dirname, "../../..")
 const wrapperSource = join(repoRoot, "packages/shakapacker-webpack/index.js")
+
+// Track every temp dir mkdtempSync hands out so we can rm them between
+// tests. Without this, each test case leaks an app root + a virtual store
+// root, which adds up across CI runs.
+const dirsToClean = []
 
 const writeModule = (root, name, source) => {
   const moduleDir = join(root, "node_modules", ...name.split("/"))
@@ -22,6 +28,7 @@ const createPnpmLikeApp = ({ configTranspiler = "swc", transpilers = [] }) => {
   const appRoot = mkdtempSync(join(tmpdir(), "shakapacker-webpack-test-"))
   const appNodeModules = join(appRoot, "node_modules")
   const storeRoot = mkdtempSync(join(tmpdir(), "shakapacker-webpack-store-"))
+  dirsToClean.push(appRoot, storeRoot)
   const virtualNodeModules = join(storeRoot, "node_modules")
   const wrapperDir = join(virtualNodeModules, "shakapacker-webpack")
 
@@ -66,6 +73,10 @@ const requireWrapper = (appRoot) => {
     })
   `
 
+  // --no-warnings stops Node from printing warnings on stderr by default,
+  // but `process.on("warning", ...)` listeners still receive them. That's
+  // why the structured-warning capture above works while keeping test
+  // output free of the loud SHAKAPACKER_NO_TRANSPILER banner.
   const result = spawnSync(process.execPath, ["--no-warnings", "-e", script], {
     cwd: appRoot,
     encoding: "utf8"
@@ -79,7 +90,13 @@ const requireWrapper = (appRoot) => {
 }
 
 describe("shakapacker-webpack package wrapper", () => {
-  test("warns when no transpiler pair is resolvable", () => {
+  afterEach(() => {
+    for (const dir of dirsToClean.splice(0)) {
+      rmSync(dir, { recursive: true, force: true })
+    }
+  })
+
+  test("warns when the configured transpiler pair is not resolvable", () => {
     const { appRoot } = createPnpmLikeApp({ transpilers: [] })
 
     const result = requireWrapper(appRoot)
@@ -91,9 +108,55 @@ describe("shakapacker-webpack package wrapper", () => {
     )
   })
 
-  test("resolves transpiler pairs from the application cwd", () => {
+  test("resolves the configured transpiler pair from the application cwd", () => {
     const { appRoot } = createPnpmLikeApp({
       transpilers: ["@swc/core", "swc-loader"]
+    })
+
+    const result = requireWrapper(appRoot)
+
+    expect(result.warnings).not.toStrictEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ code: "SHAKAPACKER_NO_TRANSPILER" })
+      ])
+    )
+  })
+
+  test("warns when an unrelated transpiler is installed but the configured one is not", () => {
+    const { appRoot } = createPnpmLikeApp({
+      configTranspiler: "swc",
+      transpilers: ["@babel/core", "babel-loader"]
+    })
+
+    const result = requireWrapper(appRoot)
+
+    const transpilerWarning = result.warnings.find(
+      (warning) => warning.code === "SHAKAPACKER_NO_TRANSPILER"
+    )
+    expect(transpilerWarning).toBeDefined()
+    expect(transpilerWarning.message).toContain('javascript_transpiler is "swc"')
+    expect(transpilerWarning.message).toContain("@swc/core + swc-loader")
+  })
+
+  test("respects javascript_transpiler: babel", () => {
+    const { appRoot } = createPnpmLikeApp({
+      configTranspiler: "babel",
+      transpilers: ["@babel/core", "babel-loader"]
+    })
+
+    const result = requireWrapper(appRoot)
+
+    expect(result.warnings).not.toStrictEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ code: "SHAKAPACKER_NO_TRANSPILER" })
+      ])
+    )
+  })
+
+  test("respects javascript_transpiler: esbuild", () => {
+    const { appRoot } = createPnpmLikeApp({
+      configTranspiler: "esbuild",
+      transpilers: ["esbuild", "esbuild-loader"]
     })
 
     const result = requireWrapper(appRoot)
@@ -116,7 +179,7 @@ describe("shakapacker-webpack package wrapper", () => {
     expect(result.warnings).toStrictEqual([])
   })
 
-  test("emits the transpiler warning before rethrowing when shakapacker cannot load", () => {
+  test("emits the transpiler warning even when shakapacker fails to load", () => {
     const { appRoot, shakapackerPath } = createPnpmLikeApp({ transpilers: [] })
     writeFileSync(
       shakapackerPath,

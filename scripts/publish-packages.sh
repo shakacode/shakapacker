@@ -76,6 +76,13 @@ if [[ "$CORE_VERSION" == *-* && ${#TAG[@]} -eq 0 ]]; then
 fi
 
 if [[ ${#DRY_RUN[@]} -eq 0 ]]; then
+  CURRENT_BRANCH="$(git rev-parse --abbrev-ref HEAD)"
+  if [[ "$CURRENT_BRANCH" != "main" ]]; then
+    echo "Error: Must publish from main (currently on '$CURRENT_BRANCH')." >&2
+    echo "Switch to main and re-run, or pass --dry-run to preview from another branch." >&2
+    exit 1
+  fi
+
   if [[ -n "$(git status --porcelain)" ]]; then
     echo "Error: Uncommitted changes detected. Commit or stash before publishing." >&2
     exit 1
