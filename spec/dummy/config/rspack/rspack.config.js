@@ -87,9 +87,11 @@ const serverConfig = () => {
   const serverEntry = config.entry['server-bundle']
 
   if (!serverEntry) {
-    throw new Error(
-      "Create a pack with the file name 'server-bundle.js' containing all the server rendering files"
+    console.warn(
+      "[React on Rails] No 'server-bundle' pack found — skipping server bundle. " +
+        "Create a pack named 'server-bundle.js' to enable server rendering."
     )
+    return null
   }
 
   config.entry = { 'server-bundle': serverEntry }
@@ -103,7 +105,9 @@ const serverConfig = () => {
     filename: 'server-bundle.js',
     globalObject: 'this'
   }
-  // Filter by constructor name — works in dev/test where names are not minified.
+  // Filter by constructor name — works in dev/test where class names are preserved.
+  // MUST NEVER run against a minified shakapacker bundle: production minification
+  // mangles these class names to single letters and the filter would silently no-op.
   // Optional chaining guards against null/raw-function/POJO plugins.
   config.plugins = config.plugins.filter(
     (plugin) => !constructorNamesToRemove.has(plugin?.constructor?.name)
@@ -111,7 +115,8 @@ const serverConfig = () => {
 
   config.module.rules = configureRulesForServer(config.module.rules)
 
-  config.devtool = 'eval'
+  // 'eval' is invalid under rspack's mode: 'production'; fall back to no source maps there.
+  config.devtool = config.mode === 'production' ? false : 'eval'
 
   return config
 }
@@ -123,10 +128,25 @@ module.exports = () => {
   }
 
   if (process.env.SERVER_BUNDLE_ONLY) {
+    const server = serverConfig()
+    if (!server) {
+      throw new Error(
+        "SERVER_BUNDLE_ONLY=1 set but no 'server-bundle' pack exists. " +
+          "Create a pack named 'server-bundle.js' to enable server rendering."
+      )
+    }
     console.log('[React on Rails] Creating only the server bundle.')
-    return serverConfig()
+    return server
+  }
+
+  const server = serverConfig()
+  if (!server) {
+    console.log(
+      '[React on Rails] Creating only the client bundles (no server-bundle pack).'
+    )
+    return clientConfig()
   }
 
   console.log('[React on Rails] Creating both client and server bundles.')
-  return [clientConfig(), serverConfig()]
+  return [clientConfig(), server]
 }
