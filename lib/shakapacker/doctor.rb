@@ -740,14 +740,18 @@ module Shakapacker
         # the disabled cache.
         stripped = content.gsub(/(['"])(\w+)\1(?=\s*:)/, '\2')
 
-        # Strip string literals and comments so examples inside strings or comments
-        # don't trigger a false positive. Single/double-quoted JS strings cannot span
-        # newlines, so the exclusion class includes \n to prevent a runaway match when
-        # an unmatched quote appears in a comment (e.g. `// don't disable cache`).
+        # Strip string literals, regex literals, and comments so examples inside
+        # them don't trigger a false positive. Single/double-quoted JS strings cannot
+        # span newlines, so the exclusion class includes \n to prevent a runaway
+        # match when an unmatched quote appears in a comment (e.g. `// don't disable
+        # cache`). Regex literals are stripped before block comments so that `/* */`
+        # inside a regex isn't misread as a comment delimiter; the non-greedy body
+        # avoids spanning multiple slashes (e.g. division operators) on the same line.
         stripped = stripped
           .gsub(/`(?:\\.|[^`\\])*`/m, '""')
           .gsub(/'(?:\\.|[^'\\\n])*'/, '""')
           .gsub(/"(?:\\.|[^"\\\n])*"/, '""')
+          .gsub(%r{/(?:\\.|\[[^\]\n]*\]|[^/\n\\\[])+?/[gimsuy]*}, "")
           .gsub(%r{/\*.*?\*/}m, "")
           .gsub(%r{//[^\n]*}, "")
 
@@ -786,12 +790,14 @@ module Shakapacker
 
         # Only trust specifiers starting with a digit or ^/~ prefix followed by a digit.
         # Skip git+, file:, npm: aliases, "latest", "*", or ranges like ">=1.5 <2".
+        # Accept shorthand forms (e.g. `^1`, `~1`, `1`, `1.x`) so we still emit the
+        # v1 advisory when node_modules isn't populated yet.
         cleaned = version.strip
         return nil unless cleaned.match?(/\A[\^~]?\d/)
         return nil if cleaned.match?(/(\s|\|\||[<>=:]|\A(?:git|file|link|workspace|npm):)/)
-        return nil unless cleaned.match?(/\A[\^~]?\d+(?:\.\d+){1,2}(?:-[0-9A-Za-z.-]+)?\z/)
+        return nil unless cleaned.match?(/\A[\^~]?\d+(?:\.(?:\d+|x|\*)){0,2}(?:-[0-9A-Za-z.-]+)?\z/i)
 
-        match = cleaned.sub(/\A[\^~]/, "").match(/\A(\d+)\./)
+        match = cleaned.sub(/\A[\^~]/, "").match(/\A(\d+)/)
         match && match[1].to_i
       end
 
@@ -810,7 +816,9 @@ module Shakapacker
         return nil unless package_json_exists?
 
         pkg = read_package_json
-        deps = (pkg["dependencies"] || {}).merge(pkg["devDependencies"] || {})
+        # Production dependencies take precedence on key conflict so the version
+        # actually shipped in production wins over a devDependencies override.
+        deps = (pkg["devDependencies"] || {}).merge(pkg["dependencies"] || {})
         deps[name]
       end
 

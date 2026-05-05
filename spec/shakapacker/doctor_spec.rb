@@ -807,6 +807,76 @@ describe Shakapacker::Doctor do
         expect(warning_messages).not_to include(match(/Rspack v1 detected/))
       end
     end
+
+    context "when the rspack version specifier uses a major-only shorthand" do
+      ["^1", "~1", "1", "1.x", "^1.x", "^1.x.x", "1.X"].each do |specifier|
+        context "with specifier #{specifier.inspect}" do
+          before do
+            File.write(package_json_path, JSON.generate({
+              "devDependencies" => {
+                "@rspack/core" => specifier,
+                "@rspack/cli" => specifier
+              }
+            }))
+          end
+
+          it "still emits the v1 advisory" do
+            doctor.send(:check_rspack_cache_configuration)
+            expect(warning_messages).to include(match(/Rspack v1 detected/))
+          end
+        end
+      end
+
+      context "with a v2 major-only shorthand" do
+        before do
+          File.write(package_json_path, JSON.generate({
+            "devDependencies" => {
+              "@rspack/core" => "^2",
+              "@rspack/cli" => "^2"
+            }
+          }))
+        end
+
+        it "does not warn about v1" do
+          doctor.send(:check_rspack_cache_configuration)
+          expect(warning_messages).not_to include(match(/Rspack v1 detected/))
+        end
+      end
+    end
+
+    context "when a regex literal contains an unbalanced brace inside a character class" do
+      before do
+        File.write(rspack_config_path, <<~JS)
+          module.exports = {
+            module: { rules: [{ test: /[{]/, use: 'raw-loader' }] },
+            cache: false
+          }
+        JS
+      end
+
+      it "still detects the top-level cache: false" do
+        doctor.send(:check_rspack_cache_configuration)
+        expect(warning_messages).to include(match(/Rspack cache appears to be disabled/))
+      end
+    end
+
+    context "when @rspack/core appears in both dependencies and devDependencies" do
+      before do
+        File.write(package_json_path, JSON.generate({
+          "dependencies" => {
+            "@rspack/core" => "^2.0.0-rc.0"
+          },
+          "devDependencies" => {
+            "@rspack/core" => "^1.0.0"
+          }
+        }))
+      end
+
+      it "uses the dependencies version (production wins) and does not warn about v1" do
+        doctor.send(:check_rspack_cache_configuration)
+        expect(warning_messages).not_to include(match(/Rspack v1 detected/))
+      end
+    end
   end
 
   describe "Windows platform checks" do
