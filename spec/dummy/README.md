@@ -94,6 +94,14 @@ The script works by copying the appropriate configuration file:
 - `config/webpack/webpack.config.js` - Webpack build configuration
 - `config/rspack/rspack.config.js` - RSpack build configuration
 
+> **Note:** `config/rspack/rspack.config.js` is a test fixture only. Its
+> SSR server-bundle filter relies on `plugin.constructor.name` matching
+> known rspack plugin classes, which only works against the unminified
+> local shakapacker build used here. Do not copy this pattern verbatim
+> into a production app without replacing the filter (e.g. with a
+> token/symbol-based marker) — minified shakapacker builds mangle class
+> names and the filter would silently no-op.
+
 ## Key Differences
 
 ### Webpack Configuration

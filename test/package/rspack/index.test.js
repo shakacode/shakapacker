@@ -95,6 +95,8 @@ describe("rspack/index", () => {
   let rspackIndex
   let validateRspackDependencies
 
+  // Relies on env.ts computing nodeEnv eagerly at require() time (plain const,
+  // not a getter), so restoring NODE_ENV after require() is safe.
   const loadRspackIndex = (nodeEnv = "development") => {
     const previousNodeEnv = process.env.NODE_ENV
     jest.resetModules()
