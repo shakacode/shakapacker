@@ -488,7 +488,7 @@ module Shakapacker
                         else "npm uninstall swc-loader"
             end
             add_warning("swc-loader is not needed with Rspack (SWC is built-in). Rspack includes SWC transpilation natively, so this package is redundant.")
-            add_warning("  Fix: Remove it with: #{remove_cmd}.")
+            add_fix_hint("Remove it with: #{remove_cmd}.")
           end
         end
       end
@@ -528,7 +528,7 @@ module Shakapacker
           babel_files << "package.json" if babel_in_package_json
           babel_files_str = babel_files.join(", ")
           add_warning("Babel configuration files found (#{babel_files_str}) but javascript_transpiler is '#{transpiler}'. These Babel configs are ignored by Shakapacker (though they may still be used by ESLint or other tools).")
-          add_warning("  Fix: Remove Babel config files if not needed, or set javascript_transpiler: 'babel' in shakapacker.yml to use Babel for transpilation.")
+          add_fix_hint("Remove Babel config files if not needed, or set javascript_transpiler: 'babel' in shakapacker.yml to use Babel for transpilation.")
         end
 
         # Check for redundant dependencies
@@ -733,20 +733,10 @@ module Shakapacker
       end
 
       def rspack_cache_disabled?(content)
-        # Preserve quoted property keys (`'cache': false` / `"cache": false`) by
-        # replacing them with the bare identifier form before stripping general
-        # string literals. Without this step the surrounding string-strip would
-        # collapse `'cache'` and `"cache"` to `""` and the regex below would miss
-        # the disabled cache.
+        # Normalize quoted property keys before stripping string literals; otherwise
+        # `'cache'` and `"cache"` collapse to `""` and the match below misses them.
         stripped = content.gsub(/(['"])(\w+)\1(?=\s*:)/, '\2')
 
-        # Strip string literals, regex literals, and comments so examples inside
-        # them don't trigger a false positive. Single/double-quoted JS strings cannot
-        # span newlines, so the exclusion class includes \n to prevent a runaway
-        # match when an unmatched quote appears in a comment (e.g. `// don't disable
-        # cache`). Regex literals are stripped before block comments so that `/* */`
-        # inside a regex isn't misread as a comment delimiter; the non-greedy body
-        # avoids spanning multiple slashes (e.g. division operators) on the same line.
         stripped = stripped
           .gsub(/`(?:\\.|[^`\\])*`/m, '""')
           .gsub(/'(?:\\.|[^'\\\n])*'/, '""')
@@ -755,23 +745,11 @@ module Shakapacker
           .gsub(%r{/\*.*?\*/}m, "")
           .gsub(%r{//[^\n]*}, "")
 
-        # Only match `cache: false` at brace depth 1 (the top level of the exported
-        # config object). This avoids false positives from nested loader options like
-        # `{ loader: 'babel-loader', options: { cache: false } }`.
-        #
-        # The heuristic also flags depth-1 objects that aren't the literal
-        # `module.exports = { ... }` object — e.g. an intermediate variable or a
-        # function-argument object:
-        #   const opts = { cache: false };
-        #   module.exports = merge(base, opts);
-        #
-        #   module.exports = merge(base, { cache: false });
-        # In typical use these still disable the build's cache (so the warning is
-        # appropriate), but if `opts` is unused or the merge function ignores
-        # `cache`, the warning could fire when caching is not actually disabled.
-        # The "appears to be disabled" wording is the mitigation. Distinguishing
-        # these cases would require a real JS parser; the conservative depth-1
-        # heuristic is intentional.
+        # Match `cache: false` only at brace depth 1. This is intentionally
+        # conservative: a real JS parser would be needed to distinguish the
+        # exported config object from an intermediate variable or merge argument,
+        # so the warning is phrased as "appears to be disabled" to mitigate the
+        # rare false positive.
         stripped.to_enum(:scan, /\bcache\s*:\s*false\b/).any? do
           pre = Regexp.last_match.pre_match
           (pre.count("{") - pre.count("}")) == 1
