@@ -9,6 +9,10 @@
 
 ## [Unreleased]
 
+### Added
+
+- **Added supplemental npm packages `shakapacker-webpack` and `shakapacker-rspack`**. [PR #1096](https://github.com/shakacode/shakapacker/pull/1096) by [justin808](https://github.com/justin808). Optional packages that lockstep with core and pin the bundler/transpiler peer set against the versions Shakapacker is tested with, so installers see one consistent peer surface instead of resolving conditional peers through core. Required peers use patch-tolerant ranges (e.g. `~5.106.2`); optional transpiler/loader peers stay exact-pinned where loader/core skew is more likely to matter. `shakapacker-webpack` also emits a structured `process.emitWarning` (code `SHAKAPACKER_NO_TRANSPILER`) when no transpiler pair is installed, and `SHAKAPACKER_BUNDLER_MISMATCH` when `assets_bundler` is set to anything other than `webpack`. See `docs/rfcs/0001-tighten-dependencies-v11.md` for the phased rollout plan; v11 will remove these peers from core entirely.
+
 ### ⚠️ Breaking Changes
 
 - **Breaking: tightened `package.json` `engines.node` to `^20.19.0 || >=22.12.0`**. [PR #1099](https://github.com/shakacode/shakapacker/pull/1099) by [justin808](https://github.com/justin808). Raised from `>= 20`, dropping support for Node 20.0.0–20.18.x and Node 21.x to match `@rspack/core@2.0.0-rc.0`. Consumers on those versions will hit an engine error with `--engine-strict` or yarn workspaces and need to upgrade. The PR also bumps `.node-version` to `22.20.0` and updates `conductor-setup.sh` to enforce the same disjoint range up front, so contributors get a clear error before `yarn install` fails with a confusing engine mismatch.

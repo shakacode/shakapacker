@@ -24,7 +24,11 @@ const writeModule = (root, name, source) => {
   writeFileSync(join(moduleDir, "index.js"), source)
 }
 
-const createPnpmLikeApp = ({ configTranspiler = "swc", transpilers = [] }) => {
+const createPnpmLikeApp = ({
+  configTranspiler = "swc",
+  configBundler = "webpack",
+  transpilers = []
+}) => {
   const appRoot = mkdtempSync(join(tmpdir(), "shakapacker-webpack-test-"))
   const appNodeModules = join(appRoot, "node_modules")
   const storeRoot = mkdtempSync(join(tmpdir(), "shakapacker-webpack-store-"))
@@ -43,7 +47,7 @@ const createPnpmLikeApp = ({ configTranspiler = "swc", transpilers = [] }) => {
     "shakapacker",
     `module.exports = { config: { javascript_transpiler: ${JSON.stringify(
       configTranspiler
-    )} } }`
+    )}, assets_bundler: ${JSON.stringify(configBundler)} } }`
   )
 
   for (const transpiler of transpilers) {
@@ -191,9 +195,90 @@ describe("shakapacker-webpack package wrapper", () => {
     expect(result.loadError).toStrictEqual(
       expect.objectContaining({ code: "LOAD_FAILED" })
     )
-    expect(result.warnings).toStrictEqual(
+    // When config load fails the wrapper falls back to "swc" (the
+    // recommended default) so the warning is actionable, not generic.
+    const transpilerWarning = result.warnings.find(
+      (warning) => warning.code === "SHAKAPACKER_NO_TRANSPILER"
+    )
+    expect(transpilerWarning).toBeDefined()
+    expect(transpilerWarning.message).toContain('javascript_transpiler is "swc"')
+    expect(transpilerWarning.message).toContain("@swc/core + swc-loader")
+  })
+
+  test("warns when only one module of the configured transpiler pair is installed", () => {
+    const { appRoot } = createPnpmLikeApp({
+      configTranspiler: "swc",
+      transpilers: ["@swc/core"]
+    })
+
+    const result = requireWrapper(appRoot)
+
+    const transpilerWarning = result.warnings.find(
+      (warning) => warning.code === "SHAKAPACKER_NO_TRANSPILER"
+    )
+    expect(transpilerWarning).toBeDefined()
+    expect(transpilerWarning.message).toContain("@swc/core + swc-loader")
+  })
+
+  test("emits generic transpiler warning for unrecognized javascript_transpiler value", () => {
+    const { appRoot } = createPnpmLikeApp({
+      configTranspiler: "custom",
+      transpilers: []
+    })
+
+    const result = requireWrapper(appRoot)
+
+    const transpilerWarning = result.warnings.find(
+      (warning) => warning.code === "SHAKAPACKER_NO_TRANSPILER"
+    )
+    expect(transpilerWarning).toBeDefined()
+    expect(transpilerWarning.message).toContain(
+      "No JavaScript transpiler is installed"
+    )
+  })
+
+  test("does not emit transpiler warning when an unrecognized transpiler value sees any pair installed", () => {
+    const { appRoot } = createPnpmLikeApp({
+      configTranspiler: "custom",
+      transpilers: ["@babel/core", "babel-loader"]
+    })
+
+    const result = requireWrapper(appRoot)
+
+    expect(result.warnings).not.toStrictEqual(
       expect.arrayContaining([
         expect.objectContaining({ code: "SHAKAPACKER_NO_TRANSPILER" })
+      ])
+    )
+  })
+
+  test("warns when assets_bundler is set to a non-webpack value", () => {
+    const { appRoot } = createPnpmLikeApp({
+      configBundler: "rspack",
+      transpilers: ["@swc/core", "swc-loader"]
+    })
+
+    const result = requireWrapper(appRoot)
+
+    const bundlerWarning = result.warnings.find(
+      (warning) => warning.code === "SHAKAPACKER_BUNDLER_MISMATCH"
+    )
+    expect(bundlerWarning).toBeDefined()
+    expect(bundlerWarning.message).toContain('assets_bundler is "rspack"')
+    expect(bundlerWarning.message).toContain("shakapacker-rspack")
+  })
+
+  test("does not warn about assets_bundler when set to webpack", () => {
+    const { appRoot } = createPnpmLikeApp({
+      configBundler: "webpack",
+      transpilers: ["@swc/core", "swc-loader"]
+    })
+
+    const result = requireWrapper(appRoot)
+
+    expect(result.warnings).not.toStrictEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ code: "SHAKAPACKER_BUNDLER_MISMATCH" })
       ])
     )
   })

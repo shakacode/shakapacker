@@ -66,6 +66,16 @@ if [[ "$CORE_VERSION" != "$WEBPACK_VERSION" || "$WEBPACK_VERSION" != "$RSPACK_VE
   exit 1
 fi
 
+# Soft-warn (don't fail) if the Ruby gem version drifts from the npm
+# version. The gem is published independently via `gem push`, so this
+# script can't enforce gem alignment, but a mismatch usually means
+# `lib/shakapacker/version.rb` was missed in the version bump commit.
+GEM_VERSION="$(ruby -r ./lib/shakapacker/version -e 'puts Shakapacker::VERSION' 2>/dev/null || true)"
+if [[ -n "$GEM_VERSION" && "$GEM_VERSION" != "$CORE_VERSION" ]]; then
+  echo "Warning: Ruby gem version ($GEM_VERSION) does not match npm version ($CORE_VERSION)." >&2
+  echo "         Update lib/shakapacker/version.rb before publishing the gem." >&2
+fi
+
 # Guardrail: prerelease versions (containing a hyphen, per semver) must not be
 # published to the default `latest` dist-tag, where they would become the
 # version `npm install shakapacker` picks up.
@@ -94,13 +104,34 @@ if [[ ${#DRY_RUN[@]} -eq 0 ]]; then
   fi
 fi
 
+# Idempotency: if a previous run published `shakapacker` but failed before
+# the supplementals (network blip, OTP timeout), retrying would hit `403
+# Cannot publish over the previously published versions` on core and abort
+# under `set -e`, leaving the supplementals stranded. `is_published` lets
+# the script skip already-published packages and continue. Skipped under
+# --dry-run since dry-runs never mutate the registry.
+is_published() {
+  npm view "$1@$2" version --registry https://registry.npmjs.org >/dev/null 2>&1
+}
+
+publish_package() {
+  local pkg="$1"
+  local version="$2"
+  local dir="${3:-.}"
+  if [[ ${#DRY_RUN[@]} -eq 0 ]] && is_published "$pkg" "$version"; then
+    echo "  $pkg@$version already on registry — skipping."
+    return
+  fi
+  (cd "$dir" && npm publish ${DRY_RUN[@]+"${DRY_RUN[@]}"} ${TAG[@]+"${TAG[@]}"})
+}
+
 echo "Publishing shakapacker @ $CORE_VERSION (core first)…"
-npm publish ${DRY_RUN[@]+"${DRY_RUN[@]}"} ${TAG[@]+"${TAG[@]}"}
+publish_package shakapacker "$CORE_VERSION" .
 
 echo "Publishing shakapacker-webpack @ $WEBPACK_VERSION…"
-(cd packages/shakapacker-webpack && npm publish ${DRY_RUN[@]+"${DRY_RUN[@]}"} ${TAG[@]+"${TAG[@]}"})
+publish_package shakapacker-webpack "$WEBPACK_VERSION" packages/shakapacker-webpack
 
 echo "Publishing shakapacker-rspack @ $RSPACK_VERSION…"
-(cd packages/shakapacker-rspack && npm publish ${DRY_RUN[@]+"${DRY_RUN[@]}"} ${TAG[@]+"${TAG[@]}"})
+publish_package shakapacker-rspack "$RSPACK_VERSION" packages/shakapacker-rspack
 
 echo "Done."

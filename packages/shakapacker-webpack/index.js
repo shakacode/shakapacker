@@ -46,21 +46,44 @@ const canResolve = (mod) => {
 // load (missing peer, missing shakapacker.yml, etc.), the warning still
 // fires and steers the user toward installing a transpiler before the
 // more cryptic core error.
+let bundlerSetting
 let transpilerSetting
 try {
   // eslint-disable-next-line global-require
-  transpilerSetting = require("shakapacker")?.config?.javascript_transpiler
+  const shakapackerExports = require("shakapacker")
+  bundlerSetting = shakapackerExports?.config?.assets_bundler
+  transpilerSetting = shakapackerExports?.config?.javascript_transpiler
 } catch {
   // shakapacker unavailable at require time — fall through and warn.
+}
+
+// Detect the misconfiguration where shakapacker-webpack is installed but
+// the app is configured to use rspack. Re-exporting the root shakapacker
+// follows config.assets_bundler into rspack rules/plugins, which then
+// requires rspack-only packages this wrapper does not declare as peers.
+// Surfacing a structured warning is cheaper than the cryptic loader
+// errors that follow. Only fires when assets_bundler is explicitly set to
+// something other than "webpack" (the default), so apps that omit it are
+// silent.
+if (bundlerSetting && bundlerSetting !== "webpack") {
+  process.emitWarning(
+    `[shakapacker-webpack] config.assets_bundler is "${bundlerSetting}" but this package only supports webpack.\n` +
+      `Install shakapacker-rspack and require it instead, or set \`assets_bundler: webpack\` in config/shakapacker.yml.`,
+    { code: "SHAKAPACKER_BUNDLER_MISMATCH" }
+  )
 }
 
 if (transpilerSetting !== "none") {
   // When the config names a known transpiler, only that pair counts —
   // unrelated transpilers being installed shouldn't mask a missing peer.
-  // When the setting is missing or unrecognized (config load failed,
-  // custom value), fall back to "any pair resolves" so the wrapper still
-  // does something useful instead of silently warning.
-  const expectedGroup = transpilerGroups[transpilerSetting]
+  // When the setting is missing (config load failed) we default to
+  // "swc" — the recommended transpiler — so the warning is actionable
+  // ("install @swc/core + swc-loader") instead of the generic
+  // pick-from-three. Unrecognized values (e.g. "custom") still fall back
+  // to "any pair resolves" since we genuinely don't know what the user
+  // configured.
+  const effectiveTranspiler = transpilerSetting ?? "swc"
+  const expectedGroup = transpilerGroups[effectiveTranspiler]
   const hasExpectedTranspiler = expectedGroup
     ? expectedGroup.every(canResolve)
     : Object.values(transpilerGroups).some((group) => group.every(canResolve))
@@ -71,7 +94,7 @@ if (transpilerSetting !== "none") {
     // --no-warnings or `process.removeAllListeners("warning")` for users who
     // know what they're doing.
     const message = expectedGroup
-      ? `[shakapacker-webpack] javascript_transpiler is "${transpilerSetting}" but ${expectedGroup.join(
+      ? `[shakapacker-webpack] javascript_transpiler is "${effectiveTranspiler}" but ${expectedGroup.join(
           " + "
         )} is not installed in the application's node_modules.\n` +
         `Install: ${expectedGroup.join(" ")}\n` +
@@ -86,4 +109,11 @@ if (transpilerSetting !== "none") {
   }
 }
 
+// Re-require shakapacker for the actual export. Node caches successful
+// loads, so on the happy path this returns the same instance read above
+// at zero cost. On the error path the cached module is evicted and this
+// call throws too — after the warning has already fired, which is the
+// behaviour the tests pin. Don't hoist this require into a shared
+// variable: the warning-before-error ordering depends on the read above
+// being inside its own try/catch.
 module.exports = require("shakapacker")
