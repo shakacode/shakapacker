@@ -733,6 +733,22 @@ describe Shakapacker::Doctor do
       end
     end
 
+    context "when cache: false belongs to a local base config object" do
+      before do
+        File.write(rspack_config_path, <<~JS)
+          const baseConfig = { cache: false }
+          module.exports = merge(baseConfig, {
+            module: { rules: [] }
+          })
+        JS
+      end
+
+      it "does not flag the local object as the exported cache setting" do
+        doctor.send(:check_rspack_cache_configuration)
+        expect(warning_messages).not_to include(match(/Rspack cache appears to be disabled/))
+      end
+    end
+
     context "when both rspack.config.js and rspack.config.ts exist" do
       let(:rspack_config_ts_path) { rspack_config_dir.join("rspack.config.ts") }
 
@@ -800,6 +816,20 @@ describe Shakapacker::Doctor do
         doctor.send(:check_rspack_cache_configuration)
 
         expect(warning_messages).to include(match(/Rspack cache appears to be disabled.*config\/rspack\/rspack\.config\.js/))
+      end
+    end
+
+    context "when the configured rspack config directory is an equivalent Pathname" do
+      it "still checks the config/webpack fallback" do
+        allow(config).to receive(:assets_bundler_config_path).and_return(Pathname.new("config/rspack/"))
+        FileUtils.rm_f(rspack_config_path)
+        webpack_config_path = root_path.join("config/webpack/webpack.config.js")
+        FileUtils.mkdir_p(webpack_config_path.dirname)
+        File.write(webpack_config_path, "module.exports = { cache: false }")
+
+        doctor.send(:check_rspack_cache_configuration)
+
+        expect(warning_messages).to include(match(/Rspack cache appears to be disabled.*config\/webpack\/webpack\.config\.js/))
       end
     end
 

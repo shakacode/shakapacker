@@ -92,6 +92,13 @@ describe "Shakapacker::Compiler" do
 
       expect(Shakapacker.logger).to have_received(:info).with(/shakapacker:doctor/).once
     end
+
+    it "does not mark the doctor hint as shown when logging fails" do
+      allow(Shakapacker.logger).to receive(:info).and_raise("logger failed")
+
+      expect { Shakapacker.compiler.compile }.to raise_error("logger failed")
+      expect(Shakapacker::Compiler.doctor_hint_shown).to be false
+    end
   end
 
   it "accepts external env variables" do

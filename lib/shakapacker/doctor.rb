@@ -721,15 +721,19 @@ module Shakapacker
       # doctor inspects the same file the build will actually use (and so unused sibling
       # configs in the same directory don't trigger spurious warnings).
       def active_assets_bundler_config_path
-        config_dir = config.assets_bundler_config_path
+        config_dir = config.assets_bundler_config_path.to_s
 
         candidates = %w[ts js].map { |ext| Pathname.new(File.join(root_path.to_s, config_dir, "rspack.config.#{ext}")) }
         candidates += %w[ts js].map { |ext| Pathname.new(File.join(root_path.to_s, config_dir, "webpack.config.#{ext}")) }
-        if config_dir == "config/rspack"
+        if default_rspack_config_dir?(config_dir)
           candidates += %w[ts js].map { |ext| Pathname.new(File.join(root_path.to_s, "config/webpack", "webpack.config.#{ext}")) }
         end
 
         candidates.find(&:exist?)
+      end
+
+      def default_rspack_config_dir?(config_dir)
+        Pathname.new(config_dir).cleanpath.to_s == "config/rspack"
       end
 
       def config_path_for_warning(path)
@@ -760,14 +764,15 @@ module Shakapacker
         # be removed first so their slash characters cannot expose cache hints.
         stripped = stripped.gsub(%r{/(?:\\.|\[[^\]\n]*\]|[^/\n\\\[])+?/[gimsuy]*}, "")
 
-        # Match `cache: false` only at brace depth 1. This is intentionally
-        # conservative: a real JS parser would be needed to distinguish the
-        # exported config object from an intermediate variable or merge argument,
-        # so the warning is phrased as "appears to be disabled" to mitigate the
-        # rare false positive.
+        # Match `cache: false` only near an exported config object at brace depth
+        # 1. This avoids warning on local base config objects while still
+        # catching the common direct export and generateRspackConfig patterns.
         stripped.to_enum(:scan, /\bcache\s*:\s*false\b/).any? do
           pre = Regexp.last_match.pre_match
-          (pre.count("{") - pre.count("}")) == 1
+          next false unless (pre.count("{") - pre.count("}")) == 1
+
+          statement_prefix = pre[(pre.rindex(";") || -1) + 1..]
+          statement_prefix.match?(/\bmodule\.exports\b|\bexport\s+default\b|\bgenerateRspackConfig\b/)
         end
       end
 

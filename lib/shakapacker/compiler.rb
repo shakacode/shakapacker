@@ -222,8 +222,8 @@ class Shakapacker::Compiler
       self.class.doctor_hint_mutex.synchronize do
         return if self.class.doctor_hint_shown
 
-        self.class.doctor_hint_shown = true
         logger.info "Tip: run 'bundle exec rake shakapacker:doctor' to diagnose configuration issues."
+        self.class.doctor_hint_shown = true
       end
     end
 end
