@@ -44,17 +44,18 @@ const canResolve = (mod) => {
 // Read shakapacker config so the warning can be scoped to the configured
 // transpiler. Wrapped in try/catch so that if shakapacker itself can't
 // load (missing peer, missing shakapacker.yml, etc.), the warning still
-// fires and steers the user toward installing a transpiler before the
-// more cryptic core error.
+// fires before the core error and carries a hint to fix that load failure
+// before changing transpiler packages.
 let bundlerSetting
 let transpilerSetting
+let shakapackerLoadFailed = false
 try {
   // eslint-disable-next-line global-require
   const shakapackerExports = require("shakapacker")
   bundlerSetting = shakapackerExports?.config?.assets_bundler
   transpilerSetting = shakapackerExports?.config?.javascript_transpiler
 } catch {
-  // shakapacker unavailable at require time — fall through and warn.
+  shakapackerLoadFailed = true
 }
 
 // Detect the misconfiguration where shakapacker-webpack is installed but
@@ -93,17 +94,20 @@ if (transpilerSetting !== "none") {
     // visible by default in stderr (including CI), suppressible with
     // --no-warnings or `process.removeAllListeners("warning")` for users who
     // know what they're doing.
+    const shakapackerLoadHint = shakapackerLoadFailed
+      ? "\nIf shakapacker failed to load, resolve that error first; the config file may be missing."
+      : ""
     const message = expectedGroup
       ? `[shakapacker-webpack] javascript_transpiler is "${effectiveTranspiler}" but ${expectedGroup.join(
           " + "
-        )} is not installed in the application's node_modules.\n` +
-        `Install: ${expectedGroup.join(" ")}\n` +
-        'Or set `javascript_transpiler: "none"` in config/shakapacker.yml if you provide your own loader.'
-      : "[shakapacker-webpack] No JavaScript transpiler is installed. Install one of:\n" +
-        "  - @swc/core + swc-loader (recommended)\n" +
-        "  - @babel/core + babel-loader\n" +
-        "  - esbuild + esbuild-loader\n" +
-        'Or set `javascript_transpiler: "none"` in config/shakapacker.yml if you provide your own loader.'
+        )} is not installed in the application's node_modules.
+Install: ${expectedGroup.join(" ")}
+Or set \`javascript_transpiler: "none"\` in config/shakapacker.yml if you provide your own loader.${shakapackerLoadHint}`
+      : `[shakapacker-webpack] No JavaScript transpiler is installed. Install one of:
+  - @swc/core + swc-loader (recommended)
+  - @babel/core + babel-loader
+  - esbuild + esbuild-loader
+Or set \`javascript_transpiler: "none"\` in config/shakapacker.yml if you provide your own loader.${shakapackerLoadHint}`
 
     process.emitWarning(message, { code: "SHAKAPACKER_NO_TRANSPILER" })
   }

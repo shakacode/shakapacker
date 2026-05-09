@@ -138,7 +138,9 @@ describe("shakapacker-webpack package wrapper", () => {
       (warning) => warning.code === "SHAKAPACKER_NO_TRANSPILER"
     )
     expect(transpilerWarning).toBeDefined()
-    expect(transpilerWarning.message).toContain('javascript_transpiler is "swc"')
+    expect(transpilerWarning.message).toContain(
+      'javascript_transpiler is "swc"'
+    )
     expect(transpilerWarning.message).toContain("@swc/core + swc-loader")
   })
 
@@ -201,8 +203,13 @@ describe("shakapacker-webpack package wrapper", () => {
       (warning) => warning.code === "SHAKAPACKER_NO_TRANSPILER"
     )
     expect(transpilerWarning).toBeDefined()
-    expect(transpilerWarning.message).toContain('javascript_transpiler is "swc"')
+    expect(transpilerWarning.message).toContain(
+      'javascript_transpiler is "swc"'
+    )
     expect(transpilerWarning.message).toContain("@swc/core + swc-loader")
+    expect(transpilerWarning.message).toContain(
+      "resolve that error first; the config file may be missing"
+    )
   })
 
   test("warns when only one module of the configured transpiler pair is installed", () => {
