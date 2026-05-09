@@ -27,8 +27,7 @@ const {
 } = require("../utils/bundlerUtils")
 const { validateRspackDependencies } = require("../utils/validateDependencies")
 
-const rulesPath = resolve(__dirname, "../rules", "rspack.js")
-const rules = require(rulesPath)
+const rules = require(resolve(__dirname, "../rules", "rspack.js"))
 
 const generateRspackConfig = (
   extraConfig: RspackConfigWithDevServer = {},

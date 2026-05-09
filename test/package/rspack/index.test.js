@@ -343,6 +343,27 @@ describe("rspack/index", () => {
         nodeEnv === "production" ? "production" : "development"
       expect(config.mode).toBe(expectedMode)
     })
+
+    test("keeps NODE_ENV from require time after process.env changes", () => {
+      const previousNodeEnv = process.env.NODE_ENV
+      const { rspackIndex: productionRspackIndex } =
+        loadRspackIndex("production")
+
+      process.env.NODE_ENV = "development"
+
+      try {
+        expect(productionRspackIndex.env.nodeEnv).toBe("production")
+        expect(productionRspackIndex.generateRspackConfig().mode).toBe(
+          "production"
+        )
+      } finally {
+        if (previousNodeEnv === undefined) {
+          delete process.env.NODE_ENV
+        } else {
+          process.env.NODE_ENV = previousNodeEnv
+        }
+      }
+    })
   })
 
   describe("generateRspackConfig in production NODE_ENV", () => {
