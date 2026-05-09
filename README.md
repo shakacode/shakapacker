@@ -160,8 +160,7 @@ _Requires extra packages to be installed._
 
 ## Installation
 
-For a focused installation walkthrough in the published docs, see
-[Installation](./docs/installation.md).
+See the [Installation guide](./docs/installation.md) for a step-by-step walkthrough.
 
 ### Rails v6+
 

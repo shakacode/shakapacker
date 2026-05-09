@@ -12,15 +12,15 @@ configuration details after installation, see the [configuration guide](./config
   [`package_json`](https://github.com/shakacode/package_json): npm, Yarn,
   pnpm, or Bun
 
-For new Rails 6+ apps, skip Rails' default JavaScript installer so Shakapacker
-can create the bundler files:
+## Add the Gem
+
+For a new Rails 6+ app, skip Rails' default JavaScript installer so
+Shakapacker can create the bundler files, then continue from the app root:
 
 ```bash
 rails new myapp --skip-javascript
 cd myapp
 ```
-
-## Add the Gem
 
 Add Shakapacker to your app:
 
@@ -47,12 +47,10 @@ point, bundler config, binstubs, and package dependencies for the selected
 bundler/transpiler setup.
 
 Before running the installer, commit or stash local work. If generated files
-conflict with existing files, choose one of these modes:
+conflict with existing files, the default install prompts before overwriting.
+To choose non-interactive conflict handling, use one of these modes:
 
 ```bash
-# Prompt before overwriting conflicting files
-bundle exec rake shakapacker:install
-
 # Overwrite generated files without prompting
 FORCE=true bundle exec rake shakapacker:install
 
@@ -135,4 +133,5 @@ Then add the generated files to version control.
 - Review [configuration options](./configuration.md)
 - Add [React](./react.md) or [TypeScript](./typescript.md)
 - Configure [deployment](./deployment.md)
-- Troubleshoot with [`shakapacker:doctor`](./troubleshooting.md)
+- Troubleshoot common install issues in the
+  [troubleshooting guide](./troubleshooting.md)
