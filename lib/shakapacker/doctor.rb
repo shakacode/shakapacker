@@ -703,7 +703,9 @@ module Shakapacker
         path = active_assets_bundler_config_path
         return unless path
 
-        content = File.read(path)
+        content = read_active_assets_bundler_config(path)
+        return unless content
+
         return unless rspack_cache_disabled?(content)
 
         relative = config_path_for_warning(path)
@@ -712,8 +714,6 @@ module Shakapacker
                     "caching from experimental to stable.")
         add_fix_hint("Remove the 'cache: false' setting, or use 'cache: { type: \"filesystem\" }' for persistent caching. " \
                      "See https://rspack.rs/config/cache for options.")
-      rescue Errno::ENOENT => e
-        add_warning("Unable to validate rspack cache configuration: #{e.message}")
       end
 
       # Returns the single active config path the runner would load, or nil. Mirrors the
@@ -730,6 +730,13 @@ module Shakapacker
         end
 
         candidates.find(&:exist?)
+      end
+
+      def read_active_assets_bundler_config(path)
+        File.read(path)
+      rescue SystemCallError => e
+        add_warning("Unable to validate rspack cache configuration: #{e.message}")
+        nil
       end
 
       def default_rspack_config_dir?(config_dir)
@@ -749,6 +756,12 @@ module Shakapacker
       end
 
       def rspack_cache_disabled?(content)
+        stripped = stripped_rspack_config_content(content)
+
+        direct_export_cache_disabled?(stripped) || exported_variable_cache_disabled?(stripped)
+      end
+
+      def stripped_rspack_config_content(content)
         # Normalize quoted property keys before stripping string literals; otherwise
         # `'cache'` and `"cache"` collapse to `""` and the match below misses them.
         stripped = content.gsub(/(['"])(\w+)\1(?=\s*:)/, '\2')
@@ -763,8 +776,10 @@ module Shakapacker
         # Regex literal stripping runs after comment removal. The line-comment
         # pass above ignores escaped slashes so /https?:\/\/host/ stays intact
         # until this pass removes the whole regex literal.
-        stripped = stripped.gsub(%r{/(?:\\.|\[[^\]\n]*\]|[^/\n\\\[])+?/[gimsuy]*}, "")
+        stripped.gsub(%r{/(?:\\.|\[[^\]\n]*\]|[^/\n\\\[])+?/[gimsuy]*}, "")
+      end
 
+      def direct_export_cache_disabled?(stripped)
         # Match `cache: false` only near an exported config object at brace depth
         # 1. This avoids warning on local base config objects while still
         # catching the common direct export and generateRspackConfig patterns.
@@ -775,6 +790,46 @@ module Shakapacker
           statement_prefix = pre[(pre.rindex(";") || -1) + 1..]
           statement_prefix.match?(/\bmodule\.exports\b|\bexport\s+default\b|\bgenerateRspackConfig\b/)
         end
+      end
+
+      def exported_variable_cache_disabled?(stripped)
+        variable_declaration = /\b(?:const|let|var)\s+([A-Za-z_$][\w$]*)(?:\s*:\s*[^=;]+)?\s*=\s*\{/
+
+        stripped.to_enum(:scan, variable_declaration).any? do
+          name = Regexp.last_match[1]
+          open_index = Regexp.last_match.end(0) - 1
+          close_index = matching_closing_brace(stripped, open_index)
+          next false unless close_index
+
+          object_source = stripped[open_index..close_index]
+          top_level_cache_false?(object_source) && exported_config_variable?(stripped, name)
+        end
+      end
+
+      def top_level_cache_false?(object_source)
+        object_source.to_enum(:scan, /\bcache\s*:\s*false\b/).any? do
+          pre = Regexp.last_match.pre_match
+          (pre.count("{") - pre.count("}")) == 1
+        end
+      end
+
+      def exported_config_variable?(stripped, name)
+        escaped_name = Regexp.escape(name)
+        stripped.match?(/\bmodule\.exports\s*=\s*#{escaped_name}\b/) ||
+          stripped.match?(/\bexport\s+default\s+#{escaped_name}\b/)
+      end
+
+      def matching_closing_brace(content, open_index)
+        depth = 0
+
+        content[open_index..].each_char.with_index do |char, offset|
+          depth += 1 if char == "{"
+          depth -= 1 if char == "}"
+
+          return open_index + offset if depth.zero?
+        end
+
+        nil
       end
 
       def rspack_major_version

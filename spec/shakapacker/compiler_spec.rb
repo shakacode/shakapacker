@@ -93,10 +93,13 @@ describe "Shakapacker::Compiler" do
       expect(Shakapacker.logger).to have_received(:info).with(/shakapacker:doctor/).once
     end
 
-    it "does not mark the doctor hint as shown when logging fails" do
-      allow(Shakapacker.logger).to receive(:info).and_raise("logger failed")
+    it "does not mark the doctor hint as shown when doctor hint logging fails during compile" do
+      allow(Shakapacker.logger).to receive(:info) do |message|
+        raise "doctor hint logger failed" if message.match?(/shakapacker:doctor/)
+      end
 
-      expect { Shakapacker.compiler.compile }.to raise_error("logger failed")
+      expect { Shakapacker.compiler.compile }.to raise_error("doctor hint logger failed")
+      expect(Shakapacker.logger).to have_received(:info).with("Compiling...").once
       expect(Shakapacker::Compiler.doctor_hint_shown).to be false
     end
   end

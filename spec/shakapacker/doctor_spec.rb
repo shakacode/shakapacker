@@ -765,6 +765,36 @@ describe Shakapacker::Doctor do
       end
     end
 
+    context "when cache: false belongs to the exported config variable" do
+      before do
+        File.write(rspack_config_path, <<~JS)
+          const rspackConfig = {
+            cache: false
+          }
+
+          module.exports = rspackConfig
+        JS
+      end
+
+      it "warns that cache is disabled" do
+        doctor.send(:check_rspack_cache_configuration)
+        expect(warning_messages).to include(match(/Rspack cache appears to be disabled/))
+      end
+    end
+
+    context "when the active rspack config cannot be read" do
+      before do
+        File.write(rspack_config_path, "module.exports = { cache: false }")
+        allow(File).to receive(:read).and_call_original
+        allow(File).to receive(:read).with(rspack_config_path).and_raise(Errno::EACCES.new(rspack_config_path.to_s))
+      end
+
+      it "warns instead of raising" do
+        expect { doctor.send(:check_rspack_cache_configuration) }.not_to raise_error
+        expect(warning_messages).to include(match(/Unable to validate rspack cache configuration/))
+      end
+    end
+
     context "when both rspack.config.js and rspack.config.ts exist" do
       let(:rspack_config_ts_path) { rspack_config_dir.join("rspack.config.ts") }
 
