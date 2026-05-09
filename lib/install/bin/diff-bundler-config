@@ -3,16 +3,25 @@
 
 def shakapacker_app_root
   candidate = File.expand_path("..", __dir__)
-  return candidate if File.exist?(File.join(candidate, "Gemfile")) ||
-                      File.exist?(File.join(candidate, "package.json"))
+  return candidate if File.exist?(File.join(candidate, "Gemfile"))
 
   Dir.pwd
+end
+
+def shakapacker_node_binary
+  node_bin = "node"
+  return node_bin if system(node_bin, "--version", out: File::NULL, err: File::NULL)
+
+  warn "[Shakapacker] Could not find Node.js executable #{node_bin.inspect}. " \
+       "Install Node.js and try again."
+  exit 1
 end
 
 ENV["RAILS_ENV"] ||= ENV["RACK_ENV"] || "development"
 ENV["NODE_ENV"] ||= "development"
 
 app_root = shakapacker_app_root
+node_bin = shakapacker_node_binary
 script_path = File.join(
   app_root,
   "node_modules",
@@ -28,5 +37,5 @@ unless File.file?(script_path)
 end
 
 Dir.chdir(app_root) do
-  exec "node", script_path, *ARGV
+  exec node_bin, script_path, *ARGV
 end

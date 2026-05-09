@@ -24,9 +24,7 @@ function exitWithCode(exitCode) {
 let run
 
 try {
-  const shakapackerRequire = createRequire(
-    require.resolve("shakapacker/package.json")
-  )
+  const shakapackerRequire = createRequire(__filename)
 
   // Resolve from Shakapacker's package boundary so strict package managers can
   // find the transitive pack-config-diff dependency.
