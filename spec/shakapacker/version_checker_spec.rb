@@ -100,30 +100,6 @@ describe "VersionChecker" do
 end
 
 describe "VersionChecker::NodePackageVersion" do
-  it "treats single-dot package.json dependencies as local paths before lockfiles" do
-    Dir.mktmpdir do |dir|
-      package_json = File.join(dir, "package.json")
-      File.write(package_json, <<~JSON)
-        {
-          "dependencies": {
-            "shakapacker": "./vendor/shakapacker"
-          }
-        }
-      JSON
-
-      node_package_version = Shakapacker::VersionChecker::NodePackageVersion.new(
-        package_json,
-        File.expand_path("../fixtures/semver_exact_yarn.v1.lock", __dir__),
-        "file/does/not/exist",
-        "file/does/not/exist"
-      )
-
-      expect(node_package_version.raw).to eq "./vendor/shakapacker"
-      expect(node_package_version.major_minor_patch).to be nil
-      expect(node_package_version.skip_processing?).to be true
-    end
-  end
-
   context "with no lock file" do
     def node_package_version(fixture_version:)
       Shakapacker::VersionChecker::NodePackageVersion.new(
@@ -231,6 +207,28 @@ describe "VersionChecker::NodePackageVersion" do
 
       it "#semver_wildcard? returns false" do
         expect(node_package_version_from_relative_path.semver_wildcard?).to be false
+      end
+    end
+
+    context "when using a single-dot relative path" do
+      let(:node_package_version_from_single_dot_path) { node_package_version(fixture_version: "single_dot_path") }
+
+      it "#raw returns the single-dot relative path without consulting lockfiles" do
+        expect(File).not_to receive(:exist?)
+
+        expect(node_package_version_from_single_dot_path.raw).to eq "./vendor/shakapacker"
+      end
+
+      it "#major_minor_patch returns nil" do
+        expect(node_package_version_from_single_dot_path.major_minor_patch).to be nil
+      end
+
+      it "#skip_processing? returns true" do
+        expect(node_package_version_from_single_dot_path.skip_processing?).to be true
+      end
+
+      it "#semver_wildcard? returns false" do
+        expect(node_package_version_from_single_dot_path.semver_wildcard?).to be false
       end
     end
 
@@ -402,6 +400,26 @@ describe "VersionChecker::NodePackageVersion" do
 
       it "#semver_wildcard? returns false" do
         expect(node_package_version_from_relative_path.semver_wildcard?).to be false
+      end
+    end
+
+    context "when using a single-dot relative path" do
+      let(:node_package_version_from_single_dot_path) { node_package_version(fixture_version: "single_dot_path") }
+
+      it "#raw returns the single-dot relative path" do
+        expect(node_package_version_from_single_dot_path.raw).to eq "./vendor/shakapacker"
+      end
+
+      it "#major_minor_patch returns nil" do
+        expect(node_package_version_from_single_dot_path.major_minor_patch).to be nil
+      end
+
+      it "#skip_processing? returns true" do
+        expect(node_package_version_from_single_dot_path.skip_processing?).to be true
+      end
+
+      it "#semver_wildcard? returns false" do
+        expect(node_package_version_from_single_dot_path.semver_wildcard?).to be false
       end
     end
 
