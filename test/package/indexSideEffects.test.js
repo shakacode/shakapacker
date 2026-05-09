@@ -10,13 +10,25 @@ describe("index side effects", () => {
     return ensureManifestExists
   }
 
+  const mockWebpackPlugins = () => {
+    const getPlugins = jest.fn()
+
+    jest.doMock("../../package/plugins/webpack", () => ({
+      getPlugins
+    }))
+
+    return getPlugins
+  }
+
   test("does not initialize webpack plugins when only requiring the package index", () => {
     jest.isolateModules(() => {
       const ensureManifestExists = mockEnsureManifestExists()
+      const getPlugins = mockWebpackPlugins()
 
       require("../../package/index")
 
       expect(ensureManifestExists).not.toHaveBeenCalled()
+      expect(getPlugins).not.toHaveBeenCalled()
     })
   })
 
