@@ -625,6 +625,22 @@ describe Shakapacker::Doctor do
       end
     end
 
+    context "when a regex literal contains escaped slashes before cache: false" do
+      before do
+        File.write(rspack_config_path, <<~JS)
+          module.exports = {
+            output: { publicPath: /https?:\\/\\/cdn\\.example\\.com\\/assets/.source },
+            cache: false
+          }
+        JS
+      end
+
+      it "does not let the regex look like a line comment" do
+        doctor.send(:check_rspack_cache_configuration)
+        expect(warning_messages).to include(match(/Rspack cache appears to be disabled/))
+      end
+    end
+
     context "when using rspack v1" do
       before do
         File.write(package_json_path, JSON.generate({
@@ -880,6 +896,22 @@ describe Shakapacker::Doctor do
       it "does not falsely classify it as v1" do
         doctor.send(:check_rspack_cache_configuration)
         expect(warning_messages).not_to include(match(/Rspack v1 detected/))
+      end
+    end
+
+    context "when @rspack/core is unparseable but @rspack/cli pins v1" do
+      before do
+        File.write(package_json_path, JSON.generate({
+          "devDependencies" => {
+            "@rspack/core" => "workspace:*",
+            "@rspack/cli" => "^1.0.0"
+          }
+        }))
+      end
+
+      it "falls back to @rspack/cli and emits the v1 advisory" do
+        doctor.send(:check_rspack_cache_configuration)
+        expect(warning_messages).to include(match(/Rspack v1 detected/))
       end
     end
 

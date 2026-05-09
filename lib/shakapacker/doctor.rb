@@ -758,10 +758,11 @@ module Shakapacker
           .gsub(/'(?:\\.|[^'\\\n])*'/, '""')
           .gsub(/"(?:\\.|[^"\\\n])*"/, '""')
           .gsub(%r{/\*.*?\*/}m, "")
-          .gsub(%r{//[^\n]*}, "")
+          .gsub(%r{(?<!\\)//[^\n]*}, "")
 
-        # Regex literal stripping is order-sensitive: strings and comments must
-        # be removed first so their slash characters cannot expose cache hints.
+        # Regex literal stripping runs after comment removal. The line-comment
+        # pass above ignores escaped slashes so /https?:\/\/host/ stays intact
+        # until this pass removes the whole regex literal.
         stripped = stripped.gsub(%r{/(?:\\.|\[[^\]\n]*\]|[^/\n\\\[])+?/[gimsuy]*}, "")
 
         # Match `cache: false` only near an exported config object at brace depth
@@ -782,14 +783,21 @@ module Shakapacker
         resolved = installed_rspack_major_version
         return resolved unless resolved.nil?
 
-        version = package_json_dependency_version("@rspack/core") ||
-                  package_json_dependency_version("@rspack/cli")
+        %w[@rspack/core @rspack/cli].each do |package_name|
+          major = rspack_major_from_specifier(package_json_dependency_version(package_name))
+          return major unless major.nil?
+        end
+
+        nil
+      end
+
+      def rspack_major_from_specifier(version)
         return nil unless version
 
-        # Only trust specifiers starting with a digit or ^/~ prefix followed by a digit.
-        # Skip git+, file:, npm: aliases, "latest", "*", or ranges like ">=1.5 <2".
-        # Accept shorthand forms (e.g. `^1`, `~1`, `1`, `1.x`) so we still emit the
-        # v1 advisory when node_modules isn't populated yet.
+        # Only trust specifiers starting with a digit or ^/~ prefix followed by
+        # a digit. Skip git+, file:, npm: aliases, "latest", "*", or ranges like
+        # ">=1.5 <2". Accept shorthand forms (e.g. `^1`, `~1`, `1`, `1.x`) so
+        # we still emit the v1 advisory when node_modules isn't populated yet.
         cleaned = version.strip
         return nil unless cleaned.match?(/\A[\^~]?\d/)
         return nil if cleaned.match?(/(\s|\|\||[<>=:]|\A(?:git|file|link|workspace|npm):)/)
