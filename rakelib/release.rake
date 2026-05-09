@@ -7,11 +7,13 @@ require "open3"
 require "tempfile"
 require "tmpdir"
 
-GITHUB_REPO_SLUG_PATTERN = /\A[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+\z/
+GITHUB_REPO_SLUG_PATTERN = /\A[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+\z/ unless defined?(GITHUB_REPO_SLUG_PATTERN)
 
-class AbortingMessageHandler
-  def add_error(error)
-    abort "❌ #{error}"
+unless defined?(AbortingMessageHandler)
+  class AbortingMessageHandler
+    def add_error(error)
+      abort "❌ #{error}"
+    end
   end
 end
 
@@ -27,7 +29,9 @@ def github_repo_slug(gem_root)
   match = origin_url.match(%r{\Agit@github\.com:(?<repo>[^/]+/[^/]+?)(?:\.git)?\z}) ||
     origin_url.match(%r{\Assh://git@github\.com/(?<repo>[^/]+/[^/]+?)(?:\.git)?\z}) ||
     origin_url.match(%r{\Ahttps://(?:[^/@]+@)?github\.com/(?<repo>[^/]+/[^/]+?)(?:\.git)?\z}) ||
-    origin_url.match(%r{\A(?:git://)?github\.com/(?<repo>[^/]+/[^/]+?)(?:\.git)?\z})
+    origin_url.match(%r{\Agit://github\.com/(?<repo>[^/]+/[^/]+?)(?:\.git)?\z}) ||
+    # Keep bare github.com/owner/repo support for remotes copied without a scheme.
+    origin_url.match(%r{\Agithub\.com/(?<repo>[^/]+/[^/]+?)(?:\.git)?\z})
   abort "❌ Unable to determine GitHub repository from origin URL #{origin_url.inspect}" unless match
 
   repo_slug = match[:repo]
@@ -447,6 +451,7 @@ def with_release_checkout(gem_root:, dry_run:)
       begin
         Shakapacker::Utils::Misc.sh_in_dir(gem_root, "git worktree remove --force #{escaped_worktree_dir}")
       rescue StandardError => cleanup_error
+        # Intentionally let interrupts and exits propagate instead of treating them as cleanup failures.
         warn "⚠️ Failed to remove dry-run release worktree #{worktree_dir}: #{cleanup_error.message}"
         raise cleanup_error unless original_error
       end

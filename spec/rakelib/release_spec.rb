@@ -4,6 +4,19 @@ require "rake"
 load File.expand_path("../../rakelib/release.rake", __dir__)
 
 RSpec.describe "release rake helpers" do
+  describe "loading the rake file" do
+    it "does not warn about reload-safe top-level definitions" do
+      previous_verbose = $VERBOSE
+      $VERBOSE = true
+
+      expect do
+        load File.expand_path("../../rakelib/release.rake", __dir__)
+      end.not_to output(/GITHUB_REPO_SLUG_PATTERN|AbortingMessageHandler/).to_stderr
+    ensure
+      $VERBOSE = previous_verbose
+    end
+  end
+
   describe "#ensure_clean_worktree!" do
     it "aborts with a user-facing message instead of raising a backtrace-producing error" do
       allow(Shakapacker::Utils::Misc).to receive(:uncommitted_changes?) do |message_handler|
