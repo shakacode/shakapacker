@@ -146,14 +146,6 @@ describe("rspack/rules", () => {
   })
 
   describe("sass rules", () => {
-    let helpers
-
-    afterEach(() => {
-      jest.resetModules()
-      helpers = require("../../../package/utils/helpers")
-      helpers.moduleExists.mockImplementation(() => true)
-    })
-
     test("includes Sass rule when dependencies are available", () => {
       const sassRule = rules.find(
         (rule) => rule.test && rule.test.toString().includes("scss|sass")
@@ -164,14 +156,18 @@ describe("rspack/rules", () => {
     })
 
     test("includes Sass rule when sass-loader is available without the sass package", () => {
-      jest.resetModules()
+      let helpers
+      let rulesWithoutSassPackage
 
-      helpers = require("../../../package/utils/helpers")
-      helpers.moduleExists.mockImplementation(
-        (packageName) => packageName !== "sass"
-      )
+      jest.isolateModules(() => {
+        helpers = require("../../../package/utils/helpers")
+        helpers.moduleExists.mockImplementation(
+          (packageName) => packageName !== "sass"
+        )
 
-      const rulesWithoutSassPackage = require("../../../package/rules/rspack")
+        rulesWithoutSassPackage = require("../../../package/rules/rspack")
+      })
+
       const sassRule = rulesWithoutSassPackage.find(
         (rule) => rule.test && rule.test.toString().includes("scss|sass")
       )

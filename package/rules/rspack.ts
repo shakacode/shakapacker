@@ -78,7 +78,9 @@ if (moduleExists("css-loader")) {
 
 // Sass rules
 debug("Checking for Sass loader...")
-// sass-loader resolves the user's Sass implementation (sass, sass-embedded, etc.).
+// Sass intentionally differs from Less/Stylus: sass-loader resolves the user's
+// Sass implementation (sass, sass-embedded, etc.), while Less/Stylus still
+// require both the implementation package and loader.
 if (moduleExists("sass-loader")) {
   debug("sass-loader found, loading Sass rule configuration...")
   const sass = require("./sass")
