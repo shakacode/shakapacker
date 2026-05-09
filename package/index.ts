@@ -103,6 +103,7 @@ const shakapacker = {
 }
 
 Object.defineProperty(shakapacker, "baseConfig", {
+  configurable: true,
   enumerable: true,
   get: getBaseConfig
 })
