@@ -407,6 +407,8 @@ describe "VersionChecker::NodePackageVersion" do
       let(:node_package_version_from_single_dot_path) { node_package_version(fixture_version: "single_dot_path") }
 
       it "#raw returns the single-dot relative path" do
+        expect(File).not_to receive(:exist?)
+
         expect(node_package_version_from_single_dot_path.raw).to eq "./vendor/shakapacker"
       end
 
