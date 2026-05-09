@@ -1,5 +1,7 @@
 #!/usr/bin/env node
 
+const { createRequire } = require("module")
+
 const PACK_CONFIG_DIFF_PACKAGE = "pack-config-diff"
 
 function formatError(error) {
@@ -22,10 +24,13 @@ function exitWithCode(exitCode) {
 let run
 
 try {
-  // The Ruby binstub runs this file from node_modules/shakapacker, so CommonJS
-  // resolution can find Shakapacker's installed pack-config-diff dependency.
-  // eslint-disable-next-line global-require
-  const loadedModule = require("pack-config-diff")
+  const shakapackerRequire = createRequire(
+    require.resolve("shakapacker/package.json")
+  )
+
+  // Resolve from Shakapacker's package boundary so strict package managers can
+  // find the transitive pack-config-diff dependency.
+  const loadedModule = shakapackerRequire(PACK_CONFIG_DIFF_PACKAGE)
   run = loadedModule.run
 } catch (error) {
   console.error(
