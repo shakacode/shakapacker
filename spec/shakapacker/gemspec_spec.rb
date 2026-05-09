@@ -52,8 +52,10 @@ describe "shakapacker.gemspec" do
       rbs_files = gemspec.files.select { |f| f.end_with?(".rbs") }
       expect(rbs_files).not_to be_empty
     end
+  end
 
-    it "does not package test files through test_files metadata" do
+  describe "s.test_files" do
+    it "is empty" do
       expect(gemspec.test_files).to be_empty
     end
   end
