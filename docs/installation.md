@@ -6,15 +6,15 @@ configuration details after installation, see the [configuration guide](./config
 ## Prerequisites
 
 - Ruby 2.7+
-- Rails 5.2+
-- Node.js 20+
+- Rails 6.1+
+- Node.js `^20.19.0` or `>=22.12.0`
 - A JavaScript package manager supported by
   [`package_json`](https://github.com/shakacode/package_json): npm, Yarn,
   pnpm, or Bun
 
 ## Add the Gem
 
-For a new Rails 6+ app, skip Rails' default JavaScript installer so
+For a new Rails 6.1+ app, skip Rails' default JavaScript installer so
 Shakapacker can create the bundler files, then continue from the app root:
 
 ```bash
@@ -25,13 +25,7 @@ cd myapp
 Add Shakapacker to your app:
 
 ```bash
-bundle add shakapacker --strict
-```
-
-Then install bundle dependencies:
-
-```bash
-./bin/bundle install
+bundle add shakapacker
 ```
 
 ## Run the Installer
