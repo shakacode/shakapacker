@@ -102,20 +102,22 @@ describe("rspack/index", () => {
     jest.resetModules()
     process.env.NODE_ENV = nodeEnv
 
-    const loadedRspackIndex = require("../../../package/rspack/index")
-    const {
-      validateRspackDependencies: loadedValidateRspackDependencies
-    } = require("../../../package/utils/validateDependencies")
+    try {
+      const loadedRspackIndex = require("../../../package/rspack/index")
+      const {
+        validateRspackDependencies: loadedValidateRspackDependencies
+      } = require("../../../package/utils/validateDependencies")
 
-    if (previousNodeEnv === undefined) {
-      delete process.env.NODE_ENV
-    } else {
-      process.env.NODE_ENV = previousNodeEnv
-    }
-
-    return {
-      rspackIndex: loadedRspackIndex,
-      validateRspackDependencies: loadedValidateRspackDependencies
+      return {
+        rspackIndex: loadedRspackIndex,
+        validateRspackDependencies: loadedValidateRspackDependencies
+      }
+    } finally {
+      if (previousNodeEnv === undefined) {
+        delete process.env.NODE_ENV
+      } else {
+        process.env.NODE_ENV = previousNodeEnv
+      }
     }
   }
 
