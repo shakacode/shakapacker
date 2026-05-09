@@ -24,7 +24,15 @@ const rulesPath = resolve(__dirname, "rules", `${config.assets_bundler}.js`)
 /** Array of webpack/rspack loader rules */
 const rules = require(rulesPath) as RuleSetRule[]
 
-const getBaseConfig = (): Configuration => require("./environments/base")
+let baseConfig: Configuration | undefined
+
+const getBaseConfig = (): Configuration => {
+  if (!baseConfig) {
+    baseConfig = require("./environments/base")
+  }
+
+  return baseConfig as Configuration
+}
 
 /**
  * Generate webpack configuration with optional custom config.
