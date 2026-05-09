@@ -451,6 +451,7 @@ def with_release_checkout(gem_root:, dry_run:)
       begin
         Shakapacker::Utils::Misc.sh_in_dir(gem_root, "git worktree remove --force #{escaped_worktree_dir}")
       rescue Exception => cleanup_error # rubocop:disable Lint/RescueException
+        # Preserve any release failure already propagating, even if cleanup exits outside StandardError.
         warn "⚠️ Failed to remove dry-run release worktree #{worktree_dir}: #{cleanup_error.message}"
         raise cleanup_error unless original_error
       end

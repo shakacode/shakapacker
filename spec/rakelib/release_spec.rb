@@ -80,6 +80,8 @@ RSpec.describe "release rake helpers" do
     it "preserves the release failure when dry-run worktree cleanup also fails" do
       allow(Shakapacker::Utils::Misc).to receive(:sh_in_dir) do |_dir, command|
         raise "cleanup failed" if command.include?("git worktree remove")
+
+        true
       end
 
       expect do
@@ -95,6 +97,8 @@ RSpec.describe "release rake helpers" do
       cleanup_error_class = Class.new(Exception)
       allow(Shakapacker::Utils::Misc).to receive(:sh_in_dir) do |_dir, command|
         raise cleanup_error_class, "cleanup failed" if command.include?("git worktree remove")
+
+        true
       end
 
       expect do
@@ -109,6 +113,8 @@ RSpec.describe "release rake helpers" do
     it "raises cleanup failures when the dry run itself succeeded" do
       allow(Shakapacker::Utils::Misc).to receive(:sh_in_dir) do |_dir, command|
         raise "cleanup failed" if command.include?("git worktree remove")
+
+        true
       end
 
       expect do
