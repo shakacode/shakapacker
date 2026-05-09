@@ -63,7 +63,7 @@ Type-only imports are erased during compilation and don't trigger module resolut
 }
 ```
 
-### Webpack + SWC (20x Faster)
+### Webpack + SWC
 
 ```json
 {
@@ -79,7 +79,7 @@ Type-only imports are erased during compilation and don't trigger module resolut
 
 > **Note:** `webpack-cli` v7 is also supported but requires Node.js >= 20.9.0. If your project meets that requirement, you can use `"webpack-cli": "^7.0.0"` instead.
 
-### Rspack + SWC (10x Faster Bundling)
+### Rspack + SWC
 
 ```json
 {

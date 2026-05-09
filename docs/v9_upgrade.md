@@ -255,7 +255,7 @@ javascript_transpiler: "babel"
 
 **What changed:** SWC replaces Babel as the default JavaScript transpiler. Babel is no longer included in peer dependencies.
 
-**Why:** SWC is 20x faster than Babel while maintaining compatibility with most JavaScript and TypeScript code.
+**Why:** SWC can be significantly faster than Babel while maintaining compatibility with most JavaScript and TypeScript code.
 
 **Impact on existing projects:**
 

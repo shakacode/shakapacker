@@ -124,6 +124,9 @@ Watch for:
 
 ## How to Switch Transpilers
 
+The examples below use `npm`. Replace `npm` with your app's package manager
+when using Yarn, pnpm, or Bun.
+
 ### SWC
 
 ```yaml
@@ -156,8 +159,6 @@ javascript_transpiler: "babel"
 ```bash
 npm install babel-loader @babel/core @babel/preset-env
 ```
-
-Replace `npm` with your app's package manager when using Yarn, pnpm, or Bun.
 
 ## Measuring Your App
 

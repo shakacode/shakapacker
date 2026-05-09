@@ -6,7 +6,7 @@
 
 Shakapacker v10 transpiler defaults depend on the bundler and installation:
 
-- **New installations (v9+, including v10)**: `swc` - Installation template explicitly sets SWC (20x faster than Babel)
+- **New installations (v9+, including v10)**: `swc` - Installation template explicitly sets SWC for faster default transpilation
 - **Webpack runtime default**: `babel` - Used when no explicit config is provided (maintains backward compatibility)
 - **Rspack runtime default**: `swc` - Rspack defaults to SWC as it's a newer bundler with modern defaults
 
@@ -15,7 +15,7 @@ Shakapacker v10 transpiler defaults depend on the bundler and installation:
 ## Available Transpilers
 
 - `babel` - Traditional JavaScript transpiler with wide ecosystem support
-- `swc` - Rust-based transpiler, 20-70x faster than Babel
+- `swc` - High-performance Rust-based transpiler
 - `esbuild` - Go-based transpiler, extremely fast
 - `none` - No transpilation (use native JavaScript)
 
@@ -88,15 +88,13 @@ yarn add --dev @pmmmwh/react-refresh-webpack-plugin
 yarn add --dev @rspack/plugin-react-refresh
 ```
 
-### Performance Comparison
+### Performance Expectations
 
-Typical build time improvements when migrating from Babel to SWC:
-
-| Project Size           | Babel | SWC | Improvement |
-| ---------------------- | ----- | --- | ----------- |
-| Small (<100 files)     | 5s    | 1s  | 5x faster   |
-| Medium (100-500 files) | 20s   | 3s  | 6.7x faster |
-| Large (500+ files)     | 60s   | 8s  | 7.5x faster |
+SWC often reduces transpilation time significantly, especially in projects with
+many files or expensive Babel plugin chains. Treat published benchmark numbers
+as directional only; measure your own app with its real Shakapacker command,
+source map settings, cache state, and CI hardware before relying on a specific
+speedup.
 
 ### Compatibility Notes
 

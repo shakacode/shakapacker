@@ -23,7 +23,7 @@
 
 This guide documents the differences between webpack and Rspack configurations in Shakapacker, and provides migration guidance for users switching to Rspack.
 
-[Rspack](https://rspack.rs/) is a high-performance bundler written in Rust, offering 5-10x faster build times than webpack with excellent webpack compatibility.
+[Rspack](https://rspack.rs/) is a high-performance bundler written in Rust with excellent webpack compatibility.
 
 ## Before You Migrate
 
@@ -74,7 +74,7 @@ Rspack provides built-in loaders for better performance:
 **JavaScript/TypeScript:**
 
 - Use `builtin:swc-loader` instead of `babel-loader` or `ts-loader`
-- 20x faster than Babel on single thread, 70x on multiple cores
+- Usually much faster than Babel in transpilation-heavy builds
 - Configuration example:
 
 ```javascript
@@ -801,13 +801,10 @@ npx patch-package @package/name
 
 **Expected Performance Improvements:**
 
-| Build Type       | Webpack | Rspack | Improvement |
-| ---------------- | ------- | ------ | ----------- |
-| Cold build       | 60s     | 8s     | 7.5x faster |
-| Hot reload       | 3s      | 0.5s   | 6x faster   |
-| Production build | 120s    | 15s    | 8x faster   |
-
-**Note:** Actual improvements vary based on project size, configuration, and hardware. Rspack's Rust-based architecture provides consistent 5-10x performance gains across most scenarios.
+Rspack can improve cold builds, hot reloads, and production builds. Actual
+results vary based on project size, configuration, cache state, source maps, and
+hardware, so measure your real Shakapacker commands before relying on a specific
+speedup.
 
 ## Debugging Configuration
 
