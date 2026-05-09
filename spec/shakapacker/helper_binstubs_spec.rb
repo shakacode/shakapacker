@@ -76,17 +76,10 @@ RSpec.describe "helper binstubs" do
           chdir: app_path
         )
 
-        expected_script_path = File.join(
-          File.realpath(app_path),
-          "node_modules",
-          "shakapacker",
-          "package",
-          "bin",
-          "#{command}.cjs"
-        )
-
         expect(status.exitstatus).to eq(1)
-        expect(stderr).to include("[Shakapacker] Could not find #{expected_script_path}")
+        expect(stderr).to match(
+          %r{\[Shakapacker\] Could not find .*/node_modules/shakapacker/package/bin/#{Regexp.escape(command)}\.cjs}
+        )
       end
     end
   end

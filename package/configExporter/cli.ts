@@ -512,6 +512,7 @@ function runInitCommand(options: ExportOptions): number {
 
 function createBinStub(binStubPath: string): void {
   const binDir = dirname(binStubPath)
+  const packageScript = `${basename(binStubPath)}.cjs`
   const { mkdirSync, chmodSync } = require("fs")
 
   // Ensure bin directory exists
@@ -540,7 +541,7 @@ script_path = File.join(
   "shakapacker",
   "package",
   "bin",
-  "shakapacker-config.cjs"
+  "${packageScript}"
 )
 
 unless File.file?(script_path)
