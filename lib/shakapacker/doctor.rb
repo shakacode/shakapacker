@@ -723,10 +723,10 @@ module Shakapacker
       def active_assets_bundler_config_path
         config_dir = config.assets_bundler_config_path
 
-        candidates = %w[ts js].map { |ext| root_path.join(config_dir, "rspack.config.#{ext}") }
-        candidates += %w[ts js].map { |ext| root_path.join(config_dir, "webpack.config.#{ext}") }
+        candidates = %w[ts js].map { |ext| Pathname.new(File.join(root_path.to_s, config_dir, "rspack.config.#{ext}")) }
+        candidates += %w[ts js].map { |ext| Pathname.new(File.join(root_path.to_s, config_dir, "webpack.config.#{ext}")) }
         if config_dir == "config/rspack"
-          candidates += %w[ts js].map { |ext| root_path.join("config/webpack", "webpack.config.#{ext}") }
+          candidates += %w[ts js].map { |ext| Pathname.new(File.join(root_path.to_s, "config/webpack", "webpack.config.#{ext}")) }
         end
 
         candidates.find(&:exist?)

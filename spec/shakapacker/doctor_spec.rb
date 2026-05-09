@@ -792,18 +792,14 @@ describe Shakapacker::Doctor do
       end
     end
 
-    context "when the active rspack config path is outside the project root" do
-      it "uses the absolute config path in the warning" do
-        external_config_dir = Pathname.new(Dir.mktmpdir)
-        external_config_path = external_config_dir.join("rspack.config.js")
-        allow(config).to receive(:assets_bundler_config_path).and_return(external_config_dir.to_s)
-        File.write(external_config_path, "module.exports = { cache: false }")
+    context "when the configured rspack config directory starts with a slash" do
+      it "matches the runner's File.join path semantics" do
+        allow(config).to receive(:assets_bundler_config_path).and_return("/config/rspack")
+        File.write(rspack_config_path, "module.exports = { cache: false }")
 
         doctor.send(:check_rspack_cache_configuration)
 
-        expect(warning_messages).to include(match(/#{Regexp.escape(external_config_path.to_s)}/))
-      ensure
-        FileUtils.rm_rf(external_config_dir) if external_config_dir
+        expect(warning_messages).to include(match(/Rspack cache appears to be disabled.*config\/rspack\/rspack\.config\.js/))
       end
     end
 
