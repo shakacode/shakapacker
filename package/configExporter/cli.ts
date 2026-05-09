@@ -522,12 +522,20 @@ function createBinStub(binStubPath: string): void {
   const stubContent = `#!/usr/bin/env ruby
 # frozen_string_literal: true
 
+def shakapacker_app_root
+  candidate = File.expand_path("..", __dir__)
+  return candidate if File.exist?(File.join(candidate, "Gemfile")) ||
+                      File.exist?(File.join(candidate, "package.json"))
+
+  Dir.pwd
+end
+
 ENV["RAILS_ENV"] ||= ENV["RACK_ENV"] || "development"
 ENV["NODE_ENV"] ||= "development"
 
-APP_ROOT = File.expand_path("..", __dir__)
-SCRIPT_PATH = File.join(
-  APP_ROOT,
+app_root = shakapacker_app_root
+script_path = File.join(
+  app_root,
   "node_modules",
   "shakapacker",
   "package",
@@ -535,13 +543,13 @@ SCRIPT_PATH = File.join(
   "shakapacker-config.cjs"
 )
 
-unless File.file?(SCRIPT_PATH)
-  warn "[Shakapacker] Could not find #{SCRIPT_PATH}. Run your package manager install command and try again."
+unless File.file?(script_path)
+  warn "[Shakapacker] Could not find #{script_path}. Run your package manager install command and try again."
   exit 1
 end
 
-Dir.chdir(APP_ROOT) do
-  exec "node", SCRIPT_PATH, *ARGV
+Dir.chdir(app_root) do
+  exec "node", script_path, *ARGV
 end
 `
 

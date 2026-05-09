@@ -22,6 +22,8 @@ function exitWithCode(exitCode) {
 let run
 
 try {
+  // The Ruby binstub runs this file from node_modules/shakapacker, so CommonJS
+  // resolution can find Shakapacker's installed pack-config-diff dependency.
   // eslint-disable-next-line global-require
   const loadedModule = require("pack-config-diff")
   run = loadedModule.run

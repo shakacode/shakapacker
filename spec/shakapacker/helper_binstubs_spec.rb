@@ -60,5 +60,34 @@ RSpec.describe "helper binstubs" do
         )
       end
     end
+
+    it "exits with an error when #{command}'s package script is missing" do
+      Dir.mktmpdir("shakapacker-binstub-") do |app_path|
+        File.write(File.join(app_path, "Gemfile"), "")
+        File.write(File.join(app_path, "package.json"), JSON.generate("type" => "module"))
+        FileUtils.mkdir_p(File.join(app_path, "bin"))
+
+        binstub_path = File.join(app_path, "bin", command)
+        FileUtils.cp(File.join(gem_root, "lib", "install", "bin", command), binstub_path)
+        FileUtils.chmod(0o755, binstub_path)
+
+        _stdout, stderr, status = Open3.capture3(
+          binstub_path,
+          chdir: app_path
+        )
+
+        expected_script_path = File.join(
+          File.realpath(app_path),
+          "node_modules",
+          "shakapacker",
+          "package",
+          "bin",
+          "#{command}.cjs"
+        )
+
+        expect(status.exitstatus).to eq(1)
+        expect(stderr).to include("[Shakapacker] Could not find #{expected_script_path}")
+      end
+    end
   end
 end

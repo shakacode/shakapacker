@@ -54,7 +54,7 @@ namespace :shakapacker do
       $stderr.puts ""
 
       Dir.chdir(Rails.root) do
-        exec(gem_bin_path, *ARGV[1..])
+        exec(RbConfig.ruby, gem_bin_path, *ARGV[1..])
       end
     else
       # Pass through command-line arguments after the task name
