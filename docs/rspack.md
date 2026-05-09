@@ -160,9 +160,9 @@ The same dev server configuration in `shakapacker.yml` applies to both webpack a
 
 Rspack typically provides:
 
-- **Faster cold builds**
-- **Faster incremental builds**
-- **Faster HMR** (Hot Module Replacement)
+- **Often faster cold builds**
+- **Often faster incremental builds**
+- **Often faster HMR** (Hot Module Replacement)
 - **Lower memory usage**
 
 ## Migration Checklist

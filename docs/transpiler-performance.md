@@ -1,12 +1,8 @@
 # JavaScript Transpiler Performance Guide
 
-Shakapacker supports Babel, SWC, and esbuild for webpack-based JavaScript
-transpilation. Rspack uses its built-in SWC-based loader by default.
+Shakapacker supports Babel, SWC, and esbuild for webpack-based JavaScript transpilation. Rspack uses its built-in SWC-based loader by default.
 
-This guide intentionally avoids exact benchmark numbers. Build performance
-depends heavily on project size, loader configuration, source maps, minification,
-cache state, hardware, and whether the measurement covers transpilation alone or
-the full bundler pipeline.
+This guide intentionally avoids exact benchmark numbers. Build performance depends heavily on project size, loader configuration, source maps, minification, cache state, hardware, and whether the measurement covers transpilation alone or the full bundler pipeline.
 
 ## Summary
 
@@ -16,15 +12,11 @@ the full bundler pipeline.
 | **esbuild** | Usually very fast              | Minimal               | Modern syntax with simple transform needs    |
 | **Babel**   | Usually slowest                | Most flexible         | Existing Babel plugins or custom transforms  |
 
-SWC is the recommended default for new Shakapacker apps because it usually gives
-large speedups over Babel while covering the common JavaScript, TypeScript, and
-React cases. esbuild can also be very fast, but its transform model is less
-compatible with Babel-style plugin workflows.
+SWC is the recommended default for new Shakapacker apps because it usually gives large speedups over Babel while covering the common JavaScript, TypeScript, and React cases. esbuild can also be very fast, but its transform model is less compatible with Babel-style plugin workflows.
 
 ## What Usually Affects Build Time
 
-The transpiler is only one part of a Shakapacker build. Measure the whole build
-before attributing performance to one tool.
+The transpiler is only one part of a Shakapacker build. Measure the whole build before attributing performance to one tool.
 
 Common factors:
 
@@ -38,9 +30,7 @@ Common factors:
 - Number of files outside `node_modules` processed by rules
 - CI hardware and CPU concurrency
 
-When comparing options, run the same command several times after clearing or
-warming caches intentionally. Record the command, environment, lockfile, and
-Shakapacker config alongside the results.
+When comparing options, run the same command several times after clearing or warming caches intentionally. Record the command, environment, lockfile, and Shakapacker config alongside the results.
 
 ## Choosing a Transpiler
 
@@ -49,16 +39,14 @@ Shakapacker config alongside the results.
 - You are starting a new app.
 - You want a faster default than Babel without moving to Rspack yet.
 - You use common JavaScript, TypeScript, JSX, or TSX transforms.
-- You can configure the few project-specific SWC options you need in
-  `config/swc.config.js`.
+- You can configure the few project-specific SWC options you need in `config/swc.config.js`.
 
 See [Using SWC Loader](./using_swc_loader.md).
 
 ### Choose esbuild When
 
 - You target modern browsers or have a simple transpilation target.
-- You do not rely on Babel plugins, Babel macros, or transform behavior that
-  esbuild does not implement.
+- You do not rely on Babel plugins, Babel macros, or transform behavior that esbuild does not implement.
 - You want a small configuration surface.
 
 See [Using esbuild-loader](./using_esbuild_loader.md).
@@ -67,10 +55,8 @@ See [Using esbuild-loader](./using_esbuild_loader.md).
 
 - You already rely on Babel plugins or Babel macros.
 - You need custom transforms that do not have SWC or esbuild equivalents.
-- You have mature Babel configuration that is more important than raw build
-  speed.
-- You need compatibility with old browser targets that your SWC/esbuild setup
-  does not cover.
+- You have mature Babel configuration that is more important than raw build speed.
+- You need compatibility with old browser targets that your SWC/esbuild setup does not cover.
 
 See [Customizing Babel Config](./customizing_babel_config.md).
 
@@ -89,10 +75,8 @@ Watch for:
 
 - Smaller plugin ecosystem than Babel
 - Project-specific transform options may need `config/swc.config.js`
-- Stimulus apps should preserve class names; see
-  [Using SWC with Stimulus](./using_swc_loader.md#using-swc-with-stimulus)
-- `.swcrc` can override Shakapacker defaults in surprising ways; prefer
-  `config/swc.config.js`
+- Stimulus apps should preserve class names; see [Using SWC with Stimulus](./using_swc_loader.md#using-swc-with-stimulus)
+- `.swcrc` can override Shakapacker defaults in surprising ways; prefer `config/swc.config.js`
 
 ### esbuild
 
@@ -124,8 +108,7 @@ Watch for:
 
 ## How to Switch Transpilers
 
-The examples below use `npm`. Replace `npm` with your app's package manager
-when using Yarn, pnpm, or Bun.
+The examples below use `npm`. Replace `npm` with your app's package manager when using Yarn, pnpm, or Bun.
 
 ### SWC
 
@@ -162,22 +145,19 @@ npm install babel-loader @babel/core @babel/preset-env
 
 ## Measuring Your App
 
-Use your app's real build command rather than a synthetic number from another
-project:
+Use your app's real build command rather than a synthetic number from another project:
 
 ```bash
 time bin/shakapacker
 ```
 
-For development feedback, measure the dev server or watch workflow you actually
-use:
+For development feedback, measure the dev server or watch workflow you actually use:
 
 ```bash
 time bin/shakapacker-dev-server
 ```
 
-For CI, measure the full command sequence, including dependency install and
-asset compilation if those are part of the job.
+For CI, measure the full command sequence, including dependency install and asset compilation if those are part of the job.
 
 Record:
 
@@ -199,9 +179,6 @@ For most apps, migrate incrementally:
 4. Compare build output and browser behavior.
 5. Keep Babel only for the paths that need Babel-specific transforms.
 
-If you want the biggest bundler-level performance change, evaluate
-[Rspack](./rspack_migration_guide.md) separately from the transpiler change so
-you can attribute any regressions to the right layer.
+If you want the biggest bundler-level performance change, evaluate [Rspack](./rspack_migration_guide.md) separately from the transpiler change so you can attribute any regressions to the right layer.
 
-See [Transpiler Migration](./transpiler-migration.md) for step-by-step migration
-commands.
+See [Transpiler Migration](./transpiler-migration.md) for step-by-step migration commands.
