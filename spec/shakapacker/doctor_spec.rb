@@ -66,6 +66,24 @@ describe Shakapacker::Doctor do
   end
 
   describe "warning formatting" do
+    it "stores fix hints as recommended warnings by default" do
+      doctor.send(:add_fix_hint, "Test fix instruction")
+
+      expect(doctor.warnings.last).to eq(
+        category: described_class::CATEGORY_RECOMMENDED,
+        message: "  Fix: Test fix instruction"
+      )
+    end
+
+    it "stores fix hints with an explicit category" do
+      doctor.send(:add_fix_hint, "Test fix instruction", described_class::CATEGORY_ACTION_REQUIRED)
+
+      expect(doctor.warnings.last).to eq(
+        category: described_class::CATEGORY_ACTION_REQUIRED,
+        message: "  Fix: Test fix instruction"
+      )
+    end
+
     it "formats warnings with correct indentation and spacing" do
       # Create a test scenario with warnings
       doctor.instance_variable_get(:@warnings) << { category: :action_required, message: "Test required warning" }
@@ -591,6 +609,22 @@ describe Shakapacker::Doctor do
       end
     end
 
+    context "when a line comment contains division before cache: false" do
+      before do
+        File.write(rspack_config_path, <<~JS)
+          module.exports = {
+            // Example: 1 / 2, cache: false
+            cache: { type: 'filesystem' }
+          }
+        JS
+      end
+
+      it "does not expose the commented cache setting while stripping regex literals" do
+        doctor.send(:check_rspack_cache_configuration)
+        expect(warning_messages).not_to include(match(/Rspack cache appears to be disabled/))
+      end
+    end
+
     context "when using rspack v1" do
       before do
         File.write(package_json_path, JSON.generate({
@@ -755,6 +789,21 @@ describe Shakapacker::Doctor do
       it "silently skips the unsupported .mjs file and emits no cache warning" do
         doctor.send(:check_rspack_cache_configuration)
         expect(warning_messages).not_to include(match(/Rspack cache appears to be disabled/))
+      end
+    end
+
+    context "when the active rspack config path is outside the project root" do
+      it "uses the absolute config path in the warning" do
+        external_config_dir = Pathname.new(Dir.mktmpdir)
+        external_config_path = external_config_dir.join("rspack.config.js")
+        allow(config).to receive(:assets_bundler_config_path).and_return(external_config_dir.to_s)
+        File.write(external_config_path, "module.exports = { cache: false }")
+
+        doctor.send(:check_rspack_cache_configuration)
+
+        expect(warning_messages).to include(match(/#{Regexp.escape(external_config_path.to_s)}/))
+      ensure
+        FileUtils.rm_rf(external_config_dir) if external_config_dir
       end
     end
 

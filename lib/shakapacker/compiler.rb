@@ -9,6 +9,7 @@ class Shakapacker::Compiler
   # Shakapacker::Compiler.env['FRONTEND_API_KEY'] = 'your_secret_key'
   cattr_accessor(:env) { {} }
 
+  # Class-level state keeps the compile-time doctor hint once-per-process.
   @doctor_hint_shown = false
   @doctor_hint_mutex = Mutex.new
 

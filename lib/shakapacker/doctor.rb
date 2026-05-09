@@ -63,8 +63,8 @@ module Shakapacker
       # Records a "Fix: ..." hint as an indented sub-item attached to the
       # preceding warning. The doctor's printer treats messages starting with
       # two spaces as subitems and renders them aligned under the parent.
-      def add_fix_hint(message)
-        add_warning("  Fix: #{message}")
+      def add_fix_hint(message, category = CATEGORY_RECOMMENDED)
+        add_warning("  Fix: #{message}", category)
       end
 
       def print_help
@@ -706,7 +706,7 @@ module Shakapacker
         content = File.read(path)
         return unless rspack_cache_disabled?(content)
 
-        relative = path.relative_path_from(root_path)
+        relative = config_path_for_warning(path)
         add_warning("Rspack cache appears to be disabled in #{relative} (found 'cache: false'). Disabling cache " \
                     "causes significantly slower builds, especially on rebuilds. Rspack v2 promotes filesystem " \
                     "caching from experimental to stable.")
@@ -732,6 +732,18 @@ module Shakapacker
         candidates.find(&:exist?)
       end
 
+      def config_path_for_warning(path)
+        expanded_root = root_path.expand_path
+        expanded_path = path.expand_path
+
+        return path.to_s unless expanded_path.to_s == expanded_root.to_s ||
+                                expanded_path.to_s.start_with?("#{expanded_root}#{File::SEPARATOR}")
+
+        path.relative_path_from(root_path)
+      rescue ArgumentError
+        path.to_s
+      end
+
       def rspack_cache_disabled?(content)
         # Normalize quoted property keys before stripping string literals; otherwise
         # `'cache'` and `"cache"` collapse to `""` and the match below misses them.
@@ -741,9 +753,12 @@ module Shakapacker
           .gsub(/`(?:\\.|[^`\\])*`/m, '""')
           .gsub(/'(?:\\.|[^'\\\n])*'/, '""')
           .gsub(/"(?:\\.|[^"\\\n])*"/, '""')
-          .gsub(%r{/(?:\\.|\[[^\]\n]*\]|[^/\n\\\[])+?/[gimsuy]*}, "")
           .gsub(%r{/\*.*?\*/}m, "")
           .gsub(%r{//[^\n]*}, "")
+
+        # Regex literal stripping is order-sensitive: strings and comments must
+        # be removed first so their slash characters cannot expose cache hints.
+        stripped = stripped.gsub(%r{/(?:\\.|\[[^\]\n]*\]|[^/\n\\\[])+?/[gimsuy]*}, "")
 
         # Match `cache: false` only at brace depth 1. This is intentionally
         # conservative: a real JS parser would be needed to distinguish the
@@ -760,7 +775,7 @@ module Shakapacker
         # Prefer the resolved version from node_modules, since package.json specifiers
         # (ranges, git refs, file paths) often don't parse to a clean major number.
         resolved = installed_rspack_major_version
-        return resolved if resolved
+        return resolved unless resolved.nil?
 
         version = package_json_dependency_version("@rspack/core") ||
                   package_json_dependency_version("@rspack/cli")
