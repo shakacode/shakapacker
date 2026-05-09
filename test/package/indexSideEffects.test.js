@@ -10,10 +10,6 @@ describe("index side effects", () => {
     return ensureManifestExists
   }
 
-  afterEach(() => {
-    jest.clearAllMocks()
-  })
-
   test("does not initialize webpack plugins when only requiring the package index", () => {
     jest.isolateModules(() => {
       const ensureManifestExists = mockEnsureManifestExists()
