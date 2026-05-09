@@ -163,7 +163,7 @@ Rspack typically provides:
 - **Often faster cold builds**
 - **Often faster incremental builds**
 - **Often faster HMR** (Hot Module Replacement)
-- **Lower memory usage**
+- **Often lower memory usage**
 
 ## Migration Checklist
 

@@ -269,7 +269,7 @@ pnpm run build
 
 #### pnpm benefits
 
-- **Faster installs**: Often faster than npm/Yarn
+- **Faster installs**: Uses pnpm's content-addressable store and hard links to speed up repeat installs
 - **Disk space efficient**: Uses hard links to save disk space
 - **Strict**: Better at catching dependency issues
 
