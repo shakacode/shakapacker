@@ -1,7 +1,8 @@
 require "spec_helper"
 require "rake"
 
-load File.expand_path("../../rakelib/release.rake", __dir__)
+release_rake_path = File.expand_path("../../rakelib/release.rake", __dir__)
+load release_rake_path unless defined?(ensure_clean_worktree!)
 
 RSpec.describe "release rake helpers" do
   describe "loading the rake file" do
@@ -79,6 +80,21 @@ RSpec.describe "release rake helpers" do
     it "preserves the release failure when dry-run worktree cleanup also fails" do
       allow(Shakapacker::Utils::Misc).to receive(:sh_in_dir) do |_dir, command|
         raise "cleanup failed" if command.include?("git worktree remove")
+      end
+
+      expect do
+        expect do
+          with_release_checkout(gem_root: "/repo", dry_run: true) do
+            raise "release failed"
+          end
+        end.to raise_error(RuntimeError, "release failed")
+      end.to output(/Failed to remove dry-run release worktree/).to_stderr
+    end
+
+    it "preserves the release failure when cleanup raises outside StandardError" do
+      cleanup_error_class = Class.new(Exception)
+      allow(Shakapacker::Utils::Misc).to receive(:sh_in_dir) do |_dir, command|
+        raise cleanup_error_class, "cleanup failed" if command.include?("git worktree remove")
       end
 
       expect do
