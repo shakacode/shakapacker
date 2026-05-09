@@ -115,9 +115,9 @@ Or set \`javascript_transpiler: "none"\` in config/shakapacker.yml if you provid
 
 // Re-require shakapacker for the actual export. Node caches successful
 // loads, so on the happy path this returns the same instance read above
-// at zero cost. On the error path the cached module is evicted and this
-// call throws too — after the warning has already fired, which is the
-// behaviour the tests pin. Don't hoist this require into a shared
+// at zero cost. Failed requires are not cached, so on the error path this
+// call retries and throws too — after the warning has already fired, which
+// is the behaviour the tests pin. Don't hoist this require into a shared
 // variable: the warning-before-error ordering depends on the read above
 // being inside its own try/catch.
 module.exports = require("shakapacker")

@@ -24,11 +24,15 @@ const writeModule = (root, name, source) => {
   writeFileSync(join(moduleDir, "index.js"), source)
 }
 
-const createPnpmLikeApp = ({
-  configTranspiler = "swc",
-  configBundler = "webpack",
-  transpilers = []
-}) => {
+const createPnpmLikeApp = (options = {}) => {
+  const { configTranspiler = "swc", transpilers = [] } = options
+  const configBundler = Object.prototype.hasOwnProperty.call(
+    options,
+    "configBundler"
+  )
+    ? options.configBundler
+    : "webpack"
+
   const appRoot = mkdtempSync(join(tmpdir(), "shakapacker-webpack-test-"))
   const appNodeModules = join(appRoot, "node_modules")
   const storeRoot = mkdtempSync(join(tmpdir(), "shakapacker-webpack-store-"))
@@ -42,12 +46,17 @@ const createPnpmLikeApp = ({
   symlinkSync(wrapperDir, join(appNodeModules, "shakapacker-webpack"), "dir")
 
   const shakapackerPath = join(virtualNodeModules, "shakapacker/index.js")
+  const configEntries = [
+    `javascript_transpiler: ${JSON.stringify(configTranspiler)}`
+  ]
+  if (configBundler !== undefined) {
+    configEntries.push(`assets_bundler: ${JSON.stringify(configBundler)}`)
+  }
+
   writeModule(
     storeRoot,
     "shakapacker",
-    `module.exports = { config: { javascript_transpiler: ${JSON.stringify(
-      configTranspiler
-    )}, assets_bundler: ${JSON.stringify(configBundler)} } }`
+    `module.exports = { config: { ${configEntries.join(", ")} } }`
   )
 
   for (const transpiler of transpilers) {
@@ -278,6 +287,21 @@ describe("shakapacker-webpack package wrapper", () => {
   test("does not warn about assets_bundler when set to webpack", () => {
     const { appRoot } = createPnpmLikeApp({
       configBundler: "webpack",
+      transpilers: ["@swc/core", "swc-loader"]
+    })
+
+    const result = requireWrapper(appRoot)
+
+    expect(result.warnings).not.toStrictEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ code: "SHAKAPACKER_BUNDLER_MISMATCH" })
+      ])
+    )
+  })
+
+  test("does not warn about assets_bundler when unset", () => {
+    const { appRoot } = createPnpmLikeApp({
+      configBundler: undefined,
       transpilers: ["@swc/core", "swc-loader"]
     })
 
