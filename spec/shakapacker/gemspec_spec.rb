@@ -40,6 +40,7 @@ describe "shakapacker.gemspec" do
     it "includes install assets needed by shakapacker:install" do
       expect(gemspec.files).to include(
         "lib/install/template.rb",
+        "lib/install/application.js",
         "lib/install/package.json",
         "lib/install/config/shakapacker.yml",
         "lib/install/bin/shakapacker",
