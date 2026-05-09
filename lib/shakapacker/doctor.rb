@@ -60,9 +60,7 @@ module Shakapacker
         add_warning(message, CATEGORY_INFO)
       end
 
-      # Records a "Fix: ..." hint as an indented sub-item attached to the
-      # preceding warning. The doctor's printer treats messages starting with
-      # two spaces as subitems and renders them aligned under the parent.
+      # "Fix: ..." hints render as indented sub-items under the preceding warning.
       def add_fix_hint(message, category = CATEGORY_RECOMMENDED)
         add_warning("  Fix: #{message}", category)
       end
