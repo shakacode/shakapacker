@@ -899,6 +899,29 @@ describe Shakapacker::Doctor do
       end
     end
 
+    context "when the installed rspack package file is unreadable" do
+      before do
+        node_modules_pkg = root_path.join("node_modules/@rspack/core/package.json")
+        FileUtils.mkdir_p(node_modules_pkg.dirname)
+        File.write(node_modules_pkg, "")
+
+        allow(File).to receive(:read).and_call_original
+        allow(File).to receive(:read).with(node_modules_pkg).and_raise(Errno::EACCES.new(node_modules_pkg.to_s))
+
+        File.write(package_json_path, JSON.generate({
+          "devDependencies" => {
+            "@rspack/core" => "workspace:*",
+            "@rspack/cli" => "^1.0.0"
+          }
+        }))
+      end
+
+      it "falls back to package.json specifiers instead of raising" do
+        doctor.send(:check_rspack_cache_configuration)
+        expect(warning_messages).to include(match(/Rspack v1 detected/))
+      end
+    end
+
     context "when the rspack version specifier is a git ref" do
       before do
         File.write(package_json_path, JSON.generate({

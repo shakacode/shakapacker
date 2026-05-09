@@ -869,7 +869,7 @@ module Shakapacker
         version = JSON.parse(File.read(rspack_pkg))["version"]
         match = version.to_s.match(/\A(\d+)\./)
         match && match[1].to_i
-      rescue JSON::ParserError, Errno::ENOENT
+      rescue JSON::ParserError, SystemCallError
         nil
       end
 
