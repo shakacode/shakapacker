@@ -15,6 +15,12 @@
 
 ### Migration Notes
 
+- **Simplify your `package.json` by adopting a supplemental package**. Existing apps can drop the explicit managed-build deps from `devDependencies` and rely on the bundled stack:
+  - **Rspack apps** can replace `shakapacker` + `@rspack/core` + `@rspack/cli` + `rspack-manifest-plugin` with a single `shakapacker-rspack`. See `packages/shakapacker-rspack/README.md` §"Simplifying an existing rspack install" for the before/after.
+  - **Webpack apps** can replace `shakapacker` + `webpack` + `webpack-cli` + `webpack-assets-manifest` with a single `shakapacker-webpack`. See `packages/shakapacker-webpack/README.md` §"Simplifying an existing webpack install" for the before/after.
+  - Optional peers (transpilers, `webpack-dev-server`, CSS preprocessors, react-refresh) stay only if your app uses those features.
+  - Adoption is opt-in: leaving your `package.json` untouched on v10.1 also continues to work.
+
 - **Adopting `shakapacker-webpack` requires `webpack-assets-manifest@^6.0.0`**. Core `shakapacker` still accepts both v5 and v6 (`^5.0.6 || ^6.0.0`), but `shakapacker-webpack` pins `~6.5.1`. Apps still on `webpack-assets-manifest@5.x` must upgrade when switching to the supplemental package; v6 fixed an ENOENT crash on clean builds with `merge: true` and dropped a Node 14 install path. See [the v5→v6 release notes](https://github.com/webdeveric/webpack-assets-manifest/releases) and `packages/shakapacker-webpack/README.md` for details.
 
 ### ⚠️ Breaking Changes

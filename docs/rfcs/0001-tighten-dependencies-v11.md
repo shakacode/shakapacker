@@ -15,7 +15,10 @@ Shakapacker should split into **three npm packages** to cleanly separate concern
 This is rolled out in two phases:
 
 - **v10.1.0** (non-breaking) — restructure repo, publish supplemental packages as additive. Existing peer deps remain in core. Supplemental packages pin the managed dependency stack to known-current versions. Users can adopt early.
-- **v11.0.0** (breaking) — remove bundler peer deps from core, tighten version ranges, drop EOL runtimes. Supplemental packages become required.
+- **v11.0.0** (breaking) — three things change at once, any one of which can require user action:
+  1. **Drop support for older bundler/loader versions**: webpack-dev-server v4, rspack v1, babel-loader v8, css-loader v6, sass-loader v13–v15. Apps still pinned to those must upgrade.
+  2. **Drop EOL runtimes**: Ruby 3.4+, Rails 7.2+ become the floor. Apps on older Ruby/Rails must upgrade or stay on the v10.x line.
+  3. **Supplemental packages become required for managed builds**: core stops declaring bundler peer deps. Apps that listed `shakapacker` and managed webpack/rspack themselves through core's peer set must adopt `shakapacker-webpack` or `shakapacker-rspack` (which bundle them as direct deps). Custom-build users (apps that produce their own `manifest.json`) keep using bare `shakapacker`.
 
 ## Motivation
 
@@ -372,8 +375,8 @@ Core `shakapacker` was tightened to `^20.19.0 || >=22.12.0` in v10.1 (PR #1099, 
 
 The `shakapacker:install` rake task should be updated to:
 
-1. Ask which bundler (webpack or rspack) — default: webpack
-2. Ask which transpiler (swc, babel, esbuild, none) — default: swc
+1. Ask which bundler (webpack or rspack) — **default: rspack**. Rspack ships SWC transpilation built in, so the recommended path is the lowest-friction install.
+2. **If the user picked webpack**, ask which transpiler (swc, babel, esbuild, none) — default: swc. **Skip this question entirely for rspack** — rspack uses its built-in SWC and we don't want to expand the support burden by exposing transpiler swap-out for rspack users who don't need it.
 3. Install the appropriate `shakapacker-*` package (it bundles `shakapacker` and the bundler stack)
 4. Install **only** the optional peer dependencies for the features the app actually uses
 
@@ -388,7 +391,9 @@ New projects or early adopters:
 1. Add `shakapacker-webpack` or `shakapacker-rspack` to devDependencies
 2. Both the old pattern (peer deps on core) and new pattern (supplemental package) work simultaneously
 
-### v10.x → v11.0.0 (Required)
+### v10.x → v11.0.0 (Planned, no firm date)
+
+> **Status:** The v11 plans below are the working roadmap, not a scheduled release. v10.1 (this PR's milestone) ships the supplemental packages additively so users can adopt them whenever they want. v11 will close out the breaking changes in §"Phase 2" once the v10.1 line has soaked, the supplemental package adoption pattern is validated in real apps, and Ruby 3.4 / Rails 7.2 are firmly the floor we want to require. Treat the steps below as the migration path users will follow when v11 lands, not as work scheduled for the current release.
 
 #### For Webpack Users
 
