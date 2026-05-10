@@ -6,10 +6,23 @@
 // `prepublishOnly`; for local monorepo development run `yarn build` in the
 // repository root before consuming this package against the source tree.
 
+// `shakapacker/package/config` is currently exposed only via core's
+// wildcard subpath export (`"./package/*": "./package/*"` in the
+// `shakapacker` package.json), not as a curated public entry. We rely on
+// it because it loads the YAML config without pulling in webpack/rspack
+// rule modules — which lets this preflight check run even when the root
+// export (which transitively touches bundler peers) fails to load.
+//
+// Tradeoff: any v11 reorganization of the `package/` directory (the RFC
+// proposes a monorepo split that moves core under `packages/shakapacker/`)
+// could break this require. The fallback to `require("shakapacker")?.config`
+// still yields a usable config for the bundler-mismatch check; if both
+// throw, we silently return undefined and let the final
+// `require("shakapacker/rspack")` surface the real error. When core
+// stabilizes a public `shakapacker/config` export, switch this away from
+// the wildcard subpath.
 const readShakapackerConfig = () => {
   try {
-    // Read the config subpath first so a webpack-default app missing webpack
-    // peers can still get the bundler mismatch warning before root export load.
     // eslint-disable-next-line global-require
     return require("shakapacker/package/config")
   } catch {
@@ -17,8 +30,6 @@ const readShakapackerConfig = () => {
       // eslint-disable-next-line global-require
       return require("shakapacker")?.config
     } catch {
-      // If shakapacker itself cannot load, the actual export below should
-      // surface that original error. There is no reliable config to inspect.
       return undefined
     }
   }

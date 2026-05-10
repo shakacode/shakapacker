@@ -357,12 +357,12 @@ The existing `bundle exec rake update_changelog` task should be updated to handl
 
 ### Node.js engines
 
-Core `shakapacker` keeps `engines.node >= 20` during the v10.x compatibility window. Supplemental packages declare the stricter runtime required by their pinned managed stack:
+Core `shakapacker` was tightened to `^20.19.0 || >=22.12.0` in v10.1 (PR #1099, driven by `@rspack/core` 2.0.x). Supplemental packages must not declare a more permissive `engines.node` than core, because a user who satisfies the supplemental's range but not core's would pass the supplemental's install gate and then hit core's engine error. Both supplementals therefore mirror core:
 
-| Package             | Node engine               | Reason                                               |
-| ------------------- | ------------------------- | ---------------------------------------------------- |
-| shakapacker-webpack | `>= 20.10.0`              | `webpack-assets-manifest` 6.5.1 requires Node 20.10+ |
-| shakapacker-rspack  | `^20.19.0 \|\| >=22.12.0` | `@rspack/core` 2.0.1 requires this range             |
+| Package             | Node engine               | Reason                                                                          |
+| ------------------- | ------------------------- | ------------------------------------------------------------------------------- |
+| shakapacker-webpack | `^20.19.0 \|\| >=22.12.0` | Mirror of core's `engines.node`; cannot be more permissive than core            |
+| shakapacker-rspack  | `^20.19.0 \|\| >=22.12.0` | Required by `@rspack/core` 2.0.1; same as core's range, so no further tightening |
 
 ### Installer Changes
 

@@ -29,6 +29,10 @@ const createPnpmLikeApp = (options = {}) => {
     ? options.configBundler
     : "rspack"
   const {
+    // When false, omit the shakapacker/package/config module so the wrapper's
+    // first require throws and the fallback to `require("shakapacker")?.config`
+    // is exercised. The default writes both entries, matching real installs.
+    writePackageConfig = true,
     shakapackerRootSource = `module.exports = { config: require("./package/config") }`,
     shakapackerRspackSource = `module.exports = { config: require("../package/config"), rspackEntrypoint: true }`
   } = options
@@ -50,11 +54,13 @@ const createPnpmLikeApp = (options = {}) => {
     configEntries.push(`assets_bundler: ${JSON.stringify(configBundler)}`)
   }
 
-  writeModule(
-    storeRoot,
-    "shakapacker/package/config",
-    `module.exports = { ${configEntries.join(", ")} }`
-  )
+  if (writePackageConfig) {
+    writeModule(
+      storeRoot,
+      "shakapacker/package/config",
+      `module.exports = { ${configEntries.join(", ")} }`
+    )
+  }
   writeModule(storeRoot, "shakapacker", shakapackerRootSource)
   writeModule(storeRoot, "shakapacker/rspack", shakapackerRspackSource)
 
@@ -164,6 +170,32 @@ describe("shakapacker-rspack package wrapper", () => {
     expect(result.loadError).toStrictEqual(
       expect.objectContaining({ code: "RSPACK_LOAD_FAILED" })
     )
+    const bundlerWarning = result.warnings.find(
+      (warning) => warning.code === "SHAKAPACKER_BUNDLER_MISMATCH"
+    )
+    expect(bundlerWarning).toBeDefined()
+    expect(bundlerWarning.message).toContain('assets_bundler is "webpack"')
+  })
+
+  // The wrapper tries `shakapacker/package/config` first because it loads
+  // the YAML config without dragging in webpack/rspack rules. If that
+  // private subpath ever moves (e.g. the v11 monorepo split relocates
+  // `package/`), the wrapper falls back to `require("shakapacker")?.config`.
+  // This test pins the fallback so the silent regression — wrapper stops
+  // emitting the bundler-mismatch warning — would fail CI.
+  test("falls back to shakapacker.config when the package/config subpath is unresolvable", () => {
+    const { appRoot } = createPnpmLikeApp({
+      configBundler: "webpack",
+      writePackageConfig: false,
+      shakapackerRootSource:
+        'module.exports = { config: { assets_bundler: "webpack" } }',
+      shakapackerRspackSource:
+        "module.exports = { rspackEntrypoint: true }"
+    })
+
+    const result = requireWrapper(appRoot)
+
+    expect(result.rspackEntrypoint).toBe(true)
     const bundlerWarning = result.warnings.find(
       (warning) => warning.code === "SHAKAPACKER_BUNDLER_MISMATCH"
     )

@@ -102,6 +102,28 @@ if [[ ${#DRY_RUN[@]} -eq 0 ]]; then
     echo "Error: not logged in to npm. Run 'npm login' first." >&2
     exit 1
   fi
+
+  # `npm whoami` only confirms credentials, not org membership. A maintainer
+  # with general npm auth but missing shakacode org access would pass the
+  # whoami gate and then fail mid-run at `npm publish`, leaving partial
+  # state (the same scenario `is_published` recovers from on retry — but
+  # only after access is granted). Fail fast for any package that already
+  # exists on the registry but isn't accessible read-write to the caller.
+  # Packages not yet on the registry are skipped; the first publish creates
+  # them under the caller's account.
+  echo "Verifying npm publish access…"
+  NPM_ACCESS_JSON="$(npm access list packages --json --registry https://registry.npmjs.org 2>/dev/null || true)"
+  for pkg in shakapacker shakapacker-webpack shakapacker-rspack; do
+    if npm view "$pkg" version --registry https://registry.npmjs.org >/dev/null 2>&1; then
+      if ! echo "$NPM_ACCESS_JSON" | grep -Eq "\"$pkg\"[[:space:]]*:[[:space:]]*\"read-write\""; then
+        echo "Error: missing read-write access to existing package '$pkg'." >&2
+        echo "       Ask a shakacode npm org owner to grant publish access before retrying." >&2
+        exit 1
+      fi
+    else
+      echo "  $pkg is not yet on the registry — first publish will create it."
+    fi
+  done
 fi
 
 # Idempotency: if a previous run published `shakapacker` but failed before
