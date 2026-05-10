@@ -13,6 +13,10 @@
 
 - **Added supplemental npm packages `shakapacker-webpack` and `shakapacker-rspack`**. [PR #1096](https://github.com/shakacode/shakapacker/pull/1096) by [justin808](https://github.com/justin808). Optional packages that lockstep with core and pin the bundler/transpiler peer set against the versions Shakapacker is tested with. Emit structured warnings (`SHAKAPACKER_BUNDLER_MISMATCH`, `SHAKAPACKER_NO_TRANSPILER`) when `config.assets_bundler` or `javascript_transpiler` doesn't match the installed peers. See [`docs/rfcs/0001-tighten-dependencies-v11.md`](docs/rfcs/0001-tighten-dependencies-v11.md) for the full phased rollout; v11 will remove these peers from core entirely.
 
+### Migration Notes
+
+- **Adopting `shakapacker-webpack` requires `webpack-assets-manifest@^6.0.0`**. Core `shakapacker` still accepts both v5 and v6 (`^5.0.6 || ^6.0.0`), but `shakapacker-webpack` pins `~6.5.1`. Apps still on `webpack-assets-manifest@5.x` must upgrade when switching to the supplemental package; v6 fixed an ENOENT crash on clean builds with `merge: true` and dropped a Node 14 install path. See [the v5→v6 release notes](https://github.com/webdeveric/webpack-assets-manifest/releases) and `packages/shakapacker-webpack/README.md` for details.
+
 ### ⚠️ Breaking Changes
 
 - **Breaking: tightened `package.json` `engines.node` to `^20.19.0 || >=22.12.0`**. [PR #1099](https://github.com/shakacode/shakapacker/pull/1099) by [justin808](https://github.com/justin808). Raised from `>= 20`, dropping support for Node 20.0.0–20.18.x and Node 21.x to match `@rspack/core@2.0.0-rc.0`. Consumers on those versions will hit an engine error with `--engine-strict` or yarn workspaces and need to upgrade. The PR also bumps `.node-version` to `22.20.0` and updates `conductor-setup.sh` to enforce the same disjoint range up front, so contributors get a clear error before `yarn install` fails with a confusing engine mismatch.

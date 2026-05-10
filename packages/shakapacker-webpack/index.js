@@ -94,6 +94,11 @@ if (
   )
 }
 
+// Intentionally not gated on `!shakapackerLoadFailed` (unlike the bundler
+// mismatch block above): when config loading fails, `transpilerSetting` is
+// undefined and we still want the missing-transpiler warning to fire so the
+// user isn't silently left with no transpiler. The shakapackerLoadFailed
+// branch below shapes the message to surface the load failure first.
 if (transpilerSetting !== "none") {
   // When the config names a known transpiler, only that pair counts —
   // unrelated transpilers being installed shouldn't mask a missing peer.
