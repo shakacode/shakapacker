@@ -12,7 +12,7 @@
     "directory": "packages/shakapacker-webpack"
   },
   "license": "MIT",
-  "author": "David Heinemeier Hansson <david@basecamp.com>, Justin Gordon <justin@shakacode.com>",
+  "author": "Justin Gordon <justin@shakacode.com>",
   "keywords": [
     "shakapacker",
     "webpack",

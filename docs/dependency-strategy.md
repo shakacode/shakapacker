@@ -331,23 +331,24 @@ All three npm packages share the same version number, always. The Ruby gem versi
 > **Sequencing is load-bearing.** Both supplemental packages declare `"shakapacker": "~10.1.0"` as a direct dependency. Core `shakapacker` 10.1.0 must be published _before_ either supplemental, otherwise installers cannot resolve the dep.
 
 ```bash
-# Bump the existing root package from 10.0.0 to 10.1.0.
-npm version 10.1.0 --no-git-tag-version
-# Bump the supplemental packages to the same version (lockstep).
-(cd packages/shakapacker-webpack && npm version 10.1.0 --no-git-tag-version)
-(cd packages/shakapacker-rspack && npm version 10.1.0 --no-git-tag-version)
-
-# Publish all three in the required order (core first, then supplementals).
-# The script verifies version lockstep before publishing anything.
-./scripts/publish-packages.sh
-
-# Ruby gem is released separately via existing rake task
-bundle exec rake release
+# Releases the gem AND all three npm packages. The rake task bumps every
+# package.json to the target version, commits + tags + pushes via release-it,
+# then invokes scripts/publish-packages.sh to publish all three to npm in
+# lockstep (core first, then supplementals).
+bundle exec rake "release[10.1.0]"
 ```
+
+Under the hood, the rake task:
+
+1. Bumps `lib/shakapacker/version.rb` (`gem bump`).
+2. Runs `npm version <v> --no-git-tag-version` in `packages/shakapacker-webpack` and `packages/shakapacker-rspack`.
+3. Invokes `release-it` with `--no-npm.publish` so it handles the core version bump, commit, tag, and push — but defers npm publishing.
+4. Calls `./scripts/publish-packages.sh`, which re-validates lockstep across all three `package.json` files and publishes them in the required core-first order. Pre-release versions (e.g. `10.1.0-beta.1`) automatically get the matching `--tag` (`beta`, `rc`, etc.).
+5. Runs `gem release` for RubyGems and syncs the GitHub release from `CHANGELOG.md`.
 
 > **Why npm for publishing despite Yarn 1 for development.** The project pins `packageManager: yarn@1.22.22` and uses Yarn for all development scripts, but Yarn Classic does not have a workspace-aware publish command (and `yarn workspaces version` is not available in v1). We invoke `npm publish` per package directly until v11 picks a dedicated release tool — see Open Question #5.
 
-For later Phase 1 releases, bump all three package manifests to the same version in one release commit before publishing. A dedicated workspace or release tool remains an open question for v11, when the core package can move under `packages/shakapacker/` and the repository root can become private.
+For later Phase 1 releases, the same `rake "release[<version>]"` invocation handles all three packages. A dedicated workspace or release tool remains an open question for v11, when the core package can move under `packages/shakapacker/` and the repository root can become private.
 
 The existing `bundle exec rake update_changelog` task should be updated to handle the monorepo structure, noting which packages were affected in each release.
 

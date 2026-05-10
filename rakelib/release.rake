@@ -455,6 +455,13 @@ def release_staged_files
   ]
 end
 
+def supplemental_package_dirs
+  [
+    "packages/shakapacker-webpack",
+    "packages/shakapacker-rspack"
+  ]
+end
+
 def print_release_summary(release_result)
   released_gem_version = release_result[:released_gem_version]
   released_npm_version = release_result[:released_npm_version]
@@ -471,6 +478,7 @@ def print_release_summary(release_result)
     puts "\nFiles that would be updated:"
     staged_files.each { |file| puts "  - #{file}" }
     puts "  - package.json (updated by release-it)"
+    supplemental_package_dirs.each { |dir| puts "  - #{dir}/package.json" }
     if changelog_section_found
       puts "\nChangelog: ✓ CHANGELOG.md section found for v#{released_npm_version}"
     else
@@ -482,6 +490,8 @@ def print_release_summary(release_result)
 
   puts "Published to npmjs.org:"
   puts "  - shakapacker@#{released_npm_version}"
+  puts "  - shakapacker-webpack@#{released_npm_version}"
+  puts "  - shakapacker-rspack@#{released_npm_version}"
   puts ""
   puts "Ruby Gem (RubyGems.org):"
   puts "  - shakapacker #{released_gem_version}"
@@ -578,17 +588,42 @@ def perform_release(
       abort "❌ Expected gem bump to produce #{resolved_target_gem_version}, but found #{resolved_gem_version}."
     end
 
+    # Bump the supplemental packages to match core. publish-packages.sh enforces
+    # version lockstep across all three packages, but release-it only knows about
+    # the root package.json — so we pre-bump the supplementals and stage them.
+    # release-it picks up the staged files when it commits the version bump.
+    supplemental_package_dirs.each do |pkg_dir|
+      Shakapacker::Utils::Misc.sh_in_dir(
+        File.join(release_root, pkg_dir),
+        "npm version #{Shellwords.escape(npm_version)} --no-git-tag-version --allow-same-version"
+      )
+    end
+    supplemental_package_jsons = supplemental_package_dirs.map { |d| "#{d}/package.json" }
+    Shakapacker::Utils::Misc.sh_in_dir(release_root, "git add #{Shellwords.join(supplemental_package_jsons)}")
+
     # Use npx so maintainers don't need a globally installed `release-it` binary.
     # This avoids failures from shim managers (e.g. mise) when `release-it` isn't configured.
+    # `--no-npm.publish` defers npm publishing to publish-packages.sh below, which
+    # enforces lockstep across all three packages and publishes in the required
+    # core-first order.
     release_it_command = +"npx --yes release-it #{Shellwords.escape(npm_version)}"
-    release_it_command << " --npm.publish --no-git.requireCleanWorkingDir"
+    release_it_command << " --no-npm.publish --no-git.requireCleanWorkingDir"
     release_it_command << " --dry-run --verbose" if dry_run
     npm_dist_tag = npm_dist_tag_for_version(npm_version)
     puts "ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ"
-    puts "NPM target: shakapacker@#{npm_version} (dist-tag: #{npm_dist_tag})"
-    puts "Use the OTP for NPM!"
+    puts "NPM target (lockstep): shakapacker, shakapacker-webpack, shakapacker-rspack @ #{npm_version} (dist-tag: #{npm_dist_tag})"
+    puts "release-it: bump versions, tag, push. publish-packages.sh: publish all three to npm."
+    puts "Use the OTP for NPM! (one prompt per package)"
     puts "ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ"
     Shakapacker::Utils::Misc.sh_in_dir(release_root, release_it_command)
+
+    # Publish all three npm packages in lockstep (core first, then supplementals).
+    # publish-packages.sh re-validates version equality and skips packages that
+    # are already on the registry, so it's safe to retry after a partial failure.
+    publish_command = +"./scripts/publish-packages.sh"
+    publish_command << " --tag #{Shellwords.escape(npm_dist_tag)}" unless npm_dist_tag == "latest"
+    publish_command << " --dry-run" if dry_run
+    Shakapacker::Utils::Misc.sh_in_dir(release_root, publish_command)
 
     puts "ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ"
     puts "Use the OTP for RubyGems!"

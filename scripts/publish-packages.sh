@@ -2,9 +2,14 @@
 # Publish core shakapacker first, then the supplemental packages.
 #
 # Sequencing is load-bearing: shakapacker-webpack and shakapacker-rspack both
-# declare "shakapacker": "^X.Y.Z" as a required peer dep. Publishing a
-# supplemental before core leaves installers with an unresolvable peer dep
-# until core is published.
+# declare "shakapacker": "~X.Y.Z" as a regular dependency. Publishing a
+# supplemental before core leaves `npm install shakapacker-webpack` unable to
+# resolve the dependency tree until core is published.
+#
+# Normal usage is via `bundle exec rake "release[X.Y.Z]"`, which wraps this
+# script after release-it bumps versions and pushes the release commit. Direct
+# invocation below is supported for manual recovery (e.g. retrying after a
+# partial publish) or for CI workflows that publish without bumping.
 #
 # Usage:
 #   ./scripts/publish-packages.sh                      # publish to default dist-tag (latest)
