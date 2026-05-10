@@ -30,4 +30,17 @@ describe("warning codes are consistent across wrapper packages", () => {
     expect(webpackCodes).toContain("SHAKAPACKER_BUNDLER_MISMATCH")
     expect(rspackCodes).toContain("SHAKAPACKER_BUNDLER_MISMATCH")
   })
+
+  test("rspack wrapper does not declare SHAKAPACKER_NO_TRANSPILER", () => {
+    // SHAKAPACKER_NO_TRANSPILER is a webpack-only concept (rspack ships
+    // SWC built in). Asserting absence here documents intent and prevents
+    // a future refactor from accidentally adding the code to the rspack
+    // wrapper, which would then need its own gating to avoid spurious
+    // warnings.
+    const rspackCodes = extractCodes(
+      join(repoRoot, "packages/shakapacker-rspack/index.js")
+    )
+
+    expect(rspackCodes).not.toContain("SHAKAPACKER_NO_TRANSPILER")
+  })
 })

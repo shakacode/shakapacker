@@ -158,6 +158,11 @@ fi
 # the script skip already-published packages and continue. Skipped under
 # --dry-run since dry-runs never mutate the registry.
 is_published() {
+  # Best-effort: `npm view` returns non-zero for both "not published yet"
+  # (expected) and "registry unreachable" (transient). On the transient
+  # path we fall through to `npm publish`, which will surface the
+  # underlying error itself; a follow-up run is safe because the next
+  # `is_published` check skips anything that did publish.
   npm view "$1@$2" version --registry https://registry.npmjs.org >/dev/null 2>&1
 }
 
@@ -169,7 +174,11 @@ publish_package() {
     echo "  $pkg@$version already on registry — skipping."
     return
   fi
-  (cd "$dir" && npm publish ${DRY_RUN[@]+"${DRY_RUN[@]}"} ${TAG[@]+"${TAG[@]}"} ${PROVENANCE[@]+"${PROVENANCE[@]}"})
+  # Pin the publish target to npmjs.org explicitly so the script doesn't
+  # accidentally follow a maintainer's `.npmrc` to a private registry. All
+  # pre-flight checks above already pass `--registry`; matching that here
+  # keeps validation and publish targeting the same registry.
+  (cd "$dir" && npm publish --registry=https://registry.npmjs.org ${DRY_RUN[@]+"${DRY_RUN[@]}"} ${TAG[@]+"${TAG[@]}"} ${PROVENANCE[@]+"${PROVENANCE[@]}"})
 }
 
 echo "Publishing shakapacker @ ${CORE_VERSION} (core first)…"

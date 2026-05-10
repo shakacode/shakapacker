@@ -57,6 +57,12 @@ const canResolve = (mod) => {
 // reorganizations); if both fail, the wrapper still emits a generic
 // transpiler warning before re-raising the load error from the final
 // require below.
+//
+// This helper is intentionally duplicated verbatim in
+// packages/shakapacker-rspack/index.js. The two supplemental packages
+// ship as separate npm packages, so a shared module isn't possible
+// without vendoring at publish time. Keep the two implementations in
+// sync when changing this logic.
 const readShakapackerConfig = () => {
   try {
     // eslint-disable-next-line global-require
@@ -82,11 +88,12 @@ const transpilerSetting = shakapackerConfig?.javascript_transpiler
 // when the wrong rules/plugins try to load. Skipped when config loading
 // failed entirely (we don't know what the user configured) or when the
 // bundler is webpack/unset (webpack is the default).
-if (
+const bundlerMismatch =
   !shakapackerLoadFailed &&
   bundlerSetting !== undefined &&
   bundlerSetting !== "webpack"
-) {
+
+if (bundlerMismatch) {
   process.emitWarning(
     `[shakapacker-webpack] config.assets_bundler is "${bundlerSetting}" but this package only supports webpack.\n` +
       `Install shakapacker-rspack and require it instead, or set \`assets_bundler: webpack\` in config/shakapacker.yml.`,
@@ -99,7 +106,13 @@ if (
 // undefined and we still want the missing-transpiler warning to fire so the
 // user isn't silently left with no transpiler. The shakapackerLoadFailed
 // branch below shapes the message to surface the load failure first.
-if (transpilerSetting !== "none") {
+//
+// Skip the transpiler check entirely when a bundler mismatch was detected:
+// rspack ships SWC transpilation built in, so a user with
+// `assets_bundler: rspack` deliberately has no webpack-stack transpilers
+// installed. The bundler mismatch is the actionable problem; an additional
+// NO_TRANSPILER warning would just be misleading noise.
+if (!bundlerMismatch && transpilerSetting !== "none") {
   // When the config names a known transpiler, only that pair counts —
   // unrelated transpilers being installed shouldn't mask a missing peer.
   // When the setting is missing (config load failed) or unrecognized
@@ -126,8 +139,20 @@ if (transpilerSetting !== "none") {
       // primary problem before the (necessarily speculative) transpiler
       // advice, so users fix the root cause first instead of chasing
       // package-install messages.
+      // Don't recommend a single "default" pair here: the install template
+      // ships `javascript_transpiler: "swc"`, but the *code* default in
+      // `package/config.ts` is `"babel"` for webpack (legacy backward
+      // compat). A user who installs SWC per a single-default message and
+      // then creates a config without setting `javascript_transpiler:`
+      // would still trip the "babel-loader missing" warning. Pointing at
+      // the supported pairs and prompting an explicit
+      // `javascript_transpiler:` value avoids that whiplash.
       message = `[shakapacker-webpack] shakapacker config could not be loaded — resolve that first; the config file may be missing.
-If the config is intentionally absent, install a JavaScript transpiler pair (default: @swc/core + swc-loader) or set \`javascript_transpiler: "none"\` once the config exists.`
+Once the config exists, install one of the supported transpiler pairs and set \`javascript_transpiler:\` to match:
+  - @swc/core + swc-loader   → javascript_transpiler: "swc" (recommended; matches the install template)
+  - @babel/core + babel-loader → javascript_transpiler: "babel"
+  - esbuild + esbuild-loader → javascript_transpiler: "esbuild"
+Or set \`javascript_transpiler: "none"\` if you provide your own loader.`
     } else if (expectedGroup) {
       message = `[shakapacker-webpack] javascript_transpiler is "${transpilerSetting}" but ${expectedGroup.join(
         " + "

@@ -18,6 +18,12 @@ const BUNDLER_MISMATCH_CODE = "SHAKAPACKER_BUNDLER_MISMATCH"
 // peers) fails to load. Falls back to `require("shakapacker").config` for
 // older core versions that predate the explicit subpath export, then to
 // `undefined` if both fail.
+//
+// This helper is intentionally duplicated verbatim in
+// packages/shakapacker-webpack/index.js. The two supplemental packages
+// ship as separate npm packages, so a shared module isn't possible
+// without vendoring at publish time. Keep the two implementations in
+// sync when changing this logic.
 const readShakapackerConfig = () => {
   try {
     // eslint-disable-next-line global-require

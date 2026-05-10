@@ -232,9 +232,14 @@ describe("shakapacker-webpack package wrapper", () => {
     expect(transpilerWarning.message).toContain(
       "shakapacker config could not be loaded"
     )
-    expect(transpilerWarning.message).toContain(
-      "default: @swc/core + swc-loader"
-    )
+    // Recommendation lists the supported transpiler pairs alongside the
+    // matching `javascript_transpiler:` value the user must set, so a
+    // user who installs SWC per the message and then defaults
+    // `javascript_transpiler:` to the code-fallback (babel) doesn't trip
+    // a follow-on babel-loader warning.
+    expect(transpilerWarning.message).toContain("@swc/core + swc-loader")
+    expect(transpilerWarning.message).toContain('javascript_transpiler: "swc"')
+    expect(transpilerWarning.message).toContain("@babel/core + babel-loader")
   })
 
   test("does not warn when shakapacker config cannot be read but a valid transpiler pair is installed", () => {
@@ -320,6 +325,32 @@ describe("shakapacker-webpack package wrapper", () => {
     expect(bundlerWarning).toBeDefined()
     expect(bundlerWarning.message).toContain('assets_bundler is "rspack"')
     expect(bundlerWarning.message).toContain("shakapacker-rspack")
+  })
+
+  test("does not double-warn with NO_TRANSPILER when bundler is mismatched", () => {
+    // Rspack ships SWC built in, so a real rspack user with no
+    // webpack-stack transpilers would otherwise hit both
+    // SHAKAPACKER_BUNDLER_MISMATCH and SHAKAPACKER_NO_TRANSPILER. Only the
+    // bundler mismatch is actionable; the transpiler warning would be
+    // misleading noise.
+    const { appRoot } = createPnpmLikeApp({
+      configBundler: "rspack",
+      configTranspiler: "swc",
+      transpilers: []
+    })
+
+    const result = requireWrapper(appRoot)
+
+    expect(result.warnings).toStrictEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ code: "SHAKAPACKER_BUNDLER_MISMATCH" })
+      ])
+    )
+    expect(result.warnings).not.toStrictEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ code: "SHAKAPACKER_NO_TRANSPILER" })
+      ])
+    )
   })
 
   test("does not warn about assets_bundler when set to webpack", () => {

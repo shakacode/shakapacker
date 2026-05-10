@@ -123,9 +123,11 @@ The `@types/*` packages remain as optional peer deps because they are referenced
 
 Supplemental package for the standard webpack managed build experience.
 
+> The version columns below show the exact release Shakapacker tests against. `package.json` ships these as patch-tolerant `~X.Y.Z` ranges (see [Version Pinning Philosophy](#version-pinning-philosophy)) — e.g. `webpack` is enforced as `~5.106.2`, not pinned to `5.106.2`.
+
 **Peer dependencies (required):**
 
-| Package                 | Version   |
+| Package                 | Tested at |
 | ----------------------- | --------- |
 | shakapacker             | `~10.1.0` |
 | webpack                 | `5.106.2` |
@@ -134,17 +136,17 @@ Supplemental package for the standard webpack managed build experience.
 
 **Peer dependencies (optional):**
 
-| Package                              | Version  | When needed             |
-| ------------------------------------ | -------- | ----------------------- |
-| webpack-dev-server                   | `5.2.3`  | Dev mode with HMR       |
-| mini-css-extract-plugin              | `2.10.2` | CSS extraction          |
-| terser-webpack-plugin                | `5.5.0`  | Production minification |
-| webpack-subresource-integrity        | `5.1.0`  | SRI hashes              |
-| @pmmmwh/react-refresh-webpack-plugin | `0.6.2`  | React HMR               |
+| Package                              | Tested at | When needed             |
+| ------------------------------------ | --------- | ----------------------- |
+| webpack-dev-server                   | `5.2.3`   | Dev mode with HMR       |
+| mini-css-extract-plugin              | `2.10.2`  | CSS extraction          |
+| terser-webpack-plugin                | `5.5.0`   | Production minification |
+| webpack-subresource-integrity        | `5.1.0`   | SRI hashes              |
+| @pmmmwh/react-refresh-webpack-plugin | `0.6.2`   | React HMR               |
 
 **Peer dependencies (optional — transpiler, pick one):**
 
-| Package        | Version   | When needed                              |
+| Package        | Tested at | When needed                              |
 | -------------- | --------- | ---------------------------------------- |
 | @swc/core      | `1.15.33` | `javascript_transpiler: "swc"` (default) |
 | swc-loader     | `0.2.7`   | Paired with @swc/core                    |
@@ -155,11 +157,11 @@ Supplemental package for the standard webpack managed build experience.
 
 **Peer dependencies (optional — CSS preprocessors):**
 
-| Package     | Version  | When needed      |
-| ----------- | -------- | ---------------- |
-| css-loader  | `7.1.4`  | CSS processing   |
-| sass        | `1.99.0` | SCSS/Sass files  |
-| sass-loader | `16.0.7` | Paired with sass |
+| Package     | Tested at | When needed      |
+| ----------- | --------- | ---------------- |
+| css-loader  | `7.1.4`   | CSS processing   |
+| sass        | `1.99.0`  | SCSS/Sass files  |
+| sass-loader | `16.0.7`  | Paired with sass |
 
 #### `shakapacker-rspack` (managed rspack build)
 
@@ -167,7 +169,7 @@ Supplemental package for the rspack managed build experience.
 
 **Peer dependencies (required):**
 
-| Package                | Version   |
+| Package                | Tested at |
 | ---------------------- | --------- |
 | shakapacker            | `~10.1.0` |
 | @rspack/core           | `2.0.1`   |
@@ -176,12 +178,12 @@ Supplemental package for the rspack managed build experience.
 
 **Peer dependencies (optional):**
 
-| Package                      | Version  | When needed      |
-| ---------------------------- | -------- | ---------------- |
-| @rspack/plugin-react-refresh | `2.0.1`  | React HMR        |
-| css-loader                   | `7.1.4`  | CSS processing   |
-| sass                         | `1.99.0` | SCSS/Sass files  |
-| sass-loader                  | `16.0.7` | Paired with sass |
+| Package                      | Tested at | When needed      |
+| ---------------------------- | --------- | ---------------- |
+| @rspack/plugin-react-refresh | `2.0.1`   | React HMR        |
+| css-loader                   | `7.1.4`   | CSS processing   |
+| sass                         | `1.99.0`  | SCSS/Sass files  |
+| sass-loader                  | `16.0.7`  | Paired with sass |
 
 Note: rspack has built-in SWC transpilation, so no external transpiler deps are needed.
 
