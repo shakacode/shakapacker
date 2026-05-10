@@ -11,7 +11,7 @@
 
 ### Added
 
-- **Added supplemental npm packages `shakapacker-webpack` and `shakapacker-rspack`**. [PR #1096](https://github.com/shakacode/shakapacker/pull/1096) by [justin808](https://github.com/justin808). Optional packages that lockstep with core and pin the bundler/transpiler peer set against the versions Shakapacker is tested with. Emit structured warnings (`SHAKAPACKER_BUNDLER_MISMATCH`, `SHAKAPACKER_NO_TRANSPILER`) when `config.assets_bundler` or `javascript_transpiler` doesn't match the installed peers. See [`docs/rfcs/0001-tighten-dependencies-v11.md`](docs/rfcs/0001-tighten-dependencies-v11.md) for the full phased rollout; v11 will remove these peers from core entirely.
+- **Added supplemental npm packages `shakapacker-webpack` and `shakapacker-rspack`**. [PR #1096](https://github.com/shakacode/shakapacker/pull/1096) by [justin808](https://github.com/justin808). Optional packages that lockstep with core and bundle the managed-build stack as direct `dependencies` (so a single `yarn add shakapacker-webpack` pulls in `shakapacker`, `webpack`, `webpack-cli`, and `webpack-assets-manifest`; the rspack package bundles `shakapacker`, `@rspack/core`, `@rspack/cli`, and `rspack-manifest-plugin`). Optional features (transpilers, dev-server, CSS preprocessors, react-refresh) remain as opt-in `peerDependencies` so SCSS/native-binding bloat isn't forced on every install. The wrappers emit structured warnings (`SHAKAPACKER_BUNDLER_MISMATCH`, `SHAKAPACKER_NO_TRANSPILER`) when `config.assets_bundler` or `javascript_transpiler` doesn't match the installed peers. See [`docs/rfcs/0001-tighten-dependencies-v11.md`](docs/rfcs/0001-tighten-dependencies-v11.md) for the full phased rollout; v11 will remove these peers from core entirely.
 
 ### Migration Notes
 

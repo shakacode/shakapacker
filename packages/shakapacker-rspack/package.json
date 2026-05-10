@@ -25,11 +25,13 @@
     "LICENSE",
     "README.md"
   ],
-  "peerDependencies": {
+  "dependencies": {
     "shakapacker": "~10.1.0",
     "@rspack/core": "~2.0.1",
     "@rspack/cli": "~2.0.1",
-    "rspack-manifest-plugin": "~5.2.1",
+    "rspack-manifest-plugin": "~5.2.1"
+  },
+  "peerDependencies": {
     "@rspack/plugin-react-refresh": "~2.0.1",
     "css-loader": "~7.1.4",
     "sass": "~1.99.0",

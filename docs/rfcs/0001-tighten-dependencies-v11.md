@@ -9,8 +9,8 @@
 Shakapacker should split into **three npm packages** to cleanly separate concerns:
 
 1. **`shakapacker`** — core package (config loading, manifest reading, dev server proxy, CLI). Zero bundler-specific peer deps.
-2. **`shakapacker-webpack`** — managed webpack build. Has `webpack`, `webpack-cli`, etc. as **required** peer deps.
-3. **`shakapacker-rspack`** — managed rspack build. Has `@rspack/core`, `@rspack/cli`, etc. as **required** peer deps.
+2. **`shakapacker-webpack`** — managed webpack build. **Bundles `webpack`, `webpack-cli`, etc. as direct dependencies** so a single install brings the full stack.
+3. **`shakapacker-rspack`** — managed rspack build. **Bundles `@rspack/core`, `@rspack/cli`, etc. as direct dependencies** so a single install brings the full stack.
 
 This is rolled out in two phases:
 
@@ -125,7 +125,7 @@ Supplemental package for the standard webpack managed build experience.
 
 > The version columns below show the exact release Shakapacker tests against. `package.json` ships these as patch-tolerant `~X.Y.Z` ranges (see [Version Pinning Philosophy](#version-pinning-philosophy)) — e.g. `webpack` is enforced as `~5.106.2`, not pinned to `5.106.2`.
 
-**Peer dependencies (required):**
+**Dependencies (bundled — installed automatically):**
 
 | Package                 | Tested at |
 | ----------------------- | --------- |
@@ -133,6 +133,8 @@ Supplemental package for the standard webpack managed build experience.
 | webpack                 | `5.106.2` |
 | webpack-cli             | `7.0.2`   |
 | webpack-assets-manifest | `6.5.1`   |
+
+The required managed-build stack ships as `dependencies` so a single `yarn add shakapacker-webpack` (or npm/pnpm equivalent) pulls in everything an app needs to start building. npm hoisting keeps a single instance of webpack at the top level so plugin `instanceof` checks behave correctly.
 
 **Peer dependencies (optional):**
 
@@ -167,7 +169,7 @@ Supplemental package for the standard webpack managed build experience.
 
 Supplemental package for the rspack managed build experience.
 
-**Peer dependencies (required):**
+**Dependencies (bundled — installed automatically):**
 
 | Package                | Tested at |
 | ---------------------- | --------- |
@@ -175,6 +177,8 @@ Supplemental package for the rspack managed build experience.
 | @rspack/core           | `2.0.1`   |
 | @rspack/cli            | `2.0.1`   |
 | rspack-manifest-plugin | `5.2.1`   |
+
+The required managed-build stack ships as `dependencies` so a single `yarn add shakapacker-rspack` (or npm/pnpm equivalent) pulls in everything an app needs to start building.
 
 **Peer dependencies (optional):**
 
@@ -191,25 +195,23 @@ Rspack v2 is stable, so the supplemental rspack package pins to the current v2 G
 
 ### Version Pinning Philosophy
 
-The core `shakapacker` package keeps its broad optional peer ranges during v10.x so existing applications are not broken by an additive release. The supplemental packages use a different policy. The version numbers above are the versions Shakapacker is tested against; both required and optional peers ship as patch-tolerant `~X.Y.Z` ranges so a consumer's routine patch bump does not trigger an npm 7+ peer-conflict warning until the next Shakapacker release.
+The core `shakapacker` package keeps its broad optional peer ranges during v10.x so existing applications are not broken by an additive release. The supplemental packages use a different policy. The version numbers above are the versions Shakapacker is tested against; bundled `dependencies` and optional `peerDependencies` alike ship as patch-tolerant `~X.Y.Z` ranges so a consumer's routine patch bump does not trigger an npm 7+ peer-conflict warning until the next Shakapacker release.
 
-- **Patch-tolerant pins (`~X.Y.Z`) for required and optional peers alike.** Patch releases are accepted across the managed stack — webpack, Rspack, loaders, transpilers, and CSS preprocessors. Major and minor bumps still wait for a coordinated Shakapacker release.
-- **Update pins with Shakapacker package releases.** When webpack, Rspack, loaders, or managed plugins move, release a new lockstep Shakapacker package version with updated peer pins.
+- **Patch-tolerant pins (`~X.Y.Z`) for bundled deps and optional peers alike.** Patch releases are accepted across the managed stack — webpack, Rspack, loaders, transpilers, and CSS preprocessors. Major and minor bumps still wait for a coordinated Shakapacker release.
+- **Update pins with Shakapacker package releases.** When webpack, Rspack, loaders, or managed plugins move, release a new lockstep Shakapacker package version with updated pins.
 - **Keep the maintenance signal honest.** A version outside the supplemental package pins is not claimed as supported until the pins are updated.
 - **Avoid pre-release pins unless deliberately testing a pre-release line.** For example, `webpack-subresource-integrity` stays on the latest stable 5.1.x release even though its npm `latest` dist-tag currently points at a release candidate.
 
 ### What Each User Type Installs (v11+)
+
+The supplemental packages bundle the required managed-build stack as `dependencies`, so users only declare the wrapper and the optional feature peers they actually use.
 
 **Webpack + SWC (default happy path):**
 
 ```json
 {
   "devDependencies": {
-    "shakapacker": "^11.0.0",
     "shakapacker-webpack": "^11.0.0",
-    "webpack": "5.106.2",
-    "webpack-cli": "7.0.2",
-    "webpack-assets-manifest": "6.5.1",
     "webpack-dev-server": "5.2.3",
     "@swc/core": "1.15.33",
     "swc-loader": "0.2.7",
@@ -219,20 +221,20 @@ The core `shakapacker` package keeps its broad optional peer ranges during v10.x
 }
 ```
 
+`shakapacker`, `webpack`, `webpack-cli`, and `webpack-assets-manifest` come along automatically as deps of `shakapacker-webpack`.
+
 **Rspack (SWC is built-in):**
 
 ```json
 {
   "devDependencies": {
-    "shakapacker": "^11.0.0",
     "shakapacker-rspack": "^11.0.0",
-    "@rspack/core": "2.0.1",
-    "@rspack/cli": "2.0.1",
-    "rspack-manifest-plugin": "5.2.1",
     "css-loader": "7.1.4"
   }
 }
 ```
+
+`shakapacker`, `@rspack/core`, `@rspack/cli`, and `rspack-manifest-plugin` come along automatically as deps of `shakapacker-rspack`.
 
 **Custom build (manifest-only):**
 
@@ -324,7 +326,7 @@ All three npm packages share the same version number, always. The Ruby gem versi
 
 **Initial v10.1.0 release process:**
 
-> **Sequencing is load-bearing.** Both supplemental packages declare `"shakapacker": "~10.1.0"` as a required peer dep. Core `shakapacker` 10.1.0 must be published _before_ either supplemental, otherwise installers receive an unresolvable peer dependency error.
+> **Sequencing is load-bearing.** Both supplemental packages declare `"shakapacker": "~10.1.0"` as a direct dependency. Core `shakapacker` 10.1.0 must be published _before_ either supplemental, otherwise installers cannot resolve the dep.
 
 ```bash
 # Bump the existing root package from 10.0.0 to 10.1.0.
@@ -372,8 +374,8 @@ The `shakapacker:install` rake task should be updated to:
 
 1. Ask which bundler (webpack or rspack) — default: webpack
 2. Ask which transpiler (swc, babel, esbuild, none) — default: swc
-3. Install `shakapacker` + the appropriate `shakapacker-*` package
-4. Install **only** the required peer dependencies for the chosen combination
+3. Install the appropriate `shakapacker-*` package (it bundles `shakapacker` and the bundler stack)
+4. Install **only** the optional peer dependencies for the features the app actually uses
 
 ## Migration Path
 

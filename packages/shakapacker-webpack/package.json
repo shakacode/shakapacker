@@ -25,11 +25,13 @@
     "LICENSE",
     "README.md"
   ],
-  "peerDependencies": {
+  "dependencies": {
     "shakapacker": "~10.1.0",
     "webpack": "~5.106.2",
     "webpack-cli": "~7.0.2",
-    "webpack-assets-manifest": "~6.5.1",
+    "webpack-assets-manifest": "~6.5.1"
+  },
+  "peerDependencies": {
     "webpack-dev-server": "~5.2.3",
     "mini-css-extract-plugin": "~2.10.2",
     "terser-webpack-plugin": "~5.5.0",
