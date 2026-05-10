@@ -1,24 +1,23 @@
-# RFC: Tighten Dependencies with Supplemental Packages
+# Dependency Strategy
 
-**Status:** Draft (Rev 6 — phased rollout v10.1 / v11)
-**Date:** 2026-03-28 (revised 2026-05-02)
+**Status:** v10.1 phase shipped (supplemental packages additive). v11 phase is the working roadmap, not a scheduled release.
+**Original RFC date:** 2026-03-28 (revised 2026-05-10)
 **Author:** Justin Gordon
+
+> **Looking for the user-facing migration steps?** See [`docs/migration/v10.1-supplemental-packages.md`](migration/v10.1-supplemental-packages.md). This doc captures the design rationale, alternatives considered, and the v11 roadmap — read it if you want to understand _why_ the dependency surface looks the way it does.
 
 ## Summary
 
-Shakapacker should split into **three npm packages** to cleanly separate concerns:
+Shakapacker is split into **three npm packages** to cleanly separate concerns:
 
 1. **`shakapacker`** — core package (config loading, manifest reading, dev server proxy, CLI). Zero bundler-specific peer deps.
 2. **`shakapacker-webpack`** — managed webpack build. **Bundles `webpack`, `webpack-cli`, etc. as direct dependencies** so a single install brings the full stack.
 3. **`shakapacker-rspack`** — managed rspack build. **Bundles `@rspack/core`, `@rspack/cli`, etc. as direct dependencies** so a single install brings the full stack.
 
-This is rolled out in two phases:
+The rollout is phased:
 
-- **v10.1.0** (non-breaking) — restructure repo, publish supplemental packages as additive. Existing peer deps remain in core. Supplemental packages pin the managed dependency stack to known-current versions. Users can adopt early.
-- **v11.0.0** (breaking) — three things change at once, any one of which can require user action:
-  1. **Drop support for older bundler/loader versions**: webpack-dev-server v4, rspack v1, babel-loader v8, css-loader v6, sass-loader v13–v15. Apps still pinned to those must upgrade.
-  2. **Drop EOL runtimes**: Ruby 3.4+, Rails 7.2+ become the floor. Apps on older Ruby/Rails must upgrade or stay on the v10.x line.
-  3. **Supplemental packages become required for managed builds**: core stops declaring bundler peer deps. Apps that listed `shakapacker` and managed webpack/rspack themselves through core's peer set must adopt `shakapacker-webpack` or `shakapacker-rspack` (which bundle them as direct deps). Custom-build users (apps that produce their own `manifest.json`) keep using bare `shakapacker`.
+- **v10.1.0 (shipped, non-breaking)** — supplemental packages are published as additive. Existing peer deps remain in core. Adopters opt in whenever they're ready.
+- **v11.0.0 (planned, no firm date)** — supplemental packages become required for managed builds; core no longer declares bundler peer deps. Older bundler/loader versions and EOL Ruby/Rails versions get dropped. Specifics are sketched in §"Phase 2" below but the timing depends on adoption signal from v10.1.
 
 ## Motivation
 
@@ -382,47 +381,19 @@ The `shakapacker:install` rake task should be updated to:
 
 ## Migration Path
 
-### v10.x → v10.1.0 (Optional, Zero-Risk)
+### v10.x → v10.1.0 (shipped)
 
-Existing users: nothing changes. Your current `package.json` continues to work.
+User-facing migration steps live in [`docs/migration/v10.1-supplemental-packages.md`](migration/v10.1-supplemental-packages.md). Adoption is opt-in; nothing breaks for users who don't change anything.
 
-New projects or early adopters:
+### v10.x → v11.0.0 (planned, no firm date)
 
-1. Add `shakapacker-webpack` or `shakapacker-rspack` to devDependencies
-2. Both the old pattern (peer deps on core) and new pattern (supplemental package) work simultaneously
+When v11 lands, the migration path will look roughly like:
 
-### v10.x → v11.0.0 (Planned, no firm date)
+- **Webpack and rspack users on the managed build path** adopt the matching supplemental package (or rely on v10.1 adoption already done) and update any stale loader/plugin versions to the pins enforced by the wrapper.
+- **Custom-build users** (apps that output their own `manifest.json`) keep using bare `shakapacker` — no supplemental package needed.
+- **Babel users** can stay on Babel but `babel-loader` will be v9+ only. Migration to SWC is recommended for build speed; see [`docs/transpiler-migration.md`](transpiler-migration.md).
 
-> **Status:** The v11 plans below are the working roadmap, not a scheduled release. v10.1 (this PR's milestone) ships the supplemental packages additively so users can adopt them whenever they want. v11 will close out the breaking changes in §"Phase 2" once the v10.1 line has soaked, the supplemental package adoption pattern is validated in real apps, and Ruby 3.4 / Rails 7.2 are firmly the floor we want to require. Treat the steps below as the migration path users will follow when v11 lands, not as work scheduled for the current release.
-
-#### For Webpack Users
-
-1. Update `shakapacker` gem and npm package to v11
-2. Add `shakapacker-webpack` to devDependencies (if not already from v10.1)
-3. Update stale managed dependencies to the exact versions required by `shakapacker-webpack`
-4. Remove `compression-webpack-plugin` if unused (no longer a peer dep)
-
-#### For Rspack Users
-
-1. Update `shakapacker` gem and npm package to v11
-2. Add `shakapacker-rspack` to devDependencies (if not already from v10.1)
-3. Update `@rspack/core` and `@rspack/cli` to the exact versions required by `shakapacker-rspack`
-4. Remove any webpack-specific packages that were installed but unused
-
-#### For Custom Build Users
-
-1. Update `shakapacker` gem and npm package to v11
-2. Do NOT install any `shakapacker-*` supplemental package
-3. Remove any Shakapacker peer deps you installed but don't directly use
-4. Ensure your custom build outputs `manifest.json` in the configured location
-
-#### For Babel Users
-
-Babel is no longer the default and hasn't been since v8. In v11:
-
-- Babel still works, but only `babel-loader` v9+ is supported
-- Consider migrating to SWC (`javascript_transpiler: "swc"`) for faster builds
-- The transpiler migration guide already exists at `docs/transpiler-migration.md`
+The exact list of dropped versions and the Ruby/Rails floor will be confirmed once v11 has a release target. The driving factors are EOL dates for the runtimes we still support and adoption signal from the v10.1 supplemental packages.
 
 ## Alternatives Considered
 
@@ -495,8 +466,8 @@ Rejected because:
 ## References
 
 - [Community discussion](https://github.com/shakacode/shakapacker/issues/1030) — feedback that shaped this RFC
-- [Current peer-dependencies docs](../peer-dependencies.md)
-- [Current optional-peer-dependencies docs](../optional-peer-dependencies.md)
+- [Current peer-dependencies docs](peer-dependencies.md)
+- [Current optional-peer-dependencies docs](optional-peer-dependencies.md)
 - [Next.js package.json](https://github.com/vercel/next.js/blob/canary/packages/next/package.json) — 4 peer deps, webpack vendored
 - [Vite package.json](https://github.com/vitejs/vite/blob/main/packages/vite/package.json) — 5 deps, 12 optional peers
-- [Transpiler migration guide](../transpiler-migration.md)
+- [Transpiler migration guide](transpiler-migration.md)
