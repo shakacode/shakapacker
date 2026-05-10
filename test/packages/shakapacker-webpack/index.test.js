@@ -237,6 +237,28 @@ describe("shakapacker-webpack package wrapper", () => {
     )
   })
 
+  test("does not warn when shakapacker config cannot be read but a valid transpiler pair is installed", () => {
+    const { appRoot, shakapackerPath } = createPnpmLikeApp({
+      transpilers: ["@swc/core", "swc-loader"],
+      writePackageConfig: false
+    })
+    writeFileSync(
+      shakapackerPath,
+      "throw Object.assign(new Error('load failed'), { code: 'LOAD_FAILED' })"
+    )
+
+    const result = requireWrapper(appRoot)
+
+    expect(result.loadError).toStrictEqual(
+      expect.objectContaining({ code: "LOAD_FAILED" })
+    )
+    expect(result.warnings).not.toStrictEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ code: "SHAKAPACKER_NO_TRANSPILER" })
+      ])
+    )
+  })
+
   test("warns when only one module of the configured transpiler pair is installed", () => {
     const { appRoot } = createPnpmLikeApp({
       configTranspiler: "swc",

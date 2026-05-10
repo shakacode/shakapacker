@@ -97,14 +97,15 @@ if (
 if (transpilerSetting !== "none") {
   // When the config names a known transpiler, only that pair counts —
   // unrelated transpilers being installed shouldn't mask a missing peer.
-  // When the setting is missing (config load failed) we default to
-  // "babel" — which matches core's webpack default in package/config.ts —
-  // so the warning's package name advice is correct for the largest
-  // population of webpack users. Unrecognized values (e.g. "custom")
-  // still fall back to "any pair resolves" since we genuinely don't know
-  // what the user configured.
-  const effectiveTranspiler = transpilerSetting ?? "babel"
-  const expectedGroup = transpilerGroups[effectiveTranspiler]
+  // When the setting is missing (config load failed) or unrecognized
+  // (e.g. "custom"), fall back to "any pair resolves" since we genuinely
+  // don't know what the user configured. Defaulting to a specific pair
+  // would produce false positives — e.g., the install template ships
+  // `javascript_transpiler: "swc"`, so a user with that standard install
+  // plus a transient config load failure has SWC installed, not Babel.
+  const expectedGroup = transpilerSetting
+    ? transpilerGroups[transpilerSetting]
+    : null
   const hasExpectedTranspiler = expectedGroup
     ? expectedGroup.every(canResolve)
     : Object.values(transpilerGroups).some((group) => group.every(canResolve))
@@ -123,7 +124,7 @@ if (transpilerSetting !== "none") {
       message = `[shakapacker-webpack] shakapacker config could not be loaded — resolve that first; the config file may be missing.
 If the config is intentionally absent, install a JavaScript transpiler pair (default: @swc/core + swc-loader) or set \`javascript_transpiler: "none"\` once the config exists.`
     } else if (expectedGroup) {
-      message = `[shakapacker-webpack] javascript_transpiler is "${effectiveTranspiler}" but ${expectedGroup.join(
+      message = `[shakapacker-webpack] javascript_transpiler is "${transpilerSetting}" but ${expectedGroup.join(
         " + "
       )} is not installed in the application's node_modules.
 Install: ${expectedGroup.join(" ")}
