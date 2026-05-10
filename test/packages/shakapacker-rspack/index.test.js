@@ -189,8 +189,7 @@ describe("shakapacker-rspack package wrapper", () => {
       writePackageConfig: false,
       shakapackerRootSource:
         'module.exports = { config: { assets_bundler: "webpack" } }',
-      shakapackerRspackSource:
-        "module.exports = { rspackEntrypoint: true }"
+      shakapackerRspackSource: "module.exports = { rspackEntrypoint: true }"
     })
 
     const result = requireWrapper(appRoot)

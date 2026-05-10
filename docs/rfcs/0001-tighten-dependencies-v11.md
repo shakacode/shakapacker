@@ -359,9 +359,9 @@ The existing `bundle exec rake update_changelog` task should be updated to handl
 
 Core `shakapacker` was tightened to `^20.19.0 || >=22.12.0` in v10.1 (PR #1099, driven by `@rspack/core` 2.0.x). Supplemental packages must not declare a more permissive `engines.node` than core, because a user who satisfies the supplemental's range but not core's would pass the supplemental's install gate and then hit core's engine error. Both supplementals therefore mirror core:
 
-| Package             | Node engine               | Reason                                                                          |
-| ------------------- | ------------------------- | ------------------------------------------------------------------------------- |
-| shakapacker-webpack | `^20.19.0 \|\| >=22.12.0` | Mirror of core's `engines.node`; cannot be more permissive than core            |
+| Package             | Node engine               | Reason                                                                           |
+| ------------------- | ------------------------- | -------------------------------------------------------------------------------- |
+| shakapacker-webpack | `^20.19.0 \|\| >=22.12.0` | Mirror of core's `engines.node`; cannot be more permissive than core             |
 | shakapacker-rspack  | `^20.19.0 \|\| >=22.12.0` | Required by `@rspack/core` 2.0.1; same as core's range, so no further tightening |
 
 ### Installer Changes
