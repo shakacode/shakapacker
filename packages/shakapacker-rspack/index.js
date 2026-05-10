@@ -6,21 +6,18 @@
 // `prepublishOnly`; for local monorepo development run `yarn build` in the
 // repository root before consuming this package against the source tree.
 
-// `shakapacker/package/config` is currently exposed only via core's
-// wildcard subpath export (`"./package/*": "./package/*"` in the
-// `shakapacker` package.json), not as a curated public entry. We rely on
-// it because it loads the YAML config without pulling in webpack/rspack
-// rule modules — which lets this preflight check run even when the root
-// export (which transitively touches bundler peers) fails to load.
-//
-// Tradeoff: any v11 reorganization of the `package/` directory (the RFC
-// proposes a monorepo split that moves core under `packages/shakapacker/`)
-// could break this require. The fallback to `require("shakapacker")?.config`
-// still yields a usable config for the bundler-mismatch check; if both
-// throw, we silently return undefined and let the final
-// `require("shakapacker/rspack")` surface the real error. When core
-// stabilizes a public `shakapacker/config` export, switch this away from
-// the wildcard subpath.
+// Keep this string in sync with packages/shakapacker-webpack/index.js.
+// Both packages emit the same warning code; a regression test asserts they
+// match (test/packages/warning-codes.test.js).
+const BUNDLER_MISMATCH_CODE = "SHAKAPACKER_BUNDLER_MISMATCH"
+
+// Read config through the explicit `shakapacker/package/config` subpath
+// export, which loads the YAML config without pulling in webpack/rspack
+// rule modules. This lets the bundler-mismatch preflight run even when
+// the root `shakapacker` export (which transitively touches bundler
+// peers) fails to load. Falls back to `require("shakapacker").config` for
+// older core versions that predate the explicit subpath export, then to
+// `undefined` if both fail.
 const readShakapackerConfig = () => {
   try {
     // eslint-disable-next-line global-require
@@ -53,7 +50,7 @@ if (shakapackerConfig !== undefined && effectiveBundler !== "rspack") {
   process.emitWarning(
     `[shakapacker-rspack] config.assets_bundler is ${bundlerDescription} but this package only supports rspack.\n` +
       `Install shakapacker-webpack and require it instead, or set \`assets_bundler: rspack\` in config/shakapacker.yml.`,
-    { code: "SHAKAPACKER_BUNDLER_MISMATCH" }
+    { code: BUNDLER_MISMATCH_CODE }
   )
 }
 

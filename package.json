@@ -24,6 +24,7 @@
     "./configExporter": "./package/configExporter/index.js",
     "./package.json": "./package.json",
     "./package/babel/preset.js": "./package/babel/preset.js",
+    "./package/config": "./package/config.js",
     "./package/*": "./package/*"
   },
   "files": [

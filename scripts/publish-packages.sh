@@ -15,6 +15,12 @@
 # Pre-release versions (e.g. 10.1.0-beta.1) MUST be published with --tag (next,
 # beta, rc, etc.) so they don't auto-promote to `latest` and become the default
 # `npm install shakapacker` resolution.
+#
+# Supply-chain provenance: when run from GitHub Actions with `id-token: write`,
+# the script auto-detects the environment and adds `--provenance` to the publish
+# call. This generates an SLSA-2 provenance attestation that links each
+# published artifact to the workflow run that built it. Local publishes skip
+# the flag (publishing without an OIDC token fails fast otherwise).
 
 set -euo pipefail
 
@@ -23,6 +29,14 @@ cd "$REPO_ROOT"
 
 DRY_RUN=()
 TAG=()
+PROVENANCE=()
+# GitHub Actions sets ACTIONS_ID_TOKEN_REQUEST_URL when `id-token: write`
+# permission is granted. Use that as the signal — outside CI the env var
+# is absent and `npm publish --provenance` would fail with a clearer
+# "Missing OIDC token" error than we'd want to surface here.
+if [[ -n "${ACTIONS_ID_TOKEN_REQUEST_URL:-}" ]]; then
+  PROVENANCE=(--provenance)
+fi
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --dry-run)
@@ -107,23 +121,34 @@ if [[ ${#DRY_RUN[@]} -eq 0 ]]; then
   # with general npm auth but missing shakacode org access would pass the
   # whoami gate and then fail mid-run at `npm publish`, leaving partial
   # state (the same scenario `is_published` recovers from on retry — but
-  # only after access is granted). Fail fast for any package that already
-  # exists on the registry but isn't accessible read-write to the caller.
-  # Packages not yet on the registry are skipped; the first publish creates
-  # them under the caller's account.
+  # only after access is granted). When npm access list is available, fail
+  # fast for any already-published package the caller can't write to.
+  #
+  # `npm access list packages` is unreliable for unscoped packages on some
+  # npm versions: it can return an empty result even when the caller has
+  # full publish rights. When the response is empty (registry blip,
+  # unsupported subcommand, or unscoped-package limitation) we soft-warn
+  # rather than hard-fail; an actual access failure still surfaces as a
+  # clear 403 from `npm publish`, and the `is_published` idempotency guard
+  # makes retrying after access is granted safe.
   echo "Verifying npm publish access…"
   NPM_ACCESS_JSON="$(npm access list packages --json --registry https://registry.npmjs.org 2>/dev/null || true)"
-  for pkg in shakapacker shakapacker-webpack shakapacker-rspack; do
-    if npm view "$pkg" version --registry https://registry.npmjs.org >/dev/null 2>&1; then
-      if ! echo "$NPM_ACCESS_JSON" | grep -Eq "\"$pkg\"[[:space:]]*:[[:space:]]*\"read-write\""; then
-        echo "Error: missing read-write access to existing package '$pkg'." >&2
-        echo "       Ask a shakacode npm org owner to grant publish access before retrying." >&2
-        exit 1
+  if [[ -z "$NPM_ACCESS_JSON" ]]; then
+    echo "Warning: could not fetch npm access list (registry error or unscoped-package limitation)." >&2
+    echo "         If publish fails with 403, ask a shakacode npm org owner to grant access." >&2
+  else
+    for pkg in shakapacker shakapacker-webpack shakapacker-rspack; do
+      if npm view "$pkg" version --registry https://registry.npmjs.org >/dev/null 2>&1; then
+        if ! echo "$NPM_ACCESS_JSON" | grep -Eq "\"$pkg\"[[:space:]]*:[[:space:]]*\"read-write\""; then
+          echo "Error: missing read-write access to existing package '$pkg'." >&2
+          echo "       Ask a shakacode npm org owner to grant publish access before retrying." >&2
+          exit 1
+        fi
+      else
+        echo "  $pkg is not yet on the registry — first publish will create it."
       fi
-    else
-      echo "  $pkg is not yet on the registry — first publish will create it."
-    fi
-  done
+    done
+  fi
 fi
 
 # Idempotency: if a previous run published `shakapacker` but failed before
@@ -144,16 +169,16 @@ publish_package() {
     echo "  $pkg@$version already on registry — skipping."
     return
   fi
-  (cd "$dir" && npm publish ${DRY_RUN[@]+"${DRY_RUN[@]}"} ${TAG[@]+"${TAG[@]}"})
+  (cd "$dir" && npm publish ${DRY_RUN[@]+"${DRY_RUN[@]}"} ${TAG[@]+"${TAG[@]}"} ${PROVENANCE[@]+"${PROVENANCE[@]}"})
 }
 
-echo "Publishing shakapacker @ $CORE_VERSION (core first)…"
+echo "Publishing shakapacker @ ${CORE_VERSION} (core first)…"
 publish_package shakapacker "$CORE_VERSION" .
 
-echo "Publishing shakapacker-webpack @ $WEBPACK_VERSION…"
+echo "Publishing shakapacker-webpack @ ${WEBPACK_VERSION}…"
 publish_package shakapacker-webpack "$WEBPACK_VERSION" packages/shakapacker-webpack
 
-echo "Publishing shakapacker-rspack @ $RSPACK_VERSION…"
+echo "Publishing shakapacker-rspack @ ${RSPACK_VERSION}…"
 publish_package shakapacker-rspack "$RSPACK_VERSION" packages/shakapacker-rspack
 
 echo "Done."

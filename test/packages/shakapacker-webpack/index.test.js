@@ -32,6 +32,10 @@ const createPnpmLikeApp = (options = {}) => {
   )
     ? options.configBundler
     : "webpack"
+  // When false, omit the shakapacker/package/config module so the wrapper
+  // exercises the fallback to `require("shakapacker").config`. Default
+  // matches real installs.
+  const { writePackageConfig = true } = options
 
   const appRoot = mkdtempSync(join(tmpdir(), "shakapacker-webpack-test-"))
   const appNodeModules = join(appRoot, "node_modules")
@@ -53,6 +57,13 @@ const createPnpmLikeApp = (options = {}) => {
     configEntries.push(`assets_bundler: ${JSON.stringify(configBundler)}`)
   }
 
+  if (writePackageConfig) {
+    writeModule(
+      storeRoot,
+      "shakapacker/package/config",
+      `module.exports = { ${configEntries.join(", ")} }`
+    )
+  }
   writeModule(
     storeRoot,
     "shakapacker",
@@ -90,9 +101,12 @@ const requireWrapper = (appRoot) => {
   // but `process.on("warning", ...)` listeners still receive them. That's
   // why the structured-warning capture above works while keeping test
   // output free of the loud SHAKAPACKER_NO_TRANSPILER banner.
+  // 5 s timeout keeps a stuck child from hanging the entire suite in CI;
+  // every passing run completes in well under a second.
   const result = spawnSync(process.execPath, ["--no-warnings", "-e", script], {
     cwd: appRoot,
-    encoding: "utf8"
+    encoding: "utf8",
+    timeout: 5000
   })
 
   if (result.status !== 0) {
@@ -194,8 +208,11 @@ describe("shakapacker-webpack package wrapper", () => {
     expect(result.warnings).toStrictEqual([])
   })
 
-  test("emits the transpiler warning even when shakapacker fails to load", () => {
-    const { appRoot, shakapackerPath } = createPnpmLikeApp({ transpilers: [] })
+  test("emits a load-failure-first transpiler warning when shakapacker config cannot be read", () => {
+    const { appRoot, shakapackerPath } = createPnpmLikeApp({
+      transpilers: [],
+      writePackageConfig: false
+    })
     writeFileSync(
       shakapackerPath,
       "throw Object.assign(new Error('load failed'), { code: 'LOAD_FAILED' })"
@@ -206,18 +223,17 @@ describe("shakapacker-webpack package wrapper", () => {
     expect(result.loadError).toStrictEqual(
       expect.objectContaining({ code: "LOAD_FAILED" })
     )
-    // When config load fails the wrapper falls back to "swc" (the
-    // recommended default) so the warning is actionable, not generic.
     const transpilerWarning = result.warnings.find(
       (warning) => warning.code === "SHAKAPACKER_NO_TRANSPILER"
     )
     expect(transpilerWarning).toBeDefined()
+    // Load failure is surfaced first so users fix the root cause before
+    // chasing transpiler installs.
     expect(transpilerWarning.message).toContain(
-      'javascript_transpiler is "swc"'
+      "shakapacker config could not be loaded"
     )
-    expect(transpilerWarning.message).toContain("@swc/core + swc-loader")
     expect(transpilerWarning.message).toContain(
-      "resolve that error first; the config file may be missing"
+      "default: @swc/core + swc-loader"
     )
   })
 

@@ -95,9 +95,12 @@ const requireWrapper = (appRoot) => {
     })
   `
 
+  // 5 s timeout keeps a stuck child from hanging the entire suite in CI;
+  // every passing run completes in well under a second.
   const result = spawnSync(process.execPath, ["--no-warnings", "-e", script], {
     cwd: appRoot,
-    encoding: "utf8"
+    encoding: "utf8",
+    timeout: 5000
   })
 
   if (result.status !== 0) {
@@ -177,12 +180,13 @@ describe("shakapacker-rspack package wrapper", () => {
     expect(bundlerWarning.message).toContain('assets_bundler is "webpack"')
   })
 
-  // The wrapper tries `shakapacker/package/config` first because it loads
-  // the YAML config without dragging in webpack/rspack rules. If that
-  // private subpath ever moves (e.g. the v11 monorepo split relocates
-  // `package/`), the wrapper falls back to `require("shakapacker")?.config`.
-  // This test pins the fallback so the silent regression — wrapper stops
-  // emitting the bundler-mismatch warning — would fail CI.
+  // The wrapper reads `shakapacker/package/config` first because that
+  // subpath loads the YAML config without dragging in webpack/rspack
+  // rules. Older core versions (predating the explicit subpath export)
+  // and any future reorganization that moves `package/` need to keep
+  // working via the fallback `require("shakapacker").config`. This test
+  // pins that fallback so a silent regression — wrapper stops emitting
+  // the bundler-mismatch warning — would fail CI.
   test("falls back to shakapacker.config when the package/config subpath is unresolvable", () => {
     const { appRoot } = createPnpmLikeApp({
       configBundler: "webpack",

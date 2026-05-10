@@ -127,7 +127,7 @@ Supplemental package for the standard webpack managed build experience.
 
 | Package                 | Version   |
 | ----------------------- | --------- |
-| shakapacker             | `^10.1.0` |
+| shakapacker             | `~10.1.0` |
 | webpack                 | `5.106.2` |
 | webpack-cli             | `7.0.2`   |
 | webpack-assets-manifest | `6.5.1`   |
@@ -169,7 +169,7 @@ Supplemental package for the rspack managed build experience.
 
 | Package                | Version   |
 | ---------------------- | --------- |
-| shakapacker            | `^10.1.0` |
+| shakapacker            | `~10.1.0` |
 | @rspack/core           | `2.0.1`   |
 | @rspack/cli            | `2.0.1`   |
 | rspack-manifest-plugin | `5.2.1`   |
@@ -178,7 +178,7 @@ Supplemental package for the rspack managed build experience.
 
 | Package                      | Version  | When needed      |
 | ---------------------------- | -------- | ---------------- |
-| @rspack/plugin-react-refresh | `2.0.0`  | React HMR        |
+| @rspack/plugin-react-refresh | `2.0.1`  | React HMR        |
 | css-loader                   | `7.1.4`  | CSS processing   |
 | sass                         | `1.99.0` | SCSS/Sass files  |
 | sass-loader                  | `16.0.7` | Paired with sass |
@@ -309,7 +309,7 @@ All three npm packages share the same version number, always. The Ruby gem versi
 **Rules:**
 
 1. **Same version, always.** When any package is released, all three are released at the same version. If a release only changes core, the supplemental packages still get the version bump.
-2. **Caret peer dep on core.** `shakapacker-webpack` and `shakapacker-rspack` declare `"shakapacker": "^10.1.0"` as a peer dep. This means minor bumps don't force users to update all packages on the same day, but they stay within the same major.
+2. **Patch-tolerant peer dep on core.** `shakapacker-webpack` and `shakapacker-rspack` declare `"shakapacker": "~10.1.0"` as a peer dep. This pins the supplemental packages to the exact minor of core they were tested against — a user on `shakapacker@10.2.x` must also upgrade their supplemental package to a `10.2.x` release. Patch flexibility is preserved (`10.1.0`–`10.1.x` all satisfy the range). Caret (`^10.1.0`) was rejected because it would allow `shakapacker@10.2.0` + `shakapacker-webpack@10.1.0`, an untested combination that defeats the lockstep value proposition.
 3. **Start at v10.1.0.** All three packages begin at the same version. No separate versioning at any point.
 4. **Defer workspace tooling until the root can be private.** During Phase 1, the root `package.json` remains the publishable core package, so root workspaces are not enabled under Yarn Classic.
 
@@ -317,12 +317,12 @@ All three npm packages share the same version number, always. The Ruby gem versi
 
 - The supplemental packages are tightly coupled to core — independent versioning would create a compatibility matrix nightmare.
 - Precedent: Next.js (`next`, `@next/env`, `@next/swc-*`), Angular (`@angular/core`, `@angular/compiler`, etc.), and Babel (`@babel/core`, `@babel/preset-env`, etc.) all use lockstep versioning across their package families.
-- Users see `"shakapacker": "^10.2.0"` and `"shakapacker-webpack": "^10.2.0"` — easy to reason about compatibility.
+- Users see `"shakapacker": "~10.2.0"` and `"shakapacker-webpack": "~10.2.0"` — easy to reason about compatibility.
 - "Empty bumps" (a supplemental package gets a version bump with no code change) are a tiny cost compared to the coordination headache of independent versions.
 
 **Initial v10.1.0 release process:**
 
-> **Sequencing is load-bearing.** Both supplemental packages declare `"shakapacker": "^10.1.0"` as a required peer dep. Core `shakapacker` 10.1.0 must be published _before_ either supplemental, otherwise installers receive an unresolvable peer dependency error.
+> **Sequencing is load-bearing.** Both supplemental packages declare `"shakapacker": "~10.1.0"` as a required peer dep. Core `shakapacker` 10.1.0 must be published _before_ either supplemental, otherwise installers receive an unresolvable peer dependency error.
 
 ```bash
 # Bump the existing root package from 10.0.0 to 10.1.0.
