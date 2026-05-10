@@ -189,9 +189,9 @@ Rspack v2 is stable, so the supplemental rspack package pins to the current v2 G
 
 ### Version Pinning Philosophy
 
-The core `shakapacker` package keeps its broad optional peer ranges during v10.x so existing applications are not broken by an additive release. The supplemental packages use a different policy:
+The core `shakapacker` package keeps its broad optional peer ranges during v10.x so existing applications are not broken by an additive release. The supplemental packages use a different policy. The version numbers above are the versions Shakapacker is tested against; both required and optional peers ship as patch-tolerant `~X.Y.Z` ranges so a consumer's routine patch bump does not trigger an npm 7+ peer-conflict warning until the next Shakapacker release.
 
-- **Pin managed peer dependencies exactly.** `shakapacker-webpack` and `shakapacker-rspack` declare the dependency set Shakapacker is expected to work with today, not every historical version that might still work.
+- **Patch-tolerant pins (`~X.Y.Z`) for required and optional peers alike.** Patch releases are accepted across the managed stack — webpack, Rspack, loaders, transpilers, and CSS preprocessors. Major and minor bumps still wait for a coordinated Shakapacker release.
 - **Update pins with Shakapacker package releases.** When webpack, Rspack, loaders, or managed plugins move, release a new lockstep Shakapacker package version with updated peer pins.
 - **Keep the maintenance signal honest.** A version outside the supplemental package pins is not claimed as supported until the pins are updated.
 - **Avoid pre-release pins unless deliberately testing a pre-release line.** For example, `webpack-subresource-integrity` stays on the latest stable 5.1.x release even though its npm `latest` dist-tag currently points at a release candidate.
