@@ -451,18 +451,6 @@ Rejected because:
 - **Rollout**: Phased — v10.1.0 (additive), v11.0.0 (breaking)
 - **Supplemental dependency policy**: exact peer pins for managed stacks; update pins through lockstep Shakapacker package releases
 
-## Open Questions
-
-1. **Should we provide a `shakapacker:upgrade` task** that automatically updates `package.json` dependencies for the v10 -> v11 migration?
-
-2. **Should the `assets_bundler` config support `"custom"` or `"none"`** as an explicit value to make custom build mode clearer than setting `javascript_transpiler: "none"`?
-
-3. **Should `compression-webpack-plugin` be documented** as a user-added plugin rather than removed silently?
-
-4. **Future extensibility**: Could this pattern extend to community packages? e.g., `shakapacker-vite` contributed by the community for Vite integration, as suggested by G-Rath.
-
-5. **Workspace tooling**: npm workspaces, yarn workspaces, or a dedicated tool like changesets/turborepo for the monorepo?
-
 ## References
 
 - [Community discussion](https://github.com/shakacode/shakapacker/issues/1030) — feedback that shaped this RFC
