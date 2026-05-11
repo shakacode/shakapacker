@@ -45,7 +45,12 @@ describe "shakapacker.gemspec" do
         "lib/install/config/shakapacker.yml",
         "lib/install/bin/shakapacker",
         "lib/install/bin/shakapacker-dev-server"
-      )
+        "lib/install/bin/shakapacker",
+        "lib/install/bin/shakapacker-dev-server",
+        "lib/install/config/rspack/rspack.config.js",
+        "lib/install/config/rspack/rspack.config.ts",
+        "lib/install/config/webpack/webpack.config.js",
+        "lib/install/config/webpack/webpack.config.ts"
     end
 
     it "includes RBS type signatures" do
