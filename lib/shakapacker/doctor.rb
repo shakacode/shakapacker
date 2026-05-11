@@ -733,7 +733,7 @@ module Shakapacker
       def read_active_assets_bundler_config(path)
         File.read(path)
       rescue SystemCallError => e
-        add_warning("Unable to validate rspack cache configuration: #{e.message}")
+        add_info_warning("Unable to validate rspack cache configuration: #{e.message}")
         nil
       end
 
