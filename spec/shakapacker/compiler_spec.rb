@@ -57,32 +57,20 @@ describe "Shakapacker::Compiler" do
 
     before do
       allow(Shakapacker.compiler).to receive(:strategy).and_return(mocked_strategy)
-      # Reset the once-per-process flag so each test starts fresh.
-      Shakapacker::Compiler.doctor_hint_shown = false
+      Shakapacker::Compiler.send(:doctor_hint_shown=, false)
     end
 
-    it "logs a doctor hint once per process when compilation starts" do
+    it "does not log the doctor hint when compilation succeeds" do
       status = OpenStruct.new(success?: true)
       allow(Open3).to receive(:capture3).and_return(["", "", status])
       allow(Shakapacker.logger).to receive(:info)
 
       Shakapacker.compiler.compile
 
-      expect(Shakapacker.logger).to have_received(:info).with(/shakapacker:doctor/).once
+      expect(Shakapacker.logger).not_to have_received(:info).with(/shakapacker:doctor/)
     end
 
-    it "does not repeat the doctor hint on subsequent compiles in the same process" do
-      status = OpenStruct.new(success?: true)
-      allow(Open3).to receive(:capture3).and_return(["", "", status])
-      allow(Shakapacker.logger).to receive(:info)
-
-      Shakapacker.compiler.compile
-      Shakapacker.compiler.compile
-
-      expect(Shakapacker.logger).to have_received(:info).with(/shakapacker:doctor/).once
-    end
-
-    it "logs the doctor hint before compilation output even when compilation fails" do
+    it "logs the doctor hint after a failed compilation" do
       status = OpenStruct.new(success?: false)
       allow(Open3).to receive(:capture3).and_return(["", "build error", status])
       allow(Shakapacker.logger).to receive(:error)
@@ -93,13 +81,28 @@ describe "Shakapacker::Compiler" do
       expect(Shakapacker.logger).to have_received(:info).with(/shakapacker:doctor/).once
     end
 
-    it "does not mark the doctor hint as shown when doctor hint logging fails during compile" do
-      allow(Shakapacker.logger).to receive(:info) do |message|
-        raise "doctor hint logger failed" if message.match?(/shakapacker:doctor/)
-      end
+    it "does not repeat the doctor hint on subsequent failed compiles" do
+      status = OpenStruct.new(success?: false)
+      allow(Open3).to receive(:capture3).and_return(["", "build error", status])
+      allow(Shakapacker.logger).to receive(:error)
+      allow(Shakapacker.logger).to receive(:info)
 
-      expect { Shakapacker.compiler.compile }.to raise_error("doctor hint logger failed")
-      expect(Shakapacker.logger).to have_received(:info).with("Compiling...").once
+      Shakapacker.compiler.compile
+      Shakapacker.compiler.compile
+
+      expect(Shakapacker.logger).to have_received(:info).with(/shakapacker:doctor/).once
+    end
+
+    it "does not abort the build when the hint logger raises" do
+      status = OpenStruct.new(success?: false)
+      allow(Open3).to receive(:capture3).and_return(["", "build error", status])
+      allow(Shakapacker.logger).to receive(:error)
+      # Generic stub first so the more specific stub below wins for matching args.
+      allow(Shakapacker.logger).to receive(:info)
+      allow(Shakapacker.logger).to receive(:info).with(/shakapacker:doctor/).and_raise("logger boom")
+
+      expect { Shakapacker.compiler.compile }.not_to raise_error
+      # Flag stays false so a future compile can still surface the tip when the logger recovers.
       expect(Shakapacker::Compiler.doctor_hint_shown).to be false
     end
   end

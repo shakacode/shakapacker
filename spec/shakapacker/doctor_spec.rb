@@ -66,12 +66,13 @@ describe Shakapacker::Doctor do
   end
 
   describe "warning formatting" do
-    it "stores fix hints as recommended warnings by default" do
+    it "stores fix hints as recommended warnings by default with the :fix marker" do
       doctor.send(:add_fix_hint, "Test fix instruction")
 
       expect(doctor.warnings.last).to eq(
         category: described_class::CATEGORY_RECOMMENDED,
-        message: "  Fix: Test fix instruction"
+        message: "Test fix instruction",
+        fix: true
       )
     end
 
@@ -80,7 +81,8 @@ describe Shakapacker::Doctor do
 
       expect(doctor.warnings.last).to eq(
         category: described_class::CATEGORY_ACTION_REQUIRED,
-        message: "  Fix: Test fix instruction"
+        message: "Test fix instruction",
+        fix: true
       )
     end
 
@@ -1035,6 +1037,54 @@ describe Shakapacker::Doctor do
       it "uses the dependencies version (production wins) and does not warn about v1" do
         doctor.send(:check_rspack_cache_configuration)
         expect(warning_messages).not_to include(match(/Rspack v1 detected/))
+      end
+    end
+
+    context "when cache: false appears at depth 1 inside a base config used in a merge" do
+      before do
+        File.write(rspack_config_path, <<~JS)
+          const baseConfig = { cache: false }
+          module.exports = merge(baseConfig, { output: { path: '/tmp' } })
+        JS
+      end
+
+      # Known limitation: the heuristic only catches variables exported directly
+      # (`module.exports = baseConfig`); composition via merge is not flagged.
+      # The "appears to be disabled" wording is the mitigation when the heuristic
+      # does fire on related patterns.
+      it "does not warn when the variable is only referenced inside merge() (false-negative gap)" do
+        doctor.send(:check_rspack_cache_configuration)
+        expect(warning_messages).not_to include(match(/Rspack cache appears to be disabled/))
+      end
+    end
+
+    context "when a regex literal sits on its own line away from any comment" do
+      before do
+        File.write(rspack_config_path, <<~JS)
+          const re = /https?:\\/\\/cdn\\.example\\.com/
+          module.exports = { cache: false }
+        JS
+      end
+
+      it "strips the regex first and still detects cache: false" do
+        doctor.send(:check_rspack_cache_configuration)
+        expect(warning_messages).to include(match(/Rspack cache appears to be disabled/))
+      end
+    end
+
+    context "when a multiline ternary contains the quoted key \"cache\" followed by : false on the next line" do
+      before do
+        File.write(rspack_config_path, <<~JS)
+          const label = condition
+            ? "cache"
+            : false
+          module.exports = { cache: { type: 'filesystem' } }
+        JS
+      end
+
+      it "does not fold the quote-key normalization across the newline (no false positive)" do
+        doctor.send(:check_rspack_cache_configuration)
+        expect(warning_messages).not_to include(match(/Rspack cache appears to be disabled/))
       end
     end
   end

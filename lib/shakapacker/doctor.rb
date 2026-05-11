@@ -60,9 +60,9 @@ module Shakapacker
         add_warning(message, CATEGORY_INFO)
       end
 
-      # "Fix: ..." hints render as indented sub-items under the preceding warning.
+      # Marks the warning as a Fix sub-item; the renderer owns the "Fix: " prefix and indentation.
       def add_fix_hint(message, category = CATEGORY_RECOMMENDED)
-        add_warning("  Fix: #{message}", category)
+        @warnings << { category: category, message: message, fix: true }
       end
 
       def print_help
@@ -206,7 +206,7 @@ module Shakapacker
         # Match "bundler:" at start of line or preceded by non-underscore character
         if config_file.match?(/^\s*bundler:/m) || config_file.match?(/[^_]bundler:/)
           add_action_required("Deprecated config: 'bundler' should be renamed to 'assets_bundler' in #{config_relative_path}.")
-          add_action_required("  Fix: Open #{config_relative_path} and change 'bundler:' to 'assets_bundler:'.")
+          add_fix_hint("Open #{config_relative_path} and change 'bundler:' to 'assets_bundler:'.", CATEGORY_ACTION_REQUIRED)
         end
       rescue => e
         # Ignore read errors as config file check already handles missing file
@@ -413,7 +413,7 @@ module Shakapacker
 
         unless missing_binstubs.empty?
           add_action_required("Missing binstubs: #{missing_binstubs.join(', ')}.")
-          add_action_required("  Fix: Run 'bundle exec rake shakapacker:binstubs' to create them.")
+          add_fix_hint("Run 'bundle exec rake shakapacker:binstubs' to create them.", CATEGORY_ACTION_REQUIRED)
         end
       end
 
@@ -762,7 +762,10 @@ module Shakapacker
       def stripped_rspack_config_content(content)
         # Normalize quoted property keys before stripping string literals; otherwise
         # `'cache'` and `"cache"` collapse to `""` and the match below misses them.
-        stripped = content.gsub(/(['"])(\w+)\1(?=\s*:)/, '\2')
+        # Lookahead is restricted to horizontal whitespace so a multiline ternary
+        # like `condition ? "cache"\n  : false` doesn't fold across the newline
+        # and produce a spurious cache: false match.
+        stripped = content.gsub(/(['"])(\w+)\1(?=[ \t]*:)/, '\2')
 
         stripped = stripped
           .gsub(/`(?:\\.|[^`\\])*`/m, '""')
@@ -773,7 +776,9 @@ module Shakapacker
 
         # Regex literal stripping runs after comment removal. The line-comment
         # pass above ignores escaped slashes so /https?:\/\/host/ stays intact
-        # until this pass removes the whole regex literal.
+        # until this pass removes the whole regex literal. The heuristic can
+        # false-match bare division like `a / b / c`, but rspack config files
+        # rarely contain arithmetic near `cache:`, so the risk is low.
         stripped.gsub(%r{/(?:\\.|\[[^\]\n]*\]|[^/\n\\\[])+?/[gimsuy]*}, "")
       end
 
@@ -786,10 +791,16 @@ module Shakapacker
           next false unless (pre.count("{") - pre.count("}")) == 1
 
           statement_prefix = pre[(pre.rindex(";") || -1) + 1..]
+          # generateRspackConfig is Shakapacker's own helper; user-defined wrappers
+          # like makeRspackConfig/createConfig are a known false-negative gap.
           statement_prefix.match?(/\bmodule\.exports\b|\bexport\s+default\b|\bgenerateRspackConfig\b/)
         end
       end
 
+      # Catches the `const cfg = { cache: false }; module.exports = cfg` pattern.
+      # Composition via merge (`module.exports = merge(cfg, …)`) is a known
+      # false-negative since the variable is never referenced by name in the
+      # export statement.
       def exported_variable_cache_disabled?(stripped)
         variable_declaration = /\b(?:const|let|var)\s+([A-Za-z_$][\w$]*)(?:\s*:\s*[^=;]+)?\s*=\s*\{/
 
@@ -1264,15 +1275,14 @@ module Shakapacker
           end
 
           def print_warnings
-            # Count only main items (not sub-items)
-            main_item_count = doctor.warnings.count { |w| !w[:message].start_with?("  ") }
+            main_item_count = doctor.warnings.count { |w| !subitem?(w) }
             puts "⚠️  Warnings (#{main_item_count}):"
             puts ""
 
             item_number = 0
             doctor.warnings.each do |warning|
-              if subitem?(warning[:message])
-                print_subitem(warning[:message])
+              if subitem?(warning)
+                print_subitem(warning)
               else
                 item_number += 1
                 print_main_item(item_number, warning)
@@ -1281,15 +1291,16 @@ module Shakapacker
             puts ""
           end
 
-          def subitem?(message)
-            message.start_with?("  ")
+          def subitem?(warning)
+            warning[:fix] || warning[:message].start_with?("  ")
           end
 
-          def print_subitem(message)
+          def print_subitem(warning)
             # Fix instructions align at column 16 (length of "N. [RECOMMENDED]  ")
-            # This ensures all Fix lines align vertically regardless of category
+            # This keeps every Fix line aligned regardless of category.
             subitem_prefix = " " * 15
-            wrapped = wrap_text(message, 100, subitem_prefix)
+            text = warning[:fix] ? "Fix: #{warning[:message]}" : warning[:message]
+            wrapped = wrap_text(text, 100, subitem_prefix)
             puts wrapped
           end
 

@@ -14,8 +14,10 @@ class Shakapacker::Compiler
   @doctor_hint_mutex = Mutex.new
 
   class << self
-    attr_accessor :doctor_hint_shown
-    attr_reader :doctor_hint_mutex
+    attr_reader :doctor_hint_shown, :doctor_hint_mutex
+    # Internal: tests reset this flag via `send(:doctor_hint_shown=, false)`.
+    attr_writer :doctor_hint_shown
+    private :doctor_hint_shown=
   end
 
   delegate :config, :logger, :strategy, to: :instance
@@ -176,7 +178,6 @@ class Shakapacker::Compiler
 
     def run_webpack
       logger.info "Compiling..."
-      show_doctor_hint_once
 
       stdout, stderr, status = Open3.capture3(
         webpack_env,
@@ -194,6 +195,7 @@ class Shakapacker::Compiler
       else
         non_empty_streams = [stdout, stderr].delete_if(&:empty?)
         logger.error "\nCOMPILATION FAILED:\nEXIT STATUS: #{status}\nOUTPUTS:\n#{non_empty_streams.join("\n\n")}"
+        show_doctor_hint_once
       end
 
       status.success?
@@ -212,7 +214,7 @@ class Shakapacker::Compiler
       config.root_path.join("bin/shakapacker")
     end
 
-    # Cache hits skip this tip because it is most useful when a build actually runs.
+    # Fires only after a failed compile, so users in a healthy loop never see the tip.
     def show_doctor_hint_once
       return if self.class.doctor_hint_shown
 
@@ -220,7 +222,9 @@ class Shakapacker::Compiler
         return if self.class.doctor_hint_shown
 
         logger.info "Tip: run 'bundle exec rake shakapacker:doctor' to diagnose configuration issues."
-        self.class.doctor_hint_shown = true
+        self.class.send(:doctor_hint_shown=, true)
+      rescue StandardError
+        # Non-critical tip; never abort a build because the logger failed.
       end
     end
 end
