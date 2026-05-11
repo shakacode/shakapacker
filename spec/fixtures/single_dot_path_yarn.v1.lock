@@ -1,2 +1,5 @@
+# Intentionally stale: key differs from package.json's ./vendor/shakapacker to simulate
+# a lockfile that was not updated after the local path was changed. The yarn parser's
+# greedy matcher still finds and returns "9.7.0", proving the short-circuit is necessary.
 shakapacker@./stale-lockfile-entry:
   version "9.7.0"
