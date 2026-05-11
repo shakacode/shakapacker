@@ -153,6 +153,17 @@ describe("rspack/index", () => {
       expect(rspackIndex.baseConfig).toHaveProperty("mode")
     })
 
+    test("defines baseConfig as a lazy getter (configurable: true)", () => {
+      const descriptor = Object.getOwnPropertyDescriptor(
+        rspackIndex,
+        "baseConfig"
+      )
+      expect(descriptor).toBeDefined()
+      expect(descriptor.configurable).toBe(true)
+      expect(descriptor.enumerable).toBe(true)
+      expect(typeof descriptor.get).toBe("function")
+    })
+
     test("exports env object", () => {
       expect(rspackIndex.env).toHaveProperty("railsEnv")
       expect(rspackIndex.env).toHaveProperty("nodeEnv")

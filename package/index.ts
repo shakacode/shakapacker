@@ -24,14 +24,14 @@ const rulesPath = resolve(__dirname, "rules", `${config.assets_bundler}.js`)
 /** Array of webpack/rspack loader rules */
 const rules = require(rulesPath) as RuleSetRule[]
 
-let baseConfig: Configuration | undefined
+let _baseConfig: Configuration | undefined
 
 const getBaseConfig = (): Configuration => {
-  if (!baseConfig) {
-    baseConfig = require("./environments/base")
+  if (!_baseConfig) {
+    _baseConfig = require("./environments/base")
   }
 
-  return baseConfig as Configuration
+  return _baseConfig as Configuration
 }
 
 /**
