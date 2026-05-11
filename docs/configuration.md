@@ -2,6 +2,8 @@
 
 This guide covers all configuration options available in `config/shakapacker.yml` and how to use them effectively.
 
+This guide covers all configuration options available in `config/shakapacker.yml` and how to use them effectively.
+
 For first-time setup, start with the [installation guide](./installation.md).
 
 ## Table of Contents

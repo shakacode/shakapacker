@@ -6,7 +6,7 @@ configuration details after installation, see the [configuration guide](./config
 ## Prerequisites
 
 - Ruby 2.7+
-- Rails 6.1+
+- Rails 5.2+
 - Node.js `^20.19.0` or `>=22.12.0`
 - A JavaScript package manager supported by
   [`package_json`](https://github.com/shakacode/package_json): npm, Yarn,
@@ -25,7 +25,7 @@ cd myapp
 Add Shakapacker to your app:
 
 ```bash
-bundle add shakapacker
+bundle add shakapacker --strict
 ```
 
 ## Run the Installer
