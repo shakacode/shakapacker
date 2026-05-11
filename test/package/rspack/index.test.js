@@ -1,4 +1,4 @@
-/* eslint-disable func-names, jest/no-conditional-in-test */
+/* eslint-disable func-names, jest/no-conditional-in-test, max-classes-per-file */
 
 const { chdirTestApp } = require("../../helpers")
 
@@ -38,6 +38,11 @@ jest.mock("../../../package/utils/requireOrError", () => ({
       })
       CssExtractRspackPlugin.loader = "css-extract-rspack-loader"
 
+      // Named classes so `instance.constructor.name` reflects the real plugin
+      // name in tests that filter/inspect by constructor identity.
+      class SwcJsMinimizerRspackPlugin {}
+      class LightningCssMinimizerRspackPlugin {}
+
       return {
         DefinePlugin: jest.fn(function (definitions) {
           this.definitions = definitions
@@ -54,8 +59,8 @@ jest.mock("../../../package/utils/requireOrError", () => ({
         SubresourceIntegrityPlugin: jest.fn(function (options) {
           this.options = options
         }),
-        SwcJsMinimizerRspackPlugin: jest.fn(),
-        LightningCssMinimizerRspackPlugin: jest.fn()
+        SwcJsMinimizerRspackPlugin,
+        LightningCssMinimizerRspackPlugin
       }
     }
     if (moduleName === "rspack-manifest-plugin") {
@@ -71,16 +76,53 @@ jest.mock("../../../package/utils/requireOrError", () => ({
   }
 }))
 
+// Mocked so the production test does not depend on compression-webpack-plugin
+// being installed in the test environment.
+jest.mock(
+  "compression-webpack-plugin",
+  () => {
+    class CompressionPlugin {
+      constructor(options) {
+        this.options = options
+      }
+    }
+    return CompressionPlugin
+  },
+  { virtual: true }
+)
+
 describe("rspack/index", () => {
   let rspackIndex
   let validateRspackDependencies
 
-  beforeEach(() => {
+  // Relies on env.ts computing nodeEnv eagerly at require() time (plain const,
+  // not a getter), so restoring NODE_ENV after require() is safe.
+  const loadRspackIndex = (nodeEnv = "development") => {
+    const previousNodeEnv = process.env.NODE_ENV
     jest.resetModules()
-    rspackIndex = require("../../../package/rspack/index")
-    ;({
-      validateRspackDependencies
-    } = require("../../../package/utils/validateDependencies"))
+    process.env.NODE_ENV = nodeEnv
+
+    try {
+      const loadedRspackIndex = require("../../../package/rspack/index")
+      const {
+        validateRspackDependencies: loadedValidateRspackDependencies
+      } = require("../../../package/utils/validateDependencies")
+
+      return {
+        rspackIndex: loadedRspackIndex,
+        validateRspackDependencies: loadedValidateRspackDependencies
+      }
+    } finally {
+      if (previousNodeEnv === undefined) {
+        delete process.env.NODE_ENV
+      } else {
+        process.env.NODE_ENV = previousNodeEnv
+      }
+    }
+  }
+
+  beforeEach(() => {
+    ;({ rspackIndex, validateRspackDependencies } = loadRspackIndex())
   })
 
   afterAll(() => process.chdir(rootPath))
@@ -167,6 +209,16 @@ describe("rspack/index", () => {
       expect(config).toHaveProperty("output.path", "new path")
     })
 
+    test("deep-merges development optimization overrides without losing shared defaults", () => {
+      const config = rspackIndex.generateRspackConfig({
+        optimization: { runtimeChunk: "multiple" }
+      })
+
+      expect(config).toHaveProperty("optimization.splitChunks.chunks", "all")
+      expect(config).toHaveProperty("optimization.runtimeChunk", "multiple")
+      expect(config.optimization).not.toHaveProperty("minimize")
+    })
+
     test("includes module rules in config", () => {
       const config = rspackIndex.generateRspackConfig()
 
@@ -185,11 +237,13 @@ describe("rspack/index", () => {
       expect(Array.isArray(config.plugins)).toBe(true)
     })
 
-    test("includes optimization in config", () => {
+    test("preserves development optimization defaults from the environment config", () => {
       const config = rspackIndex.generateRspackConfig()
 
       expect(config.optimization).toBeDefined()
-      expect(config.optimization).toHaveProperty("minimize")
+      expect(config).toHaveProperty("optimization.splitChunks.chunks", "all")
+      expect(config).toHaveProperty("optimization.runtimeChunk", "single")
+      expect(config.optimization).not.toHaveProperty("minimize")
     })
 
     test("errors if multiple configs are provided", () => {
@@ -288,6 +342,63 @@ describe("rspack/index", () => {
       const expectedMode =
         nodeEnv === "production" ? "production" : "development"
       expect(config.mode).toBe(expectedMode)
+    })
+
+    test("keeps NODE_ENV from require time after process.env changes", () => {
+      const previousNodeEnv = process.env.NODE_ENV
+      const { rspackIndex: productionRspackIndex } =
+        loadRspackIndex("production")
+
+      process.env.NODE_ENV = "development"
+
+      try {
+        expect(productionRspackIndex.env.nodeEnv).toBe("production")
+        expect(productionRspackIndex.generateRspackConfig().mode).toBe(
+          "production"
+        )
+      } finally {
+        if (previousNodeEnv === undefined) {
+          delete process.env.NODE_ENV
+        } else {
+          process.env.NODE_ENV = previousNodeEnv
+        }
+      }
+    })
+  })
+
+  describe("generateRspackConfig in production NODE_ENV", () => {
+    let productionRspackIndex
+
+    beforeEach(() => {
+      ;({ rspackIndex: productionRspackIndex } = loadRspackIndex("production"))
+    })
+
+    test("preserves production compression plugins and minimizers", () => {
+      const config = productionRspackIndex.generateRspackConfig({
+        optimization: { runtimeChunk: "multiple" }
+      })
+      const minimizerNames = config.optimization.minimizer.map(
+        (minimizer) => minimizer.constructor?.name
+      )
+      const compressionPlugins = config.plugins.filter(
+        (plugin) => plugin.constructor?.name === "CompressionPlugin"
+      )
+
+      expect(config).toHaveProperty("optimization.splitChunks.chunks", "all")
+      expect(config).toHaveProperty("optimization.runtimeChunk", "multiple")
+      expect(config).toHaveProperty("optimization.minimize", true)
+      expect(minimizerNames).toStrictEqual(
+        expect.arrayContaining([
+          "SwcJsMinimizerRspackPlugin",
+          "LightningCssMinimizerRspackPlugin"
+        ])
+      )
+      expect(compressionPlugins.length).toBeGreaterThanOrEqual(1)
+      expect(
+        compressionPlugins.some(
+          (plugin) => plugin.options?.algorithm === "gzip"
+        )
+      ).toBe(true)
     })
   })
 })

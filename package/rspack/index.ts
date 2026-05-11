@@ -25,12 +25,9 @@ const {
   getEnvironmentPlugin,
   getProvidePlugin
 } = require("../utils/bundlerUtils")
-const { getPlugins } = require("../plugins/rspack")
-const { getOptimization } = require("../optimization/rspack")
 const { validateRspackDependencies } = require("../utils/validateDependencies")
 
-const rulesPath = resolve(__dirname, "../rules", "rspack.js")
-const rules = require(rulesPath)
+const rules = require(resolve(__dirname, "../rules", "rspack.js"))
 
 const generateRspackConfig = (
   extraConfig: RspackConfigWithDevServer = {},
@@ -49,17 +46,7 @@ const generateRspackConfig = (
 
   const environmentConfig = existsSync(path) ? require(path) : baseConfig
 
-  // Create base rspack config
-  const rspackConfig: RspackConfigWithDevServer = {
-    ...environmentConfig,
-    module: {
-      rules
-    },
-    plugins: getPlugins(),
-    optimization: getOptimization()
-  }
-
-  return webpackMerge.merge({}, rspackConfig, extraConfig)
+  return webpackMerge.merge({}, environmentConfig, extraConfig)
 }
 
 // Re-export webpack-merge utilities for backward compatibility
