@@ -9,6 +9,20 @@
 
 ## [Unreleased]
 
+### Added
+
+- **Added supplemental npm packages `shakapacker-webpack` and `shakapacker-rspack`**. [PR #1096](https://github.com/shakacode/shakapacker/pull/1096) by [justin808](https://github.com/justin808). Optional packages that lockstep with core and bundle the managed-build stack as direct `dependencies` (so a single `yarn add shakapacker-webpack` pulls in `shakapacker`, `webpack`, `webpack-cli`, and `webpack-assets-manifest`; the rspack package bundles `shakapacker`, `@rspack/core`, `@rspack/cli`, and `rspack-manifest-plugin`). Optional features (transpilers, dev-server, CSS preprocessors, react-refresh) remain as opt-in `peerDependencies` so SCSS/native-binding bloat isn't forced on every install. The wrappers emit structured warnings (`SHAKAPACKER_BUNDLER_MISMATCH`, `SHAKAPACKER_NO_TRANSPILER`) when `config.assets_bundler` or `javascript_transpiler` doesn't match the installed peers. See the [v10.1 migration guide](docs/migration/v10.1-supplemental-packages.md) for adoption steps and [`docs/dependency-strategy.md`](docs/dependency-strategy.md) for the design rationale and v11 roadmap.
+
+### Migration Notes
+
+- **Simplify your `package.json` by adopting a supplemental package**. Existing apps can drop the explicit managed-build deps from `devDependencies` and rely on the bundled stack:
+  - **Rspack apps** can replace `shakapacker` + `@rspack/core` + `@rspack/cli` + `rspack-manifest-plugin` with a single `shakapacker-rspack`. See `packages/shakapacker-rspack/README.md` §"Simplifying an existing rspack install" for the before/after.
+  - **Webpack apps** can replace `shakapacker` + `webpack` + `webpack-cli` + `webpack-assets-manifest` with a single `shakapacker-webpack`. See `packages/shakapacker-webpack/README.md` §"Simplifying an existing webpack install" for the before/after.
+  - Optional peers (transpilers, `webpack-dev-server`, CSS preprocessors, react-refresh) stay only if your app uses those features.
+  - Adoption is opt-in: leaving your `package.json` untouched on v10.1 also continues to work.
+
+- **Adopting `shakapacker-webpack` requires `webpack-assets-manifest@^6.0.0`**. Core `shakapacker` still accepts both v5 and v6 (`^5.0.6 || ^6.0.0`), but `shakapacker-webpack` pins `~6.5.1`. Apps still on `webpack-assets-manifest@5.x` must upgrade when switching to the supplemental package; v6 fixed an ENOENT crash on clean builds with `merge: true` and dropped a Node 14 install path. See [the v5→v6 release notes](https://github.com/webdeveric/webpack-assets-manifest/releases) and `packages/shakapacker-webpack/README.md` for details.
+
 ### ⚠️ Breaking Changes
 
 - **Breaking: tightened `package.json` `engines.node` to `^20.19.0 || >=22.12.0`**. [PR #1099](https://github.com/shakacode/shakapacker/pull/1099) by [justin808](https://github.com/justin808). Raised from `>= 20`, dropping support for Node 20.0.0–20.18.x and Node 21.x to match `@rspack/core@2.0.0-rc.0`. Consumers on those versions will hit an engine error with `--engine-strict` or yarn workspaces and need to upgrade. The PR also bumps `.node-version` to `22.20.0` and updates `conductor-setup.sh` to enforce the same disjoint range up front, so contributors get a clear error before `yarn install` fails with a confusing engine mismatch.
