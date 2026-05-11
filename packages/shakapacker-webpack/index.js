@@ -112,7 +112,7 @@ if (bundlerMismatch) {
 // `assets_bundler: rspack` deliberately has no webpack-stack transpilers
 // installed. The bundler mismatch is the actionable problem; an additional
 // NO_TRANSPILER warning would just be misleading noise.
-if (!bundlerMismatch && transpilerSetting !== "none") {
+if (!bundlerMismatch && transpilerSetting?.toLowerCase() !== "none") {
   // When the config names a known transpiler, only that pair counts —
   // unrelated transpilers being installed shouldn't mask a missing peer.
   // When the setting is missing (config load failed) or unrecognized
