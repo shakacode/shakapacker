@@ -67,7 +67,9 @@ module Shakapacker
 
       # TODO: this might as well use package_json
       class NodePackageVersion
-        # Matches local paths package managers emit; excludes unsupported bare ".foo"/"..foo" forms.
+        # Matches local paths package managers emit: "./...", "../..", bare "..", or "file:...".
+        # Bare "..foo" (two dots, no slash, non-empty suffix) and bare "." are intentionally not
+        # matched — package managers don't emit those forms for shakapacker installs.
         LOCAL_PATH_REGEX = %r{\A(\./|\.\.(/|\z)|file:)}.freeze
 
         attr_reader :package_json
