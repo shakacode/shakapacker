@@ -341,9 +341,9 @@ bundle exec rake "release[10.1.0]"
 Under the hood, the rake task:
 
 1. Bumps `lib/shakapacker/version.rb` (`gem bump`).
-2. Runs `npm version <v> --no-git-tag-version` in `packages/shakapacker-webpack` and `packages/shakapacker-rspack`.
+2. Runs `npm version <v> --no-git-tag-version` in `packages/shakapacker-webpack` and `packages/shakapacker-rspack`, then rewrites their `dependencies.shakapacker` constraint to `~<v>` so a minor/major bump (e.g. `10.1.0` → `10.2.0`) doesn't ship supplementals declaring a stale `~10.1.0` core dep that cannot resolve `10.2.0`.
 3. Invokes `release-it` with `--no-npm.publish` so it handles the core version bump, commit, tag, and push — but defers npm publishing.
-4. Calls `./scripts/publish-packages.sh`, which re-validates lockstep across all three `package.json` files and publishes them in the required core-first order. Pre-release versions (e.g. `10.1.0-beta.1`) automatically get the matching `--tag` (`beta`, `rc`, etc.).
+4. Calls `./scripts/publish-packages.sh`, which re-validates lockstep across all three `package.json` files (both `version` AND each supplemental's `dependencies.shakapacker`) and publishes them in the required core-first order. Pre-release versions (e.g. `10.1.0-beta.1`) automatically get the matching `--tag` (`beta`, `rc`, etc.).
 5. Runs `gem release` for RubyGems and syncs the GitHub release from `CHANGELOG.md`.
 
 > **Why npm for publishing despite Yarn 1 for development.** The project pins `packageManager: yarn@1.22.22` and uses Yarn for all development scripts, but Yarn Classic does not have a workspace-aware publish command (and `yarn workspaces version` is not available in v1). We invoke `npm publish` per package directly until v11 picks a dedicated release tool — see Open Question #5.

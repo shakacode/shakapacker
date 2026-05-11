@@ -382,4 +382,28 @@ describe("shakapacker-webpack package wrapper", () => {
       ])
     )
   })
+
+  // The wrapper reads `shakapacker/package/config` first because that
+  // subpath loads the YAML config without dragging in webpack-specific
+  // rule modules. Older core versions (predating the explicit subpath
+  // export) and any future reorganization that moves `package/` need to
+  // keep working via the fallback `require("shakapacker").config`. This
+  // test pins that fallback so a silent regression — wrapper stops
+  // emitting bundler-mismatch warnings — would fail CI. Mirrors the same
+  // assertion in test/packages/shakapacker-rspack/index.test.js.
+  test("falls back to shakapacker.config when the package/config subpath is unresolvable", () => {
+    const { appRoot } = createPnpmLikeApp({
+      configBundler: "rspack",
+      transpilers: ["@swc/core", "swc-loader"],
+      writePackageConfig: false
+    })
+
+    const result = requireWrapper(appRoot)
+
+    const bundlerWarning = result.warnings.find(
+      (warning) => warning.code === "SHAKAPACKER_BUNDLER_MISMATCH"
+    )
+    expect(bundlerWarning).toBeDefined()
+    expect(bundlerWarning.message).toContain('assets_bundler is "rspack"')
+  })
 })

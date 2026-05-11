@@ -5,6 +5,7 @@ require "shellwords"
 require "open3"
 require "tempfile"
 require "tmpdir"
+require "json"
 
 class RaisingMessageHandler
   def add_error(error)
@@ -462,6 +463,19 @@ def supplemental_package_dirs
   ]
 end
 
+# Rewrites `dependencies.shakapacker` in a supplemental package.json to
+# `~<npm_version>` while preserving JSON formatting (2-space indent,
+# trailing newline) so the diff stays minimal.
+def bump_supplemental_core_dep(full_pkg_dir, npm_version)
+  pkg_json_path = File.join(full_pkg_dir, "package.json")
+  pkg_json = JSON.parse(File.read(pkg_json_path))
+  unless pkg_json.dig("dependencies", "shakapacker")
+    abort "❌ Expected dependencies.shakapacker in #{pkg_json_path} but found none."
+  end
+  pkg_json["dependencies"]["shakapacker"] = "~#{npm_version}"
+  File.write(pkg_json_path, "#{JSON.pretty_generate(pkg_json)}\n")
+end
+
 def print_release_summary(release_result)
   released_gem_version = release_result[:released_gem_version]
   released_npm_version = release_result[:released_npm_version]
@@ -592,11 +606,20 @@ def perform_release(
     # version lockstep across all three packages, but release-it only knows about
     # the root package.json — so we pre-bump the supplementals and stage them.
     # release-it picks up the staged files when it commits the version bump.
+    #
+    # `npm version` only rewrites the `version` field. The supplementals also
+    # declare `"shakapacker": "~X.Y.Z"` as a regular dependency; without
+    # rewriting that constraint here, a 10.1.0 → 10.2.0 bump would publish
+    # supplementals declaring `~10.1.0` (resolves to >=10.1.0 <10.2.0 — unable
+    # to install the new core). publish-packages.sh re-asserts both the
+    # version AND the dependency constraint as a defense-in-depth check.
     supplemental_package_dirs.each do |pkg_dir|
+      full_pkg_dir = File.join(release_root, pkg_dir)
       Shakapacker::Utils::Misc.sh_in_dir(
-        File.join(release_root, pkg_dir),
+        full_pkg_dir,
         "npm version #{Shellwords.escape(npm_version)} --no-git-tag-version --allow-same-version"
       )
+      bump_supplemental_core_dep(full_pkg_dir, npm_version)
     end
     supplemental_package_jsons = supplemental_package_dirs.map { |d| "#{d}/package.json" }
     Shakapacker::Utils::Misc.sh_in_dir(release_root, "git add #{Shellwords.join(supplemental_package_jsons)}")

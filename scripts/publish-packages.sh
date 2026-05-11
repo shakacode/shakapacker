@@ -85,13 +85,37 @@ if [[ "$CORE_VERSION" != "$WEBPACK_VERSION" || "$WEBPACK_VERSION" != "$RSPACK_VE
   exit 1
 fi
 
+# Supplementals declare `"shakapacker": "~X.Y.Z"` as a regular dependency.
+# `npm version` (run by the release rake task) bumps only the `version`
+# field — without a parallel bump of this constraint, a 10.1.0 → 10.2.0
+# release would publish supplementals declaring `~10.1.0` (which resolves
+# to >=10.1.0 <10.2.0 — unable to install the new core). The rake task
+# does that rewrite; this check is the publish-time guard that catches
+# any path that bypassed the rake flow.
+WEBPACK_CORE_DEP="$(node -p "require('./packages/shakapacker-webpack/package.json').dependencies.shakapacker")"
+RSPACK_CORE_DEP="$(node -p "require('./packages/shakapacker-rspack/package.json').dependencies.shakapacker")"
+EXPECTED_CORE_DEP="~$CORE_VERSION"
+if [[ "$WEBPACK_CORE_DEP" != "$EXPECTED_CORE_DEP" || "$RSPACK_CORE_DEP" != "$EXPECTED_CORE_DEP" ]]; then
+  echo "Core-dependency mismatch — supplementals must declare 'shakapacker': '$EXPECTED_CORE_DEP':" >&2
+  echo "  shakapacker-webpack    -> $WEBPACK_CORE_DEP" >&2
+  echo "  shakapacker-rspack     -> $RSPACK_CORE_DEP" >&2
+  echo "  expected               -> $EXPECTED_CORE_DEP" >&2
+  exit 1
+fi
+
 # Soft-warn (don't fail) if the Ruby gem version drifts from the npm
 # version. The gem is published independently via `gem push`, so this
 # script can't enforce gem alignment, but a mismatch usually means
 # `lib/shakapacker/version.rb` was missed in the version bump commit.
-GEM_VERSION="$(ruby -r ./lib/shakapacker/version -e 'puts Shakapacker::VERSION' 2>/dev/null || true)"
-if [[ -n "$GEM_VERSION" && "$GEM_VERSION" != "$CORE_VERSION" ]]; then
-  echo "Warning: Ruby gem version ($GEM_VERSION) does not match npm version ($CORE_VERSION)." >&2
+#
+# Compare in npm syntax (10.1.0-beta.1) rather than gem syntax
+# (10.1.0.beta.1) — a raw string compare would false-warn on every
+# prerelease release because the two syntaxes differ on the prerelease
+# separator (`-` vs `.`).
+GEM_VERSION_NPM="$(ruby -r ./lib/shakapacker/utils/version_syntax_converter -e 'puts Shakapacker::Utils::VersionSyntaxConverter.new.rubygem_to_npm' 2>/dev/null || true)"
+if [[ -n "$GEM_VERSION_NPM" && "$GEM_VERSION_NPM" != "$CORE_VERSION" ]]; then
+  GEM_VERSION_RAW="$(ruby -r ./lib/shakapacker/version -e 'puts Shakapacker::VERSION' 2>/dev/null || true)"
+  echo "Warning: Ruby gem version ($GEM_VERSION_RAW → $GEM_VERSION_NPM in npm syntax) does not match npm version ($CORE_VERSION)." >&2
   echo "         Update lib/shakapacker/version.rb before publishing the gem." >&2
 fi
 
