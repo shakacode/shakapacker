@@ -4,6 +4,10 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT_DIR"
 
+# Supported Node range mirrors package.json "engines" (@rspack/core v2 requirement).
+MIN_NODE_20="20.19.0"
+MIN_NODE_22="22.12.0"
+
 run_cmd() {
   if [[ -x "$ROOT_DIR/bin/conductor-exec" ]]; then
     "$ROOT_DIR/bin/conductor-exec" "$@"
@@ -20,11 +24,36 @@ ensure_tool() {
   fi
 }
 
+node_version_supported() {
+  local version="$1"
+  local major
+  major=$(echo "$version" | cut -d'.' -f1)
+  if [[ "$major" == "20" ]] && [[ $(printf '%s\n' "$MIN_NODE_20" "$version" | sort -V | head -n1) == "$MIN_NODE_20" ]]; then
+    return 0
+  fi
+  if [[ "$major" =~ ^[0-9]+$ ]] && [[ "$major" -ge 22 ]] && [[ $(printf '%s\n' "$MIN_NODE_22" "$version" | sort -V | head -n1) == "$MIN_NODE_22" ]]; then
+    return 0
+  fi
+  return 1
+}
+
 echo "Checking required tools..."
 ensure_tool ruby
 ensure_tool bundle
 ensure_tool node
 ensure_tool yarn
+
+NODE_VERSION=$(run_cmd node -v | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -n1)
+if [[ -z "$NODE_VERSION" ]]; then
+  echo "Error: Could not parse Node.js version from \`node -v\`. Got: $(run_cmd node -v)" >&2
+  exit 1
+fi
+if ! node_version_supported "$NODE_VERSION"; then
+  echo "Error: Node.js v$NODE_VERSION is unsupported. Shakapacker requires Node ^20.19.0 || >=22.12.0." >&2
+  echo "  This matches the engines field in package.json (and @rspack/core v2)." >&2
+  echo "  Upgrade Node via your version manager, then rerun bin/setup." >&2
+  exit 1
+fi
 
 echo "Installing Ruby dependencies..."
 run_cmd bundle install

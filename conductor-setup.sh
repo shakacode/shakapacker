@@ -3,6 +3,47 @@ set -euo pipefail
 
 echo "🔧 Setting up Shakapacker workspace..."
 
+# Engine requirements (kept in sync with package.json "engines" and lib/install/templates).
+# @rspack/core v2 (Shakapacker v10+) requires Node ^20.19.0 || >=22.12.0.
+MIN_RUBY_VERSION="2.7.0"
+DEFAULT_RUBY_VERSION="3.3.4"
+DEFAULT_NODE_VERSION="22.20.0"
+MIN_NODE_20="20.19.0"
+MIN_NODE_22="22.12.0"
+
+# Returns 0 if $1 is a Node version inside ^20.19.0 || >=22.12.0.
+node_version_supported() {
+    local version="$1"
+    local major
+    major=$(echo "$version" | cut -d'.' -f1)
+    if [[ "$major" == "20" ]] && [[ $(printf '%s\n' "$MIN_NODE_20" "$version" | sort -V | head -n1) == "$MIN_NODE_20" ]]; then
+        return 0
+    fi
+    if [[ "$major" =~ ^[0-9]+$ ]] && [[ "$major" -ge 22 ]] && [[ $(printf '%s\n' "$MIN_NODE_22" "$version" | sort -V | head -n1) == "$MIN_NODE_22" ]]; then
+        return 0
+    fi
+    return 1
+}
+
+# Set or update a `<tool> <version>` line in .tool-versions, preserving other entries.
+upsert_tool_versions_line() {
+    local tool="$1"
+    local version="$2"
+    local file=".tool-versions"
+    if [[ ! -f "$file" ]]; then
+        echo "$tool $version" > "$file"
+        return
+    fi
+    if grep -qE "^${tool}[[:space:]]" "$file"; then
+        awk -v tool="$tool" -v ver="$version" '
+            $1 == tool { print tool " " ver; next }
+            { print }
+        ' "$file" > "$file.tmp" && mv "$file.tmp" "$file"
+    else
+        echo "$tool $version" >> "$file"
+    fi
+}
+
 # Detect and initialize version manager
 # Supports: mise, asdf, or direct PATH (rbenv/nvm/nodenv already in PATH)
 VERSION_MANAGER="none"
@@ -30,28 +71,44 @@ else
     echo "   (Assuming rbenv/nvm/nodenv or system tools are already configured)"
 fi
 
-# Ensure version config exists for asdf/mise users
-if [[ "$VERSION_MANAGER" != "none" ]] && [[ ! -f .tool-versions ]] && [[ ! -f .mise.toml ]]; then
-    echo "📝 Creating .tool-versions from project version files..."
-
-    # Read Ruby version from .ruby-version or use default
+# Sync .tool-versions with project version files (asdf/mise only; skip when .mise.toml is authoritative)
+if [[ "$VERSION_MANAGER" != "none" ]] && [[ ! -f .mise.toml ]]; then
     if [[ -f .ruby-version ]]; then
         RUBY_VER=$(cat .ruby-version | tr -d '[:space:]')
     else
-        RUBY_VER="3.3.4"  # Default: recent stable Ruby
+        RUBY_VER="$DEFAULT_RUBY_VERSION"
     fi
 
-    # Read Node version from .node-version or use default
     if [[ -f .node-version ]]; then
         NODE_VER=$(cat .node-version | tr -d '[:space:]')
     else
-        NODE_VER="22.20.0"  # Default: LTS Node (>=22.12.0 required by @rspack/core)
+        NODE_VER="$DEFAULT_NODE_VERSION"
     fi
 
-    cat > .tool-versions << EOF
-ruby $RUBY_VER
-nodejs $NODE_VER
-EOF
+    # Fail fast if .node-version pins an unsupported Node, before mise installs the wrong version.
+    if ! node_version_supported "$NODE_VER"; then
+        echo "❌ Error: Node version $NODE_VER (from .node-version) is unsupported."
+        echo "   Shakapacker requires Node ^20.19.0 || >=22.12.0 (matches package.json engines)."
+        echo "   Fix: update .node-version to a supported version (e.g. $DEFAULT_NODE_VERSION), then rerun setup."
+        exit 1
+    fi
+
+    if [[ ! -f .tool-versions ]]; then
+        echo "📝 Creating .tool-versions from project version files..."
+    else
+        existing_node=$(awk '$1 == "nodejs" { print $2; exit }' .tool-versions)
+        existing_ruby=$(awk '$1 == "ruby" { print $2; exit }' .tool-versions)
+        if [[ "$existing_node" != "$NODE_VER" ]] || [[ "$existing_ruby" != "$RUBY_VER" ]]; then
+            echo "📝 Updating .tool-versions to match .node-version/.ruby-version..."
+            [[ -n "$existing_node" ]] && [[ "$existing_node" != "$NODE_VER" ]] && \
+                echo "   nodejs: $existing_node → $NODE_VER"
+            [[ -n "$existing_ruby" ]] && [[ "$existing_ruby" != "$RUBY_VER" ]] && \
+                echo "   ruby:   $existing_ruby → $RUBY_VER"
+        fi
+    fi
+
+    upsert_tool_versions_line "ruby" "$RUBY_VER"
+    upsert_tool_versions_line "nodejs" "$NODE_VER"
     echo "   Using Ruby $RUBY_VER, Node $NODE_VER"
 fi
 
@@ -82,37 +139,28 @@ if [[ -z "$RUBY_VERSION" ]]; then
     echo "❌ Error: Could not parse Ruby version from \`ruby -v\`. Got: $(run_cmd ruby -v)"
     exit 1
 fi
-MIN_RUBY_VERSION="2.7.0"
 if [[ $(printf '%s\n' "$MIN_RUBY_VERSION" "$RUBY_VERSION" | sort -V | head -n1) != "$MIN_RUBY_VERSION" ]]; then
-    echo "❌ Error: Ruby version $RUBY_VERSION is too old. Shakapacker requires Ruby >= 2.7.0"
+    echo "❌ Error: Ruby version $RUBY_VERSION is too old. Shakapacker requires Ruby >= $MIN_RUBY_VERSION"
     echo "   Please upgrade Ruby using your version manager or system package manager."
     exit 1
 fi
 echo "✅ Ruby version: $RUBY_VERSION"
 
-# Check Node version
-# @rspack/core v2 (used by Shakapacker v10+) requires ^20.19.0 || >=22.12.0.
-# Reject unsupported ranges (21.x, 22.0.0–22.11.x) up front so they fail before yarn install.
-# The >=22.12.0 branch intentionally accepts future majors (23.x, 24.x, …) — matching the
-# upstream rspack engine constraint.
+# Check Node version against ^20.19.0 || >=22.12.0 (rspack v2 engine constraint).
 # Extract MAJOR.MINOR.PATCH; ignores any distro patch suffix (e.g., "v22.20.0+custom") so sort -V compares cleanly.
 NODE_VERSION=$(run_cmd node -v | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -n1)
 if [[ -z "$NODE_VERSION" ]]; then
     echo "❌ Error: Could not parse Node.js version from \`node -v\`. Got: $(run_cmd node -v)"
     exit 1
 fi
-NODE_MAJOR=$(echo "$NODE_VERSION" | cut -d'.' -f1)
-MIN_NODE_20="20.19.0"
-MIN_NODE_22="22.12.0"
-node_supported=false
-if [[ "$NODE_MAJOR" == "20" ]] && [[ $(printf '%s\n' "$MIN_NODE_20" "$NODE_VERSION" | sort -V | head -n1) == "$MIN_NODE_20" ]]; then
-    node_supported=true
-elif [[ "$NODE_MAJOR" -ge 22 ]] && [[ $(printf '%s\n' "$MIN_NODE_22" "$NODE_VERSION" | sort -V | head -n1) == "$MIN_NODE_22" ]]; then
-    node_supported=true
-fi
-if [[ "$node_supported" != "true" ]]; then
+if ! node_version_supported "$NODE_VERSION"; then
     echo "❌ Error: Node.js version v$NODE_VERSION is unsupported. Shakapacker requires Node.js ^20.19.0 || >=22.12.0"
-    echo "   Please upgrade Node.js using your version manager or system package manager."
+    if [[ "$VERSION_MANAGER" == "mise" ]] && [[ -f .tool-versions ]]; then
+        echo "   Hint: .tool-versions pins nodejs $(awk '$1 == "nodejs" { print $2; exit }' .tool-versions || echo '?')."
+        echo "   Update .node-version and rerun setup, or run \`mise install\` after fixing .tool-versions."
+    else
+        echo "   Please upgrade Node.js using your version manager or system package manager."
+    fi
     exit 1
 fi
 echo "✅ Node.js version: v$NODE_VERSION"
