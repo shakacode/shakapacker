@@ -210,6 +210,28 @@ describe "VersionChecker::NodePackageVersion" do
       end
     end
 
+    context "when using a single-dot relative path" do
+      let(:node_package_version_from_single_dot_path) { node_package_version(fixture_version: "single_dot_path") }
+
+      it "#raw returns the single-dot relative path without consulting lockfiles" do
+        expect(File).not_to receive(:exist?)
+
+        expect(node_package_version_from_single_dot_path.raw).to eq "./vendor/shakapacker"
+      end
+
+      it "#major_minor_patch returns nil" do
+        expect(node_package_version_from_single_dot_path.major_minor_patch).to be nil
+      end
+
+      it "#skip_processing? returns true" do
+        expect(node_package_version_from_single_dot_path.skip_processing?).to be true
+      end
+
+      it "#semver_wildcard? returns false" do
+        expect(node_package_version_from_single_dot_path.semver_wildcard?).to be false
+      end
+    end
+
     context "when using a git url" do
       let(:node_package_version_from_git_url) { node_package_version(fixture_version: "git_url") }
 
@@ -378,6 +400,28 @@ describe "VersionChecker::NodePackageVersion" do
 
       it "#semver_wildcard? returns false" do
         expect(node_package_version_from_relative_path.semver_wildcard?).to be false
+      end
+    end
+
+    context "when using a single-dot relative path" do
+      let(:node_package_version_from_single_dot_path) { node_package_version(fixture_version: "single_dot_path") }
+
+      it "#raw returns the single-dot relative path" do
+        expect(File).not_to receive(:exist?)
+
+        expect(node_package_version_from_single_dot_path.raw).to eq "./vendor/shakapacker"
+      end
+
+      it "#major_minor_patch returns nil" do
+        expect(node_package_version_from_single_dot_path.major_minor_patch).to be nil
+      end
+
+      it "#skip_processing? returns true" do
+        expect(node_package_version_from_single_dot_path.skip_processing?).to be true
+      end
+
+      it "#semver_wildcard? returns false" do
+        expect(node_package_version_from_single_dot_path.semver_wildcard?).to be false
       end
     end
 
