@@ -51,6 +51,9 @@ describe("index side effects", () => {
   })
 
   test("lazily exposes baseConfig with the expected shape", () => {
+    // Intentionally does not call mockWebpackPlugins(): this test exercises the
+    // real plugin constructors (via environments/base) to verify the lazy
+    // getter still produces a fully assembled config object.
     jest.isolateModules(() => {
       const ensureManifestExists = mockEnsureManifestExists()
 

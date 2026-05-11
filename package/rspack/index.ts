@@ -10,7 +10,6 @@ import type { Config } from "../types"
 
 const webpackMerge = require("webpack-merge")
 const config = require("../config") as Config
-const baseConfig = require("../environments/base")
 const devServer = require("../dev_server")
 const env = require("../env")
 const { moduleExists, canProcess } = require("../utils/helpers")
@@ -29,6 +28,16 @@ const { validateRspackDependencies } = require("../utils/validateDependencies")
 
 const rules = require(resolve(__dirname, "../rules", "rspack.js"))
 
+let _baseConfig: RspackConfigWithDevServer | undefined
+
+const getBaseConfig = (): RspackConfigWithDevServer => {
+  if (!_baseConfig) {
+    _baseConfig = require("../environments/base")
+  }
+
+  return _baseConfig as RspackConfigWithDevServer
+}
+
 const generateRspackConfig = (
   extraConfig: RspackConfigWithDevServer = {},
   ...extraArgs: unknown[]
@@ -44,7 +53,12 @@ const generateRspackConfig = (
   const { nodeEnv } = env
   const path = resolve(__dirname, "../environments", `${nodeEnv}.js`)
 
-  const environmentConfig = existsSync(path) ? require(path) : baseConfig
+  const environmentConfig = existsSync(path) ? require(path) : getBaseConfig()
+
+  // Lazy-load plugin/optimization modules so simply requiring this index does
+  // not trigger @rspack/core or rspack-manifest-plugin resolution.
+  const { getPlugins } = require("../plugins/rspack")
+  const { getOptimization } = require("../optimization/rspack")
 
   return webpackMerge.merge({}, environmentConfig, extraConfig)
 }
@@ -61,7 +75,6 @@ export {
   config, // shakapacker.yml
   devServer,
   generateRspackConfig,
-  baseConfig,
   env,
   rules,
   moduleExists,
@@ -76,3 +89,12 @@ export {
   getEnvironmentPlugin,
   getProvidePlugin
 }
+
+// `baseConfig` is exposed via a lazy getter so requiring this module does not
+// load `environments/base` (and its transitive plugin/manifest side effects)
+// until a caller actually reads the property.
+Object.defineProperty(module.exports, "baseConfig", {
+  configurable: true,
+  enumerable: true,
+  get: getBaseConfig
+})

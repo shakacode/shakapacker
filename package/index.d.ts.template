@@ -25,8 +25,12 @@ interface ShakapackerExports {
   config: Config
   /** Development server configuration */
   devServer: DevServerConfig
-  /** Base webpack/rspack configuration */
-  baseConfig: Configuration
+  /**
+   * Base webpack/rspack configuration.
+   * Exposed via a lazy getter — reassignment via `shakapacker.baseConfig = ...`
+   * throws in strict mode. Use `Object.defineProperty` to override if needed.
+   */
+  readonly baseConfig: Configuration
   /** Environment configuration (railsEnv, nodeEnv, etc.) */
   env: Env
   /** Array of webpack/rspack loader rules */
