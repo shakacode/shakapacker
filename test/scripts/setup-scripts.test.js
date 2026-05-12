@@ -41,7 +41,7 @@ describe("setup scripts", () => {
     )
     writeExecutable(
       "node",
-      '#!/usr/bin/env bash\necho "$' + '{FAKE_NODE_VERSION:-v22.20.0}"\n'
+      `#!/usr/bin/env bash\necho "\${FAKE_NODE_VERSION:-v22.20.0}"\n`
     )
     writeExecutable("bundle", "#!/usr/bin/env bash\nexit 0\n")
     writeExecutable("yarn", "#!/usr/bin/env bash\nexit 0\n")

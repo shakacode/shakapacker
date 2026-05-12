@@ -11,10 +11,7 @@ const webpackWrapperPath = join(
   repoRoot,
   "packages/shakapacker-webpack/index.js"
 )
-const rspackWrapperPath = join(
-  repoRoot,
-  "packages/shakapacker-rspack/index.js"
-)
+const rspackWrapperPath = join(repoRoot, "packages/shakapacker-rspack/index.js")
 
 const extractCodes = (path) => {
   const source = readFileSync(path, "utf8")
