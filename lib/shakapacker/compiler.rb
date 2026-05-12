@@ -221,10 +221,14 @@ class Shakapacker::Compiler
       self.class.doctor_hint_mutex.synchronize do
         return if self.class.doctor_hint_shown
 
-        logger.info "Tip: run 'bundle exec rake shakapacker:doctor' to diagnose configuration issues."
+        begin
+          logger.info "Tip: run 'bundle exec rake shakapacker:doctor' to diagnose configuration issues."
+        rescue StandardError
+          # Non-critical tip; never abort a build because the logger failed.
+          return
+        end
+
         self.class.send(:doctor_hint_shown=, true)
-      rescue StandardError
-        # Non-critical tip; never abort a build because the logger failed.
       end
     end
 end

@@ -76,14 +76,10 @@ describe Shakapacker::Doctor do
       )
     end
 
-    it "stores fix hints with an explicit category" do
-      doctor.send(:add_fix_hint, "Test fix instruction", described_class::CATEGORY_ACTION_REQUIRED)
-
-      expect(doctor.warnings.last).to eq(
-        category: described_class::CATEGORY_ACTION_REQUIRED,
-        message: "Test fix instruction",
-        fix: true
-      )
+    it "does not accept a category override for fix hints" do
+      expect do
+        doctor.send(:add_fix_hint, "Test fix instruction", described_class::CATEGORY_ACTION_REQUIRED)
+      end.to raise_error(ArgumentError)
     end
 
     it "formats warnings with correct indentation and spacing" do
@@ -784,6 +780,21 @@ describe Shakapacker::Doctor do
       end
     end
 
+    context "when cache: false belongs to a named ES module export" do
+      before do
+        File.write(rspack_config_path, <<~JS)
+          export const rspackConfig = {
+            cache: false
+          }
+        JS
+      end
+
+      it "warns that cache is disabled" do
+        doctor.send(:check_rspack_cache_configuration)
+        expect(warning_messages).to include(match(/Rspack cache appears to be disabled/))
+      end
+    end
+
     context "when the active rspack config cannot be read" do
       before do
         File.write(rspack_config_path, "module.exports = { cache: false }")
@@ -868,7 +879,7 @@ describe Shakapacker::Doctor do
     end
 
     context "when the configured rspack config directory is an equivalent Pathname" do
-      it "still checks the config/webpack fallback" do
+      it "does not check the config/webpack fallback because the runner does an exact string check" do
         allow(config).to receive(:assets_bundler_config_path).and_return(Pathname.new("config/rspack/"))
         FileUtils.rm_f(rspack_config_path)
         webpack_config_path = root_path.join("config/webpack/webpack.config.js")
@@ -877,7 +888,7 @@ describe Shakapacker::Doctor do
 
         doctor.send(:check_rspack_cache_configuration)
 
-        expect(warning_messages).to include(match(/Rspack cache appears to be disabled.*config\/webpack\/webpack\.config\.js/))
+        expect(warning_messages).not_to include(match(/Rspack cache appears to be disabled/))
       end
     end
 

@@ -61,8 +61,8 @@ module Shakapacker
       end
 
       # Marks the warning as a Fix sub-item; the renderer owns the "Fix: " prefix and indentation.
-      def add_fix_hint(message, category = CATEGORY_RECOMMENDED)
-        @warnings << { category: category, message: message, fix: true }
+      def add_fix_hint(message)
+        @warnings << { category: CATEGORY_RECOMMENDED, message: message, fix: true }
       end
 
       def print_help
@@ -206,7 +206,7 @@ module Shakapacker
         # Match "bundler:" at start of line or preceded by non-underscore character
         if config_file.match?(/^\s*bundler:/m) || config_file.match?(/[^_]bundler:/)
           add_action_required("Deprecated config: 'bundler' should be renamed to 'assets_bundler' in #{config_relative_path}.")
-          add_fix_hint("Open #{config_relative_path} and change 'bundler:' to 'assets_bundler:'.", CATEGORY_ACTION_REQUIRED)
+          add_fix_hint("Open #{config_relative_path} and change 'bundler:' to 'assets_bundler:'.")
         end
       rescue => e
         # Ignore read errors as config file check already handles missing file
@@ -413,7 +413,7 @@ module Shakapacker
 
         unless missing_binstubs.empty?
           add_action_required("Missing binstubs: #{missing_binstubs.join(', ')}.")
-          add_fix_hint("Run 'bundle exec rake shakapacker:binstubs' to create them.", CATEGORY_ACTION_REQUIRED)
+          add_fix_hint("Run 'bundle exec rake shakapacker:binstubs' to create them.")
         end
       end
 
@@ -738,7 +738,7 @@ module Shakapacker
       end
 
       def default_rspack_config_dir?(config_dir)
-        Pathname.new(config_dir).cleanpath.to_s == "config/rspack"
+        config_dir == "config/rspack"
       end
 
       def config_path_for_warning(path)
@@ -793,7 +793,7 @@ module Shakapacker
           statement_prefix = pre[(pre.rindex(";") || -1) + 1..]
           # generateRspackConfig is Shakapacker's own helper; user-defined wrappers
           # like makeRspackConfig/createConfig are a known false-negative gap.
-          statement_prefix.match?(/\bmodule\.exports\b|\bexport\s+default\b|\bgenerateRspackConfig\b/)
+          statement_prefix.match?(/\bmodule\.exports\b|\bexport\s+default\b|\bexport\s+(?:const|let|var)\b|\bgenerateRspackConfig\b/)
         end
       end
 

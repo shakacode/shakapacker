@@ -105,6 +105,17 @@ describe "Shakapacker::Compiler" do
       # Flag stays false so a future compile can still surface the tip when the logger recovers.
       expect(Shakapacker::Compiler.doctor_hint_shown).to be false
     end
+
+    it "does not swallow failures outside the hint logger call" do
+      status = OpenStruct.new(success?: false)
+      allow(Open3).to receive(:capture3).and_return(["", "build error", status])
+      allow(Shakapacker.logger).to receive(:error)
+      allow(Shakapacker.logger).to receive(:info)
+      allow(Shakapacker::Compiler).to receive(:send).and_call_original
+      allow(Shakapacker::Compiler).to receive(:send).with(:doctor_hint_shown=, true).and_raise("flag boom")
+
+      expect { Shakapacker.compiler.compile }.to raise_error("flag boom")
+    end
   end
 
   it "accepts external env variables" do
