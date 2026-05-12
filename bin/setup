@@ -4,9 +4,7 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT_DIR"
 
-# Supported Node range mirrors package.json "engines" (@rspack/core v2 requirement).
-MIN_NODE_20="20.19.0"
-MIN_NODE_22="22.12.0"
+source "$ROOT_DIR/bin/lib/node-version-check.sh"
 
 run_cmd() {
   if [[ -x "$ROOT_DIR/bin/conductor-exec" ]]; then
@@ -22,19 +20,6 @@ ensure_tool() {
     echo "Error: $tool is not available. Install it and run bin/setup again." >&2
     exit 1
   fi
-}
-
-node_version_supported() {
-  local version="$1"
-  local major
-  major=$(echo "$version" | cut -d'.' -f1)
-  if [[ "$major" == "20" ]] && [[ $(printf '%s\n' "$MIN_NODE_20" "$version" | sort -V | head -n1) == "$MIN_NODE_20" ]]; then
-    return 0
-  fi
-  if [[ "$major" =~ ^[0-9]+$ ]] && [[ "$major" -ge 22 ]] && [[ $(printf '%s\n' "$MIN_NODE_22" "$version" | sort -V | head -n1) == "$MIN_NODE_22" ]]; then
-    return 0
-  fi
-  return 1
 }
 
 echo "Checking required tools..."
