@@ -726,6 +726,23 @@ describe Shakapacker::Doctor do
       end
     end
 
+    context "when a block comment contains an unmatched backtick before a real cache: false" do
+      before do
+        File.write(rspack_config_path, <<~JS)
+          /** Do not set `cache: false here. */
+          module.exports = {
+            cache: false,
+            banner: `built by shakapacker`
+          }
+        JS
+      end
+
+      it "still detects cache: false after the block comment" do
+        doctor.send(:check_rspack_cache_configuration)
+        expect(warning_messages).to include(match(/Rspack cache appears to be disabled/))
+      end
+    end
+
     context "when cache: false is nested inside a loader's options" do
       before do
         File.write(rspack_config_path, <<~JS)

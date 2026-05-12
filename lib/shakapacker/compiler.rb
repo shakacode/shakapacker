@@ -15,9 +15,7 @@ class Shakapacker::Compiler
 
   class << self
     attr_reader :doctor_hint_shown, :doctor_hint_mutex
-    # Internal: tests reset this flag via `send(:doctor_hint_shown=, false)`.
     attr_writer :doctor_hint_shown
-    private :doctor_hint_shown=
   end
 
   delegate :config, :logger, :strategy, to: :instance
@@ -228,7 +226,7 @@ class Shakapacker::Compiler
           return
         end
 
-        self.class.send(:doctor_hint_shown=, true)
+        self.class.doctor_hint_shown = true
       end
     end
 end

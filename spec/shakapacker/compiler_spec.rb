@@ -57,7 +57,7 @@ describe "Shakapacker::Compiler" do
 
     before do
       allow(Shakapacker.compiler).to receive(:strategy).and_return(mocked_strategy)
-      Shakapacker::Compiler.send(:doctor_hint_shown=, false)
+      Shakapacker::Compiler.doctor_hint_shown = false
     end
 
     it "does not log the doctor hint when compilation succeeds" do
@@ -79,6 +79,19 @@ describe "Shakapacker::Compiler" do
       Shakapacker.compiler.compile
 
       expect(Shakapacker.logger).to have_received(:info).with(/shakapacker:doctor/).once
+    end
+
+    it "sets the doctor hint flag without bypassing method visibility" do
+      status = OpenStruct.new(success?: false)
+      allow(Open3).to receive(:capture3).and_return(["", "build error", status])
+      allow(Shakapacker.logger).to receive(:error)
+      allow(Shakapacker.logger).to receive(:info)
+      allow(Shakapacker::Compiler).to receive(:send).and_call_original
+
+      Shakapacker.compiler.compile
+
+      expect(Shakapacker::Compiler).not_to have_received(:send).with(:doctor_hint_shown=, true)
+      expect(Shakapacker::Compiler.doctor_hint_shown).to be true
     end
 
     it "does not repeat the doctor hint on subsequent failed compiles" do
@@ -111,8 +124,8 @@ describe "Shakapacker::Compiler" do
       allow(Open3).to receive(:capture3).and_return(["", "build error", status])
       allow(Shakapacker.logger).to receive(:error)
       allow(Shakapacker.logger).to receive(:info)
-      allow(Shakapacker::Compiler).to receive(:send).and_call_original
-      allow(Shakapacker::Compiler).to receive(:send).with(:doctor_hint_shown=, true).and_raise("flag boom")
+      allow(Shakapacker::Compiler).to receive(:doctor_hint_shown=).and_call_original
+      allow(Shakapacker::Compiler).to receive(:doctor_hint_shown=).with(true).and_raise("flag boom")
 
       expect { Shakapacker.compiler.compile }.to raise_error("flag boom")
     end

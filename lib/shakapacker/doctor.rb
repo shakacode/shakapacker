@@ -767,12 +767,7 @@ module Shakapacker
         # and produce a spurious cache: false match.
         stripped = content.gsub(/(['"])(\w+)\1(?=[ \t]*:)/, '\2')
 
-        stripped = stripped
-          .gsub(/`(?:\\.|[^`\\])*`/m, '""')
-          .gsub(/'(?:\\.|[^'\\\n])*'/, '""')
-          .gsub(/"(?:\\.|[^"\\\n])*"/, '""')
-          .gsub(%r{/\*.*?\*/}m, "")
-          .gsub(%r{(?<!\\)//[^\n]*}, "")
+        stripped = strip_rspack_config_comments_and_literals(stripped)
 
         # Regex literal stripping runs after comment removal. The line-comment
         # pass above ignores escaped slashes so /https?:\/\/host/ stays intact
@@ -780,6 +775,91 @@ module Shakapacker
         # false-match bare division like `a / b / c`, but rspack config files
         # rarely contain arithmetic near `cache:`, so the risk is low.
         stripped.gsub(%r{/(?:\\.|\[[^\]\n]*\]|[^/\n\\\[])+?/[gimsuy]*}, "")
+      end
+
+      def strip_rspack_config_comments_and_literals(content)
+        stripped = +""
+        index = 0
+
+        while index < content.length
+          char = content[index]
+          pair = content[index, 2]
+
+          if pair == "/*"
+            comment_end = content.index("*/", index + 2)
+            if comment_end
+              comment = content[index..comment_end + 1]
+              stripped << comment.gsub(/[^\n]/, " ")
+              index = comment_end + 2
+            else
+              stripped << content[index..].gsub(/[^\n]/, " ")
+              break
+            end
+          elsif pair == "//" && (index.zero? || content[index - 1] != "\\")
+            line_end = content.index("\n", index + 2) || content.length
+            stripped << content[index...line_end].gsub(/[^\n]/, " ")
+            index = line_end
+          elsif char == "'" || char == '"'
+            literal_end = index + 1
+            escaped = false
+
+            while literal_end < content.length
+              current = content[literal_end]
+              break if current == "\n"
+
+              if escaped
+                escaped = false
+              elsif current == "\\"
+                escaped = true
+              elsif current == char
+                literal_end += 1
+                break
+              end
+
+              literal_end += 1
+            end
+
+            literal = content[index...literal_end]
+            stripped << '""'
+            stripped << literal.gsub(/[^\n]/, "")
+            index = literal_end
+          elsif char == "`"
+            literal_end = index + 1
+            escaped = false
+            closed = false
+
+            while literal_end < content.length
+              current = content[literal_end]
+
+              if escaped
+                escaped = false
+              elsif current == "\\"
+                escaped = true
+              elsif current == "`"
+                literal_end += 1
+                closed = true
+                break
+              end
+
+              literal_end += 1
+            end
+
+            if closed
+              literal = content[index...literal_end]
+              stripped << '""'
+              stripped << literal.gsub(/[^\n]/, "")
+              index = literal_end
+            else
+              stripped << char
+              index += 1
+            end
+          else
+            stripped << char
+            index += 1
+          end
+        end
+
+        stripped
       end
 
       def direct_export_cache_disabled?(stripped)
