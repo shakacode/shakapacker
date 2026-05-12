@@ -7,12 +7,15 @@ configuration details after installation, see the [configuration guide](./config
 
 - Ruby 2.7+
 - Rails 5.2+
-- Node.js `^20.19.0` or `>=22.12.0`
+- Node.js `^20.19.0` or `>=22.12.0` (see
+  [`package.json` engines](../package.json))
 - A JavaScript package manager supported by
   [`package_json`](https://github.com/shakacode/package_json): npm, Yarn,
   pnpm, or Bun
 
 ## Add the Gem
+
+### New Rails App
 
 For a new Rails 6.1+ app, skip Rails' default JavaScript installer so
 Shakapacker can create the bundler files, then continue from the app root:
@@ -21,6 +24,11 @@ Shakapacker can create the bundler files, then continue from the app root:
 rails new myapp --skip-javascript
 cd myapp
 ```
+
+### Existing Rails App
+
+For an existing Rails app (5.2+), start from the app root and skip the
+`rails new` step.
 
 Add Shakapacker to your app:
 
@@ -102,7 +110,8 @@ See:
 
 - [Optional peer dependencies](./optional-peer-dependencies.md)
 - [Current peer dependency ranges](./peer-dependencies.md)
-- [Rspack migration guide](./rspack_migration_guide.md)
+- [Rspack guide](./rspack.md)
+- [Rspack migration guide (webpack to Rspack)](./rspack_migration_guide.md)
 - [Transpiler migration guide](./transpiler-migration.md)
 
 ## Verify the Install
@@ -120,7 +129,10 @@ For development with the dev server:
 bin/shakapacker-dev-server
 ```
 
-Then add the generated files to version control.
+Then add the generated files to version control, including
+`config/shakapacker.yml`, `config/webpack/` or `config/rspack/`,
+`bin/shakapacker`, `bin/shakapacker-dev-server`, and the
+`app/javascript/packs/application.js` entry point.
 
 ## Next Steps
 

@@ -134,7 +134,7 @@ Here's a testimonial from Jon Rajavuori of [Academia.edu](https://www.academia.e
 
 - Ruby 2.7+
 - Rails 5.2+
-- Node.js 20+
+- Node.js `^20.19.0` or `>=22.12.0`
 
 ## Features
 
