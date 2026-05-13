@@ -574,7 +574,7 @@ yarn add --dev @rspack/plugin-react-refresh
 Update your config:
 
 ```javascript
-const ReactRefreshRspackPlugin = require("@rspack/plugin-react-refresh")
+const { ReactRefreshRspackPlugin } = require('@rspack/plugin-react-refresh');
 const { rspack } = require("@rspack/core")
 
 module.exports = {

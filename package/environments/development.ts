@@ -72,7 +72,7 @@ const rspackDevConfig = (): RspackConfigWithDevServer => {
     devServerConfig.hot &&
     moduleExists("@rspack/plugin-react-refresh")
   ) {
-    const ReactRefreshRspackPlugin = require("@rspack/plugin-react-refresh")
+    const { ReactRefreshRspackPlugin } = require("@rspack/plugin-react-refresh")
     rspackConfig.plugins = [
       ...(rspackConfig.plugins || []),
       new ReactRefreshRspackPlugin()
