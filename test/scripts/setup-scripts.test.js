@@ -66,6 +66,19 @@ describe("setup scripts", () => {
     })
   }
 
+  function runBinSetup(extraEnv = {}) {
+    return spawnSync("bash", ["bin/setup"], {
+      cwd: tempDir,
+      env: {
+        ...process.env,
+        ...extraEnv,
+        BASH_ENV: "",
+        PATH: `${fakeBin}:${process.env.PATH}`
+      },
+      encoding: "utf8"
+    })
+  }
+
   beforeEach(() => {
     tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "setup-scripts-test-"))
     fakeBin = path.join(tempDir, "fake-bin")
@@ -128,6 +141,83 @@ describe("setup scripts", () => {
       expect(fs.existsSync(path.join(tempDir, ".tool-versions.tmp"))).toBe(
         false
       )
+    })
+
+    it("updates a stale nodejs entry in .tool-versions to match .node-version", () => {
+      installFakeTools()
+      fs.writeFileSync(path.join(tempDir, ".ruby-version"), "3.3.4\n")
+      fs.writeFileSync(path.join(tempDir, ".node-version"), "22.20.0\n")
+      fs.writeFileSync(
+        path.join(tempDir, ".tool-versions"),
+        "ruby 3.3.4\nnodejs 22.2.0\n"
+      )
+
+      const result = runConductorSetup()
+
+      expect(result.status).toBe(0)
+      expect(result.stdout).toContain("nodejs: 22.2.0 → 22.20.0")
+      expect(
+        fs.readFileSync(path.join(tempDir, ".tool-versions"), "utf8")
+      ).toBe("ruby 3.3.4\nnodejs 22.20.0\n")
+    })
+
+    it("accepts a v-prefixed .node-version", () => {
+      installFakeTools()
+      fs.writeFileSync(path.join(tempDir, ".ruby-version"), "3.3.4\n")
+      fs.writeFileSync(path.join(tempDir, ".node-version"), "v22.20.0\n")
+
+      const result = runConductorSetup()
+
+      expect(result.status).toBe(0)
+    })
+
+    it("does not rewrite .tool-versions when versions already match", () => {
+      installFakeTools()
+      fs.writeFileSync(path.join(tempDir, ".ruby-version"), "3.3.4\n")
+      fs.writeFileSync(path.join(tempDir, ".node-version"), "22.20.0\n")
+      const toolVersionsPath = path.join(tempDir, ".tool-versions")
+      fs.writeFileSync(toolVersionsPath, "ruby 3.3.4\nnodejs 22.20.0\n")
+      const mtimeBefore = fs.statSync(toolVersionsPath).mtimeMs
+
+      // Wait a touch to ensure any rewrite would change mtime.
+      const waitUntil = Date.now() + 20
+      while (Date.now() < waitUntil) {
+        // busy-wait briefly
+      }
+
+      const result = runConductorSetup()
+
+      expect(result.status).toBe(0)
+      expect(result.stdout).not.toContain("Updating .tool-versions")
+      expect(fs.statSync(toolVersionsPath).mtimeMs).toBe(mtimeBefore)
+    })
+  })
+
+  describe("bin/setup", () => {
+    it("rejects an unsupported Node version", () => {
+      installFakeTools()
+      const result = runBinSetup({ FAKE_NODE_VERSION: "v21.0.0" })
+
+      expect(result.status).not.toBe(0)
+      expect(result.stderr).toContain("unsupported")
+    })
+
+    it("accepts a v-prefixed supported Node version", () => {
+      installFakeTools()
+      const result = runBinSetup({ FAKE_NODE_VERSION: "v22.20.0" })
+
+      expect(result.status).toBe(0)
+    })
+
+    it("surfaces the raw output when node -v cannot be parsed", () => {
+      installFakeTools()
+      writeExecutable("node", '#!/usr/bin/env bash\necho "garbage output"\n')
+
+      const result = runBinSetup()
+
+      expect(result.status).not.toBe(0)
+      expect(result.stderr).toContain("Could not parse Node.js version")
+      expect(result.stderr).toContain("garbage output")
     })
   })
 

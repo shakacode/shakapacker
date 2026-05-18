@@ -1,8 +1,9 @@
-MIN_NODE_20="20.19.0"
-MIN_NODE_22="22.12.0"
+readonly MIN_NODE_20="20.19.0"
+readonly MIN_NODE_22="22.12.0"
 
 node_version_supported() {
   local version="$1"
+  version="${version#v}"
   local major
   major=$(echo "$version" | cut -d'.' -f1)
   if [[ "$major" == "20" ]] && [[ $(printf '%s\n' "$MIN_NODE_20" "$version" | sort -V | head -n1) == "$MIN_NODE_20" ]]; then

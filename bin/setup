@@ -28,9 +28,10 @@ ensure_tool bundle
 ensure_tool node
 ensure_tool yarn
 
-NODE_VERSION=$(run_cmd node -v | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -n1)
+NODE_RAW=$(run_cmd node -v 2>&1 || true)
+NODE_VERSION=$(echo "$NODE_RAW" | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -n1 || true)
 if [[ -z "$NODE_VERSION" ]]; then
-  echo "Error: Could not parse Node.js version from \`node -v\`. Got: $(run_cmd node -v)" >&2
+  echo "Error: Could not parse Node.js version from \`node -v\`. Got: $NODE_RAW" >&2
   exit 1
 fi
 if ! node_version_supported "$NODE_VERSION"; then

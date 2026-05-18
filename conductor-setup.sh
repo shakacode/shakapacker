@@ -22,13 +22,11 @@ upsert_tool_versions_line() {
     fi
     if grep -qE "^${tool}[[:space:]]" "$file"; then
         local tmpfile="$file.tmp"
-        trap 'rm -f "$tmpfile"' EXIT
         awk -v tool="$tool" -v ver="$version" '
             $1 == tool { print tool " " ver; next }
             { print }
-        ' "$file" > "$tmpfile"
-        mv "$tmpfile" "$file"
-        trap - EXIT
+        ' "$file" > "$tmpfile" || { rm -f "$tmpfile"; return 1; }
+        mv "$tmpfile" "$file" || { rm -f "$tmpfile"; return 1; }
     else
         echo "$tool $version" >> "$file"
     fi
@@ -85,6 +83,8 @@ if [[ "$VERSION_MANAGER" != "none" ]] && [[ ! -f .mise.toml ]]; then
 
     if [[ ! -f .tool-versions ]]; then
         echo "📝 Creating .tool-versions from project version files..."
+        upsert_tool_versions_line "ruby" "$RUBY_VER"
+        upsert_tool_versions_line "nodejs" "$NODE_VER"
     else
         existing_node=$(awk '$1 == "nodejs" { print $2; exit }' .tool-versions)
         existing_ruby=$(awk '$1 == "ruby" { print $2; exit }' .tool-versions)
@@ -98,11 +98,10 @@ if [[ "$VERSION_MANAGER" != "none" ]] && [[ ! -f .mise.toml ]]; then
                 echo "   ruby:   (new) $RUBY_VER"
             [[ -n "$existing_ruby" ]] && [[ "$existing_ruby" != "$RUBY_VER" ]] && \
                 echo "   ruby:   $existing_ruby → $RUBY_VER"
+            upsert_tool_versions_line "ruby" "$RUBY_VER"
+            upsert_tool_versions_line "nodejs" "$NODE_VER"
         fi
     fi
-
-    upsert_tool_versions_line "ruby" "$RUBY_VER"
-    upsert_tool_versions_line "nodejs" "$NODE_VER"
     echo "   Using Ruby $RUBY_VER, Node $NODE_VER"
 fi
 
@@ -128,9 +127,10 @@ run_cmd node --version >/dev/null 2>&1 || { echo "❌ Error: Node.js is not inst
 
 # Check Ruby version
 # Extract MAJOR.MINOR.PATCH; ignores any distro patch suffix (e.g., "+custom") so sort -V compares cleanly.
-RUBY_VERSION=$(run_cmd ruby -v | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -n1)
+RUBY_RAW=$(run_cmd ruby -v 2>&1 || true)
+RUBY_VERSION=$(echo "$RUBY_RAW" | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -n1 || true)
 if [[ -z "$RUBY_VERSION" ]]; then
-    echo "❌ Error: Could not parse Ruby version from \`ruby -v\`. Got: $(run_cmd ruby -v)"
+    echo "❌ Error: Could not parse Ruby version from \`ruby -v\`. Got: $RUBY_RAW"
     exit 1
 fi
 if [[ $(printf '%s\n' "$MIN_RUBY_VERSION" "$RUBY_VERSION" | sort -V | head -n1) != "$MIN_RUBY_VERSION" ]]; then
@@ -142,9 +142,10 @@ echo "✅ Ruby version: $RUBY_VERSION"
 
 # Check Node version against ^20.19.0 || >=22.12.0 (rspack v2 engine constraint).
 # Extract MAJOR.MINOR.PATCH; ignores any distro patch suffix (e.g., "v22.20.0+custom") so sort -V compares cleanly.
-NODE_VERSION=$(run_cmd node -v | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -n1)
+NODE_RAW=$(run_cmd node -v 2>&1 || true)
+NODE_VERSION=$(echo "$NODE_RAW" | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -n1 || true)
 if [[ -z "$NODE_VERSION" ]]; then
-    echo "❌ Error: Could not parse Node.js version from \`node -v\`. Got: $(run_cmd node -v)"
+    echo "❌ Error: Could not parse Node.js version from \`node -v\`. Got: $NODE_RAW"
     exit 1
 fi
 if ! node_version_supported "$NODE_VERSION"; then
