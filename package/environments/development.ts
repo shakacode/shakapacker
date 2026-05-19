@@ -74,9 +74,12 @@ const rspackDevConfig = (): RspackConfigWithDevServer => {
   ) {
     const reactRefreshPlugin = require("@rspack/plugin-react-refresh")
     const ReactRefreshRspackPlugin =
-      reactRefreshPlugin.ReactRefreshRspackPlugin ||
-      reactRefreshPlugin.default ||
-      reactRefreshPlugin
+      (typeof reactRefreshPlugin.ReactRefreshRspackPlugin === "function" &&
+        reactRefreshPlugin.ReactRefreshRspackPlugin) ||
+      (typeof reactRefreshPlugin.default === "function" &&
+        reactRefreshPlugin.default) ||
+      (typeof reactRefreshPlugin === "function" && reactRefreshPlugin) ||
+      null
     if (typeof ReactRefreshRspackPlugin !== "function") {
       console.warn(
         "[SHAKAPACKER WARNING] Could not resolve a constructor from @rspack/plugin-react-refresh; React Refresh will be skipped in development."

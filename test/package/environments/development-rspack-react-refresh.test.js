@@ -32,6 +32,16 @@ const loadRspackDevelopmentConfig = (reactRefreshModule) => {
   return require("../../../package/environments/development")
 }
 
+const hasReactRefreshPluginInstance = (environmentConfig) => {
+  const plugins = environmentConfig.plugins || []
+  return plugins.some(
+    (plugin) =>
+      plugin &&
+      plugin.constructor &&
+      plugin.constructor.name === "ReactRefreshRspackPlugin"
+  )
+}
+
 describe("Rspack React refresh development config", () => {
   afterEach(() => {
     jest.restoreAllMocks()
@@ -96,5 +106,6 @@ describe("Rspack React refresh development config", () => {
       "[SHAKAPACKER WARNING] Could not resolve a constructor from @rspack/plugin-react-refresh; React Refresh will be skipped in development."
     )
     expect(environmentConfig).toBeDefined()
+    expect(hasReactRefreshPluginInstance(environmentConfig)).toBe(false)
   })
 })
