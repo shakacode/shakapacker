@@ -69,4 +69,18 @@ describe("Rspack React refresh development config", () => {
       )
     ).toBe(true)
   })
+
+  test("falls back to .default when only a default export is present", () => {
+    function ReactRefreshRspackPlugin() {}
+
+    const environmentConfig = loadRspackDevelopmentConfig({
+      default: ReactRefreshRspackPlugin
+    })
+
+    expect(
+      environmentConfig.plugins.some(
+        (plugin) => plugin instanceof ReactRefreshRspackPlugin
+      )
+    ).toBe(true)
+  })
 })
