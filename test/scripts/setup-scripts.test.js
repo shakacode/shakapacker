@@ -107,8 +107,8 @@ describe("setup scripts", () => {
       const result = runConductorSetup({ FAKE_NODE_VERSION: "v21.0.0" })
 
       expect(result.status).toBe(1)
-      expect(result.stdout).toContain(".mise.toml")
-      expect(result.stdout).not.toContain("after fixing .tool-versions")
+      expect(result.stderr).toContain(".mise.toml")
+      expect(result.stderr).not.toContain("after fixing .tool-versions")
     })
 
     it("prints new .tool-versions entries when adding missing tools", () => {
@@ -161,7 +161,7 @@ describe("setup scripts", () => {
       ).toBe("ruby 3.3.4\nnodejs 22.20.0\n")
     })
 
-    it("accepts a v-prefixed .node-version", () => {
+    it("accepts a v-prefixed .node-version and writes the version without the prefix to .tool-versions", () => {
       installFakeTools()
       fs.writeFileSync(path.join(tempDir, ".ruby-version"), "3.3.4\n")
       fs.writeFileSync(path.join(tempDir, ".node-version"), "v22.20.0\n")
@@ -169,6 +169,12 @@ describe("setup scripts", () => {
       const result = runConductorSetup()
 
       expect(result.status).toBe(0)
+      const toolVersions = fs.readFileSync(
+        path.join(tempDir, ".tool-versions"),
+        "utf8"
+      )
+      expect(toolVersions).toContain("nodejs 22.20.0")
+      expect(toolVersions).not.toContain("nodejs v22.20.0")
     })
 
     it("does not rewrite .tool-versions when versions already match", () => {

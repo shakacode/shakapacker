@@ -69,15 +69,18 @@ if [[ "$VERSION_MANAGER" != "none" ]] && [[ ! -f .mise.toml ]]; then
 
     if [[ -f .node-version ]]; then
         NODE_VER=$(cat .node-version | tr -d '[:space:]')
+        # Strip leading `v` (valid nvm/nodenv format) so mise/asdf accept the value in .tool-versions
+        # and the idempotency check below compares against the unprefixed value awk reads back.
+        NODE_VER="${NODE_VER#v}"
     else
         NODE_VER="$DEFAULT_NODE_VERSION"
     fi
 
     # Fail fast if .node-version pins an unsupported Node, before mise installs the wrong version.
     if ! node_version_supported "$NODE_VER"; then
-        echo "❌ Error: Node version $NODE_VER (from .node-version) is unsupported."
-        echo "   Shakapacker requires Node ^20.19.0 || >=22.12.0 (matches package.json engines)."
-        echo "   Fix: update .node-version to a supported version (e.g. $DEFAULT_NODE_VERSION), then rerun setup."
+        echo "❌ Error: Node version $NODE_VER (from .node-version) is unsupported." >&2
+        echo "   Shakapacker requires Node ^20.19.0 || >=22.12.0 (matches package.json engines)." >&2
+        echo "   Fix: update .node-version to a supported version (e.g. $DEFAULT_NODE_VERSION), then rerun setup." >&2
         exit 1
     fi
 
@@ -122,42 +125,42 @@ run_cmd() {
 
 # Check required tools
 echo "📋 Checking required tools..."
-run_cmd ruby --version >/dev/null 2>&1 || { echo "❌ Error: Ruby is not installed or not in PATH."; exit 1; }
-run_cmd node --version >/dev/null 2>&1 || { echo "❌ Error: Node.js is not installed or not in PATH."; exit 1; }
+run_cmd ruby --version >/dev/null 2>&1 || { echo "❌ Error: Ruby is not installed or not in PATH." >&2; exit 1; }
+run_cmd node --version >/dev/null 2>&1 || { echo "❌ Error: Node.js is not installed or not in PATH." >&2; exit 1; }
 
 # Check Ruby version
-# Extract MAJOR.MINOR.PATCH; ignores any distro patch suffix (e.g., "+custom") so sort -V compares cleanly.
+# Extract MAJOR.MINOR.PATCH; ignores any distro patch suffix (e.g., "+custom") so comparison is clean.
 RUBY_RAW=$(run_cmd ruby -v 2>&1 || true)
 RUBY_VERSION=$(echo "$RUBY_RAW" | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -n1 || true)
 if [[ -z "$RUBY_VERSION" ]]; then
-    echo "❌ Error: Could not parse Ruby version from \`ruby -v\`. Got: $RUBY_RAW"
+    echo "❌ Error: Could not parse Ruby version from \`ruby -v\`. Got: $RUBY_RAW" >&2
     exit 1
 fi
-if [[ $(printf '%s\n' "$MIN_RUBY_VERSION" "$RUBY_VERSION" | sort -V | head -n1) != "$MIN_RUBY_VERSION" ]]; then
-    echo "❌ Error: Ruby version $RUBY_VERSION is too old. Shakapacker requires Ruby >= $MIN_RUBY_VERSION"
-    echo "   Please upgrade Ruby using your version manager or system package manager."
+if ! version_ge "$RUBY_VERSION" "$MIN_RUBY_VERSION"; then
+    echo "❌ Error: Ruby version $RUBY_VERSION is too old. Shakapacker requires Ruby >= $MIN_RUBY_VERSION" >&2
+    echo "   Please upgrade Ruby using your version manager or system package manager." >&2
     exit 1
 fi
 echo "✅ Ruby version: $RUBY_VERSION"
 
 # Check Node version against ^20.19.0 || >=22.12.0 (rspack v2 engine constraint).
-# Extract MAJOR.MINOR.PATCH; ignores any distro patch suffix (e.g., "v22.20.0+custom") so sort -V compares cleanly.
+# Extract MAJOR.MINOR.PATCH; ignores any distro patch suffix (e.g., "v22.20.0+custom") so comparison is clean.
 NODE_RAW=$(run_cmd node -v 2>&1 || true)
 NODE_VERSION=$(echo "$NODE_RAW" | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -n1 || true)
 if [[ -z "$NODE_VERSION" ]]; then
-    echo "❌ Error: Could not parse Node.js version from \`node -v\`. Got: $NODE_RAW"
+    echo "❌ Error: Could not parse Node.js version from \`node -v\`. Got: $NODE_RAW" >&2
     exit 1
 fi
 if ! node_version_supported "$NODE_VERSION"; then
-    echo "❌ Error: Node.js version v$NODE_VERSION is unsupported. Shakapacker requires Node.js ^20.19.0 || >=22.12.0"
+    echo "❌ Error: Node.js version v$NODE_VERSION is unsupported. Shakapacker requires Node.js ^20.19.0 || >=22.12.0" >&2
     if [[ "$VERSION_MANAGER" == "mise" ]] && [[ -f .mise.toml ]]; then
-        echo "   Hint: .mise.toml is the authoritative mise config for this workspace."
-        echo "   Update the Node version in .mise.toml, then run \`mise install\` and rerun setup."
+        echo "   Hint: .mise.toml is the authoritative mise config for this workspace." >&2
+        echo "   Update the Node version in .mise.toml, then run \`mise install\` and rerun setup." >&2
     elif [[ "$VERSION_MANAGER" == "mise" ]] && [[ -f .tool-versions ]]; then
-        echo "   Hint: .tool-versions pins nodejs $(awk '$1 == "nodejs" { print $2; exit }' .tool-versions || echo '?')."
-        echo "   Update .node-version and rerun setup, or run \`mise install\` after fixing .tool-versions."
+        echo "   Hint: .tool-versions pins nodejs $(awk '$1 == "nodejs" { print $2; exit }' .tool-versions || echo '?')." >&2
+        echo "   Update .node-version and rerun setup, or run \`mise install\` after fixing .tool-versions." >&2
     else
-        echo "   Please upgrade Node.js using your version manager or system package manager."
+        echo "   Please upgrade Node.js using your version manager or system package manager." >&2
     fi
     exit 1
 fi
