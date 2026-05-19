@@ -61,8 +61,13 @@ module Shakapacker
       end
 
       # Marks the warning as a Fix sub-item; the renderer owns the "Fix: " prefix and indentation.
+      # The stored category mirrors the parent warning so a fix attached to an action-required
+      # item is itself action-required (it's only rendered alongside its parent, but the data
+      # stays consistent for any downstream consumer).
       def add_fix_hint(message)
-        @warnings << { category: CATEGORY_RECOMMENDED, message: message, fix: true }
+        parent = @warnings.reverse_each.find { |w| !w[:fix] }
+        category = parent ? parent[:category] : CATEGORY_RECOMMENDED
+        @warnings << { category: category, message: message, fix: true }
       end
 
       def print_help
@@ -795,7 +800,7 @@ module Shakapacker
               stripped << content[index..].gsub(/[^\n]/, " ")
               break
             end
-          elsif pair == "//" && (index.zero? || content[index - 1] != "\\")
+          elsif pair == "//"
             line_end = content.index("\n", index + 2) || content.length
             stripped << content[index...line_end].gsub(/[^\n]/, " ")
             index = line_end

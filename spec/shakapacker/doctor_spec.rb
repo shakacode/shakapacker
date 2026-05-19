@@ -82,6 +82,28 @@ describe Shakapacker::Doctor do
       end.to raise_error(ArgumentError)
     end
 
+    it "inherits the parent warning's category" do
+      doctor.send(:add_action_required, "Parent action-required warning")
+      doctor.send(:add_fix_hint, "Fix for action-required parent")
+
+      expect(doctor.warnings.last).to eq(
+        category: described_class::CATEGORY_ACTION_REQUIRED,
+        message: "Fix for action-required parent",
+        fix: true
+      )
+    end
+
+    it "inherits the parent category even when an earlier fix hint sits between" do
+      doctor.send(:add_action_required, "Parent action-required warning")
+      doctor.send(:add_fix_hint, "Earlier fix hint")
+      doctor.send(:add_fix_hint, "Later fix hint")
+
+      expect(doctor.warnings.last).to include(
+        category: described_class::CATEGORY_ACTION_REQUIRED,
+        fix: true
+      )
+    end
+
     it "formats warnings with correct indentation and spacing" do
       # Create a test scenario with warnings
       doctor.instance_variable_get(:@warnings) << { category: :action_required, message: "Test required warning" }

@@ -11,11 +11,10 @@ class Shakapacker::Compiler
 
   # Class-level state keeps the compile-time doctor hint once-per-process.
   @doctor_hint_shown = false
-  @doctor_hint_mutex = Mutex.new
+  DOCTOR_HINT_MUTEX = Mutex.new
 
   class << self
-    attr_reader :doctor_hint_shown, :doctor_hint_mutex
-    attr_writer :doctor_hint_shown
+    attr_accessor :doctor_hint_shown
   end
 
   delegate :config, :logger, :strategy, to: :instance
@@ -216,7 +215,7 @@ class Shakapacker::Compiler
     def show_doctor_hint_once
       return if self.class.doctor_hint_shown
 
-      self.class.doctor_hint_mutex.synchronize do
+      DOCTOR_HINT_MUTEX.synchronize do
         return if self.class.doctor_hint_shown
 
         begin
