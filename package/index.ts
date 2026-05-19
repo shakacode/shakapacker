@@ -31,7 +31,7 @@ const getBaseConfig = (): Configuration => {
     _baseConfig = require("./environments/base")
   }
 
-  return _baseConfig as Configuration
+  return _baseConfig!
 }
 
 /**
