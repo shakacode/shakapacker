@@ -35,7 +35,7 @@ const getBaseConfig = (): RspackConfigWithDevServer => {
     _baseConfig = require("../environments/base")
   }
 
-  return _baseConfig as RspackConfigWithDevServer
+  return _baseConfig!
 }
 
 const generateRspackConfig = (
@@ -54,11 +54,6 @@ const generateRspackConfig = (
   const path = resolve(__dirname, "../environments", `${nodeEnv}.js`)
 
   const environmentConfig = existsSync(path) ? require(path) : getBaseConfig()
-
-  // Lazy-load plugin/optimization modules so simply requiring this index does
-  // not trigger @rspack/core or rspack-manifest-plugin resolution.
-  const { getPlugins } = require("../plugins/rspack")
-  const { getOptimization } = require("../optimization/rspack")
 
   return webpackMerge.merge({}, environmentConfig, extraConfig)
 }
