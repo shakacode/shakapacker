@@ -34,6 +34,7 @@ const loadRspackDevelopmentConfig = (reactRefreshModule) => {
 
 describe("Rspack React refresh development config", () => {
   afterEach(() => {
+    jest.restoreAllMocks()
     jest.dontMock("../../../package/utils/helpers")
     jest.dontMock("@rspack/core")
     jest.dontMock("rspack-manifest-plugin")
@@ -82,5 +83,18 @@ describe("Rspack React refresh development config", () => {
         (plugin) => plugin instanceof ReactRefreshRspackPlugin
       )
     ).toBe(true)
+  })
+
+  test("skips the plugin when no known export shape is present", () => {
+    const warn = jest.spyOn(console, "warn").mockImplementation(() => {})
+
+    const environmentConfig = loadRspackDevelopmentConfig({
+      someOtherProp: {}
+    })
+
+    expect(warn).toHaveBeenCalledWith(
+      "[SHAKAPACKER WARNING] Could not resolve a constructor from @rspack/plugin-react-refresh; React Refresh will be skipped in development."
+    )
+    expect(environmentConfig).toBeDefined()
   })
 })

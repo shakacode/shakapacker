@@ -77,10 +77,16 @@ const rspackDevConfig = (): RspackConfigWithDevServer => {
       reactRefreshPlugin.ReactRefreshRspackPlugin ||
       reactRefreshPlugin.default ||
       reactRefreshPlugin
-    rspackConfig.plugins = [
-      ...(rspackConfig.plugins || []),
-      new ReactRefreshRspackPlugin()
-    ]
+    if (typeof ReactRefreshRspackPlugin !== "function") {
+      console.warn(
+        "[SHAKAPACKER WARNING] Could not resolve a constructor from @rspack/plugin-react-refresh; React Refresh will be skipped in development."
+      )
+    } else {
+      rspackConfig.plugins = [
+        ...(rspackConfig.plugins || []),
+        new ReactRefreshRspackPlugin()
+      ]
+    }
   }
 
   return rspackConfig
