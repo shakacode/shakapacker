@@ -1,3 +1,5 @@
+[[ -n "${_NODE_VERSION_CHECK_LOADED:-}" ]] && return
+readonly _NODE_VERSION_CHECK_LOADED=1
 readonly MIN_NODE_20="20.19.0"
 readonly MIN_NODE_22="22.12.0"
 
@@ -20,6 +22,10 @@ version_ge() {
 node_version_supported() {
   local version="$1"
   version="${version#v}"
+  # Reject non-numeric aliases (e.g. lts/iron used by nvm) before numeric checks.
+  if ! [[ "$version" =~ ^[0-9]+\.[0-9]+\.[0-9] ]]; then
+    return 1
+  fi
   local major
   major=$(echo "$version" | cut -d'.' -f1)
   if [[ "$major" == "20" ]] && version_ge "$version" "$MIN_NODE_20"; then

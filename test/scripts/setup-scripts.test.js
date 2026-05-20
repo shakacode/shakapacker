@@ -10,6 +10,11 @@ const binSetupPath = path.join(rootDir, "bin/setup")
 
 const hasZsh =
   spawnSync("zsh", ["--version"], { encoding: "utf8" }).status === 0
+if (!hasZsh) {
+  console.warn(
+    "[setup-scripts.test.js] zsh not found — conductor-setup.sh tests will be skipped. Install zsh to run them."
+  )
+}
 const zshDescribe = hasZsh ? describe : describe.skip
 
 describe("setup scripts", () => {
