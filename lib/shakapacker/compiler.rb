@@ -225,6 +225,7 @@ class Shakapacker::Compiler
           return
         end
 
+        # Assignment is outside the rescue so a flag-setter failure propagates rather than being silenced.
         self.class.doctor_hint_shown = true
       end
     end

@@ -12,6 +12,8 @@
 ### Added
 
 - **Added supplemental npm packages `shakapacker-webpack` and `shakapacker-rspack`**. [PR #1096](https://github.com/shakacode/shakapacker/pull/1096) by [justin808](https://github.com/justin808). Optional packages that lockstep with core and bundle the managed-build stack as direct `dependencies` (so a single `yarn add shakapacker-webpack` pulls in `shakapacker`, `webpack`, `webpack-cli`, and `webpack-assets-manifest`; the rspack package bundles `shakapacker`, `@rspack/core`, `@rspack/cli`, and `rspack-manifest-plugin`). Optional features (transpilers, dev-server, CSS preprocessors, react-refresh) remain as opt-in `peerDependencies` so SCSS/native-binding bloat isn't forced on every install. The wrappers emit structured warnings (`SHAKAPACKER_BUNDLER_MISMATCH`, `SHAKAPACKER_NO_TRANSPILER`) when `config.assets_bundler` or `javascript_transpiler` doesn't match the installed peers. See the [v10.1 migration guide](docs/migration/v10.1-supplemental-packages.md) for adoption steps and [`docs/dependency-strategy.md`](docs/dependency-strategy.md) for the design rationale and v11 roadmap.
+- **Added `shakapacker:doctor` check for disabled Rspack cache**. [PR #1100](https://github.com/shakacode/shakapacker/pull/1100) by [justin808](https://github.com/justin808). The doctor now inspects the Rspack config file for an explicit `cache: false`, warns when found (disabling cache causes significantly slower builds), and also flags Rspack v1 installs (where persistent cache is experimental) with a recommendation to upgrade to v2.
+- **Added a `shakapacker:doctor` hint to compiler output**. [PR #1100](https://github.com/shakacode/shakapacker/pull/1100) by [justin808](https://github.com/justin808). The compiler now logs a one-time tip suggesting `bundle exec rake shakapacker:doctor` after a failed compilation, so healthy build loops stay quiet.
 
 ### Migration Notes
 
@@ -26,11 +28,6 @@
 ### ⚠️ Breaking Changes
 
 - **Breaking: tightened `package.json` `engines.node` to `^20.19.0 || >=22.12.0`**. [PR #1099](https://github.com/shakacode/shakapacker/pull/1099) by [justin808](https://github.com/justin808). Raised from `>= 20`, dropping support for Node 20.0.0–20.18.x and Node 21.x to match `@rspack/core@2.0.0-rc.0`. Consumers on those versions will hit an engine error with `--engine-strict` or yarn workspaces and need to upgrade. The PR also bumps `.node-version` to `22.20.0` and updates `conductor-setup.sh` to enforce the same disjoint range up front, so contributors get a clear error before `yarn install` fails with a confusing engine mismatch.
-
-### Added
-
-- **Added `shakapacker:doctor` check for disabled Rspack cache**. [PR #1100](https://github.com/shakacode/shakapacker/pull/1100) by [justin808](https://github.com/justin808). The doctor now inspects the Rspack config file for an explicit `cache: false`, warns when found (disabling cache causes significantly slower builds), and also flags Rspack v1 installs (where persistent cache is experimental) with a recommendation to upgrade to v2.
-- **Added a `shakapacker:doctor` hint to compiler output**. [PR #1100](https://github.com/shakacode/shakapacker/pull/1100) by [justin808](https://github.com/justin808). The compiler now logs a one-time tip suggesting `bundle exec rake shakapacker:doctor` after a failed compilation, so healthy build loops stay quiet.
 
 ### Changed
 

@@ -1,5 +1,4 @@
 require_relative "spec_helper_initializer"
-require "ostruct"
 
 describe "Shakapacker::Compiler" do
   it "accepts custom environment variables" do
@@ -26,7 +25,7 @@ describe "Shakapacker::Compiler" do
 
     allow(Shakapacker.compiler).to receive(:strategy).and_return(mocked_strategy)
 
-    status = OpenStruct.new(success?: true)
+    status = instance_double(Process::Status, success?: true)
     allow(Open3).to receive(:capture3).and_return([:stderr, :stdout, status])
 
     expect(Shakapacker.compiler.compile).to be true
@@ -40,7 +39,7 @@ describe "Shakapacker::Compiler" do
 
     allow(Shakapacker.compiler).to receive(:strategy).and_return(mocked_strategy)
 
-    status = OpenStruct.new(success?: false)
+    status = instance_double(Process::Status, success?: false)
     allow(Open3).to receive(:capture3).and_return([:stderr, :stdout, status])
 
     expect(Shakapacker.compiler.compile).to be false
@@ -61,7 +60,7 @@ describe "Shakapacker::Compiler" do
     end
 
     it "does not log the doctor hint when compilation succeeds" do
-      status = OpenStruct.new(success?: true)
+      status = instance_double(Process::Status, success?: true)
       allow(Open3).to receive(:capture3).and_return(["", "", status])
       allow(Shakapacker.logger).to receive(:info)
 
@@ -71,7 +70,7 @@ describe "Shakapacker::Compiler" do
     end
 
     it "logs the doctor hint after a failed compilation" do
-      status = OpenStruct.new(success?: false)
+      status = instance_double(Process::Status, success?: false)
       allow(Open3).to receive(:capture3).and_return(["", "build error", status])
       allow(Shakapacker.logger).to receive(:error)
       allow(Shakapacker.logger).to receive(:info)
@@ -82,7 +81,7 @@ describe "Shakapacker::Compiler" do
     end
 
     it "sets the doctor hint flag without bypassing method visibility" do
-      status = OpenStruct.new(success?: false)
+      status = instance_double(Process::Status, success?: false)
       allow(Open3).to receive(:capture3).and_return(["", "build error", status])
       allow(Shakapacker.logger).to receive(:error)
       allow(Shakapacker.logger).to receive(:info)
@@ -95,7 +94,7 @@ describe "Shakapacker::Compiler" do
     end
 
     it "does not repeat the doctor hint on subsequent failed compiles" do
-      status = OpenStruct.new(success?: false)
+      status = instance_double(Process::Status, success?: false)
       allow(Open3).to receive(:capture3).and_return(["", "build error", status])
       allow(Shakapacker.logger).to receive(:error)
       allow(Shakapacker.logger).to receive(:info)
@@ -107,7 +106,7 @@ describe "Shakapacker::Compiler" do
     end
 
     it "does not abort the build when the hint logger raises" do
-      status = OpenStruct.new(success?: false)
+      status = instance_double(Process::Status, success?: false)
       allow(Open3).to receive(:capture3).and_return(["", "build error", status])
       allow(Shakapacker.logger).to receive(:error)
       # Generic stub first so the more specific stub below wins for matching args.
@@ -120,7 +119,7 @@ describe "Shakapacker::Compiler" do
     end
 
     it "does not swallow failures outside the hint logger call" do
-      status = OpenStruct.new(success?: false)
+      status = instance_double(Process::Status, success?: false)
       allow(Open3).to receive(:capture3).and_return(["", "build error", status])
       allow(Shakapacker.logger).to receive(:error)
       allow(Shakapacker.logger).to receive(:info)
@@ -145,8 +144,8 @@ describe "Shakapacker::Compiler" do
       allow(mocked_strategy).to receive(:stale?).and_return(true)
       allow(Shakapacker.compiler).to receive(:strategy).and_return(mocked_strategy)
 
-      hook_status = OpenStruct.new(success?: true, exitstatus: 0)
-      webpack_status = OpenStruct.new(success?: true)
+      hook_status = instance_double(Process::Status, success?: true, exitstatus: 0)
+      webpack_status = instance_double(Process::Status, success?: true)
       hook_command = "bin/test-hook"
 
       allow(Open3).to receive(:capture3) do |env, *args|
@@ -168,7 +167,7 @@ describe "Shakapacker::Compiler" do
       allow(mocked_strategy).to receive(:stale?).and_return(true)
       allow(Shakapacker.compiler).to receive(:strategy).and_return(mocked_strategy)
 
-      webpack_status = OpenStruct.new(success?: true)
+      webpack_status = instance_double(Process::Status, success?: true)
       allow(Open3).to receive(:capture3).and_return(["", "", webpack_status])
 
       # Config returns nil for precompile_hook (default)
@@ -184,7 +183,7 @@ describe "Shakapacker::Compiler" do
       allow(mocked_strategy).to receive(:stale?).and_return(true)
       allow(Shakapacker.compiler).to receive(:strategy).and_return(mocked_strategy)
 
-      hook_status = OpenStruct.new(success?: false, exitstatus: 1)
+      hook_status = instance_double(Process::Status, success?: false, exitstatus: 1)
       allow(Open3).to receive(:capture3).and_return(["", "Error output", hook_status])
 
       # Temporarily stub config to return failing hook
@@ -198,8 +197,8 @@ describe "Shakapacker::Compiler" do
       allow(mocked_strategy).to receive(:stale?).and_return(true)
       allow(Shakapacker.compiler).to receive(:strategy).and_return(mocked_strategy)
 
-      hook_status = OpenStruct.new(success?: true, exitstatus: 0)
-      webpack_status = OpenStruct.new(success?: true)
+      hook_status = instance_double(Process::Status, success?: true, exitstatus: 0)
+      webpack_status = instance_double(Process::Status, success?: true)
       hook_command = "bin/verbose-hook"
       hook_executable = hook_command
 
@@ -255,8 +254,8 @@ describe "Shakapacker::Compiler" do
       allow(mocked_strategy).to receive(:stale?).and_return(true)
       allow(Shakapacker.compiler).to receive(:strategy).and_return(mocked_strategy)
 
-      hook_status = OpenStruct.new(success?: true, exitstatus: 0)
-      webpack_status = OpenStruct.new(success?: true)
+      hook_status = instance_double(Process::Status, success?: true, exitstatus: 0)
+      webpack_status = instance_double(Process::Status, success?: true)
       hook_command = "'bin/my script' --arg1 --arg2"
       hook_executable = "bin/my script"
 
@@ -282,8 +281,8 @@ describe "Shakapacker::Compiler" do
       allow(mocked_strategy).to receive(:stale?).and_return(true)
       allow(Shakapacker.compiler).to receive(:strategy).and_return(mocked_strategy)
 
-      hook_status = OpenStruct.new(success?: true, exitstatus: 0)
-      webpack_status = OpenStruct.new(success?: true)
+      hook_status = instance_double(Process::Status, success?: true, exitstatus: 0)
+      webpack_status = instance_double(Process::Status, success?: true)
       hook_command = "bin/nonexistent-hook"
       hook_executable = hook_command
 
@@ -330,8 +329,8 @@ describe "Shakapacker::Compiler" do
       allow(mocked_strategy).to receive(:stale?).and_return(true)
       allow(Shakapacker.compiler).to receive(:strategy).and_return(mocked_strategy)
 
-      hook_status = OpenStruct.new(success?: true, exitstatus: 0)
-      webpack_status = OpenStruct.new(success?: true)
+      hook_status = instance_double(Process::Status, success?: true, exitstatus: 0)
+      webpack_status = instance_double(Process::Status, success?: true)
       hook_command = "bin/prepare && rm -rf /"
       hook_executable = "bin/prepare"
 
@@ -363,8 +362,8 @@ describe "Shakapacker::Compiler" do
       allow(mocked_strategy).to receive(:stale?).and_return(true)
       allow(Shakapacker.compiler).to receive(:strategy).and_return(mocked_strategy)
 
-      hook_status = OpenStruct.new(success?: true, exitstatus: 0)
-      webpack_status = OpenStruct.new(success?: true)
+      hook_status = instance_double(Process::Status, success?: true, exitstatus: 0)
+      webpack_status = instance_double(Process::Status, success?: true)
       hook_command = "FOO=bar BAZ=qux bin/hook --arg"
       hook_executable = "bin/hook"
 
@@ -393,7 +392,7 @@ describe "Shakapacker::Compiler" do
       allow(mocked_strategy).to receive(:stale?).and_return(true)
       allow(Shakapacker.compiler).to receive(:strategy).and_return(mocked_strategy)
 
-      webpack_status = OpenStruct.new(success?: true)
+      webpack_status = instance_double(Process::Status, success?: true)
       hook_command = "bin/test-hook"
       allow(Open3).to receive(:capture3).and_return(["", "", webpack_status])
 
@@ -416,8 +415,8 @@ describe "Shakapacker::Compiler" do
       allow(mocked_strategy).to receive(:stale?).and_return(true)
       allow(Shakapacker.compiler).to receive(:strategy).and_return(mocked_strategy)
 
-      hook_status = OpenStruct.new(success?: true, exitstatus: 0)
-      webpack_status = OpenStruct.new(success?: true)
+      hook_status = instance_double(Process::Status, success?: true, exitstatus: 0)
+      webpack_status = instance_double(Process::Status, success?: true)
       hook_command = "bin/test-hook"
 
       allow(Open3).to receive(:capture3) do |env, *args|
@@ -444,8 +443,8 @@ describe "Shakapacker::Compiler" do
       allow(mocked_strategy).to receive(:stale?).and_return(true)
       allow(Shakapacker.compiler).to receive(:strategy).and_return(mocked_strategy)
 
-      hook_status = OpenStruct.new(success?: true, exitstatus: 0)
-      webpack_status = OpenStruct.new(success?: true)
+      hook_status = instance_double(Process::Status, success?: true, exitstatus: 0)
+      webpack_status = instance_double(Process::Status, success?: true)
       hook_command = "bin/test-hook"
 
       allow(Open3).to receive(:capture3) do |env, *args|

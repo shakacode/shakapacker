@@ -723,6 +723,7 @@ module Shakapacker
       # resolution order in Shakapacker::Runner#find_rspack_config_with_fallback so the
       # doctor inspects the same file the build will actually use (and so unused sibling
       # configs in the same directory don't trigger spurious warnings).
+      # NOTE: keep this candidate list in sync with Runner#find_rspack_config_with_fallback.
       def active_assets_bundler_config_path
         config_dir = config.assets_bundler_config_path.to_s
 
@@ -743,6 +744,8 @@ module Shakapacker
       end
 
       def default_rspack_config_dir?(config_dir)
+        # Intentionally exact-string match: mirrors the runner's own comparison,
+        # so a trailing slash or Pathname argument won't spuriously add the config/webpack fallback.
         config_dir == "config/rspack"
       end
 
