@@ -151,10 +151,13 @@ Replace file loaders with asset modules:
 
 ```javascript
 // Development configuration
-const ReactRefreshPlugin = require("@rspack/plugin-react-refresh")
+const { ReactRefreshRspackPlugin } = require("@rspack/plugin-react-refresh")
 
 module.exports = {
-  plugins: [new ReactRefreshPlugin(), new rspack.HotModuleReplacementPlugin()]
+  plugins: [
+    new ReactRefreshRspackPlugin(),
+    new rspack.HotModuleReplacementPlugin()
+  ]
 }
 ```
 

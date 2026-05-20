@@ -72,11 +72,24 @@ const rspackDevConfig = (): RspackConfigWithDevServer => {
     devServerConfig.hot &&
     moduleExists("@rspack/plugin-react-refresh")
   ) {
-    const ReactRefreshPlugin = require("@rspack/plugin-react-refresh")
-    rspackConfig.plugins = [
-      ...(rspackConfig.plugins || []),
-      new ReactRefreshPlugin()
-    ]
+    const reactRefreshPlugin = require("@rspack/plugin-react-refresh")
+    const ReactRefreshRspackPlugin =
+      (typeof reactRefreshPlugin.ReactRefreshRspackPlugin === "function" &&
+        reactRefreshPlugin.ReactRefreshRspackPlugin) ||
+      (typeof reactRefreshPlugin.default === "function" &&
+        reactRefreshPlugin.default) ||
+      (typeof reactRefreshPlugin === "function" && reactRefreshPlugin) ||
+      null
+    if (typeof ReactRefreshRspackPlugin !== "function") {
+      console.warn(
+        "[SHAKAPACKER WARNING] Could not resolve a constructor from @rspack/plugin-react-refresh; React Refresh will be skipped in development."
+      )
+    } else {
+      rspackConfig.plugins = [
+        ...(rspackConfig.plugins || []),
+        new ReactRefreshRspackPlugin()
+      ]
+    }
   }
 
   return rspackConfig
