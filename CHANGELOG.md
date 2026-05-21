@@ -9,6 +9,12 @@
 
 ## [Unreleased]
 
+### Fixed
+
+- **Fixed `shakapacker:export_bundler_config` regression on apps upgraded from older Shakapacker versions**. [PR #1127](https://github.com/shakacode/shakapacker/pull/1127) by [justin808](https://github.com/justin808). The task previously invoked `bin/shakapacker-config` unconditionally via `RbConfig.ruby`, which crashed when the file was still the legacy JavaScript binstub (`#!/usr/bin/env node`) left over from earlier installs. The task now inspects the shebang and exec's the file directly when it points at Node, while keeping the Ruby+`RbConfig.ruby` path for the current Ruby binstub. Affected users are also nudged to run `bundle exec rake shakapacker:binstubs` to refresh their helper binstub. Refs [#1123](https://github.com/shakacode/shakapacker/issues/1123).
+- **Fixed `bin/shakapacker-config` and `bin/diff-bundler-config` returning the development bundler config under `RAILS_ENV=production`**. [PR #1127](https://github.com/shakacode/shakapacker/pull/1127) by [justin808](https://github.com/justin808). The helper binstubs hard-coded `ENV["NODE_ENV"] ||= "development"` before handing off to Node, so `RAILS_ENV=production bin/shakapacker-config show-config` with `NODE_ENV` unset spawned Node with `NODE_ENV=development` and bypassed the Ruby `Shakapacker.ensure_node_env!` mapping. The default now mirrors the Ruby helper: only `RAILS_ENV=development|test` defaults to `NODE_ENV=development`; everything else (production, staging, custom) defaults to `production`. Refs [#1123](https://github.com/shakacode/shakapacker/issues/1123).
+- **Hardened `console.error` in `package/bin/shakapacker-config.cjs` and `bin/shakapacker-config`**. [PR #1127](https://github.com/shakacode/shakapacker/pull/1127) by [justin808](https://github.com/justin808). Non-`Error` throws now print as a string via `error instanceof Error ? error.message : String(error)` instead of `undefined`, matching the `formatError` pattern already used in `diff-bundler-config.cjs`. Refs [#1123](https://github.com/shakacode/shakapacker/issues/1123).
+
 ## [v10.1.0-rc.1] - May 21, 2026
 
 ### Added
