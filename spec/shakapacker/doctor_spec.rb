@@ -834,6 +834,41 @@ describe Shakapacker::Doctor do
       end
     end
 
+    context "when cache: false is re-exported as default via ESM alias syntax" do
+      before do
+        File.write(rspack_config_path, <<~JS)
+          const rspackConfig = {
+            cache: false
+          }
+
+          export { rspackConfig as default }
+        JS
+      end
+
+      it "warns that cache is disabled" do
+        doctor.send(:check_rspack_cache_configuration)
+        expect(warning_messages).to include(match(/Rspack cache appears to be disabled/))
+      end
+    end
+
+    context "when cache: false is re-exported as default alongside other named exports" do
+      before do
+        File.write(rspack_config_path, <<~JS)
+          const rspackConfig = {
+            cache: false
+          }
+          const helper = {}
+
+          export { helper, rspackConfig as default }
+        JS
+      end
+
+      it "warns that cache is disabled" do
+        doctor.send(:check_rspack_cache_configuration)
+        expect(warning_messages).to include(match(/Rspack cache appears to be disabled/))
+      end
+    end
+
     context "when the active rspack config cannot be read" do
       before do
         File.write(rspack_config_path, "module.exports = { cache: false }")

@@ -874,6 +874,16 @@ module Shakapacker
         # Match `cache: false` only near an exported config object at brace depth
         # 1. This avoids warning on local base config objects while still
         # catching the common direct export and generateRspackConfig patterns.
+        #
+        # Known false-positive gaps (rare; the "appears to be disabled" wording
+        # is the user-visible mitigation):
+        #   * Named intermediate export — `export const helper = { cache: false }`
+        #     at depth 1 is flagged even when `helper` is not the final config and
+        #     a separate `export default { … }` provides the real configuration.
+        #   * ASI + prior `module.exports` — in semicolon-free code, an earlier
+        #     `module.exports = merge(…)` followed by a local helper literal can
+        #     leak into `statement_prefix` because `pre.rindex(";")` returns nil
+        #     and the prefix spans back to the start of the file.
         stripped.to_enum(:scan, /\bcache\s*:\s*false\b/).any? do
           pre = Regexp.last_match.pre_match
           next false unless (pre.count("{") - pre.count("}")) == 1
@@ -915,7 +925,8 @@ module Shakapacker
       def exported_config_variable?(stripped, name)
         escaped_name = Regexp.escape(name)
         stripped.match?(/\bmodule\.exports\s*=\s*#{escaped_name}\b/) ||
-          stripped.match?(/\bexport\s+default\s+#{escaped_name}\b/)
+          stripped.match?(/\bexport\s+default\s+#{escaped_name}\b/) ||
+          stripped.match?(/\bexport\s*\{[^}]*\b#{escaped_name}\s+as\s+default\b/)
       end
 
       def matching_closing_brace(content, open_index)

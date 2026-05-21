@@ -220,8 +220,9 @@ class Shakapacker::Compiler
 
         begin
           logger.info "Tip: run 'bundle exec rake shakapacker:doctor' to diagnose configuration issues."
-        rescue StandardError
+        rescue StandardError => _e
           # Non-critical tip; never abort a build because the logger failed.
+          # Named (but unused) variable makes the deliberate swallow explicit.
           return
         end
 
