@@ -425,7 +425,6 @@ baseConfig.module.rules.forEach((rule) => {
 When upgrading to Shakapacker v10 with Rspack (or any v9+ app):
 
 1. **CSS Modules default exports → named exports**: This is a breaking change. Either:
-
    - Update your code to use named imports (recommended for new projects)
    - Override the configuration to keep default exports (easier for existing large codebases)
 

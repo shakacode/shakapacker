@@ -685,7 +685,6 @@ For maximum performance improvements, you can combine multiple migrations:
 This combination provides the largest end-to-end build performance improvement available in Shakapacker: SWC handles transpilation in Rust (upstream reports up to [20x/70x vs Babel](https://swc.rs/)) and Rspack handles the rest of the bundler pipeline in Rust (upstream reports roughly [8–17x vs webpack on its own benchmark](https://rspack.rs/)). Apply them in order so you can attribute any regression to the right layer:
 
 1. **First, migrate to SWC** (while still on webpack)
-
    - Follow [Migrating from Babel to SWC](#migrating-from-babel-to-swc)
    - Test thoroughly
    - This is a smaller change to validate first
