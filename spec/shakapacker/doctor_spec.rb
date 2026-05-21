@@ -76,7 +76,7 @@ describe Shakapacker::Doctor do
       )
     end
 
-    it "does not accept a category override for fix hints" do
+    it "raises ArgumentError when add_fix_hint is called with wrong number of arguments" do
       expect do
         doctor.send(:add_fix_hint, "Test fix instruction", described_class::CATEGORY_ACTION_REQUIRED)
       end.to raise_error(ArgumentError)
@@ -1135,6 +1135,86 @@ describe Shakapacker::Doctor do
       it "does not fold the quote-key normalization across the newline (no false positive)" do
         doctor.send(:check_rspack_cache_configuration)
         expect(warning_messages).not_to include(match(/Rspack cache appears to be disabled/))
+      end
+    end
+  end
+
+  # Contract spec: doctor and runner must resolve to the same active config file.
+  # If Runner#find_rspack_config_with_fallback gains a new extension or reorders
+  # candidates, this spec will fail loudly so Doctor#active_assets_bundler_config_path
+  # can be updated to match. Without this, the doctor could silently inspect a
+  # different file than the build actually loads.
+  describe "rspack config resolution contract with Runner" do
+    let(:rspack_config_dir) { root_path.join("config/rspack") }
+
+    before do
+      require "shakapacker/runner"
+      allow(config).to receive(:assets_bundler).and_return("rspack")
+      allow(config).to receive(:rspack?).and_return(true)
+      allow(config).to receive(:assets_bundler_config_path).and_return("config/rspack")
+      FileUtils.mkdir_p(rspack_config_dir)
+      FileUtils.mkdir_p(root_path.join("config/webpack"))
+    end
+
+    def runner_resolved_path
+      runner = Shakapacker::Runner.allocate
+      runner.instance_variable_set(:@app_path, root_path.to_s)
+      runner.instance_variable_set(:@config, config)
+      allow(runner).to receive(:log_output).and_return(StringIO.new)
+
+      original_stderr = $stderr
+      $stderr = StringIO.new
+      runner.send(:find_rspack_config_with_fallback)
+    ensure
+      $stderr = original_stderr
+    end
+
+    def expect_paths_to_agree
+      doctor_path = doctor.send(:active_assets_bundler_config_path)
+      runner_path = runner_resolved_path
+      expect(File.expand_path(doctor_path.to_s)).to eq(File.expand_path(runner_path.to_s))
+    end
+
+    context "with rspack.config.js in config/rspack" do
+      before { File.write(rspack_config_dir.join("rspack.config.js"), "module.exports = {}") }
+
+      it "doctor and runner pick the same file" do
+        expect_paths_to_agree
+      end
+    end
+
+    context "with rspack.config.ts in config/rspack" do
+      before { File.write(rspack_config_dir.join("rspack.config.ts"), "export default {}") }
+
+      it "doctor and runner pick the same file" do
+        expect_paths_to_agree
+      end
+    end
+
+    context "with both rspack.config.ts and rspack.config.js present" do
+      before do
+        File.write(rspack_config_dir.join("rspack.config.ts"), "export default {}")
+        File.write(rspack_config_dir.join("rspack.config.js"), "module.exports = {}")
+      end
+
+      it "doctor and runner agree on the .ts variant taking precedence" do
+        expect_paths_to_agree
+      end
+    end
+
+    context "with only webpack.config.js fallback in config/rspack" do
+      before { File.write(rspack_config_dir.join("webpack.config.js"), "module.exports = {}") }
+
+      it "doctor and runner pick the same fallback file" do
+        expect_paths_to_agree
+      end
+    end
+
+    context "with only webpack.config.js in config/webpack (backward-compat fallback)" do
+      before { File.write(root_path.join("config/webpack/webpack.config.js"), "module.exports = {}") }
+
+      it "doctor and runner pick the same fallback file" do
+        expect_paths_to_agree
       end
     end
   end

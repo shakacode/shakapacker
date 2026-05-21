@@ -888,7 +888,9 @@ module Shakapacker
       # Catches the `const cfg = { cache: false }; module.exports = cfg` pattern.
       # Composition via merge (`module.exports = merge(cfg, …)`) is a known
       # false-negative since the variable is never referenced by name in the
-      # export statement.
+      # export statement. The `[^=;]+` type-annotation clause also stops at the
+      # first `=`, so TypeScript generics with default type parameters such as
+      # `Configuration<Opts = DefaultOpts>` are another known false-negative gap.
       def exported_variable_cache_disabled?(stripped)
         variable_declaration = /\b(?:const|let|var)\s+([A-Za-z_$][\w$]*)(?:\s*:\s*[^=;]+)?\s*=\s*\{/
 
