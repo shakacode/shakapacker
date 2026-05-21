@@ -1,3 +1,5 @@
+require "shakapacker/utils/misc"
+
 namespace :shakapacker do
   desc <<~DESC
     Export webpack or rspack configuration for debugging and analysis
@@ -54,14 +56,28 @@ namespace :shakapacker do
       $stderr.puts ""
 
       Dir.chdir(Rails.root) do
-        exec(RbConfig.ruby, gem_bin_path, *ARGV[1..])
+        Kernel.exec(RbConfig.ruby, gem_bin_path, *ARGV[1..])
       end
     else
       # Pass through command-line arguments after the task name.
-      # Invoke with RbConfig.ruby so the binstub runs under the same Ruby as Rake
-      # (avoids version-manager/shebang mismatches and works on Windows).
+      #
+      # Modern Ruby binstubs (the current default) are invoked with
+      # RbConfig.ruby so they run under the same Ruby as Rake — this avoids
+      # version-manager/shebang mismatches and works on Windows.
+      #
+      # Legacy JavaScript binstubs left over from earlier Shakapacker
+      # versions (`#!/usr/bin/env node`) are exec'd directly so their
+      # shebang resolves Node off the user's PATH. Apps in that state
+      # should run `rake shakapacker:binstubs` to refresh the binstub.
       Dir.chdir(Rails.root) do
-        exec(RbConfig.ruby, bin_path.to_s, *ARGV[1..])
+        if Shakapacker::Utils::Misc.js_binstub?(bin_path)
+          $stderr.puts "Note: bin/shakapacker-config is a legacy JavaScript binstub."
+          $stderr.puts "Run `rake shakapacker:binstubs` to upgrade to the Ruby binstub."
+          $stderr.puts ""
+          Kernel.exec(bin_path.to_s, *ARGV[1..])
+        else
+          Kernel.exec(RbConfig.ruby, bin_path.to_s, *ARGV[1..])
+        end
       end
     end
   end

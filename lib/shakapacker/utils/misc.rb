@@ -31,6 +31,17 @@ module Shakapacker
       def self.sh_in_dir(dir, *shell_commands)
         shell_commands.flatten.each { |shell_command| sh %(cd '#{dir}' && #{shell_command.strip}) }
       end
+
+      # True if the file at +path+ has a JavaScript (Node) shebang line.
+      # Used by the export_bundler_config rake task to dispatch legacy
+      # `#!/usr/bin/env node` binstubs left over from older Shakapacker
+      # versions instead of trying to parse them as Ruby.
+      def self.js_binstub?(path)
+        return false unless File.file?(path)
+
+        shebang = File.open(path, "rb") { |f| f.gets } || ""
+        shebang.start_with?("#!") && shebang.include?("node")
+      end
     end
   end
 end
