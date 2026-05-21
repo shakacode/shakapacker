@@ -18,7 +18,24 @@ end
 
 def shakapacker_node_binary
   node_bin = "node"
-  return node_bin if system(node_bin, "--version", out: File::NULL, err: File::NULL)
+  # Walk ENV["PATH"] directly instead of forking a `node --version`
+  # subprocess on every binstub invocation. On Windows, also probe
+  # PATHEXT-style extensions because executables there end in
+  # .exe/.cmd/.bat.
+  extensions = if Gem.win_platform?
+    ["", *(ENV["PATHEXT"] || ".COM;.EXE;.BAT;.CMD").split(";")]
+  else
+    [""]
+  end
+
+  ENV["PATH"].to_s.split(File::PATH_SEPARATOR).each do |dir|
+    next if dir.empty?
+
+    extensions.each do |ext|
+      candidate = File.join(dir, "#{node_bin}#{ext}")
+      return node_bin if File.file?(candidate) && File.executable?(candidate)
+    end
+  end
 
   warn "[Shakapacker] Could not find Node.js executable #{node_bin.inspect}. " \
        "Install Node.js and try again."
