@@ -9,12 +9,7 @@
 
 ## [Unreleased]
 
-### Fixed
-
-- **Fixed `shakapacker:check_node` reporting "Node.js not installed" in the published gem**. [PR #1120](https://github.com/shakacode/shakapacker/pull/1120) by [justin808](https://github.com/justin808). The gemspec allowlist introduced in [PR #1110](https://github.com/shakacode/shakapacker/pull/1110) dropped the gem-root `package.json` that `check_node.rake` reads for the `engines.node` range, so `Pathname#realpath` raised `Errno::ENOENT` and the outer rescue printed the misleading "Node.js not installed. Exiting!" — most visibly during `rails assets:precompile` via `shakapacker:clean` → `verify_install` → `check_node`. The gemspec now ships `package.json`, and `check_node.rake` skips the engines-range check gracefully if that file is ever missing rather than blaming Node.
-- **Fixed webpack-dev-server `static` config defaulting to watch `public/` directory unnecessarily**. [PR #1032](https://github.com/shakacode/shakapacker/pull/1032) by [ihabadham](https://github.com/ihabadham). Three bugs fixed: (1) `static` now defaults to `false` instead of a misconfigured object that caused webpack-dev-server to watch the `public/` directory, which is already served by Rails via `ActionDispatch::Static`; (2) setting `static: false` in `shakapacker.yml` is no longer silently ignored; (3) the default template no longer includes `static.watch`, which was a v3→v4 migration artifact. Fixes [#1031](https://github.com/shakacode/shakapacker/issues/1031).
-
-## [v10.1.0-rc.0] - May 20, 2026
+## [v10.1.0-rc.1] - May 21, 2026
 
 ### Added
 
@@ -43,6 +38,7 @@
 
 ### Fixed
 
+- **Fixed webpack-dev-server `static` config defaulting to watch `public/` directory unnecessarily**. [PR #1032](https://github.com/shakacode/shakapacker/pull/1032) by [ihabadham](https://github.com/ihabadham). Three bugs fixed: (1) `static` now defaults to `false` instead of a misconfigured object that caused webpack-dev-server to watch the `public/` directory, which is already served by Rails via `ActionDispatch::Static`; (2) setting `static: false` in `shakapacker.yml` is no longer silently ignored; (3) the default template no longer includes `static.watch`, which was a v3→v4 migration artifact. Fixes [#1031](https://github.com/shakacode/shakapacker/issues/1031).
 - **Fixed Rspack React Refresh plugin loading with `@rspack/plugin-react-refresh` v2**. [PR #1116](https://github.com/shakacode/shakapacker/pull/1116) by [justin808](https://github.com/justin808). Shakapacker now reads the v2 named `ReactRefreshRspackPlugin` export while retaining compatibility with v1 direct/default CommonJS export shapes, preventing `TypeError: ReactRefreshRspackPlugin is not a constructor` during rspack dev-server startup.
 - **Widened `@rspack/plugin-react-refresh` peer range to `^1.0.0 || ^2.0.0-0`**. [PR #1091](https://github.com/shakacode/shakapacker/pull/1091) by [ihabadham](https://github.com/ihabadham). Fixes the `ERESOLVE` conflict when installing `@rspack/plugin-react-refresh@^2.0.0` alongside `shakapacker@10.0.0`.
 - **Fixed `NodePackageVersion#find_version` for local-path `shakapacker` installs (e.g. `yalc`, `file:`, relative paths)**. [PR #1086](https://github.com/shakacode/shakapacker/pull/1086) by [justin808](https://github.com/justin808). The version check now consults `package.json` first and short-circuits on `../` or `file:` dependencies, so stale lockfile semvers no longer trigger false gem↔node version mismatches. `package_json_dependency` also consults `devDependencies` in addition to `dependencies`. The `LOCAL_PATH_REGEX` constant replaces a duplicated inline regex and anchors both alternatives to the start of the string, removing a latent false-positive on version strings containing `..` mid-value.
@@ -951,8 +947,8 @@ Note: [Rubygem is 6.3.0.pre.rc.1](https://rubygems.org/gems/shakapacker/versions
 
 See [CHANGELOG.md in rails/webpacker (up to v5.4.3)](https://github.com/rails/webpacker/blob/master/CHANGELOG.md)
 
-[Unreleased]: https://github.com/shakacode/shakapacker/compare/v10.1.0-rc.0...main
-[v10.1.0-rc.0]: https://github.com/shakacode/shakapacker/compare/v10.0.0...v10.1.0-rc.0
+[Unreleased]: https://github.com/shakacode/shakapacker/compare/v10.1.0-rc.1...main
+[v10.1.0-rc.1]: https://github.com/shakacode/shakapacker/compare/v10.0.0...v10.1.0-rc.1
 [v10.0.0]: https://github.com/shakacode/shakapacker/compare/v9.7.0...v10.0.0
 [v9.7.0]: https://github.com/shakacode/shakapacker/compare/v9.6.1...v9.7.0
 [v9.6.1]: https://github.com/shakacode/shakapacker/compare/v9.6.0...v9.6.1
