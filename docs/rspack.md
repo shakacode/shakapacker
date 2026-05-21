@@ -160,10 +160,12 @@ The same dev server configuration in `shakapacker.yml` applies to both webpack a
 
 Rspack typically provides:
 
-- **Often faster cold builds**
-- **Often faster incremental builds**
-- **Often faster HMR** (Hot Module Replacement)
-- **Often lower memory usage**
+- **Substantially faster cold builds** — Rspack's own benchmark reports roughly 8x faster production builds on a 5,000-component React app ([rspack.rs](https://rspack.rs/), [benchmark sources](https://github.com/rstackjs/build-tools-performance))
+- **Substantially faster development startup** — roughly 10–15x in the same benchmark
+- **Substantially faster HMR** — roughly 17x in the same benchmark
+- **Lower memory usage** in most reported cases
+
+Actual gains depend on project size, configuration, source maps, cache state, and hardware. See [Transpiler Performance Guide](./transpiler-performance.md) for measurement guidance.
 
 ## Migration Checklist
 

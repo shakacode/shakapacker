@@ -2,21 +2,40 @@
 
 Shakapacker supports Babel, SWC, and esbuild for webpack-based JavaScript transpilation. Rspack uses its built-in SWC-based loader by default.
 
-This guide intentionally avoids exact benchmark numbers. Build performance depends heavily on project size, loader configuration, source maps, minification, cache state, hardware, and whether the measurement covers transpilation alone or the full bundler pipeline.
+For most apps, moving off Babel is the single highest-impact change you can make to build performance. Moving from webpack to Rspack on top of that is usually the next biggest win. The numbers below come from the upstream projects' own published benchmarks, so treat them as a realistic upper bound rather than a guarantee for your app.
+
+## Published Benchmarks
+
+Use these as a starting point, then [measure your own app](#measuring-your-app):
+
+- **SWC vs Babel**: SWC reports being **[20x faster than Babel on a single thread and 70x faster on four cores](https://swc.rs/)** on its own transpiler benchmark.
+- **Rspack vs webpack**: The official Rspack landing page reports roughly **[10x faster development startup, ~8x faster production builds, and ~17x faster HMR](https://rspack.rs/)** on its reference React app, with [full benchmark sources in `rstackjs/build-tools-performance`](https://github.com/rstackjs/build-tools-performance). Numbers vary by case size; cold builds of the `react-5k` case run in roughly 1.6s on Rspack vs ~9.5s on webpack.
+- **esbuild vs other bundlers**: esbuild's homepage benchmark bundles 10 copies of three.js in **[~0.4s with esbuild vs ~41s with webpack 5](https://esbuild.github.io/)** (minified, with source maps).
+
+These are upstream micro-benchmarks. Your Shakapacker build also runs CSS processing, minification, source map generation, plugin chains, and Rails-side hooks, so end-to-end speedups are typically smaller than the transpiler or bundler number in isolation. They are still very substantial for most apps.
 
 ## Summary
 
-| Transpiler  | Performance Profile            | Configuration Profile | Best Fit                                     |
-| ----------- | ------------------------------ | --------------------- | -------------------------------------------- |
-| **SWC**     | Usually much faster than Babel | Moderate              | Default choice for most new Shakapacker apps |
-| **esbuild** | Usually very fast              | Minimal               | Modern syntax with simple transform needs    |
-| **Babel**   | Usually slowest                | Most flexible         | Existing Babel plugins or custom transforms  |
+| Transpiler  | Performance Profile (vs Babel)                            | Configuration Profile | Best Fit                                     |
+| ----------- | --------------------------------------------------------- | --------------------- | -------------------------------------------- |
+| **SWC**     | Much faster; upstream reports up to 20x / 70x multi-core¹ | Moderate              | Default choice for most new Shakapacker apps |
+| **esbuild** | Very fast for supported transforms²                       | Minimal               | Modern syntax with simple transform needs    |
+| **Babel**   | Baseline                                                  | Most flexible         | Existing Babel plugins or custom transforms  |
 
-SWC is the recommended default for new Shakapacker apps because it usually gives large speedups over Babel while covering the common JavaScript, TypeScript, and React cases. esbuild can also be very fast, but its transform model is less compatible with Babel-style plugin workflows.
+| Bundler     | Performance Profile (vs webpack)                              | Configuration Profile           | Best Fit                                               |
+| ----------- | ------------------------------------------------------------- | ------------------------------- | ------------------------------------------------------ |
+| **Rspack**  | Substantially faster; upstream reports roughly 8–17x typical³ | Mostly webpack-compatible       | Apps that want the biggest single performance jump     |
+| **webpack** | Baseline                                                      | Largest plugin/loader ecosystem | Apps with webpack-only loaders or plugins they rely on |
+
+¹ [swc.rs](https://swc.rs/) — "SWC is 20x faster than Babel on a single thread and 70x faster on four cores."
+² [esbuild.github.io](https://esbuild.github.io/) — bundle of 10× three.js: esbuild ~0.4s vs webpack 5 ~41s.
+³ [rspack.rs](https://rspack.rs/) and [rstackjs/build-tools-performance](https://github.com/rstackjs/build-tools-performance) — published numbers on the `react-5k` case.
+
+**Recommended path for most apps:** SWC first (small change, large win on transpilation), then Rspack (larger change, large win on the full bundler pipeline). The combination is what produces the biggest end-to-end improvement.
 
 ## What Usually Affects Build Time
 
-The transpiler is only one part of a Shakapacker build. Measure the whole build before attributing performance to one tool.
+The transpiler is one part of a Shakapacker build. Measure the whole build before attributing performance to any single tool.
 
 Common factors:
 
@@ -66,7 +85,7 @@ See [Customizing Babel Config](./customizing_babel_config.md).
 
 Strengths:
 
-- Fast Rust implementation
+- Fast Rust implementation (upstream reports 20x/70x vs Babel¹)
 - JavaScript, TypeScript, JSX, and TSX support
 - Good fit for React applications
 - Works well with Shakapacker's default config
@@ -82,7 +101,7 @@ Watch for:
 
 Strengths:
 
-- Very fast Go implementation
+- Very fast Go implementation (upstream three.js benchmark shows ~100x vs webpack 5²)
 - Simple configuration
 - Good fit for modern JavaScript and TypeScript transpilation
 
@@ -145,7 +164,7 @@ npm install babel-loader @babel/core @babel/preset-env
 
 ## Measuring Your App
 
-Use your app's real build command rather than a synthetic number from another project:
+Published benchmarks measure transpilation or bundling in isolation on synthetic projects. Your Shakapacker build is the full pipeline, so always measure end-to-end with your real command before deciding what to keep or revert:
 
 ```bash
 time bin/shakapacker
@@ -179,6 +198,12 @@ For most apps, migrate incrementally:
 4. Compare build output and browser behavior.
 5. Keep Babel only for the paths that need Babel-specific transforms.
 
-If you want the biggest bundler-level performance change, evaluate [Rspack](./rspack_migration_guide.md) separately from the transpiler change so you can attribute any regressions to the right layer.
+If you want the biggest bundler-level performance change, evaluate [Rspack](./rspack_migration_guide.md) as a separate step so you can attribute any regressions to the right layer. For most apps the combined **Rspack + SWC** path is the highest-leverage change available — see [Combined Migration Path](./common-upgrades.md#combined-migration-path).
 
 See [Transpiler Migration](./transpiler-migration.md) for step-by-step migration commands.
+
+## Sources
+
+- SWC benchmark: [swc.rs](https://swc.rs/)
+- Rspack benchmark: [rspack.rs](https://rspack.rs/) and [rstackjs/build-tools-performance](https://github.com/rstackjs/build-tools-performance)
+- esbuild benchmark: [esbuild.github.io](https://esbuild.github.io/)

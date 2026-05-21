@@ -6,7 +6,7 @@
 
 Shakapacker v10 transpiler defaults depend on the bundler and installation:
 
-- **New installations (v9+, including v10)**: `swc` - Installation template explicitly sets SWC for faster default transpilation
+- **New installations (v9+, including v10)**: `swc` - Installation template explicitly sets SWC, which upstream reports as [20x faster than Babel single-threaded and 70x on four cores](https://swc.rs/)
 - **Webpack runtime default**: `babel` - Used when no explicit config is provided (maintains backward compatibility)
 - **Rspack runtime default**: `swc` - Rspack defaults to SWC as it's a newer bundler with modern defaults
 
@@ -15,8 +15,8 @@ Shakapacker v10 transpiler defaults depend on the bundler and installation:
 ## Available Transpilers
 
 - `babel` - Traditional JavaScript transpiler with wide ecosystem support
-- `swc` - High-performance Rust-based transpiler
-- `esbuild` - Go-based transpiler, extremely fast
+- `swc` - High-performance Rust-based transpiler; upstream reports [20x faster than Babel single-threaded and 70x on four cores](https://swc.rs/)
+- `esbuild` - Go-based transpiler; extremely fast for supported transforms ([benchmark](https://esbuild.github.io/))
 - `none` - No transpilation (use native JavaScript)
 
 ## Configuration
@@ -90,11 +90,16 @@ yarn add --dev @rspack/plugin-react-refresh
 
 ### Performance Expectations
 
-SWC often reduces transpilation time significantly, especially in projects with
-many files or expensive Babel plugin chains. Treat published benchmark numbers
-as directional only; measure your own app with its real Shakapacker command,
-source map settings, cache state, and CI hardware before relying on a specific
-speedup.
+SWC's own benchmark reports being [20x faster than Babel single-threaded and
+70x faster on four cores](https://swc.rs/) for pure transpilation. Transpilation
+is usually the dominant cost in Babel-heavy Shakapacker builds, so this
+translates into a large end-to-end win for most apps, even though the full
+Shakapacker pipeline (CSS, minification, source maps, plugins) means the
+end-to-end speedup is usually smaller than the pure-transpiler number.
+
+Confirm the gain on your codebase by following
+[Measuring Your App](./transpiler-performance.md#measuring-your-app) before and
+after the migration.
 
 ### Compatibility Notes
 

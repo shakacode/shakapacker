@@ -277,7 +277,7 @@ pnpm run build
 
 ## Migrating from Babel to SWC
 
-SWC is a high-performance Rust-based JavaScript/TypeScript compiler that can be significantly faster than Babel. For complete details, see [JavaScript Transpiler Configuration](./transpiler-migration.md).
+SWC is a high-performance Rust-based JavaScript/TypeScript compiler. SWC reports being [20x faster than Babel on a single thread and 70x faster on four cores](https://swc.rs/) in its own transpiler benchmark; the practical speedup on a full Shakapacker build is usually smaller but still substantial. For complete details, see [JavaScript Transpiler Configuration](./transpiler-migration.md).
 
 ### Quick Migration Steps
 
@@ -361,10 +361,18 @@ bundle exec rspec
 
 ### Performance Expectations
 
-SWC often improves transpilation time, especially when an app has many files or
-an expensive Babel plugin chain. Exact gains depend on project size,
-configuration, source maps, cache state, hardware, and whether you measure only
-transpilation or the full Shakapacker build.
+SWC's own benchmark reports being [20x faster than Babel single-threaded and
+70x faster on four cores](https://swc.rs/) for pure transpilation. A real
+Shakapacker build also runs CSS processing, minification, source map
+generation, and your plugin chain, so the end-to-end speedup is typically
+smaller than the transpiler number in isolation — but the transpiler is
+usually the dominant cost on Babel-heavy projects, so the move is almost
+always a large win.
+
+Exact gains depend on project size, configuration, source maps, cache state,
+hardware, and whether you measure only transpilation or the full Shakapacker
+build. See [Measuring Your App](./transpiler-performance.md#measuring-your-app)
+for how to confirm the gain on your codebase.
 
 ### Common Issues
 
@@ -410,7 +418,7 @@ bundle exec rake shakapacker:compile
 
 ## Migrating from Webpack to Rspack
 
-[Rspack](https://rspack.rs/) is a high-performance bundler written in Rust with excellent webpack compatibility. For complete details, see [Rspack Migration Guide](./rspack_migration_guide.md).
+[Rspack](https://rspack.rs/) is a high-performance bundler written in Rust with excellent webpack compatibility. Rspack's published benchmark on a 5,000-component React app reports roughly 8x faster production builds, 10–15x faster development startup, and 17x faster HMR vs webpack ([rspack.rs](https://rspack.rs/), [benchmark sources](https://github.com/rstackjs/build-tools-performance)). For complete details, see [Rspack Migration Guide](./rspack_migration_guide.md).
 
 ### Quick Migration Steps
 
@@ -612,9 +620,20 @@ bin/shakapacker-dev-server
 
 ### Performance Benefits
 
-Rspack can improve cold builds, hot reloads, and production builds, but exact
-gains vary by project size, configuration, cache state, and hardware. Measure
-your real build and development workflows before relying on a specific speedup.
+Rspack's own published benchmark on a 5,000-component React app reports:
+
+| Workload               | Webpack 5 | Rspack | Approx. speedup |
+| ---------------------- | --------- | ------ | --------------- |
+| Cold development start | ~8.2s     | ~0.7s  | ~10x            |
+| Cold production build  | ~9.5s     | ~1.6s  | ~6x             |
+| HMR update             | ~2.8s     | ~160ms | ~17x            |
+
+Source: [rspack.rs](https://rspack.rs/) and [rstackjs/build-tools-performance](https://github.com/rstackjs/build-tools-performance) (`react-5k` case).
+
+Real Shakapacker apps will land somewhere in this range depending on project
+size, configuration, source maps, cache state, and hardware. Measure your real
+build and development workflows to confirm the gain on your app — see
+[Measuring Your App](./transpiler-performance.md#measuring-your-app).
 
 ### Common Issues
 
@@ -660,9 +679,10 @@ For maximum performance improvements, you can combine multiple migrations:
 
 ### Recommended: Webpack + Babel → Rspack + SWC
 
-This combination provides the best opportunity for broad build performance improvements:
+This combination provides the largest end-to-end build performance improvement available in Shakapacker: SWC handles transpilation in Rust (upstream reports up to [20x/70x vs Babel](https://swc.rs/)) and Rspack handles the rest of the bundler pipeline in Rust (upstream reports roughly [8–17x vs webpack on its own benchmark](https://rspack.rs/)). Apply them in order so you can attribute any regression to the right layer:
 
 1. **First, migrate to SWC** (while still on webpack)
+
    - Follow [Migrating from Babel to SWC](#migrating-from-babel-to-swc)
    - Test thoroughly
    - This is a smaller change to validate first

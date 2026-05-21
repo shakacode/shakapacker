@@ -141,6 +141,7 @@ import * as styles from './Component.module.css';
 **Migration Options:**
 
 1. **Update your code** (Recommended):
+
    - JavaScript: Change to named imports (`import { className }`)
    - TypeScript: Change to namespace imports (`import * as styles`)
    - Kebab-case class names are automatically converted to camelCase
@@ -198,6 +199,7 @@ import * as styles from './Component.module.css';
    ```
 
    **Key points:**
+
    - Test both `.module.scss` and `.module.css` file extensions
    - Validate all loader properties exist before accessing them
    - Use `.includes('css-loader')` since the loader path may vary
@@ -255,7 +257,7 @@ javascript_transpiler: "babel"
 
 **What changed:** SWC replaces Babel as the default JavaScript transpiler. Babel is no longer included in peer dependencies.
 
-**Why:** SWC can be significantly faster than Babel while maintaining compatibility with most JavaScript and TypeScript code.
+**Why:** SWC reports being [20x faster than Babel on a single thread and 70x faster on four cores](https://swc.rs/) in its own benchmark, while maintaining compatibility with most JavaScript and TypeScript code.
 
 **Impact on existing projects:**
 
