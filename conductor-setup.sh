@@ -28,6 +28,11 @@ upsert_tool_versions_line() {
         ' "$file" > "$tmpfile" || { rm -f "$tmpfile"; return 1; }
         mv "$tmpfile" "$file" || { rm -f "$tmpfile"; return 1; }
     else
+        # Ensure the file ends with a newline before appending, so the new entry doesn't
+        # concatenate onto the last line of a hand-edited file missing its trailing \n.
+        if [[ -s "$file" ]] && [[ "$(tail -c1 "$file"; echo x)" != $'\nx' ]]; then
+            printf '\n' >> "$file"
+        fi
         echo "$tool $version" >> "$file"
     fi
 }
@@ -61,26 +66,43 @@ fi
 
 # Sync .tool-versions with project version files (asdf/mise only; skip when .mise.toml is authoritative)
 if [[ "$VERSION_MANAGER" != "none" ]] && [[ ! -f .mise.toml ]]; then
+    # Read any existing .tool-versions pins up front so we can prefer a supported value there
+    # over the hard-coded default when .ruby-version / .node-version aren't present.
+    existing_node=""
+    existing_ruby=""
+    if [[ -f .tool-versions ]]; then
+        existing_node=$(awk '$1 == "nodejs" { print $2; exit }' .tool-versions)
+        existing_ruby=$(awk '$1 == "ruby" { print $2; exit }' .tool-versions)
+    fi
+
     if [[ -f .ruby-version ]]; then
         RUBY_VER=$(cat .ruby-version | tr -d '[:space:]')
+    elif [[ -n "$existing_ruby" ]] && version_ge "$existing_ruby" "$MIN_RUBY_VERSION"; then
+        RUBY_VER="$existing_ruby"
     else
         RUBY_VER="$DEFAULT_RUBY_VERSION"
     fi
 
+    # Track the source so the unsupported-Node error message points at the right file to edit.
     if [[ -f .node-version ]]; then
         NODE_VER=$(cat .node-version | tr -d '[:space:]')
         # Strip leading `v` (valid nvm/nodenv format) so mise/asdf accept the value in .tool-versions
         # and the idempotency check below compares against the unprefixed value awk reads back.
         NODE_VER="${NODE_VER#v}"
+        NODE_VER_SOURCE=".node-version"
+    elif [[ -n "$existing_node" ]] && node_version_supported "$existing_node"; then
+        NODE_VER="$existing_node"
+        NODE_VER_SOURCE=".tool-versions"
     else
         NODE_VER="$DEFAULT_NODE_VERSION"
+        NODE_VER_SOURCE="default"
     fi
 
-    # Fail fast if .node-version pins an unsupported Node, before mise installs the wrong version.
+    # Fail fast if the resolved Node version is unsupported, before mise installs the wrong version.
     if ! node_version_supported "$NODE_VER"; then
-        echo "❌ Error: Node version $NODE_VER (from .node-version) is unsupported." >&2
+        echo "❌ Error: Node version $NODE_VER (from $NODE_VER_SOURCE) is unsupported." >&2
         echo "   Shakapacker requires Node ^20.19.0 || >=22.12.0 (matches package.json engines)." >&2
-        echo "   Fix: update .node-version to a supported version (e.g. $DEFAULT_NODE_VERSION), then rerun setup." >&2
+        echo "   Fix: update $NODE_VER_SOURCE to a supported version (e.g. $DEFAULT_NODE_VERSION), then rerun setup." >&2
         exit 1
     fi
 
@@ -88,24 +110,23 @@ if [[ "$VERSION_MANAGER" != "none" ]] && [[ ! -f .mise.toml ]]; then
         echo "📝 Creating .tool-versions from project version files..."
         upsert_tool_versions_line "ruby" "$RUBY_VER"
         upsert_tool_versions_line "nodejs" "$NODE_VER"
+        echo "   Using Ruby $RUBY_VER, Node $NODE_VER"
+    elif [[ "$existing_node" != "$NODE_VER" ]] || [[ "$existing_ruby" != "$RUBY_VER" ]]; then
+        echo "📝 Updating .tool-versions to match resolved versions..."
+        [[ -z "$existing_node" ]] && \
+            echo "   nodejs: (new) $NODE_VER"
+        [[ -n "$existing_node" ]] && [[ "$existing_node" != "$NODE_VER" ]] && \
+            echo "   nodejs: $existing_node → $NODE_VER"
+        [[ -z "$existing_ruby" ]] && \
+            echo "   ruby:   (new) $RUBY_VER"
+        [[ -n "$existing_ruby" ]] && [[ "$existing_ruby" != "$RUBY_VER" ]] && \
+            echo "   ruby:   $existing_ruby → $RUBY_VER"
+        upsert_tool_versions_line "ruby" "$RUBY_VER"
+        upsert_tool_versions_line "nodejs" "$NODE_VER"
+        echo "   Using Ruby $RUBY_VER, Node $NODE_VER"
     else
-        existing_node=$(awk '$1 == "nodejs" { print $2; exit }' .tool-versions)
-        existing_ruby=$(awk '$1 == "ruby" { print $2; exit }' .tool-versions)
-        if [[ "$existing_node" != "$NODE_VER" ]] || [[ "$existing_ruby" != "$RUBY_VER" ]]; then
-            echo "📝 Updating .tool-versions to match .node-version/.ruby-version..."
-            [[ -z "$existing_node" ]] && \
-                echo "   nodejs: (new) $NODE_VER"
-            [[ -n "$existing_node" ]] && [[ "$existing_node" != "$NODE_VER" ]] && \
-                echo "   nodejs: $existing_node → $NODE_VER"
-            [[ -z "$existing_ruby" ]] && \
-                echo "   ruby:   (new) $RUBY_VER"
-            [[ -n "$existing_ruby" ]] && [[ "$existing_ruby" != "$RUBY_VER" ]] && \
-                echo "   ruby:   $existing_ruby → $RUBY_VER"
-            upsert_tool_versions_line "ruby" "$RUBY_VER"
-            upsert_tool_versions_line "nodejs" "$NODE_VER"
-        fi
+        echo "✅ .tool-versions already in sync (Ruby $RUBY_VER, Node $NODE_VER)"
     fi
-    echo "   Using Ruby $RUBY_VER, Node $NODE_VER"
 fi
 
 # Install tools via mise (after .tool-versions exists)

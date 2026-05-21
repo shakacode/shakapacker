@@ -22,8 +22,9 @@ version_ge() {
 node_version_supported() {
   local version="$1"
   version="${version#v}"
-  # Reject non-numeric aliases (e.g. lts/iron used by nvm) before numeric checks.
-  if ! [[ "$version" =~ ^[0-9]+\.[0-9]+\.[0-9] ]]; then
+  # Reject non-numeric aliases (e.g. lts/iron) and pre-release/build suffixes (e.g. 22.12.0-rc1).
+  # version_ge uses awk numeric coercion that silently strips suffixes, so guard at the gate.
+  if ! [[ "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
     return 1
   fi
   local major

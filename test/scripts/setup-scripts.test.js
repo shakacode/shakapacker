@@ -187,20 +187,60 @@ describe("setup scripts", () => {
       fs.writeFileSync(path.join(tempDir, ".ruby-version"), "3.3.4\n")
       fs.writeFileSync(path.join(tempDir, ".node-version"), "22.20.0\n")
       const toolVersionsPath = path.join(tempDir, ".tool-versions")
-      fs.writeFileSync(toolVersionsPath, "ruby 3.3.4\nnodejs 22.20.0\n")
-      const mtimeBefore = fs.statSync(toolVersionsPath).mtimeMs
-
-      // Wait a touch to ensure any rewrite would change mtime.
-      const waitUntil = Date.now() + 20
-      while (Date.now() < waitUntil) {
-        // busy-wait briefly
-      }
+      // Compare contents instead of mtime — mtime granularity varies by filesystem
+      // (1s on HFS+ and some Docker volumes) and would let a same-second rewrite slip through.
+      const contentsBefore = "ruby 3.3.4\nnodejs 22.20.0\n"
+      fs.writeFileSync(toolVersionsPath, contentsBefore)
 
       const result = runConductorSetup()
 
       expect(result.status).toBe(0)
       expect(result.stdout).not.toContain("Updating .tool-versions")
-      expect(fs.statSync(toolVersionsPath).mtimeMs).toBe(mtimeBefore)
+      expect(result.stdout).toContain(".tool-versions already in sync")
+      expect(fs.readFileSync(toolVersionsPath, "utf8")).toBe(contentsBefore)
+    })
+
+    it("preserves a supported nodejs pin in .tool-versions when .node-version is absent", () => {
+      installFakeTools()
+      fs.writeFileSync(path.join(tempDir, ".ruby-version"), "3.3.4\n")
+      // No .node-version — the supported pin in .tool-versions should be authoritative
+      // instead of being silently downgraded to DEFAULT_NODE_VERSION.
+      const contentsBefore = "ruby 3.3.4\nnodejs 23.5.0\n"
+      fs.writeFileSync(path.join(tempDir, ".tool-versions"), contentsBefore)
+
+      const result = runConductorSetup({ FAKE_NODE_VERSION: "v23.5.0" })
+
+      expect(result.status).toBe(0)
+      expect(
+        fs.readFileSync(path.join(tempDir, ".tool-versions"), "utf8")
+      ).toBe(contentsBefore)
+    })
+
+    it("rejects a malformed pre-release Node version like 22.12.0-rc1", () => {
+      installFakeTools()
+      fs.writeFileSync(path.join(tempDir, ".ruby-version"), "3.3.4\n")
+      fs.writeFileSync(path.join(tempDir, ".node-version"), "22.12.0-rc1\n")
+
+      const result = runConductorSetup({ FAKE_NODE_VERSION: "v22.12.0-rc1" })
+
+      expect(result.status).not.toBe(0)
+      expect(result.stderr).toContain("unsupported")
+      expect(result.stderr).toContain(".node-version")
+    })
+
+    it("appends a new entry on its own line when .tool-versions lacks a trailing newline", () => {
+      installFakeTools()
+      fs.writeFileSync(path.join(tempDir, ".ruby-version"), "3.3.4\n")
+      // No .node-version; a supported nodejs pin in .tool-versions stays authoritative.
+      // Seed .tool-versions WITHOUT a trailing newline so the append path is exercised.
+      fs.writeFileSync(path.join(tempDir, ".tool-versions"), "nodejs 22.20.0")
+
+      const result = runConductorSetup()
+
+      expect(result.status).toBe(0)
+      expect(
+        fs.readFileSync(path.join(tempDir, ".tool-versions"), "utf8")
+      ).toBe("nodejs 22.20.0\nruby 3.3.4\n")
     })
   })
 
