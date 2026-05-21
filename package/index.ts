@@ -27,7 +27,7 @@ const rules = require(rulesPath) as RuleSetRule[]
 let _baseConfig: Configuration | undefined
 
 const getBaseConfig = (): Configuration => {
-  if (!_baseConfig) {
+  if (_baseConfig === undefined) {
     _baseConfig = require("./environments/base")
   }
 
@@ -113,7 +113,12 @@ const shakapacker = {
 Object.defineProperty(shakapacker, "baseConfig", {
   configurable: true,
   enumerable: true,
-  get: getBaseConfig
+  get: getBaseConfig,
+  set() {
+    throw new TypeError(
+      "shakapacker.baseConfig is read-only. Use Object.defineProperty(shakapacker, 'baseConfig', { value }) to override it."
+    )
+  }
 })
 
 export = shakapacker

@@ -32,7 +32,7 @@ const rulesPath = resolve(__dirname, "../rules", "rspack.js")
 let _rules: RuleSetRule[] | undefined
 
 const getRules = (): RuleSetRule[] => {
-  if (!_rules) {
+  if (_rules === undefined) {
     _rules = require(rulesPath)
   }
 
@@ -42,7 +42,7 @@ const getRules = (): RuleSetRule[] => {
 let _baseConfig: RspackConfigWithDevServer | undefined
 
 const getBaseConfig = (): RspackConfigWithDevServer => {
-  if (!_baseConfig) {
+  if (_baseConfig === undefined) {
     _baseConfig = require("../environments/base")
   }
 
@@ -104,15 +104,24 @@ export {
 
 // `baseConfig` is exposed via a lazy getter so requiring this module does not
 // load `environments/base` (and its transitive plugin/manifest side effects)
-// until a caller actually reads the property.
-Object.defineProperty(module.exports, "rules", {
+// until a caller actually reads the property. Aliasing `module.exports` keeps
+// the target obvious and avoids relying on the implicit `exports === module.exports`
+// identity that TypeScript does not surface.
+const rspackExports = module.exports
+
+Object.defineProperty(rspackExports, "rules", {
   configurable: true,
   enumerable: true,
   get: getRules
 })
 
-Object.defineProperty(module.exports, "baseConfig", {
+Object.defineProperty(rspackExports, "baseConfig", {
   configurable: true,
   enumerable: true,
-  get: getBaseConfig
+  get: getBaseConfig,
+  set() {
+    throw new TypeError(
+      "shakapacker/rspack baseConfig is read-only. Use Object.defineProperty(require('shakapacker/rspack'), 'baseConfig', { value }) to override it."
+    )
+  }
 })
