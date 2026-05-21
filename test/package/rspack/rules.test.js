@@ -178,10 +178,11 @@ describe("rspack/rules", () => {
     })
 
     test("excludes Sass rule when sass-loader is not installed", () => {
+      let helpers
       let rulesWithoutSassLoader
 
       jest.isolateModules(() => {
-        const helpers = require("../../../package/utils/helpers")
+        helpers = require("../../../package/utils/helpers")
         helpers.moduleExists.mockImplementation(
           (packageName) => packageName !== "sass-loader"
         )
@@ -194,6 +195,7 @@ describe("rspack/rules", () => {
       )
 
       expect(sassRule).toBeUndefined()
+      expect(helpers.moduleExists).toHaveBeenCalledWith("sass-loader")
     })
   })
 
