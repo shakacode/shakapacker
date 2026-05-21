@@ -37,7 +37,20 @@ describe "binstub synchronization" do
     end
   end
 
-  it "documents every divergent binstub and only divergent binstubs" do
+  # The dummy app under spec/dummy/ ships a Ruby wrapper for shakapacker-config
+  # so the dummy can exercise the binstub from a real `bin/` entry. It must
+  # stay byte-identical to the install template, otherwise the dummy app would
+  # silently exercise a stale wrapper and a change to the install template
+  # could land without anyone noticing.
+  it "spec/dummy/bin/shakapacker-config matches lib/install/bin/shakapacker-config" do
+    dummy_path = File.join(gem_root, "spec/dummy/bin/shakapacker-config")
+    install_path = File.join(gem_root, "lib/install/bin/shakapacker-config")
+    expect(File.read(dummy_path)).to eq(File.read(install_path)),
+      "spec/dummy/bin/shakapacker-config and lib/install/bin/shakapacker-config have diverged. " \
+      "Update both files (and the createBinStub template in package/configExporter/cli.ts) to keep them in sync."
+  end
+
+  it "all documented divergent binstubs still exist in both directories" do
     install_basenames = Dir.glob(File.join(gem_root, "lib/install/bin/*")).map { |p| File.basename(p) }
     bin_basenames = Dir.glob(File.join(gem_root, "bin/*")).map { |p| File.basename(p) }
     actually_shared = install_basenames & bin_basenames

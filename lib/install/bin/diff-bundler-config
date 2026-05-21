@@ -1,8 +1,12 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
-# Keep in sync with lib/install/bin/shakapacker-config and the template in
-# package/configExporter/cli.ts (createBinStub).
+# This file is one of four helper-binstub copies that must stay in sync:
+#   - lib/install/bin/shakapacker-config
+#   - lib/install/bin/diff-bundler-config
+#   - spec/dummy/bin/shakapacker-config
+#   - the createBinStub template in package/configExporter/cli.ts
+# Update all four when changing helper logic.
 def shakapacker_app_root
   candidate = File.expand_path("..", __dir__)
   return candidate if File.exist?(File.join(candidate, "Gemfile"))

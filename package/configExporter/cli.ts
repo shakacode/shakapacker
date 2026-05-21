@@ -510,7 +510,9 @@ function runInitCommand(options: ExportOptions): number {
   return 0
 }
 
-function createBinStub(binStubPath: string): void {
+// Exported so spec/binstub_sync_spec.rb's JS sibling can verify the generated
+// content matches the checked-in lib/install/bin/* binstubs.
+export function createBinStub(binStubPath: string): void {
   const binDir = dirname(binStubPath)
   const packageScript = `${basename(binStubPath)}.cjs`
   const { mkdirSync, chmodSync } = require("fs")
@@ -523,8 +525,12 @@ function createBinStub(binStubPath: string): void {
   const stubContent = `#!/usr/bin/env ruby
 # frozen_string_literal: true
 
-# Keep in sync with lib/install/bin/shakapacker-config and
-# lib/install/bin/diff-bundler-config; update all three when changing helpers.
+# This file is one of four helper-binstub copies that must stay in sync:
+#   - lib/install/bin/shakapacker-config
+#   - lib/install/bin/diff-bundler-config
+#   - spec/dummy/bin/shakapacker-config
+#   - the createBinStub template in package/configExporter/cli.ts
+# Update all four when changing helper logic.
 def shakapacker_app_root
   candidate = File.expand_path("..", __dir__)
   return candidate if File.exist?(File.join(candidate, "Gemfile"))

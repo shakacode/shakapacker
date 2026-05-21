@@ -83,6 +83,7 @@ RSpec.describe "helper binstubs" do
           "cwd" => File.realpath(app_path),
           "argv" => []
         )
+        expect(stderr).to include("[Shakapacker] No Gemfile found at")
       end
     end
 
