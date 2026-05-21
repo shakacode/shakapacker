@@ -9,10 +9,9 @@ describe("rspack/index side effects", () => {
     })
   }
 
-  // Returns a `requireOrError` mock that yields working fakes for the modules
-  // loaded by the rules chain (`getStyleRule` reaches `@rspack/core` at
-  // require-time), so the rspack index can be loaded without throwing while
-  // we observe which modules were requested.
+  // Returns a `requireOrError` mock that yields working fakes for modules
+  // loaded when lazy rspack exports are accessed, while still letting us
+  // observe which modules were requested during the initial index require.
   const mockRequireOrError = () => {
     const requireOrError = jest.fn((moduleName) => {
       if (moduleName === "@rspack/core") {
@@ -51,6 +50,7 @@ describe("rspack/index side effects", () => {
       require("../../../package/rspack/index")
 
       const requestedModules = requireOrError.mock.calls.map((call) => call[0])
+      expect(requestedModules).not.toContain("@rspack/core")
       expect(requestedModules).not.toContain("rspack-manifest-plugin")
     })
   })
