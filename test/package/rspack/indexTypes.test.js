@@ -18,7 +18,7 @@ describe("rspack/index types", () => {
           "--outDir",
           outDir
         ],
-        { stdio: "pipe" }
+        { stdio: ["pipe", "pipe", "inherit"] }
       )
 
       const declaration = readFileSync(
@@ -26,9 +26,16 @@ describe("rspack/index types", () => {
         "utf8"
       )
 
-      expect(declaration).toContain("baseConfig")
+      // Verify lazy exports are present with their real types (not `any`),
+      // proving the placeholder `const x = undefined as unknown as T` pattern
+      // survives the compile and the named exports include baseConfig/rules.
+      expect(declaration).toMatch(
+        /declare const baseConfig: RspackConfigWithDevServer/
+      )
+      expect(declaration).toMatch(/declare const rules: RuleSetRule\[\]/)
+      expect(declaration).toMatch(/export \{[^}]*\bbaseConfig\b[^}]*\}/)
+      expect(declaration).toMatch(/export \{[^}]*\brules\b[^}]*\}/)
       expect(declaration).toContain("env")
-      expect(declaration).toContain("rules")
       expect(declaration).toContain("moduleExists")
     } finally {
       rmSync(outDir, { recursive: true, force: true })
