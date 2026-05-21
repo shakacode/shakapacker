@@ -31,6 +31,7 @@ describe "Shakapacker::Doctor with optional peer dependencies" do
            cache_path: cache_path,
            javascript_transpiler: javascript_transpiler,
            assets_bundler: assets_bundler,
+           rspack?: assets_bundler == "rspack",
            data: config_data,
            nested_entries?: false,
            ensure_consistent_versioning?: false,
