@@ -28,6 +28,6 @@ Gem::Specification.new do |s|
   s.add_development_dependency "rubocop"
   s.add_development_dependency "rubocop-performance"
 
-  s.files = `git ls-files -z CHANGELOG.md MIT-LICENSE README.md shakapacker.gemspec lib sig`.split("\x0")
+  s.files = `git ls-files -z CHANGELOG.md MIT-LICENSE README.md package.json shakapacker.gemspec lib sig`.split("\x0")
   s.test_files = []
 end

@@ -37,6 +37,10 @@ describe "shakapacker.gemspec" do
       expect(lib_files).not_to be_empty
     end
 
+    it "includes the gem-root package.json read by shakapacker:check_node" do
+      expect(gemspec.files).to include("package.json")
+    end
+
     it "includes install assets needed by shakapacker:install" do
       expect(gemspec.files).to include(
         "lib/install/template.rb",
