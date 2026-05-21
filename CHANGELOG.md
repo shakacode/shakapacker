@@ -9,6 +9,8 @@
 
 ## [Unreleased]
 
+## [v10.1.0-rc.0] - May 20, 2026
+
 ### Added
 
 - **Added supplemental npm packages `shakapacker-webpack` and `shakapacker-rspack`**. [PR #1096](https://github.com/shakacode/shakapacker/pull/1096) by [justin808](https://github.com/justin808). Optional packages that lockstep with core and bundle the managed-build stack as direct `dependencies` (so a single `yarn add shakapacker-webpack` pulls in `shakapacker`, `webpack`, `webpack-cli`, and `webpack-assets-manifest`; the rspack package bundles `shakapacker`, `@rspack/core`, `@rspack/cli`, and `rspack-manifest-plugin`). Optional features (transpilers, dev-server, CSS preprocessors, react-refresh) remain as opt-in `peerDependencies` so SCSS/native-binding bloat isn't forced on every install. The wrappers emit structured warnings (`SHAKAPACKER_BUNDLER_MISMATCH`, `SHAKAPACKER_NO_TRANSPILER`) when `config.assets_bundler` or `javascript_transpiler` doesn't match the installed peers. See the [v10.1 migration guide](docs/migration/v10.1-supplemental-packages.md) for adoption steps and [`docs/dependency-strategy.md`](docs/dependency-strategy.md) for the design rationale and v11 roadmap.
@@ -32,12 +34,14 @@
 ### Changed
 
 - **Changed `shakapacker:install` to default fresh Rspack installs to v2 (`^2.0.0-0`)**. [PR #1091](https://github.com/shakacode/shakapacker/pull/1091) by [ihabadham](https://github.com/ihabadham). `lib/install/package.json` now declares `@rspack/core` and `@rspack/cli` as `^1.0.0 || ^2.0.0-0`; fresh installs pick the v2 range. Existing apps are unaffected. Note: Rspack v2 requires Node.js 20.19.0+.
+- **Slimmed the published gem from ~486K (294 files) to ~121K (75 files)**. [PR #1110](https://github.com/shakacode/shakapacker/pull/1110) by [justin808](https://github.com/justin808). Replaced the broad `git ls-files` gem manifest with an explicit runtime/install allowlist (`CHANGELOG.md`, `MIT-LICENSE`, `README.md`, gemspec, `lib`, `sig`), excluding repo-only docs, tests, JavaScript package source, CI/tooling files, and `test_files` metadata from the published gem. Fixes [#987](https://github.com/shakacode/shakapacker/issues/987).
 
 ### Fixed
 
 - **Fixed Rspack React Refresh plugin loading with `@rspack/plugin-react-refresh` v2**. [PR #1116](https://github.com/shakacode/shakapacker/pull/1116) by [justin808](https://github.com/justin808). Shakapacker now reads the v2 named `ReactRefreshRspackPlugin` export while retaining compatibility with v1 direct/default CommonJS export shapes, preventing `TypeError: ReactRefreshRspackPlugin is not a constructor` during rspack dev-server startup.
 - **Widened `@rspack/plugin-react-refresh` peer range to `^1.0.0 || ^2.0.0-0`**. [PR #1091](https://github.com/shakacode/shakapacker/pull/1091) by [ihabadham](https://github.com/ihabadham). Fixes the `ERESOLVE` conflict when installing `@rspack/plugin-react-refresh@^2.0.0` alongside `shakapacker@10.0.0`.
 - **Fixed `NodePackageVersion#find_version` for local-path `shakapacker` installs (e.g. `yalc`, `file:`, relative paths)**. [PR #1086](https://github.com/shakacode/shakapacker/pull/1086) by [justin808](https://github.com/justin808). The version check now consults `package.json` first and short-circuits on `../` or `file:` dependencies, so stale lockfile semvers no longer trigger false gem↔node version mismatches. `package_json_dependency` also consults `devDependencies` in addition to `dependencies`. The `LOCAL_PATH_REGEX` constant replaces a duplicated inline regex and anchors both alternatives to the start of the string, removing a latent false-positive on version strings containing `..` mid-value.
+- **Detected single-dot (`./...`) local-path declarations in `NodePackageVersion#find_version`**. [PR #1106](https://github.com/shakacode/shakapacker/pull/1106) by [justin808](https://github.com/justin808). Extended `LOCAL_PATH_REGEX` to treat `./vendor/shakapacker`-style declarations as local-path installs (alongside the `../` and `file:` patterns added in [#1086](https://github.com/shakacode/shakapacker/pull/1086)), so version checks short-circuit before consulting potentially stale lockfile semvers. Fixes [#1103](https://github.com/shakacode/shakapacker/issues/1103).
 - **Fix rspack setup not reusing certain shared webpack-rspack config settings**. [PR #1085](https://github.com/shakacode/shakapacker/pull/1085) by [brunodccarvalho](https://github.com/brunodccarvalho). Default config changes include `optimization.splitChunks.chunks="all"`, `optimization.runtimeChunk="single"`, the webpack compression plugin in production, and the removal of minimization plugins in development. Fixes [#984](https://github.com/shakacode/shakapacker/issues/984).
 
 ## [v10.0.0] - April 8, 2026
@@ -940,7 +944,8 @@ Note: [Rubygem is 6.3.0.pre.rc.1](https://rubygems.org/gems/shakapacker/versions
 
 See [CHANGELOG.md in rails/webpacker (up to v5.4.3)](https://github.com/rails/webpacker/blob/master/CHANGELOG.md)
 
-[Unreleased]: https://github.com/shakacode/shakapacker/compare/v10.0.0...main
+[Unreleased]: https://github.com/shakacode/shakapacker/compare/v10.1.0-rc.0...main
+[v10.1.0-rc.0]: https://github.com/shakacode/shakapacker/compare/v10.0.0...v10.1.0-rc.0
 [v10.0.0]: https://github.com/shakacode/shakapacker/compare/v9.7.0...v10.0.0
 [v9.7.0]: https://github.com/shakacode/shakapacker/compare/v9.6.1...v9.7.0
 [v9.6.1]: https://github.com/shakacode/shakapacker/compare/v9.6.0...v9.6.1
