@@ -4,6 +4,8 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT_DIR"
 
+source "$ROOT_DIR/bin/lib/node-version-check.sh"
+
 run_cmd() {
   if [[ -x "$ROOT_DIR/bin/conductor-exec" ]]; then
     "$ROOT_DIR/bin/conductor-exec" "$@"
@@ -25,6 +27,19 @@ ensure_tool ruby
 ensure_tool bundle
 ensure_tool node
 ensure_tool yarn
+
+NODE_RAW=$(run_cmd node -v 2>&1 || true)
+NODE_VERSION=$(echo "$NODE_RAW" | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -n1 || true)
+if [[ -z "$NODE_VERSION" ]]; then
+  echo "Error: Could not parse Node.js version from \`node -v\`. Got: $NODE_RAW" >&2
+  exit 1
+fi
+if ! node_version_supported "$NODE_VERSION"; then
+  echo "Error: Node.js v$NODE_VERSION is unsupported. Shakapacker requires Node ^20.19.0 || >=22.12.0." >&2
+  echo "  This matches the engines field in package.json (and @rspack/core v2)." >&2
+  echo "  Upgrade Node via your version manager, then rerun bin/setup." >&2
+  exit 1
+fi
 
 echo "Installing Ruby dependencies..."
 run_cmd bundle install
