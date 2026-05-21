@@ -14,6 +14,9 @@ gemfiles/*.lock
 .DS_Store
 .eslintcache
 
+# Claude Code ScheduleWakeup per-process runtime lock
+.claude/*.lock
+
 .yalc
 yalc.lock
 
