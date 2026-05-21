@@ -112,7 +112,12 @@ const rspackExports = module.exports
 Object.defineProperty(rspackExports, "rules", {
   configurable: true,
   enumerable: true,
-  get: getRules
+  get: getRules,
+  set() {
+    throw new TypeError(
+      "shakapacker/rspack rules is read-only. Use Object.defineProperty(require('shakapacker/rspack'), 'rules', { value }) to override it."
+    )
+  }
 })
 
 Object.defineProperty(rspackExports, "baseConfig", {

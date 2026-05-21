@@ -87,6 +87,19 @@ describe("rspack/index side effects", () => {
     })
   })
 
+  test("assigning to rules throws an informative TypeError", () => {
+    jest.isolateModules(() => {
+      mockConfigForRspack()
+      mockRequireOrError()
+
+      const rspackIndex = require("../../../package/rspack/index")
+
+      expect(() => {
+        rspackIndex.rules = []
+      }).toThrow(/shakapacker\/rspack rules is read-only/)
+    })
+  })
+
   test("accessing baseConfig triggers the rspack-manifest-plugin load", () => {
     jest.isolateModules(() => {
       mockConfigForRspack()
