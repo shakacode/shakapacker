@@ -5,6 +5,7 @@
 // - Using import for type-only imports and Node.js built-in modules
 import { resolve } from "path"
 import { existsSync } from "fs"
+import type { RuleSetRule } from "webpack"
 import type { RspackConfigWithDevServer } from "../environments/types"
 import type { Config } from "../types"
 
@@ -26,7 +27,17 @@ const {
 } = require("../utils/bundlerUtils")
 const { validateRspackDependencies } = require("../utils/validateDependencies")
 
-const rules = require(resolve(__dirname, "../rules", "rspack.js"))
+const rulesPath = resolve(__dirname, "../rules", "rspack.js")
+
+let _rules: RuleSetRule[] | undefined
+
+const getRules = (): RuleSetRule[] => {
+  if (!_rules) {
+    _rules = require(rulesPath)
+  }
+
+  return _rules!
+}
 
 let _baseConfig: RspackConfigWithDevServer | undefined
 
@@ -37,6 +48,11 @@ const getBaseConfig = (): RspackConfigWithDevServer => {
 
   return _baseConfig!
 }
+
+// Declaration placeholders keep TypeScript's named exports while runtime values
+// are installed as lazy getters below.
+const baseConfig = undefined as unknown as RspackConfigWithDevServer
+const rules = undefined as unknown as RuleSetRule[]
 
 const generateRspackConfig = (
   extraConfig: RspackConfigWithDevServer = {},
@@ -70,6 +86,7 @@ export {
   config, // shakapacker.yml
   devServer,
   generateRspackConfig,
+  baseConfig,
   env,
   rules,
   moduleExists,
@@ -88,6 +105,12 @@ export {
 // `baseConfig` is exposed via a lazy getter so requiring this module does not
 // load `environments/base` (and its transitive plugin/manifest side effects)
 // until a caller actually reads the property.
+Object.defineProperty(module.exports, "rules", {
+  configurable: true,
+  enumerable: true,
+  get: getRules
+})
+
 Object.defineProperty(module.exports, "baseConfig", {
   configurable: true,
   enumerable: true,
