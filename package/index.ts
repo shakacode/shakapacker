@@ -21,8 +21,16 @@ import {
 } from "./utils/bundlerUtils"
 
 const rulesPath = resolve(__dirname, "rules", `${config.assets_bundler}.js`)
-/** Array of webpack/rspack loader rules */
-const rules = require(rulesPath) as RuleSetRule[]
+
+let _rules: RuleSetRule[] | undefined
+
+const getRules = (): RuleSetRule[] => {
+  if (_rules === undefined) {
+    _rules = require(rulesPath) as RuleSetRule[]
+  }
+
+  return _rules
+}
 
 let _baseConfig: Configuration | undefined
 
@@ -82,8 +90,6 @@ const shakapacker = {
   generateWebpackConfig,
   /** Environment configuration (railsEnv, nodeEnv, etc.) */
   env,
-  /** Array of webpack/rspack loader rules */
-  rules,
   /** Check if a module exists in node_modules */
   moduleExists,
   /** Process a file if a specific loader is available */
@@ -109,6 +115,17 @@ const shakapacker = {
   /** webpack-merge functions (merge, mergeWithCustomize, mergeWithRules, unique) */
   ...webpackMerge
 }
+
+Object.defineProperty(shakapacker, "rules", {
+  configurable: true,
+  enumerable: true,
+  get: getRules,
+  set() {
+    throw new TypeError(
+      "shakapacker.rules is read-only. Use Object.defineProperty(shakapacker, 'rules', { value }) to override it."
+    )
+  }
+})
 
 Object.defineProperty(shakapacker, "baseConfig", {
   configurable: true,

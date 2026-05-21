@@ -51,8 +51,8 @@ const getBaseConfig = (): RspackConfigWithDevServer => {
 
 // Declaration placeholders keep TypeScript's named exports while runtime values
 // are installed as lazy getters below.
-const baseConfig = undefined as unknown as RspackConfigWithDevServer
-const rules = undefined as unknown as RuleSetRule[]
+const baseConfig = undefined as unknown as RspackConfigWithDevServer // replaced below by lazy getter
+const rules = undefined as unknown as RuleSetRule[] // replaced below by lazy getter
 
 const generateRspackConfig = (
   extraConfig: RspackConfigWithDevServer = {},
@@ -112,7 +112,12 @@ const rspackExports = module.exports
 Object.defineProperty(rspackExports, "rules", {
   configurable: true,
   enumerable: true,
-  get: getRules
+  get: getRules,
+  set() {
+    throw new TypeError(
+      "shakapacker/rspack rules is read-only. Use Object.defineProperty(require('shakapacker/rspack'), 'rules', { value }) to override it."
+    )
+  }
 })
 
 Object.defineProperty(rspackExports, "baseConfig", {

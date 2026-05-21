@@ -62,6 +62,36 @@ describe("index side effects", () => {
     })
   })
 
+  test("defines rules as a configurable lazy export", () => {
+    jest.isolateModules(() => {
+      mockEnsureManifestExists()
+
+      const shakapacker = require("../../package/index")
+
+      expect(
+        Object.getOwnPropertyDescriptor(shakapacker, "rules")
+      ).toStrictEqual(
+        expect.objectContaining({
+          configurable: true,
+          enumerable: true,
+          get: expect.any(Function)
+        })
+      )
+    })
+  })
+
+  test("assigning to rules throws an informative TypeError", () => {
+    jest.isolateModules(() => {
+      mockEnsureManifestExists()
+
+      const shakapacker = require("../../package/index")
+
+      expect(() => {
+        shakapacker.rules = []
+      }).toThrow(/shakapacker\.rules is read-only/)
+    })
+  })
+
   test("lazily exposes baseConfig with the expected shape", () => {
     // Intentionally does not call mockWebpackPlugins(): this test exercises the
     // real plugin constructors (via environments/base) to verify the lazy

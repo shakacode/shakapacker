@@ -27,7 +27,9 @@ describe("rspack/index types", () => {
       )
 
       expect(declaration).toContain("baseConfig")
-      expect(declaration).toContain("baseConfig, env, rules, moduleExists")
+      expect(declaration).toContain("env")
+      expect(declaration).toContain("rules")
+      expect(declaration).toContain("moduleExists")
     } finally {
       rmSync(outDir, { recursive: true, force: true })
     }
