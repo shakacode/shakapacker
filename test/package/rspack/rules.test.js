@@ -154,6 +154,49 @@ describe("rspack/rules", () => {
       // Sass rule should be present since moduleExists is mocked to return true
       expect(sassRule).toBeDefined()
     })
+
+    test("includes Sass rule when sass-loader is available without the sass package", () => {
+      let helpers
+      let rulesWithoutSassPackage
+
+      jest.isolateModules(() => {
+        helpers = require("../../../package/utils/helpers")
+        helpers.moduleExists.mockImplementation(
+          (packageName) => packageName !== "sass"
+        )
+
+        rulesWithoutSassPackage = require("../../../package/rules/rspack")
+      })
+
+      const sassRule = rulesWithoutSassPackage.find(
+        (rule) => rule.test && rule.test.toString().includes("scss|sass")
+      )
+
+      expect(sassRule).toBeDefined()
+      expect(helpers.moduleExists).toHaveBeenCalledWith("sass-loader")
+      expect(helpers.moduleExists).not.toHaveBeenCalledWith("sass")
+    })
+
+    test("excludes Sass rule when sass-loader is not installed", () => {
+      let helpers
+      let rulesWithoutSassLoader
+
+      jest.isolateModules(() => {
+        helpers = require("../../../package/utils/helpers")
+        helpers.moduleExists.mockImplementation(
+          (packageName) => packageName !== "sass-loader"
+        )
+
+        rulesWithoutSassLoader = require("../../../package/rules/rspack")
+      })
+
+      const sassRule = rulesWithoutSassLoader.find(
+        (rule) => rule.test && rule.test.toString().includes("scss|sass")
+      )
+
+      expect(sassRule).toBeUndefined()
+      expect(helpers.moduleExists).toHaveBeenCalledWith("sass-loader")
+    })
   })
 
   describe("less rules", () => {
