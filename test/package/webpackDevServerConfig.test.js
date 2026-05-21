@@ -114,6 +114,16 @@ describe("webpackDevServerConfig", () => {
     })
   })
 
+  test("passes through static array from YAML config", () => {
+    const devServer = require("../../package/dev_server")
+    devServer.static = ["/path1", "/path2"]
+
+    const createDevServerConfig = require("../../package/webpackDevServerConfig")
+    const config = createDevServerConfig()
+
+    expect(config.static).toStrictEqual(["/path1", "/path2"])
+  })
+
   test("sets devMiddleware.publicPath to URL path", () => {
     const createDevServerConfig = require("../../package/webpackDevServerConfig")
     const config = createDevServerConfig()

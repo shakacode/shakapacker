@@ -22,7 +22,7 @@ interface WebpackDevServerConfig {
   static?:
     | boolean
     | string
-    | string[]
+    | Array<string | Record<string, unknown>>
     | {
         publicPath?: string
         [key: string]: unknown
@@ -125,6 +125,10 @@ function createDevServerConfig(): WebpackDevServerConfig {
   ) {
     if (devServerYamlConfig.static === false) {
       config.static = false
+    } else if (Array.isArray(devServerYamlConfig.static)) {
+      config.static = devServerYamlConfig.static as Array<
+        string | Record<string, unknown>
+      >
     } else if (typeof devServerYamlConfig.static === "object") {
       config.static = devServerYamlConfig.static as Record<string, unknown>
     } else {
