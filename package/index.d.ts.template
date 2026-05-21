@@ -33,8 +33,12 @@ interface ShakapackerExports {
   readonly baseConfig: Configuration
   /** Environment configuration (railsEnv, nodeEnv, etc.) */
   env: Env
-  /** Array of webpack/rspack loader rules */
-  rules: RuleSetRule[]
+  /**
+   * Array of webpack/rspack loader rules.
+   * Exposed via a lazy getter — reassignment via `shakapacker.rules = ...`
+   * throws in strict mode. Use `Object.defineProperty` to override if needed.
+   */
+  readonly rules: RuleSetRule[]
   /** Check if a module exists in node_modules */
   moduleExists: (packageName: string) => boolean
   /** Process a file if a specific loader is available */
