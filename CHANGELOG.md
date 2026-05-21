@@ -9,6 +9,10 @@
 
 ## [Unreleased]
 
+### Fixed
+
+- **Fixed `shakapacker:check_node` reporting "Node.js not installed" in the published gem**. [PR #1120](https://github.com/shakacode/shakapacker/pull/1120) by [justin808](https://github.com/justin808). The gemspec allowlist introduced in [PR #1110](https://github.com/shakacode/shakapacker/pull/1110) dropped the gem-root `package.json` that `check_node.rake` reads for the `engines.node` range, so `Pathname#realpath` raised `Errno::ENOENT` and the outer rescue printed the misleading "Node.js not installed. Exiting!" — most visibly during `rails assets:precompile` via `shakapacker:clean` → `verify_install` → `check_node`. The gemspec now ships `package.json`, and `check_node.rake` skips the engines-range check gracefully if that file is ever missing rather than blaming Node.
+
 ## [v10.1.0-rc.0] - May 20, 2026
 
 ### Added
