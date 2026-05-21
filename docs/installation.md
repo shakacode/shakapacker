@@ -17,20 +17,19 @@ configuration details after installation, see the [configuration guide](./config
 
 ### New Rails App
 
-For a new Rails 6.1+ app, skip Rails' default JavaScript installer so
+For a new Rails 6+ app, skip Rails' default JavaScript installer so
 Shakapacker can create the bundler files, then continue from the app root:
 
 ```bash
 rails new myapp --skip-javascript
 cd myapp
+bundle add shakapacker --strict
 ```
 
 ### Existing Rails App
 
 For an existing Rails app (5.2+), start from the app root and skip the
 `rails new` step.
-
-Add Shakapacker to your app:
 
 ```bash
 bundle add shakapacker --strict
