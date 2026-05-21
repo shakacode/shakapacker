@@ -2,7 +2,7 @@
 
 ---
 
-_🚀 Shakapacker 10 supports [Rspack](https://rspack.rs/) — upstream benchmark: roughly [8–17x faster than webpack](https://rspack.rs/) on its reference React app, with full webpack compatibility!_
+_🚀 Shakapacker 10 supports [Rspack](https://rspack.rs/) — up to 17x faster than webpack per [upstream benchmarks](./docs/transpiler-performance.md#published-benchmarks)!_
 
 _📖 **Full documentation at [shakapacker.com](https://shakapacker.com)**_
 
