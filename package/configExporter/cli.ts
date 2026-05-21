@@ -1,7 +1,13 @@
 // This will be a substantial file - the main CLI entry point
 // Originally migrated from bin/export-bundler-config, now bin/shakapacker-config
 
-import { existsSync, readFileSync, writeFileSync } from "fs"
+import {
+  chmodSync,
+  existsSync,
+  mkdirSync,
+  readFileSync,
+  writeFileSync
+} from "fs"
 import { resolve, dirname, sep, delimiter, basename } from "path"
 import { inspect } from "util"
 import { load as loadYaml } from "js-yaml"
@@ -510,10 +516,10 @@ function runInitCommand(options: ExportOptions): number {
   return 0
 }
 
-function createBinStub(binStubPath: string): void {
+// Exported for test use only: verifies generated content matches lib/install/bin/* binstubs.
+export function createBinStub(binStubPath: string): void {
   const binDir = dirname(binStubPath)
   const packageScript = `${basename(binStubPath)}.cjs`
-  const { mkdirSync, chmodSync } = require("fs")
 
   // Ensure bin directory exists
   if (!existsSync(binDir)) {
