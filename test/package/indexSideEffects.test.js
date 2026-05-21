@@ -50,6 +50,18 @@ describe("index side effects", () => {
     })
   })
 
+  test("assigning to baseConfig throws an informative TypeError", () => {
+    jest.isolateModules(() => {
+      mockEnsureManifestExists()
+
+      const shakapacker = require("../../package/index")
+
+      expect(() => {
+        shakapacker.baseConfig = {}
+      }).toThrow(/shakapacker\.baseConfig is read-only/)
+    })
+  })
+
   test("lazily exposes baseConfig with the expected shape", () => {
     // Intentionally does not call mockWebpackPlugins(): this test exercises the
     // real plugin constructors (via environments/base) to verify the lazy

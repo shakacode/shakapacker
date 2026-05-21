@@ -74,6 +74,19 @@ describe("rspack/index side effects", () => {
     })
   })
 
+  test("assigning to baseConfig throws an informative TypeError", () => {
+    jest.isolateModules(() => {
+      mockConfigForRspack()
+      mockRequireOrError()
+
+      const rspackIndex = require("../../../package/rspack/index")
+
+      expect(() => {
+        rspackIndex.baseConfig = {}
+      }).toThrow(/shakapacker\/rspack baseConfig is read-only/)
+    })
+  })
+
   test("accessing baseConfig triggers the rspack-manifest-plugin load", () => {
     jest.isolateModules(() => {
       mockConfigForRspack()
@@ -83,7 +96,7 @@ describe("rspack/index side effects", () => {
       const beforeAccess = requireOrError.mock.calls.map((call) => call[0])
       expect(beforeAccess).not.toContain("rspack-manifest-plugin")
 
-      rspackIndex.baseConfig // eslint-disable-line no-unused-expressions
+      expect(rspackIndex.baseConfig).toBeDefined()
 
       const afterAccess = requireOrError.mock.calls.map((call) => call[0])
       expect(afterAccess).toContain("rspack-manifest-plugin")
