@@ -124,6 +124,16 @@ describe("webpackDevServerConfig", () => {
     expect(config.static).toStrictEqual(["/path1", "/path2"])
   })
 
+  test("treats static: null (YAML ~) as unset, defaulting to false", () => {
+    const devServer = require("../../package/dev_server")
+    devServer.static = null
+
+    const createDevServerConfig = require("../../package/webpackDevServerConfig")
+    const config = createDevServerConfig()
+
+    expect(config.static).toBe(false)
+  })
+
   test("sets devMiddleware.publicPath to URL path", () => {
     const createDevServerConfig = require("../../package/webpackDevServerConfig")
     const config = createDevServerConfig()
