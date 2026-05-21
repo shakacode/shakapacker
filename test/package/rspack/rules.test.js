@@ -176,6 +176,25 @@ describe("rspack/rules", () => {
       expect(helpers.moduleExists).toHaveBeenCalledWith("sass-loader")
       expect(helpers.moduleExists).not.toHaveBeenCalledWith("sass")
     })
+
+    test("excludes Sass rule when sass-loader is not installed", () => {
+      let rulesWithoutSassLoader
+
+      jest.isolateModules(() => {
+        const helpers = require("../../../package/utils/helpers")
+        helpers.moduleExists.mockImplementation(
+          (packageName) => packageName !== "sass-loader"
+        )
+
+        rulesWithoutSassLoader = require("../../../package/rules/rspack")
+      })
+
+      const sassRule = rulesWithoutSassLoader.find(
+        (rule) => rule.test && rule.test.toString().includes("scss|sass")
+      )
+
+      expect(sassRule).toBeUndefined()
+    })
   })
 
   describe("less rules", () => {
