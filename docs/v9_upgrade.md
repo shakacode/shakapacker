@@ -141,7 +141,6 @@ import * as styles from './Component.module.css';
 **Migration Options:**
 
 1. **Update your code** (Recommended):
-
    - JavaScript: Change to named imports (`import { className }`)
    - TypeScript: Change to namespace imports (`import * as styles`)
    - Kebab-case class names are automatically converted to camelCase
@@ -199,7 +198,6 @@ import * as styles from './Component.module.css';
    ```
 
    **Key points:**
-
    - Test both `.module.scss` and `.module.css` file extensions
    - Validate all loader properties exist before accessing them
    - Use `.includes('css-loader')` since the loader path may vary
