@@ -50,7 +50,13 @@ const getBaseConfig = (): RspackConfigWithDevServer => {
 }
 
 // Declaration placeholders keep TypeScript's named exports while runtime values
-// are installed as lazy getters below.
+// are installed as lazy getters below. TypeScript's CommonJS emit writes these
+// `export { baseConfig, rules }` lines as plain `exports.baseConfig = baseConfig`
+// assignments (configurable: true by default), so the subsequent
+// Object.defineProperty calls can safely replace them with getters. If TypeScript
+// ever switches to non-configurable Object.defineProperty for named exports,
+// the override will throw and test/package/rspack/indexSideEffects.test.js will
+// catch the regression at module load.
 const baseConfig = undefined as unknown as RspackConfigWithDevServer // replaced below by lazy getter
 const rules = undefined as unknown as RuleSetRule[] // replaced below by lazy getter
 
@@ -115,7 +121,7 @@ Object.defineProperty(rspackExports, "rules", {
   get: getRules,
   set() {
     throw new TypeError(
-      "shakapacker/rspack rules is read-only. Use Object.defineProperty(require('shakapacker/rspack'), 'rules', { value }) to override it."
+      "shakapacker/rspack rules is read-only. Use Object.defineProperty(require('shakapacker/rspack'), 'rules', { value, writable: true, configurable: true }) to override it."
     )
   }
 })
@@ -126,7 +132,7 @@ Object.defineProperty(rspackExports, "baseConfig", {
   get: getBaseConfig,
   set() {
     throw new TypeError(
-      "shakapacker/rspack baseConfig is read-only. Use Object.defineProperty(require('shakapacker/rspack'), 'baseConfig', { value }) to override it."
+      "shakapacker/rspack baseConfig is read-only. Use Object.defineProperty(require('shakapacker/rspack'), 'baseConfig', { value, writable: true, configurable: true }) to override it."
     )
   }
 })
