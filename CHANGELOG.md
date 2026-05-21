@@ -12,6 +12,7 @@
 ### Fixed
 
 - **Fixed `shakapacker:check_node` reporting "Node.js not installed" in the published gem**. [PR #1120](https://github.com/shakacode/shakapacker/pull/1120) by [justin808](https://github.com/justin808). The gemspec allowlist introduced in [PR #1110](https://github.com/shakacode/shakapacker/pull/1110) dropped the gem-root `package.json` that `check_node.rake` reads for the `engines.node` range, so `Pathname#realpath` raised `Errno::ENOENT` and the outer rescue printed the misleading "Node.js not installed. Exiting!" — most visibly during `rails assets:precompile` via `shakapacker:clean` → `verify_install` → `check_node`. The gemspec now ships `package.json`, and `check_node.rake` skips the engines-range check gracefully if that file is ever missing rather than blaming Node.
+- **Fixed webpack-dev-server `static` config defaulting to watch `public/` directory unnecessarily**. [PR #1032](https://github.com/shakacode/shakapacker/pull/1032) by [ihabadham](https://github.com/ihabadham). Three bugs fixed: (1) `static` now defaults to `false` instead of a misconfigured object that caused webpack-dev-server to watch the `public/` directory, which is already served by Rails via `ActionDispatch::Static`; (2) setting `static: false` in `shakapacker.yml` is no longer silently ignored; (3) the default template no longer includes `static.watch`, which was a v3→v4 migration artifact. Fixes [#1031](https://github.com/shakacode/shakapacker/issues/1031).
 
 ## [v10.1.0-rc.0] - May 20, 2026
 
