@@ -1,10 +1,14 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
+# Keep in sync with lib/install/bin/shakapacker-config and the template in
+# package/configExporter/cli.ts (createBinStub).
 def shakapacker_app_root
   candidate = File.expand_path("..", __dir__)
   return candidate if File.exist?(File.join(candidate, "Gemfile"))
 
+  warn "[Shakapacker] No Gemfile found at #{candidate.inspect}; " \
+       "falling back to the current directory (#{Dir.pwd.inspect})."
   Dir.pwd
 end
 

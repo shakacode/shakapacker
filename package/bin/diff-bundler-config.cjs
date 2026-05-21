@@ -24,10 +24,14 @@ function exitWithCode(exitCode) {
 let run
 
 try {
+  // Anchor createRequire at __filename: this file lives inside
+  // node_modules/shakapacker/package/bin/, so resolution starts from
+  // Shakapacker's own dependency subtree. That is what strict package
+  // managers (pnpm, Yarn PnP) require to find pack-config-diff as
+  // Shakapacker's transitive dependency. Do not "simplify" this to
+  // createRequire(__dirname) or to a path computed by hand — __filename
+  // is the canonical anchor that keeps virtual-store layouts working.
   const shakapackerRequire = createRequire(__filename)
-
-  // Resolve from Shakapacker's package boundary so strict package managers can
-  // find the transitive pack-config-diff dependency.
   const loadedModule = shakapackerRequire(PACK_CONFIG_DIFF_PACKAGE)
   run = loadedModule.run
 } catch (error) {
