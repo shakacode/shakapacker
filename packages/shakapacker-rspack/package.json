@@ -1,6 +1,6 @@
 {
   "name": "shakapacker-rspack",
-  "version": "10.1.0",
+  "version": "10.1.0-rc.0",
   "description": "Managed rspack build support for Shakapacker",
   "homepage": "https://github.com/shakacode/shakapacker",
   "bugs": {
@@ -26,7 +26,7 @@
     "README.md"
   ],
   "dependencies": {
-    "shakapacker": "~10.1.0",
+    "shakapacker": "~10.1.0-rc.0",
     "@rspack/core": "~2.0.1",
     "@rspack/cli": "~2.0.1",
     "rspack-manifest-plugin": "~5.2.1"
