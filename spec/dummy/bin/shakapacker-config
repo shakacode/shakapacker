@@ -1,11 +1,45 @@
-#!/usr/bin/env node
+#!/usr/bin/env ruby
+# frozen_string_literal: true
 
-// Minimal shim - all logic is in the TypeScript module
-const { run } = require('shakapacker/configExporter')
+# Keep in sync with lib/install/bin/shakapacker-config and the template in
+# package/configExporter/cli.ts (createBinStub).
+def shakapacker_app_root
+  candidate = File.expand_path("..", __dir__)
+  return candidate if File.exist?(File.join(candidate, "Gemfile"))
 
-run(process.argv.slice(2))
-  .then((exitCode) => process.exit(exitCode))
-  .catch((error) => {
-    console.error(error.message)
-    process.exit(1)
-  })
+  warn "[Shakapacker] No Gemfile found at #{candidate.inspect}; " \
+       "falling back to the current directory (#{Dir.pwd.inspect})."
+  Dir.pwd
+end
+
+def shakapacker_node_binary
+  node_bin = "node"
+  return node_bin if system(node_bin, "--version", out: File::NULL, err: File::NULL)
+
+  warn "[Shakapacker] Could not find Node.js executable #{node_bin.inspect}. " \
+       "Install Node.js and try again."
+  exit 1
+end
+
+ENV["RAILS_ENV"] ||= ENV["RACK_ENV"] || "development"
+ENV["NODE_ENV"] ||= "development"
+
+app_root = shakapacker_app_root
+node_bin = shakapacker_node_binary
+script_path = File.join(
+  app_root,
+  "node_modules",
+  "shakapacker",
+  "package",
+  "bin",
+  "shakapacker-config.cjs"
+)
+
+unless File.file?(script_path)
+  warn "[Shakapacker] Could not find #{script_path}. Run your package manager install command and try again."
+  exit 1
+end
+
+Dir.chdir(app_root) do
+  exec node_bin, script_path, *ARGV
+end

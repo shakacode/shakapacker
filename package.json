@@ -27,6 +27,10 @@
     "./package/config": "./package/config.js",
     "./package/*": "./package/*"
   },
+  "bin": {
+    "shakapacker-config": "package/bin/shakapacker-config.cjs",
+    "diff-bundler-config": "package/bin/diff-bundler-config.cjs"
+  },
   "files": [
     "package",
     "lib/install/config/shakapacker.yml"

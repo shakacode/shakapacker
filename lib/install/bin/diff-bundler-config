@@ -1,64 +1,45 @@
-#!/usr/bin/env node
+#!/usr/bin/env ruby
+# frozen_string_literal: true
 
-const { createRequire } = require("module")
+# Keep in sync with lib/install/bin/shakapacker-config and the template in
+# package/configExporter/cli.ts (createBinStub).
+def shakapacker_app_root
+  candidate = File.expand_path("..", __dir__)
+  return candidate if File.exist?(File.join(candidate, "Gemfile"))
 
-const PACK_CONFIG_DIFF_PACKAGE = "pack-config-diff"
+  warn "[Shakapacker] No Gemfile found at #{candidate.inspect}; " \
+       "falling back to the current directory (#{Dir.pwd.inspect})."
+  Dir.pwd
+end
 
-function formatError(error) {
-  return error instanceof Error ? error.message : String(error)
-}
+def shakapacker_node_binary
+  node_bin = "node"
+  return node_bin if system(node_bin, "--version", out: File::NULL, err: File::NULL)
 
-function exitWithCode(exitCode) {
-  if (!Number.isInteger(exitCode)) {
-    console.error(
-      `[Shakapacker] ${PACK_CONFIG_DIFF_PACKAGE} returned a non-integer exit code: ${String(exitCode)}`
-    )
-    process.exit(2)
-  }
+  warn "[Shakapacker] Could not find Node.js executable #{node_bin.inspect}. " \
+       "Install Node.js and try again."
+  exit 1
+end
 
-  // Forward only pack-config-diff's documented exit codes (0 = no diffs, 1 = diffs found).
-  // Any other code is a tool failure — normalize to 2.
-  process.exit(exitCode <= 1 ? exitCode : 2)
-}
+ENV["RAILS_ENV"] ||= ENV["RACK_ENV"] || "development"
+ENV["NODE_ENV"] ||= "development"
 
-let run
+app_root = shakapacker_app_root
+node_bin = shakapacker_node_binary
+script_path = File.join(
+  app_root,
+  "node_modules",
+  "shakapacker",
+  "package",
+  "bin",
+  "diff-bundler-config.cjs"
+)
 
-try {
-  // Resolve pack-config-diff via shakapacker's dependency tree so strict package
-  // managers (pnpm, Yarn PnP) can find the transitive dependency.
-  const shakapackerRequire = createRequire(
-    require.resolve("shakapacker/package.json")
-  )
-  const loadedModule = shakapackerRequire("pack-config-diff")
-  run = loadedModule.run
-} catch (error) {
-  console.error(
-    `[Shakapacker] Failed to load ${PACK_CONFIG_DIFF_PACKAGE}: ${formatError(error)}`
-  )
-  process.exit(2)
-}
+unless File.file?(script_path)
+  warn "[Shakapacker] Could not find #{script_path}. Run your package manager install command and try again."
+  exit 1
+end
 
-if (typeof run !== "function") {
-  console.error(
-    `[Shakapacker] ${PACK_CONFIG_DIFF_PACKAGE} did not export a run() function`
-  )
-  process.exit(2)
-}
-
-try {
-  const runResult = run(process.argv.slice(2))
-
-  if (runResult && typeof runResult.then === "function") {
-    runResult
-      .then((exitCode) => exitWithCode(exitCode))
-      .catch((error) => {
-        console.error(formatError(error))
-        process.exit(2)
-      })
-  } else {
-    exitWithCode(runResult)
-  }
-} catch (error) {
-  console.error(formatError(error))
-  process.exit(2)
-}
+Dir.chdir(app_root) do
+  exec node_bin, script_path, *ARGV
+end

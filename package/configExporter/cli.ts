@@ -512,6 +512,7 @@ function runInitCommand(options: ExportOptions): number {
 
 function createBinStub(binStubPath: string): void {
   const binDir = dirname(binStubPath)
+  const packageScript = `${basename(binStubPath)}.cjs`
   const { mkdirSync, chmodSync } = require("fs")
 
   // Ensure bin directory exists
@@ -522,28 +523,60 @@ function createBinStub(binStubPath: string): void {
   const stubContent = `#!/usr/bin/env ruby
 # frozen_string_literal: true
 
+# Keep in sync with lib/install/bin/shakapacker-config and
+# lib/install/bin/diff-bundler-config; update all three when changing helpers.
+def shakapacker_app_root
+  candidate = File.expand_path("..", __dir__)
+  return candidate if File.exist?(File.join(candidate, "Gemfile"))
+
+  warn "[Shakapacker] No Gemfile found at #{candidate.inspect}; " \\
+       "falling back to the current directory (#{Dir.pwd.inspect})."
+  Dir.pwd
+end
+
+def shakapacker_node_binary
+  node_bin = "node"
+  return node_bin if system(node_bin, "--version", out: File::NULL, err: File::NULL)
+
+  warn "[Shakapacker] Could not find Node.js executable #{node_bin.inspect}. " \\
+       "Install Node.js and try again."
+  exit 1
+end
+
 ENV["RAILS_ENV"] ||= ENV["RACK_ENV"] || "development"
 ENV["NODE_ENV"] ||= "development"
 
-require "pathname"
-ENV["BUNDLE_GEMFILE"] ||= File.expand_path("../../Gemfile",
-  Pathname.new(__FILE__).realpath)
+app_root = shakapacker_app_root
+node_bin = shakapacker_node_binary
+script_path = File.join(
+  app_root,
+  "node_modules",
+  "shakapacker",
+  "package",
+  "bin",
+  "${packageScript}"
+)
 
-require "bundler/setup"
+unless File.file?(script_path)
+  warn "[Shakapacker] Could not find #{script_path}. Run your package manager install command and try again."
+  exit 1
+end
 
-APP_ROOT = File.expand_path("..", __dir__)
-Dir.chdir(APP_ROOT) do
-  exec "node", "./node_modules/.bin/shakapacker-config", *ARGV
+Dir.chdir(app_root) do
+  exec node_bin, script_path, *ARGV
 end
 `
 
   writeFileSync(binStubPath, stubContent, { mode: 0o755 })
 
-  // Make executable
+  // writeFileSync's mode is filtered by the process umask (e.g. umask 077
+  // strips the execute bit). chmodSync ensures the file is actually 0o755
+  // regardless of umask. It can throw on filesystems that don't support
+  // permission bits (Windows/FAT), so the try/catch is intentional.
   try {
     chmodSync(binStubPath, 0o755)
   } catch (_e) {
-    // chmod might fail on some systems, but mode in writeFileSync should handle it
+    // ignore - file was created with executable mode on supporting filesystems
   }
 }
 

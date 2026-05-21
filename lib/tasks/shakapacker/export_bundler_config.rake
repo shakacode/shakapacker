@@ -54,14 +54,14 @@ namespace :shakapacker do
       $stderr.puts ""
 
       Dir.chdir(Rails.root) do
-        exec("node", gem_bin_path, *ARGV[1..])
+        exec(RbConfig.ruby, gem_bin_path, *ARGV[1..])
       end
     else
-      # Pass through command-line arguments after the task name
-      # Use exec to replace the rake process with the export script
-      # This ensures proper exit codes and signal handling
+      # Pass through command-line arguments after the task name.
+      # Invoke with RbConfig.ruby so the binstub runs under the same Ruby as Rake
+      # (avoids version-manager/shebang mismatches and works on Windows).
       Dir.chdir(Rails.root) do
-        exec(bin_path.to_s, *ARGV[1..])
+        exec(RbConfig.ruby, bin_path.to_s, *ARGV[1..])
       end
     end
   end
