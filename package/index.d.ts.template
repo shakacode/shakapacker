@@ -28,7 +28,7 @@ interface ShakapackerExports {
   /**
    * Base webpack/rspack configuration.
    * Exposed via a lazy getter — reassignment via `shakapacker.baseConfig = ...`
-   * throws in strict mode. Use `Object.defineProperty` to override if needed.
+   * always throws a TypeError at runtime. Use `Object.defineProperty` to override if needed.
    */
   readonly baseConfig: Configuration
   /** Environment configuration (railsEnv, nodeEnv, etc.) */
@@ -36,7 +36,7 @@ interface ShakapackerExports {
   /**
    * Array of webpack/rspack loader rules.
    * Exposed via a lazy getter — reassignment via `shakapacker.rules = ...`
-   * throws in strict mode. Use `Object.defineProperty` to override if needed.
+   * always throws a TypeError at runtime. Use `Object.defineProperty` to override if needed.
    */
   readonly rules: RuleSetRule[]
   /** Check if a module exists in node_modules */

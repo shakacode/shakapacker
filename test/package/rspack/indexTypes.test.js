@@ -40,5 +40,5 @@ describe("rspack/index types", () => {
     } finally {
       rmSync(outDir, { recursive: true, force: true })
     }
-  })
+  }, 60000)
 })

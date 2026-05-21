@@ -74,6 +74,25 @@ describe("rspack/index side effects", () => {
     })
   })
 
+  test("defines rules as a configurable lazy export", () => {
+    jest.isolateModules(() => {
+      mockConfigForRspack()
+      mockRequireOrError()
+
+      const rspackIndex = require("../../../package/rspack/index")
+
+      expect(
+        Object.getOwnPropertyDescriptor(rspackIndex, "rules")
+      ).toStrictEqual(
+        expect.objectContaining({
+          configurable: true,
+          enumerable: true,
+          get: expect.any(Function)
+        })
+      )
+    })
+  })
+
   test("assigning to baseConfig throws an informative TypeError", () => {
     jest.isolateModules(() => {
       mockConfigForRspack()
@@ -113,6 +132,19 @@ describe("rspack/index side effects", () => {
 
       const afterAccess = requireOrError.mock.calls.map((call) => call[0])
       expect(afterAccess).toContain("rspack-manifest-plugin")
+    })
+  })
+
+  test("accessing rules does not trigger the rspack-manifest-plugin load", () => {
+    jest.isolateModules(() => {
+      mockConfigForRspack()
+      const requireOrError = mockRequireOrError()
+
+      const rspackIndex = require("../../../package/rspack/index")
+      expect(rspackIndex.rules).toBeDefined()
+
+      const afterAccess = requireOrError.mock.calls.map((call) => call[0])
+      expect(afterAccess).not.toContain("rspack-manifest-plugin")
     })
   })
 })

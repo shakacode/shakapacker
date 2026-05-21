@@ -122,7 +122,7 @@ Object.defineProperty(shakapacker, "rules", {
   get: getRules,
   set() {
     throw new TypeError(
-      "shakapacker.rules is read-only. Use Object.defineProperty(shakapacker, 'rules', { value }) to override it."
+      "shakapacker.rules is read-only. Use Object.defineProperty(shakapacker, 'rules', { value, writable: true, configurable: true }) to override it."
     )
   }
 })
@@ -133,7 +133,7 @@ Object.defineProperty(shakapacker, "baseConfig", {
   get: getBaseConfig,
   set() {
     throw new TypeError(
-      "shakapacker.baseConfig is read-only. Use Object.defineProperty(shakapacker, 'baseConfig', { value }) to override it."
+      "shakapacker.baseConfig is read-only. Use Object.defineProperty(shakapacker, 'baseConfig', { value, writable: true, configurable: true }) to override it."
     )
   }
 })
