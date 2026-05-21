@@ -22,7 +22,7 @@ _Official, actively maintained successor to [rails/webpacker](https://github.com
 [![Rubocop](https://github.com/shakacode/shakapacker/workflows/Rubocop/badge.svg)](https://github.com/shakacode/shakapacker/actions)
 [![JS lint](https://github.com/shakacode/shakapacker/workflows/JS%20lint/badge.svg)](https://github.com/shakacode/shakapacker/actions)
 
-[![node.js](https://img.shields.io/badge/node-%3E%3D%2020-brightgreen.svg)](https://www.npmjs.com/package/shakapacker)
+[![node.js](https://img.shields.io/badge/node-%5E20.19.0%20%7C%7C%20%3E%3D22.12.0-brightgreen.svg)](https://www.npmjs.com/package/shakapacker)
 [![Gem](https://img.shields.io/gem/v/shakapacker.svg)](https://rubygems.org/gems/shakapacker)
 [![npm version](https://badge.fury.io/js/shakapacker.svg)](https://badge.fury.io/js/shakapacker)
 
@@ -134,7 +134,7 @@ Here's a testimonial from Jon Rajavuori of [Academia.edu](https://www.academia.e
 
 - Ruby 2.7+
 - Rails 5.2+
-- Node.js 20+
+- Node.js `^20.19.0` or `>=22.12.0`
 
 ## Features
 
@@ -159,6 +159,8 @@ _Requires extra packages to be installed._
 - CoffeeScript
 
 ## Installation
+
+See the [Installation guide](./docs/installation.md) for a step-by-step walkthrough.
 
 ### Rails v6+
 
