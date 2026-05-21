@@ -2,7 +2,7 @@
 
 ---
 
-_🚀 Shakapacker 10 supports [Rspack](https://rspack.rs/)! 10x faster than webpack!_
+_🚀 Shakapacker 10 supports [Rspack](https://rspack.rs/) — up to 17x faster than webpack per [upstream benchmarks](./docs/transpiler-performance.md#published-benchmarks)!_
 
 _📖 **Full documentation at [shakapacker.com](https://shakapacker.com)**_
 
@@ -277,7 +277,7 @@ Depending on your setup, you'll need different subsets of the optional peer depe
 }
 ```
 
-**For Rspack + SWC (10x faster bundling):**
+**For Rspack + SWC (largest end-to-end speedup — see [transpiler-performance guide](./docs/transpiler-performance.md#published-benchmarks)):**
 
 ```json
 {
@@ -926,7 +926,7 @@ You can also change your Babel configuration by removing these lines in your `pa
 
 ### SWC configuration
 
-SWC is the recommended JavaScript transpiler in Shakapacker v10 (this default was introduced in v9; 20x faster than Babel). New installations use SWC by default via the installation template. You can read more at [SWC usage docs](./docs/using_swc_loader.md).
+SWC is the recommended JavaScript transpiler in Shakapacker v10 (this default was introduced in v9). SWC's own benchmark reports being [20x faster than Babel on a single thread and 70x faster on four cores](https://swc.rs/); end-to-end Shakapacker speedups are typically smaller but still substantial. New installations use SWC by default via the installation template. You can read more at [SWC usage docs](./docs/using_swc_loader.md).
 
 **Note on defaults**: The installation template explicitly sets `javascript_transpiler: "swc"` for new projects. However, for backward compatibility, webpack's runtime default (when no explicit config exists) remains `"babel"`. Rspack always defaults to `"swc"`.
 
@@ -1286,8 +1286,8 @@ for a `.github/dependabot.yml` example that updates both in a single PR.
 For step-by-step guides on common migrations, see the [Common Upgrades Guide](./docs/common-upgrades.md):
 
 - [Migrating Package Managers](./docs/common-upgrades.md#migrating-package-managers) (Yarn ↔ npm, pnpm)
-- [Migrating from Babel to SWC](./docs/common-upgrades.md#migrating-from-babel-to-swc) (20-70x faster builds)
-- [Migrating from Webpack to Rspack](./docs/common-upgrades.md#migrating-from-webpack-to-rspack) (5-10x faster builds)
+- [Migrating from Babel to SWC](./docs/common-upgrades.md#migrating-from-babel-to-swc) (upstream: ~20x faster transpilation)
+- [Migrating from Webpack to Rspack](./docs/common-upgrades.md#migrating-from-webpack-to-rspack) (upstream: ~8–17x faster bundler)
 
 ### Paths
 
