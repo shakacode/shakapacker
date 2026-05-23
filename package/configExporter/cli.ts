@@ -523,8 +523,13 @@ function createBinStub(binStubPath: string): void {
   const stubContent = `#!/usr/bin/env ruby
 # frozen_string_literal: true
 
-# Keep in sync with lib/install/bin/shakapacker-config and
-# lib/install/bin/diff-bundler-config; update all three when changing helpers.
+require "rbconfig"
+
+# Keep helper logic in sync across:
+# - lib/install/bin/shakapacker-config
+# - lib/install/bin/diff-bundler-config
+# - spec/dummy/bin/shakapacker-config
+# - package/configExporter/cli.ts (createBinStub).
 def shakapacker_app_root
   candidate = File.expand_path("..", __dir__)
   return candidate if File.exist?(File.join(candidate, "Gemfile"))
@@ -534,17 +539,42 @@ def shakapacker_app_root
   Dir.pwd
 end
 
-def shakapacker_node_binary
-  node_bin = "node"
-  return node_bin if system(node_bin, "--version", out: File::NULL, err: File::NULL)
+def shakapacker_executable_candidates(executable)
+  extensions = [
+    RbConfig::CONFIG["EXEEXT"],
+    *ENV.fetch("PATHEXT", "").split(File::PATH_SEPARATOR)
+  ].compact.reject(&:empty?)
+  return [executable] if extensions.empty? || File.extname(executable) != ""
 
-  warn "[Shakapacker] Could not find Node.js executable #{node_bin.inspect}. " \\
+  ([executable] + extensions.map { |extension| "#{executable}#{extension}" }).uniq
+end
+
+def shakapacker_find_executable(executable)
+  ENV.fetch("PATH", "").split(File::PATH_SEPARATOR).each do |path|
+    shakapacker_executable_candidates(executable).each do |candidate|
+      executable_path = File.join(path, candidate)
+      return executable_path if File.file?(executable_path) && File.executable?(executable_path)
+    end
+  end
+
+  nil
+end
+
+def shakapacker_node_binary
+  node_bin = shakapacker_find_executable("node")
+  return node_bin if node_bin
+
+  warn '[Shakapacker] Could not find Node.js executable "node". ' \\
        "Install Node.js and try again."
   exit 1
 end
 
+def shakapacker_node_env
+  %w[development test].include?(ENV["RAILS_ENV"]) ? "development" : "production"
+end
+
 ENV["RAILS_ENV"] ||= ENV["RACK_ENV"] || "development"
-ENV["NODE_ENV"] ||= "development"
+ENV["NODE_ENV"] ||= shakapacker_node_env
 
 app_root = shakapacker_app_root
 node_bin = shakapacker_node_binary

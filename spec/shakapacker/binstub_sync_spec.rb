@@ -37,7 +37,7 @@ describe "binstub synchronization" do
     end
   end
 
-  it "documents every divergent binstub and only divergent binstubs" do
+  it "all documented divergent binstubs still exist in both directories" do
     install_basenames = Dir.glob(File.join(gem_root, "lib/install/bin/*")).map { |p| File.basename(p) }
     bin_basenames = Dir.glob(File.join(gem_root, "bin/*")).map { |p| File.basename(p) }
     actually_shared = install_basenames & bin_basenames
@@ -47,5 +47,28 @@ describe "binstub synchronization" do
       "INTENTIONALLY_DIVERGENT_BINSTUBS lists #{documented_but_missing.inspect} " \
       "but those files are no longer present in both bin/ and lib/install/bin/. " \
       "Remove them from the list."
+  end
+
+  it "spec/dummy/bin/shakapacker-config matches lib/install/bin/shakapacker-config" do
+    install_content = File.read(File.join(gem_root, "lib", "install", "bin", "shakapacker-config"))
+    dummy_content = File.read(File.join(gem_root, "spec", "dummy", "bin", "shakapacker-config"))
+
+    expect(dummy_content).to eq(install_content),
+      "spec/dummy/bin/shakapacker-config and lib/install/bin/shakapacker-config have diverged. " \
+      "Update both files to keep them in sync."
+  end
+
+  # lib/install/bin/diff-bundler-config and lib/install/bin/shakapacker-config share
+  # the same helper functions and only legitimately diverge on the .cjs script name
+  # they dispatch to. Normalizing that one line catches any other drift between them.
+  it "lib/install/bin/diff-bundler-config stays in sync with lib/install/bin/shakapacker-config" do
+    shakapacker_config = File.read(File.join(gem_root, "lib", "install", "bin", "shakapacker-config"))
+    diff_bundler_config = File.read(File.join(gem_root, "lib", "install", "bin", "diff-bundler-config"))
+
+    normalized = diff_bundler_config.sub('"diff-bundler-config.cjs"', '"shakapacker-config.cjs"')
+
+    expect(normalized).to eq(shakapacker_config),
+      "lib/install/bin/diff-bundler-config and lib/install/bin/shakapacker-config have diverged " \
+      "beyond the intentional .cjs script name difference. Update both files to keep them in sync."
   end
 end
