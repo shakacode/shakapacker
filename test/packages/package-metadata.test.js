@@ -15,12 +15,17 @@ const readManifest = (path) => JSON.parse(readFileSync(path, "utf8"))
 
 // Pulled out of test bodies to keep jest/no-conditional-in-test happy.
 // Returns labeled offenders so assertion failures point at the culprit.
+// `hasTilde` walks the OR-separated operands so a compound range like
+// `"^1.0.0 || ~2.0.0"` is still caught.
+const hasTilde = (range) =>
+  range.split(/\s*\|\|\s*/).some((operand) => operand.startsWith("~"))
+
 const collectTildeOffenders = (deps, peers) => {
   const peerOffenders = Object.entries(peers)
-    .filter(([, range]) => range.startsWith("~"))
+    .filter(([, range]) => hasTilde(range))
     .map(([name, range]) => `peer ${name}: ${range}`)
   const depOffenders = Object.entries(deps)
-    .filter(([name, range]) => name !== "shakapacker" && range.startsWith("~"))
+    .filter(([name, range]) => name !== "shakapacker" && hasTilde(range))
     .map(([name, range]) => `dep ${name}: ${range}`)
   return [...peerOffenders, ...depOffenders]
 }
@@ -111,10 +116,11 @@ describe("supplemental peer ranges align with main shakapacker", () => {
         ([name, supplementalRange]) =>
           mainPeers[name] && mainPeers[name] !== supplementalRange
       )
-      .map(
-        ([name, supplementalRange]) =>
-          `${name}: supplemental="${supplementalRange}" main="${mainPeers[name]}"`
-      )
+      .map(([name, supplementalRange]) => ({
+        name,
+        supplementalRange,
+        mainRange: mainPeers[name]
+      }))
   }
 
   test("webpack supplemental peers match main peer ranges where both exist", () => {
@@ -127,7 +133,21 @@ describe("supplemental peer ranges align with main shakapacker", () => {
       "webpack-assets-manifest" // supplemental requires v6 (v5 has ENOENT bug)
     ])
     const unintended = collectMismatches(webpackManifestPath).filter(
-      (m) => !knownIntentionalNarrowings.has(m.split(":")[0])
+      (m) => !knownIntentionalNarrowings.has(m.name)
+    )
+    expect(unintended).toStrictEqual([])
+  })
+
+  test("rspack supplemental peers match main peer ranges where both exist", () => {
+    // Mirrors the webpack alignment check. @rspack/core and @rspack/cli
+    // are intentionally narrower (supplemental targets v2+; main still
+    // accepts v1 for back-compat).
+    const knownIntentionalNarrowings = new Set([
+      "@rspack/core", // supplemental curates to v2+ (rspack 1.x unsupported)
+      "@rspack/cli" // same rationale as @rspack/core
+    ])
+    const unintended = collectMismatches(rspackManifestPath).filter(
+      (m) => !knownIntentionalNarrowings.has(m.name)
     )
     expect(unintended).toStrictEqual([])
   })
