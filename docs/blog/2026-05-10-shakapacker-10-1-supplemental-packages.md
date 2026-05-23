@@ -7,24 +7,24 @@ Shakapacker 10.1 ships two new optional npm packages — `shakapacker-rspack` an
 
 ## The 30-second pitch
 
-If you're starting a new app today:
+If you're starting a new app today on npm 7+, pnpm, or yarn 2+:
 
 ```sh
-yarn add --dev shakapacker-rspack
+npm install --save-dev shakapacker-rspack
 ```
 
-That's it. You get `shakapacker`, `@rspack/core`, `@rspack/cli`, and `rspack-manifest-plugin` together, all pinned to the exact versions Shakapacker is tested against. Webpack users get the same shape with `shakapacker-webpack`.
+That's it. The required peers (`@rspack/core`, `@rspack/cli`, `rspack-manifest-plugin`) auto-install with the supplemental, and `shakapacker` comes along as a direct dependency. Webpack users get the same shape with `shakapacker-webpack`. (Yarn classic 1.x users need to list the required peers explicitly; the Rails installer handles this for you.)
 
-If you're already on Shakapacker 10.0, you can drop the now-bundled deps from your `devDependencies` and rely on the supplemental package to bring them along. Nothing breaks if you don't.
+If you're already on Shakapacker 10.0, you can collapse the now-managed deps in your `devDependencies` into the supplemental package. Nothing breaks if you don't.
 
 ## What changed
 
 Until now, a typical Shakapacker install meant listing the gem, the npm package, the bundler, the bundler's CLI, the manifest plugin, and your transpiler — all as direct dependencies. That worked, but it pushed the version-matching problem onto every user. Were you on a tested combination? You had to read the changelog to find out.
 
-10.1 shifts that responsibility to the supplemental packages. Each one declares the bundler stack as direct `dependencies` with patch-tolerant `~X.Y.Z` ranges:
+10.1 shifts that responsibility to the supplemental packages. Each one declares the singleton bundler stack as **required peer dependencies** so modern package managers auto-install them while still surfacing version conflicts as warnings rather than silently installing duplicate copies of webpack:
 
-- `shakapacker-rspack` bundles `shakapacker`, `@rspack/core`, `@rspack/cli`, `rspack-manifest-plugin`.
-- `shakapacker-webpack` bundles `shakapacker`, `webpack`, `webpack-cli`, `webpack-assets-manifest`.
+- `shakapacker-rspack` requires `@rspack/core`, `@rspack/cli`, `rspack-manifest-plugin` as peers; `shakapacker` rides along as a direct dependency.
+- `shakapacker-webpack` requires `webpack`, `webpack-cli`, `webpack-assets-manifest` as peers; `shakapacker` and `terser-webpack-plugin` ride along as direct dependencies.
 
 Optional features — transpilers (swc / babel / esbuild for webpack), CSS preprocessors, dev-server, react-refresh — stay as opt-in `peerDependencies` so you only download what you actually use. (Bundling sass into every install would force a 10MB native-binding download on apps that don't even import a `.scss` file. We're not doing that.)
 
