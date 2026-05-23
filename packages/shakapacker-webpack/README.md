@@ -15,11 +15,13 @@ pnpm and Yarn PnP keep dependency boundaries strict: packages imported by your a
 
 ```sh
 # pnpm
-pnpm add --save-dev shakapacker-webpack shakapacker webpack webpack-cli webpack-assets-manifest
+pnpm add --save-dev shakapacker-webpack shakapacker webpack webpack-cli webpack-assets-manifest terser-webpack-plugin
 
 # yarn
-yarn add --dev shakapacker-webpack shakapacker webpack webpack-cli webpack-assets-manifest
+yarn add --dev shakapacker-webpack shakapacker webpack webpack-cli webpack-assets-manifest terser-webpack-plugin
 ```
+
+`terser-webpack-plugin` is in the list because core `shakapacker`'s default minimizer calls `require("terser-webpack-plugin")` from inside the core package. Under pnpm and Yarn PnP, that require only resolves if the host app declares it directly — `shakapacker-webpack`'s direct dependency on it doesn't reach across the strict package boundary. npm 7+'s flat `node_modules` hoists it automatically, so npm users don't need to list it.
 
 (The Rails `shakapacker:install` task writes all required deps into your `package.json` regardless of package manager.)
 
@@ -52,7 +54,7 @@ If your app already runs Shakapacker on webpack, you can drop the managed-build 
 }
 ```
 
-Optional peers (transpilers, `webpack-dev-server`, `mini-css-extract-plugin`, CSS preprocessors, etc.) stay only if your app uses those features. Run `yarn install` (or the npm/pnpm equivalent) and the lockfile collapses to the managed stack. npm 7+ can auto-install the required peers; pnpm and Yarn users should keep `shakapacker`, `webpack`, `webpack-cli`, and `webpack-assets-manifest` as explicit `devDependencies` unless their config imports the wrapper package directly.
+Optional peers (transpilers, `webpack-dev-server`, `mini-css-extract-plugin`, CSS preprocessors, etc.) stay only if your app uses those features. Run `yarn install` (or the npm/pnpm equivalent) and the lockfile collapses to the managed stack. npm 7+ can auto-install the required peers; pnpm and Yarn users should keep `shakapacker`, `webpack`, `webpack-cli`, `webpack-assets-manifest`, and `terser-webpack-plugin` as explicit `devDependencies` unless their config imports the wrapper package directly.
 
 ### Migrating from core's webpack peer set
 

@@ -11,7 +11,7 @@ const rspackManifestPath = join(
   "packages/shakapacker-rspack/package.json"
 )
 
-const readManifest = (path) => JSON.parse(readFileSync(path, "utf8"))
+const readManifest = (filePath) => JSON.parse(readFileSync(filePath, "utf8"))
 
 // Pulled out of test bodies to keep jest/no-conditional-in-test happy.
 // Returns labeled offenders so assertion failures point at the culprit.

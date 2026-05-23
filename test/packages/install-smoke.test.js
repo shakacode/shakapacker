@@ -14,7 +14,10 @@
 // npm registry for bundler peers, and takes 60–120s end-to-end. Enable
 // with RUN_INSTALL_SMOKE=1 (and a dedicated CI job). Auto-skips if the
 // core TypeScript hasn't been built, or if the required PMs aren't on
-// PATH.
+// PATH. The npm case also auto-skips on npm < 8.3 because the
+// wrapperOnlyManifest uses the `overrides` field (npm 8.3+ feature) to
+// point shakapacker at the local tarball; older npm silently ignores it
+// and tries to resolve `shakapacker: ~10.1.0-rc.1` from the registry.
 //
 // Failure here ≠ a bug in your edit; usually it means the documented
 // migration matrix changed. Update the docs and these assertions together.
@@ -37,17 +40,29 @@ const coreIsBuilt = fs.existsSync(path.join(repoRoot, "package/index.js"))
 // project-spec interception doesn't false-negative pnpm in repos that
 // pin a different packageManager. The smoke test always runs commands
 // from a fresh temp dir anyway.
-const hasTool = (cmd) => {
+const toolVersion = (cmd) => {
   const r = spawnSync(cmd, ["--version"], {
     encoding: "utf8",
     cwd: os.tmpdir()
   })
-  return r.status === 0
+  return r.status === 0 ? r.stdout.trim() : null
 }
 
-const hasNpm = hasTool("npm")
-const hasPnpm = hasTool("pnpm")
-const shouldRun = optedIn && coreIsBuilt && (hasNpm || hasPnpm)
+const npmVersion = toolVersion("npm")
+const pnpmVersion = toolVersion("pnpm")
+const hasNpm = npmVersion !== null
+const hasPnpm = pnpmVersion !== null
+
+// The `overrides` manifest field is npm 8.3+. Older npm silently ignores
+// it, which would cause wrapperOnlyManifest to resolve shakapacker from
+// the registry instead of the local tarball.
+const npmSupportsOverrides = (() => {
+  if (!npmVersion) return false
+  const [major, minor] = npmVersion.split(".").map(Number)
+  return major > 8 || (major === 8 && minor >= 3)
+})()
+const npmUsable = hasNpm && npmSupportsOverrides
+const shouldRun = optedIn && coreIsBuilt && (npmUsable || hasPnpm)
 
 const packTarball = (cwd) => {
   const r = spawnSync("npm", ["pack", "--json"], { cwd, encoding: "utf8" })
@@ -140,7 +155,13 @@ const makeApp = (subdir, manifest) => {
 const computeSkipReason = () => {
   if (!optedIn) return "RUN_INSTALL_SMOKE=1 not set"
   if (!coreIsBuilt) return "shakapacker not built (run `yarn build`)"
-  return "npm and pnpm both unavailable on PATH"
+  if (!npmUsable && !hasPnpm) {
+    if (hasNpm && !npmSupportsOverrides) {
+      return `npm ${npmVersion} lacks overrides support (need 8.3+), and pnpm unavailable`
+    }
+    return "npm and pnpm both unavailable on PATH"
+  }
+  return "unknown skip reason"
 }
 
 describe("shakapacker-webpack install smoke (issue #1131)", () => {
@@ -184,6 +205,12 @@ describe("shakapacker-webpack install smoke (issue #1131)", () => {
   describe("npm", () => {
     if (!hasNpm) {
       test.todo("npm not on PATH")
+      return
+    }
+    if (!npmSupportsOverrides) {
+      test.todo(
+        `npm ${npmVersion} lacks overrides support (wrapperOnlyManifest needs npm 8.3+)`
+      )
       return
     }
     test("npm wrapper-only: shakapacker resolves from app root (npm hoisting)", () => {
