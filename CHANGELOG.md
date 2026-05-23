@@ -34,7 +34,7 @@
 ### Changed
 
 - **Changed `shakapacker:install` to default fresh Rspack installs to v2 (`^2.0.0-0`)**. [PR #1091](https://github.com/shakacode/shakapacker/pull/1091) by [ihabadham](https://github.com/ihabadham). `lib/install/package.json` now declares `@rspack/core` and `@rspack/cli` as `^1.0.0 || ^2.0.0-0`; fresh installs pick the v2 range. Existing apps are unaffected. Note: Rspack v2 requires Node.js 20.19.0+.
-- **Slimmed the published gem from ~486K (294 files) to ~121K (75 files)**. [PR #1110](https://github.com/shakacode/shakapacker/pull/1110) by [justin808](https://github.com/justin808). Replaced the broad `git ls-files` gem manifest with an explicit runtime/install allowlist (`CHANGELOG.md`, `MIT-LICENSE`, `README.md`, gemspec, `lib`, `sig`), excluding repo-only docs, tests, JavaScript package source, CI/tooling files, and `test_files` metadata from the published gem. Fixes [#987](https://github.com/shakacode/shakapacker/issues/987).
+- **Slimmed the published gem from ~486K (294 files) to ~121K (75 files)**. [PR #1110](https://github.com/shakacode/shakapacker/pull/1110), [PR #1120](https://github.com/shakacode/shakapacker/pull/1120) by [justin808](https://github.com/justin808). Replaced the broad `git ls-files` gem manifest with an explicit runtime/install allowlist (`CHANGELOG.md`, `MIT-LICENSE`, `README.md`, gemspec, `lib`, `sig`, `package.json`), excluding repo-only docs, tests, JavaScript package source, CI/tooling files, and `test_files` metadata from the published gem. Fixes [#987](https://github.com/shakacode/shakapacker/issues/987).
 
 ### Fixed
 
