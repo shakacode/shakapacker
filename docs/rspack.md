@@ -30,16 +30,34 @@ See the [Rspack v2 breaking changes discussion](https://github.com/web-infra-dev
 
 ## Installation
 
-Install the required Rspack dependencies:
+### Recommended (Shakapacker 10.1+): `shakapacker-rspack`
+
+`shakapacker-rspack` bundles `shakapacker`, `@rspack/core`, `@rspack/cli`, and `rspack-manifest-plugin` as direct dependencies, so a single install pulls in the full managed Rspack stack:
 
 ```bash
-npm install @rspack/core @rspack/cli -D
+npm install shakapacker-rspack -D
 # or
-yarn add @rspack/core @rspack/cli -D
+yarn add shakapacker-rspack -D
 # or
-pnpm add @rspack/core @rspack/cli -D
+pnpm add shakapacker-rspack -D
 # or
-bun add @rspack/core @rspack/cli -D
+bun add shakapacker-rspack -D
+```
+
+See [`packages/shakapacker-rspack/README.md`](../packages/shakapacker-rspack/README.md) for the full install reference and the [v10.1 supplemental packages migration guide](./migration/v10.1-supplemental-packages.md) for swapping an existing rspack install over to the supplemental package.
+
+### Manual install (Shakapacker 10.0 and earlier, or self-managed versions)
+
+If you're on Shakapacker 10.0 or prefer to manage `@rspack/core`, `@rspack/cli`, and `rspack-manifest-plugin` versions yourself, install them directly:
+
+```bash
+npm install @rspack/core @rspack/cli rspack-manifest-plugin -D
+# or
+yarn add @rspack/core @rspack/cli rspack-manifest-plugin -D
+# or
+pnpm add @rspack/core @rspack/cli rspack-manifest-plugin -D
+# or
+bun add @rspack/core @rspack/cli rspack-manifest-plugin -D
 ```
 
 Note: These packages are already listed as optional peer dependencies in Shakapacker, so you may see warnings if they're not installed.

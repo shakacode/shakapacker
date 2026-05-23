@@ -11,6 +11,7 @@ _📖 **Full documentation at [shakapacker.com](https://shakapacker.com)**_
 _Official, actively maintained successor to [rails/webpacker](https://github.com/rails/webpacker). ShakaCode stands behind the long-term maintenance and development of this project for the Rails community._
 
 - ⚠️ See the [6-stable](https://github.com/shakacode/shakapacker/tree/6-stable) branch for Shakapacker v6.x code and documentation. :warning:
+- **New in 10.1: optional `shakapacker-webpack` and `shakapacker-rspack` packages let you replace four `devDependencies` with one. See the [v10.1 supplemental packages migration guide](./docs/migration/v10.1-supplemental-packages.md).**
 - **See the [v10.0.0 release notes](https://github.com/shakacode/shakapacker/releases/tag/v10.0.0) for upgrading from v9 to v10.**
 - **See [V9 Upgrade](./docs/v9_upgrade.md) for upgrading from v8 to v9.**
 - See [V8 Upgrade](./docs/v8_upgrade.md) for upgrading from the v7 release.

@@ -62,6 +62,20 @@ SKIP=true bundle exec rake shakapacker:install
 Accepted truthy values for `FORCE` and `SKIP` are `true`, `1`, and `yes`
 case-insensitively. If both are set, `FORCE` wins.
 
+### Optional: Consolidate dev dependencies with a supplemental package (10.1+)
+
+The installer adds the managed-build stack to `package.json` as individual
+entries (`shakapacker`, `webpack`, `webpack-cli`, `webpack-assets-manifest` for
+webpack apps; `shakapacker`, `@rspack/core`, `@rspack/cli`,
+`rspack-manifest-plugin` for rspack apps). On Shakapacker 10.1+ you can
+optionally replace those four entries with a single
+[`shakapacker-webpack`](../packages/shakapacker-webpack/README.md) or
+[`shakapacker-rspack`](../packages/shakapacker-rspack/README.md) dependency.
+The supplemental package pulls in the same managed stack at the exact tested
+versions and has no runtime impact — adoption is opt-in. See the
+[v10.1 supplemental packages migration guide](./migration/v10.1-supplemental-packages.md)
+for the before/after.
+
 ## Package Manager Selection
 
 Shakapacker uses the

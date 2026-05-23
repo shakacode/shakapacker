@@ -7,6 +7,7 @@ This document provides step-by-step instructions for the most common upgrade sce
 ## Table of Contents
 
 - [Upgrading Shakapacker](#upgrading-shakapacker)
+- [Adopting Supplemental Packages (10.1+)](#adopting-supplemental-packages-101)
 - [Automating Updates with Dependabot](#automating-updates-with-dependabot)
 - [Migrating Package Managers](#migrating-package-managers)
   - [Yarn to npm](#yarn-to-npm)
@@ -94,6 +95,22 @@ For major version upgrades, always consult the version-specific upgrade guides f
 - [V6 Upgrade Guide](./v6_upgrade.md) - Upgrading from v5 to v6
 
 > **💡 Note:** Major version upgrades may include breaking changes. The steps above cover the basic gem/package updates that apply to all versions, but you should always review the version-specific guide for additional migration steps.
+
+---
+
+## Adopting Supplemental Packages (10.1+)
+
+Shakapacker 10.1 introduces two optional npm packages — `shakapacker-webpack` and `shakapacker-rspack` — that bundle the managed-build stack as direct dependencies. Adopting one of them lets you replace four explicit `devDependencies` (`shakapacker` + bundler + CLI + manifest plugin) with a single package that lockstep-pins to the exact versions Shakapacker is tested against.
+
+**This is opt-in.** Apps that don't change anything keep working on 10.1 exactly as they did on 10.0.
+
+**Rspack apps** can replace `shakapacker` + `@rspack/core` + `@rspack/cli` + `rspack-manifest-plugin` with a single `shakapacker-rspack` dev dependency.
+
+**Webpack apps** can replace `shakapacker` + `webpack` + `webpack-cli` + `webpack-assets-manifest` with a single `shakapacker-webpack` dev dependency. One caveat: `shakapacker-webpack` pins `webpack-assets-manifest` to `~6.5.1`, so apps still on `webpack-assets-manifest@5.x` need to upgrade to v6 when adopting it.
+
+**Custom-build apps** (apps that ship their own webpack/rspack/Vite setup and only use Shakapacker to read `manifest.json`) should **not** install a supplemental package — continue using bare `shakapacker`.
+
+See the [v10.1 supplemental packages migration guide](./migration/v10.1-supplemental-packages.md) for before/after `package.json` snippets, the `webpack-assets-manifest` v5→v6 upgrade notes, and the v11 roadmap context. The per-package install references live at [`packages/shakapacker-webpack/README.md`](../packages/shakapacker-webpack/README.md) and [`packages/shakapacker-rspack/README.md`](../packages/shakapacker-rspack/README.md).
 
 ---
 
