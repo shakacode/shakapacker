@@ -1,6 +1,7 @@
 namespace :shakapacker do
   def shakapacker_config_binstub_command(bin_path)
-    shebang = File.open(bin_path, &:gets).to_s
+    # Read in binary mode so Windows CRLF line endings do not leak \r into the shebang.
+    shebang = File.open(bin_path, "rb", &:gets).to_s
     command = shebang.delete_prefix("#!").strip.split(/\s+/)
     executable = File.basename(command.first.to_s)
 
@@ -70,14 +71,14 @@ namespace :shakapacker do
       $stderr.puts ""
 
       Dir.chdir(Rails.root) do
-        exec(RbConfig.ruby, gem_bin_path, *ARGV[1..])
+        Kernel.exec(RbConfig.ruby, gem_bin_path, *ARGV[1..])
       end
     else
       # Pass through command-line arguments after the task name.
       # Ruby binstubs run under the same Ruby as Rake; legacy JavaScript
       # binstubs from upgraded apps still need Node until users refresh them.
       Dir.chdir(Rails.root) do
-        exec(*shakapacker_config_binstub_command(bin_path), *ARGV[1..])
+        Kernel.exec(*shakapacker_config_binstub_command(bin_path), *ARGV[1..])
       end
     end
   end

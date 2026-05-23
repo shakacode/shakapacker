@@ -164,6 +164,8 @@ RSpec.describe "helper binstubs" do
           File.file?(path) && File.executable?(path)
         end
 
+        skip "node not found in PATH" unless real_node_path
+
         fake_bin_path = File.join(app_path, "fake-bin")
         FileUtils.mkdir_p(fake_bin_path)
         probe_output_path = File.join(app_path, "node-probe-output.txt")

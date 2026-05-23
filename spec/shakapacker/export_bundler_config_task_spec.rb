@@ -32,7 +32,7 @@ RSpec.describe "shakapacker:export_bundler_config" do
   def invoke_task(app_path, *args)
     captured_exec = nil
     stub_const("Rails", double(root: Pathname.new(app_path)))
-    allow_any_instance_of(Object).to receive(:exec) do |_receiver, *exec_args|
+    allow(Kernel).to receive(:exec) do |*exec_args|
       captured_exec = exec_args
     end
 
