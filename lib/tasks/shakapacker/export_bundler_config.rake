@@ -1,4 +1,16 @@
 namespace :shakapacker do
+  def shakapacker_config_binstub_command(bin_path)
+    shebang = File.open(bin_path, &:gets).to_s
+    command = shebang.delete_prefix("#!").strip.split(/\s+/)
+    executable = File.basename(command.first.to_s)
+
+    if executable == "env"
+      executable = File.basename(command.drop(1).find { |part| !part.start_with?("-") }.to_s)
+    end
+
+    executable == "node" ? ["node", bin_path.to_s] : [RbConfig.ruby, bin_path.to_s]
+  end
+
   desc <<~DESC
     Export webpack or rspack configuration for debugging and analysis
 
@@ -58,10 +70,10 @@ namespace :shakapacker do
       end
     else
       # Pass through command-line arguments after the task name.
-      # Invoke with RbConfig.ruby so the binstub runs under the same Ruby as Rake
-      # (avoids version-manager/shebang mismatches and works on Windows).
+      # Ruby binstubs run under the same Ruby as Rake; legacy JavaScript
+      # binstubs from upgraded apps still need Node until users refresh them.
       Dir.chdir(Rails.root) do
-        exec(RbConfig.ruby, bin_path.to_s, *ARGV[1..])
+        exec(*shakapacker_config_binstub_command(bin_path), *ARGV[1..])
       end
     end
   end

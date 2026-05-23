@@ -37,7 +37,7 @@ describe "binstub synchronization" do
     end
   end
 
-  it "documents every divergent binstub and only divergent binstubs" do
+  it "all documented divergent binstubs still exist in both directories" do
     install_basenames = Dir.glob(File.join(gem_root, "lib/install/bin/*")).map { |p| File.basename(p) }
     bin_basenames = Dir.glob(File.join(gem_root, "bin/*")).map { |p| File.basename(p) }
     actually_shared = install_basenames & bin_basenames
@@ -47,5 +47,14 @@ describe "binstub synchronization" do
       "INTENTIONALLY_DIVERGENT_BINSTUBS lists #{documented_but_missing.inspect} " \
       "but those files are no longer present in both bin/ and lib/install/bin/. " \
       "Remove them from the list."
+  end
+
+  it "spec/dummy/bin/shakapacker-config matches lib/install/bin/shakapacker-config" do
+    install_content = File.read(File.join(gem_root, "lib", "install", "bin", "shakapacker-config"))
+    dummy_content = File.read(File.join(gem_root, "spec", "dummy", "bin", "shakapacker-config"))
+
+    expect(dummy_content).to eq(install_content),
+      "spec/dummy/bin/shakapacker-config and lib/install/bin/shakapacker-config have diverged. " \
+      "Update both files to keep them in sync."
   end
 end
