@@ -11,10 +11,10 @@
 Shakapacker is split into **three npm packages** to cleanly separate concerns:
 
 1. **`shakapacker`** — core package (config loading, manifest reading, dev server proxy, CLI). Zero bundler-specific peer deps.
-2. **`shakapacker-webpack`** — managed webpack build. **Declares `webpack`, `webpack-cli`, `webpack-assets-manifest` as required peer dependencies** so modern package managers (npm 7+, pnpm, yarn 2+) install them automatically without any duplicate-webpack risk. `terser-webpack-plugin` (imported directly by core's default minimizer) ships as a direct `dependency`.
-3. **`shakapacker-rspack`** — managed rspack build. **Declares `@rspack/core`, `@rspack/cli`, `rspack-manifest-plugin` as required peer dependencies** — same auto-install behavior, same singleton guarantee.
+2. **`shakapacker-webpack`** — managed webpack build. **Declares `webpack`, `webpack-cli`, `webpack-assets-manifest` as required peer dependencies** so the host app owns the singleton bundler stack. npm 7+ can auto-install them; pnpm and Yarn PnP users should list packages imported by app config files directly. `terser-webpack-plugin` (imported directly by core's default minimizer) ships as a direct `dependency`.
+3. **`shakapacker-rspack`** — managed rspack build. **Declares `@rspack/core`, `@rspack/cli`, `rspack-manifest-plugin` as required peer dependencies** — same singleton guarantee.
 
-> **Why peer deps instead of direct dependencies?** Bundler packages (`webpack`, `@rspack/core`) are singletons — plugin and loader code checks `compiler instanceof webpack.Compiler` and shares types like `webpack.Compilation`. Two copies in the tree silently break those checks. Required peer dependencies let modern package managers install + dedupe in one step while still surfacing version conflicts as warnings rather than hiding them as silent duplicate installs. See [issue #1131](https://github.com/shakacode/shakapacker/issues/1131) for the discussion that led to this shape. Yarn classic 1.x does not auto-install peer deps; yarn-1 users see a peer warning listing the required packages and need to add them explicitly (the Rails installer handles this automatically).
+> **Why peer deps instead of direct dependencies?** Bundler packages (`webpack`, `@rspack/core`) are singletons — plugin and loader code checks `compiler instanceof webpack.Compiler` and shares types like `webpack.Compilation`. Two copies in the tree silently break those checks. Required peer dependencies surface version conflicts instead of hiding them as silent duplicate installs. See [issue #1131](https://github.com/shakacode/shakapacker/issues/1131) for the discussion that led to this shape. npm 7+ auto-installs required peers; pnpm and Yarn PnP users should keep packages imported by app config files as explicit app dependencies (the Rails installer handles this automatically).
 
 The rollout is phased:
 
@@ -54,7 +54,7 @@ This creates:
 
 ### Phase 1: v10.1.0 (Non-Breaking, Additive)
 
-Add the two supplemental packages. **No changes to the core `shakapacker` package's peer deps.** Existing users who do not adopt a supplemental package are unaffected. Early adopters of the supplemental packages opt into their exact managed stack pins so compatibility is explicit and updated with each Shakapacker package release.
+Add the two supplemental packages. **No changes to the core `shakapacker` package's peer deps.** Existing users who do not adopt a supplemental package are unaffected. Early adopters of the supplemental packages opt into a curated managed stack while still allowing upstream semver-compatible updates.
 
 What ships:
 
@@ -127,7 +127,7 @@ The `@types/*` packages remain as optional peer deps because they are referenced
 
 Supplemental package for the standard webpack managed build experience.
 
-> The "Range" column shows the actual `package.json` constraint. Bundler singletons (webpack, webpack-cli, webpack-assets-manifest) are required peer dependencies — modern package managers (npm 7+, pnpm, yarn 2+) auto-install them.
+> The "Range" column shows the actual `package.json` constraint. Bundler singletons (webpack, webpack-cli, webpack-assets-manifest) are required peer dependencies — npm 7+ auto-installs them, while pnpm and Yarn PnP users should list direct app imports explicitly.
 
 **Direct dependencies (always installed):**
 
@@ -141,7 +141,7 @@ Supplemental package for the standard webpack managed build experience.
 | Package                 | Range      | Reason                                                                                            |
 | ----------------------- | ---------- | ------------------------------------------------------------------------------------------------- |
 | webpack                 | `^5.101.0` | Singleton — plugins/loaders check `instanceof webpack.Compiler`. Matches main `shakapacker` peer. |
-| webpack-cli             | `^7.0.2`   | Supplemental's curated stack drops older v4–v6 (main core still accepts them for legacy users).   |
+| webpack-cli             | `^7.0.0`   | Supplemental's curated stack drops older v4–v6 (main core still accepts them for legacy users).   |
 | webpack-assets-manifest | `^6.0.0`   | v5 has an ENOENT crash on clean builds with `merge: true`; supplemental requires v6+.             |
 
 **Peer dependencies (optional):**
@@ -194,7 +194,7 @@ Supplemental package for the rspack managed build experience.
 
 | Package                      | Range                                            | When needed      |
 | ---------------------------- | ------------------------------------------------ | ---------------- |
-| @rspack/plugin-react-refresh | `^1.0.0 \|\| ^2.0.0`                             | React HMR        |
+| @rspack/plugin-react-refresh | `^1.0.0 \|\| ^2.0.0-0`                           | React HMR        |
 | css-loader                   | `^6.8.1 \|\| ^7.0.0`                             | CSS processing   |
 | sass                         | `^1.50.0`                                        | SCSS/Sass files  |
 | sass-loader                  | `^13.0.0 \|\| ^14.0.0 \|\| ^15.0.0 \|\| ^16.0.0` | Paired with sass |
@@ -214,7 +214,7 @@ The core `shakapacker` package keeps its broad optional peer ranges during v10.x
 
 ### What Each User Type Installs (v11+)
 
-`shakapacker-webpack` and `shakapacker-rspack` declare the singleton bundler stack as **required peer dependencies**. On npm 7+, pnpm, and yarn 2+, those peers auto-install with the supplemental. On yarn classic 1.x, the install succeeds and yarn prints a peer warning listing the packages to add explicitly.
+`shakapacker-webpack` and `shakapacker-rspack` declare the singleton bundler stack as **required peer dependencies**. npm 7+ can auto-install those peers with the supplemental. pnpm and Yarn PnP users should keep packages imported by app config files (`shakapacker`, and often the bundler packages) as explicit app dependencies unless their configs import the wrapper packages directly.
 
 **Webpack + SWC (default happy path):**
 
@@ -231,7 +231,7 @@ The core `shakapacker` package keeps its broad optional peer ranges during v10.x
 }
 ```
 
-`shakapacker` and `terser-webpack-plugin` come along as direct dependencies of `shakapacker-webpack`. `webpack`, `webpack-cli`, and `webpack-assets-manifest` auto-install via the required peer declarations (modern PMs) or get listed in the yarn-1 warning.
+`shakapacker` and `terser-webpack-plugin` come along as direct dependencies of `shakapacker-webpack`. npm 7+ auto-installs `webpack`, `webpack-cli`, and `webpack-assets-manifest` via the required peer declarations. pnpm and Yarn PnP users should list them directly if app config files import them.
 
 **Rspack (SWC is built-in):**
 
@@ -244,7 +244,7 @@ The core `shakapacker` package keeps its broad optional peer ranges during v10.x
 }
 ```
 
-`shakapacker` comes along as a direct dependency. `@rspack/core`, `@rspack/cli`, and `rspack-manifest-plugin` auto-install via the required peer declarations.
+`shakapacker` comes along as a direct dependency. npm 7+ auto-installs `@rspack/core`, `@rspack/cli`, and `rspack-manifest-plugin` via the required peer declarations. pnpm and Yarn PnP users should list them directly if app config files import them.
 
 **Custom build (manifest-only):**
 
@@ -385,7 +385,7 @@ The `shakapacker:install` rake task should be updated to:
 
 1. Ask which bundler (webpack or rspack) — **default: rspack**. Rspack ships SWC transpilation built in, so the recommended path is the lowest-friction install.
 2. **If the user picked webpack**, ask which transpiler (swc, babel, esbuild, none) — default: swc. **Skip this question entirely for rspack** — rspack uses its built-in SWC and we don't want to expand the support burden by exposing transpiler swap-out for rspack users who don't need it.
-3. Install the appropriate `shakapacker-*` package + its required bundler peers (so yarn 1 users get the full stack without an extra manual step; npm 7+/pnpm/yarn 2+ would auto-install the peers, but the installer writes them explicitly for cross-PM consistency)
+3. Install the appropriate `shakapacker-*` package + its required bundler peers (npm 7+ could auto-install the peers, but the installer writes them explicitly for cross-PM consistency and for pnpm/Yarn PnP app-level imports)
 4. Install **only** the optional peer dependencies for the features the app actually uses
 
 ## Migration Path

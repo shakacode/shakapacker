@@ -4,23 +4,21 @@
 
 ## Install
 
-`shakapacker-webpack` ships `shakapacker` and `terser-webpack-plugin` as direct dependencies and declares `webpack`, `webpack-cli`, and `webpack-assets-manifest` as **required peer dependencies**. On modern package managers, a single install pulls in the full managed build stack via auto-peer-install:
+`shakapacker-webpack` ships `shakapacker` and `terser-webpack-plugin` as direct dependencies and declares `webpack`, `webpack-cli`, and `webpack-assets-manifest` as **required peer dependencies**. On npm 7+, a single install pulls in the full managed build stack via auto-peer-install:
 
 ```sh
 # npm 7+ — auto-installs required peers
 npm install --save-dev shakapacker-webpack
-
-# pnpm — auto-installs required peers
-pnpm add --save-dev shakapacker-webpack
-
-# yarn 2+ (Berry) — auto-installs required peers
-yarn add --dev shakapacker-webpack
 ```
 
-**Yarn classic 1.x does not auto-install peer dependencies.** Add the required peers explicitly:
+pnpm and Yarn PnP keep dependency boundaries strict: packages imported by your app's config files must be listed directly in your app's `package.json`. The default generated webpack config imports `shakapacker`, and many customized configs import `webpack`, so keep those direct dependencies alongside the supplemental package:
 
 ```sh
-yarn add --dev shakapacker-webpack webpack webpack-cli webpack-assets-manifest
+# pnpm
+pnpm add --save-dev shakapacker-webpack shakapacker webpack webpack-cli webpack-assets-manifest
+
+# yarn
+yarn add --dev shakapacker-webpack shakapacker webpack webpack-cli webpack-assets-manifest
 ```
 
 (The Rails `shakapacker:install` task writes all required deps into your `package.json` regardless of package manager.)
@@ -54,7 +52,7 @@ If your app already runs Shakapacker on webpack, you can drop the managed-build 
 }
 ```
 
-Optional peers (transpilers, `webpack-dev-server`, `mini-css-extract-plugin`, CSS preprocessors, etc.) stay only if your app uses those features. Run `yarn install` (or the npm/pnpm equivalent) and the lockfile collapses to the managed stack — on npm 7+, pnpm, and yarn 2+ the required peers (`webpack`, `webpack-cli`, `webpack-assets-manifest`) auto-install; yarn 1 users keep them as explicit `devDependencies`.
+Optional peers (transpilers, `webpack-dev-server`, `mini-css-extract-plugin`, CSS preprocessors, etc.) stay only if your app uses those features. Run `yarn install` (or the npm/pnpm equivalent) and the lockfile collapses to the managed stack. npm 7+ can auto-install the required peers; pnpm and Yarn users should keep `shakapacker`, `webpack`, `webpack-cli`, and `webpack-assets-manifest` as explicit `devDependencies` unless their config imports the wrapper package directly.
 
 ### Migrating from core's webpack peer set
 
