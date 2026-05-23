@@ -1,5 +1,17 @@
 # Optional Peer Dependencies in Shakapacker
 
+> **Tip (Shakapacker 10.1+):** This document describes the optional peer
+> dependency model used by the core `shakapacker` package. If you want a
+> tested, lockstep-pinned managed-build stack without listing each peer
+> yourself, install
+> [`shakapacker-webpack`](../packages/shakapacker-webpack/README.md) or
+> [`shakapacker-rspack`](../packages/shakapacker-rspack/README.md) instead.
+> See the
+> [v10.1 supplemental packages migration guide](./migration/v10.1-supplemental-packages.md)
+> for adoption steps and
+> [`docs/dependency-strategy.md`](./dependency-strategy.md) for the design
+> rationale.
+
 ## Overview
 
 As of Shakapacker v9 (and continuing in v10), all peer dependencies are marked as optional via `peerDependenciesMeta`. This design provides maximum flexibility while maintaining clear version constraints.

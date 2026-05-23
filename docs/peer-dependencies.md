@@ -8,6 +8,17 @@ Shakapacker declares these packages as optional peer dependencies via
 chosen bundler/transpiler stack, while the ranges below document what current
 releases support.
 
+> **Tip (Shakapacker 10.1+):** If you'd rather not manage the managed-build
+> stack as individual peers, install
+> [`shakapacker-webpack`](../packages/shakapacker-webpack/README.md) or
+> [`shakapacker-rspack`](../packages/shakapacker-rspack/README.md). These
+> supplemental packages bundle the tested webpack/rspack stack as direct
+> dependencies, so a single install brings in `shakapacker` + bundler + CLI +
+> manifest plugin at the exact pinned versions. See the
+> [v10.1 supplemental packages migration guide](./migration/v10.1-supplemental-packages.md).
+> Optional peers (transpilers, dev-server, CSS preprocessors) still apply when
+> you adopt a supplemental package.
+
 ## Common Packages
 
 ```text
