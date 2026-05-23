@@ -46,18 +46,18 @@ bun add shakapacker-rspack -D
 
 See [`packages/shakapacker-rspack/README.md`](../packages/shakapacker-rspack/README.md) for the full install reference and the [v10.1 supplemental packages migration guide](./migration/v10.1-supplemental-packages.md) for swapping an existing rspack install over to the supplemental package.
 
-### Manual install (Shakapacker 10.0 and earlier, or custom setups)
+### Manual install (Shakapacker 10.0 and earlier, or self-managed versions)
 
-If you're on Shakapacker 10.0 or prefer to manage `@rspack/core` and `@rspack/cli` versions yourself, install them directly:
+If you're on Shakapacker 10.0 or prefer to manage `@rspack/core`, `@rspack/cli`, and `rspack-manifest-plugin` versions yourself, install them directly:
 
 ```bash
-npm install @rspack/core @rspack/cli -D
+npm install @rspack/core @rspack/cli rspack-manifest-plugin -D
 # or
-yarn add @rspack/core @rspack/cli -D
+yarn add @rspack/core @rspack/cli rspack-manifest-plugin -D
 # or
-pnpm add @rspack/core @rspack/cli -D
+pnpm add @rspack/core @rspack/cli rspack-manifest-plugin -D
 # or
-bun add @rspack/core @rspack/cli -D
+bun add @rspack/core @rspack/cli rspack-manifest-plugin -D
 ```
 
 Note: These packages are already listed as optional peer dependencies in Shakapacker, so you may see warnings if they're not installed.
