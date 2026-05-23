@@ -123,6 +123,37 @@ RSpec.describe "helper binstubs" do
       end
     end
 
+    it "maps RAILS_ENV=test to NODE_ENV=development for #{command}" do
+      Dir.mktmpdir("shakapacker-binstub-") do |app_path|
+        File.write(File.join(app_path, "Gemfile"), "")
+        FileUtils.mkdir_p(File.join(app_path, "bin"))
+        install_fake_node_script(app_path, command)
+
+        binstub_path = File.join(app_path, "bin", command)
+        FileUtils.cp(File.join(gem_root, "lib", "install", "bin", command), binstub_path)
+        FileUtils.chmod(0o755, binstub_path)
+
+        output_path = File.join(app_path, "binstub-output.json")
+        _stdout, stderr, status = Open3.capture3(
+          {
+            "NODE_ENV" => nil,
+            "RAILS_ENV" => "test",
+            "SHAKAPACKER_BINSTUB_OUTPUT" => output_path
+          },
+          binstub_path,
+          chdir: app_path
+        )
+
+        expect(status).to be_success, stderr
+        expect(JSON.parse(File.read(output_path))).to include(
+          "env" => include(
+            "RAILS_ENV" => "test",
+            "NODE_ENV" => "development"
+          )
+        )
+      end
+    end
+
     it "does not execute node just to locate it for #{command}" do
       Dir.mktmpdir("shakapacker-binstub-") do |app_path|
         File.write(File.join(app_path, "Gemfile"), "")

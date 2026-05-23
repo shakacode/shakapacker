@@ -8,6 +8,10 @@ namespace :shakapacker do
       executable = File.basename(command.drop(1).find { |part| !part.start_with?("-") }.to_s)
     end
 
+    # Legacy JS binstubs are dispatched via PATH lookup; Kernel#exec resolves
+    # "node" through the shell's PATH. The Ruby binstubs perform their own
+    # explicit lookup via shakapacker_find_executable, which matters more on
+    # Windows where PATHEXT is involved.
     executable == "node" ? ["node", bin_path.to_s] : [RbConfig.ruby, bin_path.to_s]
   end
 
