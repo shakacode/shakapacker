@@ -22,7 +22,13 @@ def shakapacker_node_binary
 end
 
 ENV["RAILS_ENV"] ||= ENV["RACK_ENV"] || "development"
-ENV["NODE_ENV"] ||= "development"
+# Keep this in sync with Shakapacker.ensure_node_env! (lib/shakapacker.rb).
+# Only `development` and `test` map to NODE_ENV=development; everything else
+# (production, staging, custom) maps to NODE_ENV=production. pack-config-diff
+# usually compares explicitly-passed configs, but JS configs evaluated by the
+# tool can branch on NODE_ENV — this keeps the default consistent with the
+# other helper binstub.
+ENV["NODE_ENV"] ||= %w[development test].include?(ENV["RAILS_ENV"]) ? "development" : "production"
 
 app_root = shakapacker_app_root
 node_bin = shakapacker_node_binary
