@@ -9,6 +9,10 @@
 
 ## [Unreleased]
 
+### Changed
+
+- **Restructured `shakapacker-webpack` and `shakapacker-rspack` dependency declarations** [PR #1133](https://github.com/shakacode/shakapacker/pull/1133) by [justin808](https://github.com/justin808). In response to [#1131](https://github.com/shakacode/shakapacker/issues/1131), bundler singletons (`webpack`, `webpack-cli`, `webpack-assets-manifest` for webpack; `@rspack/core`, `@rspack/cli`, `rspack-manifest-plugin` for rspack) are now **required peer dependencies** instead of direct `dependencies`. This eliminates the silent duplicate-bundler failure mode that direct deps could cause when an app or transitive dep pinned a different bundler version. npm 7+ auto-installs required peers, preserving the one-command install experience there; pnpm and Yarn PnP users should keep packages imported by app config files as explicit app dependencies (the Rails installer handles this automatically). The tilde (`~`) constraints from the v10.1.0-rc.1 shape have also been loosened to caret (`^`) for all non-`shakapacker` packages, so consumers can pick up upstream patch/minor releases without waiting for a coordinated Shakapacker release. `terser-webpack-plugin` moved from optional peer to direct dependency on `shakapacker-webpack` because `package/optimization/webpack.ts` always requires it for the default production minimizer.
+
 ## [v10.1.0-rc.1] - May 21, 2026
 
 ### Added

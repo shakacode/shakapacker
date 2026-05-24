@@ -3,34 +3,34 @@
 **Date:** 2026-05-10
 **Author:** Justin Gordon
 
-Shakapacker 10.1 ships two new optional npm packages — `shakapacker-rspack` and `shakapacker-webpack` — that turn a four-or-five-package install into one. Same Shakapacker, simpler `package.json`.
+Shakapacker 10.1 ships two new optional npm packages — `shakapacker-rspack` and `shakapacker-webpack` — that group the managed bundler stack behind one supplemental package. Same Shakapacker, clearer `package.json`.
 
 ## The 30-second pitch
 
-If you're starting a new app today:
+If you're starting a new app today on npm 7+:
 
 ```sh
-yarn add --dev shakapacker-rspack
+npm install --save-dev shakapacker-rspack
 ```
 
-That's it. You get `shakapacker`, `@rspack/core`, `@rspack/cli`, and `rspack-manifest-plugin` together, all pinned to the exact versions Shakapacker is tested against. Webpack users get the same shape with `shakapacker-webpack`.
+That's it for npm 7+. The required peers (`@rspack/core`, `@rspack/cli`, `rspack-manifest-plugin`) auto-install with the supplemental, and `shakapacker` comes along as a direct dependency. Webpack users get the same shape with `shakapacker-webpack`. pnpm and Yarn PnP users should keep packages imported by app config files as explicit app dependencies; the Rails installer handles this for you.
 
-If you're already on Shakapacker 10.0, you can drop the now-bundled deps from your `devDependencies` and rely on the supplemental package to bring them along. Nothing breaks if you don't.
+If you're already on Shakapacker 10.0, you can collapse the now-managed deps in your `devDependencies` into the supplemental package. Nothing breaks if you don't.
 
 ## What changed
 
 Until now, a typical Shakapacker install meant listing the gem, the npm package, the bundler, the bundler's CLI, the manifest plugin, and your transpiler — all as direct dependencies. That worked, but it pushed the version-matching problem onto every user. Were you on a tested combination? You had to read the changelog to find out.
 
-10.1 shifts that responsibility to the supplemental packages. Each one declares the bundler stack as direct `dependencies` with patch-tolerant `~X.Y.Z` ranges:
+10.1 shifts that responsibility to the supplemental packages. Each one declares the singleton bundler stack as **required peer dependencies** so package managers surface version conflicts as warnings rather than silently installing duplicate instances of webpack:
 
-- `shakapacker-rspack` bundles `shakapacker`, `@rspack/core`, `@rspack/cli`, `rspack-manifest-plugin`.
-- `shakapacker-webpack` bundles `shakapacker`, `webpack`, `webpack-cli`, `webpack-assets-manifest`.
+- `shakapacker-rspack` requires `@rspack/core`, `@rspack/cli`, `rspack-manifest-plugin` as peers; `shakapacker` rides along as a direct dependency.
+- `shakapacker-webpack` requires `webpack`, `webpack-cli`, `webpack-assets-manifest` as peers; `shakapacker` and `terser-webpack-plugin` ride along as direct dependencies.
 
 Optional features — transpilers (swc / babel / esbuild for webpack), CSS preprocessors, dev-server, react-refresh — stay as opt-in `peerDependencies` so you only download what you actually use. (Bundling sass into every install would force a 10MB native-binding download on apps that don't even import a `.scss` file. We're not doing that.)
 
 ## Adopting in an existing app
 
-Replace the explicit deps with the supplemental package:
+On npm 7+, replace the explicit deps with the supplemental package:
 
 ```diff
  {
@@ -44,7 +44,7 @@ Replace the explicit deps with the supplemental package:
  }
 ```
 
-Run `yarn install`. No changes to `config/shakapacker.yml`, `bin/shakapacker`, or your bundler config are required. The full step-by-step (including the webpack flow and the optional-peer cheatsheet) lives in [`docs/migration/v10.1-supplemental-packages.md`](../migration/v10.1-supplemental-packages.md).
+Run your package manager install command. No changes to `config/shakapacker.yml`, `bin/shakapacker`, or your bundler config are required for npm 7+. pnpm and Yarn PnP users should keep direct deps for packages their config imports, or update imports to the supplemental wrapper. The full step-by-step (including the webpack flow and the optional-peer cheatsheet) lives in [`docs/migration/v10.1-supplemental-packages.md`](../migration/v10.1-supplemental-packages.md).
 
 ## What if I don't want to migrate?
 
