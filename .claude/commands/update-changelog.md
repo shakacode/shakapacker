@@ -83,6 +83,7 @@ When stamping a version header (`release`, `rc`, or `beta`), compute the next ve
    - Test updates
    - Documentation fixes (unless they fix incorrect docs about behavior)
    - CI/CD changes
+   - **RC-only regression fixes as standalone entries**: a fix for a bug that was introduced by another PR which itself only shipped in an unreleased prerelease (e.g., `v10.1.0-rc.0`). Users upgrading from the last stable version to the next prerelease/stable never see the bug, so a standalone "Fixed X" entry is internal RC churn. Instead, **merge the fix into the original PR's entry** so the description matches the final shipped state (credit both PRs, update any details the fix changed). Only drop the entry entirely if the fix has nothing left to merge into the original. See "Filtering RC-only fixes when collapsing prereleases" below.
 
 ## Formatting Requirements
 
@@ -297,6 +298,16 @@ When the user passes `rc` or `beta` as an argument (or when creating a prereleas
    - Add any new user-visible changes from commits since the last prerelease
    - Update version diff links to point from the last stable version to the new prerelease
    - This keeps the changelog clean with a single prerelease section that accumulates all changes since the last stable release
+
+5. **Filtering RC-only fixes when collapsing prereleases**: while collapsing, scan the post-rc commit list for fixes that exist only to repair a regression introduced earlier in the same prerelease train. **Default to merging them into the original PR's entry** rather than keeping them as standalone "Fixed X" entries:
+   - For each `Fixed`/`Security` entry under Unreleased that came from a post-rc commit, identify the PR it fixes (usually referenced in the entry body, the PR body, or the linked issue)
+   - If the referenced PR is **already listed** in the prerelease section being collapsed (i.e., it shipped only in an RC, not in the last stable version), the fix is RC-only churn — choose one of:
+     1. **Merge (preferred)**: fold the fix into the original PR's entry. Credit both PRs in the link list (e.g., `[PR #1110](…), [PR #1120](…)`), and update any details the fix changed (e.g., the allowlist now includes `package.json`) so the entry reflects the final shipped state. This is almost always the right choice because stable consumers will see the merged behavior, not the intermediate regression.
+     2. **Drop**: if there is nothing meaningful left to merge (e.g., the fix only restores prior behavior without changing the original entry's description), remove the fix's standalone entry.
+   - If the referenced PR shipped in the last stable version (or earlier), keep the fix as its own entry — real users running the stable release will see the bug
+   - When uncertain, ask the user before merging or dropping
+   - Example: rc.0 ships PR #1110 (gem allowlist `CHANGELOG.md, MIT-LICENSE, README.md, gemspec, lib, sig`). Post-rc.0, PR #1120 adds `package.json` to the allowlist to fix `shakapacker:check_node`. When stamping rc.1, **merge** — credit both PRs and add `package.json` to the allowlist in the original entry. (Not "drop" — the description otherwise would lie about what ships.)
+   - Always **list merged/dropped RC-only fixes in the final summary** so the user can override case-by-case
 
 **Note**: The new version header must be inserted **immediately after `## [Unreleased]`** (see Step 4). This ensures correct ordering of version headers.
 
