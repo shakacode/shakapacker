@@ -26,7 +26,7 @@ describe("createBinStub template parity", () => {
     }
   })
 
-  test.each([["shakapacker-config"], ["diff-bundler-config"]])(
+  test.each(["shakapacker-config", "diff-bundler-config"])(
     "generates lib/install/bin/%s byte-for-byte",
     (binstubName) => {
       const generatedPath = join(tmp, "bin", binstubName)

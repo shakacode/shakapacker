@@ -516,7 +516,8 @@ function runInitCommand(options: ExportOptions): number {
   return 0
 }
 
-// Exported for test use only: verifies generated content matches lib/install/bin/* binstubs.
+// Exported for test/configExporter/createBinStub.test.js, which verifies the
+// generated content matches the checked-in lib/install/bin/* binstubs.
 export function createBinStub(binStubPath: string): void {
   const binDir = dirname(binStubPath)
   const packageScript = `${basename(binStubPath)}.cjs`
