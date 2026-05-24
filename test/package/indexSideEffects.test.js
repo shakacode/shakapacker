@@ -124,4 +124,23 @@ describe("index side effects", () => {
       expect(ensureManifestExists).toHaveBeenCalledTimes(1)
     })
   })
+
+  test("lazily exposes rules with the expected shape", () => {
+    jest.isolateModules(() => {
+      const ensureManifestExists = mockEnsureManifestExists()
+
+      const shakapacker = require("../../package/index")
+
+      expect(ensureManifestExists).not.toHaveBeenCalled()
+      expect(shakapacker.rules).toStrictEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            test: expect.any(RegExp),
+            use: expect.any(Array)
+          })
+        ])
+      )
+      expect(ensureManifestExists).not.toHaveBeenCalled()
+    })
+  })
 })

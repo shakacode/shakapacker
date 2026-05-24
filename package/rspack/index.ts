@@ -9,7 +9,7 @@ import type { RuleSetRule } from "webpack"
 import type { RspackConfigWithDevServer } from "../environments/types"
 import type { Config } from "../types"
 
-const webpackMerge = require("webpack-merge")
+const webpackMerge = require("webpack-merge") as typeof import("webpack-merge")
 const config = require("../config") as Config
 const devServer = require("../dev_server")
 const env = require("../env")
@@ -49,17 +49,6 @@ const getBaseConfig = (): RspackConfigWithDevServer => {
   return _baseConfig!
 }
 
-// Declaration placeholders keep TypeScript's named exports while runtime values
-// are installed as lazy getters below. TypeScript's CommonJS emit writes these
-// `export { baseConfig, rules }` lines as plain `exports.baseConfig = baseConfig`
-// assignments (configurable: true by default), so the subsequent
-// Object.defineProperty calls can safely replace them with getters. If TypeScript
-// ever switches to non-configurable Object.defineProperty for named exports,
-// the override will throw and test/package/rspack/indexSideEffects.test.js will
-// catch the regression at module load.
-const baseConfig = undefined as unknown as RspackConfigWithDevServer // replaced below by lazy getter
-const rules = undefined as unknown as RuleSetRule[] // replaced below by lazy getter
-
 const generateRspackConfig = (
   extraConfig: RspackConfigWithDevServer = {},
   ...extraArgs: unknown[]
@@ -80,21 +69,32 @@ const generateRspackConfig = (
   return webpackMerge.merge({}, environmentConfig, extraConfig)
 }
 
-// Re-export webpack-merge utilities for backward compatibility
-export {
-  merge,
-  mergeWithCustomize,
-  mergeWithRules,
-  unique
-} from "webpack-merge"
+type RspackExports = typeof webpackMerge & {
+  config: typeof config
+  devServer: typeof devServer
+  generateRspackConfig: typeof generateRspackConfig
+  readonly baseConfig: RspackConfigWithDevServer
+  env: typeof env
+  readonly rules: RuleSetRule[]
+  moduleExists: typeof moduleExists
+  canProcess: typeof canProcess
+  inliningCss: typeof inliningCss
+  isRspack: typeof isRspack
+  isWebpack: typeof isWebpack
+  getBundler: typeof getBundler
+  getCssExtractPlugin: typeof getCssExtractPlugin
+  getCssExtractPluginLoader: typeof getCssExtractPluginLoader
+  getDefinePlugin: typeof getDefinePlugin
+  getEnvironmentPlugin: typeof getEnvironmentPlugin
+  getProvidePlugin: typeof getProvidePlugin
+}
 
-export {
-  config, // shakapacker.yml
+const rspackExports = {
+  // shakapacker.yml
+  config,
   devServer,
   generateRspackConfig,
-  baseConfig,
   env,
-  rules,
   moduleExists,
   canProcess,
   inliningCss,
@@ -105,15 +105,10 @@ export {
   getCssExtractPluginLoader,
   getDefinePlugin,
   getEnvironmentPlugin,
-  getProvidePlugin
-}
-
-// `baseConfig` is exposed via a lazy getter so requiring this module does not
-// load `environments/base` (and its transitive plugin/manifest side effects)
-// until a caller actually reads the property. Aliasing `module.exports` keeps
-// the target obvious and avoids relying on the implicit `exports === module.exports`
-// identity that TypeScript does not surface.
-const rspackExports = module.exports
+  getProvidePlugin,
+  // webpack-merge utilities for backward compatibility
+  ...webpackMerge
+} as RspackExports
 
 Object.defineProperty(rspackExports, "rules", {
   configurable: true,
@@ -136,3 +131,5 @@ Object.defineProperty(rspackExports, "baseConfig", {
     )
   }
 })
+
+export = rspackExports
