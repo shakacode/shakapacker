@@ -113,7 +113,9 @@ const writeJson = (file, value) =>
 const writeText = (file, value) => fs.writeFileSync(file, value)
 
 const runInstall = (dir, cmd) => {
-  // Pin behavior so the test doesn't depend on the caller's ~/.npmrc:
+  // Pin behavior so the test doesn't depend on the caller's ~/.npmrc.
+  // Both keys are pnpm-only; npm silently ignores them, which keeps the
+  // .npmrc shared without affecting the npm cases:
   // - node-linker=isolated matches pnpm's default symlinked layout (the
   //   wrapper-only failure mode reproduces under that default; we set it
   //   explicitly to defend against a caller .npmrc with shamefully-hoist=true
@@ -290,7 +292,7 @@ describe("supplemental package install smoke (issue #1131)", () => {
     supplementalSpecs.forEach((spec) => {
       supplementalTarballs[spec.name] = packTarball(spec.dir, workRoot)
     })
-  }, 120000)
+  }, 180000)
 
   afterAll(() => {
     if (!shouldRun) return
@@ -330,6 +332,13 @@ describe("supplemental package install smoke (issue #1131)", () => {
         )
         runInstall(dir, "npm")
         expect(resolvesFromAppRoot(dir, "shakapacker")).toBe(true)
+        // npm's flat hoisting is the reason terser-webpack-plugin can be a
+        // direct dep of shakapacker-webpack (rather than a peer): the app
+        // root should see it without declaring it. pnpm's strict layout is
+        // the opposite case, validated by the pnpm explicit-deps test below.
+        spec.appRootAssertions.forEach((mod) => {
+          expect(resolvesFromAppRoot(dir, mod)).toBe(true)
+        })
       }, 180000)
 
       test("npm explicit-deps: shakapacker resolves from app root", () => {
