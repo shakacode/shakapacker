@@ -21,9 +21,7 @@ describe("createBinStub template parity", () => {
   })
 
   afterEach(() => {
-    if (tmp) {
-      rmSync(tmp, { recursive: true, force: true })
-    }
+    rmSync(tmp, { recursive: true, force: true })
   })
 
   test.each(["shakapacker-config", "diff-bundler-config"])(
