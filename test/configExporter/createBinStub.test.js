@@ -24,6 +24,8 @@ describe("createBinStub template parity", () => {
     rmSync(tmp, { recursive: true, force: true })
   })
 
+  // diff-bundler-config is a white-box parity case; production init only
+  // generates shakapacker-config.
   test.each(["shakapacker-config", "diff-bundler-config"])(
     "generates lib/install/bin/%s byte-for-byte",
     (binstubName) => {
