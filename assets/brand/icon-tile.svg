@@ -1,12 +1,12 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" role="img" aria-label="Shakapacker Folded S icon">
-<title>Shakapacker Folded S icon</title>
-<rect x="56" y="56" width="912" height="912" rx="186" fill="#0D1117"/>
-<rect x="66" y="66" width="892" height="892" rx="176" fill="none" stroke="#293544" stroke-width="20"/>
+  <title>Shakapacker Folded S icon</title>
+  <rect x="56" y="56" width="912" height="912" rx="186" fill="#0D1117"/>
+  <rect x="66" y="66" width="892" height="892" rx="176" fill="none" stroke="#293544" stroke-width="20"/>
 
-        <g stroke-linejoin="round">
-          <path d="M300 276 H704 L604 394 H452 L564 492 H408 L276 394 Z" fill="#E43D39"/>
-          <path d="M724 628 L594 752 H224 L354 626 H506 L394 526 H552 Z" fill="#FF8A00"/>
-          <path d="M300 276 H704 L604 394 H452 Z" fill="#FF5A4C" opacity="0.32"/>
-          <path d="M354 626 H506 L594 752 H224 Z" fill="#E05D00" opacity="0.20"/>
-        </g>
+  <g stroke-linejoin="round">
+    <path d="M300 276 H704 L604 394 H452 L564 492 H408 L276 394 Z" fill="#E43D39"/>
+    <path d="M724 628 L594 752 H224 L354 626 H506 L394 526 H552 Z" fill="#FF8A00"/>
+    <path d="M300 276 H704 L604 394 H452 Z" fill="#FF5A4C" opacity="0.32"/>
+    <path d="M354 626 H506 L594 752 H224 Z" fill="#E05D00" opacity="0.20"/>
+  </g>
 </svg>
