@@ -1,5 +1,15 @@
 # Shakapacker (v10)
 
+<p align="center">
+  <a href="https://shakapacker.com">
+    <picture>
+      <source media="(prefers-color-scheme: dark)" srcset="./assets/brand/lockup-dark.svg">
+      <source media="(prefers-color-scheme: light)" srcset="./assets/brand/lockup-light.svg">
+      <img src="./assets/brand/lockup-light.svg" alt="Shakapacker: Rails asset bundling with modern build systems" width="760">
+    </picture>
+  </a>
+</p>
+
 ---
 
 _🚀 Shakapacker 10 supports [Rspack](https://rspack.rs/) — up to 17x faster than webpack per [upstream benchmarks](./docs/transpiler-performance.md#published-benchmarks)!_
