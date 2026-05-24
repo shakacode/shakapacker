@@ -13,11 +13,13 @@
 // This test is opt-in because it shells out to package managers, hits the
 // npm registry for bundler peers, and takes 60–120s end-to-end. Enable
 // with RUN_INSTALL_SMOKE=1 (and a dedicated CI job). Auto-skips if the
-// core TypeScript hasn't been built, or if the required PMs aren't on
-// PATH. The npm case also auto-skips on npm < 8.3 because the
-// wrapperOnlyManifest uses the `overrides` field (npm 8.3+ feature) to
-// point shakapacker at the local tarball; older npm silently ignores it
-// and tries to resolve `shakapacker: ~10.1.0-rc.1` from the registry.
+// core TypeScript hasn't been built, npm isn't on PATH for tarball packing,
+// or neither tested installer is usable. The npm case auto-skips on npm
+// < 8.3 because the wrapperOnlyManifest uses the `overrides` field (npm
+// 8.3+ feature) to point shakapacker at the local tarball; older npm
+// silently ignores it and tries to resolve `shakapacker: ~10.1.0-rc.1`
+// from the registry. The pnpm case auto-skips on pnpm < 7 because the
+// fixture relies on `auto-install-peers=true`.
 //
 // Failure here ≠ a bug in your edit; usually it means the documented
 // migration matrix changed. Update the docs and these assertions together.
@@ -53,24 +55,55 @@ const pnpmVersion = toolVersion("pnpm")
 const hasNpm = npmVersion !== null
 const hasPnpm = pnpmVersion !== null
 
+const majorMinor = (version) => {
+  if (!version) return [0, 0]
+  const [major, minor] = version.split(".").map(Number)
+  return [major || 0, minor || 0]
+}
+
 // The `overrides` manifest field is npm 8.3+. Older npm silently ignores
 // it, which would cause wrapperOnlyManifest to resolve shakapacker from
 // the registry instead of the local tarball.
-const npmSupportsOverrides = (() => {
-  if (!npmVersion) return false
-  const [major, minor] = npmVersion.split(".").map(Number)
+const supportsNpmOverrides = (version) => {
+  const [major, minor] = majorMinor(version)
   return major > 8 || (major === 8 && minor >= 3)
-})()
-const npmUsable = hasNpm && npmSupportsOverrides
-const shouldRun = optedIn && coreIsBuilt && (npmUsable || hasPnpm)
+}
 
-const packTarball = (cwd) => {
-  const r = spawnSync("npm", ["pack", "--json"], { cwd, encoding: "utf8" })
+const supportsPnpmAutoInstallPeers = (version) => {
+  const [major] = majorMinor(version)
+  return major >= 7
+}
+
+const computeShouldRun = ({
+  isOptedIn,
+  isCoreBuilt,
+  npmAvailable,
+  npmUsable,
+  pnpmUsable
+}) => isOptedIn && isCoreBuilt && npmAvailable && (npmUsable || pnpmUsable)
+
+const npmSupportsOverrides = supportsNpmOverrides(npmVersion)
+const pnpmSupportsAutoInstallPeers = supportsPnpmAutoInstallPeers(pnpmVersion)
+const npmUsable = hasNpm && npmSupportsOverrides
+const pnpmUsable = hasPnpm && pnpmSupportsAutoInstallPeers
+const shouldRun = computeShouldRun({
+  isOptedIn: optedIn,
+  isCoreBuilt: coreIsBuilt,
+  npmAvailable: hasNpm,
+  npmUsable,
+  pnpmUsable
+})
+
+const packTarball = (cwd, destDir, spawn = spawnSync) => {
+  const r = spawn("npm", ["pack", "--json", "--pack-destination", destDir], {
+    cwd,
+    encoding: "utf8"
+  })
   if (r.status !== 0) {
     throw new Error(`npm pack failed in ${cwd}\n${r.stderr}`)
   }
   const meta = JSON.parse(r.stdout)
-  return path.join(cwd, meta[0].filename)
+  return path.join(destDir, meta[0].filename)
 }
 
 const writeJson = (file, value) =>
@@ -119,6 +152,48 @@ let workRoot
 let coreTarball
 let webpackTarball
 
+describe("install smoke planning helpers", () => {
+  test("requires npm even when pnpm is available because tarball packing uses npm", () => {
+    expect(
+      computeShouldRun({
+        isOptedIn: true,
+        isCoreBuilt: true,
+        npmAvailable: false,
+        npmUsable: false,
+        pnpmUsable: true
+      })
+    ).toBe(false)
+  })
+
+  test("requires pnpm 7+ for auto-install-peers coverage", () => {
+    expect(supportsPnpmAutoInstallPeers("6.35.1")).toBe(false)
+    expect(supportsPnpmAutoInstallPeers("7.0.0")).toBe(true)
+  })
+
+  test("packs tarballs into the temp workspace", () => {
+    const calls = []
+    const fakeSpawn = (cmd, args, options) => {
+      calls.push({ cmd, args, options })
+      return {
+        status: 0,
+        stdout: JSON.stringify([{ filename: "shakapacker-10.1.0-rc.1.tgz" }]),
+        stderr: ""
+      }
+    }
+
+    expect(packTarball("/repo", "/tmp/shaka-smoke-123", fakeSpawn)).toBe(
+      "/tmp/shaka-smoke-123/shakapacker-10.1.0-rc.1.tgz"
+    )
+    expect(calls).toStrictEqual([
+      {
+        cmd: "npm",
+        args: ["pack", "--json", "--pack-destination", "/tmp/shaka-smoke-123"],
+        options: { cwd: "/repo", encoding: "utf8" }
+      }
+    ])
+  })
+})
+
 const wrapperOnlyManifest = () => ({
   name: "smoke-wrapper-only",
   private: true,
@@ -155,11 +230,20 @@ const makeApp = (subdir, manifest) => {
 const computeSkipReason = () => {
   if (!optedIn) return "RUN_INSTALL_SMOKE=1 not set"
   if (!coreIsBuilt) return "shakapacker not built (run `yarn build`)"
-  if (!npmUsable && !hasPnpm) {
-    if (hasNpm && !npmSupportsOverrides) {
-      return `npm ${npmVersion} lacks overrides support (need 8.3+), and pnpm unavailable`
+  if (!hasNpm) return "npm unavailable on PATH (needed for npm pack)"
+  if (!npmUsable && !pnpmUsable) {
+    const reasons = []
+    if (!npmSupportsOverrides) {
+      reasons.push(`npm ${npmVersion} lacks overrides support (need 8.3+)`)
     }
-    return "npm and pnpm both unavailable on PATH"
+    if (!hasPnpm) {
+      reasons.push("pnpm unavailable")
+    } else if (!pnpmSupportsAutoInstallPeers) {
+      reasons.push(
+        `pnpm ${pnpmVersion} lacks auto-install-peers support (need 7+)`
+      )
+    }
+    return reasons.join(", ")
   }
   return "unknown skip reason"
 }
@@ -168,26 +252,15 @@ describe("shakapacker-webpack install smoke (issue #1131)", () => {
   beforeAll(() => {
     if (!shouldRun) return
     workRoot = fs.mkdtempSync(path.join(os.tmpdir(), "shaka-smoke-"))
-    coreTarball = packTarball(repoRoot)
-    webpackTarball = packTarball(webpackSupplementalDir)
+    coreTarball = packTarball(repoRoot, workRoot)
+    webpackTarball = packTarball(webpackSupplementalDir, workRoot)
   }, 120000)
 
   afterAll(() => {
     if (!shouldRun) return
-    // Best-effort cleanup; leave tarballs on failure so a developer can
-    // inspect what was actually installed.
+    // Best-effort cleanup covers the temp apps and packed tarballs.
     try {
       fs.rmSync(workRoot, { recursive: true, force: true })
-    } catch {
-      /* ignore */
-    }
-    try {
-      fs.rmSync(coreTarball, { force: true })
-    } catch {
-      /* ignore */
-    }
-    try {
-      fs.rmSync(webpackTarball, { force: true })
     } catch {
       /* ignore */
     }
@@ -229,6 +302,12 @@ describe("shakapacker-webpack install smoke (issue #1131)", () => {
   describe("pnpm", () => {
     if (!hasPnpm) {
       test.todo("pnpm not on PATH")
+      return
+    }
+    if (!pnpmSupportsAutoInstallPeers) {
+      test.todo(
+        `pnpm ${pnpmVersion} lacks auto-install-peers support (need 7+)`
+      )
       return
     }
     test("pnpm wrapper-only: shakapacker does NOT resolve from app root (strict isolation)", () => {

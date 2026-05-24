@@ -123,6 +123,39 @@ describe("supplemental peer ranges align with main shakapacker", () => {
       }))
   }
 
+  const expectOnlyKnownMismatches = (
+    mismatches,
+    knownIntentionalNarrowings
+  ) => {
+    const mismatchNames = new Set(mismatches.map((m) => m.name))
+    const staleAllowlistEntries = [...knownIntentionalNarrowings]
+      .filter((name) => !mismatchNames.has(name))
+      .sort()
+    const unexpectedMismatches = mismatches
+      .filter((m) => !knownIntentionalNarrowings.has(m.name))
+      .map((m) => m.name)
+      .sort()
+
+    expect({
+      staleAllowlistEntries,
+      unexpectedMismatches
+    }).toStrictEqual({
+      staleAllowlistEntries: [],
+      unexpectedMismatches: []
+    })
+  }
+
+  describe("known mismatch assertions", () => {
+    test("fail when an allowlist entry no longer corresponds to a mismatch", () => {
+      expect(() =>
+        expectOnlyKnownMismatches(
+          [{ name: "webpack-cli", supplementalRange: "^7.0.0" }],
+          new Set(["webpack-cli", "stale-entry"])
+        )
+      ).toThrow(/stale-entry/)
+    })
+  })
+
   test("webpack supplemental peers match main peer ranges where both exist", () => {
     // The supplemental is allowed to *narrow* via curation (e.g., drop
     // webpack-cli v4-v6), but where both declare a peer, the ranges
@@ -132,10 +165,12 @@ describe("supplemental peer ranges align with main shakapacker", () => {
       "webpack-cli", // supplemental curates to v7+
       "webpack-assets-manifest" // supplemental requires v6 (v5 has ENOENT bug)
     ])
-    const unintended = collectMismatches(webpackManifestPath).filter(
-      (m) => !knownIntentionalNarrowings.has(m.name)
-    )
-    expect(unintended).toStrictEqual([])
+    expect(() =>
+      expectOnlyKnownMismatches(
+        collectMismatches(webpackManifestPath),
+        knownIntentionalNarrowings
+      )
+    ).not.toThrow()
   })
 
   test("rspack supplemental peers match main peer ranges where both exist", () => {
@@ -146,9 +181,11 @@ describe("supplemental peer ranges align with main shakapacker", () => {
       "@rspack/core", // supplemental curates to v2+ (rspack 1.x unsupported)
       "@rspack/cli" // same rationale as @rspack/core
     ])
-    const unintended = collectMismatches(rspackManifestPath).filter(
-      (m) => !knownIntentionalNarrowings.has(m.name)
-    )
-    expect(unintended).toStrictEqual([])
+    expect(() =>
+      expectOnlyKnownMismatches(
+        collectMismatches(rspackManifestPath),
+        knownIntentionalNarrowings
+      )
+    ).not.toThrow()
   })
 })
