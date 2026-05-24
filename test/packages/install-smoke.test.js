@@ -112,9 +112,12 @@ const writeJson = (file, value) =>
 const writeText = (file, value) => fs.writeFileSync(file, value)
 
 const runInstall = (dir, cmd) => {
-  // Pin behavior so the test doesn't depend on the caller's npmrc:
-  // - isolated node-linker (the failure mode being tested only shows up
-  //   under pnpm's strict layout; the global ~/.npmrc could override).
+  // Pin behavior so the test doesn't depend on the caller's ~/.npmrc:
+  // - node-linker=isolated matches pnpm's default symlinked layout (the
+  //   wrapper-only failure mode reproduces under that default; we set it
+  //   explicitly to defend against a caller .npmrc with shamefully-hoist=true
+  //   or node-linker=hoisted, either of which would mask the failure by
+  //   flattening shakapacker to app root).
   // - auto-install-peers=true so required peers land at app root for
   //   modern installs (npm 7+ already does this, pnpm 8+ defaults to it).
   writeText(
@@ -208,6 +211,12 @@ const wrapperOnlyManifest = () => ({
   resolutions: { shakapacker: `file:${coreTarball}` }
 })
 
+// Mirrors the pnpm/yarn list in docs/migration/v10.1-supplemental-packages.md.
+// `terser-webpack-plugin` is included because core shakapacker's default
+// minimizer `require()`s it from inside the core package, and under pnpm's
+// strict layout that resolution only succeeds if the host app declares the
+// dep directly — `shakapacker-webpack`'s transitive dep doesn't cross the
+// package boundary.
 const explicitDepsManifest = () => ({
   name: "smoke-explicit",
   private: true,
@@ -216,7 +225,8 @@ const explicitDepsManifest = () => ({
     shakapacker: `file:${coreTarball}`,
     webpack: "^5.101.0",
     "webpack-cli": "^7.0.0",
-    "webpack-assets-manifest": "^6.0.0"
+    "webpack-assets-manifest": "^6.0.0",
+    "terser-webpack-plugin": "^5.3.1"
   }
 })
 
@@ -319,10 +329,14 @@ describe("shakapacker-webpack install smoke (issue #1131)", () => {
       expect(resolvesFromAppRoot(dir, "shakapacker")).toBe(false)
     }, 180000)
 
-    test("pnpm explicit-deps: shakapacker resolves from app root", () => {
+    test("pnpm explicit-deps: shakapacker and terser-webpack-plugin resolve from app root", () => {
       const dir = makeApp("pnpm-explicit", explicitDepsManifest())
       runInstall(dir, "pnpm")
       expect(resolvesFromAppRoot(dir, "shakapacker")).toBe(true)
+      // Verifies the documented pnpm/yarn requirement: terser-webpack-plugin
+      // must be declared directly because core shakapacker's default minimizer
+      // requires it from inside the core package.
+      expect(resolvesFromAppRoot(dir, "terser-webpack-plugin")).toBe(true)
     }, 180000)
   })
 })
