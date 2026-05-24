@@ -1,3 +1,9 @@
+<p align="center">
+  <a href="https://shakapacker.com">
+    <img src="./assets/brand/lockup-light.png?raw=true" alt="Shakapacker: Rails asset bundling with modern build systems" width="760">
+  </a>
+</p>
+
 # Shakapacker (v10)
 
 ---
