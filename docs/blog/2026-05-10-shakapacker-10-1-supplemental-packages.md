@@ -21,7 +21,7 @@ If you're already on Shakapacker 10.0, you can collapse the now-managed deps in 
 
 Until now, a typical Shakapacker install meant listing the gem, the npm package, the bundler, the bundler's CLI, the manifest plugin, and your transpiler — all as direct dependencies. That worked, but it pushed the version-matching problem onto every user. Were you on a tested combination? You had to read the changelog to find out.
 
-10.1 shifts that responsibility to the supplemental packages. Each one declares the singleton bundler stack as **required peer dependencies** so package managers surface version conflicts as warnings rather than silently installing duplicate copies of webpack:
+10.1 shifts that responsibility to the supplemental packages. Each one declares the singleton bundler stack as **required peer dependencies** so package managers surface version conflicts as warnings rather than silently installing duplicate instances of webpack:
 
 - `shakapacker-rspack` requires `@rspack/core`, `@rspack/cli`, `rspack-manifest-plugin` as peers; `shakapacker` rides along as a direct dependency.
 - `shakapacker-webpack` requires `webpack`, `webpack-cli`, `webpack-assets-manifest` as peers; `shakapacker` and `terser-webpack-plugin` ride along as direct dependencies.

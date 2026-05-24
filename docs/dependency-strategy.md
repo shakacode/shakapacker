@@ -194,7 +194,7 @@ Supplemental package for the rspack managed build experience.
 
 | Package                      | Range                                            | When needed      |
 | ---------------------------- | ------------------------------------------------ | ---------------- |
-| @rspack/plugin-react-refresh | `^1.0.0 \|\| ^2.0.0-0`                           | React HMR        |
+| @rspack/plugin-react-refresh | `^1.0.0 \|\| ^2.0.0`                             | React HMR        |
 | css-loader                   | `^6.8.1 \|\| ^7.0.0`                             | CSS processing   |
 | sass                         | `^1.50.0`                                        | SCSS/Sass files  |
 | sass-loader                  | `^13.0.0 \|\| ^14.0.0 \|\| ^15.0.0 \|\| ^16.0.0` | Paired with sass |
@@ -202,6 +202,8 @@ Supplemental package for the rspack managed build experience.
 Note: rspack has built-in SWC transpilation, so no external transpiler deps are needed.
 
 Rspack v2 is stable, so the supplemental rspack package pins to the current v2 GA line. Older Rspack v1 and v2 pre-releases remain allowed only through the legacy optional peer ranges in core `shakapacker` during the v10.x compatibility window.
+
+GA release-prep note: while 10.1 is still in release-candidate state, the dependency tables intentionally show `~10.1.0-rc.1` for the lockstep `shakapacker` dependency. Update those rows and examples to `~10.1.0` when publishing the GA supplemental packages.
 
 ### Version Pinning Philosophy
 

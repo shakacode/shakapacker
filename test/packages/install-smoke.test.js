@@ -154,6 +154,26 @@ const resolvesFromAppRoot = (dir, mod) => {
   return r.status === 0 && r.stdout.trim().length > 0
 }
 
+const resolvesFromInstalledPackage = (dir, packageName, mod) => {
+  const r = spawnSync(
+    "node",
+    [
+      "-e",
+      `const { createRequire } = require("module"); ` +
+        `const path = require("path"); ` +
+        `const [packageName, mod] = process.argv.slice(1); ` +
+        `const appRequire = createRequire(path.join(process.cwd(), "package.json")); ` +
+        `const packageJson = appRequire.resolve(packageName + "/package.json"); ` +
+        `const packageRequire = createRequire(packageJson); ` +
+        `console.log(packageRequire.resolve(mod));`,
+      packageName,
+      mod
+    ],
+    { cwd: dir, encoding: "utf8" }
+  )
+  return r.status === 0 && r.stdout.trim().length > 0
+}
+
 let workRoot
 let coreTarball
 const supplementalTarballs = {}
@@ -169,6 +189,7 @@ const supplementalSpecs = [
       "webpack-assets-manifest": "^6.0.0",
       "terser-webpack-plugin": "^5.3.1"
     },
+    requiredPeers: ["webpack", "webpack-cli", "webpack-assets-manifest"],
     appRootAssertions: ["terser-webpack-plugin"]
   },
   {
@@ -180,6 +201,7 @@ const supplementalSpecs = [
       "@rspack/cli": "^2.0.0",
       "rspack-manifest-plugin": "^5.0.0"
     },
+    requiredPeers: ["@rspack/core", "@rspack/cli", "rspack-manifest-plugin"],
     appRootAssertions: []
   }
 ]
@@ -372,6 +394,14 @@ describe("supplemental package install smoke (issue #1131)", () => {
         // pnpm isolates shakapacker under .pnpm/, so app-level
         // `require("shakapacker")` (e.g. from webpack.config.js) cannot find it.
         expect(resolvesFromAppRoot(dir, "shakapacker")).toBe(false)
+        // Required peers should still resolve from the installed wrapper via
+        // pnpm's auto-install-peers behavior. They are not app-root imports
+        // under node-linker=isolated.
+        spec.requiredPeers.forEach((mod) => {
+          expect(resolvesFromInstalledPackage(dir, spec.packageName, mod)).toBe(
+            true
+          )
+        })
       }, 180000)
 
       test("pnpm explicit-deps: documented app-level imports resolve from app root", () => {
