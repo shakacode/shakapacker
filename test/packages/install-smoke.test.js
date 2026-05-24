@@ -13,13 +13,13 @@
 // This test is opt-in because it shells out to package managers, hits the
 // npm registry for bundler peers, and takes 60–120s end-to-end. Enable
 // with RUN_INSTALL_SMOKE=1 (and a dedicated CI job). Auto-skips if the
-// core TypeScript hasn't been built, npm isn't on PATH for tarball packing,
-// or neither tested installer is usable. The npm case auto-skips on npm
-// < 8.3 because the wrapperOnlyManifest uses the `overrides` field (npm
-// 8.3+ feature) to point shakapacker at the local tarball; older npm
-// silently ignores it and tries to resolve `shakapacker: ~10.1.0-rc.1`
-// from the registry. The pnpm case auto-skips on pnpm < 7 because the
-// fixture relies on `auto-install-peers=true`.
+// core TypeScript hasn't been built, npm can't pack tarballs with the
+// required flags, or neither tested installer is usable. The npm case
+// auto-skips on npm < 8.3 because the wrapperOnlyManifest uses the
+// `overrides` field (npm 8.3+ feature) to point shakapacker at the local
+// tarball; older npm silently ignores it and tries to resolve
+// `shakapacker: ~10.1.0-rc.1` from the registry. The pnpm case auto-skips
+// on pnpm < 7 because the fixture relies on `auto-install-peers=true`.
 //
 // Failure here ≠ a bug in your edit; usually it means the documented
 // migration matrix changed. Update the docs and these assertions together.
@@ -70,6 +70,11 @@ const supportsNpmOverrides = (version) => {
   return major > 8 || (major === 8 && minor >= 3)
 }
 
+const supportsNpmPackDestination = (version) => {
+  const [major] = majorMinor(version)
+  return major >= 7
+}
+
 const supportsPnpmAutoInstallPeers = (version) => {
   const [major] = majorMinor(version)
   return major >= 7
@@ -78,19 +83,21 @@ const supportsPnpmAutoInstallPeers = (version) => {
 const computeShouldRun = ({
   isOptedIn,
   isCoreBuilt,
-  npmAvailable,
+  npmPackUsable,
   npmUsable,
   pnpmUsable
-}) => isOptedIn && isCoreBuilt && npmAvailable && (npmUsable || pnpmUsable)
+}) => isOptedIn && isCoreBuilt && npmPackUsable && (npmUsable || pnpmUsable)
 
 const npmSupportsOverrides = supportsNpmOverrides(npmVersion)
+const npmSupportsPackDestination = supportsNpmPackDestination(npmVersion)
 const pnpmSupportsAutoInstallPeers = supportsPnpmAutoInstallPeers(pnpmVersion)
+const npmPackUsable = hasNpm && npmSupportsPackDestination
 const npmUsable = hasNpm && npmSupportsOverrides
 const pnpmUsable = hasPnpm && pnpmSupportsAutoInstallPeers
 const shouldRun = computeShouldRun({
   isOptedIn: optedIn,
   isCoreBuilt: coreIsBuilt,
-  npmAvailable: hasNpm,
+  npmPackUsable,
   npmUsable,
   pnpmUsable
 })
@@ -161,13 +168,12 @@ const resolvesFromInstalledPackage = (dir, packageName, mod) => {
       "-e",
       `const { createRequire } = require("module"); ` +
         `const path = require("path"); ` +
-        `const [packageName, mod] = process.argv.slice(1); ` +
+        `const packageName = ${JSON.stringify(packageName)}; ` +
+        `const mod = ${JSON.stringify(mod)}; ` +
         `const appRequire = createRequire(path.join(process.cwd(), "package.json")); ` +
         `const packageJson = appRequire.resolve(packageName + "/package.json"); ` +
         `const packageRequire = createRequire(packageJson); ` +
-        `console.log(packageRequire.resolve(mod));`,
-      packageName,
-      mod
+        `console.log(packageRequire.resolve(mod));`
     ],
     { cwd: dir, encoding: "utf8" }
   )
@@ -212,11 +218,16 @@ describe("install smoke planning helpers", () => {
       computeShouldRun({
         isOptedIn: true,
         isCoreBuilt: true,
-        npmAvailable: false,
+        npmPackUsable: false,
         npmUsable: false,
         pnpmUsable: true
       })
     ).toBe(false)
+  })
+
+  test("requires npm 7+ for npm pack flags", () => {
+    expect(supportsNpmPackDestination("6.14.18")).toBe(false)
+    expect(supportsNpmPackDestination("7.0.0")).toBe(true)
   })
 
   test("requires pnpm 7+ for auto-install-peers coverage", () => {
@@ -289,6 +300,9 @@ const computeSkipReason = () => {
   if (!optedIn) return "RUN_INSTALL_SMOKE=1 not set"
   if (!coreIsBuilt) return "shakapacker not built (run `yarn build`)"
   if (!hasNpm) return "npm unavailable on PATH (needed for npm pack)"
+  if (!npmSupportsPackDestination) {
+    return `npm ${npmVersion} lacks npm pack --json --pack-destination support (need 7+)`
+  }
   if (!npmUsable && !pnpmUsable) {
     const reasons = []
     if (!npmSupportsOverrides) {
@@ -395,8 +409,9 @@ describe("supplemental package install smoke (issue #1131)", () => {
         // `require("shakapacker")` (e.g. from webpack.config.js) cannot find it.
         expect(resolvesFromAppRoot(dir, "shakapacker")).toBe(false)
         // Required peers should still resolve from the installed wrapper via
-        // pnpm's auto-install-peers behavior. They are not app-root imports
-        // under node-linker=isolated.
+        // pnpm's auto-install-peers behavior. App-root imports are covered by
+        // the explicit-deps case below because isolated installs do not expose
+        // wrapper-only peers to app code.
         spec.requiredPeers.forEach((mod) => {
           expect(resolvesFromInstalledPackage(dir, spec.packageName, mod)).toBe(
             true
@@ -411,6 +426,9 @@ describe("supplemental package install smoke (issue #1131)", () => {
         )
         runInstall(dir, "pnpm")
         expect(resolvesFromAppRoot(dir, "shakapacker")).toBe(true)
+        spec.requiredPeers.forEach((mod) => {
+          expect(resolvesFromAppRoot(dir, mod)).toBe(true)
+        })
         // Verifies documented pnpm/yarn requirements for packages that must be
         // direct app deps because strict layouts do not expose wrapper transitives.
         spec.appRootAssertions.forEach((mod) => {
