@@ -30,9 +30,10 @@ const collectTildeOffenders = (deps, peers) => {
   return [...peerOffenders, ...depOffenders]
 }
 
-// Singleton packages — multiple copies in the dependency tree break
-// `instanceof` checks in plugins/loaders. These MUST be required peer
-// dependencies so the host application gets exactly one resolved version.
+// Runtime singletons: multiple copies break plugin `instanceof` checks.
+// CLI and manifest packages: peered so the host app controls the exact
+// version; duplicate copies can cause version conflicts and unpredictable
+// binary resolution. Both categories MUST be required peer dependencies.
 // See issue #1131 for rationale.
 const WEBPACK_SINGLETONS = ["webpack", "webpack-cli", "webpack-assets-manifest"]
 const RSPACK_SINGLETONS = [

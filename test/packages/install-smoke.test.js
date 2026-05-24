@@ -1,4 +1,4 @@
-// Install smoke test for the shakapacker-webpack supplemental package.
+// Install smoke test for the supplemental packages.
 //
 // Verifies the resolution matrix documented in
 // docs/migration/v10.1-supplemental-packages.md:
@@ -34,6 +34,7 @@ const webpackSupplementalDir = path.join(
   repoRoot,
   "packages/shakapacker-webpack"
 )
+const rspackSupplementalDir = path.join(repoRoot, "packages/shakapacker-rspack")
 
 const optedIn = process.env.RUN_INSTALL_SMOKE === "1"
 const coreIsBuilt = fs.existsSync(path.join(repoRoot, "package/index.js"))
@@ -153,7 +154,33 @@ const resolvesFromAppRoot = (dir, mod) => {
 
 let workRoot
 let coreTarball
-let webpackTarball
+const supplementalTarballs = {}
+
+const supplementalSpecs = [
+  {
+    name: "webpack",
+    packageName: "shakapacker-webpack",
+    dir: webpackSupplementalDir,
+    explicitDeps: {
+      webpack: "^5.101.0",
+      "webpack-cli": "^7.0.0",
+      "webpack-assets-manifest": "^6.0.0",
+      "terser-webpack-plugin": "^5.3.1"
+    },
+    appRootAssertions: ["terser-webpack-plugin"]
+  },
+  {
+    name: "rspack",
+    packageName: "shakapacker-rspack",
+    dir: rspackSupplementalDir,
+    explicitDeps: {
+      "@rspack/core": "^2.0.0",
+      "@rspack/cli": "^2.0.0",
+      "rspack-manifest-plugin": "^5.0.0"
+    },
+    appRootAssertions: []
+  }
+]
 
 describe("install smoke planning helpers", () => {
   test("requires npm even when pnpm is available because tarball packing uses npm", () => {
@@ -197,11 +224,11 @@ describe("install smoke planning helpers", () => {
   })
 })
 
-const wrapperOnlyManifest = () => ({
+const wrapperOnlyManifest = (spec) => ({
   name: "smoke-wrapper-only",
   private: true,
   dependencies: {
-    "shakapacker-webpack": `file:${webpackTarball}`
+    [spec.packageName]: `file:${supplementalTarballs[spec.name]}`
   },
   // Override shakapacker to our locally-packed tarball so the supplemental's
   // `dependencies.shakapacker: "~10.1.0-rc.1"` resolves to the source under
@@ -217,16 +244,13 @@ const wrapperOnlyManifest = () => ({
 // strict layout that resolution only succeeds if the host app declares the
 // dep directly — `shakapacker-webpack`'s transitive dep doesn't cross the
 // package boundary.
-const explicitDepsManifest = () => ({
+const explicitDepsManifest = (spec) => ({
   name: "smoke-explicit",
   private: true,
   dependencies: {
-    "shakapacker-webpack": `file:${webpackTarball}`,
+    [spec.packageName]: `file:${supplementalTarballs[spec.name]}`,
     shakapacker: `file:${coreTarball}`,
-    webpack: "^5.101.0",
-    "webpack-cli": "^7.0.0",
-    "webpack-assets-manifest": "^6.0.0",
-    "terser-webpack-plugin": "^5.3.1"
+    ...spec.explicitDeps
   }
 })
 
@@ -258,12 +282,14 @@ const computeSkipReason = () => {
   return "unknown skip reason"
 }
 
-describe("shakapacker-webpack install smoke (issue #1131)", () => {
+describe("supplemental package install smoke (issue #1131)", () => {
   beforeAll(() => {
     if (!shouldRun) return
     workRoot = fs.mkdtempSync(path.join(os.tmpdir(), "shaka-smoke-"))
     coreTarball = packTarball(repoRoot, workRoot)
-    webpackTarball = packTarball(webpackSupplementalDir, workRoot)
+    supplementalSpecs.forEach((spec) => {
+      supplementalTarballs[spec.name] = packTarball(spec.dir, workRoot)
+    })
   }, 120000)
 
   afterAll(() => {
@@ -285,58 +311,73 @@ describe("shakapacker-webpack install smoke (issue #1131)", () => {
     return
   }
 
-  describe("npm", () => {
-    if (!hasNpm) {
-      test.todo("npm not on PATH")
-      return
-    }
-    if (!npmSupportsOverrides) {
-      test.todo(
-        `npm ${npmVersion} lacks overrides support (wrapperOnlyManifest needs npm 8.3+)`
-      )
-      return
-    }
-    test("npm wrapper-only: shakapacker resolves from app root (npm hoisting)", () => {
-      const dir = makeApp("npm-wrapper-only", wrapperOnlyManifest())
-      runInstall(dir, "npm")
-      expect(resolvesFromAppRoot(dir, "shakapacker")).toBe(true)
-    }, 180000)
+  describe.each(supplementalSpecs)("$name supplemental", (spec) => {
+    describe("npm", () => {
+      if (!hasNpm) {
+        test.todo("npm not on PATH")
+        return
+      }
+      if (!npmSupportsOverrides) {
+        test.todo(
+          `npm ${npmVersion} lacks overrides support (wrapperOnlyManifest needs npm 8.3+)`
+        )
+        return
+      }
+      test("npm wrapper-only: shakapacker resolves from app root (npm hoisting)", () => {
+        const dir = makeApp(
+          `${spec.name}-npm-wrapper-only`,
+          wrapperOnlyManifest(spec)
+        )
+        runInstall(dir, "npm")
+        expect(resolvesFromAppRoot(dir, "shakapacker")).toBe(true)
+      }, 180000)
 
-    test("npm explicit-deps: shakapacker resolves from app root", () => {
-      const dir = makeApp("npm-explicit", explicitDepsManifest())
-      runInstall(dir, "npm")
-      expect(resolvesFromAppRoot(dir, "shakapacker")).toBe(true)
-    }, 180000)
-  })
+      test("npm explicit-deps: shakapacker resolves from app root", () => {
+        const dir = makeApp(
+          `${spec.name}-npm-explicit`,
+          explicitDepsManifest(spec)
+        )
+        runInstall(dir, "npm")
+        expect(resolvesFromAppRoot(dir, "shakapacker")).toBe(true)
+      }, 180000)
+    })
 
-  describe("pnpm", () => {
-    if (!hasPnpm) {
-      test.todo("pnpm not on PATH")
-      return
-    }
-    if (!pnpmSupportsAutoInstallPeers) {
-      test.todo(
-        `pnpm ${pnpmVersion} lacks auto-install-peers support (need 7+)`
-      )
-      return
-    }
-    test("pnpm wrapper-only: shakapacker does NOT resolve from app root (strict isolation)", () => {
-      const dir = makeApp("pnpm-wrapper-only", wrapperOnlyManifest())
-      runInstall(dir, "pnpm")
-      // This is the exact failure mode documented in the migration guide:
-      // pnpm isolates shakapacker under .pnpm/, so app-level
-      // `require("shakapacker")` (e.g. from webpack.config.js) cannot find it.
-      expect(resolvesFromAppRoot(dir, "shakapacker")).toBe(false)
-    }, 180000)
+    describe("pnpm", () => {
+      if (!hasPnpm) {
+        test.todo("pnpm not on PATH")
+        return
+      }
+      if (!pnpmSupportsAutoInstallPeers) {
+        test.todo(
+          `pnpm ${pnpmVersion} lacks auto-install-peers support (need 7+)`
+        )
+        return
+      }
+      test("pnpm wrapper-only: shakapacker does NOT resolve from app root (strict isolation)", () => {
+        const dir = makeApp(
+          `${spec.name}-pnpm-wrapper-only`,
+          wrapperOnlyManifest(spec)
+        )
+        runInstall(dir, "pnpm")
+        // This is the exact failure mode documented in the migration guide:
+        // pnpm isolates shakapacker under .pnpm/, so app-level
+        // `require("shakapacker")` (e.g. from webpack.config.js) cannot find it.
+        expect(resolvesFromAppRoot(dir, "shakapacker")).toBe(false)
+      }, 180000)
 
-    test("pnpm explicit-deps: shakapacker and terser-webpack-plugin resolve from app root", () => {
-      const dir = makeApp("pnpm-explicit", explicitDepsManifest())
-      runInstall(dir, "pnpm")
-      expect(resolvesFromAppRoot(dir, "shakapacker")).toBe(true)
-      // Verifies the documented pnpm/yarn requirement: terser-webpack-plugin
-      // must be declared directly because core shakapacker's default minimizer
-      // requires it from inside the core package.
-      expect(resolvesFromAppRoot(dir, "terser-webpack-plugin")).toBe(true)
-    }, 180000)
+      test("pnpm explicit-deps: documented app-level imports resolve from app root", () => {
+        const dir = makeApp(
+          `${spec.name}-pnpm-explicit`,
+          explicitDepsManifest(spec)
+        )
+        runInstall(dir, "pnpm")
+        expect(resolvesFromAppRoot(dir, "shakapacker")).toBe(true)
+        // Verifies documented pnpm/yarn requirements for packages that must be
+        // direct app deps because strict layouts do not expose wrapper transitives.
+        spec.appRootAssertions.forEach((mod) => {
+          expect(resolvesFromAppRoot(dir, mod)).toBe(true)
+        })
+      }, 180000)
+    })
   })
 })

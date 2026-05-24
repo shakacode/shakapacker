@@ -161,7 +161,7 @@ Supplemental package for the standard webpack managed build experience.
 | swc-loader     | `^0.1.15 \|\| ^0.2.0`             | Paired with @swc/core                    |
 | @babel/core    | `^7.17.9`                         | `javascript_transpiler: "babel"`         |
 | babel-loader   | `^8.2.4 \|\| ^9.0.0 \|\| ^10.0.0` | Paired with @babel/core                  |
-| esbuild        | `^0.14.0 \|\| ... \|\| ^0.27.0`   | `javascript_transpiler: "esbuild"`       |
+| esbuild        | `>=0.14.0 <1.0.0`                 | `javascript_transpiler: "esbuild"`       |
 | esbuild-loader | `^2.0.0 \|\| ^3.0.0 \|\| ^4.0.0`  | Paired with esbuild                      |
 
 **Peer dependencies (optional — CSS preprocessors):**
