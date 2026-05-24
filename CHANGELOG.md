@@ -9,11 +9,7 @@
 
 ## [Unreleased]
 
-### Changed
-
-- **Restructured `shakapacker-webpack` and `shakapacker-rspack` dependency declarations** [PR #1133](https://github.com/shakacode/shakapacker/pull/1133) by [justin808](https://github.com/justin808). In response to [#1131](https://github.com/shakacode/shakapacker/issues/1131), bundler singletons (`webpack`, `webpack-cli`, `webpack-assets-manifest` for webpack; `@rspack/core`, `@rspack/cli`, `rspack-manifest-plugin` for rspack) are now **required peer dependencies** instead of direct `dependencies`. This eliminates the silent duplicate-bundler failure mode that direct deps could cause when an app or transitive dep pinned a different bundler version. npm 7+ auto-installs required peers, preserving the one-command install experience there; pnpm and Yarn PnP users should keep packages imported by app config files as explicit app dependencies (the Rails installer handles this automatically). The tilde (`~`) constraints from the v10.1.0-rc.1 shape have also been loosened to caret (`^`) for all non-`shakapacker` packages, so consumers can pick up upstream patch/minor releases without waiting for a coordinated Shakapacker release. `terser-webpack-plugin` moved from optional peer to direct dependency on `shakapacker-webpack` because `package/optimization/webpack.ts` always requires it for the default production minimizer.
-
-## [v10.1.0-rc.1] - May 21, 2026
+## [v10.1.0-rc.2] - May 23, 2026
 
 ### Added
 
@@ -37,11 +33,13 @@
 
 ### Changed
 
+- **Restructured `shakapacker-webpack` and `shakapacker-rspack` dependency declarations**. [PR #1133](https://github.com/shakacode/shakapacker/pull/1133) by [justin808](https://github.com/justin808). In response to [#1131](https://github.com/shakacode/shakapacker/issues/1131), bundler singletons (`webpack`, `webpack-cli`, `webpack-assets-manifest` for webpack; `@rspack/core`, `@rspack/cli`, `rspack-manifest-plugin` for rspack) are now **required peer dependencies** instead of direct `dependencies`. This eliminates the silent duplicate-bundler failure mode that direct deps could cause when an app or transitive dep pinned a different bundler version. npm 7+ auto-installs required peers, preserving the one-command install experience there; pnpm and Yarn PnP users should keep packages imported by app config files as explicit app dependencies (the Rails installer handles this automatically). The tilde (`~`) constraints from the v10.1.0-rc.1 shape have also been loosened to caret (`^`) for all non-`shakapacker` packages, so consumers can pick up upstream patch/minor releases without waiting for a coordinated Shakapacker release. `terser-webpack-plugin` moved from optional peer to direct dependency on `shakapacker-webpack` because `package/optimization/webpack.ts` always requires it for the default production minimizer.
 - **Changed `shakapacker:install` to default fresh Rspack installs to v2 (`^2.0.0-0`)**. [PR #1091](https://github.com/shakacode/shakapacker/pull/1091) by [ihabadham](https://github.com/ihabadham). `lib/install/package.json` now declares `@rspack/core` and `@rspack/cli` as `^1.0.0 || ^2.0.0-0`; fresh installs pick the v2 range. Existing apps are unaffected. Note: Rspack v2 requires Node.js 20.19.0+.
 - **Slimmed the published gem from ~486K (294 files) to ~121K (75 files)**. [PR #1110](https://github.com/shakacode/shakapacker/pull/1110), [PR #1120](https://github.com/shakacode/shakapacker/pull/1120) by [justin808](https://github.com/justin808). Replaced the broad `git ls-files` gem manifest with an explicit runtime/install allowlist (`CHANGELOG.md`, `MIT-LICENSE`, `README.md`, gemspec, `lib`, `sig`, `package.json`), excluding repo-only docs, tests, JavaScript package source, CI/tooling files, and `test_files` metadata from the published gem. Fixes [#987](https://github.com/shakacode/shakapacker/issues/987).
 
 ### Fixed
 
+- **Fixed config helper binstubs and `shakapacker:export_bundler_config` dispatch for upgraded apps**. [PR #1132](https://github.com/shakacode/shakapacker/pull/1132) by [justin808](https://github.com/justin808). The export task now runs legacy JavaScript `bin/shakapacker-config` binstubs via Node while keeping Ruby binstubs on Ruby. Generated helper binstubs now map `NODE_ENV` from `RAILS_ENV`, locate Node without executing it during lookup, and print useful messages for non-`Error` CLI rejections. Fixes [#1123](https://github.com/shakacode/shakapacker/issues/1123).
 - **Fixed webpack-dev-server `static` config defaulting to watch `public/` directory unnecessarily**. [PR #1032](https://github.com/shakacode/shakapacker/pull/1032) by [ihabadham](https://github.com/ihabadham). Three bugs fixed: (1) `static` now defaults to `false` instead of a misconfigured object that caused webpack-dev-server to watch the `public/` directory, which is already served by Rails via `ActionDispatch::Static`; (2) setting `static: false` in `shakapacker.yml` is no longer silently ignored; (3) the default template no longer includes `static.watch`, which was a v3→v4 migration artifact. Fixes [#1031](https://github.com/shakacode/shakapacker/issues/1031).
 - **Fixed Rspack React Refresh plugin loading with `@rspack/plugin-react-refresh` v2**. [PR #1116](https://github.com/shakacode/shakapacker/pull/1116) by [justin808](https://github.com/justin808). Shakapacker now reads the v2 named `ReactRefreshRspackPlugin` export while retaining compatibility with v1 direct/default CommonJS export shapes, preventing `TypeError: ReactRefreshRspackPlugin is not a constructor` during rspack dev-server startup.
 - **Widened `@rspack/plugin-react-refresh` peer range to `^1.0.0 || ^2.0.0-0`**. [PR #1091](https://github.com/shakacode/shakapacker/pull/1091) by [ihabadham](https://github.com/ihabadham). Fixes the `ERESOLVE` conflict when installing `@rspack/plugin-react-refresh@^2.0.0` alongside `shakapacker@10.0.0`.
@@ -951,8 +949,8 @@ Note: [Rubygem is 6.3.0.pre.rc.1](https://rubygems.org/gems/shakapacker/versions
 
 See [CHANGELOG.md in rails/webpacker (up to v5.4.3)](https://github.com/rails/webpacker/blob/master/CHANGELOG.md)
 
-[Unreleased]: https://github.com/shakacode/shakapacker/compare/v10.1.0-rc.1...main
-[v10.1.0-rc.1]: https://github.com/shakacode/shakapacker/compare/v10.0.0...v10.1.0-rc.1
+[Unreleased]: https://github.com/shakacode/shakapacker/compare/v10.1.0-rc.2...main
+[v10.1.0-rc.2]: https://github.com/shakacode/shakapacker/compare/v10.0.0...v10.1.0-rc.2
 [v10.0.0]: https://github.com/shakacode/shakapacker/compare/v9.7.0...v10.0.0
 [v9.7.0]: https://github.com/shakacode/shakapacker/compare/v9.6.1...v9.7.0
 [v9.6.1]: https://github.com/shakacode/shakapacker/compare/v9.6.0...v9.6.1
