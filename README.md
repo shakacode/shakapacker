@@ -3,9 +3,9 @@
 <p align="center">
   <a href="https://shakapacker.com">
     <picture>
-      <source media="(prefers-color-scheme: dark)" srcset="./assets/brand/lockup-dark.svg">
-      <source media="(prefers-color-scheme: light)" srcset="./assets/brand/lockup-light.svg">
-      <img src="./assets/brand/lockup-light.svg" alt="Shakapacker: Rails asset bundling with modern build systems" width="760">
+      <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/shakacode/shakapacker/main/assets/brand/lockup-dark.svg">
+      <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/shakacode/shakapacker/main/assets/brand/lockup-light.svg">
+      <img src="https://raw.githubusercontent.com/shakacode/shakapacker/main/assets/brand/lockup-light.svg" alt="Shakapacker: Rails asset bundling with modern build systems" width="760">
     </picture>
   </a>
 </p>
