@@ -349,7 +349,7 @@ When releasing from prerelease to a stable version (e.g., v9.6.0-rc.2 → v9.6.0
 
 For each entry from the prerelease section, ask:
 
-- Was this bug present in the last stable release? If no, drop (or apply the merge-into-original-entry rule from Step 2, item 1).
+- Was this change (bug fix, feature, or other) introduced during the RC cycle and absent from the previous stable? If yes, apply the REMOVE rules in Step 2 to decide whether to drop, merge, or keep it.
 - Was this feature introduced in an earlier prerelease and then superseded? If yes, keep only the final state.
 
 #### Step 5: Final read-through
