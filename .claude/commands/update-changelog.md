@@ -313,19 +313,53 @@ When the user passes `rc` or `beta` as an argument (or when creating a prereleas
 
 ### For Prerelease to Stable Version Release
 
-When releasing from prerelease to a stable version (e.g., v9.6.0-rc.1 → v9.6.0):
+When releasing from prerelease to a stable version (e.g., v9.6.0-rc.2 → v9.6.0), the accumulated prerelease section becomes the stable section. **Curate carefully** — users landing on the stable version don't care about intermediate prerelease state, and noise here makes the upgrade story harder to read.
 
-1. **Remove all prerelease version labels** from the changelog:
-   - Change `## [v9.6.0-rc.0]`, `## [v9.6.0-rc.1]`, etc. to a single `## [v9.6.0]` section
-   - Also handle beta versions: `## [v9.6.0-beta.1]` etc.
-   - Combine all prerelease entries into the stable release section
+#### Step 1: Convert the prerelease section into the stable section
 
-2. **Consolidate duplicate entries**:
-   - If bug fixes or changes were made to features introduced in earlier prereleases, keep only the final state
-   - Remove redundant changelog entries for fixes to prerelease features
-   - Keep the most recent/accurate description of each change
+- Change `## [v9.6.0-rc.0]`, `## [v9.6.0-rc.1]`, etc. (and any `## [v9.6.0-beta.N]` sections) into a single `## [v9.6.0] - Month Day, Year` section
+- **Move any remaining entries from `## [Unreleased]` into the new stable section** — anything still under `[Unreleased]` at stable-release time is shipping in this stable version. Leave `## [Unreleased]` with only its header (no entries).
+- Consolidate duplicate category headings — merge multiple `### Fixed` sections into one, etc., under the preferred order from "Category Organization"
+- Remove orphaned compare links at the bottom of the file for the prerelease versions
+- Add the `[v9.6.0]` compare link pointing from the **previous stable tag** (e.g., `v9.5.0...v9.6.0`) — **not** from the latest RC tag
+- Update the `[Unreleased]` compare link to point from `v9.6.0` to `main`
 
-3. **Update version diff links** at the bottom to point to the stable version
+#### Step 2: Curate the entries — REMOVE these
+
+1. **Prerelease-only fixes** — bugs introduced during the prerelease cycle and fixed in a later RC. If the bug never shipped in stable, the fix is noise to stable users.
+   - Investigate when the bug was introduced: `git log --oneline v<last_stable>..v<rc_that_fixed_the_bug>` — if the introducing commit predates the RC cycle, the bug was already in the last stable release and the fix belongs in the stable section. If the introduction _is_ in this range, the bug never shipped in stable.
+   - For RC-only regression fixes where the fix changed user-visible behavior of the original feature (e.g., extended a config allowlist), apply the **merge** rule from "Filtering RC-only fixes when collapsing prereleases" above: fold the fix into the original PR's entry, credit both PRs, and update any details the fix changed so the entry reflects the final shipped state. Don't drop these — stable consumers will see the merged behavior, not the intermediate regression.
+   - Pure-restore fixes (the fix only restores prior behavior without changing the original entry's description) can be dropped.
+
+2. **Refinements to prerelease-only features** — if a new feature was introduced in `rc.0` and then iterated in `rc.1`/`rc.2`, keep only the final description and drop the iteration history.
+
+3. **Internal/contributor-only tooling** — CI tweaks, build script changes, generator handling of prerelease version formats, local-dev tooling fixes. These don't belong in a user-facing changelog.
+
+#### Step 3: Curate the entries — KEEP these
+
+1. **User-facing fixes for bugs that existed in the previous stable** — if `rc.2` fixes a bug that was in `v9.5.0`, that fix matters to stable users upgrading.
+
+2. **Compatibility fixes** — Ruby/Node/Rails version support, dependency relaxations, etc.
+
+3. **All breaking changes** — API/CLI changes, removed methods, configuration changes, generator output changes. Even if a breaking change was introduced and refined across multiple prereleases, the final breaking change description belongs in stable.
+
+4. **Performance/security improvements affecting all users.**
+
+#### Step 4: Investigation process for each entry
+
+For each entry from the prerelease section, ask:
+
+- Was this bug present in the last stable release? If no, drop (or merge per Step 2).
+- Was this feature introduced in an earlier prerelease and then superseded? If yes, keep only the final state.
+- Does this matter to someone upgrading from the last stable to this stable? If no, drop.
+
+#### Step 5: Final read-through
+
+Read the resulting stable section as if you're a user upgrading from the previous stable. Every entry should be something you'd want to know about. If an entry only makes sense to someone who tracked the RC cycle, drop it.
+
+#### Step 6: Update version diff links
+
+Update the version diff links at the bottom of the file: the new `[v9.6.0]` link compares from the previous stable tag, and orphaned compare links for the coalesced prerelease versions are removed.
 
 ## Examples
 
