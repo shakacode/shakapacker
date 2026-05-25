@@ -356,7 +356,7 @@ For each entry from the prerelease section, ask:
 
 Read the resulting stable section as if you're a user upgrading from the previous stable. Every entry should be something you'd want to know about. If an entry only makes sense to someone who tracked the RC cycle, drop it.
 
-#### Step 6: Verify the compare links from Step 1
+#### Step 6: Verify the compare links from Step 1 (before committing)
 
 Before committing, confirm the compare-link updates from Step 1 are in place: orphaned RC compare links removed, the new `[v9.6.0]` link anchored at the previous stable tag (not the latest RC), and `[Unreleased]` pointing from `v9.6.0` to `main`.
 
