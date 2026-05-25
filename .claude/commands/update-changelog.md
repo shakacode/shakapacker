@@ -327,7 +327,7 @@ When releasing from prerelease to a stable version (e.g., v9.6.0-rc.2 → v9.6.0
 #### Step 2: Curate the entries — REMOVE these
 
 1. **Prerelease-only fixes** — bugs introduced during the prerelease cycle and fixed in a later RC. If the bug never shipped in stable, the fix is noise to stable users.
-   - Investigate when the bug was introduced: `git log --oneline v<last_stable>..v<rc_that_fixed_the_bug>` — if the introducing commit predates the RC cycle, the bug was already in the last stable release and the fix belongs in the stable section. If the introduction _is_ in this range, the bug never shipped in stable.
+   - Investigate when the bug was introduced: `git log --oneline v<last_stable>..v<rc_that_fixed_the_bug>` lists every commit added since the last stable release. If the introducing commit appears in this range, the bug was introduced during the prerelease cycle and never shipped to stable users — apply the RC-only churn rules below. If it does not appear (i.e., it is reachable from `v<last_stable>`), the bug was already in the last stable release and the fix belongs in the stable section.
    - For RC-only regression fixes where the fix changed user-visible behavior of the original feature (e.g., extended a config allowlist), apply the **merge** rule from "Filtering RC-only fixes when collapsing prereleases" above: fold the fix into the original PR's entry, credit both PRs, and update any details the fix changed so the entry reflects the final shipped state. Don't drop these — stable consumers will see the merged behavior, not the intermediate regression.
    - Pure-restore fixes (the fix only restores prior behavior without changing the original entry's description) can be dropped.
 
@@ -349,17 +349,16 @@ When releasing from prerelease to a stable version (e.g., v9.6.0-rc.2 → v9.6.0
 
 For each entry from the prerelease section, ask:
 
-- Was this bug present in the last stable release? If no, drop (or merge per Step 2).
+- Was this bug present in the last stable release? If no, drop (or apply the merge-into-original-entry rule from Step 2, item 1).
 - Was this feature introduced in an earlier prerelease and then superseded? If yes, keep only the final state.
-- Does this matter to someone upgrading from the last stable to this stable? If no, drop.
 
 #### Step 5: Final read-through
 
 Read the resulting stable section as if you're a user upgrading from the previous stable. Every entry should be something you'd want to know about. If an entry only makes sense to someone who tracked the RC cycle, drop it.
 
-#### Step 6: Update version diff links
+#### Step 6: Verify the compare links from Step 1
 
-Update the version diff links at the bottom of the file: the new `[v9.6.0]` link compares from the previous stable tag, and orphaned compare links for the coalesced prerelease versions are removed.
+Before committing, confirm the compare-link updates from Step 1 are in place: orphaned RC compare links removed, the new `[v9.6.0]` link anchored at the previous stable tag (not the latest RC), and `[Unreleased]` pointing from `v9.6.0` to `main`.
 
 ## Examples
 
