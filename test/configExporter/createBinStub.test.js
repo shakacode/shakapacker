@@ -1,4 +1,10 @@
-const { mkdtempSync, readFileSync, rmSync } = require("fs")
+const {
+  accessSync,
+  constants,
+  mkdtempSync,
+  readFileSync,
+  rmSync
+} = require("fs")
 const { join, resolve } = require("path")
 const { tmpdir } = require("os")
 const { createBinStub } = require("../../package/configExporter/cli")
@@ -39,6 +45,7 @@ describe("createBinStub template parity", () => {
       )
 
       expect(generated).toBe(installed)
+      expect(() => accessSync(generatedPath, constants.X_OK)).not.toThrow()
     }
   )
 })

@@ -55,7 +55,9 @@ describe "binstub synchronization" do
 
     expect(dummy_content).to eq(install_content),
       "spec/dummy/bin/shakapacker-config and lib/install/bin/shakapacker-config have diverged. " \
-      "Update both files to keep them in sync."
+      "Update all four copies (lib/install/bin/shakapacker-config, lib/install/bin/diff-bundler-config, " \
+      "spec/dummy/bin/shakapacker-config, and the createBinStub template in package/configExporter/cli.ts) " \
+      "to keep them in sync."
   end
 
   # lib/install/bin/diff-bundler-config and lib/install/bin/shakapacker-config share
