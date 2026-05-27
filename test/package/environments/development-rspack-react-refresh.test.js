@@ -3,13 +3,16 @@ const { chdirTestApp, resetEnv } = require("../../helpers")
 const rootPath = process.cwd()
 chdirTestApp()
 
-const loadRspackDevelopmentConfig = (reactRefreshModule) => {
+const loadRspackDevelopmentConfig = (
+  reactRefreshModule = function ReactRefreshRspackPlugin() {},
+  webpackServe = "true"
+) => {
   jest.resetModules()
   resetEnv()
   process.env.RAILS_ENV = "development"
   process.env.NODE_ENV = "development"
-  process.env.WEBPACK_SERVE = "true"
   process.env.SHAKAPACKER_ASSETS_BUNDLER = "rspack"
+  if (webpackServe !== null) process.env.WEBPACK_SERVE = webpackServe
 
   jest.doMock("../../../package/utils/helpers", () => {
     const original = jest.requireActual("../../../package/utils/helpers")
@@ -107,5 +110,23 @@ describe("Rspack React refresh development config", () => {
     )
     expect(environmentConfig).toBeDefined()
     expect(hasReactRefreshPluginInstance(environmentConfig)).toBe(false)
+  })
+
+  test("omits devServer when webpack dev server is not running", () => {
+    const environmentConfig = loadRspackDevelopmentConfig(undefined, null)
+
+    expect(environmentConfig.devServer).toBeUndefined()
+  })
+
+  test("sets devServer when webpack dev server is running", () => {
+    const environmentConfig = loadRspackDevelopmentConfig()
+
+    expect(environmentConfig.devServer).toBeDefined()
+    expect(environmentConfig.devServer.devMiddleware.writeToDisk).toStrictEqual(
+      expect.any(Function)
+    )
+    const { writeToDisk } = environmentConfig.devServer.devMiddleware
+    expect(writeToDisk("/packs/app.hot-update.js")).toBe(false)
+    expect(writeToDisk("/packs/app.js")).toBe(true)
   })
 })
