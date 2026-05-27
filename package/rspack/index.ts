@@ -33,20 +33,20 @@ let _rules: RuleSetRule[] | undefined
 
 const getRules = (): RuleSetRule[] => {
   if (_rules === undefined) {
-    _rules = require(rulesPath)
+    _rules = require(rulesPath) as RuleSetRule[]
   }
 
-  return _rules!
+  return _rules
 }
 
 let _baseConfig: RspackConfigWithDevServer | undefined
 
 const getBaseConfig = (): RspackConfigWithDevServer => {
   if (_baseConfig === undefined) {
-    _baseConfig = require("../environments/base")
+    _baseConfig = require("../environments/base") as RspackConfigWithDevServer
   }
 
-  return _baseConfig!
+  return _baseConfig
 }
 
 const generateRspackConfig = (
@@ -89,6 +89,8 @@ type RspackExports = typeof webpackMerge & {
   getProvidePlugin: typeof getProvidePlugin
 }
 
+// baseConfig and rules are installed below as lazy getters; this cast describes
+// the final CommonJS export shape after those descriptors are attached.
 const rspackExports = {
   // shakapacker.yml
   config,
