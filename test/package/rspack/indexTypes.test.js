@@ -32,9 +32,7 @@ describe("rspack/index types", () => {
         /readonly baseConfig: RspackConfigWithDevServer/
       )
       expect(declaration).toMatch(/readonly rules: RuleSetRule\[\]/)
-      expect(declaration).toMatch(
-        /declare const rspackExports: RspackExports/
-      )
+      expect(declaration).toMatch(/declare const rspackExports: RspackExports/)
       expect(declaration).toContain("export = rspackExports")
       expect(declaration).toContain("env")
       expect(declaration).toContain("moduleExists")

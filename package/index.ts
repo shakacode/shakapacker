@@ -36,10 +36,10 @@ let _baseConfig: Configuration | undefined
 
 const getBaseConfig = (): Configuration => {
   if (_baseConfig === undefined) {
-    _baseConfig = require("./environments/base")
+    _baseConfig = require("./environments/base") as Configuration
   }
 
-  return _baseConfig!
+  return _baseConfig
 }
 
 /**
