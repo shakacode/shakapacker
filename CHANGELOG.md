@@ -11,7 +11,7 @@
 
 ### Added
 
-- **Added support for `sass-loader` v17**. [PR #XXXX](https://github.com/shakacode/shakapacker/pull/XXXX) by [fukayatsu](https://github.com/fukayatsu). Widened the optional `sass-loader` peer range to `^13.0.0 || ^14.0.0 || ^15.0.0 || ^16.0.0 || ^17.0.0` in core `shakapacker`, `shakapacker-webpack`, and `shakapacker-rspack`. The Sass rule already selects `loadPaths` for v16+ and keeps `api: "modern"`, both of which remain valid in v17. Note that sass-loader v17 requires Node.js 22.11.0+ and drops `node-sass` and the legacy Sass JS API, so apps that opt into v17 must already be on Node 22.12+ (the upper branch of Shakapacker's `engines.node` range).
+- **Added support for `sass-loader` v17**. [PR #1141](https://github.com/shakacode/shakapacker/pull/1141) by [fukayatsu](https://github.com/fukayatsu). Widened the optional `sass-loader` peer range to `^13.0.0 || ^14.0.0 || ^15.0.0 || ^16.0.0 || ^17.0.0` in core `shakapacker`, `shakapacker-webpack`, and `shakapacker-rspack`. The Sass rule already selects `loadPaths` for v16+ and keeps `api: "modern"`, both of which remain valid in v17. Note that sass-loader v17 requires Node.js 22.11.0+ and drops `node-sass` and the legacy Sass JS API, so apps that opt into v17 must already be on Node 22.12+ (the upper branch of Shakapacker's `engines.node` range).
 
 ### Fixed
 
