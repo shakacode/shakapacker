@@ -26,7 +26,7 @@ releases support.
 "css-loader": "^6.8.1 || ^7.0.0"
 "mini-css-extract-plugin": "^2.0.0"
 "sass": "^1.50.0"
-"sass-loader": "^13.0.0 || ^14.0.0 || ^15.0.0 || ^16.0.0"
+"sass-loader": "^13.0.0 || ^14.0.0 || ^15.0.0 || ^16.0.0 || ^17.0.0"
 "terser-webpack-plugin": "^5.3.1"
 "webpack-assets-manifest": "^5.0.6 || ^6.0.0"
 "webpack-cli": "^4.9.2 || ^5.0.0 || ^6.0.0 || ^7.0.0"

@@ -29,7 +29,7 @@ Shakapacker v10 has **23 optional peer dependencies** with extremely broad versi
 
 - `esbuild`: 14 separate version ranges (`^0.14.0 || ^0.15.0 || ... || ^0.27.0`)
 - `webpack-cli`: 4 major versions (`^4.9.2 || ^5.0.0 || ^6.0.0 || ^7.0.0`)
-- `sass-loader`: 4 major versions (`^13.0.0 || ^14.0.0 || ^15.0.0 || ^16.0.0`)
+- `sass-loader`: 5 major versions (`^13.0.0 || ^14.0.0 || ^15.0.0 || ^16.0.0 || ^17.0.0`)
 - `babel-loader`: 3 major versions (`^8.2.4 || ^9.0.0 || ^10.0.0`)
 
 On the Ruby side, the gem supports Rails 5.2+ and Ruby 2.7+ — both well past end-of-life.
@@ -166,11 +166,11 @@ Supplemental package for the standard webpack managed build experience.
 
 **Peer dependencies (optional — CSS preprocessors):**
 
-| Package     | Range                                            | When needed      |
-| ----------- | ------------------------------------------------ | ---------------- |
-| css-loader  | `^6.8.1 \|\| ^7.0.0`                             | CSS processing   |
-| sass        | `^1.50.0`                                        | SCSS/Sass files  |
-| sass-loader | `^13.0.0 \|\| ^14.0.0 \|\| ^15.0.0 \|\| ^16.0.0` | Paired with sass |
+| Package     | Range                                                         | When needed      |
+| ----------- | ------------------------------------------------------------- | ---------------- |
+| css-loader  | `^6.8.1 \|\| ^7.0.0`                                          | CSS processing   |
+| sass        | `^1.50.0`                                                     | SCSS/Sass files  |
+| sass-loader | `^13.0.0 \|\| ^14.0.0 \|\| ^15.0.0 \|\| ^16.0.0 \|\| ^17.0.0` | Paired with sass |
 
 #### `shakapacker-rspack` (managed rspack build)
 
@@ -192,12 +192,12 @@ Supplemental package for the rspack managed build experience.
 
 **Peer dependencies (optional):**
 
-| Package                      | Range                                            | When needed      |
-| ---------------------------- | ------------------------------------------------ | ---------------- |
-| @rspack/plugin-react-refresh | `^1.0.0 \|\| ^2.0.0`                             | React HMR        |
-| css-loader                   | `^6.8.1 \|\| ^7.0.0`                             | CSS processing   |
-| sass                         | `^1.50.0`                                        | SCSS/Sass files  |
-| sass-loader                  | `^13.0.0 \|\| ^14.0.0 \|\| ^15.0.0 \|\| ^16.0.0` | Paired with sass |
+| Package                      | Range                                                         | When needed      |
+| ---------------------------- | ------------------------------------------------------------- | ---------------- |
+| @rspack/plugin-react-refresh | `^1.0.0 \|\| ^2.0.0`                                          | React HMR        |
+| css-loader                   | `^6.8.1 \|\| ^7.0.0`                                          | CSS processing   |
+| sass                         | `^1.50.0`                                                     | SCSS/Sass files  |
+| sass-loader                  | `^13.0.0 \|\| ^14.0.0 \|\| ^15.0.0 \|\| ^16.0.0 \|\| ^17.0.0` | Paired with sass |
 
 Note: rspack has built-in SWC transpilation, so no external transpiler deps are needed.
 
