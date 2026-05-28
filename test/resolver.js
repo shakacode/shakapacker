@@ -8,16 +8,28 @@ const mapping = {
 
 const repoRoot = resolve(__dirname, "..")
 // Keep this map explicit to avoid accidentally rewriting third-party imports.
-// If a new local rspack TS module is required via its compiled .js path in tests,
+// If a new local bundler TS module is required via its compiled .js path in tests,
 // add the corresponding mapping here.
-const rspackModuleAliasMap = {
+const bundlerModuleAliasMap = {
+  [resolve(repoRoot, "package/plugins/webpack.js")]: resolve(
+    repoRoot,
+    "package/plugins/webpack.ts"
+  ),
   [resolve(repoRoot, "package/plugins/rspack.js")]: resolve(
     repoRoot,
     "package/plugins/rspack.ts"
   ),
+  [resolve(repoRoot, "package/rules/webpack.js")]: resolve(
+    repoRoot,
+    "package/rules/webpack.ts"
+  ),
   [resolve(repoRoot, "package/rules/rspack.js")]: resolve(
     repoRoot,
     "package/rules/rspack.ts"
+  ),
+  [resolve(repoRoot, "package/optimization/webpack.js")]: resolve(
+    repoRoot,
+    "package/optimization/webpack.ts"
   ),
   [resolve(repoRoot, "package/optimization/rspack.js")]: resolve(
     repoRoot,
@@ -30,11 +42,11 @@ function resolver(module, options) {
     return mapping[module]
   }
 
-  // Remap only this repository's known rspack JS targets to TS sources.
+  // Remap only this repository's known bundler JS targets to TS sources.
   if (options.basedir) {
     const requestedPath = resolve(options.basedir, module)
-    if (rspackModuleAliasMap[requestedPath]) {
-      return rspackModuleAliasMap[requestedPath]
+    if (bundlerModuleAliasMap[requestedPath]) {
+      return bundlerModuleAliasMap[requestedPath]
     }
   }
 

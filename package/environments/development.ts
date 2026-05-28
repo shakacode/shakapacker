@@ -58,13 +58,15 @@ const rspackDevConfig = (): RspackConfigWithDevServer => {
   const devServerConfig = webpackDevServerConfig()
   const rspackConfig: RspackConfigWithDevServer = {
     ...baseDevConfig,
-    devServer: {
-      ...devServerConfig,
-      devMiddleware: {
-        ...(devServerConfig.devMiddleware || {}),
-        writeToDisk: (filePath: string) => !filePath.includes(".hot-update.")
+    ...(runningWebpackDevServer && {
+      devServer: {
+        ...devServerConfig,
+        devMiddleware: {
+          ...(devServerConfig.devMiddleware || {}),
+          writeToDisk: (filePath: string) => !filePath.includes(".hot-update.")
+        }
       }
-    }
+    })
   }
 
   if (
