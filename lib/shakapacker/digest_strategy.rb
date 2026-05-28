@@ -46,7 +46,7 @@ module Shakapacker
         files = Dir[*expanded_paths].reject { |f| File.directory?(f) }
         file_ids = files.sort.map { |f| "#{File.basename(f)}/#{Digest::SHA1.file(f).hexdigest}" }
 
-        asset_host = Shakapacker.config.asset_host.to_s
+        asset_host = config.asset_host.to_s
         Digest::SHA1.hexdigest(file_ids.join("/").concat(asset_host))
       end
 
@@ -56,7 +56,7 @@ module Shakapacker
       end
 
       def compilation_digest_path
-        config.cache_path.join("last-compilation-digest-#{Shakapacker.env}")
+        config.cache_path.join("last-compilation-digest-#{env}")
       end
   end
 end

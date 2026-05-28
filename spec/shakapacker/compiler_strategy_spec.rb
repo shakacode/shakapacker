@@ -20,5 +20,13 @@ describe "Shakapacker::CompilerStrategy" do
 
       expect { Shakapacker::CompilerStrategy.from_config }.to raise_error(expected_error_message)
     end
+
+    it "uses the given instance's config instead of the global config" do
+      custom_instance = Shakapacker::Instance.new
+      allow(custom_instance.config).to receive(:compiler_strategy).and_return("mtime")
+      allow(Shakapacker.config).to receive(:compiler_strategy).and_return("digest")
+
+      expect(Shakapacker::CompilerStrategy.from_config(custom_instance)).to be_an_instance_of(Shakapacker::MtimeStrategy)
+    end
   end
 end
