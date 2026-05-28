@@ -200,6 +200,51 @@ RSpec.describe "helper binstubs" do
       end
     end
 
+    it "honors an empty PATH entry as the current directory for #{command}" do
+      Dir.mktmpdir("shakapacker-binstub-") do |app_path|
+        File.write(File.join(app_path, "Gemfile"), "")
+        FileUtils.mkdir_p(File.join(app_path, "bin"))
+        install_fake_node_script(app_path, command)
+
+        real_node_path = ENV.fetch("PATH").split(File::PATH_SEPARATOR).map { |path| File.join(path, "node") }.find do |path|
+          File.file?(path) && File.executable?(path)
+        end
+
+        skip "node not found in PATH" unless real_node_path
+
+        launch_path = File.join(app_path, "launch")
+        FileUtils.mkdir_p(launch_path)
+        fake_node_path = File.join(launch_path, "node")
+        File.write(fake_node_path, <<~SH)
+          #!/bin/sh
+          exec #{real_node_path.shellescape} "$@"
+        SH
+        FileUtils.chmod(0o755, fake_node_path)
+
+        binstub_path = File.join(app_path, "bin", command)
+        FileUtils.cp(File.join(gem_root, "lib", "install", "bin", command), binstub_path)
+        FileUtils.chmod(0o755, binstub_path)
+
+        output_path = File.join(app_path, "binstub-output.json")
+        _stdout, stderr, status = Open3.capture3(
+          {
+            "BUNDLE_GEMFILE" => nil,
+            "PATH" => "#{File::PATH_SEPARATOR}/nonexistent",
+            "RUBYOPT" => nil,
+            "SHAKAPACKER_BINSTUB_OUTPUT" => output_path
+          },
+          RbConfig.ruby,
+          binstub_path,
+          chdir: launch_path
+        )
+
+        expect(status).to be_success, stderr
+        expect(JSON.parse(File.read(output_path))).to include(
+          "cwd" => File.realpath(app_path)
+        )
+      end
+    end
+
     it "exits with an error when #{command}'s package script is missing" do
       Dir.mktmpdir("shakapacker-binstub-") do |app_path|
         File.write(File.join(app_path, "Gemfile"), "")
