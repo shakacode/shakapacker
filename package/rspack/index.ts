@@ -72,6 +72,13 @@ const generateRspackConfig = (
 // baseConfig and rules are installed below as lazy getters. These ambient
 // declarations keep the generated .d.ts named export surface aligned with the
 // runtime descriptors without forcing either module to load eagerly.
+//
+// Mechanism: with module: commonjs, TypeScript compiles these named exports as
+// plain `exports.baseConfig = baseConfig` assignments. Those assignments create
+// configurable data properties that the Object.defineProperty calls below can
+// replace with accessor descriptors. If this file is ever compiled to a format
+// that emits non-configurable export descriptors, the lazy descriptor override
+// will fail at module load time.
 declare const baseConfig: RspackConfigWithDevServer
 declare const rules: RuleSetRule[]
 

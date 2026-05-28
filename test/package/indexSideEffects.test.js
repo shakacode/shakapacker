@@ -62,6 +62,23 @@ describe("index side effects", () => {
     })
   })
 
+  test("baseConfig can be overridden via Object.defineProperty", () => {
+    jest.isolateModules(() => {
+      mockEnsureManifestExists()
+
+      const shakapacker = require("../../package/index")
+      const stub = { mode: "none", entry: {} }
+
+      Object.defineProperty(shakapacker, "baseConfig", {
+        value: stub,
+        writable: true,
+        configurable: true
+      })
+
+      expect(shakapacker.baseConfig).toBe(stub)
+    })
+  })
+
   test("defines rules as a configurable lazy export", () => {
     jest.isolateModules(() => {
       mockEnsureManifestExists()
@@ -89,6 +106,23 @@ describe("index side effects", () => {
       expect(() => {
         shakapacker.rules = []
       }).toThrow(/shakapacker\.rules is read-only/)
+    })
+  })
+
+  test("rules can be overridden via Object.defineProperty", () => {
+    jest.isolateModules(() => {
+      mockEnsureManifestExists()
+
+      const shakapacker = require("../../package/index")
+      const stub = [{ test: /\.stub$/, use: [] }]
+
+      Object.defineProperty(shakapacker, "rules", {
+        value: stub,
+        writable: true,
+        configurable: true
+      })
+
+      expect(shakapacker.rules).toBe(stub)
     })
   })
 
