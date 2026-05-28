@@ -1,5 +1,11 @@
 const { execFileSync } = require("child_process")
-const { mkdtempSync, readFileSync, rmSync } = require("fs")
+const {
+  mkdtempSync,
+  readFileSync,
+  rmSync,
+  symlinkSync,
+  writeFileSync
+} = require("fs")
 const { join } = require("path")
 const { tmpdir } = require("os")
 
@@ -27,17 +33,49 @@ describe("rspack/index types", () => {
       )
 
       // Verify lazy exports are present with their real types (not `any`)
-      // on the CommonJS export object.
+      // on the named export surface.
       expect(declaration).toMatch(
-        /readonly baseConfig: RspackConfigWithDevServer/
+        /declare const baseConfig: RspackConfigWithDevServer/
       )
-      expect(declaration).toMatch(/readonly rules: RuleSetRule\[\]/)
-      expect(declaration).toMatch(/declare const rspackExports: RspackExports/)
-      expect(declaration).toContain("export = rspackExports")
+      expect(declaration).toMatch(/declare const rules: RuleSetRule\[\]/)
+      expect(declaration).toContain("generateRspackConfig")
       expect(declaration).toContain("env")
       expect(declaration).toContain("moduleExists")
     } finally {
       rmSync(outDir, { recursive: true, force: true })
+    }
+  }, 60000)
+
+  test("compiled rspack entry supports native ESM named imports", () => {
+    const rootDir = mkdtempSync(join(tmpdir(), "shakapacker-rspack-esm-"))
+    const outDir = join(rootDir, "package")
+
+    try {
+      execFileSync("./node_modules/.bin/tsc", ["--outDir", outDir], {
+        stdio: ["pipe", "pipe", "inherit"]
+      })
+      symlinkSync(
+        join(process.cwd(), "node_modules"),
+        join(rootDir, "node_modules")
+      )
+      symlinkSync(join(process.cwd(), "lib"), join(rootDir, "lib"))
+
+      const consumerPath = join(rootDir, "rspack-esm-consumer.mjs")
+      writeFileSync(
+        consumerPath,
+        [
+          'import { generateRspackConfig } from "./package/rspack/index.js"',
+          'if (typeof generateRspackConfig !== "function") {',
+          '  throw new Error("generateRspackConfig was not imported")',
+          "}"
+        ].join("\n")
+      )
+
+      execFileSync(process.execPath, [consumerPath], {
+        stdio: ["pipe", "pipe", "inherit"]
+      })
+    } finally {
+      rmSync(rootDir, { recursive: true, force: true })
     }
   }, 60000)
 })

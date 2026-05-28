@@ -69,34 +69,27 @@ const generateRspackConfig = (
   return webpackMerge.merge({}, environmentConfig, extraConfig)
 }
 
-type RspackExports = typeof webpackMerge & {
-  config: typeof config
-  devServer: typeof devServer
-  generateRspackConfig: typeof generateRspackConfig
-  readonly baseConfig: RspackConfigWithDevServer
-  env: typeof env
-  readonly rules: RuleSetRule[]
-  moduleExists: typeof moduleExists
-  canProcess: typeof canProcess
-  inliningCss: typeof inliningCss
-  isRspack: typeof isRspack
-  isWebpack: typeof isWebpack
-  getBundler: typeof getBundler
-  getCssExtractPlugin: typeof getCssExtractPlugin
-  getCssExtractPluginLoader: typeof getCssExtractPluginLoader
-  getDefinePlugin: typeof getDefinePlugin
-  getEnvironmentPlugin: typeof getEnvironmentPlugin
-  getProvidePlugin: typeof getProvidePlugin
-}
+// baseConfig and rules are installed below as lazy getters. These ambient
+// declarations keep the generated .d.ts named export surface aligned with the
+// runtime descriptors without forcing either module to load eagerly.
+declare const baseConfig: RspackConfigWithDevServer
+declare const rules: RuleSetRule[]
 
-// baseConfig and rules are installed below as lazy getters; this cast describes
-// the final CommonJS export shape after those descriptors are attached.
-const rspackExports = {
-  // shakapacker.yml
-  config,
+// Re-export webpack-merge utilities for backward compatibility
+export {
+  merge,
+  mergeWithCustomize,
+  mergeWithRules,
+  unique
+} from "webpack-merge"
+
+export {
+  config, // shakapacker.yml
   devServer,
   generateRspackConfig,
+  baseConfig,
   env,
+  rules,
   moduleExists,
   canProcess,
   inliningCss,
@@ -107,12 +100,10 @@ const rspackExports = {
   getCssExtractPluginLoader,
   getDefinePlugin,
   getEnvironmentPlugin,
-  getProvidePlugin,
-  // webpack-merge utilities for backward compatibility
-  ...webpackMerge
-} as RspackExports
+  getProvidePlugin
+}
 
-Object.defineProperty(rspackExports, "rules", {
+Object.defineProperty(exports, "rules", {
   configurable: true,
   enumerable: true,
   get: getRules,
@@ -123,7 +114,7 @@ Object.defineProperty(rspackExports, "rules", {
   }
 })
 
-Object.defineProperty(rspackExports, "baseConfig", {
+Object.defineProperty(exports, "baseConfig", {
   configurable: true,
   enumerable: true,
   get: getBaseConfig,
@@ -133,5 +124,3 @@ Object.defineProperty(rspackExports, "baseConfig", {
     )
   }
 })
-
-export = rspackExports
