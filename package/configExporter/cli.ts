@@ -556,7 +556,7 @@ def shakapacker_executable_candidates(executable)
 end
 
 def shakapacker_find_executable(executable)
-  ENV.fetch("PATH", "").split(File::PATH_SEPARATOR).each do |path|
+  ENV.fetch("PATH", "").split(File::PATH_SEPARATOR, -1).each do |path|
     search_path = path.empty? ? Dir.pwd : path
 
     shakapacker_executable_candidates(executable).each do |candidate|
