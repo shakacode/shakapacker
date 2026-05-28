@@ -4,9 +4,9 @@ describe("spec/dummy rspack config", () => {
     delete process.env.CLIENT_BUNDLE_ONLY
     delete process.env.SERVER_BUNDLE_ONLY
 
-    class WebpackManifestPlugin {}
-    class CssExtractRspackPlugin {}
-    class EnvironmentPlugin {}
+    function WebpackManifestPlugin() {}
+    function CssExtractRspackPlugin() {}
+    function EnvironmentPlugin() {}
 
     const generateRspackConfig = jest.fn(() => ({
       entry: {

@@ -132,6 +132,7 @@ describe("index side effects", () => {
     // getter still produces a fully assembled config object.
     jest.isolateModules(() => {
       const ensureManifestExists = mockEnsureManifestExists()
+      jest.dontMock("../../package/plugins/webpack")
 
       const shakapacker = require("../../package/index")
 
