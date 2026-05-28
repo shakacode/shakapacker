@@ -17,7 +17,7 @@ _📖 **Full documentation at [shakapacker.com](https://shakapacker.com)**_
 _Official, actively maintained successor to [rails/webpacker](https://github.com/rails/webpacker). ShakaCode stands behind the long-term maintenance and development of this project for the Rails community._
 
 - ⚠️ See the [6-stable](https://github.com/shakacode/shakapacker/tree/6-stable) branch for Shakapacker v6.x code and documentation. :warning:
-- **New in 10.1: optional `shakapacker-webpack` and `shakapacker-rspack` packages let you replace four `devDependencies` with one. See the [v10.1 supplemental packages migration guide](./docs/migration/v10.1-supplemental-packages.md).**
+- **New in 10.1: optional `shakapacker-webpack` and `shakapacker-rspack` packages let you replace four `devDependencies` with one. See the package references for [`shakapacker-webpack`](./packages/shakapacker-webpack/README.md) and [`shakapacker-rspack`](./packages/shakapacker-rspack/README.md), plus the [v10.1 supplemental packages migration guide](./docs/migration/v10.1-supplemental-packages.md).**
 - **See the [v10.0.0 release notes](https://github.com/shakacode/shakapacker/releases/tag/v10.0.0) for upgrading from v9 to v10.**
 - **See [V9 Upgrade](./docs/v9_upgrade.md) for upgrading from v8 to v9.**
 - See [V8 Upgrade](./docs/v8_upgrade.md) for upgrading from the v7 release.
@@ -32,6 +32,8 @@ _Official, actively maintained successor to [rails/webpacker](https://github.com
 [![node.js](https://img.shields.io/badge/node-%5E20.19.0%20%7C%7C%20%3E%3D22.12.0-brightgreen.svg)](https://www.npmjs.com/package/shakapacker)
 [![Gem](https://img.shields.io/gem/v/shakapacker.svg)](https://rubygems.org/gems/shakapacker)
 [![npm version](https://badge.fury.io/js/shakapacker.svg)](https://badge.fury.io/js/shakapacker)
+[![shakapacker-webpack npm version](https://badge.fury.io/js/shakapacker-webpack.svg)](https://www.npmjs.com/package/shakapacker-webpack)
+[![shakapacker-rspack npm version](https://badge.fury.io/js/shakapacker-rspack.svg)](https://www.npmjs.com/package/shakapacker-rspack)
 
 Shakapacker makes it easy to use the JavaScript pre-processor and bundler [Webpack v5+](https://webpack.js.org/)
 to manage frontend JavaScript in Rails. It can coexist with the asset pipeline,
