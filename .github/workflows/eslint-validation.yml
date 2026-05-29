@@ -9,6 +9,11 @@ on:
       - "test/**/*.js"
       - ".github/workflows/eslint-validation.yml"
 
+concurrency:
+  # Pushing new changes to a branch will cancel any in-progress CI runs
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   validate:
     runs-on: ubuntu-latest
