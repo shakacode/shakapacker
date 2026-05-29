@@ -516,6 +516,6 @@ Those paths are later passed to [output path generation in the rule](https://git
 You can avoid this by:
 
 - not using overridden `context` in your webpack config, if there's no good reason for it.
-- using custom Webpack config to modify the static file rule, following a similar process as outlined in the [Webpack Configuration](https://github.com/shakacode/shakapacker/blob/main/README.md#webpack-configuration) section of the readme.
+- using custom Webpack config to modify the static file rule, following a similar process as outlined in the [Webpack Configuration](./node_package_api.md#webpack-configuration-patterns) section of the Node Package API docs.
 
 See [this issue](https://github.com/shakacode/shakapacker/issues/538) for more details.

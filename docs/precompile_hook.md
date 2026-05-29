@@ -484,4 +484,4 @@ The hook system uses `Shellwords` to properly parse quoted arguments.
 
 - [Deployment Guide](deployment.md) - Production deployment considerations
 - [React on Rails Integration](https://github.com/shakacode/react_on_rails) - Main use case documentation
-- [Configuration](../README.md#configuration-and-code) - General shakapacker configuration
+- [Configuration](./configuration.md) - General shakapacker configuration

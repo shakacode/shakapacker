@@ -112,7 +112,7 @@ module Shakapacker::Helper
   def javascript_pack_tag(*names, defer: true, async: false, early_hints: nil, **options)
     if @javascript_pack_tag_loaded
       raise "To prevent duplicated chunks on the page, you should call javascript_pack_tag only once on the page. " \
-      "Please refer to https://github.com/shakacode/shakapacker/blob/main/README.md#view-helpers-javascript_pack_tag-and-stylesheet_pack_tag for the usage guide"
+      "Please refer to https://github.com/shakacode/shakapacker/blob/main/docs/api-reference.md#view-helpers-javascript_pack_tag-and-stylesheet_pack_tag for the usage guide"
     end
 
     # Collect all packs (queue + direct args)
@@ -330,7 +330,7 @@ module Shakapacker::Helper
   def append_stylesheet_pack_tag(*names)
     if @stylesheet_pack_tag_loaded
       raise "You can only call append_stylesheet_pack_tag before stylesheet_pack_tag helper. " \
-      "Please refer to https://github.com/shakacode/shakapacker/blob/main/README.md#view-helper-append_javascript_pack_tag-prepend_javascript_pack_tag-and-append_stylesheet_pack_tag for the usage guide"
+      "Please refer to https://github.com/shakacode/shakapacker/blob/main/docs/api-reference.md#view-helper-append_javascript_pack_tag-prepend_javascript_pack_tag-and-append_stylesheet_pack_tag for the usage guide"
     end
 
     @stylesheet_pack_tag_queue ||= []
@@ -357,7 +357,7 @@ module Shakapacker::Helper
     def update_javascript_pack_tag_queue(defer:, async:)
       if @javascript_pack_tag_loaded
         raise "You can only call #{caller_locations(1..1).first.base_label} before javascript_pack_tag helper. " \
-        "Please refer to https://github.com/shakacode/shakapacker/blob/main/README.md#view-helper-append_javascript_pack_tag-prepend_javascript_pack_tag-and-append_stylesheet_pack_tag for the usage guide"
+        "Please refer to https://github.com/shakacode/shakapacker/blob/main/docs/api-reference.md#view-helper-append_javascript_pack_tag-prepend_javascript_pack_tag-and-append_stylesheet_pack_tag for the usage guide"
       end
 
       # When both async and defer are specified, async takes precedence per HTML5 spec

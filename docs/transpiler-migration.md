@@ -19,8 +19,6 @@ Shakapacker v10 transpiler defaults depend on the bundler and installation:
 - `esbuild` - Go-based transpiler; extremely fast for supported transforms ([benchmark](https://esbuild.github.io/))
 - `none` - No transpilation (use native JavaScript)
 
-## Switching between transpilers
-
 ## Configuration
 
 Set the transpiler in your `config/shakapacker.yml`:

@@ -507,8 +507,8 @@ Check the [CHANGELOG](../CHANGELOG.md) for deprecation notices.
 ## See Also
 
 - [Configuration Guide](./configuration.md) - All `shakapacker.yml` options
-- [View Helpers](../README.md#view-helpers) - Detailed view helper usage
-- [Webpack Configuration](../README.md#webpack-configuration) - JavaScript API
+- [View Helpers](#view-helpers) - Detailed view helper usage
+- [Webpack Configuration](./node_package_api.md#webpack-configuration-patterns) - JavaScript API
 - [TypeScript](./typescript.md) - Type definitions for Shakapacker
 - [Troubleshooting](./troubleshooting.md) - Common issues
 

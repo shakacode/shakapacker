@@ -124,12 +124,14 @@ If you need to inspect the generated configuration:
 
 ```js
 // config/webpack/webpack.config.js
-const { generateWebpackConfig } = require("shakapacker")
+const { config, generateWebpackConfig } = require("shakapacker")
 
 const webpackConfig = generateWebpackConfig()
 
-console.log(webpackConfig.output_path)
-console.log(webpackConfig.source_path)
+// `webpackConfig` is a standard webpack Configuration object
+console.log(webpackConfig.output.path)
+// `source_path` is a Shakapacker setting, read it from the `config` object
+console.log(config.source_path)
 console.log(JSON.stringify(webpackConfig, undefined, 2))
 ```
 
@@ -137,7 +139,9 @@ You can search and modify generated rules. For example, to remove `.svg` from a
 file-loader-style asset rule:
 
 ```js
-const fileRule = config.module.rules.find((rule) => rule.test.test(".svg"))
+const fileRule = webpackConfig.module.rules.find((rule) =>
+  rule.test.test(".svg")
+)
 fileRule.test =
   /\.(bmp|gif|jpe?g|png|tiff|ico|avif|webp|eot|otf|ttf|woff|woff2)$/
 fileRule.type = "asset"
