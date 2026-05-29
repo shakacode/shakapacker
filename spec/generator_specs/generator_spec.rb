@@ -64,8 +64,8 @@ describe "Generator" do
             else
               ""
             end
-            install_cmd = "#{npm_package_env}SHAKAPACKER_ASSETS_BUNDLER=webpack " \
-                          "USE_BABEL_PACKAGES=true FORCE=true bundle exec rake shakapacker:install"
+            install_cmd = "#{npm_package_env}USE_BABEL_PACKAGES=true FORCE=true " \
+                          "bundle exec rake shakapacker:install"
             sh_in_dir(sh_opts, TEMP_RAILS_APP_PATH, install_cmd)
 
             # Update package.json to use local shakapacker package
@@ -107,15 +107,16 @@ describe "Generator" do
           FileUtils.rm_rf(TEMP_RAILS_APP_PATH)
         end
 
-        it "creates `config/shakapacker.yml` with babel transpiler when USE_BABEL_PACKAGES is set" do
+        it "creates `config/shakapacker.yml` with rspack bundler and babel transpiler when USE_BABEL_PACKAGES is set" do
           config_file_relative_path = "config/shakapacker.yml"
           actual_content = read(path_in_the_app(config_file_relative_path))
           expected_content = read(path_in_the_gem(config_file_relative_path))
 
           # When USE_BABEL_PACKAGES=true, the config should be updated to use babel
           expected_content_with_babel = expected_content.gsub('javascript_transpiler: "swc"', 'javascript_transpiler: "babel"')
+          expected_content_with_babel_and_rspack = expected_content_with_babel.gsub('assets_bundler: "webpack"', 'assets_bundler: "rspack"')
 
-          expect(actual_content).to eq expected_content_with_babel
+          expect(actual_content).to eq expected_content_with_babel_and_rspack
         end
 
         it "ensures the 'packageManager' field is set" do
@@ -126,14 +127,14 @@ describe "Generator" do
           expect(package_json.fetch("packageManager", "")).to match(/#{manager_name}@\d+\.\d+\.\d+/)
         end
 
-        it "creates webpack config directory and files (defaults to JS)" do
+        it "creates rspack config directory and files by default (defaults to JS)" do
           expected_files = [
-            "webpack.config.js"
+            "rspack.config.js"
           ]
 
-          Dir.chdir(path_in_the_app("config/webpack")) do
-            existing_files_in_config_webpack_dir = Dir.glob("*")
-            expect(existing_files_in_config_webpack_dir).to eq expected_files
+          Dir.chdir(path_in_the_app("config/rspack")) do
+            existing_files_in_config_rspack_dir = Dir.glob("*")
+            expect(existing_files_in_config_rspack_dir).to eq expected_files
           end
         end
 
@@ -207,25 +208,20 @@ describe "Generator" do
             @swc/core
             swc-loader
             compression-webpack-plugin
-            terser-webpack-plugin
-            webpack
-            webpack-assets-manifest
-            webpack-cli
-            webpack-merge
+            @rspack/cli
+            @rspack/core
+            rspack-manifest-plugin
           )
 
           expect(actual_dependencies).to include(*expected_dependencies)
         end
 
-        it "adds Shakapacker peer dev dependencies to package.json" do
+        it "adds the rspack dev-server (and not webpack-dev-server) as a dev dependency" do
           package_json = PackageJson.read(path_in_the_app)
           actual_dev_dependencies = package_json.fetch("devDependencies", {}).keys
 
-          expected_dev_dependencies = %w(
-            webpack-dev-server
-          )
-
-          expect(actual_dev_dependencies).to include(*expected_dev_dependencies)
+          expect(actual_dev_dependencies).to include("@rspack/dev-server")
+          expect(actual_dev_dependencies).not_to include("webpack-dev-server")
         end
 
         context "with a basic react app setup" do

@@ -206,4 +206,66 @@ describe Shakapacker::Install::Env do
       ).to be false
     end
   end
+
+  describe "update_assets_bundler_config?" do
+    it "skips updates for default webpack bundler" do
+      expect(
+        described_class.update_assets_bundler_config?(
+          assets_bundler_to_install: "webpack",
+          conflict_option: {},
+          config_preexisting: false
+        )
+      ).to be false
+    end
+
+    it "skips updates for default webpack bundler even when FORCE=true" do
+      expect(
+        described_class.update_assets_bundler_config?(
+          assets_bundler_to_install: "webpack",
+          conflict_option: { force: true },
+          config_preexisting: true
+        )
+      ).to be false
+    end
+
+    it "updates config when bundler is non-default and skip mode is off" do
+      expect(
+        described_class.update_assets_bundler_config?(
+          assets_bundler_to_install: "rspack",
+          conflict_option: {},
+          config_preexisting: true
+        )
+      ).to be true
+    end
+
+    it "updates config when FORCE=true even if config already exists" do
+      expect(
+        described_class.update_assets_bundler_config?(
+          assets_bundler_to_install: "rspack",
+          conflict_option: { force: true },
+          config_preexisting: true
+        )
+      ).to be true
+    end
+
+    it "updates config on fresh install even when SKIP=true" do
+      expect(
+        described_class.update_assets_bundler_config?(
+          assets_bundler_to_install: "rspack",
+          conflict_option: { skip: true },
+          config_preexisting: false
+        )
+      ).to be true
+    end
+
+    it "preserves existing user config when SKIP=true" do
+      expect(
+        described_class.update_assets_bundler_config?(
+          assets_bundler_to_install: "rspack",
+          conflict_option: { skip: true },
+          config_preexisting: true
+        )
+      ).to be false
+    end
+  end
 end

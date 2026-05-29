@@ -106,10 +106,12 @@ config inside `package.json`. See
 
 ## Choosing a Bundler or Transpiler
 
-New installs use webpack and SWC by default. To install with Rspack:
+New installs use Rspack by default. To install with Webpack:
 
 ```bash
-SHAKAPACKER_ASSETS_BUNDLER=rspack bundle exec rake shakapacker:install
+SHAKAPACKER_ASSETS_BUNDLER=webpack bundle exec rake shakapacker:install
+# or
+bundle exec rake shakapacker:install[webpack]
 ```
 
 To install with Babel instead of SWC:

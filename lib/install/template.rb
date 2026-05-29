@@ -14,6 +14,9 @@ require "json"
 # Using instance variable to avoid method definition issues in Rails templates
 @package_json ||= PackageJson.new
 install_dir = File.expand_path(File.dirname(__FILE__))
+# New installs default to rspack. The bundled shakapacker.yml keeps "webpack" for
+# backward compatibility, so the installer rewrites the value below when needed.
+assets_bundler = ENV["SHAKAPACKER_ASSETS_BUNDLER"] || "rspack"
 
 # Installation strategy:
 # - USE_BABEL_PACKAGES installs both babel AND swc for compatibility
@@ -49,11 +52,24 @@ if Shakapacker::Install::Env.update_transpiler_config?(
   say "   📝 Updated config/shakapacker.yml to use #{@transpiler_to_install} transpiler", :green
 end
 
+# Update config to match the selected bundler.
+# The bundled shakapacker.yml ships assets_bundler: "webpack" so existing apps
+# keep webpack on upgrade; new installs default to rspack and rewrite the value
+# here. As with the transpiler, skip the rewrite only when SKIP mode preserved a
+# pre-existing user file.
+if Shakapacker::Install::Env.update_assets_bundler_config?(
+  assets_bundler_to_install: assets_bundler,
+  conflict_option: @conflict_option,
+  config_preexisting: shakapacker_config_preexisting
+)
+  gsub_file "config/shakapacker.yml", 'assets_bundler: "webpack"', "assets_bundler: \"#{assets_bundler}\""
+  say "   📝 Updated config/shakapacker.yml to use #{assets_bundler} bundler", :green
+end
+
 # Detect TypeScript usage
 # Auto-detect from tsconfig.json or explicit via SHAKAPACKER_USE_TYPESCRIPT env var
 @use_typescript = File.exist?(Rails.root.join("tsconfig.json")) ||
   Shakapacker::Install::Env.truthy_env?("SHAKAPACKER_USE_TYPESCRIPT")
-assets_bundler = ENV["SHAKAPACKER_ASSETS_BUNDLER"] || "webpack"
 config_extension = @use_typescript ? "ts" : "js"
 
 say "Copying #{assets_bundler} core config (#{config_extension.upcase})"
@@ -224,7 +240,7 @@ Dir.chdir(Rails.root) do
   end
 
   # Inline fetch_peer_dependencies and fetch_common_dependencies
-  peers = PackageJson.read(install_dir).fetch(ENV["SHAKAPACKER_ASSETS_BUNDLER"] || "webpack")
+  peers = PackageJson.read(install_dir).fetch(assets_bundler)
   common_deps = Shakapacker::Install::Env.truthy_env?("SKIP_COMMON_LOADERS") ? {} : PackageJson.read(install_dir).fetch("common")
   peers = peers.merge(common_deps)
 
@@ -255,7 +271,7 @@ Dir.chdir(Rails.root) do
     peers = peers.merge(esbuild_deps)
   end
 
-  dev_dependency_packages = ["webpack-dev-server"]
+  dev_dependency_packages = ["webpack-dev-server", "@rspack/dev-server"]
 
   dependencies_to_add = []
   dev_dependencies_to_add = []
@@ -290,12 +306,14 @@ Dir.chdir(Rails.root) do
     exit 1
   end
 
-  say "Installing webpack-dev-server for live reloading as a development dependency"
-  begin
-    @package_json.manager.add!(dev_dependencies_to_add, type: :dev)
-  rescue PackageJson::Error
-    say "Shakapacker installation failed 😭 See above for details.", :red
-    exit 1
+  if dev_dependencies_to_add.any?
+    say "Installing bundler development dependencies"
+    begin
+      @package_json.manager.add!(dev_dependencies_to_add, type: :dev)
+    rescue PackageJson::Error
+      say "Shakapacker installation failed 😭 See above for details.", :red
+      exit 1
+    end
   end
 
   # Configure babel preset in package.json if babel is being used

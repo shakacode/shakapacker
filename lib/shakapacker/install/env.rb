@@ -28,6 +28,16 @@ module Shakapacker
 
         !config_preexisting
       end
+
+      # Keep bundled runtime defaults backward compatible while allowing the
+      # installer to write an explicit new-project bundler choice.
+      def update_assets_bundler_config?(assets_bundler_to_install:, conflict_option:, config_preexisting:)
+        return false if assets_bundler_to_install == "webpack"
+        return true if conflict_option[:force]
+        return true unless conflict_option[:skip]
+
+        !config_preexisting
+      end
     end
   end
 end

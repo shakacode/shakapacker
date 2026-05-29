@@ -59,7 +59,9 @@ default: &default
   javascript_transpiler: "swc"
 
   # Select assets bundler to use
-  # Available options: 'webpack' (default) or 'rspack'
+  # Available options: 'webpack' or 'rspack'
+  # New installs default to 'rspack'; this value stays 'webpack' so existing apps
+  # keep their current bundler on upgrade.
   assets_bundler: "webpack"
 
   # Path to the directory containing webpack/rspack config files
