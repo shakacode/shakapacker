@@ -1,7 +1,13 @@
 // This will be a substantial file - the main CLI entry point
 // Originally migrated from bin/export-bundler-config, now bin/shakapacker-config
 
-import { existsSync, readFileSync, writeFileSync } from "fs"
+import {
+  chmodSync,
+  existsSync,
+  mkdirSync,
+  readFileSync,
+  writeFileSync
+} from "fs"
 import { resolve, dirname, sep, delimiter, basename } from "path"
 import { inspect } from "util"
 import { load as loadYaml } from "js-yaml"
@@ -510,10 +516,15 @@ function runInitCommand(options: ExportOptions): number {
   return 0
 }
 
-function createBinStub(binStubPath: string): void {
+/**
+ * Exported for test use only: verifies generated content matches
+ * lib/install/bin/* binstubs. Not part of the public API.
+ *
+ * @internal
+ */
+export function createBinStub(binStubPath: string): void {
   const binDir = dirname(binStubPath)
   const packageScript = `${basename(binStubPath)}.cjs`
-  const { mkdirSync, chmodSync } = require("fs")
 
   // Ensure bin directory exists
   if (!existsSync(binDir)) {
@@ -550,9 +561,11 @@ def shakapacker_executable_candidates(executable)
 end
 
 def shakapacker_find_executable(executable)
-  ENV.fetch("PATH", "").split(File::PATH_SEPARATOR).each do |path|
+  ENV.fetch("PATH", "").split(File::PATH_SEPARATOR, -1).each do |path|
+    search_path = path.empty? ? Dir.pwd : path
+
     shakapacker_executable_candidates(executable).each do |candidate|
-      executable_path = File.join(path, candidate)
+      executable_path = File.join(search_path, candidate)
       return executable_path if File.file?(executable_path) && File.executable?(executable_path)
     end
   end

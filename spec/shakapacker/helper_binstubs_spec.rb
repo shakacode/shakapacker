@@ -38,6 +38,12 @@ RSpec.describe "helper binstubs" do
     FileUtils.chmod(0o755, script_path)
   end
 
+  def real_node_path
+    ENV.fetch("PATH", "").split(File::PATH_SEPARATOR)
+      .map { |dir| File.join(dir, "node") }
+      .find { |candidate| File.file?(candidate) && File.executable?(candidate) }
+  end
+
   %w[shakapacker-config diff-bundler-config].each do |command|
     it "runs #{command} through a CommonJS package script when the app is ESM" do
       Dir.mktmpdir("shakapacker-binstub-") do |app_path|
@@ -160,11 +166,9 @@ RSpec.describe "helper binstubs" do
         FileUtils.mkdir_p(File.join(app_path, "bin"))
         install_fake_node_script(app_path, command)
 
-        real_node_path = ENV.fetch("PATH").split(File::PATH_SEPARATOR).map { |path| File.join(path, "node") }.find do |path|
-          File.file?(path) && File.executable?(path)
-        end
+        node_path = real_node_path
 
-        skip "node not found in PATH" unless real_node_path
+        skip "node not found in PATH" unless node_path
 
         fake_bin_path = File.join(app_path, "fake-bin")
         FileUtils.mkdir_p(fake_bin_path)
@@ -176,7 +180,7 @@ RSpec.describe "helper binstubs" do
             echo probed >> "$SHAKAPACKER_NODE_PROBE_OUTPUT"
             exit 0
           fi
-          exec #{real_node_path.shellescape} "$@"
+          exec #{node_path.shellescape} "$@"
         SH
         FileUtils.chmod(0o755, fake_node_path)
 
@@ -197,6 +201,55 @@ RSpec.describe "helper binstubs" do
 
         expect(status).to be_success, stderr
         expect(File).not_to exist(probe_output_path)
+      end
+    end
+
+    {
+      "leading" => "#{File::PATH_SEPARATOR}/nonexistent",
+      "trailing" => "/nonexistent#{File::PATH_SEPARATOR}"
+    }.each do |position, path_value|
+      it "honors a #{position} empty PATH entry as the current directory for #{command}" do
+        Dir.mktmpdir("shakapacker-binstub-") do |app_path|
+          File.write(File.join(app_path, "Gemfile"), "")
+          FileUtils.mkdir_p(File.join(app_path, "bin"))
+          install_fake_node_script(app_path, command)
+
+          node_path = real_node_path
+          skip "node not found in PATH" unless node_path
+
+          launch_path = File.join(app_path, "launch")
+          FileUtils.mkdir_p(launch_path)
+          fake_node_path = File.join(launch_path, "node")
+          File.write(fake_node_path, <<~SH)
+            #!/bin/sh
+            exec #{node_path.shellescape} "$@"
+          SH
+          FileUtils.chmod(0o755, fake_node_path)
+
+          binstub_path = File.join(app_path, "bin", command)
+          FileUtils.cp(File.join(gem_root, "lib", "install", "bin", command), binstub_path)
+          FileUtils.chmod(0o755, binstub_path)
+
+          output_path = File.join(app_path, "binstub-output.json")
+          _stdout, stderr, status = Bundler.with_unbundled_env do
+            Open3.capture3(
+              {
+                "BUNDLE_GEMFILE" => nil,
+                "PATH" => path_value,
+                "RUBYOPT" => nil,
+                "SHAKAPACKER_BINSTUB_OUTPUT" => output_path
+              },
+              RbConfig.ruby,
+              binstub_path,
+              chdir: launch_path
+            )
+          end
+
+          expect(status).to be_success, stderr
+          expect(JSON.parse(File.read(output_path))).to include(
+            "cwd" => File.realpath(app_path)
+          )
+        end
       end
     end
 
@@ -232,12 +285,14 @@ RSpec.describe "helper binstubs" do
         FileUtils.cp(File.join(gem_root, "lib", "install", "bin", command), binstub_path)
         FileUtils.chmod(0o755, binstub_path)
 
-        _stdout, stderr, status = Open3.capture3(
-          { "BUNDLE_GEMFILE" => nil, "RUBYOPT" => nil, "PATH" => "/nonexistent" },
-          RbConfig.ruby,
-          binstub_path,
-          chdir: app_path
-        )
+        _stdout, stderr, status = Bundler.with_unbundled_env do
+          Open3.capture3(
+            { "BUNDLE_GEMFILE" => nil, "RUBYOPT" => nil, "PATH" => "/nonexistent" },
+            RbConfig.ruby,
+            binstub_path,
+            chdir: app_path
+          )
+        end
 
         expect(status.exitstatus).to eq(1)
         expect(stderr).to include('[Shakapacker] Could not find Node.js executable "node"')
