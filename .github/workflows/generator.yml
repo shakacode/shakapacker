@@ -25,34 +25,29 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  setup-matrix:
+    name: Set up generator matrix
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
+    steps:
+      - name: Select matrix (minimal on PRs, full on main / workflow_dispatch)
+        id: set-matrix
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            # Fast PR feedback: only the newest and oldest supported combos.
+            # The full matrix below still runs on `main` pushes and via workflow_dispatch.
+            echo 'matrix={"include":[{"os":"ubuntu-latest","ruby":"3.4","gemfile":"gemfiles/Gemfile-rails.8.0.x"},{"os":"ubuntu-latest","ruby":"2.7","gemfile":"gemfiles/Gemfile-rails.7.0.x"}]}' >> "$GITHUB_OUTPUT"
+          else
+            echo 'matrix={"os":["ubuntu-latest"],"ruby":["2.7","3.0","3.1","3.2","3.3","3.4"],"gemfile":["gemfiles/Gemfile-rails.7.0.x","gemfiles/Gemfile-rails.7.1.x","gemfiles/Gemfile-rails.7.2.x","gemfiles/Gemfile-rails.8.0.x"],"exclude":[{"ruby":"2.7","gemfile":"gemfiles/Gemfile-rails.7.2.x"},{"ruby":"2.7","gemfile":"gemfiles/Gemfile-rails.8.0.x"},{"ruby":"3.0","gemfile":"gemfiles/Gemfile-rails.7.2.x"},{"ruby":"3.0","gemfile":"gemfiles/Gemfile-rails.8.0.x"},{"ruby":"3.1","gemfile":"gemfiles/Gemfile-rails.8.0.x"},{"ruby":"3.4","gemfile":"gemfiles/Gemfile-rails.7.0.x"}]}' >> "$GITHUB_OUTPUT"
+          fi
+
   test:
     name: Generator specs
+    needs: setup-matrix
     runs-on: ${{ matrix.os }}
     strategy:
-      matrix:
-        os: [ubuntu-latest]
-        ruby: ["2.7", "3.0", "3.1", "3.2", "3.3", "3.4"]
-        gemfile:
-          - gemfiles/Gemfile-rails.7.0.x
-          - gemfiles/Gemfile-rails.7.1.x
-          - gemfiles/Gemfile-rails.7.2.x
-          - gemfiles/Gemfile-rails.8.0.x
-          # Uncomment the following line only to ensure compatibility with the
-          # upcomming Rails versions, maybe before a release.
-          #- gemfiles/Gemfile-rails-edge
-        exclude:
-          - ruby: "2.7"
-            gemfile: gemfiles/Gemfile-rails.7.2.x
-          - ruby: "2.7"
-            gemfile: gemfiles/Gemfile-rails.8.0.x
-          - ruby: "3.0"
-            gemfile: gemfiles/Gemfile-rails.7.2.x
-          - ruby: "3.0"
-            gemfile: gemfiles/Gemfile-rails.8.0.x
-          - ruby: "3.1"
-            gemfile: gemfiles/Gemfile-rails.8.0.x
-          - ruby: "3.4"
-            gemfile: gemfiles/Gemfile-rails.7.0.x
+      matrix: ${{ fromJson(needs.setup-matrix.outputs.matrix) }}
 
     env:
       BUNDLE_GEMFILE: ${{ matrix.gemfile }}

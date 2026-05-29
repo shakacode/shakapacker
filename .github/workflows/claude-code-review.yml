@@ -3,6 +3,10 @@ name: Claude Code Review
 on:
   pull_request:
     types: [opened, synchronize, ready_for_review, reopened]
+    # Skip docs-only PRs (matches the path filters used by the test workflows)
+    paths-ignore:
+      - "**.md"
+      - "docs/**"
 
 jobs:
   claude-review:
