@@ -20,6 +20,8 @@ Those are limitations of esbuild itself and might make use of esbuild-loader in 
 
 ## Switching your Shakapacker project to esbuild-loader
 
+### esbuild loader configuration
+
 To use esbuild as your transpiler today. You need to do two things:
 
 1. Make sure you've installed `esbuild` and `esbuild-loader` packages.

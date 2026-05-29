@@ -1,5 +1,7 @@
 # Shakapacker API Reference
 
+## Ruby API Reference
+
 This document provides a comprehensive reference for Shakapacker's public Ruby API. For JavaScript bundler configuration, see the [Configuration Guide](./configuration.md).
 
 ## Table of Contents
@@ -32,6 +34,8 @@ Methods and classes marked with `@api public` in the source code are considered 
 The `Shakapacker` module provides singleton-style access to all major functionality.
 
 ### Configuration Access
+
+#### Quick Examples
 
 ```ruby
 # Get the configuration object
@@ -184,8 +188,15 @@ dev_server[:server]          # => "http"
 ## View Helpers
 
 Shakapacker provides Rails view helpers in the `Shakapacker::Helper` module, automatically included in ActionView.
+You can also consult the source documentation in
+[`helper.rb`](../lib/shakapacker/helper.rb).
 
-### JavaScript Pack Tag
+For styles or static assets to be available in a view, link them from a pack or
+entry file. Otherwise, webpack/rspack will not know to package those files.
+
+### View Helpers `javascript_pack_tag` and `stylesheet_pack_tag`
+
+#### JavaScript Pack Tag
 
 ```ruby
 # Basic usage
@@ -211,7 +222,7 @@ Shakapacker provides Rails view helpers in the `Shakapacker::Helper` module, aut
 
 **Important:** Call `javascript_pack_tag` only once per page to avoid duplicate chunks.
 
-### Stylesheet Pack Tag
+#### Stylesheet Pack Tag
 
 ```ruby
 # Basic usage
@@ -225,7 +236,9 @@ Shakapacker provides Rails view helpers in the `Shakapacker::Helper` module, aut
 <%= stylesheet_pack_tag 'application', early_hints: 'preload' %>
 ```
 
-### Dynamic Pack Loading
+### View Helper `append_javascript_pack_tag`, `prepend_javascript_pack_tag` and `append_stylesheet_pack_tag`
+
+#### Dynamic Pack Loading
 
 ```ruby
 # In view or partial - queue packs
@@ -242,6 +255,8 @@ Shakapacker provides Rails view helpers in the `Shakapacker::Helper` module, aut
 
 ### Asset Helpers
 
+#### View Helper: `asset_pack_path`
+
 ```ruby
 # Get pack path
 <%= asset_pack_path 'logo.svg' %>
@@ -250,20 +265,38 @@ Shakapacker provides Rails view helpers in the `Shakapacker::Helper` module, aut
 # Get pack URL
 <%= asset_pack_url 'logo.svg' %>
 # => "https://cdn.example.com/packs/logo-abc123.svg"
+```
 
+#### View Helper: `image_pack_tag`
+
+```ruby
 # Image pack tag
 <%= image_pack_tag 'logo.png', size: '16x10', alt: 'Logo' %>
 # => <img src="/packs/logo-abc123.png" width="16" height="10" alt="Logo">
 
 # With srcset
 <%= image_pack_tag 'photo.png', srcset: { 'photo-2x.png' => '2x' } %>
+```
 
+#### View Helper: `favicon_pack_tag`
+
+```ruby
 # Favicon
 <%= favicon_pack_tag 'icon.png', rel: 'apple-touch-icon' %>
+```
 
+#### View Helper: `preload_pack_asset`
+
+```ruby
 # Preload asset
 <%= preload_pack_asset 'fonts/custom.woff2' %>
 ```
+
+If you use server-side rendering of JavaScript with dynamic code-splitting, as
+is often done with extensions like
+[React on Rails](https://github.com/shakacode/react_on_rails), your JavaScript
+should create the link prefetch HTML tags. In that case, you usually do not need
+to use `asset_pack_path` for those split assets.
 
 ## Manifest API
 
@@ -474,8 +507,8 @@ Check the [CHANGELOG](../CHANGELOG.md) for deprecation notices.
 ## See Also
 
 - [Configuration Guide](./configuration.md) - All `shakapacker.yml` options
-- [View Helpers](../README.md#view-helpers) - Detailed view helper usage
-- [Webpack Configuration](../README.md#webpack-configuration) - JavaScript API
+- [View Helpers](#view-helpers) - Detailed view helper usage
+- [Webpack Configuration](./node_package_api.md#webpack-configuration-patterns) - JavaScript API
 - [TypeScript](./typescript.md) - Type definitions for Shakapacker
 - [Troubleshooting](./troubleshooting.md) - Common issues
 
@@ -495,3 +528,53 @@ open doc/index.html
 ```
 
 The generated documentation includes all public and private methods with detailed parameter descriptions.
+
+## Type Signatures with RBS
+
+Shakapacker includes RBS type signatures for public Ruby APIs, enabling static
+type checking and improved IDE support.
+
+Benefits:
+
+- IDE autocomplete with method signatures and parameter hints.
+- Static type checking with tools such as
+  [Steep](https://github.com/soutaro/steep) or
+  [TypeProf](https://github.com/ruby/typeprof).
+- Machine-readable API documentation.
+- Safer refactoring across Shakapacker API calls.
+
+RBS signatures are in the `sig/` directory and included with the gem:
+
+```
+sig/
+├── shakapacker.rbs
+└── shakapacker/
+    ├── configuration.rbs
+    ├── helper.rbs
+    ├── manifest.rbs
+    ├── compiler.rbs
+    ├── dev_server.rbs
+    └── ...
+```
+
+Example Steep configuration:
+
+```yaml
+# Steepfile
+target :app do
+signature "sig"
+check "app"
+library "shakapacker"
+end
+```
+
+Example type-checked usage:
+
+```ruby
+config = Shakapacker.config
+config.source_path
+config.webpack?
+
+# Type checkers can report this as an undefined method:
+config.invalid_method
+```

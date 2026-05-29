@@ -126,7 +126,7 @@ This approach works when:
 
 ## Related
 
-- [View Helpers Documentation](../README.md#view-helpers)
+- [View Helpers Documentation](./api-reference.md#view-helpers)
 - [Troubleshooting Guide](./troubleshooting.md)
 - Original issue: [#720](https://github.com/shakacode/shakapacker/issues/720)
 - Working implementation: [react-webpack-rails-tutorial PR #686](https://github.com/shakacode/react-webpack-rails-tutorial/pull/686)

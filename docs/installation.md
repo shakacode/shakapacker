@@ -17,6 +17,8 @@ configuration details after installation, see the [configuration guide](./config
 
 ### New Rails App
 
+#### Rails v6+
+
 For a new Rails 6+ app, skip Rails' default JavaScript installer so
 Shakapacker can create the bundler files, then continue from the app root:
 
