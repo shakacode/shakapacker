@@ -20,6 +20,14 @@ describe("index side effects", () => {
     return getPlugins
   }
 
+  // jest.doMock registrations are global and persist across jest.isolateModules
+  // boundaries, so clear them after every test to keep these specs independent
+  // of execution order (e.g. under --randomize).
+  afterEach(() => {
+    jest.dontMock("../../package/plugins/webpack")
+    jest.dontMock("../../package/utils/ensureManifestExists")
+  })
+
   test("does not initialize webpack plugins when only requiring the package index", () => {
     jest.isolateModules(() => {
       const ensureManifestExists = mockEnsureManifestExists()

@@ -46,83 +46,71 @@ describe("rspack/index types", () => {
     }
   }, 60000)
 
-  test("compiled rspack entry supports native ESM named imports", () => {
-    const rootDir = mkdtempSync(join(tmpdir(), "shakapacker-rspack-esm-"))
-    const outDir = join(rootDir, "package")
+  // The two native-ESM specs below run identical full compilations, so share a
+  // single tsc build (and node_modules/lib symlinks) across them to avoid paying
+  // the compile cost twice in CI. Each spec only writes and runs its own .mjs
+  // consumer against the shared output.
+  describe("native ESM consumers", () => {
+    let sharedRootDir
 
-    try {
+    const runConsumer = (fileName, lines) => {
+      const consumerPath = join(sharedRootDir, fileName)
+      writeFileSync(consumerPath, lines.join("\n"))
+
+      return execFileSync(process.execPath, [consumerPath], {
+        encoding: "utf8",
+        stdio: ["pipe", "pipe", "inherit"]
+      })
+    }
+
+    beforeAll(() => {
+      sharedRootDir = mkdtempSync(join(tmpdir(), "shakapacker-rspack-esm-"))
+      const outDir = join(sharedRootDir, "package")
+
       execFileSync("./node_modules/.bin/tsc", ["--outDir", outDir], {
         stdio: ["pipe", "pipe", "inherit"]
       })
       symlinkSync(
         join(process.cwd(), "node_modules"),
-        join(rootDir, "node_modules")
+        join(sharedRootDir, "node_modules")
       )
-      symlinkSync(join(process.cwd(), "lib"), join(rootDir, "lib"))
+      symlinkSync(join(process.cwd(), "lib"), join(sharedRootDir, "lib"))
+    }, 60000)
 
-      const consumerPath = join(rootDir, "rspack-esm-consumer.mjs")
-      writeFileSync(
-        consumerPath,
-        [
-          'import { generateRspackConfig } from "./package/rspack/index.js"',
-          'if (typeof generateRspackConfig !== "function") {',
-          '  throw new Error("generateRspackConfig was not imported")',
-          "}",
-          'console.log("rspack ESM named imports ok")'
-        ].join("\n")
-      )
+    afterAll(() => {
+      if (sharedRootDir) {
+        rmSync(sharedRootDir, { recursive: true, force: true })
+      }
+    })
 
-      const output = execFileSync(process.execPath, [consumerPath], {
-        encoding: "utf8",
-        stdio: ["pipe", "pipe", "inherit"]
-      })
+    test("compiled rspack entry supports native ESM named imports", () => {
+      const output = runConsumer("rspack-esm-consumer.mjs", [
+        'import { generateRspackConfig } from "./package/rspack/index.js"',
+        'if (typeof generateRspackConfig !== "function") {',
+        '  throw new Error("generateRspackConfig was not imported")',
+        "}",
+        'console.log("rspack ESM named imports ok")'
+      ])
 
       expect(output).toContain("rspack ESM named imports ok")
-    } finally {
-      rmSync(rootDir, { recursive: true, force: true })
-    }
-  }, 60000)
+    })
 
-  test("compiled rspack lazy exports work from native ESM default import", () => {
-    // Native ESM named imports only cover statically detected CommonJS exports;
-    // lazy accessor exports stay available through the default/CommonJS namespace.
-    const rootDir = mkdtempSync(join(tmpdir(), "shakapacker-rspack-esm-"))
-    const outDir = join(rootDir, "package")
-
-    try {
-      execFileSync("./node_modules/.bin/tsc", ["--outDir", outDir], {
-        stdio: ["pipe", "pipe", "inherit"]
-      })
-      symlinkSync(
-        join(process.cwd(), "node_modules"),
-        join(rootDir, "node_modules")
-      )
-      symlinkSync(join(process.cwd(), "lib"), join(rootDir, "lib"))
-
-      const consumerPath = join(rootDir, "rspack-esm-lazy-consumer.mjs")
-      writeFileSync(
-        consumerPath,
-        [
-          'import rspack from "./package/rspack/index.js"',
-          "const { baseConfig, rules } = rspack",
-          'if (baseConfig === null || typeof baseConfig !== "object") {',
-          '  throw new Error("baseConfig was not imported")',
-          "}",
-          "if (!Array.isArray(rules)) {",
-          '  throw new Error("rules was not imported")',
-          "}",
-          'console.log("rspack ESM lazy exports ok")'
-        ].join("\n")
-      )
-
-      const output = execFileSync(process.execPath, [consumerPath], {
-        encoding: "utf8",
-        stdio: ["pipe", "pipe", "inherit"]
-      })
+    test("compiled rspack lazy exports work from native ESM default import", () => {
+      // Native ESM named imports only cover statically detected CommonJS exports;
+      // lazy accessor exports stay available through the default/CommonJS namespace.
+      const output = runConsumer("rspack-esm-lazy-consumer.mjs", [
+        'import rspack from "./package/rspack/index.js"',
+        "const { baseConfig, rules } = rspack",
+        'if (baseConfig === null || typeof baseConfig !== "object") {',
+        '  throw new Error("baseConfig was not imported")',
+        "}",
+        "if (!Array.isArray(rules)) {",
+        '  throw new Error("rules was not imported")',
+        "}",
+        'console.log("rspack ESM lazy exports ok")'
+      ])
 
       expect(output).toContain("rspack ESM lazy exports ok")
-    } finally {
-      rmSync(rootDir, { recursive: true, force: true })
-    }
-  }, 60000)
+    })
+  })
 })
