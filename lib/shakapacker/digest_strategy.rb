@@ -30,7 +30,7 @@ module Shakapacker
       end
 
       def watched_files_digest
-        if Rails.env.development?
+        if env.development?
           warn <<~MSG.strip
           Shakapacker::Compiler - Slow setup for development
           Prepare JS assets with either:

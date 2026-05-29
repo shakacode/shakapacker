@@ -19,7 +19,7 @@ module Shakapacker
       end
 
       def latest_modified_timestamp
-        if Rails.env.development?
+        if env.development?
           warn <<~MSG.strip
           Shakapacker::Compiler - Slow setup for development
 

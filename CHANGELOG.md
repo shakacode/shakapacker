@@ -11,7 +11,7 @@
 
 ### Fixed
 
-- **Fixed compiler strategies ignoring the instance config of custom `Shakapacker::Instance` objects.** [PR #976](https://github.com/shakacode/shakapacker/pull/976) by [brunodccarvalho](https://github.com/brunodccarvalho). Strategies now read the instance-specific config and watch both webpack and rspack config directories.
+- **Fixed compiler strategies ignoring the instance config of custom `Shakapacker::Instance` objects.** [PR #1147](https://github.com/shakacode/shakapacker/pull/1147) by [justin808](https://github.com/justin808). Ports [#976](https://github.com/shakacode/shakapacker/pull/976) by [brunodccarvalho](https://github.com/brunodccarvalho). Strategies now read the instance-specific config and watch both webpack and rspack config directories.
 
 ## [v10.1.0] - May 27, 2026
 
