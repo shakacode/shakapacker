@@ -62,7 +62,7 @@ Type-only imports are erased during compilation and don't trigger module resolut
 
 ### Required Dependencies by Configuration
 
-### Webpack + Babel (Traditional)
+#### Webpack + Babel (Traditional)
 
 ```json
 {
@@ -77,7 +77,7 @@ Type-only imports are erased during compilation and don't trigger module resolut
 }
 ```
 
-### Webpack + SWC (faster transpilation — see [benchmarks](./transpiler-performance.md#published-benchmarks))
+#### Webpack + SWC (faster transpilation — see [benchmarks](./transpiler-performance.md#published-benchmarks))
 
 ```json
 {
@@ -93,7 +93,7 @@ Type-only imports are erased during compilation and don't trigger module resolut
 
 > **Note:** `webpack-cli` v7 is also supported but requires Node.js >= 20.9.0. If your project meets that requirement, you can use `"webpack-cli": "^7.0.0"` instead.
 
-### Rspack + SWC (largest end-to-end speedup — see [benchmarks](./transpiler-performance.md#published-benchmarks))
+#### Rspack + SWC (largest end-to-end speedup — see [benchmarks](./transpiler-performance.md#published-benchmarks))
 
 ```json
 {

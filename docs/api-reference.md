@@ -196,7 +196,7 @@ entry file. Otherwise, webpack/rspack will not know to package those files.
 
 ### View Helpers `javascript_pack_tag` and `stylesheet_pack_tag`
 
-### JavaScript Pack Tag
+#### JavaScript Pack Tag
 
 ```ruby
 # Basic usage
@@ -222,7 +222,7 @@ entry file. Otherwise, webpack/rspack will not know to package those files.
 
 **Important:** Call `javascript_pack_tag` only once per page to avoid duplicate chunks.
 
-### Stylesheet Pack Tag
+#### Stylesheet Pack Tag
 
 ```ruby
 # Basic usage
@@ -238,7 +238,7 @@ entry file. Otherwise, webpack/rspack will not know to package those files.
 
 ### View Helper `append_javascript_pack_tag`, `prepend_javascript_pack_tag` and `append_stylesheet_pack_tag`
 
-### Dynamic Pack Loading
+#### Dynamic Pack Loading
 
 ```ruby
 # In view or partial - queue packs
