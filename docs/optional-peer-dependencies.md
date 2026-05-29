@@ -60,6 +60,8 @@ Type-only imports are erased during compilation and don't trigger module resolut
 
 ## Configuration Examples
 
+### Required Dependencies by Configuration
+
 ### Webpack + Babel (Traditional)
 
 ```json

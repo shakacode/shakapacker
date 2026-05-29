@@ -7,11 +7,14 @@ For first-time setup, start with the [installation guide](./installation.md).
 ## Table of Contents
 
 - [Quick Reference](#quick-reference)
+- [Core Concepts](#core-concepts)
 - [Basic Configuration](#basic-configuration)
 - [Source Configuration](#source-configuration)
 - [Output Configuration](#output-configuration)
 - [Bundler Configuration](#bundler-configuration)
 - [Development Server](#development-server)
+  - [Development Workflows](#development-workflows)
+  - [Common Development Commands](#common-development-commands)
 - [Compilation Options](#compilation-options)
 - [Advanced Options](#advanced-options)
   - [Subresource Integrity](#integrity)
@@ -47,6 +50,14 @@ Common configuration options with their defaults:
 For detailed explanations, examples, and additional options, see the sections below.
 
 **\*Note on `javascript_transpiler` default**: The installation template sets this to `"swc"` for new projects. However, at runtime, if no explicit value is configured, webpack defaults to `"babel"` (for backward compatibility) while rspack defaults to `"swc"`.
+
+## Core Concepts
+
+At its core, Shakapacker's essential function is to:
+
+1. Provide configuration by a single file used by both Rails view helpers and JavaScript webpack compilation code.
+2. Provide Rails view helpers, utilizing this configuration file so that a webpage can load JavaScript, CSS, and other static assets compiled by webpack, supporting bundle splitting, fingerprinting, and HMR.
+3. Provide a community-supported, default webpack compilation that generates the necessary bundles and manifest, using the same configuration file. This compilation can be extended for any needs.
 
 ## Basic Configuration
 
@@ -177,6 +188,37 @@ app/javascript/packs/
     dashboard.js       # Entry: admin/dashboard
 ```
 
+Your file system should correspond to the setup in `config/shakapacker.yml`.
+For example:
+
+```yaml
+default: &default
+  source_path: app/javascript
+  source_entry_path: packs
+  public_root_path: public
+  public_output_path: packs
+  nested_entries: false
+```
+
+maps to a directory structure like this:
+
+```
+app/javascript:
+  └── packs:               # sets up webpack entries
+  │   └── application.js   # references ../src/my_component.js
+  │   └── application.css
+  └── src:                 # any directory name is fine; referenced files need to be under source_path
+  │   └── my_component.js
+  └── stylesheets:
+  │   └── my_styles.css
+  └── images:
+      └── logo.svg
+public/packs                # webpack output
+```
+
+Webpack intelligently includes only necessary files. In this example, the file
+`packs/application.js` would reference `../src/my_component.js`.
+
 ### `additional_paths`
 
 **Type:** `array`
@@ -196,6 +238,17 @@ additional_paths:
 - Resolving modules from Rails asset directories
 - Including vendored JavaScript
 - Sharing code between engines
+
+### Images in Stylesheets
+
+If you want to use images in your stylesheets, reference them from a stylesheet
+that is imported by a pack or entry file:
+
+```css
+.foo {
+  background-image: url("../images/logo.svg");
+}
+```
 
 ## Output Configuration
 
@@ -238,6 +291,23 @@ private_output_path: ssr-generated
 ```
 
 **Important:** Must be different from `public_output_path` to prevent serving private bundles.
+
+#### Migration Guide for React on Rails Users
+
+If you're using React on Rails with separate client and server bundles, you can
+use `private_output_path` instead of serving both bundle types from `public/`:
+
+```yaml
+# Before: both client and server bundles in public/
+# After: separate directories
+public_output_path: packs
+private_output_path: ssr-bundles
+```
+
+Update your bundler configuration to use the appropriate output path based on
+the bundle type. Shakapacker validates that `private_output_path` and
+`public_output_path` differ to prevent private bundles from being served
+publicly.
 
 ### `manifest_path`
 
@@ -383,6 +453,38 @@ dev_server:
 - **overlay:** Shows errors/warnings in browser overlay. Helpful for development.
 - **allowed_hosts:** Protects against DNS rebinding attacks. Use `"all"` to disable (not recommended).
 
+### Development Workflows
+
+Shakapacker ships with three binstubs:
+
+- `./bin/shakapacker` - thin wrapper around the standard bundler executable.
+- `./bin/shakapacker-dev-server` - thin wrapper around the standard dev-server executable.
+- `./bin/shakapacker-watch` - shell wrapper around `./bin/shakapacker` that traps `INT`/`TERM` for clean shutdown in Procfile-based workflows such as `foreman` or `bin/dev`.
+
+Older Shakapacker installations set a missing `NODE_ENV` in the binstubs. Remove
+that for versions 6.5.2 and newer.
+
+### Common Development Commands
+
+```bash
+# webpack dev server
+./bin/shakapacker-dev-server
+
+# watcher (use in Procfiles for clean Ctrl-C shutdown)
+./bin/shakapacker-watch --watch --progress
+
+# watcher (standalone, without signal handling)
+./bin/shakapacker --watch --progress
+
+# standalone build
+./bin/shakapacker --progress
+```
+
+If you are not using `shakapacker-dev-server`, packs are served by the Rails
+public file server. If Rails caching is enabled, browser memory caching may hide
+newly compiled assets because of `Cache-Control` headers. See
+[issue 88](https://github.com/shakacode/shakapacker/issues/88) for background.
+
 ## Compilation Options
 
 ### `compile`
@@ -399,6 +501,15 @@ development:
 production:
   compile: false # Assets must be precompiled
 ```
+
+#### Automatic Webpack Code Building
+
+On-demand compilation runs when a web request uses Shakapacker helper methods
+and the referenced assets are stale; it does not run immediately when files
+change. This can be painfully slow for frontend development, so prefer
+`bin/shakapacker --watch` or `./bin/shakapacker-dev-server` for live work.
+
+The `compile: true` option can be more useful for test and production builds.
 
 ### `shakapacker_precompile`
 
@@ -456,6 +567,13 @@ production:
 
 **mtime:** Faster but may miss changes if timestamps are unreliable.
 **digest:** Slower but guarantees accuracy by comparing content hashes.
+
+#### Compiler strategies
+
+More specifically:
+
+- `digest` calculates a SHA1 digest of files in watched paths, stores it in a temp file, and recompiles when the current digest differs or the temp file is missing.
+- `mtime` compares the most recent modified timestamp of watched files and directories to the generated `manifest.json`; it recompiles when the manifest is older.
 
 ## Advanced Options
 
@@ -618,6 +736,8 @@ Shakapacker validates configuration at runtime and provides helpful error messag
 - **Version mismatches:** Detects gem/npm version differences when `ensure_consistent_versioning` is enabled
 
 ## Environment Variables
+
+### Setting custom config path
 
 Some options can be overridden via environment variables:
 
