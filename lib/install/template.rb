@@ -52,11 +52,8 @@ if Shakapacker::Install::Env.update_transpiler_config?(
   say "   📝 Updated config/shakapacker.yml to use #{@transpiler_to_install} transpiler", :green
 end
 
-# Update config to match the selected bundler.
-# The bundled shakapacker.yml ships assets_bundler: "webpack" so existing apps
-# keep webpack on upgrade; new installs default to rspack and rewrite the value
-# here. As with the transpiler, skip the rewrite only when SKIP mode preserved a
-# pre-existing user file.
+# Update config to match the selected bundler. Mirrors the transpiler rewrite
+# above: skip it only when SKIP mode preserved a pre-existing user file.
 if Shakapacker::Install::Env.update_assets_bundler_config?(
   assets_bundler_to_install: assets_bundler,
   conflict_option: @conflict_option,

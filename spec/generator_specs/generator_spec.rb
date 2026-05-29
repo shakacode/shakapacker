@@ -370,10 +370,10 @@ describe "Generator" do
 
         it "auto-detects TypeScript and creates .ts config" do
           expected_files = [
-            "webpack.config.ts"
+            "rspack.config.ts"
           ]
 
-          Dir.chdir(Pathname.new(File.join(TEMP_RAILS_APP_PATH.to_s + "-tsconfig", "config/webpack"))) do
+          Dir.chdir(Pathname.new(File.join(TEMP_RAILS_APP_PATH.to_s + "-tsconfig", "config/rspack"))) do
             existing_files = Dir.glob("*")
             expect(existing_files).to eq expected_files
           end
