@@ -39,7 +39,7 @@ RSpec.describe "helper binstubs" do
   end
 
   def real_node_path
-    ENV.fetch("PATH").split(File::PATH_SEPARATOR)
+    ENV.fetch("PATH", "").split(File::PATH_SEPARATOR)
       .map { |dir| File.join(dir, "node") }
       .find { |candidate| File.file?(candidate) && File.executable?(candidate) }
   end
