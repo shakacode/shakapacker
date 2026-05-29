@@ -15,7 +15,7 @@
 
 ### Changed
 
-- **New installs now default to Rspack instead of webpack**. [PR #1150](https://github.com/shakacode/shakapacker/pull/1150) by [justin808](https://github.com/justin808). `bundle exec rake shakapacker:install` now scaffolds an Rspack project (config, dependencies, and `config/shakapacker.yml`) by default. This is an install-time default only: existing applications are unaffected on upgrade — the bundled `shakapacker.yml` still ships `assets_bundler: "webpack"`, and the installer never rewrites a pre-existing config in `SKIP` mode. To install with webpack, run `bundle exec rake shakapacker:install[webpack]` or set `SHAKAPACKER_ASSETS_BUNDLER=webpack`.
+- **New installs now default to Rspack instead of webpack**. [PR #1150](https://github.com/shakacode/shakapacker/pull/1150) by [justin808](https://github.com/justin808). `bundle exec rake shakapacker:install` now scaffolds an Rspack project (config, dependencies, and `config/shakapacker.yml`) by default. This is an install-time default only: existing applications are unaffected on upgrade — the bundled `shakapacker.yml` still ships `assets_bundler: "webpack"`, and the installer only rewrites that value when it actually writes the bundled template, so a config it preserves (`SKIP` mode or a declined overwrite prompt) keeps its existing bundler. To install with webpack, run `bundle exec rake shakapacker:install[webpack]` or set `SHAKAPACKER_ASSETS_BUNDLER=webpack`.
 
 ### Fixed
 

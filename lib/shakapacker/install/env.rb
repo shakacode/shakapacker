@@ -30,15 +30,15 @@ module Shakapacker
       end
 
       # Keep bundled runtime defaults backward compatible while allowing the
-      # installer to write an explicit new-project bundler choice.
-      def update_assets_bundler_config?(assets_bundler_to_install:, conflict_option:, config_preexisting:)
+      # installer to write an explicit new-project bundler choice. Only rewrite
+      # when copy_file actually wrote the bundled template (config_written); a
+      # preserved user config (SKIP mode or a declined overwrite) is left as-is.
+      def update_assets_bundler_config?(assets_bundler_to_install:, config_written:)
         # The bundled shakapacker.yml already ships assets_bundler: "webpack", so
         # rewriting it to "webpack" would be a no-op. This relies on that shipped default.
         return false if assets_bundler_to_install == "webpack"
-        return true if conflict_option[:force]
-        return true unless conflict_option[:skip]
 
-        !config_preexisting
+        config_written
       end
     end
   end
