@@ -16,14 +16,19 @@ _Shakapacker 10 supports [Rspack](https://rspack.rs/) — up to 17x faster than
 webpack per
 [upstream benchmarks](https://shakapacker.com/docs/transpiler-performance/#published-benchmarks)._
 
-Full documentation lives at [shakapacker.com/docs](https://shakapacker.com/docs/).
 The canonical markdown source stays in this repository's [`docs/`](./docs/)
 directory and is published to the docs site.
 
-[![Ruby based checks](https://github.com/shakacode/shakapacker/workflows/Ruby%20based%20checks/badge.svg)](https://github.com/shakacode/shakapacker/actions)
-[![Jest specs](https://github.com/shakacode/shakapacker/workflows/Jest%20specs/badge.svg)](https://github.com/shakacode/shakapacker/actions)
-[![Rubocop](https://github.com/shakacode/shakapacker/workflows/Rubocop/badge.svg)](https://github.com/shakacode/shakapacker/actions)
-[![JS lint](https://github.com/shakacode/shakapacker/workflows/JS%20lint/badge.svg)](https://github.com/shakacode/shakapacker/actions)
+<p align="center">
+  <a href="https://shakapacker.com/docs/">
+    <img src="https://img.shields.io/badge/%F0%9F%93%96%20Read%20the%20Docs-shakapacker.com-cc0000?style=for-the-badge" alt="Read the Shakapacker documentation at shakapacker.com">
+  </a>
+</p>
+
+[![Ruby based checks](https://github.com/shakacode/shakapacker/actions/workflows/ruby.yml/badge.svg)](https://github.com/shakacode/shakapacker/actions/workflows/ruby.yml)
+[![Node based checks](https://github.com/shakacode/shakapacker/actions/workflows/node.yml/badge.svg)](https://github.com/shakacode/shakapacker/actions/workflows/node.yml)
+[![Generator specs](https://github.com/shakacode/shakapacker/actions/workflows/generator.yml/badge.svg)](https://github.com/shakacode/shakapacker/actions/workflows/generator.yml)
+[![Test Both Bundlers](https://github.com/shakacode/shakapacker/actions/workflows/test-bundlers.yml/badge.svg)](https://github.com/shakacode/shakapacker/actions/workflows/test-bundlers.yml)
 
 [![node.js](https://img.shields.io/badge/node-%5E20.19.0%20%7C%7C%20%3E%3D22.12.0-brightgreen.svg)](https://www.npmjs.com/package/shakapacker)
 [![shakapacker gem version](https://img.shields.io/gem/v/shakapacker.svg?label=shakapacker%20gem)](https://rubygems.org/gems/shakapacker)
