@@ -42,6 +42,14 @@ describe("rspack/index side effects", () => {
     return requireOrError
   }
 
+  // jest.doMock registrations are global and persist across jest.isolateModules
+  // boundaries, so clear them after every test to keep these specs independent
+  // of execution order (e.g. under --randomize).
+  afterEach(() => {
+    jest.dontMock("../../../package/config")
+    jest.dontMock("../../../package/utils/requireOrError")
+  })
+
   test("does not eagerly load rspack-manifest-plugin when only requiring the rspack index", () => {
     jest.isolateModules(() => {
       mockConfigForRspack()
