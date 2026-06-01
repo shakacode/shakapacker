@@ -421,6 +421,19 @@ describe "Generator" do
         expect(config_content).to include('javascript_transpiler: "babel"')
         expect(config_content).not_to include('javascript_transpiler: "swc"')
       end
+
+      it "creates the webpack config directory and files (JS by default)" do
+        Dir.chdir(File.join(@babel_only_app_path, "config/webpack")) do
+          expect(Dir.glob("*")).to eq(["webpack.config.js"])
+        end
+      end
+
+      it "keeps assets_bundler set to webpack when requested explicitly" do
+        config_content = File.read(File.join(@babel_only_app_path, "config/shakapacker.yml"))
+
+        expect(config_content).to include('assets_bundler: "webpack"')
+        expect(config_content).not_to include('assets_bundler: "rspack"')
+      end
     end
   end
 

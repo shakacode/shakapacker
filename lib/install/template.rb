@@ -63,6 +63,12 @@ if Shakapacker::Install::Env.update_assets_bundler_config?(
   config_preexisting: shakapacker_config_preexisting
 )
   gsub_file "config/shakapacker.yml", 'assets_bundler: "webpack"', "assets_bundler: \"#{assets_bundler}\""
+  # gsub_file matches the literal shipped value, so a future reformat of the
+  # template would turn this into a silent no-op. Surface that instead of leaving
+  # the user on the wrong bundler without any warning.
+  unless File.read(Rails.root.join("config/shakapacker.yml")).include?("assets_bundler: \"#{assets_bundler}\"")
+    say "   ⚠️  Could not update assets_bundler in config/shakapacker.yml — please set it to \"#{assets_bundler}\" manually.", :yellow
+  end
   say "   📝 Updated config/shakapacker.yml to use #{assets_bundler} bundler", :green
 end
 
