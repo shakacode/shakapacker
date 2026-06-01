@@ -212,34 +212,68 @@ describe Shakapacker::Install::Env do
       expect(
         described_class.update_assets_bundler_config?(
           assets_bundler_to_install: "webpack",
-          config_written: false
+          conflict_option: {},
+          config_preexisting: false
         )
       ).to be false
     end
 
-    it "skips updates for the default webpack bundler even when the template was written" do
+    it "skips updates for the default webpack bundler even when FORCE=true" do
       expect(
         described_class.update_assets_bundler_config?(
           assets_bundler_to_install: "webpack",
-          config_written: true
+          conflict_option: { force: true },
+          config_preexisting: true
         )
       ).to be false
     end
 
-    it "updates config when the bundled template was written (fresh install, FORCE, or accepted overwrite)" do
+    it "updates config for a non-default bundler on a fresh install" do
       expect(
         described_class.update_assets_bundler_config?(
           assets_bundler_to_install: "rspack",
-          config_written: true
+          conflict_option: {},
+          config_preexisting: false
         )
       ).to be true
     end
 
-    it "preserves a kept user config when the template was not written (SKIP or declined overwrite)" do
+    it "updates config for a non-default bundler when FORCE=true even if config already exists" do
       expect(
         described_class.update_assets_bundler_config?(
           assets_bundler_to_install: "rspack",
-          config_written: false
+          conflict_option: { force: true },
+          config_preexisting: true
+        )
+      ).to be true
+    end
+
+    it "updates config on fresh install even when SKIP=true" do
+      expect(
+        described_class.update_assets_bundler_config?(
+          assets_bundler_to_install: "rspack",
+          conflict_option: { skip: true },
+          config_preexisting: false
+        )
+      ).to be true
+    end
+
+    it "preserves an existing user config when SKIP=true" do
+      expect(
+        described_class.update_assets_bundler_config?(
+          assets_bundler_to_install: "rspack",
+          conflict_option: { skip: true },
+          config_preexisting: true
+        )
+      ).to be false
+    end
+
+    it "preserves an existing user config in interactive mode (no FORCE/SKIP)" do
+      expect(
+        described_class.update_assets_bundler_config?(
+          assets_bundler_to_install: "rspack",
+          conflict_option: {},
+          config_preexisting: true
         )
       ).to be false
     end

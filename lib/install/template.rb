@@ -41,13 +41,6 @@ end
 shakapacker_config_preexisting = Rails.root.join("config/shakapacker.yml").exist?
 copy_file "#{install_dir}/config/shakapacker.yml", "config/shakapacker.yml", @conflict_option
 
-# True only when copy_file actually wrote the bundled template (fresh install,
-# FORCE, or an accepted interactive overwrite). It stays false when a pre-existing
-# config is preserved (SKIP mode or a declined overwrite prompt), so we never
-# rewrite a config the user chose to keep.
-shakapacker_config_written =
-  File.read(Rails.root.join("config/shakapacker.yml")) == File.read("#{install_dir}/config/shakapacker.yml")
-
 # Update config to match the selected transpiler
 # Skip modification only when SKIP mode preserved a pre-existing user file
 if Shakapacker::Install::Env.update_transpiler_config?(
@@ -61,12 +54,13 @@ end
 
 # Update config to match the selected bundler. The bundled shakapacker.yml ships
 # assets_bundler: "webpack" for backward compatibility, so new installs rewrite it
-# to the chosen bundler. Only rewrite when copy_file actually wrote that template;
-# a preserved user config (SKIP mode or a declined overwrite) is left untouched so
-# the installer never silently switches an existing app's bundler.
+# to the chosen bundler. We only rewrite a config the installer owns (a fresh
+# install or FORCE); a pre-existing config (SKIP mode, a declined overwrite, or any
+# existing app) is left untouched so the installer never silently switches its bundler.
 if Shakapacker::Install::Env.update_assets_bundler_config?(
   assets_bundler_to_install: assets_bundler,
-  config_written: shakapacker_config_written
+  conflict_option: @conflict_option,
+  config_preexisting: shakapacker_config_preexisting
 )
   gsub_file "config/shakapacker.yml", 'assets_bundler: "webpack"', "assets_bundler: \"#{assets_bundler}\""
   say "   📝 Updated config/shakapacker.yml to use #{assets_bundler} bundler", :green
@@ -277,6 +271,8 @@ Dir.chdir(Rails.root) do
     peers = peers.merge(esbuild_deps)
   end
 
+  # Lists both dev servers for classification only; just the one matching the chosen
+  # bundler appears in `peers`, so only that package is actually installed.
   dev_dependency_packages = ["webpack-dev-server", "@rspack/dev-server"]
 
   dependencies_to_add = []

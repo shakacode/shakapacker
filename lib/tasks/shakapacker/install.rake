@@ -6,8 +6,12 @@ namespace :shakapacker do
   task :install, [:bundler, :typescript] => [:check_node] do |task, args|
     Shakapacker::Configuration.installing = true
 
-    if %w[webpack rspack].include?(args[:bundler])
-      ENV["SHAKAPACKER_ASSETS_BUNDLER"] = args[:bundler]
+    if args[:bundler]
+      if %w[webpack rspack].include?(args[:bundler])
+        ENV["SHAKAPACKER_ASSETS_BUNDLER"] = args[:bundler]
+      else
+        warn "Unknown bundler '#{args[:bundler]}'; defaulting to rspack. Valid values: webpack, rspack."
+      end
     end
 
     # Set typescript flag if passed as argument
