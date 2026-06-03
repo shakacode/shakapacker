@@ -127,6 +127,42 @@ describe("rspack/index side effects", () => {
     })
   })
 
+  test("baseConfig can be overridden via Object.defineProperty", () => {
+    jest.isolateModules(() => {
+      mockConfigForRspack()
+      mockRequireOrError()
+
+      const rspackIndex = require("../../../package/rspack/index")
+      const stub = { mode: "none", entry: {} }
+
+      Object.defineProperty(rspackIndex, "baseConfig", {
+        value: stub,
+        writable: true,
+        configurable: true
+      })
+
+      expect(rspackIndex.baseConfig).toBe(stub)
+    })
+  })
+
+  test("rules can be overridden via Object.defineProperty", () => {
+    jest.isolateModules(() => {
+      mockConfigForRspack()
+      mockRequireOrError()
+
+      const rspackIndex = require("../../../package/rspack/index")
+      const stub = [{ test: /\.stub$/, use: [] }]
+
+      Object.defineProperty(rspackIndex, "rules", {
+        value: stub,
+        writable: true,
+        configurable: true
+      })
+
+      expect(rspackIndex.rules).toBe(stub)
+    })
+  })
+
   test("accessing baseConfig triggers the rspack-manifest-plugin load", () => {
     jest.isolateModules(() => {
       mockConfigForRspack()
