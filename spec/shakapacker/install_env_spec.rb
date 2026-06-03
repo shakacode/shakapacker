@@ -218,7 +218,7 @@ describe Shakapacker::Install::Env do
       ).to be false
     end
 
-    it "skips updates for the default webpack bundler even when FORCE=true" do
+    it "skips updates for webpack regardless of FORCE (it is the template's shipped default)" do
       expect(
         described_class.update_assets_bundler_config?(
           assets_bundler_to_install: "webpack",

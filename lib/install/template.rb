@@ -74,10 +74,13 @@ if Shakapacker::Install::Env.update_assets_bundler_config?(
 else
   # The bundler was deliberately left as-is: an explicit webpack request, a
   # preserved pre-existing config, or an interactive overwrite that restored the
-  # shipped webpack default. Report the retained value so the choice isn't silent.
-  config_contents = File.read(Rails.root.join("config/shakapacker.yml"))
-  retained_bundler = config_contents[/assets_bundler:\s*"([^"]+)"/, 1] || assets_bundler
-  say "   📝 Keeping assets_bundler: \"#{retained_bundler}\" in config/shakapacker.yml", :green
+  # shipped webpack default. Report the value actually present so the choice isn't
+  # silent, but only when we can read it back — never guess, or the message could
+  # contradict the file.
+  retained_bundler = File.read(Rails.root.join("config/shakapacker.yml"))[/assets_bundler:\s*"([^"]+)"/, 1]
+  if retained_bundler
+    say "   📝 Keeping assets_bundler: \"#{retained_bundler}\" in config/shakapacker.yml", :green
+  end
 end
 
 # Detect TypeScript usage
