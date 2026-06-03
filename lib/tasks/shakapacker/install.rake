@@ -1,3 +1,5 @@
+require "shakapacker/install/env"
+
 install_template_path = File.expand_path("../../install/template.rb", __dir__).freeze
 bin_path = ENV["BUNDLE_BIN"] || Rails.root.join("bin")
 
@@ -6,12 +8,8 @@ namespace :shakapacker do
   task :install, [:bundler, :typescript] => [:check_node] do |task, args|
     Shakapacker::Configuration.installing = true
 
-    if args[:bundler]
-      if %w[webpack rspack].include?(args[:bundler])
-        ENV["SHAKAPACKER_ASSETS_BUNDLER"] = args[:bundler]
-      else
-        warn "Unknown bundler '#{args[:bundler]}'; ignoring it. Valid values: webpack, rspack."
-      end
+    if (bundler_warning = Shakapacker::Install::Env.apply_bundler_arg(args[:bundler]))
+      warn bundler_warning
     end
 
     # Set typescript flag if passed as argument

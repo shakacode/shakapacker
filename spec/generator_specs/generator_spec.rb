@@ -219,9 +219,13 @@ describe "Generator" do
         it "adds the rspack dev-server (and not webpack-dev-server) as a dev dependency" do
           package_json = PackageJson.read(path_in_the_app)
           actual_dev_dependencies = package_json.fetch("devDependencies", {}).keys
+          actual_dependencies = package_json.fetch("dependencies", {}).keys
 
           expect(actual_dev_dependencies).to include("@rspack/dev-server")
           expect(actual_dev_dependencies).not_to include("webpack-dev-server")
+          # Guard the dev/runtime classification: the dev-server must land in
+          # devDependencies, not leak into runtime dependencies.
+          expect(actual_dependencies).not_to include("@rspack/dev-server")
         end
 
         context "with a basic react app setup" do
@@ -288,6 +292,14 @@ describe "Generator" do
           content = File.read(config_path)
 
           expect(content).to end_with("\n")
+        end
+
+        it "keeps assets_bundler set to webpack when requested via the positional argument" do
+          config_path = Pathname.new(File.join(TEMP_RAILS_APP_PATH.to_s + "-ts", "config/shakapacker.yml"))
+          content = File.read(config_path)
+
+          expect(content).to include('assets_bundler: "webpack"')
+          expect(content).not_to include('assets_bundler: "rspack"')
         end
       end
 

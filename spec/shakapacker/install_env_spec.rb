@@ -8,6 +8,7 @@ describe Shakapacker::Install::Env do
     USE_BABEL_PACKAGES
     SHAKAPACKER_USE_TYPESCRIPT
     SKIP_COMMON_LOADERS
+    SHAKAPACKER_ASSETS_BUNDLER
   ].freeze
   installer_flag_truthy_values = %w[true TRUE 1 yes YES].freeze
   installer_flag_falsey_values = ["false", "0", ""].freeze
@@ -276,6 +277,34 @@ describe Shakapacker::Install::Env do
           config_preexisting: true
         )
       ).to be false
+    end
+  end
+
+  describe "apply_bundler_arg" do
+    before { ENV.delete("SHAKAPACKER_ASSETS_BUNDLER") }
+
+    it "sets SHAKAPACKER_ASSETS_BUNDLER and returns no warning for webpack" do
+      expect(described_class.apply_bundler_arg("webpack")).to be_nil
+      expect(ENV["SHAKAPACKER_ASSETS_BUNDLER"]).to eq "webpack"
+    end
+
+    it "sets SHAKAPACKER_ASSETS_BUNDLER and returns no warning for rspack" do
+      expect(described_class.apply_bundler_arg("rspack")).to be_nil
+      expect(ENV["SHAKAPACKER_ASSETS_BUNDLER"]).to eq "rspack"
+    end
+
+    it "returns a warning and leaves SHAKAPACKER_ASSETS_BUNDLER unset for an unknown bundler" do
+      warning = described_class.apply_bundler_arg("wbpack")
+
+      expect(warning).to include "Unknown bundler 'wbpack'"
+      expect(warning).to include "webpack, rspack"
+      expect(ENV).not_to have_key("SHAKAPACKER_ASSETS_BUNDLER")
+    end
+
+    it "does nothing when no bundler argument is given" do
+      expect(described_class.apply_bundler_arg(nil)).to be_nil
+      expect(described_class.apply_bundler_arg("")).to be_nil
+      expect(ENV).not_to have_key("SHAKAPACKER_ASSETS_BUNDLER")
     end
   end
 end
