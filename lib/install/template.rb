@@ -64,12 +64,20 @@ if Shakapacker::Install::Env.update_assets_bundler_config?(
 )
   gsub_file "config/shakapacker.yml", 'assets_bundler: "webpack"', "assets_bundler: \"#{assets_bundler}\""
   # gsub_file matches the literal shipped value, so a future reformat of the
-  # template would turn this into a silent no-op. Surface that instead of leaving
-  # the user on the wrong bundler without any warning.
-  unless File.read(Rails.root.join("config/shakapacker.yml")).include?("assets_bundler: \"#{assets_bundler}\"")
+  # template would turn this into a silent no-op. Report success and failure as
+  # mutually exclusive outcomes so the user never sees both messages at once.
+  if File.read(Rails.root.join("config/shakapacker.yml")).include?("assets_bundler: \"#{assets_bundler}\"")
+    say "   📝 Updated config/shakapacker.yml to use #{assets_bundler} bundler", :green
+  else
     say "   ⚠️  Could not update assets_bundler in config/shakapacker.yml — please set it to \"#{assets_bundler}\" manually.", :yellow
   end
-  say "   📝 Updated config/shakapacker.yml to use #{assets_bundler} bundler", :green
+else
+  # The bundler was deliberately left as-is: an explicit webpack request, a
+  # preserved pre-existing config, or an interactive overwrite that restored the
+  # shipped webpack default. Report the retained value so the choice isn't silent.
+  config_contents = File.read(Rails.root.join("config/shakapacker.yml"))
+  retained_bundler = config_contents[/assets_bundler:\s*"([^"]+)"/, 1] || assets_bundler
+  say "   📝 Keeping assets_bundler: \"#{retained_bundler}\" in config/shakapacker.yml", :green
 end
 
 # Detect TypeScript usage
