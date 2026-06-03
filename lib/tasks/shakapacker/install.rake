@@ -10,7 +10,7 @@ namespace :shakapacker do
       if %w[webpack rspack].include?(args[:bundler])
         ENV["SHAKAPACKER_ASSETS_BUNDLER"] = args[:bundler]
       else
-        warn "Unknown bundler '#{args[:bundler]}'; defaulting to rspack. Valid values: webpack, rspack."
+        warn "Unknown bundler '#{args[:bundler]}'; ignoring it. Valid values: webpack, rspack."
       end
     end
 
