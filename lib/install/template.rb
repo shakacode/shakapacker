@@ -70,9 +70,8 @@ if Shakapacker::Install::Env.update_assets_bundler_config?(
   config_preexisting: shakapacker_config_preexisting
 )
   gsub_file "config/shakapacker.yml", 'assets_bundler: "webpack"', "assets_bundler: \"#{assets_bundler}\""
-  # gsub_file matches the literal shipped value, so a future reformat of the
-  # template would turn this into a silent no-op. Report success and failure as
-  # mutually exclusive outcomes so the user never sees both messages at once.
+  # gsub_file silently no-ops if the shipped literal is ever reformatted, so verify
+  # the value landed and report success/failure as mutually exclusive outcomes.
   if File.read(Rails.root.join("config/shakapacker.yml")).include?("assets_bundler: \"#{assets_bundler}\"")
     say "   📝 Updated config/shakapacker.yml to use #{assets_bundler} bundler", :green
   else
@@ -333,7 +332,8 @@ Dir.chdir(Rails.root) do
   end
 
   if dev_dependencies_to_add.any?
-    say "Installing bundler development dependencies"
+    dev_dependency_names = dev_dependencies_to_add.map { |entry| entry.sub(/@[^@]+\z/, "") }
+    say "Installing development dependencies: #{dev_dependency_names.join(", ")}"
     begin
       @package_json.manager.add!(dev_dependencies_to_add, type: :dev)
     rescue PackageJson::Error
