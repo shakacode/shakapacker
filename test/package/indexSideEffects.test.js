@@ -186,4 +186,18 @@ describe("index side effects", () => {
       expect(ensureManifestExists).not.toHaveBeenCalled()
     })
   })
+
+  test("memoizes baseConfig across repeated accesses", () => {
+    // The module-level _baseConfig cache is the crux of the lazy-getter
+    // contract: the first access loads environments/base, subsequent accesses
+    // must return the same cached object rather than reloading it.
+    jest.isolateModules(() => {
+      mockEnsureManifestExists()
+      jest.dontMock("../../package/plugins/webpack")
+
+      const shakapacker = require("../../package/index")
+
+      expect(shakapacker.baseConfig).toBe(shakapacker.baseConfig)
+    })
+  })
 })

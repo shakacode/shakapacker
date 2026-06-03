@@ -78,6 +78,13 @@ const generateRspackConfig = (
 // calls below can replace with accessor descriptors. If this file is ever
 // compiled to a format that emits non-configurable export descriptors, the lazy
 // descriptor override will fail at module load time.
+//
+// This also relies on the placeholder assignments and the Object.defineProperty
+// calls running in source order at module load: a bundler or minifier that
+// hoists or reorders top-level statements could install the getter before the
+// placeholder assignment and silently break the override. This file is not run
+// through a bundler in practice, so this is a maintenance note rather than a
+// live risk.
 declare const baseConfig: RspackConfigWithDevServer
 declare const rules: RuleSetRule[]
 

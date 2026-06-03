@@ -51,6 +51,14 @@ describe("spec/dummy rspack config", () => {
     return configFactory()
   }
 
+  // jest.doMock registrations are global and persist across jest.resetModules /
+  // jest.isolateModules boundaries, so clear the virtual "shakapacker/rspack"
+  // mock after every test to keep this spec independent of execution order and
+  // to avoid leaking the stub into other specs in the same worker.
+  afterEach(() => {
+    jest.dontMock("shakapacker/rspack")
+  })
+
   test("server bundle does not write a manifest over the client manifest", () => {
     const log = jest.spyOn(console, "log").mockImplementation(() => {})
 
