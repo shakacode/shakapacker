@@ -18,6 +18,13 @@ install_dir = File.expand_path(File.dirname(__FILE__))
 # backward compatibility, so the installer rewrites the value below when needed.
 assets_bundler = ENV["SHAKAPACKER_ASSETS_BUNDLER"] || "rspack"
 
+# Fail fast on a misspelled SHAKAPACKER_ASSETS_BUNDLER instead of failing later
+# with a confusing missing-config-directory or peer-lookup error.
+unless Shakapacker::Install::Env::VALID_BUNDLERS.include?(assets_bundler)
+  say "❌ Unknown bundler '#{assets_bundler}'. Set SHAKAPACKER_ASSETS_BUNDLER to one of: #{Shakapacker::Install::Env::VALID_BUNDLERS.join(", ")}.", :red
+  exit 1
+end
+
 # Installation strategy:
 # - USE_BABEL_PACKAGES installs both babel AND swc for compatibility
 # - Otherwise install only the specified transpiler
