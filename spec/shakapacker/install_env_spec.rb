@@ -283,21 +283,21 @@ describe Shakapacker::Install::Env do
   describe "apply_bundler_arg" do
     before { ENV.delete("SHAKAPACKER_ASSETS_BUNDLER") }
 
-    it "sets SHAKAPACKER_ASSETS_BUNDLER and returns no warning for webpack" do
+    it "sets SHAKAPACKER_ASSETS_BUNDLER and returns no error for webpack" do
       expect(described_class.apply_bundler_arg("webpack")).to be_nil
       expect(ENV["SHAKAPACKER_ASSETS_BUNDLER"]).to eq "webpack"
     end
 
-    it "sets SHAKAPACKER_ASSETS_BUNDLER and returns no warning for rspack" do
+    it "sets SHAKAPACKER_ASSETS_BUNDLER and returns no error for rspack" do
       expect(described_class.apply_bundler_arg("rspack")).to be_nil
       expect(ENV["SHAKAPACKER_ASSETS_BUNDLER"]).to eq "rspack"
     end
 
-    it "returns a warning and leaves SHAKAPACKER_ASSETS_BUNDLER unset for an unknown bundler" do
-      warning = described_class.apply_bundler_arg("wbpack")
+    it "returns an error and leaves SHAKAPACKER_ASSETS_BUNDLER unset for an unknown bundler" do
+      error = described_class.apply_bundler_arg("wbpack")
 
-      expect(warning).to include "Unknown bundler 'wbpack'"
-      expect(warning).to include "webpack, rspack"
+      expect(error).to include "Unknown bundler 'wbpack'"
+      expect(error).to include "webpack, rspack"
       expect(ENV).not_to have_key("SHAKAPACKER_ASSETS_BUNDLER")
     end
 

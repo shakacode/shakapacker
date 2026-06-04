@@ -47,11 +47,11 @@ module Shakapacker
 
       # Apply an optional `shakapacker:install[bundler]` task argument. A
       # recognized bundler (webpack or rspack) is written to
-      # SHAKAPACKER_ASSETS_BUNDLER so the install template picks it up; an
-      # unrecognized value is ignored — the bundler then falls back to the env
-      # var or the rspack default — and described in the returned warning so the
-      # caller can surface it. Returns nil when no argument was given or there is
-      # nothing to warn about.
+      # SHAKAPACKER_ASSETS_BUNDLER so the install template picks it up. An
+      # unrecognized value returns an error message (and leaves the env var
+      # unset) so the caller can abort, mirroring the template's strict
+      # validation of SHAKAPACKER_ASSETS_BUNDLER. Returns nil when the argument
+      # is valid or absent.
       def apply_bundler_arg(bundler_arg)
         return nil if bundler_arg.nil? || bundler_arg.empty?
 
@@ -59,7 +59,7 @@ module Shakapacker
           ENV["SHAKAPACKER_ASSETS_BUNDLER"] = bundler_arg
           nil
         else
-          "Unknown bundler '#{bundler_arg}'; ignoring it. Valid values: #{VALID_BUNDLERS.join(", ")}."
+          "Unknown bundler '#{bundler_arg}'. Valid values: #{VALID_BUNDLERS.join(", ")}."
         end
       end
     end

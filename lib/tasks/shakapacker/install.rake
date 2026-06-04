@@ -8,8 +8,8 @@ namespace :shakapacker do
   task :install, [:bundler, :typescript] => [:check_node] do |task, args|
     Shakapacker::Configuration.installing = true
 
-    if (bundler_warning = Shakapacker::Install::Env.apply_bundler_arg(args[:bundler]))
-      warn bundler_warning
+    if (bundler_error = Shakapacker::Install::Env.apply_bundler_arg(args[:bundler]))
+      abort bundler_error
     end
 
     # Set typescript flag if passed as argument
