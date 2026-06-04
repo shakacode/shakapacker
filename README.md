@@ -40,19 +40,20 @@ directory and is published to the docs site.
 
 Full documentation lives at **[shakapacker.com/docs](https://shakapacker.com/docs/)**. Start here:
 
-| Need                                     | Link                                                                     |
-| ---------------------------------------- | ------------------------------------------------------------------------ |
-| Install Shakapacker                      | [Installation](https://shakapacker.com/docs/installation/)               |
-| Configure `config/shakapacker.yml`       | [Configuration](https://shakapacker.com/docs/configuration/)             |
-| Use the JavaScript/Node API              | [Node Package API](https://shakapacker.com/docs/node_package_api/)       |
-| Render assets with view helpers          | [API Reference](https://shakapacker.com/docs/api-reference/)             |
-| Add React, TypeScript, or CSS            | [React & integrations](https://shakapacker.com/docs/react/)              |
-| Move from webpack to Rspack              | [Rspack Migration](https://shakapacker.com/docs/rspack_migration_guide/) |
-| Compare generated webpack/Rspack configs | [Config Diff](https://shakapacker.com/docs/config-diff/)                 |
-| Deploy compiled assets                   | [Deployment](https://shakapacker.com/docs/deployment/)                   |
-| Upgrade an existing app                  | [Common Upgrades](https://shakapacker.com/docs/common-upgrades/)         |
-| Troubleshoot builds                      | [Troubleshooting](https://shakapacker.com/docs/troubleshooting/)         |
-| Review releases                          | [Changelog](./CHANGELOG.md)                                              |
+| Need                                     | Link                                                                                |
+| ---------------------------------------- | ----------------------------------------------------------------------------------- |
+| Decide if Shakapacker + Rspack is right  | [Why Shakapacker with Rspack](https://shakapacker.com/docs/why-shakapacker-rspack/) |
+| Install Shakapacker                      | [Installation](https://shakapacker.com/docs/installation/)                          |
+| Configure `config/shakapacker.yml`       | [Configuration](https://shakapacker.com/docs/configuration/)                        |
+| Use the JavaScript/Node API              | [Node Package API](https://shakapacker.com/docs/node_package_api/)                  |
+| Render assets with view helpers          | [API Reference](https://shakapacker.com/docs/api-reference/)                        |
+| Add React, TypeScript, or CSS            | [React & integrations](https://shakapacker.com/docs/react/)                         |
+| Move from webpack to Rspack              | [Rspack Migration](https://shakapacker.com/docs/rspack_migration_guide/)            |
+| Compare generated webpack/Rspack configs | [Config Diff](https://shakapacker.com/docs/config-diff/)                            |
+| Deploy compiled assets                   | [Deployment](https://shakapacker.com/docs/deployment/)                              |
+| Upgrade an existing app                  | [Common Upgrades](https://shakapacker.com/docs/common-upgrades/)                    |
+| Troubleshoot builds                      | [Troubleshooting](https://shakapacker.com/docs/troubleshooting/)                    |
+| Review releases                          | [Changelog](./CHANGELOG.md)                                                         |
 
 ## Why Shakapacker
 
@@ -71,7 +72,10 @@ Full documentation lives at **[shakapacker.com/docs](https://shakapacker.com/doc
 Optional integrations require extra packages only when you use them: React,
 TypeScript, stylesheets with Sass, Less, Stylus, CSS, PostCSS, and CoffeeScript.
 
-See a comparison of
+For why you might choose this stack over importmaps, jsbundling-rails, or
+vite-rails, see
+[Why Shakapacker with Rspack](https://shakapacker.com/docs/why-shakapacker-rspack/).
+See also a comparison of
 [Shakapacker with jsbundling-rails](https://github.com/rails/jsbundling-rails/blob/main/docs/comparison_with_webpacker.md).
 For an in-depth discussion of choosing between `shakapacker` and
 `jsbundling-rails`, see the discussion
