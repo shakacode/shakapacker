@@ -23,23 +23,27 @@ import {
 const rulesPath = resolve(__dirname, "rules", `${config.assets_bundler}.js`)
 
 let _rules: RuleSetRule[] | undefined
+let _rulesLoaded = false
 
 const getRules = (): RuleSetRule[] => {
-  if (_rules === undefined) {
+  if (!_rulesLoaded) {
     _rules = require(rulesPath) as RuleSetRule[]
+    _rulesLoaded = true
   }
 
-  return _rules
+  return _rules as RuleSetRule[]
 }
 
 let _baseConfig: Configuration | undefined
+let _baseConfigLoaded = false
 
 const getBaseConfig = (): Configuration => {
-  if (_baseConfig === undefined) {
+  if (!_baseConfigLoaded) {
     _baseConfig = require("./environments/base") as Configuration
+    _baseConfigLoaded = true
   }
 
-  return _baseConfig
+  return _baseConfig as Configuration
 }
 
 /**
@@ -120,10 +124,11 @@ Object.defineProperty(shakapacker, "rules", {
   configurable: true,
   enumerable: true,
   get: getRules,
-  set() {
-    throw new TypeError(
-      "shakapacker.rules is read-only. Use Object.defineProperty(shakapacker, 'rules', { value, writable: true, configurable: true }) to override it."
-    )
+  set(value: RuleSetRule[]) {
+    // Assigning `undefined` resets to lazy loading rather than caching a
+    // permanently-undefined value the getter would then return silently.
+    _rules = value
+    _rulesLoaded = value !== undefined
   }
 })
 
@@ -131,10 +136,9 @@ Object.defineProperty(shakapacker, "baseConfig", {
   configurable: true,
   enumerable: true,
   get: getBaseConfig,
-  set() {
-    throw new TypeError(
-      "shakapacker.baseConfig is read-only. Use Object.defineProperty(shakapacker, 'baseConfig', { value, writable: true, configurable: true }) to override it."
-    )
+  set(value: Configuration) {
+    _baseConfig = value
+    _baseConfigLoaded = value !== undefined
   }
 })
 

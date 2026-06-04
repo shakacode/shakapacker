@@ -30,23 +30,27 @@ const { validateRspackDependencies } = require("../utils/validateDependencies")
 const rulesPath = resolve(__dirname, "../rules", "rspack.js")
 
 let _rules: RuleSetRule[] | undefined
+let _rulesLoaded = false
 
 const getRules = (): RuleSetRule[] => {
-  if (_rules === undefined) {
+  if (!_rulesLoaded) {
     _rules = require(rulesPath) as RuleSetRule[]
+    _rulesLoaded = true
   }
 
-  return _rules
+  return _rules as RuleSetRule[]
 }
 
 let _baseConfig: RspackConfigWithDevServer | undefined
+let _baseConfigLoaded = false
 
 const getBaseConfig = (): RspackConfigWithDevServer => {
-  if (_baseConfig === undefined) {
+  if (!_baseConfigLoaded) {
     _baseConfig = require("../environments/base") as RspackConfigWithDevServer
+    _baseConfigLoaded = true
   }
 
-  return _baseConfig
+  return _baseConfig as RspackConfigWithDevServer
 }
 
 const generateRspackConfig = (
@@ -69,22 +73,23 @@ const generateRspackConfig = (
   return webpackMerge.merge({}, environmentConfig, extraConfig)
 }
 
-// baseConfig and rules are installed below as lazy getters. These ambient
-// declarations keep the generated .d.ts named export surface aligned with the
-// runtime descriptors without forcing either module to load eagerly.
+// baseConfig and rules are installed below as lazy getters via
+// Object.defineProperty. These ambient declarations exist only to shape the
+// generated .d.ts: they advertise baseConfig/rules on the named-export surface
+// with their real types, without forcing either module to load eagerly. Being
+// ambient (`declare const`), they emit no runtime binding of their own.
 //
-// Mechanism: with module: commonjs, TypeScript emits export placeholder
-// assignments as configurable data properties that the Object.defineProperty
-// calls below can replace with accessor descriptors. If this file is ever
-// compiled to a format that emits non-configurable export descriptors, the lazy
-// descriptor override will fail at module load time.
-//
-// This also relies on the placeholder assignments and the Object.defineProperty
-// calls running in source order at module load: a bundler or minifier that
-// hoists or reorders top-level statements could install the getter before the
-// placeholder assignment and silently break the override. This file is not run
-// through a bundler in practice, so this is a maintenance note rather than a
-// live risk.
+// Mechanism: with module: commonjs, tsc initializes every named export to
+// `void 0` at the top of the emitted module as a configurable data property.
+// Installing an accessor via Object.defineProperty(exports, ...) below replaces
+// that placeholder AND removes the export from Node's static CommonJS
+// named-export detection (cjs-module-lexer) — which is why a native ESM
+// `import { baseConfig } from "shakapacker/rspack"` throws "Named export not
+// found" (a documented breaking change; see CHANGELOG). ESM consumers must use
+// the default import or require(). The defineProperty calls succeed because the
+// placeholder is configurable; a build target that emitted non-configurable
+// export bindings would make them throw at load, and the guard after them fails
+// loudly in the unlikely event a getter is otherwise not installed.
 declare const baseConfig: RspackConfigWithDevServer
 declare const rules: RuleSetRule[]
 
@@ -120,10 +125,11 @@ Object.defineProperty(exports, "rules", {
   configurable: true,
   enumerable: true,
   get: getRules,
-  set() {
-    throw new TypeError(
-      "shakapacker/rspack rules is read-only. Use Object.defineProperty(require('shakapacker/rspack'), 'rules', { value, writable: true, configurable: true }) to override it."
-    )
+  set(value: RuleSetRule[]) {
+    // Assigning `undefined` resets to lazy loading rather than caching a
+    // permanently-undefined value the getter would then return silently.
+    _rules = value
+    _rulesLoaded = value !== undefined
   }
 })
 
@@ -131,9 +137,23 @@ Object.defineProperty(exports, "baseConfig", {
   configurable: true,
   enumerable: true,
   get: getBaseConfig,
-  set() {
-    throw new TypeError(
-      "shakapacker/rspack baseConfig is read-only. Use Object.defineProperty(require('shakapacker/rspack'), 'baseConfig', { value, writable: true, configurable: true }) to override it."
+  set(value: RspackConfigWithDevServer) {
+    _baseConfig = value
+    _baseConfigLoaded = value !== undefined
+  }
+})
+
+// Fail loudly if the lazy getters were not installed (e.g. a future build target
+// emits non-overridable export bindings), rather than silently shipping eager or
+// missing baseConfig/rules exports.
+;(["rules", "baseConfig"] as const).forEach((key) => {
+  if (
+    typeof Object.getOwnPropertyDescriptor(exports, key)?.get !== "function"
+  ) {
+    throw new Error(
+      `[shakapacker] Failed to install the lazy '${key}' getter on shakapacker/rspack. ` +
+        "This indicates the build emitted a non-configurable export binding for it. " +
+        "See package/rspack/index.ts."
     )
   }
 })

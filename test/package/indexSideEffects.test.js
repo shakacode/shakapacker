@@ -58,15 +58,42 @@ describe("index side effects", () => {
     })
   })
 
-  test("assigning to baseConfig throws an informative TypeError", () => {
+  test("assigning to baseConfig overrides the lazy value without loading the real config", () => {
+    // plugins/webpack is intentionally left unmocked: if the setter override did
+    // not write to the same cache the getter reads, accessing baseConfig back
+    // would load environments/base and call ensureManifestExists. Asserting it
+    // stays uncalled proves the assignment short-circuits the lazy loader.
     jest.isolateModules(() => {
-      mockEnsureManifestExists()
+      const ensureManifestExists = mockEnsureManifestExists()
+      jest.dontMock("../../package/plugins/webpack")
+
+      const shakapacker = require("../../package/index")
+      const stub = { mode: "none", entry: {} }
+
+      shakapacker.baseConfig = stub
+
+      expect(shakapacker.baseConfig).toBe(stub)
+      expect(ensureManifestExists).not.toHaveBeenCalled()
+    })
+  })
+
+  test("assigning undefined to baseConfig resets to lazy loading", () => {
+    // Guards the setter footgun: a stray `undefined` assignment must fall back
+    // to the real lazy loader rather than caching undefined and returning it
+    // silently. Accessing afterwards loads environments/base exactly once.
+    jest.isolateModules(() => {
+      const ensureManifestExists = mockEnsureManifestExists()
+      jest.dontMock("../../package/plugins/webpack")
 
       const shakapacker = require("../../package/index")
 
-      expect(() => {
-        shakapacker.baseConfig = {}
-      }).toThrow(/shakapacker\.baseConfig is read-only/)
+      shakapacker.baseConfig = undefined
+
+      expect(ensureManifestExists).not.toHaveBeenCalled()
+      expect(shakapacker.baseConfig).toStrictEqual(
+        expect.objectContaining({ mode: expect.any(String) })
+      )
+      expect(ensureManifestExists).toHaveBeenCalledTimes(1)
     })
   })
 
@@ -105,15 +132,32 @@ describe("index side effects", () => {
     })
   })
 
-  test("assigning to rules throws an informative TypeError", () => {
+  test("assigning to rules overrides the lazy value", () => {
+    jest.isolateModules(() => {
+      mockEnsureManifestExists()
+
+      const shakapacker = require("../../package/index")
+      const stub = [{ test: /\.stub$/, use: [] }]
+
+      shakapacker.rules = stub
+
+      expect(shakapacker.rules).toBe(stub)
+    })
+  })
+
+  test("assigning undefined to rules resets to lazy loading", () => {
     jest.isolateModules(() => {
       mockEnsureManifestExists()
 
       const shakapacker = require("../../package/index")
 
-      expect(() => {
-        shakapacker.rules = []
-      }).toThrow(/shakapacker\.rules is read-only/)
+      shakapacker.rules = undefined
+
+      expect(shakapacker.rules).toStrictEqual(
+        expect.arrayContaining([
+          expect.objectContaining({ test: expect.any(RegExp) })
+        ])
+      )
     })
   })
 
@@ -187,17 +231,24 @@ describe("index side effects", () => {
     })
   })
 
-  test("memoizes baseConfig across repeated accesses", () => {
+  test("memoizes baseConfig across repeated accesses without re-running side effects", () => {
     // The module-level _baseConfig cache is the crux of the lazy-getter
-    // contract: the first access loads environments/base, subsequent accesses
-    // must return the same cached object rather than reloading it.
+    // contract: the first access loads environments/base (running
+    // ensureManifestExists once), and subsequent accesses must return the same
+    // cached object without re-running that side effect. Spying on
+    // ensureManifestExists gives the assertion teeth a bare `.toBe` reference
+    // check (satisfied by Node's require cache alone) would lack.
     jest.isolateModules(() => {
-      mockEnsureManifestExists()
+      const ensureManifestExists = mockEnsureManifestExists()
       jest.dontMock("../../package/plugins/webpack")
 
       const shakapacker = require("../../package/index")
 
-      expect(shakapacker.baseConfig).toBe(shakapacker.baseConfig)
+      const first = shakapacker.baseConfig
+      const second = shakapacker.baseConfig
+
+      expect(second).toBe(first)
+      expect(ensureManifestExists).toHaveBeenCalledTimes(1)
     })
   })
 })

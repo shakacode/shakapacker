@@ -64,13 +64,20 @@ describe("spec/dummy rspack config", () => {
 
     try {
       const configs = loadConfig()
-      const serverConfig = configs[1]
-      const pluginNames = serverConfig.plugins.map(
+      const clientPluginNames = configs[0].plugins.map(
+        (plugin) => plugin.constructor.name
+      )
+      const serverPluginNames = configs[1].plugins.map(
         (plugin) => plugin.constructor.name
       )
 
-      expect(pluginNames).not.toContain("WebpackManifestPlugin")
-      expect(pluginNames).not.toContain("CssExtractRspackPlugin")
+      // Server config must drop the manifest writer (and css-extract) so it
+      // does not overwrite the client manifest...
+      expect(serverPluginNames).not.toContain("WebpackManifestPlugin")
+      expect(serverPluginNames).not.toContain("CssExtractRspackPlugin")
+      // ...while the client config must keep its manifest plugin, proving the
+      // server-side filter did not over-strip the shared base config.
+      expect(clientPluginNames).toContain("WebpackManifestPlugin")
     } finally {
       log.mockRestore()
     }
