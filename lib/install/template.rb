@@ -332,6 +332,8 @@ Dir.chdir(Rails.root) do
   end
 
   if dev_dependencies_to_add.any?
+    # Strip the trailing @version, keeping the package name; the regex drops only
+    # the last @-segment so scoped names (e.g. @rspack/dev-server) survive.
     dev_dependency_names = dev_dependencies_to_add.map { |entry| entry.sub(/@[^@]+\z/, "") }
     say "Installing development dependencies: #{dev_dependency_names.join(", ")}"
     begin
