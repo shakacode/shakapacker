@@ -101,29 +101,72 @@ describe("rspack/index side effects", () => {
     })
   })
 
-  test("assigning to baseConfig throws an informative TypeError", () => {
+  test("assigning to baseConfig overrides the lazy value without loading rspack-manifest-plugin", () => {
+    // If the setter override did not write to the same cache the getter reads,
+    // accessing baseConfig back would load the real base config and resolve
+    // rspack-manifest-plugin. Asserting it is never requested proves the
+    // assignment short-circuits the lazy loader.
     jest.isolateModules(() => {
       mockConfigForRspack()
-      mockRequireOrError()
+      const requireOrError = mockRequireOrError()
 
       const rspackIndex = require("../../../package/rspack/index")
+      const stub = { mode: "none", entry: {} }
 
-      expect(() => {
-        rspackIndex.baseConfig = {}
-      }).toThrow(/shakapacker\/rspack baseConfig is read-only/)
+      rspackIndex.baseConfig = stub
+
+      expect(rspackIndex.baseConfig).toBe(stub)
+      const requested = requireOrError.mock.calls.map((call) => call[0])
+      expect(requested).not.toContain("rspack-manifest-plugin")
     })
   })
 
-  test("assigning to rules throws an informative TypeError", () => {
+  test("assigning undefined to baseConfig resets to lazy loading", () => {
+    // Guards the setter footgun: a stray `undefined` assignment must fall back
+    // to the real lazy loader rather than caching undefined and returning it
+    // silently. Accessing afterwards resolves rspack-manifest-plugin.
+    jest.isolateModules(() => {
+      mockConfigForRspack()
+      const requireOrError = mockRequireOrError()
+
+      const rspackIndex = require("../../../package/rspack/index")
+
+      rspackIndex.baseConfig = undefined
+
+      const beforeAccess = requireOrError.mock.calls.map((call) => call[0])
+      expect(beforeAccess).not.toContain("rspack-manifest-plugin")
+
+      expect(rspackIndex.baseConfig).toBeDefined()
+
+      const afterAccess = requireOrError.mock.calls.map((call) => call[0])
+      expect(afterAccess).toContain("rspack-manifest-plugin")
+    })
+  })
+
+  test("assigning to rules overrides the lazy value", () => {
+    jest.isolateModules(() => {
+      mockConfigForRspack()
+      mockRequireOrError()
+
+      const rspackIndex = require("../../../package/rspack/index")
+      const stub = [{ test: /\.stub$/, use: [] }]
+
+      rspackIndex.rules = stub
+
+      expect(rspackIndex.rules).toBe(stub)
+    })
+  })
+
+  test("assigning undefined to rules resets to lazy loading", () => {
     jest.isolateModules(() => {
       mockConfigForRspack()
       mockRequireOrError()
 
       const rspackIndex = require("../../../package/rspack/index")
 
-      expect(() => {
-        rspackIndex.rules = []
-      }).toThrow(/shakapacker\/rspack rules is read-only/)
+      rspackIndex.rules = undefined
+
+      expect(rspackIndex.rules).toBeDefined()
     })
   })
 
@@ -189,6 +232,28 @@ describe("rspack/index side effects", () => {
 
       const afterAccess = requireOrError.mock.calls.map((call) => call[0])
       expect(afterAccess).not.toContain("rspack-manifest-plugin")
+    })
+  })
+
+  test("memoizes baseConfig across repeated accesses without re-resolving optional deps", () => {
+    // Mirrors the webpack memoization spec: the _baseConfig cache must return the
+    // same object on repeated access and resolve rspack-manifest-plugin only
+    // once. Spying on requireOrError gives the assertion teeth the Node require
+    // cache alone would not — a re-running getter would request the plugin again.
+    jest.isolateModules(() => {
+      mockConfigForRspack()
+      const requireOrError = mockRequireOrError()
+
+      const rspackIndex = require("../../../package/rspack/index")
+
+      const first = rspackIndex.baseConfig
+      const second = rspackIndex.baseConfig
+
+      expect(second).toBe(first)
+      const manifestLoads = requireOrError.mock.calls.filter(
+        (call) => call[0] === "rspack-manifest-plugin"
+      )
+      expect(manifestLoads).toHaveLength(1)
     })
   })
 })

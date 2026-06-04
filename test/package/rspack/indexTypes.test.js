@@ -49,8 +49,12 @@ describe("rspack/index types", () => {
   // The two native-ESM specs below run identical full compilations, so share a
   // single tsc build (and node_modules/lib symlinks) across them to avoid paying
   // the compile cost twice in CI. Each spec only writes and runs its own .mjs
-  // consumer against the shared output.
-  describe("native ESM consumers", () => {
+  // consumer against the shared output. symlinkSync to node_modules/lib requires
+  // elevated privileges on Windows (EPERM), so these specs are skipped there; the
+  // declaration-emit test above does not symlink and still runs.
+  const describeOrSkip = process.platform === "win32" ? describe.skip : describe
+
+  describeOrSkip("native ESM consumers", () => {
     let sharedRootDir
 
     const runConsumer = (fileName, lines) => {
@@ -111,6 +115,37 @@ describe("rspack/index types", () => {
       ])
 
       expect(output).toContain("rspack ESM lazy exports ok")
+    })
+
+    test("compiled rspack entry rejects native ESM named imports of lazy exports", () => {
+      // Locks in the documented breaking change: baseConfig/rules are installed
+      // as lazy getters via Object.defineProperty, so Node's CommonJS named-export
+      // detection (cjs-module-lexer) cannot see them statically. A native ESM
+      // named import therefore throws SyntaxError at load time; consumers must use
+      // the default import instead (covered by the test above). This guards
+      // against a future toolchain change silently re-enabling the named import.
+      const consumerPath = join(
+        sharedRootDir,
+        "rspack-esm-named-lazy-consumer.mjs"
+      )
+      writeFileSync(
+        consumerPath,
+        'import { baseConfig } from "./package/rspack/index.js"\n' +
+          "console.log(typeof baseConfig)\n"
+      )
+
+      let error
+      try {
+        execFileSync(process.execPath, [consumerPath], {
+          encoding: "utf8",
+          stdio: ["pipe", "pipe", "pipe"]
+        })
+      } catch (caught) {
+        error = caught
+      }
+
+      expect(error).toBeDefined()
+      expect(error.stderr).toMatch(/Named export 'baseConfig' not found/)
     })
   })
 })

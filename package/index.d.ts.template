@@ -25,20 +25,12 @@ interface ShakapackerExports {
   config: Config
   /** Development server configuration */
   devServer: DevServerConfig
-  /**
-   * Base webpack/rspack configuration.
-   * Exposed via a lazy getter — reassignment via `shakapacker.baseConfig = ...`
-   * always throws a TypeError at runtime. Use `Object.defineProperty` to override if needed.
-   */
-  readonly baseConfig: Configuration
+  /** Base webpack/rspack configuration (lazily loaded on first access; may throw if the bundler is not installed) */
+  baseConfig: Configuration
   /** Environment configuration (railsEnv, nodeEnv, etc.) */
   env: Env
-  /**
-   * Array of webpack/rspack loader rules.
-   * Exposed via a lazy getter — reassignment via `shakapacker.rules = ...`
-   * always throws a TypeError at runtime. Use `Object.defineProperty` to override if needed.
-   */
-  readonly rules: RuleSetRule[]
+  /** Array of webpack/rspack loader rules (lazily loaded on first access; may throw if the bundler is not installed) */
+  rules: RuleSetRule[]
   /** Check if a module exists in node_modules */
   moduleExists: (packageName: string) => boolean
   /** Process a file if a specific loader is available */
