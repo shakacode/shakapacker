@@ -15,6 +15,31 @@ require "json"
 @package_json ||= PackageJson.new
 install_dir = File.expand_path(File.dirname(__FILE__))
 
+# Read the existing app's bundler (if any) before copy_file can overwrite it, so a
+# re-install can default to that bundler instead of silently switching it.
+config_path = Rails.root.join("config/shakapacker.yml")
+shakapacker_config_preexisting = config_path.exist?
+existing_assets_bundler =
+  File.read(config_path)[/assets_bundler:\s*"([^"]+)"/, 1] if shakapacker_config_preexisting
+
+# New installs default to rspack; an existing app keeps its current bundler on a
+# re-install unless overridden by the env var/argument or a FORCE overwrite (see
+# Env.resolve_assets_bundler for the precedence rules). The bundled shakapacker.yml
+# ships "webpack" for backward compatibility and is rewritten below when the chosen
+# bundler differs.
+assets_bundler = Shakapacker::Install::Env.resolve_assets_bundler(
+  env_value: ENV["SHAKAPACKER_ASSETS_BUNDLER"],
+  existing_bundler: existing_assets_bundler,
+  force: @conflict_option[:force]
+)
+
+# Fail fast on a misspelled SHAKAPACKER_ASSETS_BUNDLER instead of failing later
+# with a confusing missing-config-directory or peer-lookup error.
+unless Shakapacker::Install::Env::VALID_BUNDLERS.include?(assets_bundler)
+  say "❌ Unknown bundler '#{assets_bundler}'. Set SHAKAPACKER_ASSETS_BUNDLER to one of: #{Shakapacker::Install::Env::VALID_BUNDLERS.join(", ")}.", :red
+  exit 1
+end
+
 # Installation strategy:
 # - USE_BABEL_PACKAGES installs both babel AND swc for compatibility
 # - Otherwise install only the specified transpiler
@@ -35,7 +60,6 @@ else
 end
 
 # Copy config file
-shakapacker_config_preexisting = Rails.root.join("config/shakapacker.yml").exist?
 copy_file "#{install_dir}/config/shakapacker.yml", "config/shakapacker.yml", @conflict_option
 
 # Update config to match the selected transpiler
@@ -46,14 +70,59 @@ if Shakapacker::Install::Env.update_transpiler_config?(
   config_preexisting: shakapacker_config_preexisting
 )
   gsub_file "config/shakapacker.yml", 'javascript_transpiler: "swc"', "javascript_transpiler: \"#{@transpiler_to_install}\""
-  say "   📝 Updated config/shakapacker.yml to use #{@transpiler_to_install} transpiler", :green
+  # Unlike the bundler rewrite below (which only runs on installer-owned files and
+  # aborts on a miss), this can also run against a pre-existing user config whose
+  # transpiler line may legitimately differ from the shipped "swc" literal. A no-op
+  # there is not an error, so only claim success when the value actually landed.
+  if File.read(config_path).include?("javascript_transpiler: \"#{@transpiler_to_install}\"")
+    say "   📝 Updated config/shakapacker.yml to use #{@transpiler_to_install} transpiler", :green
+  end
+end
+
+# Update config to match the selected bundler (see update_assets_bundler_config?
+# for when the installer rewrites the shipped "webpack" default vs. preserves an
+# existing config).
+if Shakapacker::Install::Env.update_assets_bundler_config?(
+  assets_bundler_to_install: assets_bundler,
+  conflict_option: @conflict_option,
+  config_preexisting: shakapacker_config_preexisting
+)
+  gsub_file "config/shakapacker.yml", 'assets_bundler: "webpack"', "assets_bundler: \"#{assets_bundler}\""
+  # gsub_file silently no-ops if the shipped literal is ever reformatted, so verify
+  # the value landed. Abort rather than continue, since the installer is about to set
+  # up the chosen bundler's dependencies and config, and a mismatched bundler value
+  # would produce a broken install. This runs before any dependencies are installed.
+  if File.read(config_path).include?("assets_bundler: \"#{assets_bundler}\"")
+    say "   📝 Updated config/shakapacker.yml to use #{assets_bundler} bundler", :green
+  else
+    say "❌ Could not set assets_bundler to \"#{assets_bundler}\" in config/shakapacker.yml " \
+        "— the expected 'assets_bundler: \"webpack\"' line was not found. Aborting so the " \
+        "install doesn't proceed with a mismatched bundler config.", :red
+    exit 1
+  end
+else
+  # The bundler config was left as-is (an existing app's config is preserved unless
+  # FORCE overwrites it). Report the value present, and warn if it differs from the
+  # bundler whose dependencies/config are being installed — usually when a bundler is
+  # requested explicitly (env var or task argument) against a preserved config, but
+  # also when a preserved config holds an unrecognized bundler and resolve_assets_bundler
+  # falls back to rspack. Either case would otherwise be a silent mismatch. Only act
+  # when we can read the value back — never guess, or the message could contradict the file.
+  retained_bundler = File.read(config_path)[/assets_bundler:\s*"([^"]+)"/, 1]
+  if retained_bundler && retained_bundler != assets_bundler
+    say "⚠️  Installing #{assets_bundler} dependencies, but config/shakapacker.yml keeps " \
+        "assets_bundler: \"#{retained_bundler}\". To switch an existing app's bundler, run " \
+        "`bin/rake shakapacker:switch_bundler #{assets_bundler} -- --install-deps`, " \
+        "or re-run the installer with FORCE=true to overwrite the config.", :yellow
+  elsif retained_bundler
+    say "   📝 Keeping assets_bundler: \"#{retained_bundler}\" in config/shakapacker.yml", :green
+  end
 end
 
 # Detect TypeScript usage
 # Auto-detect from tsconfig.json or explicit via SHAKAPACKER_USE_TYPESCRIPT env var
 @use_typescript = File.exist?(Rails.root.join("tsconfig.json")) ||
   Shakapacker::Install::Env.truthy_env?("SHAKAPACKER_USE_TYPESCRIPT")
-assets_bundler = ENV["SHAKAPACKER_ASSETS_BUNDLER"] || "webpack"
 config_extension = @use_typescript ? "ts" : "js"
 
 say "Copying #{assets_bundler} core config (#{config_extension.upcase})"
@@ -224,7 +293,7 @@ Dir.chdir(Rails.root) do
   end
 
   # Inline fetch_peer_dependencies and fetch_common_dependencies
-  peers = PackageJson.read(install_dir).fetch(ENV["SHAKAPACKER_ASSETS_BUNDLER"] || "webpack")
+  peers = PackageJson.read(install_dir).fetch(assets_bundler)
   common_deps = Shakapacker::Install::Env.truthy_env?("SKIP_COMMON_LOADERS") ? {} : PackageJson.read(install_dir).fetch("common")
   peers = peers.merge(common_deps)
 
@@ -255,7 +324,9 @@ Dir.chdir(Rails.root) do
     peers = peers.merge(esbuild_deps)
   end
 
-  dev_dependency_packages = ["webpack-dev-server"]
+  # Lists both dev servers for classification only; just the one matching the chosen
+  # bundler appears in `peers`, so only that package is actually installed.
+  dev_dependency_packages = ["webpack-dev-server", "@rspack/dev-server"]
 
   dependencies_to_add = []
   dev_dependencies_to_add = []
@@ -290,12 +361,17 @@ Dir.chdir(Rails.root) do
     exit 1
   end
 
-  say "Installing webpack-dev-server for live reloading as a development dependency"
-  begin
-    @package_json.manager.add!(dev_dependencies_to_add, type: :dev)
-  rescue PackageJson::Error
-    say "Shakapacker installation failed 😭 See above for details.", :red
-    exit 1
+  if dev_dependencies_to_add.any?
+    # Strip the trailing @version, keeping the package name; the regex drops only
+    # the last @-segment so scoped names (e.g. @rspack/dev-server) survive.
+    dev_dependency_names = dev_dependencies_to_add.map { |entry| entry.sub(/@[^@]+\z/, "") }
+    say "Installing development dependencies: #{dev_dependency_names.join(", ")}"
+    begin
+      @package_json.manager.add!(dev_dependencies_to_add, type: :dev)
+    rescue PackageJson::Error
+      say "Shakapacker installation failed 😭 See above for details.", :red
+      exit 1
+    end
   end
 
   # Configure babel preset in package.json if babel is being used

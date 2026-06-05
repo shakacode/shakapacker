@@ -218,7 +218,7 @@ The core `shakapacker` package keeps its broad optional peer ranges during v10.x
 
 `shakapacker-webpack` and `shakapacker-rspack` declare the singleton bundler stack as **required peer dependencies**. npm 7+ can auto-install those peers with the supplemental. pnpm and Yarn PnP users should keep packages imported by app config files (`shakapacker`, and often the bundler packages) as explicit app dependencies unless their configs import the wrapper packages directly.
 
-**Webpack + SWC (default happy path):**
+**Webpack + SWC:**
 
 ```json
 {
@@ -235,7 +235,7 @@ The core `shakapacker` package keeps its broad optional peer ranges during v10.x
 
 `shakapacker` and `terser-webpack-plugin` come along as direct dependencies of `shakapacker-webpack`. npm 7+ auto-installs `webpack`, `webpack-cli`, and `webpack-assets-manifest` via the required peer declarations. pnpm and Yarn PnP users should list them directly if app config files import them.
 
-**Rspack (SWC is built-in):**
+**Rspack — new-install default (SWC is built-in):**
 
 ```json
 {
@@ -385,7 +385,7 @@ Core `shakapacker` was tightened to `^20.19.0 || >=22.12.0` in v10.1 (PR #1099, 
 
 The `shakapacker:install` rake task should be updated to:
 
-1. Ask which bundler (webpack or rspack) — **default: rspack**. Rspack ships SWC transpilation built in, so the recommended path is the lowest-friction install.
+1. Ask which bundler (webpack or rspack) — **default: rspack** (the non-interactive installer already defaults to rspack; the interactive prompt remains v11 work). Rspack ships SWC transpilation built in, so the recommended path is the lowest-friction install.
 2. **If the user picked webpack**, ask which transpiler (swc, babel, esbuild, none) — default: swc. **Skip this question entirely for rspack** — rspack uses its built-in SWC and we don't want to expand the support burden by exposing transpiler swap-out for rspack users who don't need it.
 3. Install the appropriate `shakapacker-*` package + its required bundler peers (npm 7+ could auto-install the peers, but the installer writes them explicitly for cross-PM consistency and for pnpm/Yarn PnP app-level imports)
 4. Install **only** the optional peer dependencies for the features the app actually uses

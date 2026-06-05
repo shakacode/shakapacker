@@ -59,7 +59,7 @@ default: &default
   javascript_transpiler: "swc"
 
   # Select assets bundler to use
-  # Available options: 'webpack' (default) or 'rspack'
+  # Available options: 'webpack' or 'rspack'
   assets_bundler: "webpack"
 
   # Path to the directory containing webpack/rspack config files
