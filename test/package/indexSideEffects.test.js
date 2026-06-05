@@ -98,6 +98,11 @@ describe("index side effects", () => {
   })
 
   test("baseConfig can be overridden via Object.defineProperty", () => {
+    // Verifies only that the export stays redefinable (`configurable: true`).
+    // A value-descriptor override bypasses the setter, so it does NOT propagate
+    // to `generateWebpackConfig` (which reads `getBaseConfig()`/`_baseConfig`
+    // directly). Direct assignment (`shakapacker.baseConfig = custom`) is the
+    // only path that reaches config generation.
     jest.isolateModules(() => {
       mockEnsureManifestExists()
 
