@@ -136,6 +136,11 @@ Object.defineProperty(shakapacker, "baseConfig", {
   configurable: true,
   enumerable: true,
   get: getBaseConfig,
+  // Only direct assignment (`shakapacker.baseConfig = custom`) runs this setter
+  // and propagates to config generation. Redefining the property with a value
+  // descriptor (`Object.defineProperty(shakapacker, "baseConfig", { value })`)
+  // bypasses it, leaving `_baseConfig`/`_baseConfigLoaded` untouched, so
+  // `generateWebpackConfig` (which calls `getBaseConfig()`) keeps the lazy value.
   set(value: Configuration | undefined) {
     _baseConfig = value
     _baseConfigLoaded = value !== undefined
@@ -152,7 +157,7 @@ Object.defineProperty(shakapacker, "baseConfig", {
     throw new Error(
       `[shakapacker] Failed to install the lazy '${key}' getter on shakapacker. ` +
         "This indicates the build emitted a non-configurable property binding for it. " +
-        "See package/index.ts."
+        "See package/index.js."
     )
   }
 })

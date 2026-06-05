@@ -157,7 +157,7 @@ Object.defineProperty(exports, "baseConfig", {
     throw new Error(
       `[shakapacker] Failed to install the lazy '${key}' getter on shakapacker/rspack. ` +
         "This indicates the build emitted a non-configurable export binding for it. " +
-        "See package/rspack/index.ts."
+        "See package/rspack/index.js."
     )
   }
 })
