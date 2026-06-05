@@ -1,6 +1,7 @@
 describe("spec/dummy rspack config", () => {
   const loadConfig = () => {
     jest.resetModules()
+    delete process.env.WEBPACK_SERVE
     delete process.env.CLIENT_BUNDLE_ONLY
     delete process.env.SERVER_BUNDLE_ONLY
 

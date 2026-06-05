@@ -251,4 +251,17 @@ describe("index side effects", () => {
       expect(ensureManifestExists).toHaveBeenCalledTimes(1)
     })
   })
+
+  test("memoizes rules across repeated accesses", () => {
+    // Repeated access must return the same cached array reference rather than
+    // re-deriving it from the rules module on every read; a bare reference check
+    // catches a regression that mapped or cloned the rules on each access.
+    jest.isolateModules(() => {
+      mockEnsureManifestExists()
+
+      const shakapacker = require("../../package/index")
+
+      expect(shakapacker.rules).toBe(shakapacker.rules)
+    })
+  })
 })

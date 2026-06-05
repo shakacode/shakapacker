@@ -124,7 +124,7 @@ Object.defineProperty(shakapacker, "rules", {
   configurable: true,
   enumerable: true,
   get: getRules,
-  set(value: RuleSetRule[]) {
+  set(value: RuleSetRule[] | undefined) {
     // Assigning `undefined` resets to lazy loading rather than caching a
     // permanently-undefined value the getter would then return silently.
     _rules = value
@@ -136,9 +136,24 @@ Object.defineProperty(shakapacker, "baseConfig", {
   configurable: true,
   enumerable: true,
   get: getBaseConfig,
-  set(value: Configuration) {
+  set(value: Configuration | undefined) {
     _baseConfig = value
     _baseConfigLoaded = value !== undefined
+  }
+})
+
+// Fail loudly if the lazy getters were not installed (parity with
+// package/rspack/index.ts), rather than silently shipping eager or missing
+// baseConfig/rules exports.
+;(["rules", "baseConfig"] as const).forEach((key) => {
+  if (
+    typeof Object.getOwnPropertyDescriptor(shakapacker, key)?.get !== "function"
+  ) {
+    throw new Error(
+      `[shakapacker] Failed to install the lazy '${key}' getter on shakapacker. ` +
+        "This indicates the build emitted a non-configurable property binding for it. " +
+        "See package/index.ts."
+    )
   }
 })
 

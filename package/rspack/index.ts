@@ -5,6 +5,10 @@
 // - Using import for type-only imports and Node.js built-in modules
 import { resolve } from "path"
 import { existsSync } from "fs"
+// RuleSetRule is intentionally imported from "webpack": Shakapacker generates a
+// single shared rule set (../rules/rspack.js) consumed by both bundlers, and
+// rspack's rule shape is compatible with webpack's. Using the webpack type keeps
+// the `rules` export type identical across the webpack and rspack entry points.
 import type { RuleSetRule } from "webpack"
 import type { RspackConfigWithDevServer } from "../environments/types"
 import type { Config } from "../types"
@@ -125,7 +129,7 @@ Object.defineProperty(exports, "rules", {
   configurable: true,
   enumerable: true,
   get: getRules,
-  set(value: RuleSetRule[]) {
+  set(value: RuleSetRule[] | undefined) {
     // Assigning `undefined` resets to lazy loading rather than caching a
     // permanently-undefined value the getter would then return silently.
     _rules = value
@@ -137,7 +141,7 @@ Object.defineProperty(exports, "baseConfig", {
   configurable: true,
   enumerable: true,
   get: getBaseConfig,
-  set(value: RspackConfigWithDevServer) {
+  set(value: RspackConfigWithDevServer | undefined) {
     _baseConfig = value
     _baseConfigLoaded = value !== undefined
   }
