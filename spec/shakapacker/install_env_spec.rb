@@ -280,6 +280,50 @@ describe Shakapacker::Install::Env do
     end
   end
 
+  describe "resolve_assets_bundler" do
+    it "returns the env var value when set (it wins over force and existing config)" do
+      expect(
+        described_class.resolve_assets_bundler(env_value: "webpack", existing_bundler: "rspack", force: true)
+      ).to eq "webpack"
+    end
+
+    it "returns the env var value verbatim so the caller can still reject a bad value" do
+      expect(
+        described_class.resolve_assets_bundler(env_value: "wbpack", existing_bundler: nil, force: false)
+      ).to eq "wbpack"
+    end
+
+    it "treats an empty env var as set and returns it verbatim (the caller's VALID_BUNDLERS check then rejects it)" do
+      expect(
+        described_class.resolve_assets_bundler(env_value: "", existing_bundler: "webpack", force: false)
+      ).to eq ""
+    end
+
+    it "installs the rspack default on FORCE, ignoring an existing bundler" do
+      expect(
+        described_class.resolve_assets_bundler(env_value: nil, existing_bundler: "webpack", force: true)
+      ).to eq "rspack"
+    end
+
+    it "keeps an existing app's bundler when not overridden" do
+      expect(
+        described_class.resolve_assets_bundler(env_value: nil, existing_bundler: "webpack", force: false)
+      ).to eq "webpack"
+    end
+
+    it "ignores an unrecognized existing value and falls back to rspack" do
+      expect(
+        described_class.resolve_assets_bundler(env_value: nil, existing_bundler: "wbpack", force: false)
+      ).to eq "rspack"
+    end
+
+    it "defaults a brand-new install (no env, no existing config) to rspack" do
+      expect(
+        described_class.resolve_assets_bundler(env_value: nil, existing_bundler: nil, force: false)
+      ).to eq "rspack"
+    end
+  end
+
   describe "apply_bundler_arg" do
     before { ENV.delete("SHAKAPACKER_ASSETS_BUNDLER") }
 
@@ -293,11 +337,23 @@ describe Shakapacker::Install::Env do
       expect(ENV["SHAKAPACKER_ASSETS_BUNDLER"]).to eq "rspack"
     end
 
+    it "lets an explicit argument override an existing SHAKAPACKER_ASSETS_BUNDLER" do
+      ENV["SHAKAPACKER_ASSETS_BUNDLER"] = "rspack"
+      expect(described_class.apply_bundler_arg("webpack")).to be_nil
+      expect(ENV["SHAKAPACKER_ASSETS_BUNDLER"]).to eq "webpack"
+    end
+
     it "returns an error and leaves SHAKAPACKER_ASSETS_BUNDLER unset for an unknown bundler" do
       error = described_class.apply_bundler_arg("wbpack")
 
       expect(error).to include "Unknown bundler 'wbpack'"
       expect(error).to include "webpack, rspack"
+      expect(ENV).not_to have_key("SHAKAPACKER_ASSETS_BUNDLER")
+    end
+
+    it "matches strictly, rejecting values that differ only by case or surrounding whitespace" do
+      expect(described_class.apply_bundler_arg("Rspack")).to include "Unknown bundler 'Rspack'"
+      expect(described_class.apply_bundler_arg(" rspack")).to include "Unknown bundler ' rspack'"
       expect(ENV).not_to have_key("SHAKAPACKER_ASSETS_BUNDLER")
     end
 

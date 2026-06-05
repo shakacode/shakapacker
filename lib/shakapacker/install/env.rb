@@ -45,11 +45,27 @@ module Shakapacker
         !config_preexisting
       end
 
+      # Resolve which bundler the installer should set up. Precedence: an explicit
+      # SHAKAPACKER_ASSETS_BUNDLER env var (or task argument, which sets that env var)
+      # always wins; otherwise a FORCE overwrite installs the new-project default;
+      # otherwise an existing app keeps its current bundler (when it is a recognized
+      # value) so a re-install never silently switches it; brand-new installs fall
+      # back to rspack. Returning the env var verbatim lets the caller's strict
+      # VALID_BUNDLERS check still reject a misspelled value.
+      def resolve_assets_bundler(env_value:, existing_bundler:, force:)
+        return env_value if env_value
+        return "rspack" if force
+        return existing_bundler if VALID_BUNDLERS.include?(existing_bundler)
+
+        "rspack"
+      end
+
       # Apply an optional `shakapacker:install[bundler]` task argument. A
       # recognized bundler (webpack or rspack) is written to
-      # SHAKAPACKER_ASSETS_BUNDLER so the install template picks it up. An
-      # unrecognized value returns an error message (and leaves the env var
-      # unset) so the caller can abort, mirroring the template's strict
+      # SHAKAPACKER_ASSETS_BUNDLER so the install template picks it up,
+      # overriding any value already set in that env var (the explicit argument
+      # wins). An unrecognized value returns an error message (and leaves the
+      # env var unset) so the caller can abort, mirroring the template's strict
       # validation of SHAKAPACKER_ASSETS_BUNDLER. Returns nil when the argument
       # is valid or absent.
       def apply_bundler_arg(bundler_arg)

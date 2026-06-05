@@ -110,14 +110,15 @@ New installs use Rspack by default. To install with Webpack:
 
 ```bash
 SHAKAPACKER_ASSETS_BUNDLER=webpack bundle exec rake shakapacker:install
-# or
-bundle exec rake shakapacker:install[webpack]
+# or (quote the task name so zsh does not treat the brackets as a glob)
+bundle exec rake 'shakapacker:install[webpack]'
 ```
 
-To install with Babel instead of SWC:
+To install with Babel instead of SWC (applies to webpack installs — Rspack always
+uses its built-in SWC and ignores `javascript_transpiler`):
 
 ```bash
-JAVASCRIPT_TRANSPILER=babel bundle exec rake shakapacker:install
+SHAKAPACKER_ASSETS_BUNDLER=webpack JAVASCRIPT_TRANSPILER=babel bundle exec rake shakapacker:install
 ```
 
 Most JavaScript packages are optional peer dependencies. The installer adds the
