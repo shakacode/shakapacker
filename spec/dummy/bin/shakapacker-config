@@ -1,11 +1,77 @@
-#!/usr/bin/env node
+#!/usr/bin/env ruby
+# frozen_string_literal: true
 
-// Minimal shim - all logic is in the TypeScript module
-const { run } = require("shakapacker/configExporter")
+require "rbconfig"
 
-run(process.argv.slice(2))
-  .then((exitCode) => process.exit(exitCode))
-  .catch((error) => {
-    console.error(error.message)
-    process.exit(1)
-  })
+# Keep helper logic in sync across:
+# - lib/install/bin/shakapacker-config
+# - lib/install/bin/diff-bundler-config
+# - spec/dummy/bin/shakapacker-config
+# - package/configExporter/cli.ts (createBinStub).
+def shakapacker_app_root
+  candidate = File.expand_path("..", __dir__)
+  return candidate if File.exist?(File.join(candidate, "Gemfile"))
+
+  warn "[Shakapacker] No Gemfile found at #{candidate.inspect}; " \
+       "falling back to the current directory (#{Dir.pwd.inspect})."
+  Dir.pwd
+end
+
+def shakapacker_executable_candidates(executable)
+  extensions = [
+    RbConfig::CONFIG["EXEEXT"],
+    *ENV.fetch("PATHEXT", "").split(File::PATH_SEPARATOR)
+  ].compact.reject(&:empty?)
+  return [executable] if extensions.empty? || File.extname(executable) != ""
+
+  ([executable] + extensions.map { |extension| "#{executable}#{extension}" }).uniq
+end
+
+def shakapacker_find_executable(executable)
+  ENV.fetch("PATH", "").split(File::PATH_SEPARATOR, -1).each do |path|
+    search_path = path.empty? ? Dir.pwd : path
+
+    shakapacker_executable_candidates(executable).each do |candidate|
+      executable_path = File.join(search_path, candidate)
+      return executable_path if File.file?(executable_path) && File.executable?(executable_path)
+    end
+  end
+
+  nil
+end
+
+def shakapacker_node_binary
+  node_bin = shakapacker_find_executable("node")
+  return node_bin if node_bin
+
+  warn '[Shakapacker] Could not find Node.js executable "node". ' \
+       "Install Node.js and try again."
+  exit 1
+end
+
+def shakapacker_node_env
+  %w[development test].include?(ENV["RAILS_ENV"]) ? "development" : "production"
+end
+
+ENV["RAILS_ENV"] ||= ENV["RACK_ENV"] || "development"
+ENV["NODE_ENV"] ||= shakapacker_node_env
+
+app_root = shakapacker_app_root
+node_bin = shakapacker_node_binary
+script_path = File.join(
+  app_root,
+  "node_modules",
+  "shakapacker",
+  "package",
+  "bin",
+  "shakapacker-config.cjs"
+)
+
+unless File.file?(script_path)
+  warn "[Shakapacker] Could not find #{script_path}. Run your package manager install command and try again."
+  exit 1
+end
+
+Dir.chdir(app_root) do
+  exec node_bin, script_path, *ARGV
+end

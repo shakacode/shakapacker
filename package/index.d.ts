@@ -10,6 +10,11 @@
 // @ts-ignore: webpack is an optional peer dependency (using type-only import)
 import type { Configuration, RuleSetRule } from "webpack"
 import type { Config, DevServerConfig, Env } from "./types"
+import type {
+  PluginConstructor,
+  CssExtractPluginConstructor,
+  BundlerModule
+} from "./utils/bundlerUtils"
 
 /**
  * The shape of the Shakapacker module exports.
@@ -37,6 +42,22 @@ interface ShakapackerExports {
   inliningCss: boolean
   /** Generate webpack configuration with optional custom config */
   generateWebpackConfig: (extraConfig?: Configuration) => Configuration
+  /** Whether the current bundler is Rspack */
+  isRspack: boolean
+  /** Whether the current bundler is Webpack */
+  isWebpack: boolean
+  /** Get the bundler module (webpack or @rspack/core) */
+  getBundler: () => BundlerModule
+  /** Get the CSS extraction plugin for the current bundler */
+  getCssExtractPlugin: () => CssExtractPluginConstructor
+  /** Get the CSS extraction plugin loader for the current bundler */
+  getCssExtractPluginLoader: () => string
+  /** Get the DefinePlugin for the current bundler */
+  getDefinePlugin: () => PluginConstructor
+  /** Get the EnvironmentPlugin for the current bundler */
+  getEnvironmentPlugin: () => PluginConstructor
+  /** Get the ProvidePlugin for the current bundler */
+  getProvidePlugin: () => PluginConstructor
   /** webpack-merge's merge function */
   merge: typeof import("webpack-merge").merge
   /** webpack-merge's mergeWithCustomize function */

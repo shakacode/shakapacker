@@ -19,4 +19,8 @@ describe("sass rule", () => {
     )
     expect(typeof sass.use[2].options.sassOptions.loadPaths).toBe("object")
   })
+
+  test("uses modern API for better compatibility with sass plugins", () => {
+    expect(sass.use[2].options.api).toBe("modern")
+  })
 })

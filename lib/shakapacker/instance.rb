@@ -81,7 +81,7 @@ class Shakapacker::Instance
   # @return [Shakapacker::CompilerStrategy] the compiler strategy
   # @api private
   def strategy
-    @strategy ||= Shakapacker::CompilerStrategy.from_config
+    @strategy ||= Shakapacker::CompilerStrategy.from_config(self)
   end
 
   # Returns the compiler for this instance

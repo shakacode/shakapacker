@@ -4,8 +4,7 @@ const snakeToCamelCase = require("./utils/snakeToCamelCase")
 
 const shakapackerDevServerYamlConfig =
   require("./dev_server") as DevServerConfig
-const { outputPath: contentBase, publicPath } = require("./config") as {
-  outputPath: string
+const { publicPath } = require("./config") as {
   publicPath: string
 }
 
@@ -20,10 +19,14 @@ interface WebpackDevServerConfig {
     | {
         disableDotRule?: boolean
       }
-  static?: {
-    publicPath?: string
-    [key: string]: unknown
-  }
+  static?:
+    | boolean
+    | string
+    | Array<string | Record<string, unknown>>
+    | {
+        publicPath?: string
+        [key: string]: unknown
+      }
   client?: Record<string, unknown>
   allowedHosts?: string | string[]
   bonjour?: boolean | Record<string, unknown>
@@ -34,8 +37,6 @@ interface WebpackDevServerConfig {
   https?: boolean | Record<string, unknown>
   ipc?: boolean | string
   magicHtml?: boolean
-  onAfterSetupMiddleware?: (devServer: unknown) => void
-  onBeforeSetupMiddleware?: (devServer: unknown) => void
   open?:
     | boolean
     | string
@@ -65,8 +66,6 @@ const webpackDevServerMappedKeys = new Set([
   "https",
   "ipc",
   "magicHtml",
-  "onAfterSetupMiddleware",
-  "onBeforeSetupMiddleware",
   "open",
   "port",
   "proxy",
@@ -76,6 +75,26 @@ const webpackDevServerMappedKeys = new Set([
   "watchFiles",
   "webSocketServer"
 ])
+
+const removedWebpackDevServerYamlKeys = [
+  "on_before_setup_middleware",
+  "on_after_setup_middleware"
+]
+
+function warnOnRemovedDevServerHooks(
+  devServerYamlConfig: DevServerConfig & Record<string, unknown>
+): void {
+  const removedKeys = removedWebpackDevServerYamlKeys.filter(
+    (key) => devServerYamlConfig[key] !== undefined
+  )
+
+  if (removedKeys.length === 0) return
+
+  const formattedKeys = removedKeys.map((key) => `\`${key}\``).join(", ")
+  console.warn(
+    `[Shakapacker] Deprecated dev_server setting(s) ${formattedKeys} were removed in webpack-dev-server v5 and will be ignored. Use \`setup_middlewares\` instead.`
+  )
+}
 
 function createDevServerConfig(): WebpackDevServerConfig {
   const devServerYamlConfig = {
@@ -96,18 +115,25 @@ function createDevServerConfig(): WebpackDevServerConfig {
     historyApiFallback: {
       disableDotRule: true
     },
-    static: {
-      publicPath: contentBase
-    }
+    static: false
   }
   delete devServerYamlConfig.hmr
 
-  if (devServerYamlConfig.static) {
-    config.static = {
-      ...config.static,
-      ...(typeof devServerYamlConfig.static === "object"
-        ? (devServerYamlConfig.static as Record<string, unknown>)
-        : {})
+  if (
+    devServerYamlConfig.static !== undefined &&
+    devServerYamlConfig.static !== null
+  ) {
+    if (devServerYamlConfig.static === false) {
+      config.static = false
+    } else if (Array.isArray(devServerYamlConfig.static)) {
+      config.static = devServerYamlConfig.static as Array<
+        string | Record<string, unknown>
+      >
+    } else if (typeof devServerYamlConfig.static === "object") {
+      config.static = devServerYamlConfig.static as Record<string, unknown>
+    } else {
+      config.static =
+        devServerYamlConfig.static as WebpackDevServerConfig["static"]
     }
     delete devServerYamlConfig.static
   }
@@ -116,6 +142,11 @@ function createDevServerConfig(): WebpackDevServerConfig {
     config.client = devServerYamlConfig.client
     delete devServerYamlConfig.client
   }
+
+  warnOnRemovedDevServerHooks(devServerYamlConfig)
+  removedWebpackDevServerYamlKeys.forEach(
+    (key) => delete devServerYamlConfig[key]
+  )
 
   Object.keys(devServerYamlConfig).forEach((yamlKey) => {
     const camelYamlKey = snakeToCamelCase(yamlKey)

@@ -1,4 +1,21 @@
 namespace :shakapacker do
+  def shakapacker_config_binstub_command(bin_path)
+    # Read in binary mode so Windows CRLF line endings do not leak \r into the shebang.
+    shebang = File.open(bin_path, "rb", &:gets).to_s
+    command = shebang.delete_prefix("#!").strip.split(/\s+/)
+    executable = File.basename(command.first.to_s)
+
+    if executable == "env"
+      executable = File.basename(command.drop(1).find { |part| !part.start_with?("-") }.to_s)
+    end
+
+    # Legacy JS binstubs are dispatched via PATH lookup; Kernel#exec resolves
+    # "node" through the shell's PATH. The Ruby binstubs perform their own
+    # explicit lookup via shakapacker_find_executable, which matters more on
+    # Windows where PATHEXT is involved.
+    executable == "node" ? ["node", bin_path.to_s] : [RbConfig.ruby, bin_path.to_s]
+  end
+
   desc <<~DESC
     Export webpack or rspack configuration for debugging and analysis
 
@@ -54,14 +71,14 @@ namespace :shakapacker do
       $stderr.puts ""
 
       Dir.chdir(Rails.root) do
-        exec("node", gem_bin_path, *ARGV[1..])
+        Kernel.exec(RbConfig.ruby, gem_bin_path, *ARGV[1..])
       end
     else
-      # Pass through command-line arguments after the task name
-      # Use exec to replace the rake process with the export script
-      # This ensures proper exit codes and signal handling
+      # Pass through command-line arguments after the task name.
+      # Ruby binstubs run under the same Ruby as Rake; legacy JavaScript
+      # binstubs from upgraded apps still need Node until users refresh them.
       Dir.chdir(Rails.root) do
-        exec(bin_path.to_s, *ARGV[1..])
+        Kernel.exec(*shakapacker_config_binstub_command(bin_path), *ARGV[1..])
       end
     end
   end

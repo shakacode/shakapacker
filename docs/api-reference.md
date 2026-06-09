@@ -1,6 +1,8 @@
 # Shakapacker API Reference
 
-This document provides a comprehensive reference for Shakapacker's public Ruby API. For JavaScript/webpack configuration, see [Webpack Configuration](./webpack-configuration.md).
+## Ruby API Reference
+
+This document provides a comprehensive reference for Shakapacker's public Ruby API. For JavaScript bundler configuration, see the [Configuration Guide](./configuration.md).
 
 ## Table of Contents
 
@@ -33,6 +35,8 @@ The `Shakapacker` module provides singleton-style access to all major functional
 
 ### Configuration Access
 
+#### Quick Examples
+
 ```ruby
 # Get the configuration object
 Shakapacker.config
@@ -43,7 +47,7 @@ Shakapacker.config.source_path
 # => #<Pathname:/path/to/app/javascript>
 
 Shakapacker.config.public_output_path
-# => "packs"
+# => #<Pathname:/path/to/public/packs>
 ```
 
 ### Compilation
@@ -124,12 +128,12 @@ The `Shakapacker::Configuration` class provides access to all settings from `con
 ```ruby
 config = Shakapacker.config
 
-# Get raw configuration hash (public API as of v9.1.0)
+# Get raw configuration hash (symbol-keyed)
 config.data
-# => { "source_path" => "app/javascript", ... }
+# => { source_path: "app/javascript", ... }
 
 # Access specific values
-config.data["source_path"]
+config.data[:source_path]
 # => "app/javascript"
 ```
 
@@ -141,11 +145,11 @@ config.data["source_path"]
 # Source paths
 config.source_path          # => #<Pathname:/app/app/javascript>
 config.source_entry_path    # => #<Pathname:/app/app/javascript/packs>
-config.additional_paths     # => [#<Pathname:/app/app/assets>, ...]
+config.additional_paths     # => ["app/assets", ...]
 
 # Output paths
 config.public_path          # => #<Pathname:/app/public>
-config.public_output_path   # => "packs"
+config.public_output_path   # => #<Pathname:/app/public/packs>
 config.public_manifest_path # => #<Pathname:/app/public/packs/manifest.json>
 ```
 
@@ -159,7 +163,7 @@ config.bundler    # => "webpack"
 
 # Get bundler config path
 config.assets_bundler_config_path
-# => #<Pathname:/app/config/webpack/webpack.config.js>
+# => "config/webpack"
 ```
 
 ### Compilation Settings
@@ -167,7 +171,7 @@ config.assets_bundler_config_path
 ```ruby
 config.compile?              # => true (auto-compile enabled?)
 config.cache_manifest?       # => false
-config.extract_css?          # => false (use MiniCssExtractPlugin?)
+config.javascript_transpiler # => "swc"
 config.nested_entries?       # => false
 ```
 
@@ -175,17 +179,24 @@ config.nested_entries?       # => false
 
 ```ruby
 dev_server = config.dev_server
-dev_server["host"]           # => "localhost"
-dev_server["port"]           # => 3035
-dev_server["hmr"]            # => true
-dev_server["https"]          # => false
+dev_server[:host]            # => "localhost"
+dev_server[:port]            # => 3035
+dev_server[:hmr]             # => true
+dev_server[:server]          # => "http"
 ```
 
 ## View Helpers
 
 Shakapacker provides Rails view helpers in the `Shakapacker::Helper` module, automatically included in ActionView.
+You can also consult the source documentation in
+[`helper.rb`](../lib/shakapacker/helper.rb).
 
-### JavaScript Pack Tag
+For styles or static assets to be available in a view, link them from a pack or
+entry file. Otherwise, webpack/rspack will not know to package those files.
+
+### View Helpers `javascript_pack_tag` and `stylesheet_pack_tag`
+
+#### JavaScript Pack Tag
 
 ```ruby
 # Basic usage
@@ -211,7 +222,7 @@ Shakapacker provides Rails view helpers in the `Shakapacker::Helper` module, aut
 
 **Important:** Call `javascript_pack_tag` only once per page to avoid duplicate chunks.
 
-### Stylesheet Pack Tag
+#### Stylesheet Pack Tag
 
 ```ruby
 # Basic usage
@@ -225,7 +236,9 @@ Shakapacker provides Rails view helpers in the `Shakapacker::Helper` module, aut
 <%= stylesheet_pack_tag 'application', early_hints: 'preload' %>
 ```
 
-### Dynamic Pack Loading
+### View Helper `append_javascript_pack_tag`, `prepend_javascript_pack_tag` and `append_stylesheet_pack_tag`
+
+#### Dynamic Pack Loading
 
 ```ruby
 # In view or partial - queue packs
@@ -242,6 +255,8 @@ Shakapacker provides Rails view helpers in the `Shakapacker::Helper` module, aut
 
 ### Asset Helpers
 
+#### View Helper: `asset_pack_path`
+
 ```ruby
 # Get pack path
 <%= asset_pack_path 'logo.svg' %>
@@ -250,20 +265,38 @@ Shakapacker provides Rails view helpers in the `Shakapacker::Helper` module, aut
 # Get pack URL
 <%= asset_pack_url 'logo.svg' %>
 # => "https://cdn.example.com/packs/logo-abc123.svg"
+```
 
+#### View Helper: `image_pack_tag`
+
+```ruby
 # Image pack tag
 <%= image_pack_tag 'logo.png', size: '16x10', alt: 'Logo' %>
 # => <img src="/packs/logo-abc123.png" width="16" height="10" alt="Logo">
 
 # With srcset
 <%= image_pack_tag 'photo.png', srcset: { 'photo-2x.png' => '2x' } %>
+```
 
+#### View Helper: `favicon_pack_tag`
+
+```ruby
 # Favicon
 <%= favicon_pack_tag 'icon.png', rel: 'apple-touch-icon' %>
+```
 
+#### View Helper: `preload_pack_asset`
+
+```ruby
 # Preload asset
 <%= preload_pack_asset 'fonts/custom.woff2' %>
 ```
+
+If you use server-side rendering of JavaScript with dynamic code-splitting, as
+is often done with extensions like
+[React on Rails](https://github.com/shakacode/react_on_rails), your JavaScript
+should create the link prefetch HTML tags. In that case, you usually do not need
+to use `asset_pack_path` for those split assets.
 
 ## Manifest API
 
@@ -295,15 +328,12 @@ manifest.lookup("logo.svg")
 # => "/packs/static/logo-abc123.svg"
 ```
 
-### Full Manifest Access
+### Refreshing Manifest Data
 
 ```ruby
-# Get all entries
-manifest.data
-# => { "application.js" => "/packs/application-abc123.js", ... }
-
 # Refresh manifest from disk
 manifest.refresh
+# => { "application.js" => "/packs/application-abc123.js", ... }
 ```
 
 ## Dev Server API
@@ -319,9 +349,12 @@ dev_server = Shakapacker.dev_server
 dev_server.running?
 # => true
 
-# Get full status URL
-dev_server.status_url
-# => "http://localhost:3035"
+# Get connection info
+dev_server.protocol
+# => "http"
+
+dev_server.host_with_port
+# => "localhost:3035"
 ```
 
 ### Configuration
@@ -333,19 +366,11 @@ dev_server.host
 dev_server.port
 # => 3035
 
-dev_server.https?
-# => false
+dev_server.server
+# => "http"
 
 dev_server.hmr?
 # => true
-```
-
-### Proxying
-
-```ruby
-# Get asset URL (uses dev server if running, otherwise public path)
-dev_server.asset_url("application.js")
-# => "http://localhost:3035/packs/application.js" (or "/packs/application.js")
 ```
 
 ## Compiler API
@@ -365,21 +390,9 @@ compiler.compile
 compiler.stale?
 # => false
 
-# Get last compilation time
-compiler.last_compilation_digest
-# => "abc123..."
-```
-
-### Configuration
-
-```ruby
-# Get watched paths
-compiler.watched_paths
-# => [#<Pathname:/app/app/javascript>, ...]
-
-# Get config files
-compiler.config_files
-# => [#<Pathname:/app/config/webpack/webpack.config.js>, ...]
+# Check if assets are current
+compiler.fresh?
+# => true
 ```
 
 ## Advanced Usage
@@ -469,18 +482,16 @@ rescue Shakapacker::Manifest::MissingEntryError => e
   Rails.logger.error "Missing pack: #{e.message}"
 end
 
-# Compilation errors
-begin
-  Shakapacker.compiler.compile
-rescue Shakapacker::Compiler::CompilationError => e
-  Rails.logger.error "Compilation failed: #{e.message}"
+# Compilation returns a boolean status
+unless Shakapacker.compiler.compile
+  Rails.logger.error "Compilation failed. Check preceding Shakapacker output."
 end
 
-# Configuration errors
+# Accessing an unknown config key raises KeyError
 begin
-  config = Shakapacker::Configuration.new(...)
-rescue Shakapacker::Configuration::InvalidConfigurationError => e
-  Rails.logger.error "Invalid config: #{e.message}"
+  Shakapacker.config.fetch(:unknown_key)
+rescue KeyError => e
+  Rails.logger.error "Invalid config lookup: #{e.message}"
 end
 ```
 
@@ -496,8 +507,8 @@ Check the [CHANGELOG](../CHANGELOG.md) for deprecation notices.
 ## See Also
 
 - [Configuration Guide](./configuration.md) - All `shakapacker.yml` options
-- [View Helpers](../README.md#view-helpers) - Detailed view helper usage
-- [Webpack Configuration](../README.md#webpack-configuration) - JavaScript API
+- [View Helpers](#view-helpers) - Detailed view helper usage
+- [Webpack Configuration](./node_package_api.md#webpack-configuration-patterns) - JavaScript API
 - [TypeScript](./typescript.md) - Type definitions for Shakapacker
 - [Troubleshooting](./troubleshooting.md) - Common issues
 
@@ -517,3 +528,53 @@ open doc/index.html
 ```
 
 The generated documentation includes all public and private methods with detailed parameter descriptions.
+
+## Type Signatures with RBS
+
+Shakapacker includes RBS type signatures for public Ruby APIs, enabling static
+type checking and improved IDE support.
+
+Benefits:
+
+- IDE autocomplete with method signatures and parameter hints.
+- Static type checking with tools such as
+  [Steep](https://github.com/soutaro/steep) or
+  [TypeProf](https://github.com/ruby/typeprof).
+- Machine-readable API documentation.
+- Safer refactoring across Shakapacker API calls.
+
+RBS signatures are in the `sig/` directory and included with the gem:
+
+```
+sig/
+├── shakapacker.rbs
+└── shakapacker/
+    ├── configuration.rbs
+    ├── helper.rbs
+    ├── manifest.rbs
+    ├── compiler.rbs
+    ├── dev_server.rbs
+    └── ...
+```
+
+Example Steep configuration:
+
+```yaml
+# Steepfile
+target :app do
+signature "sig"
+check "app"
+library "shakapacker"
+end
+```
+
+Example type-checked usage:
+
+```ruby
+config = Shakapacker.config
+config.source_path
+config.webpack?
+
+# Type checkers can report this as an undefined method:
+config.invalid_method
+```

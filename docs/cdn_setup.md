@@ -98,7 +98,7 @@ This ensures that:
 
 - Webpack's `publicPath` is set to your CDN URL
 - Dynamic imports and code-split chunks load from the CDN
-- Asset manifest references use CDN URLs
+- Rendered asset URLs use the CDN host at request time
 
 ### 4. Deploy and Sync Assets
 
@@ -205,9 +205,9 @@ import("./components/HeavyComponent").then((module) => {
 
 1. Ensure you set `SHAKAPACKER_ASSET_HOST` **before** running `assets:precompile`
 2. Clear Rails cache: `bundle exec rake tmp:cache:clear`
-3. Check the manifest.json file includes CDN URLs:
+3. Check your rendered asset tags use the CDN host. The manifest intentionally stores pack paths without the CDN host:
    ```bash
-   cat public/packs/manifest.json
+   curl -s https://your-app.example.com | grep cdn.example.com
    ```
 
 ### CORS Errors

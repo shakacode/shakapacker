@@ -150,12 +150,9 @@ describe "DevServerRunner" do
 
           allow(klass).to receive(:new).and_return(instance)
 
-          # Stub build_cmd and system to prevent actual execution
+          # Stub build_cmd and exec to prevent actual execution
           allow(instance).to receive(:build_cmd).and_return(["webpack", "serve"])
-          allow(instance).to receive(:system) do |*args|
-            system("true")  # Sets $? to successful status
-            true
-          end
+          allow(instance).to receive(:exec)
 
           klass.run([])
 
@@ -175,15 +172,11 @@ describe "DevServerRunner" do
         instance = klass.new(argv)
 
         allow(klass).to receive(:new).and_return(instance)
-        # Stub system to set $? to successful status
-        allow(instance).to receive(:system) do |*args|
-          system("true")  # Sets $? to successful status
-          true
-        end
+        allow(instance).to receive(:exec)
 
         klass.run(argv)
 
-        expect(instance).to have_received(:system).with(env, *cmd)
+        expect(instance).to have_received(:exec).with(env, *cmd)
         expect(Shakapacker::Utils::Manager).to have_received(:error_unless_package_manager_is_obvious!)
       end
     end

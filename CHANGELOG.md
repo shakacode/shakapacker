@@ -9,9 +9,208 @@
 
 ## [Unreleased]
 
-Changes since the last non-beta release.
+### Added
 
-## [v9.3.4-beta.0] - November 17, 2025
+- **Added support for `sass-loader` v17**. [PR #1141](https://github.com/shakacode/shakapacker/pull/1141) by [fukayatsu](https://github.com/fukayatsu). Widened the optional `sass-loader` peer range to `^13.0.0 || ^14.0.0 || ^15.0.0 || ^16.0.0 || ^17.0.0` in core `shakapacker`, `shakapacker-webpack`, and `shakapacker-rspack`. The Sass rule already selects `loadPaths` for v16+ and keeps `api: "modern"`, both of which remain valid in v17. Note that sass-loader v17 requires Node.js 22.11.0+ and drops `node-sass` and the legacy Sass JS API, so apps that opt into v17 must already be on Node 22.12+ (the upper branch of Shakapacker's `engines.node` range).
+
+### Changed
+
+- **New installs now default to Rspack instead of webpack**. [PR #1150](https://github.com/shakacode/shakapacker/pull/1150) by [justin808](https://github.com/justin808). `bundle exec rake shakapacker:install` now scaffolds an Rspack project (config, dependencies, and `config/shakapacker.yml`) by default. This is a new-install default only: existing applications are unaffected. The Rspack default applies only to brand-new installs — re-running the installer on an app that already has a `config/shakapacker.yml` keeps that app's current bundler (and installs that bundler's dependencies), so the installer never silently switches an existing project's bundler. To install with webpack, run `bundle exec rake shakapacker:install[webpack]` or set `SHAKAPACKER_ASSETS_BUNDLER=webpack`; to change an existing app's bundler, use `bundle exec rake shakapacker:switch_bundler`.
+
+### Fixed
+
+- **Fixed compiler strategies ignoring the instance config of custom `Shakapacker::Instance` objects.** [PR #1147](https://github.com/shakacode/shakapacker/pull/1147) by [justin808](https://github.com/justin808). Ports [#976](https://github.com/shakacode/shakapacker/pull/976) by [brunodccarvalho](https://github.com/brunodccarvalho). Strategies now read the instance-specific config and watch both webpack and rspack config directories.
+
+## [v10.1.0] - May 27, 2026
+
+### Added
+
+- **Added supplemental npm packages `shakapacker-webpack` and `shakapacker-rspack`**. [PR #1096](https://github.com/shakacode/shakapacker/pull/1096), [PR #1133](https://github.com/shakacode/shakapacker/pull/1133) by [justin808](https://github.com/justin808). Optional packages that lockstep with core and declare the managed-build stack as required peer dependencies (so on npm 7+ a single `yarn add shakapacker-webpack` auto-installs `shakapacker`, `webpack`, `webpack-cli`, and `webpack-assets-manifest`; `shakapacker-rspack` declares `shakapacker`, `@rspack/core`, `@rspack/cli`, and `rspack-manifest-plugin`). Required peers eliminate the silent duplicate-bundler failure mode that direct dependencies could cause when an app or transitive dep pins a different bundler version. Optional features (transpilers, dev-server, CSS preprocessors, react-refresh) remain as opt-in `peerDependencies` so SCSS/native-binding bloat isn't forced on every install. The wrappers emit structured warnings (`SHAKAPACKER_BUNDLER_MISMATCH`, `SHAKAPACKER_NO_TRANSPILER`) when `config.assets_bundler` or `javascript_transpiler` doesn't match the installed peers. pnpm and Yarn PnP users should keep packages imported by app config files as explicit app dependencies (the Rails installer handles this automatically). See the [v10.1 migration guide](docs/migration/v10.1-supplemental-packages.md) for adoption steps and [`docs/dependency-strategy.md`](docs/dependency-strategy.md) for the design rationale and v11 roadmap.
+- **Added `shakapacker:doctor` check for disabled Rspack cache**. [PR #1100](https://github.com/shakacode/shakapacker/pull/1100) by [justin808](https://github.com/justin808). The doctor now inspects the Rspack config file for an explicit `cache: false`, warns when found (disabling cache causes significantly slower builds), and also flags Rspack v1 installs (where persistent cache is experimental) with a recommendation to upgrade to v2.
+- **Added a `shakapacker:doctor` hint to compiler output**. [PR #1100](https://github.com/shakacode/shakapacker/pull/1100) by [justin808](https://github.com/justin808). The compiler now logs a one-time tip suggesting `bundle exec rake shakapacker:doctor` after a failed compilation, so healthy build loops stay quiet.
+
+### Migration Notes
+
+- **Simplify your `package.json` by adopting a supplemental package**. On npm 7+ (or Yarn 2+ in `nodeLinker: node-modules` mode), existing apps can drop the explicit managed-build deps from `devDependencies` and let the supplemental package's required peers be auto-installed:
+  - **Rspack apps** can replace `shakapacker` + `@rspack/core` + `@rspack/cli` + `rspack-manifest-plugin` with a single `shakapacker-rspack`. See `packages/shakapacker-rspack/README.md` §"Simplifying an existing rspack install" for the before/after.
+  - **Webpack apps** can replace `shakapacker` + `webpack` + `webpack-cli` + `webpack-assets-manifest` with a single `shakapacker-webpack`. See `packages/shakapacker-webpack/README.md` §"Simplifying an existing webpack install" for the before/after.
+  - Optional peers (transpilers, `webpack-dev-server`, CSS preprocessors, react-refresh) stay only if your app uses those features.
+  - Adoption is opt-in: leaving your `package.json` untouched on v10.1 also continues to work.
+
+- **Adopting `shakapacker-webpack` requires `webpack-assets-manifest@^6.0.0`**. Core `shakapacker` still accepts both v5 and v6 (`^5.0.6 || ^6.0.0`), but `shakapacker-webpack` pins `~6.5.1`. Apps still on `webpack-assets-manifest@5.x` must upgrade when switching to the supplemental package; v6 fixed an ENOENT crash on clean builds with `merge: true` and dropped a Node 14 install path. See [the v5→v6 release notes](https://github.com/webdeveric/webpack-assets-manifest/releases) and `packages/shakapacker-webpack/README.md` for details.
+
+### ⚠️ Breaking Changes
+
+- **Breaking: tightened `package.json` `engines.node` to `^20.19.0 || >=22.12.0`**. [PR #1099](https://github.com/shakacode/shakapacker/pull/1099) by [justin808](https://github.com/justin808). Raised from `>= 20`, dropping support for Node 20.0.0–20.18.x and Node 21.x to match `@rspack/core@2.0.0-rc.0`. Consumers on those versions will hit an engine error with `--engine-strict` or yarn workspaces and need to upgrade. The PR also bumps `.node-version` to `22.20.0` and updates `conductor-setup.sh` to enforce the same disjoint range up front, so contributors get a clear error before `yarn install` fails with a confusing engine mismatch.
+
+### Changed
+
+- **Changed `shakapacker:install` to default fresh Rspack installs to v2 (`^2.0.0-0`)**. [PR #1091](https://github.com/shakacode/shakapacker/pull/1091) by [ihabadham](https://github.com/ihabadham). `lib/install/package.json` now declares `@rspack/core` and `@rspack/cli` as `^1.0.0 || ^2.0.0-0`; fresh installs pick the v2 range. Existing apps are unaffected. Note: Rspack v2 requires Node.js 20.19.0+.
+- **Slimmed the published gem from ~486K (294 files) to ~121K (75 files)**. [PR #1110](https://github.com/shakacode/shakapacker/pull/1110), [PR #1120](https://github.com/shakacode/shakapacker/pull/1120) by [justin808](https://github.com/justin808). Replaced the broad `git ls-files` gem manifest with an explicit runtime/install allowlist (`CHANGELOG.md`, `MIT-LICENSE`, `README.md`, gemspec, `lib`, `sig`, `package.json`), excluding repo-only docs, tests, JavaScript package source, CI/tooling files, and `test_files` metadata from the published gem. Fixes [#987](https://github.com/shakacode/shakapacker/issues/987).
+
+### Fixed
+
+- **Fixed webpack-dev-server `static` config defaulting to watch `public/` directory unnecessarily**. [PR #1032](https://github.com/shakacode/shakapacker/pull/1032) by [ihabadham](https://github.com/ihabadham). Three bugs fixed: (1) `static` now defaults to `false` instead of a misconfigured object that caused webpack-dev-server to watch the `public/` directory, which is already served by Rails via `ActionDispatch::Static`; (2) setting `static: false` in `shakapacker.yml` is no longer silently ignored; (3) the default template no longer includes `static.watch`, which was a v3→v4 migration artifact. Fixes [#1031](https://github.com/shakacode/shakapacker/issues/1031).
+- **Fixed Rspack React Refresh plugin loading with `@rspack/plugin-react-refresh` v2**. [PR #1116](https://github.com/shakacode/shakapacker/pull/1116) by [justin808](https://github.com/justin808). Shakapacker now reads the v2 named `ReactRefreshRspackPlugin` export while retaining compatibility with v1 direct/default CommonJS export shapes, preventing `TypeError: ReactRefreshRspackPlugin is not a constructor` during rspack dev-server startup.
+- **Widened `@rspack/plugin-react-refresh` peer range to `^1.0.0 || ^2.0.0-0`**. [PR #1091](https://github.com/shakacode/shakapacker/pull/1091) by [ihabadham](https://github.com/ihabadham). Fixes the `ERESOLVE` conflict when installing `@rspack/plugin-react-refresh@^2.0.0` alongside `shakapacker@10.0.0`.
+- **Fixed `NodePackageVersion#find_version` for local-path `shakapacker` installs (e.g. `yalc`, `file:`, relative paths)**. [PR #1086](https://github.com/shakacode/shakapacker/pull/1086), [PR #1106](https://github.com/shakacode/shakapacker/pull/1106) by [justin808](https://github.com/justin808). The version check now consults `package.json` first and short-circuits on `../`, `./`, and `file:` dependencies, so stale lockfile semvers no longer trigger false gem↔node version mismatches. `package_json_dependency` also consults `devDependencies` in addition to `dependencies`. The `LOCAL_PATH_REGEX` constant replaces a duplicated inline regex and anchors both alternatives to the start of the string, removing a latent false-positive on version strings containing `..` mid-value. Fixes [#1103](https://github.com/shakacode/shakapacker/issues/1103).
+- **Fix rspack setup not reusing certain shared webpack-rspack config settings**. [PR #1085](https://github.com/shakacode/shakapacker/pull/1085) by [brunodccarvalho](https://github.com/brunodccarvalho). Default config changes include `optimization.splitChunks.chunks="all"`, `optimization.runtimeChunk="single"`, the webpack compression plugin in production, and the removal of minimization plugins in development. Fixes [#984](https://github.com/shakacode/shakapacker/issues/984).
+- **Fixed Rspack Sass rule blocking `sass-embedded` users by requiring the `sass` package**. [PR #1105](https://github.com/shakacode/shakapacker/pull/1105) by [justin808](https://github.com/justin808). Rspack Sass detection now only checks for `sass-loader`; the implementation (`sass`, `sass-embedded`, etc.) is resolved by the loader at build time, matching the webpack code path.
+- **Fixed `bin/shakapacker-config` and `bin/diff-bundler-config` in ESM apps and on upgraded apps**. [PR #1104](https://github.com/shakacode/shakapacker/pull/1104), [PR #1132](https://github.com/shakacode/shakapacker/pull/1132) by [justin808](https://github.com/justin808). Apps with `"type": "module"` in `package.json` failed to run the JavaScript binstubs because Node parsed them as ESM. The binstubs are now Ruby wrappers that locate Node (without executing it during lookup) and invoke `.cjs` package scripts shipped inside `node_modules/shakapacker/package/bin/`. The wrappers also map `NODE_ENV` from `RAILS_ENV` and print useful messages for non-`Error` CLI rejections. `shakapacker:export_bundler_config` dispatches binstubs by shebang, so upgraded apps with legacy JavaScript binstubs continue to run via Node while Ruby wrappers run via Ruby. Existing apps with the old JavaScript binstubs should re-run `bundle exec rake shakapacker:binstubs` to install the new Ruby wrappers. Fixes [#1123](https://github.com/shakacode/shakapacker/issues/1123).
+
+## [v10.0.0] - April 8, 2026
+
+### Added
+
+- **Added `bin/diff-bundler-config` CLI for semantic bundler configuration diffs**. [PR #973](https://github.com/shakacode/shakapacker/pull/973) by [justin808](https://github.com/justin808). Wraps the extracted [`pack-config-diff`](https://github.com/shakacode/pack-config-diff) package to provide semantic diffing of webpack/rspack configurations with normalized exit codes. Supersedes [#961](https://github.com/shakacode/shakapacker/pull/961).
+- **Added `bin/shakapacker-watch` binstub for clean Ctrl-C shutdown in Procfile-based workflows**. [PR #1026](https://github.com/shakacode/shakapacker/pull/1026) by [justin808](https://github.com/justin808). The new wrapper script traps INT/TERM signals and forwards TERM to the underlying `bin/shakapacker --watch` process, preventing Ruby interrupt backtraces when stopping `bin/dev`. Use `bin/shakapacker-watch --watch` in Procfiles instead of `bin/shakapacker --watch`.
+- **Allowed `webpack-cli` v7 (`^7.0.0`) in peer dependencies**. [PR #1021](https://github.com/shakacode/shakapacker/pull/1021) by [justin808](https://github.com/justin808). Fixes [#1020](https://github.com/shakacode/shakapacker/issues/1020). Note: `webpack-cli` v7 requires Node.js >= 20.9.0.
+
+### ⚠️ Breaking Changes
+
+- **Breaking: bumped the minimum `webpack` version to `^5.101.0`**. [PR #1021](https://github.com/shakacode/shakapacker/pull/1021) by [justin808](https://github.com/justin808). The previous minimum was `^5.76.0`.
+- **Breaking: required `webpack-dev-server` `^5.2.2` and dropped support for v4**. [PR #1021](https://github.com/shakacode/shakapacker/pull/1021) by [justin808](https://github.com/justin808). The removed v4 range was `^4.15.2`.
+
+### Changed
+
+- **Changed `shakapacker:install` to default `webpack-cli` installs to the latest v6 range**. [PR #1021](https://github.com/shakacode/shakapacker/pull/1021) by [justin808](https://github.com/justin808). This keeps installs compatible with Node.js `20.0-20.8`; v7 remains supported via peer dependencies for Node.js >= 20.9.0.
+- **Changed dev server config handling to warn on deprecated middleware hooks and ignore them for webpack-dev-server v5**. [PR #1021](https://github.com/shakacode/shakapacker/pull/1021) by [justin808](https://github.com/justin808). Use `setup_middlewares` instead of `on_before_setup_middleware` and `on_after_setup_middleware`.
+
+### Fixed
+
+- **Ensured `shakapacker:install` installs the latest `compression-webpack-plugin`**. [PR #1035](https://github.com/shakacode/shakapacker/pull/1035) by [G-Rath](https://github.com/G-Rath).
+
+## [v9.7.0] - March 15, 2026
+
+### Added
+
+- **Added rspack v2 support**. [PR #975](https://github.com/shakacode/shakapacker/pull/975) by [justin808](https://github.com/justin808). Peer dependencies now accept both rspack v1 and v2 (`^1.0.0 || ^2.0.0-0`). No source code changes were needed — all existing APIs work identically in v2. Note that rspack v2 requires Node.js 20.19.0+.
+
+### Fixed
+
+- **Fixed config exporter path traversal and annotation format validation**. [PR #914](https://github.com/shakacode/shakapacker/pull/914) by [justin808](https://github.com/justin808). Added `safeResolvePath` security check to prevent path traversal in export save paths, and enforced YAML format when using annotations with build exports.
+- **Fixed `webpack-subresource-integrity` v5 named export handling**. [PR #978](https://github.com/shakacode/shakapacker/pull/978) by [justin808](https://github.com/justin808). Supports both the default export (older versions) and the named `SubresourceIntegrityPlugin` export (v5.1+), preventing runtime breakage when upgrading the plugin. Fixes [#972](https://github.com/shakacode/shakapacker/issues/972).
+
+## [v9.6.1] - March 8, 2026
+
+### Fixed
+
+- **Fixed `Env#current` crashing when Rails is not loaded**. [PR #963](https://github.com/shakacode/shakapacker/pull/963) by [ihabadham](https://github.com/ihabadham). Added `defined?(Rails)` guard to `Shakapacker::Env#current` so it falls back to `RAILS_ENV`/`RACK_ENV` environment variables when called from non-Rails Ruby processes (e.g., `bin/dev` scripts). Previously, this would raise a `NameError` and silently fall back to `"production"`.
+
+### Documentation
+
+- **Added Node package API documentation**. [PR #900](https://github.com/shakacode/shakapacker/pull/900) by [justin808](https://github.com/justin808). New guide (`docs/node_package_api.md`) documenting the JavaScript API exports, configuration objects, import entrypoints for webpack and rspack, and built-in third-party support resources.
+
+## [v9.6.0] - March 7, 2026
+
+### Security
+
+- Removed default `Access-Control-Allow-Origin: *` header from dev server configuration. This header allowed any website to access dev server resources. **If your setup runs webpack-dev-server on a different port from your Rails server, uncomment the `headers` section in `config/shakapacker.yml` to restore cross-origin asset loading.** [PR #936](https://github.com/shakacode/shakapacker/pull/936) by [justin808](https://github.com/justin808). Fixes [#935](https://github.com/shakacode/shakapacker/issues/935).
+
+### Added
+
+- **Added `SKIP=true` installer mode to preserve existing files**. [PR #926](https://github.com/shakacode/shakapacker/pull/926) by [justin808](https://github.com/justin808). Running `rails shakapacker:install SKIP=true` now skips conflicting files instead of overwriting them. This is useful for CI/CD pipelines and automated setups where you want to install only missing files without touching existing configuration.
+- **Export bundler utility functions for Webpack/Rspack compatibility**. [PR #922](https://github.com/shakacode/shakapacker/pull/922) by [justin808](https://github.com/justin808). New utility functions that make it easier to write bundler-agnostic configuration code: `isRspack`, `isWebpack`, `getBundler()`, `getCssExtractPlugin()`, `getCssExtractPluginLoader()`, `getDefinePlugin()`, `getEnvironmentPlugin()`, and `getProvidePlugin()`. Users no longer need to write conditional logic to handle differences between Webpack and Rspack.
+
+  ```javascript
+  // Before: manual conditional logic
+  const { config } = require("shakapacker")
+  const CssPlugin =
+    config.assets_bundler === "rspack"
+      ? require("@rspack/core").CssExtractRspackPlugin
+      : require("mini-css-extract-plugin")
+
+  // After: use bundler utilities
+  const { getCssExtractPlugin } = require("shakapacker")
+  const CssPlugin = getCssExtractPlugin()
+  ```
+
+### Changed
+
+- **Changed default file rule type from `asset/resource` to `asset`**. [PR #901](https://github.com/shakacode/shakapacker/pull/901) by [justin808](https://github.com/justin808). Static assets (images, fonts, SVGs) now use webpack/rspack's `asset` type instead of `asset/resource`, allowing the bundler to automatically inline small files as data URIs for better performance.
+- Allow `compression-webpack-plugin` v12. [PR #937](https://github.com/shakacode/shakapacker/pull/937) by [G-Rath](https://github.com/G-Rath).
+- **BREAKING: sass-loader now defaults to modern Sass API**. [PR #879](https://github.com/shakacode/shakapacker/pull/879) by [justin808](https://github.com/justin808). The sass-loader configuration now uses `api: "modern"` instead of the deprecated legacy API. This improves compatibility with plugins like sass-resources-loader that require the modern API. If you experience issues after upgrading, you can revert to the legacy API by customizing your webpack config:
+
+  ```javascript
+  // config/webpack/webpack.config.js
+  const { generateWebpackConfig } = require("shakapacker")
+  const config = generateWebpackConfig()
+
+  // Find and modify sass-loader options
+  config.module.rules.forEach((rule) => {
+    if (rule.use) {
+      rule.use.forEach((loader) => {
+        if (loader.loader?.includes("sass-loader")) {
+          loader.options.api = "legacy"
+        }
+      })
+    }
+  })
+
+  module.exports = config
+  ```
+
+### Fixed
+
+- **Fixed hidden dotfiles and dot-directories being treated as entrypoints**. [PR #915](https://github.com/shakacode/shakapacker/pull/915) by [justin808](https://github.com/justin808). Entry discovery now ignores files and directories whose names start with `.` when traversing `source_entry_path`, preventing unintended bundles from being created. Closes [#853](https://github.com/shakacode/shakapacker/issues/853).
+- **Fixed orphaned webpack/rspack processes when foreman receives SIGTERM**. [PR #888](https://github.com/shakacode/shakapacker/pull/888) by [jordan-brough](https://github.com/jordan-brough). When running under foreman, sending SIGTERM to foreman (e.g. `kill <pid>`) would kill the Ruby shakapacker process but leave the webpack/rspack child process running as an orphan. DevServerRunner now uses `exec` to replace the Ruby process entirely, and Runner uses `spawn` with SIGTERM forwarding to ensure the child process is properly terminated.
+- **Fixed missing-environment fallback to use production instead of development**. [PR #894](https://github.com/shakacode/shakapacker/pull/894) by [justin808](https://github.com/justin808). When a Rails environment (e.g., staging) is not defined in `shakapacker.yml`, Shakapacker now falls back to the `production` configuration instead of `development`. This ensures unknown environments get production-optimized webpack/rspack builds by default.
+- **Fixed installer writing wrong shakapacker version in package.json**. [PR #899](https://github.com/shakacode/shakapacker/pull/899) by [justin808](https://github.com/justin808). The `shakapacker:install` generator now keeps the `package.json` dependency value in sync with the exact version or path that was requested, instead of relying on the post-install value which could differ.
+- **Fixed `privateOutputPath` not being computed in JavaScript config**. [PR #891](https://github.com/shakacode/shakapacker/pull/891) by [ihabadham](https://github.com/ihabadham). The `private_output_path` setting from `shakapacker.yml` is now properly resolved to an absolute path and exposed as `privateOutputPath` in the JavaScript configuration, matching the behavior already present in the Ruby configuration.
+- **Fixed installer not updating `shakapacker.yml` when selecting a non-default transpiler**. [PR #895](https://github.com/shakacode/shakapacker/pull/895) by [codex-rs](https://github.com/apps/codex-rs). Installing with `JAVASCRIPT_TRANSPILER=babel` (or `esbuild`) now correctly updates `config/shakapacker.yml` to match the selected transpiler instead of leaving it set to `swc`. Previously, a quote mismatch in the `gsub_file` call meant the config was never actually updated, and the condition also excluded `JAVASCRIPT_TRANSPILER=babel` from the update entirely. Additionally, `JAVASCRIPT_TRANSPILER=babel` no longer installs SWC packages.
+- **Fixed ENOENT crash on clean builds when using `webpack-assets-manifest` v6 with `merge: true`**. [PR #931](https://github.com/shakacode/shakapacker/pull/931) by [justin808](https://github.com/justin808). Seeds an empty `{}` manifest file before instantiating the plugin, so the merge read succeeds on first build rather than throwing an unhandled ENOENT.
+- **Improved error message when manifest is empty or missing**. [PR #872](https://github.com/shakacode/shakapacker/pull/872) by [justin808](https://github.com/justin808). When the bundler is still compiling (empty manifest) or hasn't run yet (missing manifest file), users now see clear, actionable error messages instead of the generic 7-point checklist.
+- **Fixed NODE_ENV=test causing DefinePlugin warnings**. [PR #870](https://github.com/shakacode/shakapacker/pull/870) by [justin808](https://github.com/justin808). When RAILS_ENV=test, Shakapacker now sets NODE_ENV=development instead of NODE_ENV=test. This prevents webpack/rspack DefinePlugin conflicts since these bundlers only recognize "development" and "production" as valid NODE_ENV values.
+- **Fixed `--json` flag output being corrupted by log messages**. [PR #869](https://github.com/shakacode/shakapacker/pull/869) by [justin808](https://github.com/justin808). When `--json` is in the command arguments, `[Shakapacker]` log messages are now written to stderr instead of stdout, keeping stdout clean for valid JSON output. This allows `bin/shakapacker --profile --json` to be piped to tools like `webpack-bundle-analyzer`. Normal (non-JSON) usage is unchanged. Resolves [#868](https://github.com/shakacode/shakapacker/issues/868).
+- **Require explicit truthy values for all installer env vars**. [PR #926](https://github.com/shakacode/shakapacker/pull/926), [PR #943](https://github.com/shakacode/shakapacker/pull/943) by [justin808](https://github.com/justin808). Previously, any set value (including `"false"` or `"0"`) would activate these flags. Now only explicit truthy values (`true`, `1`, `yes`, case-insensitive) are recognized for `SKIP`, `FORCE`, `USE_BABEL_PACKAGES`, `SHAKAPACKER_USE_TYPESCRIPT`, and `SKIP_COMMON_LOADERS`. This behavior change may require CI/scripts that relied on arbitrary non-empty values to switch to recognized truthy values like `true`.
+
+### Documentation
+
+- **Added CDN limitation warnings for Early Hints feature**. [PR #878](https://github.com/shakacode/shakapacker/pull/878) by [justin808](https://github.com/justin808). The early hints documentation now prominently notes that most CDNs (Cloudflare, AWS CloudFront, AWS ALB) strip HTTP 103 responses before they reach end users. Debug mode also includes CDN warnings in HTML comments.
+
+## [v9.5.0] - January 7, 2026
+
+### Security
+
+- **CRITICAL: Fixed environment variable leak via EnvironmentPlugin**. [PR #857](https://github.com/shakacode/shakapacker/pull/857) by [justin808](https://github.com/justin808). The default webpack and rspack plugins were passing the entire `process.env` to `EnvironmentPlugin`, which exposed ALL build environment variables (including secrets like `DATABASE_URL`, `AWS_SECRET_ACCESS_KEY`, `RAILS_MASTER_KEY`, etc.) to client-side JavaScript bundles when code referenced `process.env.VARIABLE_NAME`. **Note**: This issue is especially critical with webpack 5.103+ due to a [serialization change](https://github.com/webpack/webpack/commit/eecdeeb746b2f996ed4ab74365dd72c95070196b) that can embed all environment variables into bundles when `import.meta.env` is accessed conditionally. This vulnerability was inherited from webpacker v1.0.0 (January 2017) and has been present in all versions of webpacker and shakapacker. **Action required**: After upgrading, rotate any secrets that may have been exposed in production JavaScript bundles.
+
+### Added
+
+- **Added `SHAKAPACKER_PUBLIC_*` prefix convention for client-side environment variables**. [PR #857](https://github.com/shakacode/shakapacker/pull/857) by [justin808](https://github.com/justin808). Any environment variable prefixed with `SHAKAPACKER_PUBLIC_` is automatically exposed to client-side JavaScript. This follows the same convention used by Next.js (`NEXT_PUBLIC_*`) and Vite (`VITE_*`), making it explicit which variables are intended for client-side use.
+
+  ```bash
+  # These are automatically available in your JavaScript
+  export SHAKAPACKER_PUBLIC_API_URL=https://api.example.com
+  export SHAKAPACKER_PUBLIC_ANALYTICS_ID=UA-12345
+  ```
+
+- **Added `SHAKAPACKER_ENV_VARS` environment variable as escape hatch for extending allowed client-side env vars**. [PR #857](https://github.com/shakacode/shakapacker/pull/857) by [justin808](https://github.com/justin808). Set `SHAKAPACKER_ENV_VARS=VAR1,VAR2,VAR3` to expose additional environment variables to client-side JavaScript beyond the default allowlist (`NODE_ENV`, `RAILS_ENV`, `WEBPACK_SERVE`). Only add non-sensitive variables that are safe to embed in public JavaScript bundles.
+
+### Changed
+
+- **BREAKING: EnvironmentPlugin now uses allowlist instead of exposing all env vars**. [PR #857](https://github.com/shakacode/shakapacker/pull/857) by [justin808](https://github.com/justin808). Only `NODE_ENV`, `RAILS_ENV`, `WEBPACK_SERVE`, and any `SHAKAPACKER_PUBLIC_*` variables are exposed by default. If your client-side code relies on other environment variables, either rename them with the `SHAKAPACKER_PUBLIC_` prefix (recommended), add them via `SHAKAPACKER_ENV_VARS`, or customize your webpack/rspack config. This is a security fix - the previous behavior was dangerous.
+
+  **Migration examples:**
+
+  ```bash
+  # Option 1 (recommended): Use the SHAKAPACKER_PUBLIC_ prefix
+  export SHAKAPACKER_PUBLIC_API_BASE_URL=https://api.example.com
+
+  # Option 2: Use SHAKAPACKER_ENV_VARS for existing variable names
+  SHAKAPACKER_ENV_VARS=API_BASE_URL bundle exec rails assets:precompile
+  ```
+
+### Fixed
+
+- **Fixed gemspec to exclude Gemfile.lock from published gem**. [PR #856](https://github.com/shakacode/shakapacker/pull/856) by [adrien-k](https://github.com/adrien-k). The gemspec's file pattern now correctly excludes `Gemfile.lock`, preventing vulnerability alerts during Docker image scans caused by outdated pinned versions in the lock file.
+
+## [v9.4.0] - November 22, 2025
+
+### Added
+
+- **Added `SHAKAPACKER_SKIP_PRECOMPILE_HOOK` environment variable to skip precompile hook**. [PR #850](https://github.com/shakacode/shakapacker/pull/850) by [justin808](https://github.com/justin808). Set `SHAKAPACKER_SKIP_PRECOMPILE_HOOK=true` to skip the precompile hook during compilation. This is useful when using process managers like Foreman or Overmind to run the hook once before starting multiple webpack processes, preventing duplicate hook execution. **Migration tip:** If you have a custom `bin/dev` script that starts multiple webpack processes, you can now run the precompile hook once in the script and set this environment variable to prevent each webpack process from running the hook again. See the [precompile hook documentation](./docs/precompile_hook.md#skipping-the-hook) for implementation examples.
+
+## [v9.3.4] - November 17, 2025
 
 ### Fixed
 
@@ -759,8 +958,15 @@ Note: [Rubygem is 6.3.0.pre.rc.1](https://rubygems.org/gems/shakapacker/versions
 
 See [CHANGELOG.md in rails/webpacker (up to v5.4.3)](https://github.com/rails/webpacker/blob/master/CHANGELOG.md)
 
-[Unreleased]: https://github.com/shakacode/shakapacker/compare/v9.3.4-beta.0...main
-[v9.3.4-beta.0]: https://github.com/shakacode/shakapacker/compare/v9.3.3...v9.3.4-beta.0
+[Unreleased]: https://github.com/shakacode/shakapacker/compare/v10.1.0...main
+[v10.1.0]: https://github.com/shakacode/shakapacker/compare/v10.0.0...v10.1.0
+[v10.0.0]: https://github.com/shakacode/shakapacker/compare/v9.7.0...v10.0.0
+[v9.7.0]: https://github.com/shakacode/shakapacker/compare/v9.6.1...v9.7.0
+[v9.6.1]: https://github.com/shakacode/shakapacker/compare/v9.6.0...v9.6.1
+[v9.6.0]: https://github.com/shakacode/shakapacker/compare/v9.5.0...v9.6.0
+[v9.5.0]: https://github.com/shakacode/shakapacker/compare/v9.4.0...v9.5.0
+[v9.4.0]: https://github.com/shakacode/shakapacker/compare/v9.3.4...v9.4.0
+[v9.3.4]: https://github.com/shakacode/shakapacker/compare/v9.3.3...v9.3.4
 [v9.3.3]: https://github.com/shakacode/shakapacker/compare/v9.3.2...v9.3.3
 [v9.3.2]: https://github.com/shakacode/shakapacker/compare/v9.3.1...v9.3.2
 [v9.3.1]: https://github.com/shakacode/shakapacker/compare/v9.3.0...v9.3.1

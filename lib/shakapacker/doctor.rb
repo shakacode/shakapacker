@@ -12,6 +12,17 @@ module Shakapacker
     CATEGORY_RECOMMENDED = :recommended
     CATEGORY_INFO = :info
 
+    REQUIRED_BINSTUBS = {
+      "bin/shakapacker" => "Main Shakapacker binstub",
+      "bin/shakapacker-dev-server" => "Development server binstub",
+      "bin/shakapacker-config" => "Config export binstub"
+    }.freeze
+
+    OPTIONAL_BINSTUBS = %w[
+      bin/shakapacker-watch
+      bin/diff-bundler-config
+    ].freeze
+
     def initialize(config = nil, root_path = nil, options = {})
       @config = config || Shakapacker.config
       @root_path = root_path || (defined?(Rails) ? Rails.root : Pathname.new(Dir.pwd))
@@ -47,6 +58,16 @@ module Shakapacker
 
       def add_info_warning(message)
         add_warning(message, CATEGORY_INFO)
+      end
+
+      # Marks the warning as a Fix sub-item; the renderer owns the "Fix: " prefix and indentation.
+      # The stored category mirrors the parent warning so a fix attached to an action-required
+      # item is itself action-required (it's only rendered alongside its parent, but the data
+      # stays consistent for any downstream consumer).
+      def add_fix_hint(message)
+        parent = @warnings.reverse_each.find { |w| !w[:fix] }
+        category = parent ? parent[:category] : CATEGORY_RECOMMENDED
+        @warnings << { category: category, message: message, fix: true }
       end
 
       def print_help
@@ -99,6 +120,7 @@ module Shakapacker
         check_css_dependencies
         check_css_modules_configuration
         check_bundler_dependencies if config_exists?
+        check_rspack_cache_configuration if config_exists?
         check_file_type_dependencies if config_exists?
         check_sri_dependencies if config_exists?
         check_peer_dependencies
@@ -189,7 +211,7 @@ module Shakapacker
         # Match "bundler:" at start of line or preceded by non-underscore character
         if config_file.match?(/^\s*bundler:/m) || config_file.match?(/[^_]bundler:/)
           add_action_required("Deprecated config: 'bundler' should be renamed to 'assets_bundler' in #{config_relative_path}.")
-          add_action_required("  Fix: Open #{config_relative_path} and change 'bundler:' to 'assets_bundler:'.")
+          add_fix_hint("Open #{config_relative_path} and change 'bundler:' to 'assets_bundler:'.")
         end
       rescue => e
         # Ignore read errors as config file check already handles missing file
@@ -273,8 +295,8 @@ module Shakapacker
 
       def check_webpack_peer_deps(deps)
         essential_webpack = {
-          "webpack" => "^5.76.0",
-          "webpack-cli" => "^4.9.2 || ^5.0.0"
+          "webpack" => "^5.101.0",
+          "webpack-cli" => "^4.9.2 || ^5.0.0 || ^6.0.0 || ^7.0.0"
         }
 
         essential_webpack.each do |package, version|
@@ -388,13 +410,7 @@ module Shakapacker
       def check_binstub
         missing_binstubs = []
 
-        expected_binstubs = {
-          "bin/shakapacker" => "Main Shakapacker binstub",
-          "bin/shakapacker-dev-server" => "Development server binstub",
-          "bin/shakapacker-config" => "Config export binstub"
-        }
-
-        expected_binstubs.each do |path, description|
+        REQUIRED_BINSTUBS.each do |path, description|
           unless root_path.join(path).exist?
             missing_binstubs << "#{path} (#{description})"
           end
@@ -402,7 +418,7 @@ module Shakapacker
 
         unless missing_binstubs.empty?
           add_action_required("Missing binstubs: #{missing_binstubs.join(', ')}.")
-          add_action_required("  Fix: Run 'bundle exec rake shakapacker:binstubs' to create them.")
+          add_fix_hint("Run 'bundle exec rake shakapacker:binstubs' to create them.")
         end
       end
 
@@ -475,7 +491,7 @@ module Shakapacker
                         else "npm uninstall swc-loader"
             end
             add_warning("swc-loader is not needed with Rspack (SWC is built-in). Rspack includes SWC transpilation natively, so this package is redundant.")
-            add_warning("  Fix: Remove it with: #{remove_cmd}.")
+            add_fix_hint("Remove it with: #{remove_cmd}.")
           end
         end
       end
@@ -515,7 +531,7 @@ module Shakapacker
           babel_files << "package.json" if babel_in_package_json
           babel_files_str = babel_files.join(", ")
           add_warning("Babel configuration files found (#{babel_files_str}) but javascript_transpiler is '#{transpiler}'. These Babel configs are ignored by Shakapacker (though they may still be used by ESLint or other tools).")
-          add_warning("  Fix: Remove Babel config files if not needed, or set javascript_transpiler: 'babel' in shakapacker.yml to use Babel for transpilation.")
+          add_fix_hint("Remove Babel config files if not needed, or set javascript_transpiler: 'babel' in shakapacker.yml to use Babel for transpilation.")
         end
 
         # Check for redundant dependencies
@@ -674,6 +690,307 @@ module Shakapacker
           check_dependency("@rspack/core", @issues, "Rspack")
           check_dependency("@rspack/cli", @issues, "Rspack CLI")
         end
+      end
+
+      def check_rspack_cache_configuration
+        return unless config.rspack?
+
+        rspack_major = rspack_major_version
+
+        if rspack_major == 1
+          add_warning("Rspack v1 detected: persistent caching is experimental in v1 and requires manual opt-in. " \
+                      "Upgrading to Rspack v2 enables stable persistent caching out of the box for significantly faster rebuilds.")
+          add_fix_hint("Bump @rspack/core and @rspack/cli to ^2.0.0-0 in package.json. See https://rspack.rs/config/cache and docs/rspack.md for details.")
+        end
+
+        path = active_assets_bundler_config_path
+        return unless path
+
+        content = read_active_assets_bundler_config(path)
+        return unless content
+
+        return unless rspack_cache_disabled?(content)
+
+        relative = config_path_for_warning(path)
+        add_warning("Rspack cache appears to be disabled in #{relative} (found 'cache: false'). Disabling cache " \
+                    "causes significantly slower builds, especially on rebuilds. Rspack v2 promotes filesystem " \
+                    "caching from experimental to stable.")
+        add_fix_hint("Remove the 'cache: false' setting, or use 'cache: { type: \"filesystem\" }' for persistent caching. " \
+                     "See https://rspack.rs/config/cache for options.")
+      end
+
+      # Returns the single active config path the runner would load, or nil. Mirrors the
+      # resolution order in Shakapacker::Runner#find_rspack_config_with_fallback so the
+      # doctor inspects the same file the build will actually use (and so unused sibling
+      # configs in the same directory don't trigger spurious warnings).
+      # NOTE: keep this candidate list in sync with Runner#find_rspack_config_with_fallback.
+      def active_assets_bundler_config_path
+        config_dir = config.assets_bundler_config_path.to_s
+
+        candidates = %w[ts js].map { |ext| Pathname.new(File.join(root_path.to_s, config_dir, "rspack.config.#{ext}")) }
+        candidates += %w[ts js].map { |ext| Pathname.new(File.join(root_path.to_s, config_dir, "webpack.config.#{ext}")) }
+        if default_rspack_config_dir?(config_dir)
+          candidates += %w[ts js].map { |ext| Pathname.new(File.join(root_path.to_s, "config/webpack", "webpack.config.#{ext}")) }
+        end
+
+        candidates.find(&:exist?)
+      end
+
+      def read_active_assets_bundler_config(path)
+        File.read(path)
+      rescue SystemCallError => e
+        add_info_warning("Unable to validate rspack cache configuration: #{e.message}")
+        nil
+      end
+
+      def default_rspack_config_dir?(config_dir)
+        # Intentionally exact-string match: mirrors the runner's own comparison,
+        # so a trailing slash or Pathname argument won't spuriously add the config/webpack fallback.
+        config_dir == "config/rspack"
+      end
+
+      def config_path_for_warning(path)
+        expanded_root = root_path.expand_path
+        expanded_path = path.expand_path
+
+        return path.to_s unless expanded_path.to_s == expanded_root.to_s ||
+                                expanded_path.to_s.start_with?("#{expanded_root}#{File::SEPARATOR}")
+
+        path.relative_path_from(root_path)
+      rescue ArgumentError
+        path.to_s
+      end
+
+      def rspack_cache_disabled?(content)
+        stripped = stripped_rspack_config_content(content)
+
+        direct_export_cache_disabled?(stripped) || exported_variable_cache_disabled?(stripped)
+      end
+
+      def stripped_rspack_config_content(content)
+        # Normalize quoted property keys before stripping string literals; otherwise
+        # `'cache'` and `"cache"` collapse to `""` and the match below misses them.
+        # Lookahead is restricted to horizontal whitespace so a multiline ternary
+        # like `condition ? "cache"\n  : false` doesn't fold across the newline
+        # and produce a spurious cache: false match.
+        stripped = content.gsub(/(['"])(\w+)\1(?=[ \t]*:)/, '\2')
+
+        stripped = strip_rspack_config_comments_and_literals(stripped)
+
+        # Regex literal stripping runs after comment removal. The line-comment
+        # pass above ignores escaped slashes so /https?:\/\/host/ stays intact
+        # until this pass removes the whole regex literal. The heuristic can
+        # false-match bare division like `a / b / c`, but rspack config files
+        # rarely contain arithmetic near `cache:`, so the risk is low.
+        stripped.gsub(%r{/(?:\\.|\[[^\]\n]*\]|[^/\n\\\[])+?/[gimsuy]*}, "")
+      end
+
+      def strip_rspack_config_comments_and_literals(content)
+        stripped = +""
+        index = 0
+
+        while index < content.length
+          char = content[index]
+          pair = content[index, 2]
+
+          if pair == "/*"
+            comment_end = content.index("*/", index + 2)
+            if comment_end
+              comment = content[index..comment_end + 1]
+              stripped << comment.gsub(/[^\n]/, " ")
+              index = comment_end + 2
+            else
+              stripped << content[index..].gsub(/[^\n]/, " ")
+              break
+            end
+          elsif pair == "//"
+            line_end = content.index("\n", index + 2) || content.length
+            stripped << content[index...line_end].gsub(/[^\n]/, " ")
+            index = line_end
+          elsif char == "'" || char == '"'
+            literal_end = index + 1
+            escaped = false
+
+            while literal_end < content.length
+              current = content[literal_end]
+              break if current == "\n"
+
+              if escaped
+                escaped = false
+              elsif current == "\\"
+                escaped = true
+              elsif current == char
+                literal_end += 1
+                break
+              end
+
+              literal_end += 1
+            end
+
+            literal = content[index...literal_end]
+            stripped << '""'
+            stripped << literal.gsub(/[^\n]/, "")
+            index = literal_end
+          elsif char == "`"
+            literal_end = index + 1
+            escaped = false
+            closed = false
+
+            while literal_end < content.length
+              current = content[literal_end]
+
+              if escaped
+                escaped = false
+              elsif current == "\\"
+                escaped = true
+              elsif current == "`"
+                literal_end += 1
+                closed = true
+                break
+              end
+
+              literal_end += 1
+            end
+
+            if closed
+              literal = content[index...literal_end]
+              stripped << '""'
+              stripped << literal.gsub(/[^\n]/, "")
+              index = literal_end
+            else
+              stripped << char
+              index += 1
+            end
+          else
+            stripped << char
+            index += 1
+          end
+        end
+
+        stripped
+      end
+
+      def direct_export_cache_disabled?(stripped)
+        # Match `cache: false` only near an exported config object at brace depth
+        # 1. This avoids warning on local base config objects while still
+        # catching the common direct export and generateRspackConfig patterns.
+        #
+        # Known false-positive gaps (rare; the "appears to be disabled" wording
+        # is the user-visible mitigation):
+        #   * Named intermediate export — `export const helper = { cache: false }`
+        #     at depth 1 is flagged even when `helper` is not the final config and
+        #     a separate `export default { … }` provides the real configuration.
+        #   * ASI + prior `module.exports` — in semicolon-free code, an earlier
+        #     `module.exports = merge(…)` followed by a local helper literal can
+        #     leak into `statement_prefix` because `pre.rindex(";")` returns nil
+        #     and the prefix spans back to the start of the file.
+        stripped.to_enum(:scan, /\bcache\s*:\s*false\b/).any? do
+          pre = Regexp.last_match.pre_match
+          next false unless (pre.count("{") - pre.count("}")) == 1
+
+          statement_prefix = pre[(pre.rindex(";") || -1) + 1..]
+          # generateRspackConfig is Shakapacker's own helper; user-defined wrappers
+          # like makeRspackConfig/createConfig are a known false-negative gap.
+          statement_prefix.match?(/\bmodule\.exports\b|\bexport\s+default\b|\bexport\s+(?:const|let|var)\b|\bgenerateRspackConfig\b/)
+        end
+      end
+
+      # Catches the `const cfg = { cache: false }; module.exports = cfg` pattern.
+      # Composition via merge (`module.exports = merge(cfg, …)`) is a known
+      # false-negative since the variable is never referenced by name in the
+      # export statement. The `[^=;]+` type-annotation clause also stops at the
+      # first `=`, so TypeScript generics with default type parameters such as
+      # `Configuration<Opts = DefaultOpts>` are another known false-negative gap.
+      def exported_variable_cache_disabled?(stripped)
+        variable_declaration = /\b(?:const|let|var)\s+([A-Za-z_$][\w$]*)(?:\s*:\s*[^=;]+)?\s*=\s*\{/
+
+        stripped.to_enum(:scan, variable_declaration).any? do
+          name = Regexp.last_match[1]
+          open_index = Regexp.last_match.end(0) - 1
+          close_index = matching_closing_brace(stripped, open_index)
+          next false unless close_index
+
+          object_source = stripped[open_index..close_index]
+          top_level_cache_false?(object_source) && exported_config_variable?(stripped, name)
+        end
+      end
+
+      def top_level_cache_false?(object_source)
+        object_source.to_enum(:scan, /\bcache\s*:\s*false\b/).any? do
+          pre = Regexp.last_match.pre_match
+          (pre.count("{") - pre.count("}")) == 1
+        end
+      end
+
+      def exported_config_variable?(stripped, name)
+        escaped_name = Regexp.escape(name)
+        stripped.match?(/\bmodule\.exports\s*=\s*#{escaped_name}\b/) ||
+          stripped.match?(/\bexport\s+default\s+#{escaped_name}\b/) ||
+          stripped.match?(/\bexport\s*\{[^}]*\b#{escaped_name}\s+as\s+default\b/)
+      end
+
+      def matching_closing_brace(content, open_index)
+        depth = 0
+
+        content[open_index..].each_char.with_index do |char, offset|
+          depth += 1 if char == "{"
+          depth -= 1 if char == "}"
+
+          return open_index + offset if depth.zero?
+        end
+
+        nil
+      end
+
+      def rspack_major_version
+        # Prefer the resolved version from node_modules, since package.json specifiers
+        # (ranges, git refs, file paths) often don't parse to a clean major number.
+        resolved = installed_rspack_major_version
+        return resolved unless resolved.nil?
+
+        %w[@rspack/core @rspack/cli].each do |package_name|
+          major = rspack_major_from_specifier(package_json_dependency_version(package_name))
+          return major unless major.nil?
+        end
+
+        nil
+      end
+
+      def rspack_major_from_specifier(version)
+        return nil unless version
+
+        # Only trust specifiers starting with a digit or ^/~ prefix followed by
+        # a digit. Skip git+, file:, npm: aliases, "latest", "*", or ranges like
+        # ">=1.5 <2". Accept shorthand forms (e.g. `^1`, `~1`, `1`, `1.x`) so
+        # we still emit the v1 advisory when node_modules isn't populated yet.
+        cleaned = version.strip
+        return nil unless cleaned.match?(/\A[\^~]?\d/)
+        return nil if cleaned.match?(/(\s|\|\||[<>=:]|\A(?:git|file|link|workspace|npm):)/)
+        return nil unless cleaned.match?(/\A[\^~]?\d+(?:\.(?:\d+|x|\*)){0,2}(?:-[0-9A-Za-z.-]+)?\z/i)
+
+        match = cleaned.sub(/\A[\^~]/, "").match(/\A(\d+)/)
+        match && match[1].to_i
+      end
+
+      def installed_rspack_major_version
+        rspack_pkg = root_path.join("node_modules/@rspack/core/package.json")
+        return nil unless rspack_pkg.exist?
+
+        version = JSON.parse(File.read(rspack_pkg))["version"]
+        match = version.to_s.match(/\A(\d+)\./)
+        match && match[1].to_i
+      rescue JSON::ParserError, SystemCallError
+        nil
+      end
+
+      def package_json_dependency_version(name)
+        return nil unless package_json_exists?
+
+        pkg = read_package_json
+        # Production dependencies take precedence on key conflict so the version
+        # actually shipped in production wins over a devDependencies override.
+        deps = (pkg["devDependencies"] || {}).merge(pkg["dependencies"] || {})
+        deps[name]
       end
 
       def check_file_type_dependencies
@@ -1010,20 +1327,21 @@ module Shakapacker
           end
 
           def print_binstub_status
-            binstubs = [
-              "bin/shakapacker",
-              "bin/shakapacker-dev-server",
-              "bin/shakapacker-config"
-            ]
+            required_paths = REQUIRED_BINSTUBS.keys
 
-            existing_binstubs = binstubs.select { |b| doctor.root_path.join(b).exist? }
+            existing_required = required_paths.select { |b| doctor.root_path.join(b).exist? }
+            existing_optional = OPTIONAL_BINSTUBS.select { |b| doctor.root_path.join(b).exist? }
 
-            if existing_binstubs.length == binstubs.length
-              puts "✓ All Shakapacker binstubs found (#{existing_binstubs.join(', ')})"
-            elsif existing_binstubs.any?
-              existing_binstubs.each do |binstub|
+            if existing_required.length == required_paths.length
+              puts "✓ All required Shakapacker binstubs found (#{existing_required.join(', ')})"
+            elsif existing_required.any?
+              existing_required.each do |binstub|
                 puts "✓ #{binstub} found"
               end
+            end
+
+            existing_optional.each do |binstub|
+              puts "✓ #{binstub} found (optional)"
             end
           end
 
@@ -1058,15 +1376,14 @@ module Shakapacker
           end
 
           def print_warnings
-            # Count only main items (not sub-items)
-            main_item_count = doctor.warnings.count { |w| !w[:message].start_with?("  ") }
+            main_item_count = doctor.warnings.count { |w| !subitem?(w) }
             puts "⚠️  Warnings (#{main_item_count}):"
             puts ""
 
             item_number = 0
             doctor.warnings.each do |warning|
-              if subitem?(warning[:message])
-                print_subitem(warning[:message])
+              if subitem?(warning)
+                print_subitem(warning)
               else
                 item_number += 1
                 print_main_item(item_number, warning)
@@ -1075,15 +1392,16 @@ module Shakapacker
             puts ""
           end
 
-          def subitem?(message)
-            message.start_with?("  ")
+          def subitem?(warning)
+            warning[:fix] || warning[:message].start_with?("  ")
           end
 
-          def print_subitem(message)
+          def print_subitem(warning)
             # Fix instructions align at column 16 (length of "N. [RECOMMENDED]  ")
-            # This ensures all Fix lines align vertically regardless of category
+            # This keeps every Fix line aligned regardless of category.
             subitem_prefix = " " * 15
-            wrapped = wrap_text(message, 100, subitem_prefix)
+            text = warning[:fix] ? "Fix: #{warning[:message]}" : warning[:message]
+            wrapped = wrap_text(text, 100, subitem_prefix)
             puts wrapped
           end
 

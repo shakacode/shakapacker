@@ -134,7 +134,7 @@ module ActionView::TestCase::Behavior
       it "#append_javascript_pack_tag raises an error if called after calling #javascript_pack_tag" do
         expected_error_message = \
           "You can only call append_javascript_pack_tag before javascript_pack_tag helper. " +
-          "Please refer to https://github.com/shakacode/shakapacker/blob/main/README.md#view-helper-append_javascript_pack_tag-prepend_javascript_pack_tag-and-append_stylesheet_pack_tag for the usage guide"
+          "Please refer to https://github.com/shakacode/shakapacker/blob/main/docs/api-reference.md#view-helper-append_javascript_pack_tag-prepend_javascript_pack_tag-and-append_stylesheet_pack_tag for the usage guide"
 
         expect {
           javascript_pack_tag("application")
@@ -145,7 +145,7 @@ module ActionView::TestCase::Behavior
       it "#prepend_javascript_pack_tag raises an error if called after calling #javascript_pack_tag" do
         expected_error_message = \
           "You can only call prepend_javascript_pack_tag before javascript_pack_tag helper. " +
-          "Please refer to https://github.com/shakacode/shakapacker/blob/main/README.md#view-helper-append_javascript_pack_tag-prepend_javascript_pack_tag-and-append_stylesheet_pack_tag for the usage guide"
+          "Please refer to https://github.com/shakacode/shakapacker/blob/main/docs/api-reference.md#view-helper-append_javascript_pack_tag-prepend_javascript_pack_tag-and-append_stylesheet_pack_tag for the usage guide"
 
         expect {
           javascript_pack_tag("application")
@@ -175,7 +175,7 @@ module ActionView::TestCase::Behavior
 
       it "#javascript_pack_tag raises error on multiple invocations" do
         expected_error_message = "To prevent duplicated chunks on the page, you should call javascript_pack_tag only once on the page. " +
-                                 "Please refer to https://github.com/shakacode/shakapacker/blob/main/README.md#view-helpers-javascript_pack_tag-and-stylesheet_pack_tag for the usage guide"
+                                 "Please refer to https://github.com/shakacode/shakapacker/blob/main/docs/api-reference.md#view-helpers-javascript_pack_tag-and-stylesheet_pack_tag for the usage guide"
 
         expect {
           javascript_pack_tag(:application)
@@ -574,7 +574,7 @@ module ActionView::TestCase::Behavior
       it "#append_javascript_pack_tag raises an error if called after calling #javascript_pack_tag" do
         expected_error_message = \
           "You can only call append_javascript_pack_tag before javascript_pack_tag helper. " +
-          "Please refer to https://github.com/shakacode/shakapacker/blob/main/README.md#view-helper-append_javascript_pack_tag-prepend_javascript_pack_tag-and-append_stylesheet_pack_tag for the usage guide"
+          "Please refer to https://github.com/shakacode/shakapacker/blob/main/docs/api-reference.md#view-helper-append_javascript_pack_tag-prepend_javascript_pack_tag-and-append_stylesheet_pack_tag for the usage guide"
 
         expect {
           javascript_pack_tag("application_with_integrity")
@@ -585,7 +585,7 @@ module ActionView::TestCase::Behavior
       it "#prepend_javascript_pack_tag raises an error if called after calling #javascript_pack_tag" do
         expected_error_message = \
           "You can only call prepend_javascript_pack_tag before javascript_pack_tag helper. " +
-          "Please refer to https://github.com/shakacode/shakapacker/blob/main/README.md#view-helper-append_javascript_pack_tag-prepend_javascript_pack_tag-and-append_stylesheet_pack_tag for the usage guide"
+          "Please refer to https://github.com/shakacode/shakapacker/blob/main/docs/api-reference.md#view-helper-append_javascript_pack_tag-prepend_javascript_pack_tag-and-append_stylesheet_pack_tag for the usage guide"
 
         expect {
           javascript_pack_tag("application_with_integrity")
@@ -615,7 +615,7 @@ module ActionView::TestCase::Behavior
 
       it "#javascript_pack_tag raises error on multiple invocations" do
         expected_error_message = "To prevent duplicated chunks on the page, you should call javascript_pack_tag only once on the page. " +
-                                 "Please refer to https://github.com/shakacode/shakapacker/blob/main/README.md#view-helpers-javascript_pack_tag-and-stylesheet_pack_tag for the usage guide"
+                                 "Please refer to https://github.com/shakacode/shakapacker/blob/main/docs/api-reference.md#view-helpers-javascript_pack_tag-and-stylesheet_pack_tag for the usage guide"
 
         expect {
           javascript_pack_tag(:application_with_integrity)

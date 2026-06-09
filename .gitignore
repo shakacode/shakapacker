@@ -14,14 +14,23 @@ gemfiles/*.lock
 .DS_Store
 .eslintcache
 
+# Claude Code ScheduleWakeup per-process runtime lock
+.claude/*.lock
+
 .yalc
 yalc.lock
 
 # npm pack tarballs
 *.tgz
 
+# Built gem files
+*.gem
+
 # Config exporter output directory
 shakapacker-config-exports/
+
+# Webpack build output
+public/packs/
 
 # TypeScript generated files
 package/**/*.d.ts

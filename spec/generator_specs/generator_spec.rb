@@ -39,6 +39,7 @@ describe "Generator" do
           bundle add shakapacker --path "#{GEM_ROOT}"
         ))
       end
+
     end
   end
 
@@ -63,8 +64,8 @@ describe "Generator" do
             else
               ""
             end
-            install_cmd = "#{npm_package_env}SHAKAPACKER_ASSETS_BUNDLER=webpack " \
-                          "USE_BABEL_PACKAGES=true FORCE=true bundle exec rake shakapacker:install"
+            install_cmd = "#{npm_package_env}USE_BABEL_PACKAGES=true FORCE=true " \
+                          "bundle exec rake shakapacker:install"
             sh_in_dir(sh_opts, TEMP_RAILS_APP_PATH, install_cmd)
 
             # Update package.json to use local shakapacker package
@@ -106,15 +107,16 @@ describe "Generator" do
           FileUtils.rm_rf(TEMP_RAILS_APP_PATH)
         end
 
-        it "creates `config/shakapacker.yml` with babel transpiler when USE_BABEL_PACKAGES is set" do
+        it "creates `config/shakapacker.yml` with rspack bundler and babel transpiler when USE_BABEL_PACKAGES is set" do
           config_file_relative_path = "config/shakapacker.yml"
           actual_content = read(path_in_the_app(config_file_relative_path))
           expected_content = read(path_in_the_gem(config_file_relative_path))
 
           # When USE_BABEL_PACKAGES=true, the config should be updated to use babel
-          expected_content_with_babel = expected_content.gsub("javascript_transpiler: 'swc'", "javascript_transpiler: 'babel'")
+          expected_content_with_babel = expected_content.gsub('javascript_transpiler: "swc"', 'javascript_transpiler: "babel"')
+          expected_content_with_babel_and_rspack = expected_content_with_babel.gsub('assets_bundler: "webpack"', 'assets_bundler: "rspack"')
 
-          expect(actual_content).to eq expected_content_with_babel
+          expect(actual_content).to eq expected_content_with_babel_and_rspack
         end
 
         it "ensures the 'packageManager' field is set" do
@@ -125,14 +127,14 @@ describe "Generator" do
           expect(package_json.fetch("packageManager", "")).to match(/#{manager_name}@\d+\.\d+\.\d+/)
         end
 
-        it "creates webpack config directory and files (defaults to JS)" do
+        it "creates rspack config directory and files by default (defaults to JS)" do
           expected_files = [
-            "webpack.config.js"
+            "rspack.config.js"
           ]
 
-          Dir.chdir(path_in_the_app("config/webpack")) do
-            existing_files_in_config_webpack_dir = Dir.glob("*")
-            expect(existing_files_in_config_webpack_dir).to eq expected_files
+          Dir.chdir(path_in_the_app("config/rspack")) do
+            existing_files_in_config_rspack_dir = Dir.glob("*")
+            expect(existing_files_in_config_rspack_dir).to eq expected_files
           end
         end
 
@@ -206,25 +208,24 @@ describe "Generator" do
             @swc/core
             swc-loader
             compression-webpack-plugin
-            terser-webpack-plugin
-            webpack
-            webpack-assets-manifest
-            webpack-cli
-            webpack-merge
+            @rspack/cli
+            @rspack/core
+            rspack-manifest-plugin
           )
 
           expect(actual_dependencies).to include(*expected_dependencies)
         end
 
-        it "adds Shakapacker peer dev dependencies to package.json" do
+        it "adds the rspack dev-server (and not webpack-dev-server) as a dev dependency" do
           package_json = PackageJson.read(path_in_the_app)
           actual_dev_dependencies = package_json.fetch("devDependencies", {}).keys
+          actual_dependencies = package_json.fetch("dependencies", {}).keys
 
-          expected_dev_dependencies = %w(
-            webpack-dev-server
-          )
-
-          expect(actual_dev_dependencies).to include(*expected_dev_dependencies)
+          expect(actual_dev_dependencies).to include("@rspack/dev-server")
+          expect(actual_dev_dependencies).not_to include("webpack-dev-server")
+          # Guard the dev/runtime classification: the dev-server must land in
+          # devDependencies, not leak into runtime dependencies.
+          expect(actual_dependencies).not_to include("@rspack/dev-server")
         end
 
         context "with a basic react app setup" do
@@ -291,6 +292,14 @@ describe "Generator" do
           content = File.read(config_path)
 
           expect(content).to end_with("\n")
+        end
+
+        it "keeps assets_bundler set to webpack when requested via the positional argument" do
+          config_path = Pathname.new(File.join(TEMP_RAILS_APP_PATH.to_s + "-ts", "config/shakapacker.yml"))
+          content = File.read(config_path)
+
+          expect(content).to include('assets_bundler: "webpack"')
+          expect(content).not_to include('assets_bundler: "rspack"')
         end
       end
 
@@ -373,14 +382,69 @@ describe "Generator" do
 
         it "auto-detects TypeScript and creates .ts config" do
           expected_files = [
-            "webpack.config.ts"
+            "rspack.config.ts"
           ]
 
-          Dir.chdir(Pathname.new(File.join(TEMP_RAILS_APP_PATH.to_s + "-tsconfig", "config/webpack"))) do
+          Dir.chdir(Pathname.new(File.join(TEMP_RAILS_APP_PATH.to_s + "-tsconfig", "config/rspack"))) do
             existing_files = Dir.glob("*")
             expect(existing_files).to eq expected_files
           end
         end
+      end
+    end
+
+    context "when JAVASCRIPT_TRANSPILER=babel is set" do
+      before :all do
+        sh_opts = { fallback_manager: "npm" }
+        @babel_only_app_path = SPEC_PATH.join("temp-rails-app-babel-only")
+
+        sh_in_dir(sh_opts, SPEC_PATH, "cp -r '#{BASE_RAILS_APP_PATH}' '#{@babel_only_app_path}'")
+
+        Bundler.with_unbundled_env do
+          npm_package_env = ENV["SHAKAPACKER_NPM_PACKAGE"] ? "SHAKAPACKER_NPM_PACKAGE='#{ENV["SHAKAPACKER_NPM_PACKAGE"]}' " : ""
+          install_cmd = "#{npm_package_env}SHAKAPACKER_ASSETS_BUNDLER=webpack JAVASCRIPT_TRANSPILER=babel FORCE=true " \
+                        "bundle exec rake shakapacker:install"
+          sh_in_dir(sh_opts, @babel_only_app_path, install_cmd)
+        end
+      end
+
+      after :all do
+        Dir.chdir(SPEC_PATH)
+        FileUtils.rm_rf(@babel_only_app_path)
+      end
+
+      it "installs babel dependencies" do
+        package_json = PackageJson.read(@babel_only_app_path)
+        dependencies = package_json.fetch("dependencies", {}).keys
+
+        expect(dependencies).to include("@babel/core", "babel-loader")
+      end
+
+      it "does not install swc dependencies" do
+        package_json = PackageJson.read(@babel_only_app_path)
+        dependencies = package_json.fetch("dependencies", {}).keys
+
+        expect(dependencies).not_to include("@swc/core", "swc-loader")
+      end
+
+      it "updates shakapacker.yml to use babel transpiler" do
+        config_content = File.read(File.join(@babel_only_app_path, "config/shakapacker.yml"))
+
+        expect(config_content).to include('javascript_transpiler: "babel"')
+        expect(config_content).not_to include('javascript_transpiler: "swc"')
+      end
+
+      it "creates the webpack config directory and files (JS by default)" do
+        Dir.chdir(File.join(@babel_only_app_path, "config/webpack")) do
+          expect(Dir.glob("*")).to eq(["webpack.config.js"])
+        end
+      end
+
+      it "keeps assets_bundler set to webpack when requested explicitly" do
+        config_content = File.read(File.join(@babel_only_app_path, "config/shakapacker.yml"))
+
+        expect(config_content).to include('assets_bundler: "webpack"')
+        expect(config_content).not_to include('assets_bundler: "rspack"')
       end
     end
   end

@@ -2,6 +2,11 @@
 require "bundler/gem_tasks"
 require "pathname"
 
+# Remove Bundler's default `release` task — it bypasses the custom release flow
+# (CHANGELOG version detection, npm publish, GitHub release sync, etc.).
+# The custom `release` task in rakelib/release.rake replaces it.
+Rake::Task[:release].clear
+
 desc "Run all specs"
 task test: ["run_spec:all_specs"]
 
@@ -22,8 +27,9 @@ namespace :run_spec do
       sh_in_dir(".", "yalc publish")
       sh_in_dir(spec_dummy_dir, [
         "bundle install",
-        "yalc link shakapacker",
-        "npm install",
+        "yarn install",
+        "yalc add shakapacker",
+        "yarn install",
         "bin/test-bundler webpack",
         "NODE_ENV=test RAILS_ENV=test bin/shakapacker",
         "bundle exec rspec"
@@ -39,8 +45,9 @@ namespace :run_spec do
       sh_in_dir(".", "yalc publish")
       sh_in_dir(spec_dummy_dir, [
         "bundle install",
-        "yalc link shakapacker",
-        "npm install",
+        "yarn install",
+        "yalc add shakapacker",
+        "yarn install",
         "bin/test-bundler rspack",
         "NODE_ENV=test RAILS_ENV=test bin/shakapacker",
         "bundle exec rspec"
@@ -56,8 +63,9 @@ namespace :run_spec do
       sh_in_dir(".", "yalc publish")
       sh_in_dir(spec_dummy_dir, [
         "bundle install",
-        "yalc link shakapacker",
-        "npm install",
+        "yarn install",
+        "yalc add shakapacker",
+        "yarn install",
         "NODE_ENV=test RAILS_ENV=test npm exec --no -- rspack build --config config/rspack/rspack.config.js",
         "bundle exec rspec"
       ])

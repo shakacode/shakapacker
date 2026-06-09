@@ -1,6 +1,6 @@
 # TypeScript Support
 
-Shakapacker v9 includes TypeScript support, providing type safety and better IDE experience for your webpack configurations.
+Shakapacker includes TypeScript support, providing type safety and better IDE experience for your webpack configurations.
 
 ## Quick Start
 

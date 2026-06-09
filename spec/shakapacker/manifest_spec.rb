@@ -3,6 +3,62 @@ require_relative "spec_helper_initializer"
 describe "Shakapacker::Manifest" do
   let(:manifest_path) { File.expand_path File.join(File.dirname(__FILE__), "./test_app/public/packs", "manifest.json").to_s }
 
+  context "when manifest file exists but is empty" do
+    let(:manifest_file) { Shakapacker.config.manifest_path.to_s }
+    let!(:original_contents) { File.read(manifest_file) }
+
+    before do
+      allow(Shakapacker.config).to receive(:compile?).and_return(false)
+      File.write(manifest_file, "")
+      Shakapacker.manifest.refresh
+    end
+
+    after do
+      File.write(manifest_file, original_contents)
+      Shakapacker.manifest.refresh
+    end
+
+    it "#lookup! raises an error indicating the bundler is still compiling" do
+      expect {
+        Shakapacker.manifest.lookup!("application.js")
+      }.to raise_error(Shakapacker::Manifest::MissingEntryError, /manifest is empty.*still compiling/i)
+    end
+
+    it "#lookup_pack_with_chunks! raises an error indicating the bundler is still compiling" do
+      expect {
+        Shakapacker.manifest.lookup_pack_with_chunks!("application", type: :javascript)
+      }.to raise_error(Shakapacker::Manifest::MissingEntryError, /manifest is empty.*still compiling/i)
+    end
+  end
+
+  context "when manifest file does not exist" do
+    let(:manifest_file) { Shakapacker.config.manifest_path.to_s }
+    let!(:original_contents) { File.read(manifest_file) }
+
+    before do
+      allow(Shakapacker.config).to receive(:compile?).and_return(false)
+      File.delete(manifest_file)
+      Shakapacker.manifest.refresh
+    end
+
+    after do
+      File.write(manifest_file, original_contents)
+      Shakapacker.manifest.refresh
+    end
+
+    it "#lookup! raises an error indicating the manifest file is not found" do
+      expect {
+        Shakapacker.manifest.lookup!("application.js")
+      }.to raise_error(Shakapacker::Manifest::MissingEntryError, /manifest file not found.*has not yet built/i)
+    end
+
+    it "#lookup_pack_with_chunks! raises an error indicating the manifest file is not found" do
+      expect {
+        Shakapacker.manifest.lookup_pack_with_chunks!("application", type: :javascript)
+      }.to raise_error(Shakapacker::Manifest::MissingEntryError, /manifest file not found.*has not yet built/i)
+    end
+  end
+
   context "with no integrity hashes" do
     it "#lookup! raises an exception for a non-existing asset file" do
       asset_file = "calendar.js"

@@ -1,10 +1,10 @@
 # Using SWC Loader
 
-SWC is the recommended JavaScript transpiler in Shakapacker v9+, and is set as the default in new installations. If you face any issues, please report them at [Shakapacker Issues](https://github.com/shakacode/shakapacker/issues).
+SWC is the recommended JavaScript transpiler in Shakapacker v10 (this default was introduced in v9), and is set as the default in new installations. If you face any issues, please report them at [Shakapacker Issues](https://github.com/shakacode/shakapacker/issues).
 
 ## About SWC
 
-[SWC (Speedy Web compiler)](https://swc.rs/) is a Rust-based compilation and bundler tool that can be used for Javascript and Typescript files. It claims to be 20x faster than Babel!
+[SWC (Speedy Web compiler)](https://swc.rs/) is a Rust-based compilation and bundler tool that can be used for Javascript and Typescript files. SWC's own benchmark reports being [20x faster than Babel on a single thread and 70x faster on four cores](https://swc.rs/); end-to-end Shakapacker build wins are typically smaller than that pure-transpiler number but still substantial.
 
 It supports all ECMAScript features and it's designed to be a drop-in replacement for Babel and its plugins. Out of the box, it supports TS, JSX syntax, React fast refresh, and much more.
 
@@ -45,7 +45,7 @@ default: &default
   cache_manifest: false
 
   # Select JavaScript transpiler to use
-  # Available options: 'swc' (default, 20x faster), 'babel', or 'esbuild'
+  # Available options: 'swc' (default, ~20x faster than Babel per swc.rs), 'babel', or 'esbuild'
   # Note: When using rspack, swc is used automatically regardless of this setting
   javascript_transpiler: "swc"
 ```
@@ -114,7 +114,7 @@ module.exports = customConfig
 
 ### Example: Enabling React Fast Refresh
 
-:warning: Remember that you still need to add [@pmmmwh/react-refresh-webpack-plugin](https://github.com/pmmmwh/react-refresh-webpack-plugin) to your webpack config. The setting below just replaces equivalent `react-refresh/babel` Babel plugin.
+:warning: Shakapacker's default development config automatically adds [@pmmmwh/react-refresh-webpack-plugin](https://github.com/pmmmwh/react-refresh-webpack-plugin) when HMR is enabled and the package is installed. Use the setting below when you need to customize the SWC React transform itself; it replaces the equivalent `react-refresh/babel` Babel plugin behavior.
 
 ```js
 const { env } = require("shakapacker")
@@ -250,7 +250,7 @@ If your Stimulus controllers aren't working after migrating to SWC:
 2. ✅ Ensure your controllers have explicit class names (not anonymous classes)
 3. ✅ Test with `console.log()` in your controller's `connect()` method to verify it's being instantiated
 4. ✅ Check that you haven't added `jsc.target` (which conflicts with Shakapacker's `env` setting)
-5. ✅ Rebuild your assets: `bin/shakapacker clobber && bin/shakapacker compile`
+5. ✅ Rebuild your assets: `bundle exec rake shakapacker:clobber && bundle exec rake shakapacker:compile`
 
 ## Known limitations
 

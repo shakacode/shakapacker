@@ -9,6 +9,14 @@ class Shakapacker::Compiler
   # Shakapacker::Compiler.env['FRONTEND_API_KEY'] = 'your_secret_key'
   cattr_accessor(:env) { {} }
 
+  # Class-level state keeps the compile-time doctor hint once-per-process.
+  @doctor_hint_shown = false
+  DOCTOR_HINT_MUTEX = Mutex.new
+
+  class << self
+    attr_accessor :doctor_hint_shown
+  end
+
   delegate :config, :logger, :strategy, to: :instance
   delegate :fresh?, :stale?, :after_compile_hook, to: :strategy
 
@@ -27,7 +35,7 @@ class Shakapacker::Compiler
       true
     else
       acquire_ipc_lock do
-        run_precompile_hook if config.precompile_hook
+        run_precompile_hook if should_run_precompile_hook?
         run_webpack.tap do |success|
           after_compile_hook
         end
@@ -78,6 +86,13 @@ class Shakapacker::Compiler
     def optional_ruby_runner
       first_line = File.readlines(bin_shakapacker_path).first.chomp
       /ruby/.match?(first_line) ? RbConfig.ruby : ""
+    end
+
+    def should_run_precompile_hook?
+      return false unless config.precompile_hook
+      return false if ENV["SHAKAPACKER_SKIP_PRECOMPILE_HOOK"] == "true"
+
+      true
     end
 
     def run_precompile_hook
@@ -177,6 +192,7 @@ class Shakapacker::Compiler
       else
         non_empty_streams = [stdout, stderr].delete_if(&:empty?)
         logger.error "\nCOMPILATION FAILED:\nEXIT STATUS: #{status}\nOUTPUTS:\n#{non_empty_streams.join("\n\n")}"
+        show_doctor_hint_once
       end
 
       status.success?
@@ -193,5 +209,25 @@ class Shakapacker::Compiler
 
     def bin_shakapacker_path
       config.root_path.join("bin/shakapacker")
+    end
+
+    # Fires only after a failed compile, so users in a healthy loop never see the tip.
+    def show_doctor_hint_once
+      return if self.class.doctor_hint_shown
+
+      DOCTOR_HINT_MUTEX.synchronize do
+        return if self.class.doctor_hint_shown
+
+        begin
+          logger.info "Tip: run 'bundle exec rake shakapacker:doctor' to diagnose configuration issues."
+        rescue StandardError => _e
+          # Non-critical tip; never abort a build because the logger failed.
+          # Named (but unused) variable makes the deliberate swallow explicit.
+          return
+        end
+
+        # Assignment is outside the rescue so a flag-setter failure propagates rather than being silenced.
+        self.class.doctor_hint_shown = true
+      end
     end
 end

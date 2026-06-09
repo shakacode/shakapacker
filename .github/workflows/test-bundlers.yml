@@ -15,6 +15,11 @@ on:
     branches: [master, main]
   workflow_dispatch:
 
+concurrency:
+  # Pushing new changes to a branch will cancel any in-progress CI runs
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   test-webpack:
     name: Test with Webpack
@@ -36,7 +41,7 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          node-version: "20.19.x"
           cache: "yarn"
           cache-dependency-path: spec/dummy/yarn.lock
 
@@ -56,8 +61,10 @@ jobs:
 
       - name: Install dependencies
         run: |
-          yalc link shakapacker
           yarn install
+          yalc add shakapacker
+          yarn install
+          yalc link shakapacker
 
       - name: Switch to Webpack
         run: bin/test-bundler webpack
@@ -89,7 +96,7 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          node-version: "20.19.x"
           cache: "yarn"
           cache-dependency-path: spec/dummy/yarn.lock
 
@@ -109,8 +116,10 @@ jobs:
 
       - name: Install dependencies
         run: |
-          yalc link shakapacker
           yarn install
+          yalc add shakapacker
+          yarn install
+          yalc link shakapacker
 
       - name: Switch to RSpack
         run: bin/test-bundler rspack
@@ -142,7 +151,7 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          node-version: "20.19.x"
           cache: "yarn"
           cache-dependency-path: spec/dummy/yarn.lock
 
@@ -162,8 +171,10 @@ jobs:
 
       - name: Install dependencies
         run: |
-          yalc link shakapacker
           yarn install
+          yalc add shakapacker
+          yarn install
+          yalc link shakapacker
 
       - name: Test switching between bundlers
         run: |

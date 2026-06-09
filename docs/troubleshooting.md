@@ -64,7 +64,10 @@ If you're experiencing FOUC where content briefly appears unstyled before CSS lo
 
    # Compare development vs production configs
    bin/shakapacker-config --save --save-dir=./configs
-   diff configs/webpack-development-client.yaml configs/webpack-production-client.yaml
+   bin/diff-bundler-config \
+     --left=configs/webpack-development-client.yaml \
+     --right=configs/webpack-production-client.yaml \
+     --format=summary
 
    # View config in terminal (no files created)
    bin/shakapacker-config
@@ -80,8 +83,10 @@ If you're experiencing FOUC where content briefly appears unstyled before CSS lo
    - Examples: `webpack-development-client.yaml`, `rspack-production-server.yaml`
    - YAML format includes inline documentation explaining each config key
    - Separate files for client and server bundles (cleaner than combined)
+   - Pair with `bin/diff-bundler-config` for semantic comparisons
 
    See `bin/shakapacker-config --help` for all available options.
+   For semantic comparisons, see the [Configuration Diff Guide](./config-diff.md).
 
 6. **Validate your webpack/rspack builds**: Use `bin/shakapacker-config --validate` to test that all your build configurations compile successfully. This is especially useful for:
    - **CI/CD pipelines**: Catch configuration errors before deployment
@@ -262,11 +267,20 @@ NoMethodError: undefined method 'deep_symbolize_keys' for nil:NilClass
 
 This happens when deploying to a custom Rails environment (like `staging`) that isn't explicitly defined in your `config/shakapacker.yml` file.
 
-**Solution:** This was fixed in Shakapacker v9.1.1+. Upgrade to the latest version:
+**Solution:** This was fixed in Shakapacker v9.1.1+ and is included in v10. Upgrade both the gem and npm package to the same version:
 
 ```ruby
 # Gemfile
-gem 'shakapacker', '~> 9.1'
+gem 'shakapacker', '~> 10.0'  # or '>= 9.1.1' if still on the v9 line
+```
+
+```jsonc
+// package.json
+{
+  "dependencies": {
+    "shakapacker": "^10.0.0" // or ">=9.1.1" if still on the v9 line
+  }
+}
 ```
 
 After upgrading, Shakapacker will automatically fall back to sensible defaults when your environment isn't defined:
@@ -350,8 +364,8 @@ for the scripts generated in `bin/shakapacker` and `bin/shakapacker-dev-server`.
 manually with Ruby:
 
 ```
-C:\path>ruby bin\webpack
-C:\path>ruby bin\webpack-dev-server
+C:\path>ruby bin\shakapacker
+C:\path>ruby bin\shakapacker-dev-server
 ```
 
 ## Invalid configuration object. webpack has been initialised using a configuration object that does not match the API schema.
@@ -510,6 +524,6 @@ Those paths are later passed to [output path generation in the rule](https://git
 You can avoid this by:
 
 - not using overridden `context` in your webpack config, if there's no good reason for it.
-- using custom Webpack config to modify the static file rule, following a similar process as outlined in the [Webpack Configuration](https://github.com/shakacode/shakapacker/blob/main/README.md#webpack-configuration) section of the readme.
+- using custom Webpack config to modify the static file rule, following a similar process as outlined in the [Webpack Configuration](./node_package_api.md#webpack-configuration-patterns) section of the Node Package API docs.
 
 See [this issue](https://github.com/shakacode/shakapacker/issues/538) for more details.

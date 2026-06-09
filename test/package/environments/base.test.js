@@ -54,6 +54,27 @@ describe("Base config", () => {
         resolve("app", "javascript", "entrypoints", "multi_entry.js")
       ])
       expect(baseConfig.entry["generated/something"]).toBeUndefined()
+      expect(baseConfig.entry[".hidden"]).toBeUndefined()
+    })
+
+    test("keeps entry value shapes stable for TypeScript narrowing", () => {
+      const entryValues = Object.values(baseConfig.entry)
+      const stringEntries = entryValues.filter(
+        (entryValue) => typeof entryValue === "string"
+      )
+      const arrayEntries = entryValues.filter(Array.isArray)
+      const flattenedArrayEntries = arrayEntries.flat()
+
+      expect(stringEntries.length + arrayEntries.length).toBe(
+        entryValues.length
+      )
+      expect(stringEntries.length).toBeGreaterThan(0)
+      stringEntries.forEach((entryValue) =>
+        expect(entryValue.length).toBeGreaterThan(0)
+      )
+      flattenedArrayEntries.forEach((entryValue) =>
+        expect(typeof entryValue).toBe("string")
+      )
     })
 
     test("should returns top level and nested entry points with config.nested_entries == true", () => {
@@ -73,6 +94,8 @@ describe("Base config", () => {
       expect(baseConfig2.entry["generated/something"]).toStrictEqual(
         resolve("app", "javascript", "entrypoints", "generated", "something.js")
       )
+      expect(baseConfig2.entry[".hidden"]).toBeUndefined()
+      expect(baseConfig2.entry[".hidden_dir/hidden_nested"]).toBeUndefined()
     })
 
     test("should return output", () => {

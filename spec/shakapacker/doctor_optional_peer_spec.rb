@@ -31,6 +31,7 @@ describe "Shakapacker::Doctor with optional peer dependencies" do
            cache_path: cache_path,
            javascript_transpiler: javascript_transpiler,
            assets_bundler: assets_bundler,
+           rspack?: assets_bundler == "rspack",
            data: config_data,
            nested_entries?: false,
            ensure_consistent_versioning?: false,
@@ -71,6 +72,7 @@ describe "Shakapacker::Doctor with optional peer dependencies" do
             "shakapacker" => "^9.0.0",
             "webpack" => "^5.0.0",
             "webpack-cli" => "^5.0.0",
+            "webpack-dev-server" => "^5.2.2",
             "@swc/core" => "^1.3.0",
             "swc-loader" => "^0.2.0"
           }
@@ -146,6 +148,7 @@ describe "Shakapacker::Doctor with optional peer dependencies" do
             "shakapacker" => "^9.0.0",
             "webpack" => "^5.0.0",
             "webpack-cli" => "^5.0.0",
+            "webpack-dev-server" => "^5.2.2",
             "babel-loader" => "^9.0.0",
             "@babel/core" => "^7.0.0",
             "@babel/preset-env" => "^7.0.0"

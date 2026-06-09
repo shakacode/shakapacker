@@ -4,6 +4,12 @@ describe "Shakapacker::MtimeStrategy" do
   let(:mtime_strategy) { Shakapacker::MtimeStrategy.new }
   let(:manifest_timestamp) { Time.parse("2021-01-01 12:34:56 UTC") }
 
+  describe "#default_watched_paths" do
+    it "watches both webpack and rspack config directories" do
+      expect(mtime_strategy.send(:default_watched_paths)).to include("config/{webpack,rspack}{,/**/*}")
+    end
+  end
+
   describe "#fresh?" do
     it "returns false when the manifest is missing" do
       latest_timestamp = manifest_timestamp + 3600

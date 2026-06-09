@@ -8,17 +8,24 @@ This application supports testing with both **Webpack** and **RSpack** bundlers,
 
 ## Setup
 
-The dummy app needs to link to the local shakapacker gem for development:
+The dummy app uses the local `shakapacker` npm package via `yalc`. The Ruby gem is already
+path-pinned from this repository in `spec/dummy/Gemfile`.
 
 ```bash
 # From the repository root, publish shakapacker via yalc
 yalc publish
 
-# In spec/dummy, link to the local shakapacker
+# In spec/dummy, install Ruby deps and link the local shakapacker package
 cd spec/dummy
+bundle install
 yalc link shakapacker
 npm install
+yalc link shakapacker
 ```
+
+The second `yalc link shakapacker` is required because `npm install`/`yarn install` restores the
+published package from the lockfiles. Re-linking ensures the dummy app runs against the locally
+published package from this repository.
 
 Now you're ready to use the dummy app!
 
@@ -86,6 +93,14 @@ The script works by copying the appropriate configuration file:
 
 - `config/webpack/webpack.config.js` - Webpack build configuration
 - `config/rspack/rspack.config.js` - RSpack build configuration
+
+> **Note:** `config/rspack/rspack.config.js` is a test fixture only. Its
+> SSR server-bundle filter relies on `plugin.constructor.name` matching
+> known rspack plugin classes, which only works against the unminified
+> local shakapacker build used here. Do not copy this pattern verbatim
+> into a production app without replacing the filter (e.g. with a
+> token/symbol-based marker) — minified shakapacker builds mangle class
+> names and the filter would silently no-op.
 
 ## Key Differences
 

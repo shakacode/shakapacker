@@ -23,7 +23,7 @@
 
 This guide documents the differences between webpack and Rspack configurations in Shakapacker, and provides migration guidance for users switching to Rspack.
 
-[Rspack](https://rspack.rs/) is a high-performance bundler written in Rust, offering 5-10x faster build times than webpack with excellent webpack compatibility.
+[Rspack](https://rspack.rs/) is a high-performance bundler written in Rust with excellent webpack compatibility. Rspack's own published benchmark on a 5,000-component React app reports roughly 8x faster production builds, 10–15x faster development startup, and 17x faster HMR vs webpack ([rspack.rs](https://rspack.rs/), [benchmark sources](https://github.com/rstackjs/build-tools-performance)). Real-world Shakapacker apps will land somewhere in this range depending on size, configuration, and cache state.
 
 ## Before You Migrate
 
@@ -53,7 +53,7 @@ When migrating from webpack to Rspack, follow this testing strategy to minimize 
 ⚠️ **If your application uses SSR**, be aware of these critical issues before migrating:
 
 1. **CSS Extraction Differences**: Rspack uses different loader paths than webpack for CSS extraction
-2. **CSS Modules Breaking Change**: Shakapacker 9 changed from default exports to named exports
+2. **CSS Modules Breaking Change**: Shakapacker changed in v9 (and keeps this in v10) from default exports to named exports
 3. **React Runtime Compatibility**: SWC's automatic runtime may not work with React on Rails SSR detection
 
 **SSR Migration Checklist** (complete before migrating):
@@ -74,7 +74,7 @@ Rspack provides built-in loaders for better performance:
 **JavaScript/TypeScript:**
 
 - Use `builtin:swc-loader` instead of `babel-loader` or `ts-loader`
-- 20x faster than Babel on single thread, 70x on multiple cores
+- SWC reports being [20x faster than Babel on a single thread and 70x faster on four cores](https://swc.rs/) in its own benchmark; the practical speedup on a Shakapacker build is usually smaller but still substantial
 - Configuration example:
 
 ```javascript
@@ -151,10 +151,13 @@ Replace file loaders with asset modules:
 
 ```javascript
 // Development configuration
-const ReactRefreshPlugin = require("@rspack/plugin-react-refresh")
+const { ReactRefreshRspackPlugin } = require("@rspack/plugin-react-refresh")
 
 module.exports = {
-  plugins: [new ReactRefreshPlugin(), new rspack.HotModuleReplacementPlugin()]
+  plugins: [
+    new ReactRefreshRspackPlugin(),
+    new rspack.HotModuleReplacementPlugin()
+  ]
 }
 ```
 
@@ -240,7 +243,7 @@ The task will:
 **Custom Dependencies:** You can customize which dependencies are installed by creating a `.shakapacker-switch-bundler-dependencies.yml` file:
 
 ```bash
-bundle exec rake shakapacker:switch_bundler --init-config
+bin/rake shakapacker:switch_bundler -- --init-config
 ```
 
 ### Manual Migration Steps
@@ -379,36 +382,20 @@ For applications with SSR, follow this verification order:
 
 ### Configuration Organization
 
-**Recommended approach**: Keep webpack and rspack configs in the same directory with conditional logic:
+**Recommended approach**: Keep webpack and rspack configs in their default directories:
 
-```javascript
-// config/webpack/webpack.config.js (works for both bundlers)
-const { config } = require("shakapacker")
-const bundler =
-  config.assets_bundler === "rspack"
-    ? require("@rspack/core")
-    : require("webpack")
+- `config/webpack/webpack.config.js` for webpack
+- `config/rspack/rspack.config.js` (or `.ts`) for rspack
 
-// Use for plugins
-clientConfig.plugins.push(
-  new bundler.ProvidePlugin({
-    /* ... */
-  })
-)
-
-serverConfig.plugins.unshift(
-  new bundler.optimize.LimitChunkCountPlugin({ maxChunks: 1 })
-)
-```
-
-**Avoid**: Creating separate `config/rspack/` directory unless configs diverge significantly.
+Shakapacker looks for `rspack.config.js` / `rspack.config.ts` first when
+`assets_bundler: rspack`. Falling back to `config/webpack/webpack.config.js` is
+still supported for backward compatibility, but it is deprecated.
 
 **Benefits**:
 
-- Smaller diff when comparing configurations
-- Easy to see what's different between bundlers
-- Single source of truth for webpack/rspack config
-- Easier maintenance and debugging
+- Keeps bundler-specific plugins explicit
+- Avoids deprecated fallback behavior
+- Makes migration diffs easier to debug
 
 ### CSS Modules Configuration Placement
 
@@ -435,7 +422,7 @@ baseConfig.module.rules.forEach((rule) => {
 
 ### Handling Breaking Changes
 
-When upgrading to Shakapacker 9 with Rspack:
+When upgrading to Shakapacker v10 with Rspack (or any v9+ app):
 
 1. **CSS Modules default exports → named exports**: This is a breaking change. Either:
    - Update your code to use named imports (recommended for new projects)
@@ -496,7 +483,7 @@ const customConfig = {
 
 ### 2. CSS Modules Configuration for Server Bundles (CRITICAL for SSR + CSS Modules)
 
-**Problem**: When configuring server bundles, you must preserve Shakapacker 9's CSS Modules settings (`namedExport: true`) while adding SSR-specific settings. Simply setting `exportOnlyLocals: true` will override the base configuration and break CSS imports.
+**Problem**: When configuring server bundles, you must preserve Shakapacker's v9+ CSS Modules settings (`namedExport: true`) while adding SSR-specific settings. Simply setting `exportOnlyLocals: true` will override the base configuration and break CSS imports.
 
 **Symptoms**:
 
@@ -521,7 +508,7 @@ if (cssLoader && cssLoader.options && cssLoader.options.modules) {
 }
 ```
 
-**Why this matters**: Shakapacker 9 changed the default CSS Modules configuration to use named exports. If you only set `exportOnlyLocals: true` without preserving the base config, you'll lose the `namedExport: true` setting, causing import/export mismatches between client and server bundles.
+**Why this matters**: Shakapacker changed the default CSS Modules configuration in v9 to use named exports. If you only set `exportOnlyLocals: true` without preserving the base config, you'll lose the `namedExport: true` setting, causing import/export mismatches between client and server bundles.
 
 **Related configuration**: You must also filter out CSS extraction loaders in server bundles:
 
@@ -626,7 +613,7 @@ Quick reference for the key differences that cause migration issues:
 
 **Error:** `Cannot read properties of undefined (reading 'className')` in SSR or `export 'default' (imported as 'css') was not found`
 
-**Root Cause:** Shakapacker 9 changed the default CSS Modules configuration to use named exports (`namedExport: true`), which is a breaking change from v8's default export behavior.
+**Root Cause:** Shakapacker changed the default CSS Modules configuration in v9 to use named exports (`namedExport: true`), which is a breaking change from v8's default export behavior.
 
 **Solution:** If you want to keep the v8 default export behavior, override the CSS loader configuration:
 
@@ -817,13 +804,20 @@ npx patch-package @package/name
 
 **Expected Performance Improvements:**
 
-| Build Type       | Webpack | Rspack | Improvement |
-| ---------------- | ------- | ------ | ----------- |
-| Cold build       | 60s     | 8s     | 7.5x faster |
-| Hot reload       | 3s      | 0.5s   | 6x faster   |
-| Production build | 120s    | 15s    | 8x faster   |
+Rspack's own published benchmark on a 5,000-component React app reports:
 
-**Note:** Actual improvements vary based on project size, configuration, and hardware. Rspack's Rust-based architecture provides consistent 5-10x performance gains across most scenarios.
+| Workload               | Webpack 5 | Rspack | Approx. speedup |
+| ---------------------- | --------- | ------ | --------------- |
+| Cold development start | ~8.2s     | ~0.7s  | ~10x            |
+| Cold production build  | ~9.5s     | ~1.6s  | ~6x             |
+| HMR update             | ~2.8s     | ~160ms | ~17x            |
+
+Source: [rspack.rs](https://rspack.rs/) and [rstackjs/build-tools-performance](https://github.com/rstackjs/build-tools-performance) (`react-5k` case).
+
+These are upstream micro-benchmarks. Real Shakapacker apps will land somewhere
+in this range depending on project size, configuration, source maps, cache
+state, and hardware, so measure your real Shakapacker commands to confirm the
+gain on your app — see [Measuring Your App](./transpiler-performance.md#measuring-your-app).
 
 ## Debugging Configuration
 
@@ -834,14 +828,16 @@ To compare your webpack and rspack configurations during migration:
 bin/shakapacker-config --doctor
 
 # Switch to rspack
-bundle exec rake shakapacker:switch_bundler rspack --install-deps
+bin/rake shakapacker:switch_bundler rspack -- --install-deps
 
 # Export rspack configs to compare
 bin/shakapacker-config --doctor
 
-# Compare the files in shakapacker-config-exports/
-diff shakapacker-config-exports/webpack-production-client.yaml \
-     shakapacker-config-exports/rspack-production-client.yaml
+# Compare with semantic config diffing
+bin/diff-bundler-config \
+  --left=shakapacker-config-exports/webpack-production-client.yaml \
+  --right=shakapacker-config-exports/rspack-production-client.yaml \
+  --format=summary
 ```
 
 The config export utility creates annotated YAML files that make it easy to:
@@ -852,6 +848,7 @@ The config export utility creates annotated YAML files that make it easy to:
 - Debug configuration issues
 
 See the [Troubleshooting Guide](./troubleshooting.md#exporting-webpack--rspack-configuration) for more details.
+For semantic diff workflows, see the [Configuration Diff Guide](./config-diff.md).
 
 ## Resources
 

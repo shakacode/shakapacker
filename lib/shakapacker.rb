@@ -42,9 +42,12 @@ module Shakapacker
 
   # Default environment when RAILS_ENV is not set
   DEFAULT_ENV = "development".freeze
-  # Environments that use their RAILS_ENV value for NODE_ENV
+  # Environments that use "development" for NODE_ENV
   # All other environments (production, staging, etc.) use "production" for webpack optimizations
-  DEV_TEST_ENVS = %w[development test].freeze
+  # Note: Both development and test RAILS_ENV use NODE_ENV=development because
+  # webpack/rspack only recognize "development" and "production" values for NODE_ENV.
+  # Using "test" causes DefinePlugin conflicts with optimization.nodeEnv.
+  DEV_ENVS = %w[development test].freeze
 
   # Sets the shared Shakapacker instance
   #
@@ -94,15 +97,19 @@ module Shakapacker
   # Sets NODE_ENV based on RAILS_ENV if not already set
   #
   # Environment mapping:
-  # - +development+ and +test+ environments use their RAILS_ENV value for NODE_ENV
+  # - +development+ and +test+ environments use "development" for NODE_ENV
   # - All other environments (+production+, +staging+, etc.) use "production" for webpack optimizations
+  #
+  # Note: We always use "development" (not "test") for test environments because
+  # webpack/rspack only recognize "development" and "production" as valid NODE_ENV values.
+  # Using "test" causes DefinePlugin conflicts with optimization.nodeEnv.
   #
   # This method is typically called automatically during Rails initialization.
   #
   # @return [String] the NODE_ENV value that was set
   # @api private
   def ensure_node_env!
-    ENV["NODE_ENV"] ||= DEV_TEST_ENVS.include?(ENV["RAILS_ENV"]) ? ENV["RAILS_ENV"] : "production"
+    ENV["NODE_ENV"] ||= DEV_ENVS.include?(ENV["RAILS_ENV"]) ? "development" : "production"
   end
 
   # Temporarily redirects Shakapacker logging to STDOUT

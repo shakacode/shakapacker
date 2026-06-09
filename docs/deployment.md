@@ -30,7 +30,7 @@ heroku create my-shakapacker-heroku-app
 heroku addons:create heroku-postgresql:hobby-dev
 heroku buildpacks:add heroku/nodejs
 heroku buildpacks:add heroku/ruby
-git push heroku master
+git push heroku HEAD:main
 ```
 
 We're essentially doing the following here:

@@ -7,6 +7,8 @@ This document provides step-by-step instructions for the most common upgrade sce
 ## Table of Contents
 
 - [Upgrading Shakapacker](#upgrading-shakapacker)
+- [Adopting Supplemental Packages (10.1+)](#adopting-supplemental-packages-101)
+- [Automating Updates with Dependabot](#automating-updates-with-dependabot)
 - [Migrating Package Managers](#migrating-package-managers)
   - [Yarn to npm](#yarn-to-npm)
   - [npm to Yarn](#npm-to-yarn)
@@ -30,22 +32,22 @@ Shakapacker consists of two components that must be updated together:
 #### 1. Update `Gemfile`
 
 ```ruby
-gem "shakapacker", "9.3.0"  # or the version you want to upgrade to
+gem "shakapacker", "10.0.0"  # or the version you want to upgrade to
 ```
 
-**Pre-release versions:** Ruby gems use dot notation (e.g., `"9.3.0.beta.1"`)
+**Pre-release versions:** Ruby gems use dot notation (e.g., `"10.0.0.beta.1"`)
 
 #### 2. Update `package.json`
 
 ```json
 {
   "dependencies": {
-    "shakapacker": "9.3.0"
+    "shakapacker": "10.0.0"
   }
 }
 ```
 
-**Pre-release versions:** npm uses hyphen notation (e.g., `"9.3.0-beta.1"`)
+**Pre-release versions:** npm uses hyphen notation (e.g., `"10.0.0-beta.1"`)
 
 #### 3. Run bundler and package manager
 
@@ -73,8 +75,8 @@ Note that pre-release versions use different formats:
 
 | Component    | Stable Version | Pre-release Version |
 | ------------ | -------------- | ------------------- |
-| Gemfile      | `"9.3.0"`      | `"9.3.0.beta.1"`    |
-| package.json | `"9.3.0"`      | `"9.3.0-beta.1"`    |
+| Gemfile      | `"10.0.0"`     | `"10.0.0.beta.1"`   |
+| package.json | `"10.0.0"`     | `"10.0.0-beta.1"`   |
 
 ### Finding the Latest Version
 
@@ -86,12 +88,40 @@ Note that pre-release versions use different formats:
 
 For major version upgrades, always consult the version-specific upgrade guides for breaking changes and new features:
 
+- [v10.0.0 Release Notes](https://github.com/shakacode/shakapacker/releases/tag/v10.0.0) - Upgrading from v9 to v10 (includes webpack and dev-server minimum version changes)
 - [V9 Upgrade Guide](./v9_upgrade.md) - Upgrading from v8 to v9 (includes CSS Modules changes, SWC defaults, and more)
 - [V8 Upgrade Guide](./v8_upgrade.md) - Upgrading from v7 to v8
 - [V7 Upgrade Guide](./v7_upgrade.md) - Upgrading from v6 to v7
 - [V6 Upgrade Guide](./v6_upgrade.md) - Upgrading from v5 to v6
 
 > **💡 Note:** Major version upgrades may include breaking changes. The steps above cover the basic gem/package updates that apply to all versions, but you should always review the version-specific guide for additional migration steps.
+
+---
+
+## Adopting Supplemental Packages (10.1+)
+
+Shakapacker 10.1 introduces two optional npm packages — `shakapacker-webpack` and `shakapacker-rspack` — that bundle the managed-build stack as direct dependencies. Adopting one of them lets you replace four explicit `devDependencies` (`shakapacker` + bundler + CLI + manifest plugin) with a single package that lockstep-pins to the exact versions Shakapacker is tested against.
+
+**This is opt-in.** Apps that don't change anything keep working on 10.1 exactly as they did on 10.0.
+
+**Rspack apps** can replace `shakapacker` + `@rspack/core` + `@rspack/cli` + `rspack-manifest-plugin` with a single `shakapacker-rspack` dev dependency.
+
+**Webpack apps** can replace `shakapacker` + `webpack` + `webpack-cli` + `webpack-assets-manifest` with a single `shakapacker-webpack` dev dependency. One caveat: `shakapacker-webpack` pins `webpack-assets-manifest` to `~6.5.1`, so apps still on `webpack-assets-manifest@5.x` need to upgrade to v6 when adopting it.
+
+**Custom-build apps** (apps that ship their own webpack/rspack/Vite setup and only use Shakapacker to read `manifest.json`) should **not** install a supplemental package — continue using bare `shakapacker`.
+
+See the [v10.1 supplemental packages migration guide](./migration/v10.1-supplemental-packages.md) for before/after `package.json` snippets, the `webpack-assets-manifest` v5→v6 upgrade notes, and the v11 roadmap context. The per-package install references live at [`packages/shakapacker-webpack/README.md`](../packages/shakapacker-webpack/README.md) and [`packages/shakapacker-rspack/README.md`](../packages/shakapacker-rspack/README.md).
+
+---
+
+## Automating Updates with Dependabot
+
+Because Shakapacker ships as both a Ruby gem and an npm package, both sides must
+be bumped together. Dependabot's [multi-ecosystem groups](https://docs.github.com/en/code-security/reference/supply-chain-security/dependabot-options-reference#multi-ecosystem-groups-)
+can open a single PR that updates both ecosystems at once.
+
+See [Dependabot configuration for Shakapacker](./dependabot.md) for an example
+`.github/dependabot.yml` that keeps the gem and npm package in sync.
 
 ---
 
@@ -256,7 +286,7 @@ pnpm run build
 
 #### pnpm benefits
 
-- **Faster installs**: Up to 2x faster than npm/Yarn
+- **Faster installs**: Uses pnpm's content-addressable store and hard links to speed up repeat installs
 - **Disk space efficient**: Uses hard links to save disk space
 - **Strict**: Better at catching dependency issues
 
@@ -264,7 +294,7 @@ pnpm run build
 
 ## Migrating from Babel to SWC
 
-SWC is a Rust-based JavaScript/TypeScript compiler that's significantly faster than Babel (20-70x on multi-core with optimal setup, 5-7.5x in typical single-threaded scenarios). For complete details, see [JavaScript Transpiler Configuration](./transpiler-migration.md).
+SWC is a high-performance Rust-based JavaScript/TypeScript compiler. SWC reports being [20x faster than Babel on a single thread and 70x faster on four cores](https://swc.rs/) in its own transpiler benchmark; the practical speedup on a full Shakapacker build is usually smaller but still substantial. For complete details, see [JavaScript Transpiler Configuration](./transpiler-migration.md).
 
 ### Quick Migration Steps
 
@@ -348,15 +378,18 @@ bundle exec rspec
 
 ### Performance Expectations
 
-Typical build time improvements when migrating from Babel to SWC (single-threaded transpilation):
+SWC's own benchmark reports being [20x faster than Babel single-threaded and
+70x faster on four cores](https://swc.rs/) for pure transpilation. A real
+Shakapacker build also runs CSS processing, minification, source map
+generation, and your plugin chain, so the end-to-end speedup is typically
+smaller than the transpiler number in isolation — but the transpiler is
+usually the dominant cost on Babel-heavy projects, so the move is almost
+always a large win.
 
-| Project Size           | Babel | SWC | Improvement |
-| ---------------------- | ----- | --- | ----------- |
-| Small (<100 files)     | 5s    | 1s  | 5x faster   |
-| Medium (100-500 files) | 20s   | 3s  | 6.7x faster |
-| Large (500+ files)     | 60s   | 8s  | 7.5x faster |
-
-**Note:** With multi-core optimization and ideal conditions, SWC can achieve 20-70x improvements over Babel.
+Exact gains depend on project size, configuration, source maps, cache state,
+hardware, and whether you measure only transpilation or the full Shakapacker
+build. See [Measuring Your App](./transpiler-performance.md#measuring-your-app)
+for how to confirm the gain on your codebase.
 
 ### Common Issues
 
@@ -394,15 +427,15 @@ default: &default
 Then rebuild:
 
 ```bash
-bin/shakapacker clobber
-bin/shakapacker compile
+bundle exec rake shakapacker:clobber
+bundle exec rake shakapacker:compile
 ```
 
 ---
 
 ## Migrating from Webpack to Rspack
 
-[Rspack](https://rspack.rs/) is a high-performance bundler written in Rust, offering 5-10x faster build times than webpack with excellent webpack compatibility. For complete details, see [Rspack Migration Guide](./rspack_migration_guide.md).
+[Rspack](https://rspack.rs/) is a high-performance bundler written in Rust with excellent webpack compatibility. Rspack's published benchmark on a 5,000-component React app reports roughly 8x faster production builds, 10–15x faster development startup, and 17x faster HMR vs webpack ([rspack.rs](https://rspack.rs/), [benchmark sources](https://github.com/rstackjs/build-tools-performance)). For complete details, see [Rspack Migration Guide](./rspack_migration_guide.md).
 
 ### Quick Migration Steps
 
@@ -561,11 +594,14 @@ yarn add --dev @rspack/plugin-react-refresh
 Update your config:
 
 ```javascript
-const ReactRefreshPlugin = require("@rspack/plugin-react-refresh")
+const { ReactRefreshRspackPlugin } = require("@rspack/plugin-react-refresh")
 const { rspack } = require("@rspack/core")
 
 module.exports = {
-  plugins: [new ReactRefreshPlugin(), new rspack.HotModuleReplacementPlugin()]
+  plugins: [
+    new ReactRefreshRspackPlugin(),
+    new rspack.HotModuleReplacementPlugin()
+  ]
 }
 ```
 
@@ -604,15 +640,20 @@ bin/shakapacker-dev-server
 
 ### Performance Benefits
 
-Typical build time improvements when migrating from webpack to Rspack:
+Rspack's own published benchmark on a 5,000-component React app reports:
 
-| Build Type       | Webpack | Rspack | Improvement |
-| ---------------- | ------- | ------ | ----------- |
-| Cold build       | 60s     | 8s     | 7.5x faster |
-| Hot reload       | 3s      | 0.5s   | 6x faster   |
-| Production build | 120s    | 15s    | 8x faster   |
+| Workload               | Webpack 5 | Rspack | Approx. speedup |
+| ---------------------- | --------- | ------ | --------------- |
+| Cold development start | ~8.2s     | ~0.7s  | ~10x            |
+| Cold production build  | ~9.5s     | ~1.6s  | ~6x             |
+| HMR update             | ~2.8s     | ~160ms | ~17x            |
 
-**Note:** Actual improvements vary based on project size, configuration, and hardware. Rspack's Rust-based architecture provides consistent 5-10x performance gains across most scenarios.
+Source: [rspack.rs](https://rspack.rs/) and [rstackjs/build-tools-performance](https://github.com/rstackjs/build-tools-performance) (`react-5k` case).
+
+Real Shakapacker apps will land somewhere in this range depending on project
+size, configuration, source maps, cache state, and hardware. Measure your real
+build and development workflows to confirm the gain on your app — see
+[Measuring Your App](./transpiler-performance.md#measuring-your-app).
 
 ### Common Issues
 
@@ -646,8 +687,8 @@ default: &default
 Then rebuild:
 
 ```bash
-bin/shakapacker clobber
-bin/shakapacker compile
+bundle exec rake shakapacker:clobber
+bundle exec rake shakapacker:compile
 ```
 
 ---
@@ -658,7 +699,7 @@ For maximum performance improvements, you can combine multiple migrations:
 
 ### Recommended: Webpack + Babel → Rspack + SWC
 
-This combination provides the best performance improvement (up to 50-70x faster builds):
+This combination provides the largest end-to-end build performance improvement available in Shakapacker: SWC handles transpilation in Rust (upstream reports up to [20x/70x vs Babel](https://swc.rs/)) and Rspack handles the rest of the bundler pipeline in Rust (upstream reports roughly [8–17x vs webpack on its own benchmark](https://rspack.rs/)). Apply them in order so you can attribute any regression to the right layer:
 
 1. **First, migrate to SWC** (while still on webpack)
    - Follow [Migrating from Babel to SWC](#migrating-from-babel-to-swc)

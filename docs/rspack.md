@@ -4,18 +4,60 @@ Shakapacker supports [Rspack](https://rspack.rs) as an alternative assets bundle
 
 **📖 For configuration options, see the [Configuration Guide](./configuration.md)**
 
+## Version Compatibility
+
+Shakapacker supports both Rspack v1 (`^1.0.0`) and Rspack v2 (`^2.0.0-0`). No configuration changes are needed when upgrading between rspack versions — shakapacker's generated config works with both.
+
+Fresh installs default to the latest supported Rspack range from `lib/install/package.json`, which is currently the Rspack v2 prerelease line (`^2.0.0-0`).
+
+**Rspack v2 note:** Rspack v2 ships as a pure ESM package and requires **Node.js 20.19.0+**.
+
+**Rspack v1 note:** Rspack v1 itself supports older Node versions, but Shakapacker requires Node 20+.
+
+**Current CI coverage note:** Shakapacker currently validates rspack v2 using `2.0.0-rc.0`. The rspack v2 dev dependencies are intentionally pinned while v2 is pre-release and should be revisited when stable `2.0.0` is released.
+
+### Why upgrade to Rspack v2?
+
+- **Persistent cache with proper invalidation** — Rspack v2 promotes persistent caching (`cache.type: 'filesystem'`) from experimental to stable, with portable cache support (`cache.portable`) and read-only cache for CI (`cache.readonly`). This means fast rebuilds that survive process restarts and are properly invalidated when dependencies change.
+- **Incremental compilation (stable)** — The `incremental` option moves from `experiments` to a top-level config, signaling it's production-ready. Incremental builds skip unchanged work in the dependency graph.
+- **Better tree shaking** — CJS `require()` destructuring and variable property access are now tree-shaken, and Module Federation shares can be tree-shaken.
+- **Unified target configuration** — A single `target` setting now propagates defaults to SWC and LightningCSS automatically, eliminating redundant per-loader configuration.
+- **Stricter export validation** — `exportsPresence` defaults to `'error'`, catching missing or misspelled exports at build time instead of silently producing broken bundles.
+- **React Server Components** — Built-in RSC support for frameworks.
+- **Performance** — Dozens of Rust-level optimizations across every beta release (hash caching, regex fast paths, reduced allocations, rayon parallelism).
+
+See the [Rspack v2 breaking changes discussion](https://github.com/web-infra-dev/rspack/discussions/9270) for full details.
+
 ## Installation
 
-First, install the required Rspack dependencies:
+### Recommended (Shakapacker 10.1+): `shakapacker-rspack`
+
+`shakapacker-rspack` bundles `shakapacker`, `@rspack/core`, `@rspack/cli`, and `rspack-manifest-plugin` as direct dependencies, so a single install pulls in the full managed Rspack stack:
 
 ```bash
-npm install @rspack/core @rspack/cli -D
+npm install shakapacker-rspack -D
 # or
-yarn add @rspack/core @rspack/cli -D
+yarn add shakapacker-rspack -D
 # or
-pnpm add @rspack/core @rspack/cli -D
+pnpm add shakapacker-rspack -D
 # or
-bun add @rspack/core @rspack/cli -D
+bun add shakapacker-rspack -D
+```
+
+See [`packages/shakapacker-rspack/README.md`](../packages/shakapacker-rspack/README.md) for the full install reference and the [v10.1 supplemental packages migration guide](./migration/v10.1-supplemental-packages.md) for swapping an existing rspack install over to the supplemental package.
+
+### Manual install (Shakapacker 10.0 and earlier, or self-managed versions)
+
+If you're on Shakapacker 10.0 or prefer to manage `@rspack/core`, `@rspack/cli`, and `rspack-manifest-plugin` versions yourself, install them directly:
+
+```bash
+npm install @rspack/core @rspack/cli rspack-manifest-plugin -D
+# or
+yarn add @rspack/core @rspack/cli rspack-manifest-plugin -D
+# or
+pnpm add @rspack/core @rspack/cli rspack-manifest-plugin -D
+# or
+bun add @rspack/core @rspack/cli rspack-manifest-plugin -D
 ```
 
 Note: These packages are already listed as optional peer dependencies in Shakapacker, so you may see warnings if they're not installed.
@@ -136,10 +178,12 @@ The same dev server configuration in `shakapacker.yml` applies to both webpack a
 
 Rspack typically provides:
 
-- **2-10x faster** cold builds
-- **5-20x faster** incremental builds
-- **Faster HMR** (Hot Module Replacement)
-- **Lower memory usage**
+- **Substantially faster cold builds** — Rspack's own benchmark reports roughly 8x faster production builds on a 5,000-component React app ([rspack.rs](https://rspack.rs/), [benchmark sources](https://github.com/rstackjs/build-tools-performance))
+- **Substantially faster development startup** — roughly 10–15x in the same benchmark
+- **Substantially faster HMR** — roughly 17x in the same benchmark
+- **Lower memory usage** in most reported cases
+
+Actual gains depend on project size, configuration, source maps, cache state, and hardware. See [Transpiler Performance Guide](./transpiler-performance.md) for measurement guidance.
 
 ## Migration Checklist
 

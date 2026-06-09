@@ -18,10 +18,57 @@ The precompile hook is especially useful when you need to run commands like:
 - `bin/rake react_on_rails:locale` - Generate locale files
 - Any custom script that prepares files before asset compilation
 
-**Important:** The hook runs in **both development and production**:
+**Important:** The hook runs before **Shakapacker-managed compilation paths**:
 
-- **Development**: Runs before `bin/shakapacker --watch` or dev server starts
-- **Production**: Runs before `bundle exec rake assets:precompile`
+- **On-demand development compilation** when `compile: true` and assets are stale
+- **Explicit compilation tasks** such as `bundle exec rake shakapacker:compile` and `bundle exec rake assets:precompile`
+- It does **not** run when starting `bin/shakapacker-dev-server` or when invoking the bundler directly with `bin/shakapacker`
+
+## Choosing an Approach
+
+Use `precompile_hook` when your setup should always run preparatory commands right
+before Shakapacker compiles. For React on Rails projects, this is often the
+simplest default.
+
+For projects with more custom startup needs (for example, additional build steps
+or strict process ordering in `bin/dev`), you can run those commands explicitly
+before launching long-running processes instead of using `precompile_hook`.
+
+### Comparison
+
+| Aspect                     | `precompile_hook`                     | Explicit setup in `bin/dev`             |
+| -------------------------- | ------------------------------------- | --------------------------------------- |
+| Best for                   | Default/consistent pre-build tasks    | Custom multi-step dev boot flows        |
+| Runs when                  | Immediately before compilation starts | Wherever you place it in startup script |
+| Production integration     | Automatic via `assets:precompile`     | Requires explicit production wiring     |
+| Process manager complexity | Lower                                 | Higher (you own orchestration)          |
+| Debugging                  | Centralized hook command              | Fully explicit command-by-command flow  |
+
+### `shakapacker_precompile` Interaction
+
+`shakapacker_precompile` controls whether Shakapacker compilation is included in
+`assets:precompile`, while `precompile_hook` controls whether a preparatory command
+runs before compilation.
+
+```yaml
+# Option A: Default behavior
+shakapacker_precompile: true
+precompile_hook: "bin/shakapacker-precompile-hook"
+
+# Option B: You manage compilation elsewhere
+shakapacker_precompile: false
+precompile_hook: "bin/shakapacker-precompile-hook"
+
+# Option C: Fully explicit startup flow (no hook)
+shakapacker_precompile: false
+# precompile_hook: not set
+```
+
+To temporarily skip only the hook, set:
+
+```bash
+SHAKAPACKER_SKIP_PRECOMPILE_HOOK=true
+```
 
 ## Configuration
 
@@ -39,7 +86,7 @@ development:
 
 production:
   <<: *default
-  precompile_hook: "rake react_on_rails:generate_packs"
+  precompile_hook: "bin/rake react_on_rails:generate_packs"
 ```
 
 ## Creating a Precompile Hook Script
@@ -284,6 +331,104 @@ default:
 
 ## Advanced Usage
 
+### Skipping the Hook
+
+You can skip the precompile hook using the `SHAKAPACKER_SKIP_PRECOMPILE_HOOK` environment variable:
+
+```bash
+SHAKAPACKER_SKIP_PRECOMPILE_HOOK=true bin/shakapacker
+```
+
+**Important:** The environment variable must be set to the exact string `"true"` to skip the hook. Any other value (including `"false"`, `"1"`, or empty string) will run the hook normally.
+
+This is useful when:
+
+- Using `bin/dev` or Foreman to run the hook once before starting multiple webpack processes
+- Running the hook manually and then compiling multiple times
+- Debugging compilation issues without the hook
+
+**Note:** The examples below show how to implement this in your custom `bin/dev` script. If you're using React on Rails v13.1.0+, the generated `bin/dev` script already implements this pattern automatically - **no action needed**. It runs the precompile hook once before launching processes, then sets `SHAKAPACKER_SKIP_PRECOMPILE_HOOK=true` to prevent duplicate execution.
+
+**Recommended: Use Procfile env prefix**
+
+The cleanest approach is to set the environment variable per-process in your Procfile:
+
+```procfile
+# Procfile.dev
+web: env SHAKAPACKER_SKIP_PRECOMPILE_HOOK=true bin/rails server
+webpack-client: env SHAKAPACKER_SKIP_PRECOMPILE_HOOK=true bin/shakapacker --watch
+webpack-server: env SHAKAPACKER_SKIP_PRECOMPILE_HOOK=true bin/shakapacker --watch --config-name server
+```
+
+Then your `bin/dev` can run the hook once and launch the process manager:
+
+```bash
+#!/usr/bin/env bash
+# bin/dev
+
+# Run the hook once before launching all processes
+bundle exec ruby -r ./config/boot -e "
+  hook = Shakapacker.config.precompile_hook
+  if hook
+    puts \"Running precompile hook: #{hook}\"
+    system(hook) or exit(1)
+  end
+"
+
+exec foreman start -f Procfile.dev
+# or: exec overmind start -f Procfile.dev
+```
+
+**Alternative: Export environment variable**
+
+You can export the environment variable before starting your process manager:
+
+```bash
+#!/usr/bin/env bash
+# bin/dev
+
+# Run the hook once before launching all processes
+bundle exec ruby -r ./config/boot -e "
+  hook = Shakapacker.config.precompile_hook
+  if hook
+    puts \"Running precompile hook: #{hook}\"
+    system(hook) or exit(1)
+  end
+"
+
+# Export skip flag for all subprocesses
+export SHAKAPACKER_SKIP_PRECOMPILE_HOOK=true
+
+exec foreman start -f Procfile.dev
+# or: exec overmind start -f Procfile.dev
+```
+
+**Alternative: Use .env.local (not tracked by git)**
+
+For Foreman or Overmind, you can create a `.env.local` file (typically gitignored):
+
+```bash
+#!/usr/bin/env bash
+# bin/dev
+
+# Run the hook once before launching all processes
+bundle exec ruby -r ./config/boot -e "
+  hook = Shakapacker.config.precompile_hook
+  if hook
+    puts \"Running precompile hook: #{hook}\"
+    system(hook) or exit(1)
+  end
+"
+
+# Create .env.local for process manager subprocesses
+echo "SHAKAPACKER_SKIP_PRECOMPILE_HOOK=true" > .env.local
+
+exec foreman start -f Procfile.dev
+# or: exec overmind start -f Procfile.dev
+```
+
+This pattern ensures the hook runs once when development starts, not separately for each webpack process.
+
 ### Conditional Execution
 
 ```bash
@@ -339,4 +484,4 @@ The hook system uses `Shellwords` to properly parse quoted arguments.
 
 - [Deployment Guide](deployment.md) - Production deployment considerations
 - [React on Rails Integration](https://github.com/shakacode/react_on_rails) - Main use case documentation
-- [Configuration](../README.md#configuration-and-code) - General shakapacker configuration
+- [Configuration](./configuration.md) - General shakapacker configuration

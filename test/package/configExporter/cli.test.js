@@ -1,3 +1,6 @@
+const { mkdirSync, mkdtempSync, readFileSync, rmSync } = require("fs")
+const { tmpdir } = require("os")
+const { join, resolve } = require("path")
 const { resetEnv } = require("../../helpers")
 
 describe("configExporter/cli", () => {
@@ -435,6 +438,43 @@ describe("configExporter/cli", () => {
           parseArguments([`--output=${path}`])
         }).not.toThrow()
       })
+    })
+  })
+
+  describe("run --init", () => {
+    let originalCwd
+    let testDir
+    let mockLog
+
+    beforeEach(() => {
+      originalCwd = process.cwd()
+      testDir = mkdtempSync(join(tmpdir(), "shakapacker-config-init-"))
+      mkdirSync(join(testDir, "config"), { recursive: true })
+      process.chdir(testDir)
+      mockLog = jest.spyOn(console, "log").mockImplementation(() => {})
+    })
+
+    afterEach(() => {
+      process.chdir(originalCwd)
+      rmSync(testDir, { recursive: true, force: true })
+      mockLog.mockRestore()
+    })
+
+    test("creates a shakapacker-config binstub matching the installed helper", async () => {
+      const { run } = require("../../../package/configExporter/cli")
+
+      const exitCode = await run(["--init"])
+
+      const generatedContent = readFileSync(
+        join(testDir, "bin", "shakapacker-config"),
+        "utf8"
+      )
+      const installedContent = readFileSync(
+        resolve(__dirname, "../../../lib/install/bin/shakapacker-config"),
+        "utf8"
+      )
+      expect(exitCode).toBe(0)
+      expect(generatedContent).toBe(installedContent)
     })
   })
 })

@@ -9,6 +9,7 @@ export = canProcess("sass-loader", (resolvedPath: string) => {
     {
       loader: resolvedPath,
       options: {
+        api: "modern",
         sourceMap: true,
         sassOptions: {
           [optionKey]: extraPaths,

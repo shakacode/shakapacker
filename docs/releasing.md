@@ -7,8 +7,10 @@ This guide is for Shakapacker maintainers who need to publish a new release.
 1. **Install required tools:**
 
    ```bash
-   bundle install              # Installs gem-release
-   yarn global add release-it  # Installs release-it for npm publishing
+   bundle install
+   gem install gem-release     # Provides `gem bump` and `gem release`
+   npm --version               # Required because release task uses `npx release-it`
+   gh --version                # Required for automatic GitHub release creation
    ```
 
 2. **Ensure you have publishing access:**
@@ -19,85 +21,149 @@ This guide is for Shakapacker maintainers who need to publish a new release.
    - npm: 2FA is required for publishing
    - RubyGems: 2FA is required for publishing
 
+4. **Authenticate GitHub CLI:**
+   - Run `gh auth login` and ensure your account/token has write access to this repository
+   - Required for automatic GitHub release creation after publishing
+
+5. **No global `release-it` install required:**
+   - The release task runs `npx --yes release-it ...` automatically
+
 ## Release Process
 
-### 1. Prepare the Release
+### 1. Update the Changelog
 
-Before running the release task:
+**Always update CHANGELOG.md before running the release task.** The release task reads the version from CHANGELOG.md and automatically creates a GitHub release from the changelog section.
 
 1. Ensure all desired changes are merged to `main` branch
-2. Update `CHANGELOG.md` with the new version and release notes
-3. Commit the CHANGELOG changes
-4. Ensure your working directory is clean (`git status` shows no uncommitted changes)
+2. Run `/update-changelog release` (or `rc` or `beta` for prereleases) to:
+   - Find merged PRs missing from the changelog
+   - Add changelog entries under the appropriate category headings
+   - Auto-compute the next version based on changes (breaking → major, features → minor, fixes → patch)
+   - Stamp the version header (e.g., `## [v10.0.0] - April 8, 2026`)
+3. Review the changelog entries and verify the computed version
+4. Commit and push CHANGELOG.md
+
+If you forget this step, the release task will print a warning and the GitHub release will need to be created manually afterward using `sync_github_release`.
 
 ### 2. Run the Release Task
 
-The automated release task handles the entire release process:
+The simplest way to release is with no arguments — the task reads the version from CHANGELOG.md:
 
 ```bash
-# For a specific version (e.g., 9.1.0)
-bundle exec rake create_release[9.1.0]
+# Recommended: reads version from CHANGELOG.md (requires step 1)
+bundle exec rake release
+
+# For a specific version (overrides CHANGELOG.md detection)
+bundle exec rake "release[10.1.0]"
 
 # For a beta release (note: use period, not dash)
-bundle exec rake create_release[9.2.0.beta.1]  # Creates npm package 9.2.0-beta.1
+bundle exec rake "release[10.2.0.beta.1]"  # Creates npm package 10.2.0-beta.1
 
-# For a patch version bump (auto-increments)
-bundle exec rake create_release
+# For a release candidate
+bundle exec rake "release[10.6.0.rc.0]"
 
 # Dry run to test without publishing
-bundle exec rake create_release[9.1.0,true]
+bundle exec rake "release[10.1.0,true]"
+
+# Skip interactive confirmations (for scripted maintainer runs)
+AUTO_CONFIRM=true bundle exec rake release
+
+# Override version policy checks (monotonic + changelog/bump consistency)
+RELEASE_VERSION_POLICY_OVERRIDE=true bundle exec rake "release[10.1.0]"
+bundle exec rake "release[10.1.0,false,true]"
 ```
+
+When called with no arguments, `release`:
+
+1. Reads the first versioned header from CHANGELOG.md (e.g., `## [v10.6.0]`)
+2. Compares it to the current gem version
+3. If the changelog version is newer, prompts for confirmation and uses it
+4. If no new version is found, falls back to a patch bump
+
+Dry runs use a temporary git worktree so version bumps and installs do not modify your current checkout.
+Dry runs now also print explicit "skipping confirmation" messages and the would-run GitHub release command.
+
+`release` validates release-version policy before publishing:
+
+- Target version must be greater than the latest tagged release.
+- If the versioned target changelog section exists (`## [vX.Y.Z...]`; not `UNRELEASED`), it maps to expected bump type:
+  - Breaking changes => major bump
+  - Added/New Features/Features/Enhancements => minor bump
+  - Fixed/Fixes/Bug Fixes/Security/Improved/Deprecated => patch bump
+  - Other headings => no inferred bump level (consistency check is skipped)
+
+Use override only when needed:
+
+- `RELEASE_VERSION_POLICY_OVERRIDE=true`
+- Or task arg override (`release[..., ..., true]`)
 
 ### 3. What the Release Task Does
 
-The `create_release` task automatically:
+The `release` task automatically:
 
-1. **Pulls latest changes** from the repository
-2. **Bumps version numbers** in:
+1. **Validates release prerequisites**:
+   - Verifies npm authentication
+   - Warns if CHANGELOG.md section is missing for the target version
+2. **Pulls latest changes** from the repository
+3. **Bumps version numbers** in:
    - `lib/shakapacker/version.rb` (Ruby gem version)
    - `package.json` (npm package version - converted from Ruby format)
-3. **Publishes to npm:**
+4. **Publishes to npm:**
    - Prompts for npm OTP (2FA code)
    - Creates git tag
    - Pushes to GitHub
-4. **Publishes to RubyGems:**
+5. **Publishes to RubyGems:**
    - Prompts for RubyGems OTP (2FA code)
-5. **Updates spec/dummy lockfiles:**
+6. **Updates spec/dummy lockfiles:**
    - Runs `bundle install` to update `Gemfile.lock`
-   - Runs `npm install` to update `package-lock.json` (yarn.lock may also be updated for multi-package-manager compatibility testing)
-6. **Commits and pushes lockfile changes** automatically
+   - Runs `yarn install` to refresh the Yarn-managed dummy app lockfile
+   - Runs `npm install` to keep `package-lock.json` in sync for npm compatibility/testing
+7. **Commits and pushes lockfile changes** automatically
+8. **Creates GitHub release** from CHANGELOG.md (if the matching section exists)
 
 ### 4. Version Format
 
 **Important:** Use Ruby gem version format (no dashes):
 
-- ✅ Correct: `9.1.0`, `9.2.0.beta.1`, `9.0.0.rc.2`
-- ❌ Wrong: `9.1.0-beta.1`, `9.0.0-rc.2`
+- ✅ Correct: `10.1.0`, `10.2.0.beta.1`, `10.0.0.rc.2`
+- ❌ Wrong: `10.1.0-beta.1`, `10.0.0-rc.2`
 
 The task automatically converts Ruby gem format to npm semver format:
 
-- Ruby: `9.2.0.beta.1` → npm: `9.2.0-beta.1`
-- Ruby: `9.0.0.rc.2` → npm: `9.0.0-rc.2`
+- Ruby: `10.2.0.beta.1` → npm: `10.2.0-beta.1`
+- Ruby: `10.0.0.rc.2` → npm: `10.0.0-rc.2`
+
+**CHANGELOG.md headers** use npm semver format (with dashes):
+
+- `## [v10.6.0-rc.1]` — correct (matches git tag format)
+- `## [v10.6.0.rc.1]` — wrong (RubyGems format, will not be found by release tasks)
 
 **Examples:**
 
 ```bash
 # Regular release
-bundle exec rake create_release[9.1.0]  # Gem: 9.1.0, npm: 9.1.0
+bundle exec rake "release[10.1.0]"  # Gem: 10.1.0, npm: 10.1.0
 
 # Beta release
-bundle exec rake create_release[9.2.0.beta.1]  # Gem: 9.2.0.beta.1, npm: 9.2.0-beta.1
+bundle exec rake "release[10.2.0.beta.1]"  # Gem: 10.2.0.beta.1, npm: 10.2.0-beta.1
 
 # Release candidate
-bundle exec rake create_release[10.0.0.rc.1]  # Gem: 10.0.0.rc.1, npm: 10.0.0-rc.1
+bundle exec rake "release[10.0.0.rc.1]"  # Gem: 10.0.0.rc.1, npm: 10.0.0-rc.1
+
+# Prerelease: use /update-changelog rc first, then release reads it
+bundle exec rake release  # reads v10.0.0-rc.0 from CHANGELOG.md
 ```
 
 ### 5. During the Release
 
+If you are running non-interactively, set `AUTO_CONFIRM=true` to skip confirmation prompts.
+
 1. When prompted for **npm OTP**, enter your 2FA code from your authenticator app
 2. Accept defaults for release-it options
 3. When prompted for **RubyGems OTP**, enter your 2FA code
-4. The script will automatically commit and push lockfile updates
+4. If using `release` with no version, confirm the version detected from CHANGELOG.md (or the computed patch version)
+5. The script will automatically commit and push lockfile updates
+6. The script will automatically create a GitHub release (if CHANGELOG.md section exists)
 
 ### 6. After Release
 
@@ -117,6 +183,25 @@ bundle exec rake create_release[10.0.0.rc.1]  # Gem: 10.0.0.rc.1, npm: 10.0.0-rc
    - Post in relevant Slack/Discord channels
    - Tweet about major releases
    - Update documentation if needed
+
+### Syncing GitHub Releases Manually
+
+If the automatic GitHub release creation was skipped (e.g., CHANGELOG.md section was missing during release), you can create it manually after updating the changelog:
+
+1. Update `CHANGELOG.md` with the published version section
+   - For prerelease entries, use npm semver header format with dashes, for example `## [v10.6.0-rc.1]`
+2. Commit and push `CHANGELOG.md`
+3. Run:
+
+```bash
+# Stable
+bundle exec rake "sync_github_release[10.6.0]"
+
+# Prerelease
+bundle exec rake "sync_github_release[10.6.0.rc.1]"
+```
+
+`sync_github_release` reads release notes from the matching `CHANGELOG.md` section and creates/updates the GitHub release for the corresponding tag.
 
 ## Troubleshooting
 
@@ -141,6 +226,18 @@ If publishing fails partway through:
 3. If RubyGems failed: Fix the issue and manually run `gem release`
 4. Then manually update and commit spec/dummy lockfiles
 
+### GitHub Release Sync Fails
+
+If package publishing succeeds but GitHub release creation fails:
+
+1. Fix GitHub auth (`gh auth login`) or permissions
+2. Ensure `CHANGELOG.md` has matching header `## [vX.Y.Z...]` (npm format for prereleases)
+3. Rerun only:
+
+   ```bash
+   bundle exec rake "sync_github_release[<gem_version>]"
+   ```
+
 ### Wrong Version Format
 
 If you accidentally use npm format (with dashes):
@@ -159,14 +256,14 @@ If you need to release manually (not recommended):
 1. **Bump version:**
 
    ```bash
-   gem bump --version 9.1.0
+   gem bump --version 10.1.0
    bundle install
    ```
 
 2. **Publish to npm:**
 
    ```bash
-   release-it 9.1.0 --npm.publish
+   npx --yes release-it 10.1.0 --npm.publish
    ```
 
 3. **Publish to RubyGems:**
@@ -180,6 +277,7 @@ If you need to release manually (not recommended):
    cd spec/dummy
    bundle install
    npm install
+   yarn install
    cd ../..
    git add spec/dummy/Gemfile.lock spec/dummy/package-lock.json spec/dummy/yarn.lock
    git commit -m 'Update spec/dummy lockfiles after release'

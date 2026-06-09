@@ -384,5 +384,5 @@ After migrating to TypeScript:
 
 - [TypeScript Handbook](https://www.typescriptlang.org/docs/handbook/intro.html)
 - [Webpack TypeScript Configuration](https://webpack.js.org/configuration/configuration-languages/#typescript)
-- [Shakapacker Types Documentation](./types/README.md)
-- [Migration Examples](https://github.com/shakacode/shakapacker/tree/main/examples/typescript-config)
+- [Shakapacker Types Documentation](https://github.com/shakacode/shakapacker/blob/main/package/types/README.md)
+- [TypeScript Support Guide](./typescript.md)

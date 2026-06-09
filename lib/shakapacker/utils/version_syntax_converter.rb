@@ -17,7 +17,7 @@ module Shakapacker
                   .tr("-", ".")
                   .strip
                   .match(/(\d.*)/)
-        match.present? ? match[0] : nil
+        match ? match[0] : nil
       end
     end
   end

@@ -56,4 +56,30 @@ describe "DigestStrategy" do
 
     expect(actual_path).to eq expected_path
   end
+
+  it "uses the provided instance cache path and env for compilation_digest_path" do
+    cache_path = Pathname.new("/tmp/custom-shakapacker-cache")
+    custom_config = double("config", cache_path: cache_path)
+    custom_instance = double("instance", config: custom_config, env: "custom-env")
+    digest_strategy = Shakapacker::DigestStrategy.new(custom_instance)
+
+    expect(digest_strategy.send(:compilation_digest_path)).to eq cache_path.join("last-compilation-digest-custom-env")
+  end
+
+  it "uses the provided instance asset_host in watched_files_digest" do
+    custom_config = double(
+      "config",
+      root_path: Shakapacker.config.root_path,
+      source_path: "missing-source-path",
+      additional_paths: [],
+      asset_host: "instance-host"
+    )
+    custom_instance = double("instance", config: custom_config, env: Shakapacker.env)
+    digest_strategy = Shakapacker::DigestStrategy.new(custom_instance)
+
+    allow(Dir).to receive(:[]).and_return([])
+    allow(Shakapacker.config).to receive(:asset_host).and_return("global-host")
+
+    expect(digest_strategy.send(:watched_files_digest)).to eq Digest::SHA1.hexdigest("instance-host")
+  end
 end

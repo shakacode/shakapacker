@@ -54,13 +54,13 @@ describe "Shakapacker" do
       expect(ENV["NODE_ENV"]).to eq("development")
     end
 
-    it "sets NODE_ENV to test when RAILS_ENV is test" do
+    it "sets NODE_ENV to development when RAILS_ENV is test" do
       ENV["RAILS_ENV"] = "test"
       ENV.delete("NODE_ENV")
 
       Shakapacker.ensure_node_env!
 
-      expect(ENV["NODE_ENV"]).to eq("test")
+      expect(ENV["NODE_ENV"]).to eq("development")
     end
 
     it "sets NODE_ENV to production when RAILS_ENV is staging" do

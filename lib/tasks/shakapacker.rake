@@ -1,6 +1,6 @@
 tasks = {
   "shakapacker:info"                    => "Provides information on Shakapacker's environment",
-  "shakapacker:install"                 => "Installs and setup webpack",
+  "shakapacker:install"                 => "Installs and sets up Shakapacker",
   "shakapacker:compile"                 => "Compiles webpack bundles based on environment",
   "shakapacker:clean"                   => "Remove old compiled bundles",
   "shakapacker:clobber"                 => "Removes the webpack compiled output directory",

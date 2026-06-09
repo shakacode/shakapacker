@@ -1,7 +1,13 @@
 // This will be a substantial file - the main CLI entry point
 // Originally migrated from bin/export-bundler-config, now bin/shakapacker-config
 
-import { existsSync, readFileSync, writeFileSync } from "fs"
+import {
+  chmodSync,
+  existsSync,
+  mkdirSync,
+  readFileSync,
+  writeFileSync
+} from "fs"
 import { resolve, dirname, sep, delimiter, basename } from "path"
 import { inspect } from "util"
 import { load as loadYaml } from "js-yaml"
@@ -511,9 +517,15 @@ function runInitCommand(options: ExportOptions): number {
   return 0
 }
 
-function createBinStub(binStubPath: string): void {
+/**
+ * Exported for test use only: verifies generated content matches
+ * lib/install/bin/* binstubs. Not part of the public API.
+ *
+ * @internal
+ */
+export function createBinStub(binStubPath: string): void {
   const binDir = dirname(binStubPath)
-  const { mkdirSync, chmodSync } = require("fs")
+  const packageScript = `${basename(binStubPath)}.cjs`
 
   // Ensure bin directory exists
   if (!existsSync(binDir)) {
@@ -523,28 +535,92 @@ function createBinStub(binStubPath: string): void {
   const stubContent = `#!/usr/bin/env ruby
 # frozen_string_literal: true
 
+require "rbconfig"
+
+# Keep helper logic in sync across:
+# - lib/install/bin/shakapacker-config
+# - lib/install/bin/diff-bundler-config
+# - spec/dummy/bin/shakapacker-config
+# - package/configExporter/cli.ts (createBinStub).
+def shakapacker_app_root
+  candidate = File.expand_path("..", __dir__)
+  return candidate if File.exist?(File.join(candidate, "Gemfile"))
+
+  warn "[Shakapacker] No Gemfile found at #{candidate.inspect}; " \\
+       "falling back to the current directory (#{Dir.pwd.inspect})."
+  Dir.pwd
+end
+
+def shakapacker_executable_candidates(executable)
+  extensions = [
+    RbConfig::CONFIG["EXEEXT"],
+    *ENV.fetch("PATHEXT", "").split(File::PATH_SEPARATOR)
+  ].compact.reject(&:empty?)
+  return [executable] if extensions.empty? || File.extname(executable) != ""
+
+  ([executable] + extensions.map { |extension| "#{executable}#{extension}" }).uniq
+end
+
+def shakapacker_find_executable(executable)
+  ENV.fetch("PATH", "").split(File::PATH_SEPARATOR, -1).each do |path|
+    search_path = path.empty? ? Dir.pwd : path
+
+    shakapacker_executable_candidates(executable).each do |candidate|
+      executable_path = File.join(search_path, candidate)
+      return executable_path if File.file?(executable_path) && File.executable?(executable_path)
+    end
+  end
+
+  nil
+end
+
+def shakapacker_node_binary
+  node_bin = shakapacker_find_executable("node")
+  return node_bin if node_bin
+
+  warn '[Shakapacker] Could not find Node.js executable "node". ' \\
+       "Install Node.js and try again."
+  exit 1
+end
+
+def shakapacker_node_env
+  %w[development test].include?(ENV["RAILS_ENV"]) ? "development" : "production"
+end
+
 ENV["RAILS_ENV"] ||= ENV["RACK_ENV"] || "development"
-ENV["NODE_ENV"] ||= "development"
+ENV["NODE_ENV"] ||= shakapacker_node_env
 
-require "pathname"
-ENV["BUNDLE_GEMFILE"] ||= File.expand_path("../../Gemfile",
-  Pathname.new(__FILE__).realpath)
+app_root = shakapacker_app_root
+node_bin = shakapacker_node_binary
+script_path = File.join(
+  app_root,
+  "node_modules",
+  "shakapacker",
+  "package",
+  "bin",
+  "${packageScript}"
+)
 
-require "bundler/setup"
+unless File.file?(script_path)
+  warn "[Shakapacker] Could not find #{script_path}. Run your package manager install command and try again."
+  exit 1
+end
 
-APP_ROOT = File.expand_path("..", __dir__)
-Dir.chdir(APP_ROOT) do
-  exec "node", "./node_modules/.bin/shakapacker-config", *ARGV
+Dir.chdir(app_root) do
+  exec node_bin, script_path, *ARGV
 end
 `
 
   writeFileSync(binStubPath, stubContent, { mode: 0o755 })
 
-  // Make executable
+  // writeFileSync's mode is filtered by the process umask (e.g. umask 077
+  // strips the execute bit). chmodSync ensures the file is actually 0o755
+  // regardless of umask. It can throw on filesystems that don't support
+  // permission bits (Windows/FAT), so the try/catch is intentional.
   try {
     chmodSync(binStubPath, 0o755)
   } catch (_e) {
-    // chmod might fail on some systems, but mode in writeFileSync should handle it
+    // ignore - file was created with executable mode on supporting filesystems
   }
 }
 
@@ -712,6 +788,17 @@ async function runAllBuildsCommand(options: ExportOptions): Promise<number> {
 
     // Apply defaults
     const resolvedOptions = applyDefaults(options)
+
+    // Validate paths for security in all-builds mode.
+    // saveDir is always set by applyDefaults(); --output is not used in --all-builds mode.
+    safeResolvePath(appRoot, resolvedOptions.saveDir!)
+
+    // Keep in sync with validation in run()
+    if (resolvedOptions.annotate && resolvedOptions.format !== "yaml") {
+      throw new Error(
+        "Annotation requires YAML format. Use --no-annotate or --format=yaml."
+      )
+    }
 
     const loader = new ConfigFileLoader(resolvedOptions.configFile)
     if (!loader.exists()) {

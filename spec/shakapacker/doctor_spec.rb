@@ -56,7 +56,54 @@ describe Shakapacker::Doctor do
     doctor.warnings.map { |w| w[:message] }
   end
 
+  def capture_stdout
+    old_stdout = $stdout
+    $stdout = StringIO.new
+    yield
+    $stdout.string
+  ensure
+    $stdout = old_stdout
+  end
+
   describe "warning formatting" do
+    it "stores fix hints as recommended warnings by default with the :fix marker" do
+      doctor.send(:add_fix_hint, "Test fix instruction")
+
+      expect(doctor.warnings.last).to eq(
+        category: described_class::CATEGORY_RECOMMENDED,
+        message: "Test fix instruction",
+        fix: true
+      )
+    end
+
+    it "raises ArgumentError when add_fix_hint is called with wrong number of arguments" do
+      expect do
+        doctor.send(:add_fix_hint, "Test fix instruction", described_class::CATEGORY_ACTION_REQUIRED)
+      end.to raise_error(ArgumentError)
+    end
+
+    it "inherits the parent warning's category" do
+      doctor.send(:add_action_required, "Parent action-required warning")
+      doctor.send(:add_fix_hint, "Fix for action-required parent")
+
+      expect(doctor.warnings.last).to eq(
+        category: described_class::CATEGORY_ACTION_REQUIRED,
+        message: "Fix for action-required parent",
+        fix: true
+      )
+    end
+
+    it "inherits the parent category even when an earlier fix hint sits between" do
+      doctor.send(:add_action_required, "Parent action-required warning")
+      doctor.send(:add_fix_hint, "Earlier fix hint")
+      doctor.send(:add_fix_hint, "Later fix hint")
+
+      expect(doctor.warnings.last).to include(
+        category: described_class::CATEGORY_ACTION_REQUIRED,
+        fix: true
+      )
+    end
+
     it "formats warnings with correct indentation and spacing" do
       # Create a test scenario with warnings
       doctor.instance_variable_get(:@warnings) << { category: :action_required, message: "Test required warning" }
@@ -451,6 +498,762 @@ describe Shakapacker::Doctor do
     end
   end
 
+  describe "rspack cache configuration checks" do
+    let(:rspack_config_dir) { root_path.join("config/rspack") }
+    let(:rspack_config_path) { rspack_config_dir.join("rspack.config.js") }
+
+    before do
+      allow(config).to receive(:assets_bundler).and_return("rspack")
+      allow(config).to receive(:rspack?).and_return(true)
+      allow(config).to receive(:assets_bundler_config_path).and_return("config/rspack")
+      FileUtils.mkdir_p(rspack_config_dir)
+      File.write(package_json_path, JSON.generate({
+        "devDependencies" => {
+          "@rspack/core" => "^2.0.0-rc.0",
+          "@rspack/cli" => "^2.0.0-rc.0"
+        }
+      }))
+    end
+
+    context "when bundler is webpack" do
+      before do
+        allow(config).to receive(:assets_bundler).and_return("webpack")
+        allow(config).to receive(:rspack?).and_return(false)
+        File.write(rspack_config_path, "module.exports = { cache: false }")
+      end
+
+      it "does not warn about rspack cache" do
+        doctor.send(:check_rspack_cache_configuration)
+        expect(warning_messages).not_to include(match(/Rspack cache/))
+      end
+    end
+
+    context "when rspack config has cache: false" do
+      before do
+        File.write(rspack_config_path, <<~JS)
+          const { generateRspackConfig } = require('shakapacker/rspack')
+          module.exports = generateRspackConfig({ cache: false })
+        JS
+      end
+
+      it "warns that cache is disabled" do
+        doctor.send(:check_rspack_cache_configuration)
+        expect(warning_messages).to include(match(/Rspack cache appears to be disabled.*config\/rspack\/rspack\.config\.js/))
+      end
+
+      it "suggests a filesystem cache fix" do
+        doctor.send(:check_rspack_cache_configuration)
+        expect(warning_messages).to include(match(/cache: \{ type: "filesystem" \}/))
+      end
+    end
+
+    context "when rspack config has cache enabled" do
+      before do
+        File.write(rspack_config_path, <<~JS)
+          const { generateRspackConfig } = require('shakapacker/rspack')
+          module.exports = generateRspackConfig({ cache: { type: 'filesystem' } })
+        JS
+      end
+
+      it "does not warn about cache" do
+        doctor.send(:check_rspack_cache_configuration)
+        expect(warning_messages).not_to include(match(/Rspack cache appears to be disabled/))
+      end
+    end
+
+    context "when rspack config uses a single-quoted cache key" do
+      before do
+        File.write(rspack_config_path, "module.exports = { 'cache': false }")
+      end
+
+      it "warns that cache is disabled" do
+        doctor.send(:check_rspack_cache_configuration)
+        expect(warning_messages).to include(match(/Rspack cache appears to be disabled/))
+      end
+    end
+
+    context "when rspack config uses a double-quoted cache key" do
+      before do
+        File.write(rspack_config_path, 'module.exports = { "cache": false }')
+      end
+
+      it "warns that cache is disabled" do
+        doctor.send(:check_rspack_cache_configuration)
+        expect(warning_messages).to include(match(/Rspack cache appears to be disabled/))
+      end
+    end
+
+    context "when rspack config has no explicit cache setting" do
+      before do
+        File.write(rspack_config_path, <<~JS)
+          const { generateRspackConfig } = require('shakapacker/rspack')
+          module.exports = generateRspackConfig()
+        JS
+      end
+
+      it "does not warn about cache" do
+        doctor.send(:check_rspack_cache_configuration)
+        expect(warning_messages).not_to include(match(/Rspack cache appears to be disabled/))
+      end
+    end
+
+    context "when rspack config has cacheDirectory (not top-level cache)" do
+      before do
+        File.write(rspack_config_path, <<~JS)
+          module.exports = {
+            module: {
+              rules: [{ loader: 'babel-loader', options: { cacheDirectory: false } }]
+            }
+          }
+        JS
+      end
+
+      it "does not flag cacheDirectory as disabled cache" do
+        doctor.send(:check_rspack_cache_configuration)
+        expect(warning_messages).not_to include(match(/Rspack cache appears to be disabled/))
+      end
+    end
+
+    context "when cache: false appears only inside a comment" do
+      before do
+        File.write(rspack_config_path, <<~JS)
+          // To opt out of caching, set cache: false below.
+          /* Previous config: cache: false */
+          module.exports = { cache: { type: 'filesystem' } }
+        JS
+      end
+
+      it "does not flag commented-out cache: false" do
+        doctor.send(:check_rspack_cache_configuration)
+        expect(warning_messages).not_to include(match(/Rspack cache appears to be disabled/))
+      end
+    end
+
+    context "when a line comment contains division before cache: false" do
+      before do
+        File.write(rspack_config_path, <<~JS)
+          module.exports = {
+            // Example: 1 / 2, cache: false
+            cache: { type: 'filesystem' }
+          }
+        JS
+      end
+
+      it "does not expose the commented cache setting while stripping regex literals" do
+        doctor.send(:check_rspack_cache_configuration)
+        expect(warning_messages).not_to include(match(/Rspack cache appears to be disabled/))
+      end
+    end
+
+    context "when a regex literal contains escaped slashes before cache: false" do
+      before do
+        File.write(rspack_config_path, <<~JS)
+          module.exports = {
+            output: { publicPath: /https?:\\/\\/cdn\\.example\\.com\\/assets/.source },
+            cache: false
+          }
+        JS
+      end
+
+      it "does not let the regex look like a line comment" do
+        doctor.send(:check_rspack_cache_configuration)
+        expect(warning_messages).to include(match(/Rspack cache appears to be disabled/))
+      end
+    end
+
+    context "when using rspack v1" do
+      before do
+        File.write(package_json_path, JSON.generate({
+          "devDependencies" => {
+            "@rspack/core" => "^1.0.0",
+            "@rspack/cli" => "^1.0.0"
+          }
+        }))
+      end
+
+      it "warns that v1 cache is experimental and recommends upgrading" do
+        doctor.send(:check_rspack_cache_configuration)
+        expect(warning_messages).to include(match(/Rspack v1 detected/))
+        expect(warning_messages).to include(match(/Bump @rspack\/core and @rspack\/cli/))
+      end
+    end
+
+    context "when using rspack v2" do
+      before do
+        File.write(package_json_path, JSON.generate({
+          "devDependencies" => {
+            "@rspack/core" => "^2.0.0-rc.0",
+            "@rspack/cli" => "^2.0.0-rc.0"
+          }
+        }))
+      end
+
+      it "does not warn about v1" do
+        doctor.send(:check_rspack_cache_configuration)
+        expect(warning_messages).not_to include(match(/Rspack v1 detected/))
+      end
+    end
+
+    context "when no rspack config file exists" do
+      it "does not raise and does not warn about cache" do
+        FileUtils.rm_rf(rspack_config_dir)
+        expect { doctor.send(:check_rspack_cache_configuration) }.not_to raise_error
+        expect(warning_messages).not_to include(match(/Rspack cache appears to be disabled/))
+      end
+    end
+
+    context "when the rspack config is a TypeScript file" do
+      let(:rspack_config_ts_path) { rspack_config_dir.join("rspack.config.ts") }
+
+      before do
+        FileUtils.rm_f(rspack_config_path)
+        File.write(rspack_config_ts_path, <<~TS)
+          import { generateRspackConfig } from 'shakapacker/rspack'
+          export default generateRspackConfig({ cache: false })
+        TS
+      end
+
+      it "detects cache: false in the TypeScript config" do
+        doctor.send(:check_rspack_cache_configuration)
+        expect(warning_messages).to include(match(/Rspack cache appears to be disabled.*rspack\.config\.ts/))
+      end
+    end
+
+    context "when cache: false appears only inside a template literal string" do
+      before do
+        File.write(rspack_config_path, <<~JS)
+          const message = `Set cache: false to opt out`
+          module.exports = { cache: { type: 'filesystem' } }
+        JS
+      end
+
+      it "does not flag string-literal mentions of cache: false" do
+        doctor.send(:check_rspack_cache_configuration)
+        expect(warning_messages).not_to include(match(/Rspack cache appears to be disabled/))
+      end
+    end
+
+    context "when a comment contains an unmatched quote before a real cache: false" do
+      before do
+        File.write(rspack_config_path, <<~JS)
+          // don't disable cache here
+          const path = require('path')
+          module.exports = { cache: false }
+        JS
+      end
+
+      it "still detects cache: false on a later line" do
+        doctor.send(:check_rspack_cache_configuration)
+        expect(warning_messages).to include(match(/Rspack cache appears to be disabled/))
+      end
+    end
+
+    context "when a block comment contains an unmatched backtick before a real cache: false" do
+      before do
+        File.write(rspack_config_path, <<~JS)
+          /** Do not set `cache: false here. */
+          module.exports = {
+            cache: false,
+            banner: `built by shakapacker`
+          }
+        JS
+      end
+
+      it "still detects cache: false after the block comment" do
+        doctor.send(:check_rspack_cache_configuration)
+        expect(warning_messages).to include(match(/Rspack cache appears to be disabled/))
+      end
+    end
+
+    context "when cache: false is nested inside a loader's options" do
+      before do
+        File.write(rspack_config_path, <<~JS)
+          module.exports = {
+            cache: { type: 'filesystem' },
+            module: {
+              rules: [{
+                loader: 'babel-loader',
+                options: { cache: false }
+              }]
+            }
+          }
+        JS
+      end
+
+      it "does not flag nested loader cache: false as a top-level disabled cache" do
+        doctor.send(:check_rspack_cache_configuration)
+        expect(warning_messages).not_to include(match(/Rspack cache appears to be disabled/))
+      end
+    end
+
+    context "when cache: false belongs to a local base config object" do
+      before do
+        File.write(rspack_config_path, <<~JS)
+          const baseConfig = { cache: false }
+          module.exports = merge(baseConfig, {
+            module: { rules: [] }
+          })
+        JS
+      end
+
+      it "does not flag the local object as the exported cache setting" do
+        doctor.send(:check_rspack_cache_configuration)
+        expect(warning_messages).not_to include(match(/Rspack cache appears to be disabled/))
+      end
+    end
+
+    context "when cache: false belongs to the exported config variable" do
+      before do
+        File.write(rspack_config_path, <<~JS)
+          const rspackConfig = {
+            cache: false
+          }
+
+          module.exports = rspackConfig
+        JS
+      end
+
+      it "warns that cache is disabled" do
+        doctor.send(:check_rspack_cache_configuration)
+        expect(warning_messages).to include(match(/Rspack cache appears to be disabled/))
+      end
+    end
+
+    context "when cache: false belongs to a named ES module export" do
+      before do
+        File.write(rspack_config_path, <<~JS)
+          export const rspackConfig = {
+            cache: false
+          }
+        JS
+      end
+
+      it "warns that cache is disabled" do
+        doctor.send(:check_rspack_cache_configuration)
+        expect(warning_messages).to include(match(/Rspack cache appears to be disabled/))
+      end
+    end
+
+    context "when cache: false is re-exported as default via ESM alias syntax" do
+      before do
+        File.write(rspack_config_path, <<~JS)
+          const rspackConfig = {
+            cache: false
+          }
+
+          export { rspackConfig as default }
+        JS
+      end
+
+      it "warns that cache is disabled" do
+        doctor.send(:check_rspack_cache_configuration)
+        expect(warning_messages).to include(match(/Rspack cache appears to be disabled/))
+      end
+    end
+
+    context "when cache: false is re-exported as default alongside other named exports" do
+      before do
+        File.write(rspack_config_path, <<~JS)
+          const rspackConfig = {
+            cache: false
+          }
+          const helper = {}
+
+          export { helper, rspackConfig as default }
+        JS
+      end
+
+      it "warns that cache is disabled" do
+        doctor.send(:check_rspack_cache_configuration)
+        expect(warning_messages).to include(match(/Rspack cache appears to be disabled/))
+      end
+    end
+
+    context "when the active rspack config cannot be read" do
+      before do
+        File.write(rspack_config_path, "module.exports = { cache: false }")
+        allow(File).to receive(:read).and_call_original
+        allow(File).to receive(:read).with(rspack_config_path).and_raise(Errno::EACCES.new(rspack_config_path.to_s))
+      end
+
+      it "warns instead of raising" do
+        expect { doctor.send(:check_rspack_cache_configuration) }.not_to raise_error
+        expect(warning_messages).to include(match(/Unable to validate rspack cache configuration/))
+      end
+    end
+
+    context "when both rspack.config.js and rspack.config.ts exist" do
+      let(:rspack_config_ts_path) { rspack_config_dir.join("rspack.config.ts") }
+
+      before do
+        File.write(rspack_config_path, "module.exports = { cache: false }")
+        File.write(rspack_config_ts_path, "export default { cache: { type: 'filesystem' } }")
+      end
+
+      it "inspects only the active config (matching the runner's resolution)" do
+        doctor.send(:check_rspack_cache_configuration)
+        # Runner prefers .ts, which has cache enabled — no warning expected.
+        expect(warning_messages).not_to include(match(/Rspack cache appears to be disabled/))
+      end
+    end
+
+    context "when only webpack.config.js exists in rspack mode (webpack fallback)" do
+      let(:webpack_config_path) { rspack_config_dir.join("webpack.config.js") }
+
+      before do
+        FileUtils.rm_f(rspack_config_path)
+        File.write(webpack_config_path, "module.exports = { cache: false }")
+      end
+
+      it "checks the webpack fallback config and warns when cache is disabled" do
+        doctor.send(:check_rspack_cache_configuration)
+        expect(warning_messages).to include(match(/Rspack cache appears to be disabled.*webpack\.config\.js/))
+      end
+    end
+
+    context "when only rspack.config.mjs exists alongside a webpack.config.js fallback" do
+      let(:rspack_config_mjs_path) { rspack_config_dir.join("rspack.config.mjs") }
+      let(:webpack_config_path) { rspack_config_dir.join("webpack.config.js") }
+
+      before do
+        FileUtils.rm_f(rspack_config_path)
+        File.write(rspack_config_mjs_path, "export default { cache: { type: 'filesystem' } }")
+        File.write(webpack_config_path, "module.exports = { cache: false }")
+      end
+
+      it "inspects the webpack fallback (matching the runner) instead of the unsupported .mjs" do
+        doctor.send(:check_rspack_cache_configuration)
+        expect(warning_messages).to include(match(/Rspack cache appears to be disabled.*webpack\.config\.js/))
+      end
+    end
+
+    context "when only rspack.config.mjs exists with no fallback" do
+      let(:rspack_config_mjs_path) { rspack_config_dir.join("rspack.config.mjs") }
+
+      before do
+        FileUtils.rm_f(rspack_config_path)
+        File.write(rspack_config_mjs_path, "export default { cache: false }")
+      end
+
+      it "silently skips the unsupported .mjs file and emits no cache warning" do
+        doctor.send(:check_rspack_cache_configuration)
+        expect(warning_messages).not_to include(match(/Rspack cache appears to be disabled/))
+      end
+    end
+
+    context "when the configured rspack config directory starts with a slash" do
+      it "matches the runner's File.join path semantics" do
+        allow(config).to receive(:assets_bundler_config_path).and_return("/config/rspack")
+        File.write(rspack_config_path, "module.exports = { cache: false }")
+
+        doctor.send(:check_rspack_cache_configuration)
+
+        expect(warning_messages).to include(match(/Rspack cache appears to be disabled.*config\/rspack\/rspack\.config\.js/))
+      end
+    end
+
+    context "when the configured rspack config directory is an equivalent Pathname" do
+      it "does not check the config/webpack fallback because the runner does an exact string check" do
+        allow(config).to receive(:assets_bundler_config_path).and_return(Pathname.new("config/rspack/"))
+        FileUtils.rm_f(rspack_config_path)
+        webpack_config_path = root_path.join("config/webpack/webpack.config.js")
+        FileUtils.mkdir_p(webpack_config_path.dirname)
+        File.write(webpack_config_path, "module.exports = { cache: false }")
+
+        doctor.send(:check_rspack_cache_configuration)
+
+        expect(warning_messages).not_to include(match(/Rspack cache appears to be disabled/))
+      end
+    end
+
+    context "when node_modules reports a v2 install even though package.json pins v1" do
+      before do
+        node_modules_pkg = root_path.join("node_modules/@rspack/core/package.json")
+        FileUtils.mkdir_p(node_modules_pkg.dirname)
+        File.write(node_modules_pkg, JSON.generate({ "name" => "@rspack/core", "version" => "2.0.0-rc.0" }))
+
+        File.write(package_json_path, JSON.generate({
+          "devDependencies" => {
+            "@rspack/core" => "^1.0.0 || ^2.0.0-0",
+            "@rspack/cli" => "^1.0.0 || ^2.0.0-0"
+          }
+        }))
+      end
+
+      it "prefers the installed version and does not warn about v1" do
+        doctor.send(:check_rspack_cache_configuration)
+        expect(warning_messages).not_to include(match(/Rspack v1 detected/))
+      end
+    end
+
+    context "when the installed rspack package file is unreadable" do
+      before do
+        node_modules_pkg = root_path.join("node_modules/@rspack/core/package.json")
+        FileUtils.mkdir_p(node_modules_pkg.dirname)
+        File.write(node_modules_pkg, "")
+
+        allow(File).to receive(:read).and_call_original
+        allow(File).to receive(:read).with(node_modules_pkg).and_raise(Errno::EACCES.new(node_modules_pkg.to_s))
+
+        File.write(package_json_path, JSON.generate({
+          "devDependencies" => {
+            "@rspack/core" => "workspace:*",
+            "@rspack/cli" => "^1.0.0"
+          }
+        }))
+      end
+
+      it "falls back to package.json specifiers instead of raising" do
+        doctor.send(:check_rspack_cache_configuration)
+        expect(warning_messages).to include(match(/Rspack v1 detected/))
+      end
+    end
+
+    context "when the rspack version specifier is a git ref" do
+      before do
+        File.write(package_json_path, JSON.generate({
+          "devDependencies" => {
+            "@rspack/core" => "git+https://github.com/web-infra-dev/rspack.git#v2.0.0"
+          }
+        }))
+      end
+
+      it "does not falsely classify it as v1" do
+        doctor.send(:check_rspack_cache_configuration)
+        expect(warning_messages).not_to include(match(/Rspack v1 detected/))
+      end
+    end
+
+    context "when the rspack version specifier is a compound range" do
+      before do
+        File.write(package_json_path, JSON.generate({
+          "devDependencies" => {
+            "@rspack/core" => "^1.0.0 || ^2.0.0-0"
+          }
+        }))
+      end
+
+      it "does not falsely classify it as v1" do
+        doctor.send(:check_rspack_cache_configuration)
+        expect(warning_messages).not_to include(match(/Rspack v1 detected/))
+      end
+    end
+
+    context "when @rspack/core is unparseable but @rspack/cli pins v1" do
+      before do
+        File.write(package_json_path, JSON.generate({
+          "devDependencies" => {
+            "@rspack/core" => "workspace:*",
+            "@rspack/cli" => "^1.0.0"
+          }
+        }))
+      end
+
+      it "falls back to @rspack/cli and emits the v1 advisory" do
+        doctor.send(:check_rspack_cache_configuration)
+        expect(warning_messages).to include(match(/Rspack v1 detected/))
+      end
+    end
+
+    context "when the rspack version specifier uses a major-only shorthand" do
+      ["^1", "~1", "1", "1.x", "^1.x", "^1.x.x", "1.X"].each do |specifier|
+        context "with specifier #{specifier.inspect}" do
+          before do
+            File.write(package_json_path, JSON.generate({
+              "devDependencies" => {
+                "@rspack/core" => specifier,
+                "@rspack/cli" => specifier
+              }
+            }))
+          end
+
+          it "still emits the v1 advisory" do
+            doctor.send(:check_rspack_cache_configuration)
+            expect(warning_messages).to include(match(/Rspack v1 detected/))
+          end
+        end
+      end
+
+      context "with a v2 major-only shorthand" do
+        before do
+          File.write(package_json_path, JSON.generate({
+            "devDependencies" => {
+              "@rspack/core" => "^2",
+              "@rspack/cli" => "^2"
+            }
+          }))
+        end
+
+        it "does not warn about v1" do
+          doctor.send(:check_rspack_cache_configuration)
+          expect(warning_messages).not_to include(match(/Rspack v1 detected/))
+        end
+      end
+    end
+
+    context "when a regex literal contains an unbalanced brace inside a character class" do
+      before do
+        File.write(rspack_config_path, <<~JS)
+          module.exports = {
+            module: { rules: [{ test: /[{]/, use: 'raw-loader' }] },
+            cache: false
+          }
+        JS
+      end
+
+      it "still detects the top-level cache: false" do
+        doctor.send(:check_rspack_cache_configuration)
+        expect(warning_messages).to include(match(/Rspack cache appears to be disabled/))
+      end
+    end
+
+    context "when @rspack/core appears in both dependencies and devDependencies" do
+      before do
+        File.write(package_json_path, JSON.generate({
+          "dependencies" => {
+            "@rspack/core" => "^2.0.0-rc.0"
+          },
+          "devDependencies" => {
+            "@rspack/core" => "^1.0.0"
+          }
+        }))
+      end
+
+      it "uses the dependencies version (production wins) and does not warn about v1" do
+        doctor.send(:check_rspack_cache_configuration)
+        expect(warning_messages).not_to include(match(/Rspack v1 detected/))
+      end
+    end
+
+    context "when cache: false appears at depth 1 inside a base config used in a merge" do
+      before do
+        File.write(rspack_config_path, <<~JS)
+          const baseConfig = { cache: false }
+          module.exports = merge(baseConfig, { output: { path: '/tmp' } })
+        JS
+      end
+
+      # Known limitation: the heuristic only catches variables exported directly
+      # (`module.exports = baseConfig`); composition via merge is not flagged.
+      # The "appears to be disabled" wording is the mitigation when the heuristic
+      # does fire on related patterns.
+      it "does not warn when the variable is only referenced inside merge() (false-negative gap)" do
+        doctor.send(:check_rspack_cache_configuration)
+        expect(warning_messages).not_to include(match(/Rspack cache appears to be disabled/))
+      end
+    end
+
+    context "when a regex literal sits on its own line away from any comment" do
+      before do
+        File.write(rspack_config_path, <<~JS)
+          const re = /https?:\\/\\/cdn\\.example\\.com/
+          module.exports = { cache: false }
+        JS
+      end
+
+      it "strips the regex first and still detects cache: false" do
+        doctor.send(:check_rspack_cache_configuration)
+        expect(warning_messages).to include(match(/Rspack cache appears to be disabled/))
+      end
+    end
+
+    context "when a multiline ternary contains the quoted key \"cache\" followed by : false on the next line" do
+      before do
+        File.write(rspack_config_path, <<~JS)
+          const label = condition
+            ? "cache"
+            : false
+          module.exports = { cache: { type: 'filesystem' } }
+        JS
+      end
+
+      it "does not fold the quote-key normalization across the newline (no false positive)" do
+        doctor.send(:check_rspack_cache_configuration)
+        expect(warning_messages).not_to include(match(/Rspack cache appears to be disabled/))
+      end
+    end
+  end
+
+  # Contract spec: doctor and runner must resolve to the same active config file.
+  # If Runner#find_rspack_config_with_fallback gains a new extension or reorders
+  # candidates, this spec will fail loudly so Doctor#active_assets_bundler_config_path
+  # can be updated to match. Without this, the doctor could silently inspect a
+  # different file than the build actually loads.
+  describe "rspack config resolution contract with Runner" do
+    let(:rspack_config_dir) { root_path.join("config/rspack") }
+
+    before do
+      require "shakapacker/runner"
+      allow(config).to receive(:assets_bundler).and_return("rspack")
+      allow(config).to receive(:rspack?).and_return(true)
+      allow(config).to receive(:assets_bundler_config_path).and_return("config/rspack")
+      FileUtils.mkdir_p(rspack_config_dir)
+      FileUtils.mkdir_p(root_path.join("config/webpack"))
+    end
+
+    def runner_resolved_path
+      runner = Shakapacker::Runner.allocate
+      runner.instance_variable_set(:@app_path, root_path.to_s)
+      runner.instance_variable_set(:@config, config)
+      allow(runner).to receive(:log_output).and_return(StringIO.new)
+
+      original_stderr = $stderr
+      $stderr = StringIO.new
+      runner.send(:find_rspack_config_with_fallback)
+    ensure
+      $stderr = original_stderr
+    end
+
+    def expect_paths_to_agree
+      doctor_path = doctor.send(:active_assets_bundler_config_path)
+      runner_path = runner_resolved_path
+      expect(File.expand_path(doctor_path.to_s)).to eq(File.expand_path(runner_path.to_s))
+    end
+
+    context "with rspack.config.js in config/rspack" do
+      before { File.write(rspack_config_dir.join("rspack.config.js"), "module.exports = {}") }
+
+      it "doctor and runner pick the same file" do
+        expect_paths_to_agree
+      end
+    end
+
+    context "with rspack.config.ts in config/rspack" do
+      before { File.write(rspack_config_dir.join("rspack.config.ts"), "export default {}") }
+
+      it "doctor and runner pick the same file" do
+        expect_paths_to_agree
+      end
+    end
+
+    context "with both rspack.config.ts and rspack.config.js present" do
+      before do
+        File.write(rspack_config_dir.join("rspack.config.ts"), "export default {}")
+        File.write(rspack_config_dir.join("rspack.config.js"), "module.exports = {}")
+      end
+
+      it "doctor and runner agree on the .ts variant taking precedence" do
+        expect_paths_to_agree
+      end
+    end
+
+    context "with only webpack.config.js fallback in config/rspack" do
+      before { File.write(rspack_config_dir.join("webpack.config.js"), "module.exports = {}") }
+
+      it "doctor and runner pick the same fallback file" do
+        expect_paths_to_agree
+      end
+    end
+
+    context "with only webpack.config.js in config/webpack (backward-compat fallback)" do
+      before { File.write(root_path.join("config/webpack/webpack.config.js"), "module.exports = {}") }
+
+      it "doctor and runner pick the same fallback file" do
+        expect_paths_to_agree
+      end
+    end
+  end
+
   describe "Windows platform checks" do
     context "on Windows" do
       before do
@@ -721,9 +1524,67 @@ describe Shakapacker::Doctor do
     end
 
     context "when no binstubs exist" do
-      it "adds missing binstubs warning for all three" do
+      it "adds missing binstubs warning for all required binstubs" do
         doctor.send(:check_binstub)
-        expect(warning_messages).to include(match(/Missing binstubs:.*bin\/shakapacker.*bin\/shakapacker-dev-server.*bin\/shakapacker-config/))
+        expect(warning_messages).to include(
+          match(/Missing binstubs:.*bin\/shakapacker.*bin\/shakapacker-dev-server.*bin\/shakapacker-config/)
+        )
+      end
+
+      it "does not warn about optional binstub diff-bundler-config" do
+        doctor.send(:check_binstub)
+        expect(warning_messages).not_to include(match(/diff-bundler-config/))
+      end
+    end
+  end
+
+  describe "binstub status display" do
+    let(:reporter) { Shakapacker::Doctor::Reporter.new(doctor) }
+    let(:binstub_path) { root_path.join("bin/shakapacker") }
+    let(:dev_server_binstub_path) { root_path.join("bin/shakapacker-dev-server") }
+    let(:export_config_binstub_path) { root_path.join("bin/shakapacker-config") }
+    let(:diff_bundler_config_path) { root_path.join("bin/diff-bundler-config") }
+
+    context "when all required binstubs exist" do
+      before do
+        FileUtils.mkdir_p(binstub_path.dirname)
+        File.write(binstub_path, "#!/usr/bin/env ruby")
+        File.write(dev_server_binstub_path, "#!/usr/bin/env ruby")
+        File.write(export_config_binstub_path, "#!/usr/bin/env node")
+      end
+
+      it "prints all required binstubs found message" do
+        output = capture_stdout { reporter.send(:print_binstub_status) }
+        expect(output).to include("All required Shakapacker binstubs found")
+      end
+    end
+
+    context "when diff-bundler-config optional binstub exists" do
+      before do
+        FileUtils.mkdir_p(binstub_path.dirname)
+        File.write(binstub_path, "#!/usr/bin/env ruby")
+        File.write(dev_server_binstub_path, "#!/usr/bin/env ruby")
+        File.write(export_config_binstub_path, "#!/usr/bin/env node")
+        File.write(diff_bundler_config_path, "#!/usr/bin/env node")
+      end
+
+      it "prints optional binstub as found" do
+        output = capture_stdout { reporter.send(:print_binstub_status) }
+        expect(output).to include("diff-bundler-config found (optional)")
+      end
+    end
+
+    context "when diff-bundler-config is absent" do
+      before do
+        FileUtils.mkdir_p(binstub_path.dirname)
+        File.write(binstub_path, "#!/usr/bin/env ruby")
+        File.write(dev_server_binstub_path, "#!/usr/bin/env ruby")
+        File.write(export_config_binstub_path, "#!/usr/bin/env node")
+      end
+
+      it "does not mention diff-bundler-config" do
+        output = capture_stdout { reporter.send(:print_binstub_status) }
+        expect(output).not_to include("diff-bundler-config")
       end
     end
   end

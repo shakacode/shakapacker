@@ -42,8 +42,9 @@ default: &default
   # Select assets bundler to use, available options are 'webpack' (default) or 'rspack'
   assets_bundler: 'webpack'
 
-  # Raises an error if there is a mismatch in the shakapacker gem and npm package being used
-  ensure_consistent_versioning: true
+  # The dummy app installs the local npm package via yalc, so package.json and lockfiles do not
+  # reliably describe the active package during test runs.
+  ensure_consistent_versioning: false
 
   # Select whether the compiler will use SHA digest ('digest' option) or most recent modified timestamp ('mtime') to determine freshness
   compiler_strategy: digest
@@ -108,8 +109,8 @@ development:
     allowed_hosts: 'auto'
     # Shows progress and colorizes output of bin/shakapacker[-dev-server]
     pretty: true
-    headers:
-      'Access-Control-Allow-Origin': '*'
+    # headers:
+    #   'Access-Control-Allow-Origin': '*'
     static:
       watch:
         ignored: '**/node_modules/**'

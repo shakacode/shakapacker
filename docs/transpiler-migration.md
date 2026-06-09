@@ -4,9 +4,9 @@
 
 ## Default Transpilers
 
-Shakapacker v9 transpiler defaults depend on the bundler and installation:
+Shakapacker v10 transpiler defaults depend on the bundler and installation:
 
-- **New installations (v9+)**: `swc` - Installation template explicitly sets SWC (20x faster than Babel)
+- **New installations (v9+, including v10)**: `swc` - Installation template explicitly sets SWC, which upstream reports as [20x faster than Babel single-threaded and 70x on four cores](https://swc.rs/)
 - **Webpack runtime default**: `babel` - Used when no explicit config is provided (maintains backward compatibility)
 - **Rspack runtime default**: `swc` - Rspack defaults to SWC as it's a newer bundler with modern defaults
 
@@ -15,8 +15,8 @@ Shakapacker v9 transpiler defaults depend on the bundler and installation:
 ## Available Transpilers
 
 - `babel` - Traditional JavaScript transpiler with wide ecosystem support
-- `swc` - Rust-based transpiler, 20-70x faster than Babel
-- `esbuild` - Go-based transpiler, extremely fast
+- `swc` - High-performance Rust-based transpiler; upstream reports [20x faster than Babel single-threaded and 70x on four cores](https://swc.rs/)
+- `esbuild` - Go-based transpiler; extremely fast for supported transforms ([benchmark](https://esbuild.github.io/))
 - `none` - No transpilation (use native JavaScript)
 
 ## Configuration
@@ -24,16 +24,12 @@ Shakapacker v9 transpiler defaults depend on the bundler and installation:
 Set the transpiler in your `config/shakapacker.yml`:
 
 ```yaml
-default: &default
-  # SWC is the default (recommended - 20x faster than Babel)
-  javascript_transpiler: swc
+default: &default # Choose one transpiler:
+  javascript_transpiler: swc # default, recommended
+  # javascript_transpiler: babel
+  # javascript_transpiler: esbuild
 
-  # To use Babel for backward compatibility
-  javascript_transpiler: babel
-
-  # For rspack users (defaults to swc if not specified)
-  assets_bundler: rspack
-  # javascript_transpiler can be set, but rspack defaults to swc
+  # assets_bundler: webpack  # default; for rspack, set: assets_bundler: rspack
 ```
 
 ## Migration Guide
@@ -66,10 +62,12 @@ If you need custom transpilation settings, create `config/swc.config.js`:
 // See: https://swc.rs/docs/configuration/compilation
 
 module.exports = {
-  jsc: {
-    transform: {
-      react: {
-        runtime: "automatic"
+  options: {
+    jsc: {
+      transform: {
+        react: {
+          runtime: "automatic"
+        }
       }
     }
   }
@@ -90,15 +88,18 @@ yarn add --dev @pmmmwh/react-refresh-webpack-plugin
 yarn add --dev @rspack/plugin-react-refresh
 ```
 
-### Performance Comparison
+### Performance Expectations
 
-Typical build time improvements when migrating from Babel to SWC:
+SWC's own benchmark reports being [20x faster than Babel single-threaded and
+70x faster on four cores](https://swc.rs/) for pure transpilation. Transpilation
+is usually the dominant cost in Babel-heavy Shakapacker builds, so this
+translates into a large end-to-end win for most apps, even though the full
+Shakapacker pipeline (CSS, minification, source maps, plugins) means the
+end-to-end speedup is usually smaller than the pure-transpiler number.
 
-| Project Size           | Babel | SWC | Improvement |
-| ---------------------- | ----- | --- | ----------- |
-| Small (<100 files)     | 5s    | 1s  | 5x faster   |
-| Medium (100-500 files) | 20s   | 3s  | 6.7x faster |
-| Large (500+ files)     | 60s   | 8s  | 7.5x faster |
+Confirm the gain on your codebase by following
+[Measuring Your App](./transpiler-performance.md#measuring-your-app) before and
+after the migration.
 
 ### Compatibility Notes
 
@@ -113,7 +114,7 @@ Typical build time improvements when migrating from Babel to SWC:
 - [ ] Back up your current configuration
 - [ ] Install SWC dependencies
 - [ ] Update `shakapacker.yml`
-- [ ] If using Stimulus, ensure `keepClassNames: true` is set in `config/swc.config.js` (automatically included in v9.1.0+)
+- [ ] If using Stimulus, ensure `keepClassNames: true` is set in `config/swc.config.js` (automatically included in v9.1.0+, including v10)
 - [ ] Test your build locally
 - [ ] Run your test suite
 - [ ] Check browser compatibility
@@ -136,7 +137,7 @@ module.exports = {
 }
 ```
 
-Starting with Shakapacker v9.1.0, running `rake shakapacker:migrate_to_swc` automatically creates a configuration with this setting.
+Starting with Shakapacker v9.1.0 (and continuing in v10), running `rake shakapacker:migrate_to_swc` automatically creates a configuration with this setting.
 
 ### Rollback Plan
 
@@ -151,8 +152,8 @@ default: &default
 Then rebuild your application:
 
 ```bash
-bin/shakapacker clobber
-bin/shakapacker compile
+bundle exec rake shakapacker:clobber
+bundle exec rake shakapacker:compile
 ```
 
 ## Environment Variables
@@ -161,10 +162,10 @@ You can also control the transpiler via environment variables:
 
 ```bash
 # Override config file setting
-SHAKAPACKER_JAVASCRIPT_TRANSPILER=swc bin/shakapacker compile
+SHAKAPACKER_JAVASCRIPT_TRANSPILER=swc bundle exec rake shakapacker:compile
 
 # For debugging
-SHAKAPACKER_DEBUG_CACHE=true bin/shakapacker compile
+SHAKAPACKER_DEBUG_CACHE=true bundle exec rake shakapacker:compile
 ```
 
 ## Troubleshooting
@@ -196,10 +197,12 @@ yarn add --dev @rspack/plugin-react-refresh
 ```javascript
 // config/swc.config.js
 module.exports = {
-  jsc: {
-    parser: {
-      decorators: true,
-      decoratorsBeforeExport: true
+  options: {
+    jsc: {
+      parser: {
+        decorators: true,
+        decoratorsBeforeExport: true
+      }
     }
   }
 }

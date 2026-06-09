@@ -15,12 +15,19 @@ const devServer = require("../dev_server")
 const env = require("../env")
 const { moduleExists, canProcess } = require("../utils/helpers")
 const inliningCss = require("../utils/inliningCss")
-const { getPlugins } = require("../plugins/rspack")
-const { getOptimization } = require("../optimization/rspack")
+const {
+  isRspack,
+  isWebpack,
+  getBundler,
+  getCssExtractPlugin,
+  getCssExtractPluginLoader,
+  getDefinePlugin,
+  getEnvironmentPlugin,
+  getProvidePlugin
+} = require("../utils/bundlerUtils")
 const { validateRspackDependencies } = require("../utils/validateDependencies")
 
-const rulesPath = resolve(__dirname, "../rules", "rspack.js")
-const rules = require(rulesPath)
+const rules = require(resolve(__dirname, "../rules", "rspack.js"))
 
 const generateRspackConfig = (
   extraConfig: RspackConfigWithDevServer = {},
@@ -39,17 +46,7 @@ const generateRspackConfig = (
 
   const environmentConfig = existsSync(path) ? require(path) : baseConfig
 
-  // Create base rspack config
-  const rspackConfig: RspackConfigWithDevServer = {
-    ...environmentConfig,
-    module: {
-      rules
-    },
-    plugins: getPlugins(),
-    optimization: getOptimization()
-  }
-
-  return webpackMerge.merge({}, rspackConfig, extraConfig)
+  return webpackMerge.merge({}, environmentConfig, extraConfig)
 }
 
 // Re-export webpack-merge utilities for backward compatibility
@@ -69,5 +66,13 @@ export {
   rules,
   moduleExists,
   canProcess,
-  inliningCss
+  inliningCss,
+  isRspack,
+  isWebpack,
+  getBundler,
+  getCssExtractPlugin,
+  getCssExtractPluginLoader,
+  getDefinePlugin,
+  getEnvironmentPlugin,
+  getProvidePlugin
 }

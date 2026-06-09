@@ -2,4 +2,4 @@
 # You can run these commands in separate shells
 rails: bundle exec rails s -p 3000
 wp-client: WEBPACK_SERVE=true bin/shakapacker-dev-server
-wp-server: SERVER_BUNDLE_ONLY=yes bin/shakapacker --watch
+wp-server: SERVER_BUNDLE_ONLY=yes bin/shakapacker-watch --watch
