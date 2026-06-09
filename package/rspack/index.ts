@@ -94,6 +94,11 @@ const generateRspackConfig = (
 // placeholder is configurable; a build target that emitted non-configurable
 // export bindings would make them throw at load, and the guard after them fails
 // loudly in the unlikely event a getter is otherwise not installed.
+//
+// TODO(#641): Once the module/export strategy is resolved, consider switching to
+// the same local-object pattern used in package/index.ts (assemble the exports
+// object, then install the getters on it) to remove this reliance on
+// TypeScript's internal CommonJS emit behaviour.
 declare const baseConfig: RspackConfigWithDevServer
 declare const rules: RuleSetRule[]
 
