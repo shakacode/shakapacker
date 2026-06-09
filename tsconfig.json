@@ -1,6 +1,11 @@
 {
   "compilerOptions": {
     "target": "ES2020",
+    // Required: the lazy named-export getters in package/rspack/index.ts rely on
+    // TypeScript's CommonJS emit initializing each named export to a configurable
+    // `void 0` placeholder that Object.defineProperty then replaces. A different
+    // module target could emit non-configurable bindings and break load. See the
+    // comment block in that file and TODO(#641).
     "module": "commonjs",
     "lib": ["ES2020"],
     "importHelpers": false,

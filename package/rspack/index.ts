@@ -146,6 +146,13 @@ Object.defineProperty(exports, "baseConfig", {
   configurable: true,
   enumerable: true,
   get: getBaseConfig,
+  // Direct assignment (`require("shakapacker/rspack").baseConfig = custom`) runs
+  // this setter and overrides the value read back from `baseConfig`. It changes
+  // `generateRspackConfig` output ONLY in the fallback case where no
+  // `environments/<NODE_ENV>.js` file exists, since that is the sole branch that
+  // calls `getBaseConfig()`. Normal NODE_ENV builds load `environments/<env>.js`
+  // (which `require("../environments/base")` directly), so the override does not
+  // affect them.
   set(value: RspackConfigWithDevServer | undefined) {
     _baseConfig = value
     _baseConfigLoaded = value !== undefined

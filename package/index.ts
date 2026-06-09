@@ -136,20 +136,28 @@ Object.defineProperty(shakapacker, "baseConfig", {
   configurable: true,
   enumerable: true,
   get: getBaseConfig,
-  // Only direct assignment (`shakapacker.baseConfig = custom`) runs this setter
-  // and propagates to config generation. Redefining the property with a value
-  // descriptor (`Object.defineProperty(shakapacker, "baseConfig", { value })`)
-  // bypasses it, leaving `_baseConfig`/`_baseConfigLoaded` untouched, so
-  // `generateWebpackConfig` (which calls `getBaseConfig()`) keeps the lazy value.
+  // Direct assignment (`shakapacker.baseConfig = custom`) runs this setter and
+  // overrides the value read back from `shakapacker.baseConfig`. It changes
+  // `generateWebpackConfig` output ONLY in the fallback case where no
+  // `environments/<NODE_ENV>.js` file exists, since that is the sole branch that
+  // calls `getBaseConfig()`. Normal NODE_ENV builds load `environments/<env>.js`
+  // (which `require("./base")` directly), so the override does not affect them.
+  // Redefining the property with a value descriptor
+  // (`Object.defineProperty(shakapacker, "baseConfig", { value })`) bypasses this
+  // setter, leaving `_baseConfig`/`_baseConfigLoaded` untouched.
   set(value: Configuration | undefined) {
     _baseConfig = value
     _baseConfigLoaded = value !== undefined
   }
 })
 
-// Fail loudly if the lazy getters were not installed (parity with
-// package/rspack/index.ts), rather than silently shipping eager or missing
-// baseConfig/rules exports.
+// Parity guard with package/rspack/index.ts, kept for symmetry and as executable
+// documentation of the contract rather than as runtime protection. Here the
+// getters are installed on a freshly-created plain object, so the
+// Object.defineProperty calls above throw synchronously if they ever fail and
+// this check can never actually fire. It is meaningful in the rspack entry, where
+// the getters are installed on the CommonJS `exports` object and a future build
+// target could emit a non-configurable placeholder that makes defineProperty fail.
 ;(["rules", "baseConfig"] as const).forEach((key) => {
   if (
     typeof Object.getOwnPropertyDescriptor(shakapacker, key)?.get !== "function"
