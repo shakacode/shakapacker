@@ -25,7 +25,12 @@ interface ShakapackerExports {
   config: Config
   /** Development server configuration */
   devServer: DevServerConfig
-  /** Base webpack/rspack configuration (lazily loaded on first access; may throw if the bundler is not installed) */
+  /**
+   * Base webpack/rspack configuration (lazily loaded on first access; may throw if the bundler is not installed).
+   *
+   * To override for config generation, use direct assignment (`shakapacker.baseConfig = custom`).
+   * `Object.defineProperty` with a value descriptor bypasses the internal cache and will NOT affect `generateWebpackConfig`.
+   */
   baseConfig: Configuration
   /** Environment configuration (railsEnv, nodeEnv, etc.) */
   env: Env
