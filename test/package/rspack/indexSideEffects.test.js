@@ -57,9 +57,13 @@ describe("rspack/index side effects", () => {
 
       require("../../../package/rspack/index")
 
+      // Requiring the index must not pull in ANY bundler module. Asserting the
+      // full request list is empty (rather than spot-checking specific names)
+      // gives the test teeth: a newly-added eager dependency would surface here
+      // even though the requireOrError mock returns an empty object for unknown
+      // modules and would otherwise mask it.
       const requestedModules = requireOrError.mock.calls.map((call) => call[0])
-      expect(requestedModules).not.toContain("@rspack/core")
-      expect(requestedModules).not.toContain("rspack-manifest-plugin")
+      expect(requestedModules).toStrictEqual([])
     })
   })
 
