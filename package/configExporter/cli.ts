@@ -888,7 +888,7 @@ async function runDoctorMode(
     const targetDir = options.saveDir! // Set by applyDefaults
 
     const createdFiles: string[] = []
-    let detectedBundler = "webpack"
+    const detectedBundlers = new Set<string>()
 
     // Check if config file exists - always use it for doctor mode
     const configFilePath = options.configFile || DEFAULT_CONFIG_FILE
@@ -920,7 +920,7 @@ async function runDoctorMode(
           )
 
           for (const { config, metadata } of configs) {
-            detectedBundler = metadata.bundler
+            detectedBundlers.add(metadata.bundler)
             const output = formatConfig(config, metadata, options, appRoot)
             const filename = FileWriter.generateFilename(
               metadata.bundler,
@@ -935,18 +935,12 @@ async function runDoctorMode(
           }
         }
 
-        // Generate AI analysis prompt
-        const aiPromptGenerator = new AiPromptGenerator()
-        const fileBasenames = createdFiles.map((f) => basename(f))
-        const aiPromptContent = aiPromptGenerator.generatePrompt(
-          fileBasenames,
+        // Generate AI analysis prompt (best-effort companion file)
+        const aiPromptFilename = writeAiAnalysisPrompt(
+          createdFiles,
           targetDir,
-          detectedBundler
+          detectedBundlers
         )
-        const aiPromptFilename = aiPromptGenerator.generatePromptFilename()
-        const aiPromptPath = resolve(targetDir, aiPromptFilename)
-        FileWriter.writeSingleFile(aiPromptPath, aiPromptContent)
-        createdFiles.push(aiPromptPath)
 
         // Print summary and exit early
         printDoctorSummary(createdFiles, targetDir, aiPromptFilename)
@@ -998,7 +992,7 @@ async function runDoctorMode(
       const configs = await loadConfigsForEnv(env, options, appRoot)
 
       for (const { config, metadata } of configs) {
-        detectedBundler = metadata.bundler
+        detectedBundlers.add(metadata.bundler)
         const output = formatConfig(config, metadata, options, appRoot)
 
         // Adjust filename for HMR config
@@ -1039,18 +1033,12 @@ async function runDoctorMode(
       }
     }
 
-    // Generate AI analysis prompt
-    const aiPromptGenerator = new AiPromptGenerator()
-    const fileBasenames = createdFiles.map((f) => basename(f))
-    const aiPromptContent = aiPromptGenerator.generatePrompt(
-      fileBasenames,
+    // Generate AI analysis prompt (best-effort companion file)
+    const aiPromptFilename = writeAiAnalysisPrompt(
+      createdFiles,
       targetDir,
-      detectedBundler
+      detectedBundlers
     )
-    const aiPromptFilename = aiPromptGenerator.generatePromptFilename()
-    const aiPromptPath = resolve(targetDir, aiPromptFilename)
-    FileWriter.writeSingleFile(aiPromptPath, aiPromptContent)
-    createdFiles.push(aiPromptPath)
 
     printDoctorSummary(createdFiles, targetDir, aiPromptFilename)
   } finally {
@@ -1059,10 +1047,48 @@ async function runDoctorMode(
   }
 }
 
+/**
+ * Generate and write the AI analysis prompt that accompanies a doctor-mode
+ * export. The prompt is a best-effort companion file: the exported configs are
+ * the primary deliverable, so failures here warn instead of aborting the
+ * export. Returns the prompt filename, or null if nothing was written.
+ *
+ * Exported for testing.
+ */
+export function writeAiAnalysisPrompt(
+  createdFiles: string[],
+  targetDir: string,
+  bundlers: Set<string>
+): string | null {
+  if (createdFiles.length === 0) {
+    return null
+  }
+  try {
+    const aiPromptGenerator = new AiPromptGenerator()
+    const bundler = [...bundlers].join(" and ") || "unknown"
+    const fileBasenames = createdFiles.map((f) => basename(f))
+    const aiPromptContent = aiPromptGenerator.generatePrompt(
+      fileBasenames,
+      targetDir,
+      bundler
+    )
+    const aiPromptFilename = aiPromptGenerator.generatePromptFilename()
+    const aiPromptPath = resolve(targetDir, aiPromptFilename)
+    FileWriter.writeSingleFile(aiPromptPath, aiPromptContent)
+    createdFiles.push(aiPromptPath)
+    return aiPromptFilename
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : String(error)
+    console.warn(`\n⚠️  Could not write AI analysis prompt: ${errorMessage}`)
+    console.warn("   The exported configuration files are unaffected.")
+    return null
+  }
+}
+
 function printDoctorSummary(
   createdFiles: string[],
   targetDir: string,
-  aiPromptFilename: string
+  aiPromptFilename: string | null
 ): void {
   // Print summary
   console.log(`\n${"=".repeat(80)}`)
@@ -1073,20 +1099,22 @@ function printDoctorSummary(
   console.log("Configuration Files:")
   createdFiles.forEach((file) => {
     const name = basename(file)
-    if (name.endsWith(".md")) {
-      // Don't show AI prompt in main list, will highlight separately
+    if (name === aiPromptFilename) {
+      // The AI prompt is highlighted separately below
       return
     }
     console.log(`  ✓ ${name}`)
   })
-  console.log("")
-  console.log("AI Analysis:")
-  console.log(
-    `  🤖 ${aiPromptFilename} - Use this prompt to get AI recommendations`
-  )
-  console.log(
-    "     Copy the contents and paste into an AI assistant for configuration analysis"
-  )
+  if (aiPromptFilename) {
+    console.log("")
+    console.log("AI Analysis:")
+    console.log(
+      `  🤖 ${aiPromptFilename} - Use this prompt to get AI recommendations`
+    )
+    console.log(
+      "     Copy the contents and paste into an AI assistant for configuration analysis"
+    )
+  }
 
   // Check if directory should be added to .gitignore
   const gitignorePath = resolve(process.cwd(), ".gitignore")

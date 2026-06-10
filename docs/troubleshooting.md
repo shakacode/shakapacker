@@ -36,8 +36,9 @@ If you're experiencing FOUC where content briefly appears unstyled before CSS lo
 
    # Export EVERYTHING for troubleshooting (dev + prod, annotated YAML)
    bin/shakapacker-config --doctor
-   # Creates: webpack-development-client.yaml, webpack-development-server.yaml,
-   #          webpack-production-client.yaml, webpack-production-server.yaml,
+   # Creates: webpack-development-hmr-client.yml, webpack-development-client.yml,
+   #          webpack-development-server.yml, webpack-production-client.yml,
+   #          webpack-production-server.yml,
    #          AI-ANALYSIS-PROMPT.md (prompt file for AI analysis)
    ```
 

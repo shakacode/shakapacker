@@ -1,18 +1,21 @@
-import { basename } from "path"
-import { ConfigMetadata } from "./types"
-
 /**
- * Generates an AI prompt file for analyzing webpack/rspack configuration exports.
- * The prompt helps AI identify issues and suggest optimizations for the bundler configuration.
+ * Generates the content and filename for an AI prompt that accompanies
+ * webpack/rspack configuration exports. The prompt helps AI identify issues and
+ * suggest optimizations for the bundler configuration. (Writing the file to
+ * disk is the caller's responsibility.)
  */
 export class AiPromptGenerator {
   /**
    * Generate a comprehensive AI analysis prompt based on exported config files.
    *
+   * Every entry in `exportedFiles` is listed in the prompt. Filenames containing
+   * recognizable markers (dev/development, prod/production, client, server, hmr)
+   * get descriptive labels; anything else is listed without a description.
+   *
    * @param exportedFiles - Array of exported config file basenames
    * @param targetDir - Directory where configs were exported
-   * @param bundler - The bundler type (webpack or rspack)
-   * @param includeReactOnRailsContext - Whether to include React on Rails specific context
+   * @param bundler - The bundler label (e.g. "webpack", "rspack", or "webpack and rspack" for mixed-bundler exports)
+   * @param includeReactOnRailsContext - Whether to include React on Rails specific context (defaults to true)
    * @returns Markdown-formatted AI prompt
    */
   generatePrompt(
@@ -21,19 +24,7 @@ export class AiPromptGenerator {
     bundler: string,
     includeReactOnRailsContext = true
   ): string {
-    const clientDevFile = exportedFiles.find((f) =>
-      f.includes("development-client")
-    )
-    const serverDevFile = exportedFiles.find((f) =>
-      f.includes("development-server")
-    )
-    const clientProdFile = exportedFiles.find((f) =>
-      f.includes("production-client")
-    )
-    const serverProdFile = exportedFiles.find((f) =>
-      f.includes("production-server")
-    )
-
+    const timestamp = new Date().toISOString()
     const sections: string[] = []
 
     // Header
@@ -51,37 +42,30 @@ export class AiPromptGenerator {
     sections.push("## Context")
     sections.push("")
     sections.push(`- **Bundler**: ${bundler}`)
-    sections.push(`- **Exported At**: ${new Date().toISOString()}`)
+    sections.push(`- **Exported At**: ${timestamp}`)
     sections.push(`- **Export Directory**: ${targetDir}`)
     sections.push("")
 
     // Configuration files
     sections.push("## Configuration Files")
     sections.push("")
-    sections.push(
-      "The following configuration files are available for analysis:"
-    )
-    sections.push("")
-
-    if (clientDevFile) {
+    if (exportedFiles.length > 0) {
       sections.push(
-        `- **Development (Client)**: \`${clientDevFile}\` - Client bundle for development mode`
+        "The following configuration files are available for analysis:"
       )
-    }
-    if (serverDevFile) {
-      sections.push(
-        `- **Development (Server)**: \`${serverDevFile}\` - Server-side rendering bundle for development mode`
-      )
-    }
-    if (clientProdFile) {
-      sections.push(
-        `- **Production (Client)**: \`${clientProdFile}\` - Client bundle for production mode`
-      )
-    }
-    if (serverProdFile) {
-      sections.push(
-        `- **Production (Server)**: \`${serverProdFile}\` - Server-side rendering bundle for production mode`
-      )
+      sections.push("")
+      for (const file of exportedFiles) {
+        sections.push(this.describeExportedFile(file))
+      }
+      if (exportedFiles.some((f) => f.toLowerCase().includes("hmr"))) {
+        sections.push("")
+        sections.push(
+          "The HMR config is especially useful for troubleshooting dev server, hot reload,"
+        )
+        sections.push("and live reload issues.")
+      }
+    } else {
+      sections.push("No configuration files were exported.")
     }
     sections.push("")
 
@@ -90,7 +74,7 @@ export class AiPromptGenerator {
       sections.push("## React on Rails Standard Configuration")
       sections.push("")
       sections.push(
-        "This project uses React on Rails, which typically includes these standard configuration files:"
+        "If this project uses React on Rails, it typically includes these standard configuration files:"
       )
       sections.push("")
       sections.push(
@@ -127,45 +111,16 @@ export class AiPromptGenerator {
       sections.push("**Source Configuration Files (JavaScript):**")
       sections.push("")
       sections.push(
-        "- [commonWebpackConfig.js](https://github.com/shakacode/react_on_rails/blob/master/spec/dummy/config/webpack/commonWebpackConfig.js)"
+        "- [commonWebpackConfig.js](https://github.com/shakacode/react_on_rails/blob/main/react_on_rails/spec/dummy/config/webpack/commonWebpackConfig.js)"
       )
       sections.push(
-        "- [clientWebpackConfig.js](https://github.com/shakacode/react_on_rails/blob/master/spec/dummy/config/webpack/clientWebpackConfig.js)"
+        "- [clientWebpackConfig.js](https://github.com/shakacode/react_on_rails/blob/main/react_on_rails/spec/dummy/config/webpack/clientWebpackConfig.js)"
       )
       sections.push(
-        "- [serverWebpackConfig.js](https://github.com/shakacode/react_on_rails/blob/master/spec/dummy/config/webpack/serverWebpackConfig.js)"
+        "- [serverWebpackConfig.js](https://github.com/shakacode/react_on_rails/blob/main/react_on_rails/spec/dummy/config/webpack/serverWebpackConfig.js)"
       )
       sections.push(
-        "- [webpack.config.js](https://github.com/shakacode/react_on_rails/blob/master/spec/dummy/config/webpack/webpack.config.js)"
-      )
-      sections.push("")
-      sections.push(
-        "**Exported Configuration References (YAML - Coming Soon):**"
-      )
-      sections.push("")
-      sections.push(
-        "The React on Rails team is working on providing exported reference configurations"
-      )
-      sections.push(
-        "in YAML format (similar to the files in this directory) for easier comparison."
-      )
-      sections.push(
-        "These will include 10 exported config files (5 for webpack, 5 for rspack):"
-      )
-      sections.push("")
-      sections.push("- Development client (standard build)")
-      sections.push("- Development client with HMR (dev server configuration)")
-      sections.push("- Development server (SSR)")
-      sections.push("- Production client")
-      sections.push("- Production server (SSR)")
-      sections.push("")
-      sections.push(
-        "The HMR configs are especially useful for troubleshooting dev server, hot reload,"
-      )
-      sections.push("and live reload issues.")
-      sections.push("")
-      sections.push(
-        "Track progress at: https://github.com/shakacode/react_on_rails/issues/1862"
+        "- [webpack.config.js](https://github.com/shakacode/react_on_rails/blob/main/react_on_rails/spec/dummy/config/webpack/webpack.config.js)"
       )
       sections.push("")
       sections.push(
@@ -315,14 +270,55 @@ export class AiPromptGenerator {
     sections.push("")
     sections.push("**Generated by Shakapacker Config Exporter**")
     sections.push(`**Bundler**: ${bundler}`)
-    sections.push(`**Date**: ${new Date().toISOString()}`)
+    sections.push(`**Date**: ${timestamp}`)
     sections.push("")
 
     return sections.join("\n")
   }
 
   /**
-   * Generate filename for the AI prompt.
+   * Build a Markdown bullet for an exported config file, attaching a
+   * descriptive label when the filename contains recognizable markers.
+   * Filenames come from FileWriter.generateFilename
+   * ({bundler}-{buildName|env}-{configType}.{ext}), where build names are
+   * user-defined, so matching is best-effort and unmatched files are still
+   * listed.
+   */
+  private describeExportedFile(filename: string): string {
+    const lower = filename.toLowerCase()
+
+    let mode: string | null = null
+    if (lower.includes("prod")) {
+      mode = "production"
+    } else if (lower.includes("dev")) {
+      mode = "development"
+    } else if (lower.includes("test")) {
+      mode = "test"
+    }
+    const modeLabel = mode ? `${mode[0].toUpperCase()}${mode.slice(1)}` : null
+    const modeSuffix = mode ? ` for ${mode} mode` : ""
+
+    if (lower.includes("hmr")) {
+      const label = modeLabel ? `${modeLabel} (Client, HMR)` : "Client (HMR)"
+      return `- **${label}**: \`${filename}\` - Client bundle with Hot Module Replacement${modeSuffix}`
+    }
+    if (lower.includes("client")) {
+      const label = modeLabel ? `${modeLabel} (Client)` : "Client"
+      return `- **${label}**: \`${filename}\` - Client bundle${modeSuffix}`
+    }
+    if (lower.includes("server")) {
+      const label = modeLabel ? `${modeLabel} (Server)` : "Server"
+      return `- **${label}**: \`${filename}\` - Server-side rendering bundle${modeSuffix}`
+    }
+    if (lower.includes("-all.")) {
+      const label = modeLabel ? `${modeLabel} (All bundles)` : "All bundles"
+      return `- **${label}**: \`${filename}\` - Combined client and server configuration${modeSuffix}`
+    }
+    return `- \`${filename}\``
+  }
+
+  /**
+   * Generate the filename for the AI prompt file.
    */
   generatePromptFilename(): string {
     return "AI-ANALYSIS-PROMPT.md"
