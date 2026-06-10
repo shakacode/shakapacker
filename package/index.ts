@@ -151,23 +151,4 @@ Object.defineProperty(shakapacker, "baseConfig", {
   }
 })
 
-// Parity guard with package/rspack/index.ts, kept for symmetry and as executable
-// documentation of the contract rather than as runtime protection. Here the
-// getters are installed on a freshly-created plain object, so the
-// Object.defineProperty calls above throw synchronously if they ever fail and
-// this check can never actually fire. It is meaningful in the rspack entry, where
-// the getters are installed on the CommonJS `exports` object and a future build
-// target could emit a non-configurable placeholder that makes defineProperty fail.
-;(["rules", "baseConfig"] as const).forEach((key) => {
-  if (
-    typeof Object.getOwnPropertyDescriptor(shakapacker, key)?.get !== "function"
-  ) {
-    throw new Error(
-      `[shakapacker] Failed to install the lazy '${key}' getter on shakapacker. ` +
-        "This indicates the build emitted a non-configurable property binding for it. " +
-        "See package/index.js."
-    )
-  }
-})
-
 export = shakapacker
