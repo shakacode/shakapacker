@@ -22,7 +22,9 @@ describe("webpack index types", () => {
       const outDir = join(sharedRootDir, "package")
 
       execFileSync("./node_modules/.bin/tsc", ["--outDir", outDir], {
-        stdio: ["pipe", "pipe", "inherit"]
+        // tsc writes diagnostics to stdout; inherit it so a compile failure
+        // surfaces readable errors instead of a raw Buffer in the thrown error.
+        stdio: ["pipe", "inherit", "inherit"]
       })
       symlinkSync(
         join(process.cwd(), "node_modules"),

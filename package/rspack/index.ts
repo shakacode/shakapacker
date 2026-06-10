@@ -83,7 +83,8 @@ const generateRspackConfig = (
 // with their real types, without forcing either module to load eagerly. Being
 // ambient (`declare const`), they emit no runtime binding of their own.
 //
-// Mechanism: with module: commonjs, tsc initializes every named export to
+// Mechanism: with module: commonjs (set in tsconfig.json, where a note on the
+// "module" setting points back here), tsc initializes every named export to
 // `void 0` at the top of the emitted module as a configurable data property.
 // Installing an accessor via Object.defineProperty(exports, ...) below replaces
 // that placeholder AND removes the export from Node's static CommonJS
