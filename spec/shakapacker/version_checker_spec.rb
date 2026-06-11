@@ -1559,4 +1559,46 @@ describe "VersionChecker::NodePackageVersion" do
       end
     end
   end
+
+  # Regression test for https://github.com/shakacode/shakapacker/issues/1160
+  # pnpm >= 10.16 (default in pnpm 11) writes a `time:` section whose ISO-8601
+  # values YAML parses as `Time`. Under Psych 4+ the lockfile is safe-loaded, so
+  # an unguarded load raised `Psych::DisallowedClass` and crashed every Rails boot.
+  context "with a pnpm-lock.yaml that contains a time: section" do
+    it "#raw parses the version instead of raising Psych::DisallowedClass" do
+      Dir.mktmpdir do |dir|
+        package_json_path = File.join(dir, "package.json")
+        pnpm_lock_path = File.join(dir, "pnpm-lock.yaml")
+
+        File.write(package_json_path, JSON.generate({ "dependencies" => { "shakapacker" => "8.4.0" } }))
+        File.write(pnpm_lock_path, <<~LOCK)
+          lockfileVersion: '9.0'
+
+          importers:
+            .:
+              dependencies:
+                shakapacker:
+                  specifier: 8.4.0
+                  version: 8.4.0
+
+          packages:
+            shakapacker@8.4.0:
+              resolution: {integrity: sha512-deadbeefdeadbeefdeadbeefdeadbeef}
+
+          time:
+            shakapacker@8.4.0: 2025-09-09T08:34:00.687Z
+        LOCK
+
+        node_package_version = Shakapacker::VersionChecker::NodePackageVersion.new(
+          package_json_path,
+          "file/does/not/exist",
+          "file/does/not/exist",
+          pnpm_lock_path
+        )
+
+        expect(node_package_version.raw).to eq "8.4.0"
+        expect(node_package_version.major_minor_patch).to eq ["8", "4", "0"]
+      end
+    end
+  end
 end
