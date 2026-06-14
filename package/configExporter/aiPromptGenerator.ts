@@ -303,6 +303,13 @@ export class AiPromptGenerator {
     const modeLabel = mode ? `${mode[0].toUpperCase()}${mode.slice(1)}` : null
     const modeSuffix = mode ? ` for ${mode} mode` : ""
 
+    // Check "server" before "hmr"/"client": HMR applies to client bundles, but
+    // a build name can combine markers (e.g. "<bundler>-dev-hmr-server.yml"),
+    // and such a file is still a server bundle.
+    if (lower.includes("server")) {
+      const label = modeLabel ? `${modeLabel} (Server)` : "Server"
+      return `- **${label}**: \`${filename}\` - Server-side rendering bundle${modeSuffix}`
+    }
     if (lower.includes("hmr")) {
       const label = modeLabel ? `${modeLabel} (Client, HMR)` : "Client (HMR)"
       return `- **${label}**: \`${filename}\` - Client bundle with Hot Module Replacement${modeSuffix}`
@@ -310,10 +317,6 @@ export class AiPromptGenerator {
     if (lower.includes("client")) {
       const label = modeLabel ? `${modeLabel} (Client)` : "Client"
       return `- **${label}**: \`${filename}\` - Client bundle${modeSuffix}`
-    }
-    if (lower.includes("server")) {
-      const label = modeLabel ? `${modeLabel} (Server)` : "Server"
-      return `- **${label}**: \`${filename}\` - Server-side rendering bundle${modeSuffix}`
     }
     if (lower.includes("-all.")) {
       const label = modeLabel ? `${modeLabel} (All bundles)` : "All bundles"

@@ -159,6 +159,21 @@ describe("AiPromptGenerator", () => {
     expect(prompt).toContain("The HMR config is especially useful")
   })
 
+  test("generatePrompt labels an hmr server bundle as a server bundle", () => {
+    // A build name can combine markers; "server" must win over "hmr" since HMR
+    // only applies to client bundles.
+    const prompt = AiPromptGenerator.generatePrompt(
+      ["webpack-dev-hmr-server.yml"],
+      "/path/to/exports",
+      "webpack"
+    )
+
+    expect(prompt).toContain(
+      "- **Development (Server)**: `webpack-dev-hmr-server.yml` - Server-side rendering bundle for development mode"
+    )
+    expect(prompt).not.toContain("`webpack-dev-hmr-server.yml` - Client bundle")
+  })
+
   test("generatePrompt lists unrecognized filenames without a label", () => {
     const exportedFiles = ["webpack-my-custom-build-extras.yml"]
 
