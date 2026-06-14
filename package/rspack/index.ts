@@ -18,6 +18,8 @@ const config = require("../config") as Config
 const devServer = require("../dev_server")
 const env = require("../env")
 const { moduleExists, canProcess } = require("../utils/helpers")
+const createLazyExport =
+  require("../utils/createLazyExport") as typeof import("../utils/createLazyExport")
 const inliningCss = require("../utils/inliningCss")
 const {
   isRspack,
@@ -33,29 +35,10 @@ const { validateRspackDependencies } = require("../utils/validateDependencies")
 
 const rulesPath = resolve(__dirname, "../rules", "rspack.js")
 
-let _rules: RuleSetRule[] | undefined
-let _rulesLoaded = false
-
-const getRules = (): RuleSetRule[] => {
-  if (!_rulesLoaded) {
-    _rules = require(rulesPath) as RuleSetRule[]
-    _rulesLoaded = true
-  }
-
-  return _rules as RuleSetRule[]
-}
-
-let _baseConfig: RspackConfigWithDevServer | undefined
-let _baseConfigLoaded = false
-
-const getBaseConfig = (): RspackConfigWithDevServer => {
-  if (!_baseConfigLoaded) {
-    _baseConfig = require("../environments/base") as RspackConfigWithDevServer
-    _baseConfigLoaded = true
-  }
-
-  return _baseConfig as RspackConfigWithDevServer
-}
+const lazyRules = createLazyExport(() => require(rulesPath) as RuleSetRule[])
+const lazyBaseConfig = createLazyExport(
+  () => require("../environments/base") as RspackConfigWithDevServer
+)
 
 const generateRspackConfig = (
   extraConfig: RspackConfigWithDevServer = {},
@@ -72,7 +55,9 @@ const generateRspackConfig = (
   const { nodeEnv } = env
   const path = resolve(__dirname, "../environments", `${nodeEnv}.js`)
 
-  const environmentConfig = existsSync(path) ? require(path) : getBaseConfig()
+  const environmentConfig = existsSync(path)
+    ? require(path)
+    : lazyBaseConfig.get()
 
   return webpackMerge.merge({}, environmentConfig, extraConfig)
 }
@@ -93,8 +78,8 @@ const generateRspackConfig = (
 // found" (a documented breaking change; see CHANGELOG). ESM consumers must use
 // the default import or require(). The defineProperty calls succeed because the
 // placeholder is configurable; a build target that emitted non-configurable
-// export bindings would make them throw at load, and the guard after them fails
-// loudly in the unlikely event a getter is otherwise not installed.
+// export bindings would make them throw at load. The compiled-output contract
+// is locked in by test/package/indexTypes.test.js.
 //
 // TODO(#641): Once the module/export strategy is resolved, consider switching to
 // the same local-object pattern used in package/index.ts (assemble the exports
@@ -131,46 +116,12 @@ export {
   getProvidePlugin
 }
 
-Object.defineProperty(exports, "rules", {
-  configurable: true,
-  enumerable: true,
-  get: getRules,
-  set(value: RuleSetRule[] | undefined) {
-    // Assigning `undefined` resets to lazy loading rather than caching a
-    // permanently-undefined value the getter would then return silently.
-    _rules = value
-    _rulesLoaded = value !== undefined
-  }
-})
-
-Object.defineProperty(exports, "baseConfig", {
-  configurable: true,
-  enumerable: true,
-  get: getBaseConfig,
-  // Direct assignment (`require("shakapacker/rspack").baseConfig = custom`) runs
-  // this setter and overrides the value read back from `baseConfig`. It changes
-  // `generateRspackConfig` output ONLY in the fallback case where no
-  // `environments/<NODE_ENV>.js` file exists, since that is the sole branch that
-  // calls `getBaseConfig()`. Normal NODE_ENV builds load `environments/<env>.js`
-  // (which `require("../environments/base")` directly), so the override does not
-  // affect them.
-  set(value: RspackConfigWithDevServer | undefined) {
-    _baseConfig = value
-    _baseConfigLoaded = value !== undefined
-  }
-})
-
-// Fail loudly if the lazy getters were not installed (e.g. a future build target
-// emits non-overridable export bindings), rather than silently shipping eager or
-// missing baseConfig/rules exports.
-;(["rules", "baseConfig"] as const).forEach((key) => {
-  if (
-    typeof Object.getOwnPropertyDescriptor(exports, key)?.get !== "function"
-  ) {
-    throw new Error(
-      `[shakapacker] Failed to install the lazy '${key}' getter on shakapacker/rspack. ` +
-        "This indicates the build emitted a non-configurable export binding for it. " +
-        "See package/rspack/index.js."
-    )
-  }
-})
+// Override semantics (assignment, undefined reset, defineProperty bypass) are
+// documented on createLazyExport. A `require("shakapacker/rspack").baseConfig =
+// custom` override changes `generateRspackConfig` output ONLY in the fallback
+// case where no `environments/<NODE_ENV>.js` file exists, since that is the
+// sole branch that reads the lazy value. Normal NODE_ENV builds load
+// `environments/<env>.js` (which `require("../environments/base")` directly),
+// so the override does not affect them.
+Object.defineProperty(exports, "rules", lazyRules.descriptor)
+Object.defineProperty(exports, "baseConfig", lazyBaseConfig.descriptor)

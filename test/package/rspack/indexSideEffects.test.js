@@ -210,22 +210,6 @@ describe("rspack/index side effects", () => {
     })
   })
 
-  test("accessing baseConfig triggers the rspack-manifest-plugin load", () => {
-    jest.isolateModules(() => {
-      mockConfigForRspack()
-      const requireOrError = mockRequireOrError()
-
-      const rspackIndex = require("../../../package/rspack/index")
-      const beforeAccess = requireOrError.mock.calls.map((call) => call[0])
-      expect(beforeAccess).not.toContain("rspack-manifest-plugin")
-
-      expect(rspackIndex.baseConfig).toBeDefined()
-
-      const afterAccess = requireOrError.mock.calls.map((call) => call[0])
-      expect(afterAccess).toContain("rspack-manifest-plugin")
-    })
-  })
-
   test("accessing rules does not trigger the rspack-manifest-plugin load", () => {
     jest.isolateModules(() => {
       mockConfigForRspack()
@@ -240,7 +224,7 @@ describe("rspack/index side effects", () => {
   })
 
   test("memoizes baseConfig across repeated accesses without re-resolving optional deps", () => {
-    // Mirrors the webpack memoization spec: the _baseConfig cache must return the
+    // Mirrors the webpack memoization spec: the lazy cache must return the
     // same object on repeated access and resolve rspack-manifest-plugin only
     // once. Spying on requireOrError gives the assertion teeth the Node require
     // cache alone would not — a re-running getter would request the plugin again.

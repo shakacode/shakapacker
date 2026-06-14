@@ -8,6 +8,7 @@ import config from "./config"
 import devServer from "./dev_server"
 import env from "./env"
 import { moduleExists, canProcess } from "./utils/helpers"
+import createLazyExport from "./utils/createLazyExport"
 import inliningCss from "./utils/inliningCss"
 import {
   isRspack,
@@ -22,29 +23,10 @@ import {
 
 const rulesPath = resolve(__dirname, "rules", `${config.assets_bundler}.js`)
 
-let _rules: RuleSetRule[] | undefined
-let _rulesLoaded = false
-
-const getRules = (): RuleSetRule[] => {
-  if (!_rulesLoaded) {
-    _rules = require(rulesPath) as RuleSetRule[]
-    _rulesLoaded = true
-  }
-
-  return _rules as RuleSetRule[]
-}
-
-let _baseConfig: Configuration | undefined
-let _baseConfigLoaded = false
-
-const getBaseConfig = (): Configuration => {
-  if (!_baseConfigLoaded) {
-    _baseConfig = require("./environments/base") as Configuration
-    _baseConfigLoaded = true
-  }
-
-  return _baseConfig as Configuration
-}
+const lazyRules = createLazyExport(() => require(rulesPath) as RuleSetRule[])
+const lazyBaseConfig = createLazyExport(
+  () => require("./environments/base") as Configuration
+)
 
 /**
  * Generate webpack configuration with optional custom config.
@@ -73,7 +55,9 @@ const generateWebpackConfig = (
 
   const { nodeEnv } = env
   const path = resolve(__dirname, "environments", `${nodeEnv}.js`)
-  const environmentConfig = existsSync(path) ? require(path) : getBaseConfig()
+  const environmentConfig = existsSync(path)
+    ? require(path)
+    : lazyBaseConfig.get()
 
   return webpackMerge.merge({}, environmentConfig, extraConfig)
 }
@@ -120,35 +104,13 @@ const shakapacker = {
   ...webpackMerge
 }
 
-Object.defineProperty(shakapacker, "rules", {
-  configurable: true,
-  enumerable: true,
-  get: getRules,
-  set(value: RuleSetRule[] | undefined) {
-    // Assigning `undefined` resets to lazy loading rather than caching a
-    // permanently-undefined value the getter would then return silently.
-    _rules = value
-    _rulesLoaded = value !== undefined
-  }
-})
-
-Object.defineProperty(shakapacker, "baseConfig", {
-  configurable: true,
-  enumerable: true,
-  get: getBaseConfig,
-  // Direct assignment (`shakapacker.baseConfig = custom`) runs this setter and
-  // overrides the value read back from `shakapacker.baseConfig`. It changes
-  // `generateWebpackConfig` output ONLY in the fallback case where no
-  // `environments/<NODE_ENV>.js` file exists, since that is the sole branch that
-  // calls `getBaseConfig()`. Normal NODE_ENV builds load `environments/<env>.js`
-  // (which `require("./base")` directly), so the override does not affect them.
-  // Redefining the property with a value descriptor
-  // (`Object.defineProperty(shakapacker, "baseConfig", { value })`) bypasses this
-  // setter, leaving `_baseConfig`/`_baseConfigLoaded` untouched.
-  set(value: Configuration | undefined) {
-    _baseConfig = value
-    _baseConfigLoaded = value !== undefined
-  }
-})
+// Override semantics (assignment, undefined reset, defineProperty bypass) are
+// documented on createLazyExport. A `shakapacker.baseConfig = custom` override
+// changes `generateWebpackConfig` output ONLY in the fallback case where no
+// `environments/<NODE_ENV>.js` file exists, since that is the sole branch that
+// reads the lazy value. Normal NODE_ENV builds load `environments/<env>.js`
+// (which `require("./base")` directly), so the override does not affect them.
+Object.defineProperty(shakapacker, "rules", lazyRules.descriptor)
+Object.defineProperty(shakapacker, "baseConfig", lazyBaseConfig.descriptor)
 
 export = shakapacker

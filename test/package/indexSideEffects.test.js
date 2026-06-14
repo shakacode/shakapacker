@@ -100,9 +100,9 @@ describe("index side effects", () => {
   test("baseConfig can be overridden via Object.defineProperty", () => {
     // Verifies only that the export stays redefinable (`configurable: true`).
     // A value-descriptor override bypasses the setter, so it does NOT propagate
-    // to `generateWebpackConfig` (which reads `getBaseConfig()`/`_baseConfig`
-    // directly). Direct assignment (`shakapacker.baseConfig = custom`) is the
-    // only path that reaches config generation.
+    // to `generateWebpackConfig` (which reads the lazy cache directly). Direct
+    // assignment (`shakapacker.baseConfig = custom`) is the only path that
+    // reaches config generation.
     jest.isolateModules(() => {
       mockEnsureManifestExists()
 
@@ -237,7 +237,7 @@ describe("index side effects", () => {
   })
 
   test("memoizes baseConfig across repeated accesses without re-running side effects", () => {
-    // The module-level _baseConfig cache is the crux of the lazy-getter
+    // The module-level lazy cache is the crux of the lazy-getter
     // contract: the first access loads environments/base (running
     // ensureManifestExists once), and subsequent accesses must return the same
     // cached object without re-running that side effect. Spying on
