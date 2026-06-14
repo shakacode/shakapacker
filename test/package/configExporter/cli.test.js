@@ -518,6 +518,31 @@ describe("configExporter/cli", () => {
       expect(content).toContain("**Bundler**: webpack")
     })
 
+    test("lists each config once when createdFiles contains duplicates", () => {
+      const {
+        writeAiAnalysisPrompt
+      } = require("../../../package/configExporter/cli")
+      // The HMR and regular development passes can write the same server bundle
+      // to the same path, so createdFiles may contain duplicate entries.
+      const serverPath = join(tempDir, "webpack-development-server.yml")
+      const createdFiles = [
+        join(tempDir, "webpack-development-client.yml"),
+        serverPath,
+        serverPath
+      ]
+
+      const filename = writeAiAnalysisPrompt(
+        createdFiles,
+        tempDir,
+        new Set(["webpack"])
+      )
+
+      const content = readFileSync(join(tempDir, filename), "utf8")
+      const occurrences =
+        content.split("`webpack-development-server.yml`").length - 1
+      expect(occurrences).toBe(1)
+    })
+
     test("labels mixed-bundler exports with both bundlers", () => {
       const {
         writeAiAnalysisPrompt

@@ -18,7 +18,7 @@ export class AiPromptGenerator {
    * @param includeReactOnRailsContext - Whether to include React on Rails specific context (defaults to true)
    * @returns Markdown-formatted AI prompt
    */
-  generatePrompt(
+  static generatePrompt(
     exportedFiles: string[],
     targetDir: string,
     bundler: string,
@@ -55,7 +55,7 @@ export class AiPromptGenerator {
       )
       sections.push("")
       for (const file of exportedFiles) {
-        sections.push(this.describeExportedFile(file))
+        sections.push(AiPromptGenerator.describeExportedFile(file))
       }
       if (exportedFiles.some((f) => f.toLowerCase().includes("hmr"))) {
         sections.push("")
@@ -284,7 +284,7 @@ export class AiPromptGenerator {
    * user-defined, so matching is best-effort and unmatched files are still
    * listed.
    */
-  private describeExportedFile(filename: string): string {
+  private static describeExportedFile(filename: string): string {
     const lower = filename.toLowerCase()
 
     let mode: string | null = null
@@ -320,7 +320,7 @@ export class AiPromptGenerator {
   /**
    * Generate the filename for the AI prompt file.
    */
-  generatePromptFilename(): string {
+  static generatePromptFilename(): string {
     return "AI-ANALYSIS-PROMPT.md"
   }
 }

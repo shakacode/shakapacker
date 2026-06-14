@@ -991,7 +991,17 @@ async function runDoctorMode(
       // eslint-disable-next-line no-await-in-loop -- Sequential execution required: each config modifies shared global state (env vars, config cache) that must be cleared/restored between iterations
       const configs = await loadConfigsForEnv(env, options, appRoot)
 
-      for (const { config, metadata } of configs) {
+      // HMR only applies to client bundles. During the HMR pass, skip
+      // server/other configs so they are written once (by the regular
+      // development pass) instead of being duplicated under the same filename.
+      const configsToWrite = hmr
+        ? configs.filter(
+            ({ metadata }) =>
+              metadata.configType === "client" || metadata.configType === "all"
+          )
+        : configs
+
+      for (const { config, metadata } of configsToWrite) {
         detectedBundlers.add(metadata.bundler)
         const output = formatConfig(config, metadata, options, appRoot)
 
@@ -1064,15 +1074,17 @@ export function writeAiAnalysisPrompt(
     return null
   }
   try {
-    const aiPromptGenerator = new AiPromptGenerator()
     const bundler = [...bundlers].join(" and ") || "unknown"
-    const fileBasenames = createdFiles.map((f) => basename(f))
-    const aiPromptContent = aiPromptGenerator.generatePrompt(
+    // Deduplicate basenames: doctor mode can write the same config to the same
+    // path more than once (e.g. a server bundle produced by both the HMR and
+    // regular development passes), and the prompt should list each config once.
+    const fileBasenames = [...new Set(createdFiles.map((f) => basename(f)))]
+    const aiPromptContent = AiPromptGenerator.generatePrompt(
       fileBasenames,
       targetDir,
       bundler
     )
-    const aiPromptFilename = aiPromptGenerator.generatePromptFilename()
+    const aiPromptFilename = AiPromptGenerator.generatePromptFilename()
     const aiPromptPath = resolve(targetDir, aiPromptFilename)
     FileWriter.writeSingleFile(aiPromptPath, aiPromptContent)
     createdFiles.push(aiPromptPath)
