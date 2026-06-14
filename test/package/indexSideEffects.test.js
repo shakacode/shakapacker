@@ -26,6 +26,7 @@ describe("index side effects", () => {
   afterEach(() => {
     jest.dontMock("../../package/plugins/webpack")
     jest.dontMock("../../package/utils/ensureManifestExists")
+    jest.dontMock("../../package/env")
   })
 
   test("does not initialize webpack plugins when only requiring the package index", () => {
@@ -267,6 +268,56 @@ describe("index side effects", () => {
       const shakapacker = require("../../package/index")
 
       expect(shakapacker.rules).toBe(shakapacker.rules)
+    })
+  })
+
+  test("a baseConfig override flows into generateWebpackConfig in the no-environment-file fallback", () => {
+    // Exercises the `: lazyBaseConfig.get()` branch of generateWebpackConfig
+    // (package/index.ts), which is only reached when no environments/<env>.js
+    // file exists. Pointing nodeEnv at a missing env forces that branch, and a
+    // prior `baseConfig` override must flow through to the generated config —
+    // without loading the real base (ensureManifestExists stays uncalled).
+    jest.isolateModules(() => {
+      const ensureManifestExists = mockEnsureManifestExists()
+      jest.doMock("../../package/env", () => ({
+        ...jest.requireActual("../../package/env"),
+        nodeEnv: "no-such-env"
+      }))
+
+      const shakapacker = require("../../package/index")
+      const stub = { mode: "none", entry: { app: "./app.js" } }
+
+      shakapacker.baseConfig = stub
+
+      const result = shakapacker.generateWebpackConfig()
+
+      expect(result).toStrictEqual(
+        expect.objectContaining({ mode: "none", entry: { app: "./app.js" } })
+      )
+      expect(ensureManifestExists).not.toHaveBeenCalled()
+    })
+  })
+
+  test("a baseConfig override does NOT affect generateWebpackConfig for a normal NODE_ENV build", () => {
+    // The companion to the fallback test: when environments/<env>.js exists
+    // (the normal case — jest runs with NODE_ENV=test), generateWebpackConfig
+    // loads that file directly and never reads the lazy baseConfig, so an
+    // override is intentionally ignored. This is the caveat documented on the
+    // override in index.ts / the .d.ts, here given executable teeth.
+    jest.isolateModules(() => {
+      mockEnsureManifestExists()
+      jest.dontMock("../../package/plugins/webpack")
+
+      const shakapacker = require("../../package/index")
+      const stub = { mode: "none", entry: { sentinel: "./override.js" } }
+
+      shakapacker.baseConfig = stub
+
+      const result = shakapacker.generateWebpackConfig()
+
+      // The real environment config was used, not the override stub.
+      expect(result.entry).not.toHaveProperty("sentinel")
+      expect(result).toHaveProperty("output.publicPath", "/packs/")
     })
   })
 })
