@@ -1560,44 +1560,76 @@ describe "VersionChecker::NodePackageVersion" do
     end
   end
 
-  # Regression test for https://github.com/shakacode/shakapacker/issues/1160
-  # pnpm >= 10.16 (default in pnpm 11) writes a `time:` section whose ISO-8601
-  # values YAML parses as `Time`. Under Psych 4+ the lockfile is safe-loaded, so
-  # an unguarded load raised `Psych::DisallowedClass` and crashed every Rails boot.
+  # Regression tests for https://github.com/shakacode/shakapacker/issues/1160
+  # pnpm writes a `time:` section (default since 10.16) whose ISO-8601 values YAML
+  # parses as Time. Under Psych 4+, load/load_file is safe-by-default, so an
+  # unguarded load raised `Psych::DisallowedClass` and crashed every Rails boot.
   context "with a pnpm-lock.yaml that contains a time: section" do
+    def build_node_package_version(dir, lockfile)
+      package_json_path = File.join(dir, "package.json")
+      pnpm_lock_path = File.join(dir, "pnpm-lock.yaml")
+
+      File.write(package_json_path, JSON.generate({ "dependencies" => { "shakapacker" => "8.4.0" } }))
+      File.write(pnpm_lock_path, lockfile)
+
+      Shakapacker::VersionChecker::NodePackageVersion.new(
+        package_json_path,
+        "file/does/not/exist",
+        "file/does/not/exist",
+        pnpm_lock_path
+      )
+    end
+
+    let(:lockfile_with_time) do
+      <<~LOCK
+        lockfileVersion: '9.0'
+
+        importers:
+          .:
+            dependencies:
+              shakapacker:
+                specifier: 8.4.0
+                version: 8.4.0
+
+        packages:
+          shakapacker@8.4.0:
+            resolution: {integrity: sha512-deadbeefdeadbeefdeadbeefdeadbeef}
+
+        time:
+          shakapacker@8.4.0: 2025-09-09T08:34:00.687Z
+      LOCK
+    end
+
     it "#raw parses the version instead of raising Psych::DisallowedClass" do
       Dir.mktmpdir do |dir|
-        package_json_path = File.join(dir, "package.json")
-        pnpm_lock_path = File.join(dir, "pnpm-lock.yaml")
-
-        File.write(package_json_path, JSON.generate({ "dependencies" => { "shakapacker" => "8.4.0" } }))
-        File.write(pnpm_lock_path, <<~LOCK)
-          lockfileVersion: '9.0'
-
-          importers:
-            .:
-              dependencies:
-                shakapacker:
-                  specifier: 8.4.0
-                  version: 8.4.0
-
-          packages:
-            shakapacker@8.4.0:
-              resolution: {integrity: sha512-deadbeefdeadbeefdeadbeefdeadbeef}
-
-          time:
-            shakapacker@8.4.0: 2025-09-09T08:34:00.687Z
-        LOCK
-
-        node_package_version = Shakapacker::VersionChecker::NodePackageVersion.new(
-          package_json_path,
-          "file/does/not/exist",
-          "file/does/not/exist",
-          pnpm_lock_path
-        )
+        node_package_version = build_node_package_version(dir, lockfile_with_time)
 
         expect(node_package_version.raw).to eq "8.4.0"
         expect(node_package_version.major_minor_patch).to eq ["8", "4", "0"]
+      end
+    end
+
+    # The crash fired on every boot even with checking disabled, because
+    # raise_if_gem_and_node_package_versions_differ evaluates skip_processing?
+    # (which parses the lockfile) before the ensure_consistent_versioning? short-circuit.
+    it "does not raise on boot even when version checking is disabled" do
+      Dir.mktmpdir do |dir|
+        node_package_version = build_node_package_version(dir, lockfile_with_time)
+        version_checker = Shakapacker::VersionChecker.new(node_package_version)
+        allow(Shakapacker.config).to receive(:ensure_consistent_versioning?).and_return(false)
+
+        expect { version_checker.raise_if_gem_and_node_package_versions_differ }
+          .not_to raise_error
+      end
+    end
+
+    # A time: value without a clock component parses as Date rather than Time.
+    it "#raw tolerates Date-typed time: values" do
+      Dir.mktmpdir do |dir|
+        lockfile = lockfile_with_time.sub("2025-09-09T08:34:00.687Z", "2025-09-09")
+        node_package_version = build_node_package_version(dir, lockfile)
+
+        expect(node_package_version.raw).to eq "8.4.0"
       end
     end
   end

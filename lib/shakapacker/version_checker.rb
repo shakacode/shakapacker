@@ -224,10 +224,12 @@ module Shakapacker
 
           def from_pnpm_lock
             require "yaml"
+            require "date"
 
-            # pnpm >= 10.16 writes a `time:` section that YAML parses as Time. Permit it to avoid a
-            # Psych 4+ boot crash; safe_load (not load_file's permitted_classes:) keeps Ruby 2.7/Psych 3.1.
-            content = YAML.safe_load(File.read(@pnpm_lock), permitted_classes: [Time])
+            # pnpm writes a `time:` section (default since 10.16) whose ISO-8601 values YAML parses as
+            # Time, or Date when a value omits the clock. Permit both to avoid a Psych 4+ boot crash;
+            # safe_load (not load_file's permitted_classes:) keeps Ruby 2.7/Psych 3.1 working.
+            content = YAML.safe_load(File.read(@pnpm_lock), permitted_classes: [Time, Date])
 
             content.fetch("packages", {}).each do |key, value|
               # git-based constraints will include a "version" key with their pseudo semantic version
