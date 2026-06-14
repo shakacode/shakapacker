@@ -213,14 +213,17 @@ describe("AiPromptGenerator", () => {
     expect(prompt).not.toContain("webpack-production-server.yml")
   })
 
-  test("generatePrompt includes the export directory", () => {
+  test("generatePrompt includes only the export directory name, not the full path", () => {
     const prompt = AiPromptGenerator.generatePrompt(
       ["webpack-development-client.yml"],
-      "/path/to/exports",
+      "/home/alice/projects/myapp/exports",
       "webpack"
     )
 
-    expect(prompt).toContain("- **Export Directory**: /path/to/exports")
+    // Only the base name is shown so the prompt is safe to paste into an
+    // external AI assistant without leaking the absolute local path.
+    expect(prompt).toContain("- **Export Directory**: exports")
+    expect(prompt).not.toContain("/home/alice/projects/myapp/exports")
   })
 
   test("generatePrompt includes React on Rails context by default", () => {

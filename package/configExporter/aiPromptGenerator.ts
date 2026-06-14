@@ -1,3 +1,5 @@
+import { basename } from "path"
+
 /**
  * Generates the content and filename for an AI prompt that accompanies
  * webpack/rspack configuration exports. The prompt helps AI identify issues and
@@ -13,7 +15,7 @@ export class AiPromptGenerator {
    * get descriptive labels; anything else is listed without a description.
    *
    * @param exportedFiles - Array of exported config file basenames
-   * @param targetDir - Directory where configs were exported
+   * @param targetDir - Directory where configs were exported (only its base name appears in the prompt)
    * @param bundler - The bundler label (e.g. "webpack", "rspack", or "webpack and rspack" for mixed-bundler exports)
    * @param includeReactOnRailsContext - Whether to include React on Rails specific context (defaults to true)
    * @returns Markdown-formatted AI prompt
@@ -43,7 +45,10 @@ export class AiPromptGenerator {
     sections.push("")
     sections.push(`- **Bundler**: ${bundler}`)
     sections.push(`- **Exported At**: ${timestamp}`)
-    sections.push(`- **Export Directory**: ${targetDir}`)
+    // Only the directory name is included: users are encouraged to paste this
+    // prompt into external AI assistants, so the absolute path (which can leak
+    // a username or internal layout) is deliberately omitted.
+    sections.push(`- **Export Directory**: ${basename(targetDir)}`)
     sections.push("")
 
     // Configuration files
