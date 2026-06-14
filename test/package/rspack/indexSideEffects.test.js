@@ -48,7 +48,15 @@ describe("rspack/index side effects", () => {
   afterEach(() => {
     jest.dontMock("../../../package/config")
     jest.dontMock("../../../package/utils/requireOrError")
+    jest.dontMock("../../../package/utils/validateDependencies")
+    jest.dontMock("../../../package/env")
   })
+
+  const mockValidateDependencies = () => {
+    jest.doMock("../../../package/utils/validateDependencies", () => ({
+      validateRspackDependencies: jest.fn()
+    }))
+  }
 
   test("does not eagerly load rspack-manifest-plugin when only requiring the rspack index", () => {
     jest.isolateModules(() => {
@@ -242,6 +250,59 @@ describe("rspack/index side effects", () => {
         (call) => call[0] === "rspack-manifest-plugin"
       )
       expect(manifestLoads).toHaveLength(1)
+    })
+  })
+
+  test("a baseConfig override flows into generateRspackConfig in the no-environment-file fallback", () => {
+    // Exercises the `: lazyBaseConfig.get()` branch of generateRspackConfig
+    // (package/rspack/index.ts), only reached when no environments/<env>.js
+    // file exists. Pointing nodeEnv at a missing env forces that branch, and a
+    // prior `baseConfig` override must flow through to the generated config —
+    // without resolving the optional rspack-manifest-plugin.
+    jest.isolateModules(() => {
+      mockConfigForRspack()
+      const requireOrError = mockRequireOrError()
+      mockValidateDependencies()
+      jest.doMock("../../../package/env", () => ({
+        ...jest.requireActual("../../../package/env"),
+        nodeEnv: "no-such-env"
+      }))
+
+      const rspackIndex = require("../../../package/rspack/index")
+      const stub = { mode: "none", entry: { app: "./app.js" } }
+
+      rspackIndex.baseConfig = stub
+
+      const result = rspackIndex.generateRspackConfig()
+
+      expect(result).toStrictEqual(
+        expect.objectContaining({ mode: "none", entry: { app: "./app.js" } })
+      )
+      const requested = requireOrError.mock.calls.map((call) => call[0])
+      expect(requested).not.toContain("rspack-manifest-plugin")
+    })
+  })
+
+  test("a baseConfig override does NOT affect generateRspackConfig for a normal NODE_ENV build", () => {
+    // The companion to the fallback test: when environments/<env>.js exists
+    // (the normal case — jest runs with NODE_ENV=test), generateRspackConfig
+    // loads that file directly and never reads the lazy baseConfig, so an
+    // override is intentionally ignored. This is the caveat documented on the
+    // override in rspack/index.ts / the .d.ts, here given executable teeth.
+    jest.isolateModules(() => {
+      mockConfigForRspack()
+      mockRequireOrError()
+      mockValidateDependencies()
+
+      const rspackIndex = require("../../../package/rspack/index")
+      const stub = { mode: "none", entry: { sentinel: "./override.js" } }
+
+      rspackIndex.baseConfig = stub
+
+      const result = rspackIndex.generateRspackConfig()
+
+      // The real environment config was used, not the override stub.
+      expect(result.entry).not.toHaveProperty("sentinel")
     })
   })
 })
