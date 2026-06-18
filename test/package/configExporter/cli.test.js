@@ -498,7 +498,7 @@ describe("configExporter/cli", () => {
       mockLog.mockRestore()
     })
 
-    test("writes the prompt file and appends it to createdFiles", () => {
+    test("writes the prompt file and returns its filename without mutating createdFiles", () => {
       const {
         writeAiAnalysisPrompt
       } = require("../../../package/configExporter/cli")
@@ -512,7 +512,9 @@ describe("configExporter/cli", () => {
 
       expect(filename).toBe("AI-ANALYSIS-PROMPT.md")
       const promptPath = join(tempDir, "AI-ANALYSIS-PROMPT.md")
-      expect(createdFiles).toContain(promptPath)
+      // createdFiles stays a pure record of exported configs (no prompt path).
+      expect(createdFiles).not.toContain(promptPath)
+      expect(createdFiles).toHaveLength(1)
       const content = readFileSync(promptPath, "utf8")
       expect(content).toContain("`webpack-development-all.yml`")
       expect(content).toContain("**Bundler**: webpack")

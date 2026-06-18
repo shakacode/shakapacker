@@ -4,9 +4,8 @@ const {
 } = require("../../../package/configExporter")
 
 describe("AiPromptGenerator", () => {
-  test("generatePromptFilename returns correct filename", () => {
-    const filename = AiPromptGenerator.generatePromptFilename()
-    expect(filename).toBe("AI-ANALYSIS-PROMPT.md")
+  test("exposes PROMPT_FILENAME as the prompt filename constant", () => {
+    expect(AiPromptGenerator.PROMPT_FILENAME).toBe("AI-ANALYSIS-PROMPT.md")
   })
 
   test("generatePrompt includes all sections for webpack", () => {
@@ -260,10 +259,14 @@ describe("AiPromptGenerator", () => {
     expect(prompt).toContain("clientWebpackConfig.js")
     expect(prompt).toContain("serverWebpackConfig.js")
 
-    // Check for reference links (monorepo layout under react_on_rails/)
+    // Reference links point at durable destinations: the docs guide and the
+    // example app's webpack config directory (not individual fixture files).
     expect(prompt).toContain("### Reference Configuration Examples")
     expect(prompt).toContain(
-      "https://github.com/shakacode/react_on_rails/blob/main/react_on_rails/spec/dummy/config/webpack/commonWebpackConfig.js"
+      "https://reactonrails.com/docs/core-concepts/webpack-configuration"
+    )
+    expect(prompt).toContain(
+      "https://github.com/shakacode/react_on_rails/tree/main/react_on_rails/spec/dummy/config/webpack"
     )
   })
 

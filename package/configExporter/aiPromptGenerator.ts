@@ -7,6 +7,9 @@ import { basename } from "path"
  * disk is the caller's responsibility.)
  */
 export class AiPromptGenerator {
+  /** Filename for the AI prompt written alongside the exported configs. */
+  static readonly PROMPT_FILENAME = "AI-ANALYSIS-PROMPT.md"
+
   /**
    * Generate a comprehensive AI analysis prompt based on exported config files.
    *
@@ -27,259 +30,203 @@ export class AiPromptGenerator {
     includeReactOnRailsContext = true
   ): string {
     const timestamp = new Date().toISOString()
-    const sections: string[] = []
+    const configFiles = AiPromptGenerator.buildConfigFilesSection(exportedFiles)
+    const reactOnRailsContext = includeReactOnRailsContext
+      ? AiPromptGenerator.REACT_ON_RAILS_CONTEXT
+      : ""
 
-    // Header
-    sections.push("# AI Configuration Analysis Request")
-    sections.push("")
-    sections.push(
-      `This directory contains exported ${bundler} configuration files for analysis.`
-    )
-    sections.push(
-      "Please analyze these configurations and provide recommendations."
-    )
-    sections.push("")
+    // Only the directory name is included in Context: users are encouraged to
+    // paste this prompt into external AI assistants, so the absolute path
+    // (which can leak a username or internal layout) is deliberately omitted.
+    return `# AI Configuration Analysis Request
 
-    // Context section
-    sections.push("## Context")
-    sections.push("")
-    sections.push(`- **Bundler**: ${bundler}`)
-    sections.push(`- **Exported At**: ${timestamp}`)
-    // Only the directory name is included: users are encouraged to paste this
-    // prompt into external AI assistants, so the absolute path (which can leak
-    // a username or internal layout) is deliberately omitted.
-    sections.push(`- **Export Directory**: ${basename(targetDir)}`)
-    sections.push("")
+This directory contains exported ${bundler} configuration files for analysis.
+Please analyze these configurations and provide recommendations.
 
-    // Configuration files
-    sections.push("## Configuration Files")
-    sections.push("")
-    if (exportedFiles.length > 0) {
-      sections.push(
-        "The following configuration files are available for analysis:"
-      )
-      sections.push("")
-      for (const file of exportedFiles) {
-        sections.push(AiPromptGenerator.describeExportedFile(file))
-      }
-      if (exportedFiles.some((f) => f.toLowerCase().includes("hmr"))) {
-        sections.push("")
-        sections.push(
-          "The HMR config is especially useful for troubleshooting dev server, hot reload,"
-        )
-        sections.push("and live reload issues.")
-      }
-    } else {
-      sections.push("No configuration files were exported.")
-    }
-    sections.push("")
+## Context
 
-    // React on Rails context
-    if (includeReactOnRailsContext) {
-      sections.push("## React on Rails Standard Configuration")
-      sections.push("")
-      sections.push(
-        "If this project uses React on Rails, it typically includes these standard configuration files:"
-      )
-      sections.push("")
-      sections.push(
-        "1. **`config/webpack/webpack.config.js`** (or rspack equivalent)"
-      )
-      sections.push(
-        "   - Main entry point that loads environment-specific configs"
-      )
-      sections.push("")
-      sections.push("2. **`config/webpack/commonWebpackConfig.js`**")
-      sections.push(
-        "   - Shared configuration between client and server bundles"
-      )
-      sections.push("   - Sets up common loaders, resolve extensions, etc.")
-      sections.push("")
-      sections.push("3. **`config/webpack/clientWebpackConfig.js`**")
-      sections.push("   - Client-specific configuration")
-      sections.push("   - Removes server-bundle entry")
-      sections.push("   - Optimized for browser execution")
-      sections.push("")
-      sections.push("4. **`config/webpack/serverWebpackConfig.js`**")
-      sections.push("   - Server-side rendering (SSR) configuration")
-      sections.push("   - Single chunk output (no code splitting)")
-      sections.push("   - Removes MiniCssExtractPlugin (CSS handled by client)")
-      sections.push("   - Uses `css-loader` with `exportOnlyLocals: true`")
-      sections.push("   - Target can be 'web' or 'node' depending on renderer")
-      sections.push("")
-      sections.push("### Reference Configuration Examples")
-      sections.push("")
-      sections.push(
-        "For comparison, you can reference the standard React on Rails configuration examples:"
-      )
-      sections.push("")
-      sections.push("**Source Configuration Files (JavaScript):**")
-      sections.push("")
-      sections.push(
-        "- [commonWebpackConfig.js](https://github.com/shakacode/react_on_rails/blob/main/react_on_rails/spec/dummy/config/webpack/commonWebpackConfig.js)"
-      )
-      sections.push(
-        "- [clientWebpackConfig.js](https://github.com/shakacode/react_on_rails/blob/main/react_on_rails/spec/dummy/config/webpack/clientWebpackConfig.js)"
-      )
-      sections.push(
-        "- [serverWebpackConfig.js](https://github.com/shakacode/react_on_rails/blob/main/react_on_rails/spec/dummy/config/webpack/serverWebpackConfig.js)"
-      )
-      sections.push(
-        "- [webpack.config.js](https://github.com/shakacode/react_on_rails/blob/main/react_on_rails/spec/dummy/config/webpack/webpack.config.js)"
-      )
-      sections.push("")
-      sections.push(
-        "These files demonstrate best practices for React on Rails webpack/rspack configuration."
-      )
-      sections.push("")
-    }
+- **Bundler**: ${bundler}
+- **Exported At**: ${timestamp}
+- **Export Directory**: ${basename(targetDir)}
 
-    // Analysis requests
-    sections.push("## Analysis Objectives")
-    sections.push("")
-    sections.push(
-      "Please analyze the exported configuration files and provide:"
-    )
-    sections.push("")
+## Configuration Files
 
-    sections.push("### 1. Migration Issues")
-    sections.push("")
-    sections.push(
-      "If this is a migration from webpack to rspack (or vice versa):"
-    )
-    sections.push("")
-    sections.push("- Identify any incompatible plugins or loaders")
-    sections.push("- Flag deprecated or removed options")
-    sections.push("- Suggest equivalent replacements")
-    sections.push(
-      "- Check for rspack-specific optimizations that can be enabled"
-    )
-    sections.push("")
+${configFiles}
 
-    sections.push("### 2. Build Errors & Warnings")
-    sections.push("")
-    sections.push(
-      "Examine the configuration for common issues that cause build failures:"
-    )
-    sections.push("")
-    sections.push("- Misconfigured loaders or plugins")
-    sections.push("- Incorrect module resolution settings")
-    sections.push("- Missing or incorrect output path configurations")
-    sections.push("- Entry point issues")
-    sections.push("- DevServer configuration problems")
-    sections.push("")
-    sections.push(
-      "**Note**: If build error logs are provided separately (from `bin/shakapacker` or "
-    )
-    sections.push(
-      "`bin/shakapacker-dev-server`), correlate them with configuration issues."
-    )
-    sections.push("")
+${reactOnRailsContext}## Analysis Objectives
 
-    sections.push("### 3. Client vs Server Optimization")
-    sections.push("")
-    sections.push("Compare client and server configurations and recommend:")
-    sections.push("")
-    sections.push("**Client Bundle Optimizations:**")
-    sections.push("- Code splitting strategy")
-    sections.push("- Asset optimization (images, fonts)")
-    sections.push("- CSS extraction and optimization")
-    sections.push("- Tree shaking effectiveness")
-    sections.push("- Bundle size reduction opportunities")
-    sections.push("")
-    sections.push("**Server Bundle Optimizations:**")
-    sections.push("- Verify single-chunk output (no code splitting)")
-    sections.push("- Ensure CSS is not extracted (handled by client)")
-    sections.push("- Check for proper `exportOnlyLocals` for CSS modules")
-    sections.push("- Validate target environment (web vs node)")
-    sections.push("- Confirm assets are not emitted during SSR")
-    sections.push("")
+Please analyze the exported configuration files and provide:
 
-    sections.push("### 4. Development vs Production Optimization")
-    sections.push("")
-    sections.push("Compare development and production configurations:")
-    sections.push("")
-    sections.push("**Development:**")
-    sections.push("- Fast rebuild times (appropriate devtool setting)")
-    sections.push("- Hot Module Replacement (HMR) configuration")
-    sections.push("- Detailed error messages")
-    sections.push("- DevServer setup")
-    sections.push("")
-    sections.push("**Production:**")
-    sections.push("- Minification and optimization")
-    sections.push("- Source map strategy (balance between debugging and size)")
-    sections.push("- Cache busting with content hashes")
-    sections.push("- Compression and asset optimization")
-    sections.push("- Performance budgets")
-    sections.push("")
+### 1. Migration Issues
 
-    sections.push("### 5. Common Best Practices")
-    sections.push("")
-    sections.push("Check for adherence to bundler best practices:")
-    sections.push("")
-    sections.push("- Efficient caching strategies")
-    sections.push("- Proper externals configuration")
-    sections.push("- Loader performance (e.g., thread-loader, cache-loader)")
-    sections.push("- Plugin optimization")
-    sections.push("- Module resolution efficiency")
-    sections.push("")
+If this is a migration from webpack to rspack (or vice versa):
 
-    // Providing additional context
-    sections.push("## Providing Additional Context")
-    sections.push("")
-    sections.push(
-      "To get the most accurate analysis, you can provide additional information:"
-    )
-    sections.push("")
-    sections.push("### Build Error Logs")
-    sections.push("")
-    sections.push("Paste output from:")
-    sections.push("```bash")
-    sections.push("bin/shakapacker")
-    sections.push("# or")
-    sections.push("bin/shakapacker-dev-server")
-    sections.push("```")
-    sections.push("")
-    sections.push("### Custom Configuration Files")
-    sections.push("")
-    sections.push("Include content from your custom config files:")
-    sections.push("- `config/webpack/commonWebpackConfig.js`")
-    sections.push("- `config/webpack/clientWebpackConfig.js`")
-    sections.push("- `config/webpack/serverWebpackConfig.js`")
-    sections.push("- `config/webpack/development.js`")
-    sections.push("- `config/webpack/production.js`")
-    sections.push("")
-    sections.push("(Or equivalent rspack files in `config/rspack/` directory)")
-    sections.push("")
+- Identify any incompatible plugins or loaders
+- Flag deprecated or removed options
+- Suggest equivalent replacements
+- Check for rspack-specific optimizations that can be enabled
 
-    // Output format
-    sections.push("## Desired Output Format")
-    sections.push("")
-    sections.push("Please structure your analysis as follows:")
-    sections.push("")
-    sections.push("1. **Executive Summary**: High-level overview of findings")
-    sections.push(
-      "2. **Critical Issues**: Problems that will prevent builds from working"
-    )
-    sections.push(
-      "3. **Warnings**: Suboptimal configurations that should be addressed"
-    )
-    sections.push("4. **Optimizations**: Recommendations for improvement")
-    sections.push(
-      "5. **Configuration Diffs**: Specific code changes to implement (if applicable)"
-    )
-    sections.push("")
+### 2. Build Errors & Warnings
 
-    // Footer
-    sections.push("---")
-    sections.push("")
-    sections.push("**Generated by Shakapacker Config Exporter**")
-    sections.push(`**Bundler**: ${bundler}`)
-    sections.push(`**Date**: ${timestamp}`)
-    sections.push("")
+Examine the configuration for common issues that cause build failures:
 
-    return sections.join("\n")
+- Misconfigured loaders or plugins
+- Incorrect module resolution settings
+- Missing or incorrect output path configurations
+- Entry point issues
+- DevServer configuration problems
+
+**Note**: If build error logs are provided separately (from \`bin/shakapacker\` or
+\`bin/shakapacker-dev-server\`), correlate them with configuration issues.
+
+### 3. Client vs Server Optimization
+
+Compare client and server configurations and recommend:
+
+**Client Bundle Optimizations:**
+- Code splitting strategy
+- Asset optimization (images, fonts)
+- CSS extraction and optimization
+- Tree shaking effectiveness
+- Bundle size reduction opportunities
+
+**Server Bundle Optimizations:**
+- Verify single-chunk output (no code splitting)
+- Ensure CSS is not extracted (handled by client)
+- Check for proper \`exportOnlyLocals\` for CSS modules
+- Validate target environment (web vs node)
+- Confirm assets are not emitted during SSR
+
+### 4. Development vs Production Optimization
+
+Compare development and production configurations:
+
+**Development:**
+- Fast rebuild times (appropriate devtool setting)
+- Hot Module Replacement (HMR) configuration
+- Detailed error messages
+- DevServer setup
+
+**Production:**
+- Minification and optimization
+- Source map strategy (balance between debugging and size)
+- Cache busting with content hashes
+- Compression and asset optimization
+- Performance budgets
+
+### 5. Common Best Practices
+
+Check for adherence to bundler best practices:
+
+- Efficient caching strategies
+- Proper externals configuration
+- Loader performance (e.g., thread-loader, persistent caching via \`cache: { type: 'filesystem' }\`)
+- Plugin optimization
+- Module resolution efficiency
+
+## Providing Additional Context
+
+To get the most accurate analysis, you can provide additional information:
+
+### Build Error Logs
+
+Paste output from:
+\`\`\`bash
+bin/shakapacker
+# or
+bin/shakapacker-dev-server
+\`\`\`
+
+### Custom Configuration Files
+
+Include content from your custom config files:
+- \`config/webpack/commonWebpackConfig.js\`
+- \`config/webpack/clientWebpackConfig.js\`
+- \`config/webpack/serverWebpackConfig.js\`
+- \`config/webpack/development.js\`
+- \`config/webpack/production.js\`
+
+(Or equivalent rspack files in \`config/rspack/\` directory)
+
+## Desired Output Format
+
+Please structure your analysis as follows:
+
+1. **Executive Summary**: High-level overview of findings
+2. **Critical Issues**: Problems that will prevent builds from working
+3. **Warnings**: Suboptimal configurations that should be addressed
+4. **Optimizations**: Recommendations for improvement
+5. **Configuration Diffs**: Specific code changes to implement (if applicable)
+
+---
+
+**Generated by Shakapacker Config Exporter**
+**Bundler**: ${bundler}
+**Date**: ${timestamp}
+`
   }
+
+  /**
+   * Build the body of the "Configuration Files" section: a bullet per exported
+   * file (with a best-effort descriptive label), plus an HMR troubleshooting
+   * note when an HMR config is present. Returns a placeholder line when nothing
+   * was exported.
+   */
+  private static buildConfigFilesSection(exportedFiles: string[]): string {
+    if (exportedFiles.length === 0) {
+      return "No configuration files were exported."
+    }
+
+    const fileList = exportedFiles
+      .map((file) => AiPromptGenerator.describeExportedFile(file))
+      .join("\n")
+
+    const hmrNote = exportedFiles.some((f) => f.toLowerCase().includes("hmr"))
+      ? "\n\nThe HMR config is especially useful for troubleshooting dev server, hot reload,\nand live reload issues."
+      : ""
+
+    return `The following configuration files are available for analysis:\n\n${fileList}${hmrNote}`
+  }
+
+  /**
+   * Static React on Rails reference block. Ends with a trailing blank line so it
+   * can be interpolated directly before the next section without disturbing the
+   * surrounding spacing.
+   */
+  private static readonly REACT_ON_RAILS_CONTEXT = `## React on Rails Standard Configuration
+
+If this project uses React on Rails, it typically includes these standard configuration files:
+
+1. **\`config/webpack/webpack.config.js\`** (or rspack equivalent)
+   - Main entry point that loads environment-specific configs
+
+2. **\`config/webpack/commonWebpackConfig.js\`**
+   - Shared configuration between client and server bundles
+   - Sets up common loaders, resolve extensions, etc.
+
+3. **\`config/webpack/clientWebpackConfig.js\`**
+   - Client-specific configuration
+   - Removes server-bundle entry
+   - Optimized for browser execution
+
+4. **\`config/webpack/serverWebpackConfig.js\`**
+   - Server-side rendering (SSR) configuration
+   - Single chunk output (no code splitting)
+   - Removes MiniCssExtractPlugin (CSS handled by client)
+   - Uses \`css-loader\` with \`exportOnlyLocals: true\`
+   - Target can be 'web' or 'node' depending on renderer
+
+### Reference Configuration Examples
+
+For comparison, see the React on Rails webpack/rspack documentation and the
+maintained example app configuration:
+
+- [Webpack Configuration guide](https://reactonrails.com/docs/core-concepts/webpack-configuration)
+- [Example app webpack configs](https://github.com/shakacode/react_on_rails/tree/main/react_on_rails/spec/dummy/config/webpack)
+
+These resources demonstrate best practices for React on Rails webpack/rspack configuration.
+
+`
 
   /**
    * Build a Markdown bullet for an exported config file, attaching a
@@ -323,12 +270,5 @@ export class AiPromptGenerator {
       return `- **${label}**: \`${filename}\` - Combined client and server configuration${modeSuffix}`
     }
     return `- \`${filename}\``
-  }
-
-  /**
-   * Generate the filename for the AI prompt file.
-   */
-  static generatePromptFilename(): string {
-    return "AI-ANALYSIS-PROMPT.md"
   }
 }

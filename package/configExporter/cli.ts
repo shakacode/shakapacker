@@ -1063,6 +1063,9 @@ async function runDoctorMode(
  * the primary deliverable, so failures here warn instead of aborting the
  * export. Returns the prompt filename, or null if nothing was written.
  *
+ * `createdFiles` is read (to derive the bundler list and config names) but not
+ * mutated; the caller owns the prompt path via the return value.
+ *
  * Exported for testing.
  */
 export function writeAiAnalysisPrompt(
@@ -1084,10 +1087,12 @@ export function writeAiAnalysisPrompt(
       targetDir,
       bundler
     )
-    const aiPromptFilename = AiPromptGenerator.generatePromptFilename()
+    const aiPromptFilename = AiPromptGenerator.PROMPT_FILENAME
     const aiPromptPath = resolve(targetDir, aiPromptFilename)
     FileWriter.writeSingleFile(aiPromptPath, aiPromptContent)
-    createdFiles.push(aiPromptPath)
+    // Return the filename and let the caller decide what to do with it.
+    // `createdFiles` stays a pure record of exported configs so the doctor
+    // summary can report the prompt separately without double-counting.
     return aiPromptFilename
   } catch (error: unknown) {
     const errorMessage = error instanceof Error ? error.message : String(error)
@@ -1102,20 +1107,20 @@ function printDoctorSummary(
   targetDir: string,
   aiPromptFilename: string | null
 ): void {
-  // Print summary
+  // Print summary. `createdFiles` holds only the exported configs; the AI
+  // prompt (when written) is reported separately, so spell out the breakdown
+  // rather than a single combined count that wouldn't match the lists below.
   console.log(`\n${"=".repeat(80)}`)
   console.log("✅ Export Complete!")
   console.log("=".repeat(80))
-  console.log(`\nCreated ${createdFiles.length} file(s) in:`)
+  const configSummary = `${createdFiles.length} configuration file(s)`
+  console.log(
+    `\nCreated ${aiPromptFilename ? `${configSummary} and 1 AI analysis prompt` : configSummary} in:`
+  )
   console.log(`  ${targetDir}\n`)
   console.log("Configuration Files:")
   createdFiles.forEach((file) => {
-    const name = basename(file)
-    if (name === aiPromptFilename) {
-      // The AI prompt is highlighted separately below
-      return
-    }
-    console.log(`  ✓ ${name}`)
+    console.log(`  ✓ ${basename(file)}`)
   })
   if (aiPromptFilename) {
     console.log("")
