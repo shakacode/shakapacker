@@ -10,7 +10,9 @@ const commonOptions = {
 
 // rspack-manifest-plugin exports RspackManifestPlugin as an alias of its
 // WebpackManifestPlugin class, so match manifest plugins by constructor-name
-// suffix rather than enumerating each alias.
+// suffix rather than enumerating each alias. The match is intentionally broad:
+// any plugin whose constructor name ends in `ManifestPlugin` is stripped from
+// the server config, not just the known aliases.
 const shouldRemoveServerPlugin = (name) =>
   name === 'CssExtractRspackPlugin' || name.endsWith('ManifestPlugin')
 
