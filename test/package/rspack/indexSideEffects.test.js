@@ -133,10 +133,10 @@ describe("rspack/index side effects", () => {
     })
   })
 
-  test("assigning undefined to baseConfig resets to lazy loading", () => {
-    // Guards the setter footgun: a stray `undefined` assignment must fall back
-    // to the real lazy loader rather than caching undefined and returning it
-    // silently. Accessing afterwards resolves rspack-manifest-plugin.
+  test("assigning undefined to baseConfig caches it without loading", () => {
+    // The setter overrides the cache with whatever is assigned, so even an
+    // `undefined` assignment short-circuits the lazy loader: rspack-manifest-plugin
+    // is never resolved.
     jest.isolateModules(() => {
       mockConfigForRspack()
       const requireOrError = mockRequireOrError()
@@ -145,13 +145,10 @@ describe("rspack/index side effects", () => {
 
       rspackIndex.baseConfig = undefined
 
-      const beforeAccess = requireOrError.mock.calls.map((call) => call[0])
-      expect(beforeAccess).not.toContain("rspack-manifest-plugin")
+      expect(rspackIndex.baseConfig).toBeUndefined()
 
-      expect(rspackIndex.baseConfig).toBeDefined()
-
-      const afterAccess = requireOrError.mock.calls.map((call) => call[0])
-      expect(afterAccess).toContain("rspack-manifest-plugin")
+      const requested = requireOrError.mock.calls.map((call) => call[0])
+      expect(requested).not.toContain("rspack-manifest-plugin")
     })
   })
 
@@ -169,7 +166,7 @@ describe("rspack/index side effects", () => {
     })
   })
 
-  test("assigning undefined to rules resets to lazy loading", () => {
+  test("assigning undefined to rules caches it without loading", () => {
     jest.isolateModules(() => {
       mockConfigForRspack()
       mockRequireOrError()
@@ -178,7 +175,7 @@ describe("rspack/index side effects", () => {
 
       rspackIndex.rules = undefined
 
-      expect(rspackIndex.rules).toBeDefined()
+      expect(rspackIndex.rules).toBeUndefined()
     })
   })
 

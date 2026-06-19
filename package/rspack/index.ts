@@ -116,7 +116,7 @@ export {
   getProvidePlugin
 }
 
-// Override semantics (assignment, undefined reset, defineProperty bypass) are
+// Override semantics (assignment override, defineProperty bypass) are
 // documented on createLazyExport. A `require("shakapacker/rspack").baseConfig =
 // custom` override changes `generateRspackConfig` output ONLY in the fallback
 // case where no `environments/<NODE_ENV>.js` file exists, since that is the

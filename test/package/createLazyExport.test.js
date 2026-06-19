@@ -66,7 +66,7 @@ describe("createLazyExport", () => {
     expect(load).not.toHaveBeenCalled()
   })
 
-  test("assigning undefined resets to lazy loading", () => {
+  test("assigning undefined caches it as-is without re-arming lazy loading", () => {
     const load = jest.fn(() => "real")
     const lazy = createLazyExport(load)
     const target = {}
@@ -75,9 +75,10 @@ describe("createLazyExport", () => {
     target.value = "override"
     target.value = undefined
 
+    // Assignment overrides the cache with whatever is assigned, including
+    // `undefined`; it does not fall back to re-running the loader.
+    expect(target.value).toBeUndefined()
     expect(load).not.toHaveBeenCalled()
-    expect(target.value).toBe("real")
-    expect(load).toHaveBeenCalledTimes(1)
   })
 
   test("a value-descriptor redefinition bypasses the setter and leaves the cache untouched", () => {
