@@ -5,7 +5,12 @@ require "package_json"
 package_json = PackageJson.new
 
 # install react
-package_json.manager.add(["react", "react-dom", "@babel/preset-react@^7.17.0"])
+# Align with spec/dummy; React 18 and Babel 7 match this template's app stack.
+package_json.manager.add([
+  "react@^18.3.1",
+  "react-dom@^18.3.1",
+  "@babel/preset-react@^7.18.6"
+])
 
 # update webpack presets for react
 package_json.merge! do |pj|
