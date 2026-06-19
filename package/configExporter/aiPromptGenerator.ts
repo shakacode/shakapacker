@@ -213,13 +213,12 @@ If this project uses React on Rails, it typically includes these standard config
 
 ### Reference Configuration Examples
 
-For comparison, see the React on Rails webpack/rspack documentation and the
-maintained example app configuration:
+For comparison, see the React on Rails webpack/rspack configuration
+documentation:
 
 - [Webpack Configuration guide](https://reactonrails.com/docs/core-concepts/webpack-configuration)
-- [Example app webpack configs](https://github.com/shakacode/react_on_rails/tree/main/react_on_rails/spec/dummy/config/webpack)
 
-These resources demonstrate best practices for React on Rails webpack/rspack configuration.
+The guide demonstrates best practices for React on Rails webpack/rspack configuration.
 
 `
 

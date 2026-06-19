@@ -259,15 +259,13 @@ describe("AiPromptGenerator", () => {
     expect(prompt).toContain("clientWebpackConfig.js")
     expect(prompt).toContain("serverWebpackConfig.js")
 
-    // Reference links point at durable destinations: the docs guide and the
-    // example app's webpack config directory (not individual fixture files).
+    // Reference link points at a durable destination (the docs guide), not a
+    // spec/dummy fixture path that can be restructured without notice.
     expect(prompt).toContain("### Reference Configuration Examples")
     expect(prompt).toContain(
       "https://reactonrails.com/docs/core-concepts/webpack-configuration"
     )
-    expect(prompt).toContain(
-      "https://github.com/shakacode/react_on_rails/tree/main/react_on_rails/spec/dummy/config/webpack"
-    )
+    expect(prompt).not.toContain("spec/dummy")
   })
 
   test("generatePrompt includes analysis objectives", () => {
