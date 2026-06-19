@@ -10,3 +10,6 @@ gem "rack-proxy", require: false
 gem "rspec-rails", "~> 6.0.0"
 gem "byebug"
 gem "concurrent-ruby", "1.3.4"
+# i18n 1.15.0 uses Fiber[] (Ruby 3.2+) but its gemspec allows Ruby >= 3.1, so Bundler
+# installs it on Ruby 3.1 where Rails boot crashes. Pin until upstream fixes the gemspec.
+gem "i18n", "< 1.15" if RUBY_VERSION < "3.2"
