@@ -1,5 +1,6 @@
 const { execFileSync } = require("child_process")
 const {
+  existsSync,
   mkdtempSync,
   readFileSync,
   rmSync,
@@ -63,7 +64,13 @@ describe("compiled package output", () => {
         join(process.cwd(), "node_modules"),
         join(sharedRootDir, "node_modules")
       )
-      symlinkSync(join(process.cwd(), "lib"), join(sharedRootDir, "lib"))
+      const libDir = join(process.cwd(), "lib")
+      if (!existsSync(libDir)) {
+        throw new Error(
+          "lib/ directory missing — run these specs from the repo root with the gem files present"
+        )
+      }
+      symlinkSync(libDir, join(sharedRootDir, "lib"))
     })
 
     const runConsumer = (fileName, lines) => {
