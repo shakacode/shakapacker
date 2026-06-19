@@ -24,6 +24,7 @@ import {
 } from "./types"
 import { YamlSerializer } from "./yamlSerializer"
 import { FileWriter } from "./fileWriter"
+import { AiPromptGenerator } from "./aiPromptGenerator"
 import { ConfigFileLoader, generateSampleConfigFile } from "./configFile"
 import { BuildValidator } from "./buildValidator"
 import { safeResolvePath } from "../utils/pathValidation"
@@ -887,6 +888,7 @@ async function runDoctorMode(
     const targetDir = options.saveDir! // Set by applyDefaults
 
     const createdFiles: string[] = []
+    const detectedBundlers = new Set<string>()
 
     // Check if config file exists - always use it for doctor mode
     const configFilePath = options.configFile || DEFAULT_CONFIG_FILE
@@ -918,6 +920,7 @@ async function runDoctorMode(
           )
 
           for (const { config, metadata } of configs) {
+            detectedBundlers.add(metadata.bundler)
             const output = formatConfig(config, metadata, options, appRoot)
             const filename = FileWriter.generateFilename(
               metadata.bundler,
@@ -932,8 +935,15 @@ async function runDoctorMode(
           }
         }
 
+        // Generate AI analysis prompt (best-effort companion file)
+        const aiPromptFilename = writeAiAnalysisPrompt(
+          createdFiles,
+          targetDir,
+          detectedBundlers
+        )
+
         // Print summary and exit early
-        printDoctorSummary(createdFiles, targetDir)
+        printDoctorSummary(createdFiles, targetDir, aiPromptFilename)
         return
       } catch (error: unknown) {
         // If config file exists but is invalid, show error and exit
@@ -981,7 +991,18 @@ async function runDoctorMode(
       // eslint-disable-next-line no-await-in-loop -- Sequential execution required: each config modifies shared global state (env vars, config cache) that must be cleared/restored between iterations
       const configs = await loadConfigsForEnv(env, options, appRoot)
 
-      for (const { config, metadata } of configs) {
+      // HMR only applies to client bundles. During the HMR pass, skip
+      // server/other configs so they are written once (by the regular
+      // development pass) instead of being duplicated under the same filename.
+      const configsToWrite = hmr
+        ? configs.filter(
+            ({ metadata }) =>
+              metadata.configType === "client" || metadata.configType === "all"
+          )
+        : configs
+
+      for (const { config, metadata } of configsToWrite) {
+        detectedBundlers.add(metadata.bundler)
         const output = formatConfig(config, metadata, options, appRoot)
 
         // Adjust filename for HMR config
@@ -1022,24 +1043,95 @@ async function runDoctorMode(
       }
     }
 
-    printDoctorSummary(createdFiles, targetDir)
+    // Generate AI analysis prompt (best-effort companion file)
+    const aiPromptFilename = writeAiAnalysisPrompt(
+      createdFiles,
+      targetDir,
+      detectedBundlers
+    )
+
+    printDoctorSummary(createdFiles, targetDir, aiPromptFilename)
   } finally {
     // Restore original environment
     restoreBuildEnvironmentVariables(savedEnv)
   }
 }
 
-function printDoctorSummary(createdFiles: string[], targetDir: string): void {
-  // Print summary
+/**
+ * Generate and write the AI analysis prompt that accompanies a doctor-mode
+ * export. The prompt is a best-effort companion file: the exported configs are
+ * the primary deliverable, so failures here warn instead of aborting the
+ * export. Returns the prompt filename, or null if nothing was written.
+ *
+ * `createdFiles` is read (to derive the bundler list and config names) but not
+ * mutated; the caller owns the prompt path via the return value.
+ *
+ * Exported for testing.
+ */
+export function writeAiAnalysisPrompt(
+  createdFiles: string[],
+  targetDir: string,
+  bundlers: Set<string>
+): string | null {
+  if (createdFiles.length === 0) {
+    return null
+  }
+  try {
+    const bundler = [...bundlers].join(" and ") || "unknown"
+    // Deduplicate basenames: doctor mode can write the same config to the same
+    // path more than once (e.g. a server bundle produced by both the HMR and
+    // regular development passes), and the prompt should list each config once.
+    const fileBasenames = [...new Set(createdFiles.map((f) => basename(f)))]
+    const aiPromptContent = AiPromptGenerator.generatePrompt(
+      fileBasenames,
+      targetDir,
+      bundler
+    )
+    const aiPromptFilename = AiPromptGenerator.PROMPT_FILENAME
+    const aiPromptPath = resolve(targetDir, aiPromptFilename)
+    FileWriter.writeSingleFile(aiPromptPath, aiPromptContent)
+    // Return the filename and let the caller decide what to do with it.
+    // `createdFiles` stays a pure record of exported configs so the doctor
+    // summary can report the prompt separately without double-counting.
+    return aiPromptFilename
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : String(error)
+    console.warn(`\n⚠️  Could not write AI analysis prompt: ${errorMessage}`)
+    console.warn("   The exported configuration files are unaffected.")
+    return null
+  }
+}
+
+function printDoctorSummary(
+  createdFiles: string[],
+  targetDir: string,
+  aiPromptFilename: string | null
+): void {
+  // Print summary. `createdFiles` holds only the exported configs; the AI
+  // prompt (when written) is reported separately, so spell out the breakdown
+  // rather than a single combined count that wouldn't match the lists below.
   console.log(`\n${"=".repeat(80)}`)
   console.log("✅ Export Complete!")
   console.log("=".repeat(80))
-  console.log(`\nCreated ${createdFiles.length} configuration file(s) in:`)
+  const configSummary = `${createdFiles.length} configuration file(s)`
+  console.log(
+    `\nCreated ${aiPromptFilename ? `${configSummary} and 1 AI analysis prompt` : configSummary} in:`
+  )
   console.log(`  ${targetDir}\n`)
-  console.log("Files:")
+  console.log("Configuration Files:")
   createdFiles.forEach((file) => {
     console.log(`  ✓ ${basename(file)}`)
   })
+  if (aiPromptFilename) {
+    console.log("")
+    console.log("AI Analysis:")
+    console.log(
+      `  🤖 ${aiPromptFilename} - Use this prompt to get AI recommendations`
+    )
+    console.log(
+      "     Copy the contents and paste into an AI assistant for configuration analysis"
+    )
+  }
 
   // Check if directory should be added to .gitignore
   const gitignorePath = resolve(process.cwd(), ".gitignore")

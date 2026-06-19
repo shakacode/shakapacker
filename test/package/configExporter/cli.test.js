@@ -1,4 +1,10 @@
-const { mkdirSync, mkdtempSync, readFileSync, rmSync } = require("fs")
+const {
+  existsSync,
+  mkdirSync,
+  mkdtempSync,
+  readFileSync,
+  rmSync
+} = require("fs")
 const { tmpdir } = require("os")
 const { join, resolve } = require("path")
 const { resetEnv } = require("../../helpers")
@@ -475,6 +481,123 @@ describe("configExporter/cli", () => {
       )
       expect(exitCode).toBe(0)
       expect(generatedContent).toBe(installedContent)
+    })
+  })
+
+  describe("writeAiAnalysisPrompt", () => {
+    let tempDir
+    let mockLog
+
+    beforeEach(() => {
+      tempDir = mkdtempSync(join(tmpdir(), "shakapacker-ai-prompt-"))
+      mockLog = jest.spyOn(console, "log").mockImplementation(() => {})
+    })
+
+    afterEach(() => {
+      rmSync(tempDir, { recursive: true, force: true })
+      mockLog.mockRestore()
+    })
+
+    test("writes the prompt file and returns its filename without mutating createdFiles", () => {
+      const {
+        writeAiAnalysisPrompt
+      } = require("../../../package/configExporter/cli")
+      const createdFiles = [join(tempDir, "webpack-development-all.yml")]
+
+      const filename = writeAiAnalysisPrompt(
+        createdFiles,
+        tempDir,
+        new Set(["webpack"])
+      )
+
+      expect(filename).toBe("AI-ANALYSIS-PROMPT.md")
+      const promptPath = join(tempDir, "AI-ANALYSIS-PROMPT.md")
+      // createdFiles stays a pure record of exported configs (no prompt path).
+      expect(createdFiles).not.toContain(promptPath)
+      expect(createdFiles).toHaveLength(1)
+      const content = readFileSync(promptPath, "utf8")
+      expect(content).toContain("`webpack-development-all.yml`")
+      expect(content).toContain("**Bundler**: webpack")
+    })
+
+    test("lists each config once when createdFiles contains duplicates", () => {
+      const {
+        writeAiAnalysisPrompt
+      } = require("../../../package/configExporter/cli")
+      // The HMR and regular development passes can write the same server bundle
+      // to the same path, so createdFiles may contain duplicate entries.
+      const serverPath = join(tempDir, "webpack-development-server.yml")
+      const createdFiles = [
+        join(tempDir, "webpack-development-client.yml"),
+        serverPath,
+        serverPath
+      ]
+
+      const filename = writeAiAnalysisPrompt(
+        createdFiles,
+        tempDir,
+        new Set(["webpack"])
+      )
+
+      const content = readFileSync(join(tempDir, filename), "utf8")
+      const occurrences =
+        content.split("`webpack-development-server.yml`").length - 1
+      expect(occurrences).toBe(1)
+    })
+
+    test("labels mixed-bundler exports with both bundlers", () => {
+      const {
+        writeAiAnalysisPrompt
+      } = require("../../../package/configExporter/cli")
+      const createdFiles = [
+        join(tempDir, "webpack-development-all.yml"),
+        join(tempDir, "rspack-production-all.yml")
+      ]
+
+      const filename = writeAiAnalysisPrompt(
+        createdFiles,
+        tempDir,
+        new Set(["webpack", "rspack"])
+      )
+
+      const content = readFileSync(join(tempDir, filename), "utf8")
+      expect(content).toContain("**Bundler**: webpack and rspack")
+    })
+
+    test("returns null and writes nothing when no configs were exported", () => {
+      const {
+        writeAiAnalysisPrompt
+      } = require("../../../package/configExporter/cli")
+      const createdFiles = []
+
+      const filename = writeAiAnalysisPrompt(createdFiles, tempDir, new Set())
+
+      expect(filename).toBeNull()
+      expect(createdFiles).toHaveLength(0)
+      expect(existsSync(join(tempDir, "AI-ANALYSIS-PROMPT.md"))).toBe(false)
+    })
+
+    test("warns instead of throwing when the prompt cannot be written", () => {
+      const {
+        writeAiAnalysisPrompt
+      } = require("../../../package/configExporter/cli")
+      // Occupy the prompt path with a directory so writeFileSync fails (EISDIR)
+      mkdirSync(join(tempDir, "AI-ANALYSIS-PROMPT.md"))
+      const mockWarn = jest.spyOn(console, "warn").mockImplementation(() => {})
+      const createdFiles = [join(tempDir, "webpack-development-all.yml")]
+
+      const filename = writeAiAnalysisPrompt(
+        createdFiles,
+        tempDir,
+        new Set(["webpack"])
+      )
+
+      expect(filename).toBeNull()
+      expect(createdFiles).toHaveLength(1)
+      expect(mockWarn).toHaveBeenCalledWith(
+        expect.stringContaining("Could not write AI analysis prompt")
+      )
+      mockWarn.mockRestore()
     })
   })
 })
