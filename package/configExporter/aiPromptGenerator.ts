@@ -20,20 +20,15 @@ export class AiPromptGenerator {
    * @param exportedFiles - Array of exported config file basenames
    * @param targetDir - Directory where configs were exported (only its base name appears in the prompt)
    * @param bundler - The bundler label (e.g. "webpack", "rspack", or "webpack and rspack" for mixed-bundler exports)
-   * @param includeReactOnRailsContext - Whether to include React on Rails specific context (defaults to true)
    * @returns Markdown-formatted AI prompt
    */
   static generatePrompt(
     exportedFiles: string[],
     targetDir: string,
-    bundler: string,
-    includeReactOnRailsContext = true
+    bundler: string
   ): string {
     const timestamp = new Date().toISOString()
     const configFiles = AiPromptGenerator.buildConfigFilesSection(exportedFiles)
-    const reactOnRailsContext = includeReactOnRailsContext
-      ? AiPromptGenerator.REACT_ON_RAILS_CONTEXT
-      : ""
 
     // Only the directory name is included in Context: users are encouraged to
     // paste this prompt into external AI assistants, so the absolute path
@@ -53,7 +48,7 @@ Please analyze these configurations and provide recommendations.
 
 ${configFiles}
 
-${reactOnRailsContext}## Analysis Objectives
+${AiPromptGenerator.REACT_ON_RAILS_CONTEXT}## Analysis Objectives
 
 Please analyze the exported configuration files and provide:
 

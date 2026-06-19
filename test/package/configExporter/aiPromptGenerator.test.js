@@ -240,7 +240,7 @@ describe("AiPromptGenerator", () => {
     expect(prompt).not.toContain("/home/alice/projects/myapp/exports")
   })
 
-  test("generatePrompt includes React on Rails context by default", () => {
+  test("generatePrompt includes React on Rails context", () => {
     const exportedFiles = ["webpack-development-client.yml"]
     const targetDir = "/path/to/exports"
     const bundler = "webpack"
@@ -268,21 +268,6 @@ describe("AiPromptGenerator", () => {
     expect(prompt).toContain(
       "https://github.com/shakacode/react_on_rails/tree/main/react_on_rails/spec/dummy/config/webpack"
     )
-  })
-
-  test("generatePrompt can exclude React on Rails context", () => {
-    const exportedFiles = ["webpack-development-client.yml"]
-    const targetDir = "/path/to/exports"
-    const bundler = "webpack"
-
-    const prompt = AiPromptGenerator.generatePrompt(
-      exportedFiles,
-      targetDir,
-      bundler,
-      false
-    )
-
-    expect(prompt).not.toContain("## React on Rails Standard Configuration")
   })
 
   test("generatePrompt includes analysis objectives", () => {
