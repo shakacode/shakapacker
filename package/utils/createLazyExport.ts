@@ -4,9 +4,11 @@
  * The first `get` runs `load` and caches the result. A dedicated `loaded` flag
  * (rather than an `=== undefined` sentinel) tracks whether the value has been
  * computed, so a `load` that legitimately returns `undefined` is cached like
- * any other value instead of silently re-running on every access. Direct
- * assignment runs the setter and overrides the cached value with whatever is
- * assigned (including `undefined`); it never re-arms lazy loading. Redefining
+ * any other value instead of silently re-running on every access. If `load`
+ * throws, `loaded` stays `false`, so the next `get` retries from scratch — a
+ * side-effectful loader that keeps failing can therefore run more than once.
+ * Direct assignment runs the setter and overrides the cached value with whatever
+ * is assigned (including `undefined`); it never re-arms lazy loading. Redefining
  * the property with a value descriptor
  * (`Object.defineProperty(target, key, { value })`) bypasses the setter,
  * leaving the cache untouched.
