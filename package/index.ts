@@ -104,7 +104,7 @@ const shakapacker = {
   ...webpackMerge
 }
 
-// Override semantics (assignment, undefined reset, defineProperty bypass) are
+// Override semantics (assignment override, defineProperty bypass) are
 // documented on createLazyExport. A `shakapacker.baseConfig = custom` override
 // changes `generateWebpackConfig` output ONLY in the fallback case where no
 // `environments/<NODE_ENV>.js` file exists, since that is the sole branch that

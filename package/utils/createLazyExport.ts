@@ -5,11 +5,11 @@
  * (rather than an `=== undefined` sentinel) tracks whether the value has been
  * computed, so a `load` that legitimately returns `undefined` is cached like
  * any other value instead of silently re-running on every access. Direct
- * assignment runs the setter and overrides the cached value; assigning
- * `undefined` resets to lazy loading rather than caching a permanently-undefined
- * value the getter would then return silently. Redefining the property with a
- * value descriptor (`Object.defineProperty(target, key, { value })`) bypasses
- * the setter, leaving the cache untouched.
+ * assignment runs the setter and overrides the cached value with whatever is
+ * assigned (including `undefined`); it never re-arms lazy loading. Redefining
+ * the property with a value descriptor
+ * (`Object.defineProperty(target, key, { value })`) bypasses the setter,
+ * leaving the cache untouched.
  *
  * Returns the getter (for internal callers that need the value without going
  * through the property) plus a configurable, enumerable accessor descriptor to
@@ -25,7 +25,7 @@ const createLazyExport = <T>(
     configurable: true
     enumerable: true
     get: () => T
-    set: (value: T | undefined) => void
+    set: (value: T) => void
   }
 } => {
   let cached: T | undefined
@@ -46,14 +46,9 @@ const createLazyExport = <T>(
       configurable: true,
       enumerable: true,
       get,
-      set(value: T | undefined) {
-        if (value === undefined) {
-          cached = undefined
-          loaded = false
-        } else {
-          cached = value
-          loaded = true
-        }
+      set(value: T) {
+        cached = value
+        loaded = true
       }
     }
   }

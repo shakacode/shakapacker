@@ -78,10 +78,10 @@ describe("index side effects", () => {
     })
   })
 
-  test("assigning undefined to baseConfig resets to lazy loading", () => {
-    // Guards the setter footgun: a stray `undefined` assignment must fall back
-    // to the real lazy loader rather than caching undefined and returning it
-    // silently. Accessing afterwards loads environments/base exactly once.
+  test("assigning undefined to baseConfig caches it without loading", () => {
+    // The setter overrides the cache with whatever is assigned, so even an
+    // `undefined` assignment short-circuits the lazy loader: environments/base
+    // is never loaded and ensureManifestExists never runs.
     jest.isolateModules(() => {
       const ensureManifestExists = mockEnsureManifestExists()
       jest.dontMock("../../package/plugins/webpack")
@@ -90,11 +90,8 @@ describe("index side effects", () => {
 
       shakapacker.baseConfig = undefined
 
+      expect(shakapacker.baseConfig).toBeUndefined()
       expect(ensureManifestExists).not.toHaveBeenCalled()
-      expect(shakapacker.baseConfig).toStrictEqual(
-        expect.objectContaining({ mode: expect.any(String) })
-      )
-      expect(ensureManifestExists).toHaveBeenCalledTimes(1)
     })
   })
 
@@ -151,7 +148,7 @@ describe("index side effects", () => {
     })
   })
 
-  test("assigning undefined to rules resets to lazy loading", () => {
+  test("assigning undefined to rules caches it without loading", () => {
     jest.isolateModules(() => {
       mockEnsureManifestExists()
 
@@ -159,11 +156,7 @@ describe("index side effects", () => {
 
       shakapacker.rules = undefined
 
-      expect(shakapacker.rules).toStrictEqual(
-        expect.arrayContaining([
-          expect.objectContaining({ test: expect.any(RegExp) })
-        ])
-      )
+      expect(shakapacker.rules).toBeUndefined()
     })
   })
 
