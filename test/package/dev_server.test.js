@@ -22,13 +22,18 @@ describe("DevServer", () => {
   })
 
   test("with custom env prefix", () => {
-    const config = require("../../package/config")
-    config.dev_server.env_prefix = "TEST_SHAKAPACKER_DEV_SERVER"
-
+    // Set NODE_ENV/RAILS_ENV before requiring config: config resolves
+    // dev_server from shakapacker.yml at load time, and production has no
+    // dev_server section. Without this, a reordered run (e.g. --randomize)
+    // where the production test ran first leaks NODE_ENV=production here and
+    // config.dev_server is undefined.
     process.env.NODE_ENV = "development"
     process.env.RAILS_ENV = "development"
     process.env.TEST_SHAKAPACKER_DEV_SERVER_HOST = "0.0.0.0"
     process.env.TEST_SHAKAPACKER_DEV_SERVER_PORT = 5000
+
+    const config = require("../../package/config")
+    config.dev_server.env_prefix = "TEST_SHAKAPACKER_DEV_SERVER"
 
     const devServer = require("../../package/dev_server")
     expect(devServer).toBeDefined()
