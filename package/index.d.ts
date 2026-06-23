@@ -25,11 +25,18 @@ interface ShakapackerExports {
   config: Config
   /** Development server configuration */
   devServer: DevServerConfig
-  /** Base webpack/rspack configuration */
+  /**
+   * Base webpack/rspack configuration (lazily loaded on first access; may throw if the bundler is not installed).
+   *
+   * Direct assignment (`shakapacker.baseConfig = custom`) overrides the value read back here. It only
+   * changes `generateWebpackConfig` output in the fallback case where no `environments/<NODE_ENV>.js`
+   * file exists; normal NODE_ENV builds load `environments/<env>.js` (which require the real base) and
+   * are unaffected. `Object.defineProperty` with a value descriptor bypasses the setter entirely.
+   */
   baseConfig: Configuration
   /** Environment configuration (railsEnv, nodeEnv, etc.) */
   env: Env
-  /** Array of webpack/rspack loader rules */
+  /** Array of webpack/rspack loader rules (lazily loaded on first access; may throw if the bundler is not installed) */
   rules: RuleSetRule[]
   /** Check if a module exists in node_modules */
   moduleExists: (packageName: string) => boolean

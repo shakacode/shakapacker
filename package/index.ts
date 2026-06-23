@@ -5,10 +5,10 @@ import { resolve } from "path"
 import { existsSync } from "fs"
 import type { Configuration, RuleSetRule } from "webpack"
 import config from "./config"
-import baseConfig from "./environments/base"
 import devServer from "./dev_server"
 import env from "./env"
 import { moduleExists, canProcess } from "./utils/helpers"
+import createLazyExport from "./utils/createLazyExport"
 import inliningCss from "./utils/inliningCss"
 import {
   isRspack,
@@ -22,8 +22,11 @@ import {
 } from "./utils/bundlerUtils"
 
 const rulesPath = resolve(__dirname, "rules", `${config.assets_bundler}.js`)
-/** Array of webpack/rspack loader rules */
-const rules = require(rulesPath) as RuleSetRule[]
+
+const lazyRules = createLazyExport(() => require(rulesPath) as RuleSetRule[])
+const lazyBaseConfig = createLazyExport(
+  () => require("./environments/base") as Configuration
+)
 
 /**
  * Generate webpack configuration with optional custom config.
@@ -52,7 +55,9 @@ const generateWebpackConfig = (
 
   const { nodeEnv } = env
   const path = resolve(__dirname, "environments", `${nodeEnv}.js`)
-  const environmentConfig = existsSync(path) ? require(path) : baseConfig
+  const environmentConfig = existsSync(path)
+    ? require(path)
+    : lazyBaseConfig.get()
 
   return webpackMerge.merge({}, environmentConfig, extraConfig)
 }
@@ -64,19 +69,15 @@ const generateWebpackConfig = (
  * NOTE: This pattern is temporary and will be replaced with named exports
  * once issue #641 is resolved.
  */
-export = {
+const shakapacker = {
   /** Shakapacker configuration from shakapacker.yml */
   config,
   /** Development server configuration */
   devServer,
   /** Generate webpack configuration with optional custom config */
   generateWebpackConfig,
-  /** Base webpack/rspack configuration */
-  baseConfig,
   /** Environment configuration (railsEnv, nodeEnv, etc.) */
   env,
-  /** Array of webpack/rspack loader rules */
-  rules,
   /** Check if a module exists in node_modules */
   moduleExists,
   /** Process a file if a specific loader is available */
@@ -102,3 +103,14 @@ export = {
   /** webpack-merge functions (merge, mergeWithCustomize, mergeWithRules, unique) */
   ...webpackMerge
 }
+
+// Override semantics (assignment override, defineProperty bypass) are
+// documented on createLazyExport. A `shakapacker.baseConfig = custom` override
+// changes `generateWebpackConfig` output ONLY in the fallback case where no
+// `environments/<NODE_ENV>.js` file exists, since that is the sole branch that
+// reads the lazy value. Normal NODE_ENV builds load `environments/<env>.js`
+// (which `require("./base")` directly), so the override does not affect them.
+Object.defineProperty(shakapacker, "rules", lazyRules.descriptor)
+Object.defineProperty(shakapacker, "baseConfig", lazyBaseConfig.descriptor)
+
+export = shakapacker

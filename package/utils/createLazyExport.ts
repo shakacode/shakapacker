@@ -1,0 +1,59 @@
+/**
+ * Builds a lazily-loaded property for an exports object.
+ *
+ * The first `get` runs `load` and caches the result. A dedicated `loaded` flag
+ * (rather than an `=== undefined` sentinel) tracks whether the value has been
+ * computed, so a `load` that legitimately returns `undefined` is cached like
+ * any other value instead of silently re-running on every access. If `load`
+ * throws, `loaded` stays `false`, so the next `get` retries from scratch — a
+ * side-effectful loader that keeps failing can therefore run more than once.
+ * Direct assignment runs the setter and overrides the cached value with whatever
+ * is assigned (including `undefined`); it never re-arms lazy loading. Redefining
+ * the property with a value descriptor
+ * (`Object.defineProperty(target, key, { value })`) bypasses the setter,
+ * leaving the cache untouched.
+ *
+ * Returns the getter (for internal callers that need the value without going
+ * through the property) plus a configurable, enumerable accessor descriptor to
+ * install with `Object.defineProperty`. The descriptor type is a literal so the
+ * configurable/enumerable/accessor invariants are enforced at the call sites
+ * rather than erased to the loose built-in `PropertyDescriptor`.
+ */
+const createLazyExport = <T>(
+  load: () => T
+): {
+  get: () => T
+  descriptor: {
+    configurable: true
+    enumerable: true
+    get: () => T
+    set: (value: T) => void
+  }
+} => {
+  let cached: T | undefined
+  let loaded = false
+
+  const get = (): T => {
+    if (!loaded) {
+      cached = load()
+      loaded = true
+    }
+
+    return cached as T
+  }
+
+  return {
+    get,
+    descriptor: {
+      configurable: true,
+      enumerable: true,
+      get,
+      set(value: T) {
+        cached = value
+        loaded = true
+      }
+    }
+  }
+}
+
+export = createLazyExport
