@@ -5,7 +5,10 @@ require "package_json"
 package_json = PackageJson.new
 
 # install react
-package_json.manager.add(["react", "react-dom", "@babel/preset-react"])
+# Pin @babel/preset-react to v7: the generated app uses @babel/core ^7, but
+# @babel/preset-react@8 requires @babel/core ^8, so an unpinned add resolves to
+# v8 and fails with npm ERESOLVE (leaving react/react-dom uninstalled).
+package_json.manager.add(["react", "react-dom", "@babel/preset-react@^7"])
 
 # update webpack presets for react
 package_json.merge! do |pj|
