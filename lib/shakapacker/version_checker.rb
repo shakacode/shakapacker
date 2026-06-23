@@ -224,8 +224,11 @@ module Shakapacker
 
           def from_pnpm_lock
             require "yaml"
+            require "date"
 
-            content = YAML.load_file(@pnpm_lock)
+            # pnpm >= 10.16 writes a `time:` section; permit Time/Date so Psych 4+ doesn't raise DisallowedClass.
+            # safe_load (not load_file's permitted_classes:) keeps this working on Ruby 2.7 / Psych 3.1.
+            content = YAML.safe_load(File.read(@pnpm_lock), permitted_classes: [Time, Date])
 
             content.fetch("packages", {}).each do |key, value|
               # git-based constraints will include a "version" key with their pseudo semantic version
