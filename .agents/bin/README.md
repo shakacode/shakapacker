@@ -9,7 +9,7 @@ means that capability is n/a here.
 | --- | --- | --- |
 | `setup` | Install dependencies | `bundle install` + `yarn install` |
 | `validate` | Pre-push gate (run before pushing) | `lint` + `test` |
-| `test` | Run tests | `bundle exec rake test` (rspec) + `yarn test` (jest) |
+| `test` | Run tests | `bundle exec rake test` (rspec) + `yarn test --runInBand` (jest) |
 | `lint` | Lint / format (pass `-A` to fix RuboCop) | `bundle exec rubocop` + `yarn lint` (eslint) |
 | `build` | Build / type-check | `yarn build` + `yarn type-check` |
 

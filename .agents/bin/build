@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 # Build the JS package and type-check.
 set -euo pipefail
+cd "$(CDPATH= cd -- "$(dirname -- "$0")/../.." && pwd)"
 yarn build
 yarn type-check
