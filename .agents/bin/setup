@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+# Install dependencies (Ruby + JS).
+set -euo pipefail
+cd "$(CDPATH= cd -- "$(dirname -- "$0")/../.." && pwd)"
+bundle install
+yarn install

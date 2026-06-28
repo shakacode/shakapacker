@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+# Pre-push gate: lint + test (run before pushing).
+set -euo pipefail
+root="$(CDPATH= cd -- "$(dirname -- "$0")/../.." && pwd)"
+cd "$root"
+"$root/.agents/bin/lint"
+"$root/.agents/bin/test"

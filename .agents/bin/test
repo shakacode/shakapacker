@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+# Run the test suite (Ruby specs + JS jest).
+set -euo pipefail
+cd "$(CDPATH= cd -- "$(dirname -- "$0")/../.." && pwd)"
+bundle exec rake test
+yarn test --runInBand

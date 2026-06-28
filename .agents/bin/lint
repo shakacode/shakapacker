@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+# Lint / format (Ruby + JS). Pass -A to autocorrect RuboCop.
+set -euo pipefail
+cd "$(CDPATH= cd -- "$(dirname -- "$0")/../.." && pwd)"
+bundle exec rubocop "$@"
+yarn lint
