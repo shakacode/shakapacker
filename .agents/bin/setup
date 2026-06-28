@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+# Install dependencies (Ruby + JS).
+set -euo pipefail
+bundle install
+yarn install

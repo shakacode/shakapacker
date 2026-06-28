@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+# Build the JS package and type-check.
+set -euo pipefail
+yarn build
+yarn type-check

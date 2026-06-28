@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+# Pre-push gate: lint + test (run before pushing).
+set -euo pipefail
+here="$(cd "$(dirname "$0")" && pwd)"
+"$here/lint"
+"$here/test"

@@ -1,0 +1,13 @@
+# Non-command agent-workflow configuration for portable shared skills.
+# Commands live as scripts in .agents/bin/ (see .agents/bin/README.md).
+base_branch: main
+changelog: "CHANGELOG.md — user-visible changes only"
+follow_up_prefix: "Follow-up:"
+review_gate: "AI reviewers are advisory unless they confirm a blocker; merge gate is the full `gh pr checks` list green (not --required) + all threads resolved + mergeable clean"
+approval_exempt: "at batch closeout, auto-merge ready low-risk PRs that pass the merge gate; keep high-risk (CI/workflow, build-config, dependency or runtime bumps, broad refactors, release) maintainer-gated"
+coordination_backend: "private shakacode/agent-coordination (claims/heartbeats namespaced by full repo name)"
+benchmark_labels: n/a
+merge_ledger: n/a
+ci_parity_environment: "n/a — reproduce CI-only failures from the matching job in .github/workflows/**"
+hosted_ci_trigger: "n/a — CI runs on every PR"
+ci_change_detector: n/a

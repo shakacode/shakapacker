@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+# Run the test suite (Ruby specs + JS jest).
+set -euo pipefail
+bundle exec rake test
+yarn test
