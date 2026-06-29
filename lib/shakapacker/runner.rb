@@ -29,6 +29,21 @@ module Shakapacker
     SHAKAPACKER_NODE_FLAGS = %w[--debug-shakapacker --trace-deprecation --no-deprecation].freeze
     private_constant :SHAKAPACKER_NODE_FLAGS
 
+    RSPACK_RUNNER_EXTENSION = Module.new do
+      def build_cmd
+        package_json.manager.native_exec_command("rspack")
+      end
+
+      def assets_bundler_commands
+        BASE_COMMANDS + %w[build watch]
+      end
+
+      def config_incompatible_args
+        (bundler_argv & BASE_COMMANDS) + (@argv & %w[build watch])
+      end
+    end
+    private_constant :RSPACK_RUNNER_EXTENSION
+
     def self.json_output?(argv)
       argv.include?("--json") || argv.include?("-j")
     end
@@ -163,21 +178,8 @@ module Shakapacker
 
       if use_rspack
         require_relative "rspack_runner"
-        # Extend the runner instance with rspack-specific methods
-        # This avoids creating a new RspackRunner which would reload the configuration
-        runner.extend(Module.new do
-          def build_cmd
-            package_json.manager.native_exec_command("rspack")
-          end
-
-          def assets_bundler_commands
-            BASE_COMMANDS + %w[build watch]
-          end
-
-          def config_incompatible_args
-            (bundler_argv & BASE_COMMANDS) + (@argv & %w[build watch])
-          end
-        end)
+        # Extend the runner instance to avoid creating a new RspackRunner and reloading configuration.
+        runner.extend(RSPACK_RUNNER_EXTENSION)
         runner.run
       else
         require_relative "webpack_runner"
@@ -219,19 +221,7 @@ module Shakapacker
       # Use bundler from build_config (which includes CLI override)
       if build_config[:bundler] == "rspack"
         require_relative "rspack_runner"
-        runner.extend(Module.new do
-          def build_cmd
-            package_json.manager.native_exec_command("rspack")
-          end
-
-          def assets_bundler_commands
-            BASE_COMMANDS + %w[build watch]
-          end
-
-          def config_incompatible_args
-            (bundler_argv & BASE_COMMANDS) + (@argv & %w[build watch])
-          end
-        end)
+        runner.extend(RSPACK_RUNNER_EXTENSION)
         runner.run
       else
         require_relative "webpack_runner"
