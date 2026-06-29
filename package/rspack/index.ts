@@ -63,30 +63,17 @@ const generateRspackConfig = (
 }
 
 // baseConfig and rules are installed below as lazy getters via
-// Object.defineProperty. These ambient declarations exist only to shape the
-// generated .d.ts: they advertise baseConfig/rules on the named-export surface
-// with their real types, without forcing either module to load eagerly. Being
-// ambient (`declare const`), they emit no runtime binding of their own.
-//
-// Mechanism: with module: commonjs (set in tsconfig.json, where a note on the
-// "module" setting points back here), tsc initializes every named export to
-// `void 0` at the top of the emitted module as a configurable data property.
-// Installing an accessor via Object.defineProperty(exports, ...) below replaces
-// that placeholder AND removes the export from Node's static CommonJS
-// named-export detection (cjs-module-lexer) — which is why a native ESM
-// `import { baseConfig } from "shakapacker/rspack"` throws "Named export not
-// found" (a documented breaking change; see CHANGELOG). ESM consumers must use
-// the default import or require(). The defineProperty calls succeed because the
-// placeholder is configurable; a build target that emitted non-configurable
-// export bindings would make them throw at load. The compiled-output contract
-// is locked in by test/package/indexTypes.test.js.
-//
-// TODO(#641): Once the module/export strategy is resolved, consider switching to
-// the same local-object pattern used in package/index.ts (assemble the exports
-// object, then install the getters on it) to remove this reliance on
-// TypeScript's internal CommonJS emit behaviour.
-declare const baseConfig: RspackConfigWithDevServer
-declare const rules: RuleSetRule[]
+// Object.defineProperty. These exported ambient declarations exist only to shape
+// the generated .d.ts: they advertise baseConfig/rules on the TypeScript named
+// export surface with their real types, without forcing either module to load
+// eagerly and without emitting `exports.baseConfig = void 0` /
+// `exports.rules = void 0` runtime placeholders. Keeping those placeholders out
+// of the compiled CommonJS output is what makes Node's native ESM
+// cjs-module-lexer reject named imports for the lazy values. ESM consumers must
+// use the default import or require() for baseConfig/rules. The compiled-output
+// contract is locked in by test/package/indexTypes.test.js.
+export declare const baseConfig: RspackConfigWithDevServer
+export declare const rules: RuleSetRule[]
 
 // Re-export webpack-merge utilities for backward compatibility
 export {
@@ -100,9 +87,7 @@ export {
   config, // shakapacker.yml
   devServer,
   generateRspackConfig,
-  baseConfig,
   env,
-  rules,
   moduleExists,
   canProcess,
   inliningCss,

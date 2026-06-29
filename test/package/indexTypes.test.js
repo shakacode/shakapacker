@@ -53,6 +53,23 @@ describe("compiled package output", () => {
     expect(declaration).toContain("moduleExists")
   })
 
+  test("rspack compiled output does not statically export lazy properties", () => {
+    const compiled = readFileSync(join(outDir, "rspack", "index.js"), "utf8")
+
+    // `export declare const` keeps the lazy values in the generated .d.ts, but
+    // the CommonJS output must not contain TypeScript's static named-export
+    // placeholders. If those return, Node's native CJS/ESM interop sees the
+    // names and `import { baseConfig } from "shakapacker/rspack"` stops
+    // throwing, which breaks the documented lazy-export contract below.
+    expect(compiled).not.toMatch(/exports\.(baseConfig|rules)\s*=/)
+    expect(compiled).toContain(
+      'Object.defineProperty(exports, "rules", lazyRules.descriptor)'
+    )
+    expect(compiled).toContain(
+      'Object.defineProperty(exports, "baseConfig", lazyBaseConfig.descriptor)'
+    )
+  })
+
   // symlinkSync to node_modules/lib requires elevated privileges on Windows
   // (EPERM), so the native-ESM consumer specs are skipped there; the
   // declaration-emit test above does not symlink and still runs.
@@ -83,13 +100,44 @@ describe("compiled package output", () => {
       })
     }
 
+    describe("compiled CommonJS consumers", () => {
+      test("webpack entry ignores baseConfig overrides for normal NODE_ENV builds", () => {
+        const output = runConsumer("webpack-cjs-normal-env-consumer.cjs", [
+          'const shakapacker = require("./package/index.js")',
+          'shakapacker.baseConfig = { mode: "none", entry: { sentinel: "./override.js" } }',
+          "const result = shakapacker.generateWebpackConfig()",
+          "if (result.entry && result.entry.sentinel) {",
+          '  throw new Error("baseConfig override leaked into normal env config")',
+          "}",
+          'console.log("webpack CJS normal env override ignored")'
+        ])
+
+        expect(output).toContain("webpack CJS normal env override ignored")
+      })
+
+      test("rspack entry ignores baseConfig overrides for normal NODE_ENV builds", () => {
+        const output = runConsumer("rspack-cjs-normal-env-consumer.cjs", [
+          'const rspack = require("./package/rspack/index.js")',
+          'rspack.baseConfig = { mode: "none", entry: { sentinel: "./override.js" } }',
+          "const result = rspack.generateRspackConfig()",
+          "if (result.entry && result.entry.sentinel) {",
+          '  throw new Error("baseConfig override leaked into normal env config")',
+          "}",
+          'console.log("rspack CJS normal env override ignored")'
+        ])
+
+        expect(output).toContain("rspack CJS normal env override ignored")
+      })
+    })
+
     // Locks in the documented breaking change: members assembled in a local
-    // object before `export =` (webpack entry) or installed as lazy getters via
-    // Object.defineProperty (rspack entry) are not statically detectable by
-    // Node's cjs-module-lexer, so a native ESM named import throws SyntaxError
-    // at load time; consumers must use the default import. This also guards
-    // against a future toolchain change silently re-enabling the named import.
-    // Returns the error thrown by the consumer process for the test to assert.
+    // object before `export =` (webpack entry) or lazy values installed only as
+    // Object.defineProperty accessors (rspack entry) are not statically
+    // detectable by Node's cjs-module-lexer, so a native ESM named import throws
+    // SyntaxError at load time; consumers must use the default import. This also
+    // guards against a future toolchain change silently re-enabling the named
+    // import. Returns the error thrown by the consumer process for the test to
+    // assert.
     const runFailingConsumer = (fileName, importLine) => {
       const consumerPath = join(sharedRootDir, fileName)
       writeFileSync(consumerPath, `${importLine}\n`)

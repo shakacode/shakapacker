@@ -280,26 +280,7 @@ describe("rspack/index side effects", () => {
     })
   })
 
-  test("a baseConfig override does NOT affect generateRspackConfig for a normal NODE_ENV build", () => {
-    // The companion to the fallback test: when environments/<env>.js exists
-    // (the normal case — jest runs with NODE_ENV=test), generateRspackConfig
-    // loads that file directly and never reads the lazy baseConfig, so an
-    // override is intentionally ignored. This is the caveat documented on the
-    // override in rspack/index.ts / the .d.ts, here given executable teeth.
-    jest.isolateModules(() => {
-      mockConfigForRspack()
-      mockRequireOrError()
-      mockValidateDependencies()
-
-      const rspackIndex = require("../../../package/rspack/index")
-      const stub = { mode: "none", entry: { sentinel: "./override.js" } }
-
-      rspackIndex.baseConfig = stub
-
-      const result = rspackIndex.generateRspackConfig()
-
-      // The real environment config was used, not the override stub.
-      expect(result.entry).not.toHaveProperty("sentinel")
-    })
-  })
+  // The compiled-output specs cover the normal NODE_ENV path where
+  // environments/<env>.js exists. Source-level Jest runs only have the .ts env
+  // files, so they intentionally exercise the missing-env fallback above.
 })
