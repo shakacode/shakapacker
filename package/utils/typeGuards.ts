@@ -190,7 +190,7 @@ export function isValidConfig(obj: unknown): obj is Config {
   }
 
   if (
-    "webpack_compile_flags" in config &&
+    config.webpack_compile_flags !== undefined &&
     (!Array.isArray(config.webpack_compile_flags) ||
       !config.webpack_compile_flags.every((flag) => typeof flag === "string"))
   ) {
@@ -340,12 +340,20 @@ export function isPartialConfig(obj: unknown): obj is Partial<Config> {
     return false
   }
 
+  const config = obj as Record<string, unknown>
+
+  if (
+    config.webpack_compile_flags !== undefined &&
+    (!Array.isArray(config.webpack_compile_flags) ||
+      !config.webpack_compile_flags.every((flag) => typeof flag === "string"))
+  ) {
+    return false
+  }
+
   // In production, skip deep validation unless explicitly enabled
   if (!shouldValidate()) {
     return true
   }
-
-  const config = obj as Record<string, unknown>
 
   // Check string fields if present
   const stringFields = [
@@ -381,14 +389,6 @@ export function isPartialConfig(obj: unknown): obj is Partial<Config> {
 
   // Check arrays if present
   if ("additional_paths" in config && !Array.isArray(config.additional_paths)) {
-    return false
-  }
-
-  if (
-    "webpack_compile_flags" in config &&
-    (!Array.isArray(config.webpack_compile_flags) ||
-      !config.webpack_compile_flags.every((flag) => typeof flag === "string"))
-  ) {
     return false
   }
 

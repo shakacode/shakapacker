@@ -254,6 +254,39 @@ describe "WebpackRunner" do
     end
   end
 
+  describe "passthrough separator" do
+    it "passes reserved flags after -- to the bundler" do
+      Dir.chdir(test_app_path) do
+        allow(Shakapacker::Utils::Manager).to receive(
+          :error_unless_package_manager_is_obvious!
+        )
+
+        klass = Shakapacker::Runner
+        instance = klass.new([], nil, nil, ["--help", "--bundler", "rspack"])
+        cmd = PackageJson.read(test_app_path).manager.native_exec_command(
+          "webpack",
+          ["--help", "--bundler", "rspack"]
+        )
+
+        allow(klass).to receive(:new).and_return(instance)
+        allow(instance).to receive(:spawn).and_return(12345)
+        allow(instance).to receive(:trap)
+        allow(Process).to receive(:wait).with(12345) do
+          system("true")
+        end
+
+        expect { klass.run(["--", "--help", "--bundler", "rspack"]) }.not_to(
+          raise_error
+        )
+
+        expect(instance).to have_received(:spawn).with(
+          Shakapacker::Compiler.env,
+          *cmd
+        )
+      end
+    end
+  end
+
   private
 
     def capture_stdout

@@ -9,11 +9,13 @@ require_relative "version"
 module Shakapacker
   class DevServerRunner < Shakapacker::Runner
     def self.run(argv)
+      runner_argv, passthrough_argv = split_passthrough_argv(argv)
+
       # Show Shakapacker help and exit (don't call bundler)
-      if argv.include?("--help") || argv.include?("-h")
+      if runner_argv.include?("--help") || runner_argv.include?("-h")
         print_help
         exit(0)
-      elsif argv.include?("--version") || argv.include?("-v")
+      elsif runner_argv.include?("--version") || runner_argv.include?("-v")
         print_version
         exit(0)
       end
@@ -21,9 +23,9 @@ module Shakapacker
       Shakapacker.ensure_node_env!
 
       # Check for --build flag
-      build_index = argv.index("--build")
+      build_index = runner_argv.index("--build")
       if build_index
-        build_name = argv[build_index + 1]
+        build_name = runner_argv[build_index + 1]
 
         unless build_name
           $stderr.puts "[Shakapacker] Error: --build requires a build name"
@@ -51,11 +53,11 @@ module Shakapacker
           end
 
           # Remove --build and build name from argv
-          remaining_argv = argv.dup
+          remaining_argv = runner_argv.dup
           remaining_argv.delete_at(build_index + 1)
           remaining_argv.delete_at(build_index)
 
-          run_with_build_config(remaining_argv, build_config)
+          run_with_build_config(remaining_argv, build_config, passthrough_argv)
           return
         rescue ArgumentError => e
           $stderr.puts "[Shakapacker] #{e.message}"
@@ -63,10 +65,10 @@ module Shakapacker
         end
       end
 
-      new(argv).run
+      new(runner_argv, nil, nil, passthrough_argv).run
     end
 
-    def self.run_with_build_config(argv, build_config)
+    def self.run_with_build_config(argv, build_config, passthrough_argv = [])
       Shakapacker.ensure_node_env!
 
       # Apply build config environment variables
@@ -84,7 +86,7 @@ module Shakapacker
       puts "[Shakapacker] Config file: #{build_config[:config_file]}" if build_config[:config_file]
 
       # Pass bundler override so Configuration.assets_bundler reflects the build
-      new(argv, build_config, build_config[:bundler]).run
+      new(argv, build_config, build_config[:bundler], passthrough_argv).run
     end
 
     def self.print_help
@@ -307,7 +309,7 @@ module Shakapacker
           cmd += ["--hot"] if @hot && @hot != false
         end
 
-        cmd += @argv
+        cmd += bundler_argv
 
         Dir.chdir(@app_path) do
           exec(env, *cmd)

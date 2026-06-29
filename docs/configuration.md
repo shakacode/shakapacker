@@ -368,7 +368,7 @@ webpack_compile_flags:
   - "--fail-on-warnings"
 ```
 
-Use flags supported by your configured bundler. Each list item is passed as one command-line argument.
+Use flags supported by your configured bundler. Each list item is passed as one command-line argument after the `bin/shakapacker --` separator, so Shakapacker-specific wrapper flags are not consumed from this list.
 
 ### `useContentHash`
 

@@ -1,5 +1,6 @@
 const {
   isValidConfig,
+  isPartialConfig,
   clearValidationCache
 } = require("../../package/utils/typeGuards")
 
@@ -131,6 +132,20 @@ describe("security validation", () => {
       }
 
       expect(isValidConfig(unsafeConfig)).toBe(false)
+    })
+  })
+
+  describe("partial config validation", () => {
+    it("rejects invalid webpack compile flags in production", () => {
+      process.env.NODE_ENV = "production"
+      delete process.env.SHAKAPACKER_STRICT_VALIDATION
+
+      expect(isPartialConfig({ webpack_compile_flags: "--progress" })).toBe(
+        false
+      )
+      expect(
+        isPartialConfig({ webpack_compile_flags: ["--progress", true] })
+      ).toBe(false)
     })
   })
 

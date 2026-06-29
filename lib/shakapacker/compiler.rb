@@ -213,7 +213,9 @@ class Shakapacker::Compiler
 
     def shakapacker_command
       runner = optional_ruby_runner
-      command = [bin_shakapacker_path.to_s, *config.webpack_compile_flags]
+      command = [bin_shakapacker_path.to_s]
+      compile_flags = config.webpack_compile_flags
+      command += ["--", *compile_flags] if compile_flags.any?
       runner.empty? ? command : [runner, *command]
     end
 

@@ -39,14 +39,16 @@ describe "Shakapacker::Compiler" do
     allow(Shakapacker.config).to receive(:webpack_compile_flags).and_return(["--progress", "--fail-on-warnings"])
 
     status = instance_double(Process::Status, success?: true)
-    captured_args = nil
-    allow(Open3).to receive(:capture3) do |env, *args|
-      captured_args = args
-      ["", "", status]
-    end
+    allow(Open3).to receive(:capture3).and_return(["", "", status])
 
     expect(Shakapacker.compiler.compile).to be true
-    expect(captured_args).to include("--progress", "--fail-on-warnings")
+    expect(Open3).to have_received(:capture3) do |_env, *args|
+      command_args = args.take_while { |arg| !arg.is_a?(Hash) }
+      separator_index = command_args.index("--")
+
+      expect(separator_index).not_to be nil
+      expect(command_args[(separator_index + 1)..]).to eq(["--progress", "--fail-on-warnings"])
+    end
   end
 
   it "returns false and calls after_compile_hook on failed compile" do
