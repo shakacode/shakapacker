@@ -208,6 +208,7 @@ describe "Generator" do
             @swc/core
             swc-loader
             compression-webpack-plugin
+            sass
             @rspack/cli
             @rspack/core
             rspack-manifest-plugin

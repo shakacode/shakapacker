@@ -2041,6 +2041,38 @@ describe Shakapacker::Doctor do
         expect(doctor.issues).to include(match(/sass-loader/))
         expect(doctor.issues).to include(match(/sass/))
       end
+
+      %w[sass sass-embedded].each do |sass_package|
+        it "accepts #{sass_package} as a Sass implementation" do
+          package_json = {
+            "devDependencies" => {
+              "sass-loader" => "^16.0.0",
+              sass_package => "^1.0.0"
+            }
+          }
+          File.write(package_json_path, JSON.generate(package_json))
+
+          doctor.send(:check_file_type_dependencies)
+
+          expect(doctor.issues).to be_empty
+        end
+      end
+
+      it "does not accept node-sass as a Sass implementation for the default modern Sass API" do
+        package_json = {
+          "devDependencies" => {
+            "sass-loader" => "^16.0.0",
+            "node-sass" => "^9.0.0"
+          }
+        }
+        File.write(package_json_path, JSON.generate(package_json))
+
+        doctor.send(:check_file_type_dependencies)
+
+        expect(doctor.issues).to include(
+          "Missing required dependency 'sass' or 'sass-embedded' for Sass/SCSS implementation"
+        )
+      end
     end
 
     context "with PostCSS config" do
