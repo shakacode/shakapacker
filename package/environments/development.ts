@@ -59,6 +59,7 @@ const rspackDevConfig = (): RspackConfigWithDevServer => {
   const rspackConfig: RspackConfigWithDevServer = {
     ...baseDevConfig,
     ...(runningWebpackDevServer && {
+      lazyCompilation: false,
       devServer: {
         ...devServerConfig,
         devMiddleware: {
@@ -76,12 +77,9 @@ const rspackDevConfig = (): RspackConfigWithDevServer => {
   ) {
     const reactRefreshPlugin = require("@rspack/plugin-react-refresh")
     const ReactRefreshRspackPlugin =
-      (typeof reactRefreshPlugin.ReactRefreshRspackPlugin === "function" &&
-        reactRefreshPlugin.ReactRefreshRspackPlugin) ||
-      (typeof reactRefreshPlugin.default === "function" &&
-        reactRefreshPlugin.default) ||
-      (typeof reactRefreshPlugin === "function" && reactRefreshPlugin) ||
-      null
+      typeof reactRefreshPlugin.ReactRefreshRspackPlugin === "function"
+        ? reactRefreshPlugin.ReactRefreshRspackPlugin
+        : null
     if (typeof ReactRefreshRspackPlugin !== "function") {
       console.warn(
         "[SHAKAPACKER WARNING] Could not resolve a constructor from @rspack/plugin-react-refresh; React Refresh will be skipped in development."

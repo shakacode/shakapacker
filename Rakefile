@@ -58,7 +58,14 @@ namespace :run_spec do
   desc "Run specs in the dummy-rspack app"
   task :dummy_rspack do
     puts "Running dummy-rspack app specs"
-    spec_dummy_dir = Pathname.new(File.join("spec", "dummy-rspack")).realpath
+    spec_dummy_path = Pathname.new(File.join("spec", "dummy-rspack"))
+
+    unless spec_dummy_path.directory?
+      puts "Skipping dummy-rspack app specs; #{spec_dummy_path} is not present in this checkout"
+      next
+    end
+
+    spec_dummy_dir = spec_dummy_path.realpath
     Bundler.with_unbundled_env do
       sh_in_dir(".", "yalc publish")
       sh_in_dir(spec_dummy_dir, [

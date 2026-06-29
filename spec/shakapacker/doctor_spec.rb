@@ -476,6 +476,102 @@ describe Shakapacker::Doctor do
           doctor.send(:check_peer_dependencies)
           expect(doctor.issues).to include(match(/Missing essential rspack dependency.*@rspack\/core/))
           expect(doctor.issues).to include(match(/Missing essential rspack dependency.*@rspack\/cli/))
+          expect(doctor.issues).to include(match(/Missing essential rspack dependency.*rspack-manifest-plugin/))
+        end
+      end
+
+      context "unsupported rspack v1 dependencies" do
+        before do
+          File.write(package_json_path, JSON.generate({
+            "devDependencies" => {
+              "@rspack/core" => "^1.0.0",
+              "@rspack/cli" => "^1.0.0",
+              "rspack-manifest-plugin" => "^5.2.2"
+            }
+          }))
+        end
+
+        it "adds an unsupported rspack version issue" do
+          doctor.send(:check_peer_dependencies)
+          expect(doctor.issues).to include(match(/Shakapacker supports Rspack v2 only/))
+          expect(doctor.issues).to include(match(/Upgrade @rspack\/core and @rspack\/cli to \^2\.0\.0/))
+        end
+      end
+
+      context "mixed rspack v2 core and v1 cli dependencies" do
+        before do
+          File.write(package_json_path, JSON.generate({
+            "devDependencies" => {
+              "@rspack/core" => "^2.0.0",
+              "@rspack/cli" => "^1.0.0",
+              "rspack-manifest-plugin" => "^5.2.2"
+            }
+          }))
+        end
+
+        it "adds an unsupported cli version issue" do
+          doctor.send(:check_peer_dependencies)
+          expect(doctor.issues).to include(match(/Shakapacker supports Rspack v2 only/))
+          expect(doctor.issues).to include(match(/Upgrade @rspack\/cli to \^2\.0\.0/))
+        end
+      end
+
+      context "missing rspack dev-server dependency" do
+        before do
+          File.write(package_json_path, JSON.generate({
+            "dependencies" => {
+              "@rspack/core" => "^2.0.0",
+              "@rspack/cli" => "^2.0.0",
+              "rspack-manifest-plugin" => "^5.2.2"
+            }
+          }))
+        end
+
+        it "adds a missing essential dev-server issue" do
+          doctor.send(:check_peer_dependencies)
+          expect(doctor.issues).to include(
+            "Missing essential rspack dependency: @rspack/dev-server (^2.0.0)"
+          )
+        end
+      end
+
+      context "mixed rspack v2 core and v1 dev-server dependencies" do
+        before do
+          File.write(package_json_path, JSON.generate({
+            "dependencies" => {
+              "@rspack/core" => "^2.0.0",
+              "rspack-manifest-plugin" => "^5.2.2"
+            },
+            "devDependencies" => {
+              "@rspack/cli" => "^2.0.0",
+              "@rspack/dev-server" => "^1.0.0"
+            }
+          }))
+        end
+
+        it "adds an unsupported dev-server version issue" do
+          doctor.send(:check_peer_dependencies)
+          expect(doctor.issues).to include(match(/Shakapacker supports Rspack v2 only/))
+          expect(doctor.issues).to include(match(/Upgrade @rspack\/dev-server to \^2\.0\.0/))
+        end
+      end
+
+      context "with stale rspack-manifest-plugin dependency" do
+        before do
+          File.write(package_json_path, JSON.generate({
+            "dependencies" => {
+              "@rspack/core" => "^2.0.0",
+              "rspack-manifest-plugin" => "^5.1.0"
+            },
+            "devDependencies" => {
+              "@rspack/cli" => "^2.0.0"
+            }
+          }))
+        end
+
+        it "adds an unsupported manifest plugin version issue" do
+          doctor.send(:check_peer_dependencies)
+          expect(doctor.issues).to include(match(/rspack-manifest-plugin \^5\.2\.2/))
         end
       end
     end
@@ -485,7 +581,7 @@ describe Shakapacker::Doctor do
         package_json = {
           "dependencies" => {
             "webpack" => "^5.0.0",
-            "@rspack/core" => "^1.0.0"
+            "@rspack/core" => "^2.0.0"
           }
         }
         File.write(package_json_path, JSON.generate(package_json))
@@ -671,9 +767,10 @@ describe Shakapacker::Doctor do
         }))
       end
 
-      it "warns that v1 cache is experimental and recommends upgrading" do
+      it "warns that v1 is unsupported and recommends upgrading" do
         doctor.send(:check_rspack_cache_configuration)
         expect(warning_messages).to include(match(/Rspack v1 detected/))
+        expect(warning_messages).to include(match(/Shakapacker supports Rspack v2 only/))
         expect(warning_messages).to include(match(/Bump @rspack\/core and @rspack\/cli/))
       end
     end

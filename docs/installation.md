@@ -69,8 +69,8 @@ case-insensitively. If both are set, `FORCE` wins.
 The installer adds the managed-build stack to `package.json` as individual
 entries (`shakapacker`, `webpack`, `webpack-cli`, `webpack-assets-manifest` for
 webpack apps; `shakapacker`, `@rspack/core`, `@rspack/cli`,
-`rspack-manifest-plugin` for rspack apps). On Shakapacker 10.1+ you can
-optionally replace those four entries with a single
+`@rspack/dev-server`, `rspack-manifest-plugin` for rspack apps). On Shakapacker 10.1+ you can
+optionally replace those entries with a single
 [`shakapacker-webpack`](../packages/shakapacker-webpack/README.md) or
 [`shakapacker-rspack`](../packages/shakapacker-rspack/README.md) dependency.
 The supplemental package pulls in the same managed stack at the exact tested

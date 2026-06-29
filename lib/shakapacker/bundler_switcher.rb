@@ -23,7 +23,7 @@ module Shakapacker
     # Note: Excludes independent/optional dependencies like @swc/core, swc-loader (user-configured
     # transpilers)
     DEFAULT_RSPACK_DEPS = {
-      dev: %w[@rspack/cli @rspack/plugin-react-refresh],
+      dev: %w[@rspack/cli @rspack/dev-server @rspack/plugin-react-refresh],
       prod: %w[@rspack/core rspack-manifest-plugin]
     }.freeze
 

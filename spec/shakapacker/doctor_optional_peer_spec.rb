@@ -112,9 +112,10 @@ describe "Shakapacker::Doctor with optional peer dependencies" do
         package_json = {
           "dependencies" => {
             "shakapacker" => "^9.0.0",
-            "@rspack/core" => "^1.0.0",
-            "@rspack/cli" => "^1.0.0",
-            "rspack-manifest-plugin" => "^5.0.0"
+            "@rspack/core" => "^2.0.0",
+            "@rspack/cli" => "^2.0.0",
+            "@rspack/dev-server" => "^2.0.0",
+            "rspack-manifest-plugin" => "^5.2.2"
           }
         }
         File.write(package_json_path, JSON.generate(package_json))
@@ -252,8 +253,8 @@ describe "Shakapacker::Doctor with optional peer dependencies" do
             "shakapacker" => "^9.0.0",
             "webpack" => "^5.0.0",
             "webpack-cli" => "^5.0.0",
-            "@rspack/core" => "^1.0.0",
-            "@rspack/cli" => "^1.0.0"
+            "@rspack/core" => "^2.0.0",
+            "@rspack/cli" => "^2.0.0"
           }
         }
         File.write(package_json_path, JSON.generate(package_json))

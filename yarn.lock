@@ -5770,10 +5770,10 @@ rfdc@^1.4.1:
   resolved "https://registry.npmjs.org/rfdc/-/rfdc-1.4.1.tgz#778f76c4fb731d93414e8f925fbecf64cce7f6ca"
   integrity sha512-q1b3N5QkRUWUl7iyylaaj3kOpIT0N2i9MqIEQXP73GVsN9cw3fdx8X63cEmWhJGi2PPCF23Ijp7ktmd39rawIA==
 
-rspack-manifest-plugin@5.2.1:
-  version "5.2.1"
-  resolved "https://registry.npmjs.org/rspack-manifest-plugin/-/rspack-manifest-plugin-5.2.1.tgz#e685c228ec60c65efec8f6bcf93e701c7efb9eee"
-  integrity sha512-H3qyCumiEiWy9zhcPIYPr3J3SWyvypVJJY5wxjG5L8gYny6dfNHfk0gyICg1tGO+g4uQzvVHER875ek/I/J8UA==
+rspack-manifest-plugin@5.2.2:
+  version "5.2.2"
+  resolved "https://registry.npmjs.org/rspack-manifest-plugin/-/rspack-manifest-plugin-5.2.2.tgz#ad2f593471b724150ed1bf6083addb2c7a5a901c"
+  integrity sha512-vynki1FQjdRaPYHKuiu5vxa/CT6v6pa601Q1nXWOHgdJ1HGID7/bShwuD1c6K4GWboJYl590iD0i6hoUi4AAhA==
   dependencies:
     "@rspack/lite-tapable" "^1.0.1"
 

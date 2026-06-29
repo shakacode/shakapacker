@@ -295,7 +295,10 @@ Dir.chdir(Rails.root) do
   # Inline fetch_peer_dependencies and fetch_common_dependencies
   peers = PackageJson.read(install_dir).fetch(assets_bundler)
   common_deps = Shakapacker::Install::Env.truthy_env?("SKIP_COMMON_LOADERS") ? {} : PackageJson.read(install_dir).fetch("common")
-  peers = peers.merge(common_deps)
+  if assets_bundler == "rspack" && common_deps.key?("css-loader")
+    common_deps["css-loader"] = "^7.1.4"
+  end
+  peers = common_deps.merge(peers)
 
   # Add transpiler-specific dependencies based on detected/configured transpiler
   # Inline the logic here since methods can't be called before they're defined in Rails templates

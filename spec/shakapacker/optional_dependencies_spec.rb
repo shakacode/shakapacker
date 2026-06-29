@@ -74,6 +74,10 @@ describe "Optional Peer Dependencies" do
     end
 
     it "can load shakapacker without webpack when using rspack" do
+      unless File.exist?(File.join(shakapacker_root, "package/index.js"))
+        skip "shakapacker package entrypoint is not built (run `yarn build`)"
+      end
+
       Dir.mktmpdir do |dir|
         # Create a test package with only rspack dependencies
         test_package = {
@@ -81,8 +85,10 @@ describe "Optional Peer Dependencies" do
           "version" => "1.0.0",
           "dependencies" => {
             "shakapacker" => "file:#{shakapacker_root}",
-            "@rspack/core" => "^1.0.0",
-            "rspack-manifest-plugin" => "^5.0.0"
+            "@rspack/core" => "^2.0.0",
+            "@rspack/cli" => "^2.0.0",
+            "@rspack/dev-server" => "^2.0.0",
+            "rspack-manifest-plugin" => "^5.2.2"
           }
         }
 
