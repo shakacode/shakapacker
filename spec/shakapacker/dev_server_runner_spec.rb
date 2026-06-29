@@ -143,7 +143,10 @@ describe "DevServerRunner" do
           :error_unless_package_manager_is_obvious!
         )
 
-        instance = Shakapacker::DevServerRunner.new(["--", "--host", "0.0.0.0"])
+        runner_argv, passthrough_argv = Shakapacker::DevServerRunner.split_passthrough_argv(
+          ["--", "--host", "0.0.0.0"]
+        )
+        instance = Shakapacker::DevServerRunner.new(runner_argv, nil, nil, passthrough_argv)
         allow(instance).to receive(:exit!).and_raise(SystemExit)
 
         expect { instance.send(:detect_unsupported_switches!) }
