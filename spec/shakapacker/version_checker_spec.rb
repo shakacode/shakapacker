@@ -1631,6 +1631,20 @@ describe "VersionChecker::NodePackageVersion" do
           expect(node_package_version.raw).to eq "8.4.0"
         end
       end
+
+      it "#raw supports Psych versions that use positional permitted classes" do
+        parsed_lockfile = YAML.safe_load(lockfile_with_time, permitted_classes: [Time, Date])
+
+        Dir.mktmpdir do |dir|
+          node_package_version = build_node_package_version(dir, lockfile_with_time)
+          allow(node_package_version).to receive(:safe_load_supports_permitted_classes_keyword?).and_return(false)
+          expect(node_package_version).to receive(:safe_load_pnpm_lock_legacy)
+            .with(lockfile_with_time)
+            .and_return(parsed_lockfile)
+
+          expect(node_package_version.raw).to eq "8.4.0"
+        end
+      end
     end
   end
 end
