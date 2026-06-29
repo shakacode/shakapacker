@@ -9,6 +9,8 @@ gem "rake", ">= 11.1"
 gem "rack-proxy", require: false
 gem "rspec-rails", "~> 7.0"
 gem "byebug"
-# i18n 1.15.0/1.15.1 call Fiber[] (Ruby 3.2+) unconditionally, crashing on Ruby 3.1.
-# Fixed in 1.15.2; exclude the broken releases to keep Ruby 3.1 CI green.
-gem "i18n", "!= 1.15.0", "!= 1.15.1"
+if Gem::Version.new(RUBY_VERSION) < Gem::Version.new("3.2")
+  # i18n 1.15.x uses Fiber[] (Ruby 3.2+) while allowing Ruby 3.1.
+  # Ruby 3.0/2.x are protected by i18n's gemspec; keep Ruby 3.1 below 1.15.
+  gem "i18n", "< 1.15"
+end
