@@ -24,6 +24,7 @@ describe("security validation", () => {
       nested_entries: false,
       css_extract_ignore_order_warnings: false,
       webpack_compile_output: true,
+      webpack_compile_flags: [],
       shakapacker_precompile: true,
       cache_manifest: false,
       ensure_consistent_versioning: false,
@@ -100,6 +101,28 @@ describe("security validation", () => {
 
       expect(isValidConfig(safeConfig)).toBe(true)
     })
+
+    it("rejects non-array webpack compile flags", () => {
+      process.env.NODE_ENV = "development"
+
+      const unsafeConfig = {
+        ...baseConfig,
+        webpack_compile_flags: "--progress"
+      }
+
+      expect(isValidConfig(unsafeConfig)).toBe(false)
+    })
+
+    it("rejects non-string webpack compile flag entries", () => {
+      process.env.NODE_ENV = "development"
+
+      const unsafeConfig = {
+        ...baseConfig,
+        webpack_compile_flags: ["--progress", true]
+      }
+
+      expect(isValidConfig(unsafeConfig)).toBe(false)
+    })
   })
 
   describe("optional field validation", () => {
@@ -113,6 +136,7 @@ describe("security validation", () => {
       nested_entries: false,
       css_extract_ignore_order_warnings: false,
       webpack_compile_output: true,
+      webpack_compile_flags: [],
       shakapacker_precompile: true,
       cache_manifest: false,
       ensure_consistent_versioning: false,

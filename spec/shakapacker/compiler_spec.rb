@@ -32,6 +32,23 @@ describe "Shakapacker::Compiler" do
     expect(mocked_strategy).to have_received(:after_compile_hook)
   end
 
+  it "passes configured webpack compile flags to the shakapacker binstub" do
+    mocked_strategy = spy("Strategy")
+    allow(mocked_strategy).to receive(:stale?).and_return(true)
+    allow(Shakapacker.compiler).to receive(:strategy).and_return(mocked_strategy)
+    allow(Shakapacker.config).to receive(:webpack_compile_flags).and_return(["--progress", "--fail-on-warnings"])
+
+    status = instance_double(Process::Status, success?: true)
+    captured_args = nil
+    allow(Open3).to receive(:capture3) do |env, *args|
+      captured_args = args
+      ["", "", status]
+    end
+
+    expect(Shakapacker.compiler.compile).to be true
+    expect(captured_args).to include("--progress", "--fail-on-warnings")
+  end
+
   it "returns false and calls after_compile_hook on failed compile" do
     mocked_strategy = spy("Strategy")
     allow(mocked_strategy).to receive(:stale?).and_return(true)

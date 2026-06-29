@@ -172,6 +172,7 @@ config.assets_bundler_config_path
 config.compile?              # => true (auto-compile enabled?)
 config.cache_manifest?       # => false
 config.javascript_transpiler # => "swc"
+config.webpack_compile_flags # => ["--progress", "--fail-on-warnings"]
 config.nested_entries?       # => false
 ```
 

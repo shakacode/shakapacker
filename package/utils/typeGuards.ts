@@ -189,6 +189,17 @@ export function isValidConfig(obj: unknown): obj is Config {
     return false
   }
 
+  if (
+    !Array.isArray(config.webpack_compile_flags) ||
+    !config.webpack_compile_flags.every((flag) => typeof flag === "string")
+  ) {
+    validatedConfigs.set(obj, {
+      result: false,
+      timestamp: Date.now()
+    })
+    return false
+  }
+
   // SECURITY: Path traversal validation for additional_paths ALWAYS runs (not subject to shouldValidate)
   // This critical security check ensures user-provided paths cannot escape the project directory
   for (const additionalPath of config.additional_paths as string[]) {
@@ -369,6 +380,14 @@ export function isPartialConfig(obj: unknown): obj is Partial<Config> {
 
   // Check arrays if present
   if ("additional_paths" in config && !Array.isArray(config.additional_paths)) {
+    return false
+  }
+
+  if (
+    "webpack_compile_flags" in config &&
+    (!Array.isArray(config.webpack_compile_flags) ||
+      !config.webpack_compile_flags.every((flag) => typeof flag === "string"))
+  ) {
     return false
   }
 

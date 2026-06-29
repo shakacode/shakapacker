@@ -233,6 +233,20 @@ class Shakapacker::Configuration
     fetch(:webpack_compile_output)
   end
 
+  # Returns extra command-line flags passed to the webpack/rspack compile command
+  #
+  # @return [Array<String>] bundler CLI flags
+  def webpack_compile_flags
+    flags = fetch(:webpack_compile_flags)
+    return [] if flags.nil?
+
+    unless flags.is_a?(Array) && flags.all? { |flag| flag.is_a?(String) }
+      raise "Shakapacker configuration error: webpack_compile_flags must be an array of strings"
+    end
+
+    flags
+  end
+
   # Returns the compiler strategy for determining staleness
   #
   # Options:

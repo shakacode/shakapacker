@@ -76,6 +76,9 @@ class Shakapacker::Configuration
   # Returns whether webpack/rspack compilation output should be shown
   def webpack_compile_output?: () -> bool
 
+  # Returns extra command-line flags passed to the webpack/rspack compile command
+  def webpack_compile_flags: () -> Array[String]
+
   # Returns the compiler strategy for determining staleness
   def compiler_strategy: () -> String
 

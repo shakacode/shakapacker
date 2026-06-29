@@ -41,6 +41,7 @@ Common configuration options with their defaults:
 | `compiler_strategy`            | string  | `"mtime"` (dev), `"digest"` (prod)      | How to determine if recompilation is needed                |
 | `useContentHash`               | boolean | `false` (dev), `true` (prod)            | Include content hashes in asset filenames                  |
 | `webpack_compile_output`       | boolean | `true`                                  | Show webpack/rspack compilation output                     |
+| `webpack_compile_flags`        | array   | `[]`                                    | Extra webpack/rspack CLI flags for compilation             |
 | `shakapacker_precompile`       | boolean | `true`                                  | Include in `bundle exec rake assets:precompile`            |
 | `ensure_consistent_versioning` | boolean | `true`                                  | Enforce gem/npm version matching                           |
 | `dev_server.host`              | string  | `"localhost"`                           | Development server host                                    |
@@ -353,6 +354,21 @@ webpack_compile_output: true
 # Minimal output (cleaner logs)
 webpack_compile_output: false
 ```
+
+### `webpack_compile_flags`
+
+**Type:** `array`
+**Default:** `[]`
+
+Extra command-line flags to pass to webpack/rspack when Shakapacker compiles assets through `bin/shakapacker`, including `bundle exec rake shakapacker:compile` and `bundle exec rake assets:precompile`.
+
+```yaml
+webpack_compile_flags:
+  - "--progress"
+  - "--fail-on-warnings"
+```
+
+Use flags supported by your configured bundler. Each list item is passed as one command-line argument.
 
 ### `useContentHash`
 

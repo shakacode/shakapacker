@@ -178,7 +178,7 @@ class Shakapacker::Compiler
 
       stdout, stderr, status = Open3.capture3(
         webpack_env,
-        "#{optional_ruby_runner} '#{bin_shakapacker_path}'",
+        *shakapacker_command,
         chdir: File.expand_path(config.root_path)
       )
 
@@ -209,6 +209,12 @@ class Shakapacker::Compiler
 
     def bin_shakapacker_path
       config.root_path.join("bin/shakapacker")
+    end
+
+    def shakapacker_command
+      runner = optional_ruby_runner
+      command = [bin_shakapacker_path.to_s, *config.webpack_compile_flags]
+      runner.empty? ? command : [runner, *command]
     end
 
     # Fires only after a failed compile, so users in a healthy loop never see the tip.
