@@ -23,6 +23,16 @@ module Shakapacker
       bin/diff-bundler-config
     ].freeze
 
+    SASS_IMPLEMENTATION_PACKAGES = %w[
+      sass
+      sass-embedded
+    ].freeze
+
+    SASS_IMPLEMENTATION_DEPENDENCY_MESSAGE = (
+      "Missing required dependency 'sass' or 'sass-embedded' " \
+      "for Sass/SCSS implementation"
+    ).freeze
+
     def initialize(config = nil, root_path = nil, options = {})
       @config = config || Shakapacker.config
       @root_path = root_path || (defined?(Rails) ? Rails.root : Pathname.new(Dir.pwd))
@@ -1015,7 +1025,9 @@ module Shakapacker
 
       def check_sass_dependencies
         check_dependency("sass-loader", @issues, "Sass/SCSS")
-        check_dependency("sass", @issues, "Sass/SCSS (sass package)")
+        unless SASS_IMPLEMENTATION_PACKAGES.any? { |package_name| package_installed?(package_name) }
+          @issues << SASS_IMPLEMENTATION_DEPENDENCY_MESSAGE
+        end
       end
 
       def check_less_dependencies

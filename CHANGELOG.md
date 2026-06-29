@@ -20,6 +20,7 @@
 
 ### Fixed
 
+- **Fixed `shakapacker:doctor` Sass implementation detection for `sass-embedded` apps**. [PR #1178](https://github.com/shakacode/shakapacker/pull/1178) by [justin808](https://github.com/justin808). The doctor now accepts either modern Sass implementation package (`sass` or `sass-embedded`) when Sass files are present, matching Shakapacker's default modern Sass API instead of incorrectly requiring Dart Sass. New installs also include `sass` alongside `sass-loader`. Fixes [#1172](https://github.com/shakacode/shakapacker/issues/1172).
 - **Fixed compiler strategies ignoring the instance config of custom `Shakapacker::Instance` objects.** [PR #1147](https://github.com/shakacode/shakapacker/pull/1147) by [justin808](https://github.com/justin808). Ports [#976](https://github.com/shakacode/shakapacker/pull/976) by [brunodccarvalho](https://github.com/brunodccarvalho). Strategies now read the instance-specific config and watch both webpack and rspack config directories.
 
 ## [v10.1.0] - May 27, 2026

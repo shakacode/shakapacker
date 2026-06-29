@@ -225,9 +225,9 @@ npm install sass-loader
 npm install sass
 ```
 
-You can use Dart Sass (`sass`), Node Sass (`node-sass`), or Sass Embedded
-(`sass-embedded`); `sass-loader` picks an implementation based on installed
-packages.
+Use Dart Sass (`sass`) or Sass Embedded (`sass-embedded`) with Shakapacker's
+default modern Sass API. Node Sass (`node-sass`) only works if you customize
+`sass-loader` back to the legacy API.
 
 Less:
 
