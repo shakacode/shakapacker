@@ -11,6 +11,14 @@ SPEC_PATH = Pathname.new(File.expand_path("../", __FILE__))
 BASE_RAILS_APP_PATH = SPEC_PATH.join("base-rails-app")
 TEMP_RAILS_APP_PATH = SPEC_PATH.join("temp-rails-app")
 
+describe "Generator e2e React template" do
+  it "pins @babel/preset-react to a Node 20-compatible major version" do
+    template = File.read(SPEC_PATH.join("e2e_template/template.rb"))
+
+    expect(template).to include("@babel/preset-react@^7.0.0")
+  end
+end
+
 describe "Generator" do
   before :all do
     # Don't use --skip-git because we want .gitignore file to exist in the project

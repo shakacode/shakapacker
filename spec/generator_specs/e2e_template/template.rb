@@ -5,7 +5,7 @@ require "package_json"
 package_json = PackageJson.new
 
 # install react
-package_json.manager.add(["react", "react-dom", "@babel/preset-react"])
+package_json.manager.add(["react", "react-dom", "@babel/preset-react@^7.0.0"])
 
 # update webpack presets for react
 package_json.merge! do |pj|
