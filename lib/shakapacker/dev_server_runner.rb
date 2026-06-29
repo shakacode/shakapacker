@@ -262,13 +262,13 @@ module Shakapacker
       UNSUPPORTED_SWITCHES = %w[--host --port]
       private_constant :UNSUPPORTED_SWITCHES
       def detect_unsupported_switches!
-        unsupported_switches = UNSUPPORTED_SWITCHES & @argv
+        unsupported_switches = UNSUPPORTED_SWITCHES & bundler_argv
         if unsupported_switches.any?
           $stdout.puts "The following CLI switches are not supported by Shakapacker: #{unsupported_switches.join(' ')}. Please edit your command and try again."
           exit!
         end
 
-        if @argv.include?("--https") && !@https
+        if bundler_argv.include?("--https") && !@https
           $stdout.puts "--https requires that 'server' in shakapacker.yml is set to 'https'"
           exit!
         end

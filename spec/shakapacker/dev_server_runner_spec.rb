@@ -136,6 +136,23 @@ describe "DevServerRunner" do
     end
   end
 
+  describe "passthrough separator" do
+    it "rejects unsupported dev-server flags after --" do
+      Dir.chdir(test_app_path) do
+        allow(Shakapacker::Utils::Manager).to receive(
+          :error_unless_package_manager_is_obvious!
+        )
+
+        instance = Shakapacker::DevServerRunner.new(["--", "--host", "0.0.0.0"])
+        allow(instance).to receive(:exit!).and_raise(SystemExit)
+
+        expect { instance.send(:detect_unsupported_switches!) }
+          .to output(/--host/).to_stdout
+          .and raise_error(SystemExit)
+      end
+    end
+  end
+
   describe "NODE_ENV environment variable" do
     it "sets NODE_ENV when not already set" do
       original_node_env = ENV.delete("NODE_ENV")
