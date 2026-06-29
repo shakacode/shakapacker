@@ -1,36 +1,12 @@
-const { chdirTestApp } = require("../helpers")
+const { chdirTestApp, resetEnv } = require("../helpers")
 
 const rootPath = process.cwd()
 chdirTestApp()
 
-const envKeys = [
-  "NODE_ENV",
-  "RAILS_ENV",
-  "SHAKAPACKER_DEV_SERVER_HOST",
-  "SHAKAPACKER_DEV_SERVER_PORT",
-  "SHAKAPACKER_DEV_SERVER_DISABLE_HOST_CHECK",
-  "TEST_SHAKAPACKER_DEV_SERVER_HOST",
-  "TEST_SHAKAPACKER_DEV_SERVER_PORT"
-]
-
 describe("DevServer", () => {
-  let originalEnv
-
   beforeEach(() => {
-    originalEnv = Object.fromEntries(
-      envKeys.map((key) => [key, process.env[key]])
-    )
     jest.resetModules()
-  })
-
-  afterEach(() => {
-    envKeys.forEach((key) => {
-      if (originalEnv[key] === undefined) {
-        delete process.env[key]
-      } else {
-        process.env[key] = originalEnv[key]
-      }
-    })
+    resetEnv()
   })
 
   afterAll(() => process.chdir(rootPath))
@@ -39,8 +15,8 @@ describe("DevServer", () => {
     process.env.NODE_ENV = "development"
     process.env.RAILS_ENV = "development"
     process.env.SHAKAPACKER_DEV_SERVER_HOST = "0.0.0.0"
-    process.env.SHAKAPACKER_DEV_SERVER_PORT = 5000
-    process.env.SHAKAPACKER_DEV_SERVER_DISABLE_HOST_CHECK = false
+    process.env.SHAKAPACKER_DEV_SERVER_PORT = "5000"
+    process.env.SHAKAPACKER_DEV_SERVER_DISABLE_HOST_CHECK = "false"
 
     const devServer = require("../../package/dev_server")
     expect(devServer).toBeDefined()
@@ -50,15 +26,11 @@ describe("DevServer", () => {
   })
 
   test("with custom env prefix", () => {
-    // Set NODE_ENV/RAILS_ENV before requiring config: config resolves
-    // dev_server from shakapacker.yml at load time, and production has no
-    // dev_server section. Without this, a reordered run (e.g. --randomize)
-    // where the production test ran first leaks NODE_ENV=production here and
-    // config.dev_server is undefined.
+    // NODE_ENV must precede require: config reads shakapacker.yml at load time; production has no dev_server.
     process.env.NODE_ENV = "development"
     process.env.RAILS_ENV = "development"
     process.env.TEST_SHAKAPACKER_DEV_SERVER_HOST = "0.0.0.0"
-    process.env.TEST_SHAKAPACKER_DEV_SERVER_PORT = 5000
+    process.env.TEST_SHAKAPACKER_DEV_SERVER_PORT = "5000"
 
     const config = require("../../package/config")
     config.dev_server.env_prefix = "TEST_SHAKAPACKER_DEV_SERVER"
