@@ -69,6 +69,18 @@ describe("security validation", () => {
       expect(isValidConfig(unsafeConfig)).toBe(false)
     })
 
+    it("rejects non-string additional_paths entries before path traversal checks", () => {
+      process.env.NODE_ENV = "production"
+      delete process.env.SHAKAPACKER_STRICT_VALIDATION
+
+      const unsafeConfig = {
+        ...baseConfig,
+        additional_paths: ["./safe/path", true]
+      }
+
+      expect(isValidConfig(unsafeConfig)).toBe(false)
+    })
+
     it("always validates path traversal in additional_paths in development", () => {
       process.env.NODE_ENV = "development"
 
@@ -133,6 +145,17 @@ describe("security validation", () => {
 
       expect(isValidConfig(unsafeConfig)).toBe(false)
     })
+
+    it("rejects webpack compile flags that include the passthrough separator", () => {
+      process.env.NODE_ENV = "development"
+
+      const unsafeConfig = {
+        ...baseConfig,
+        webpack_compile_flags: ["--", "--progress"]
+      }
+
+      expect(isValidConfig(unsafeConfig)).toBe(false)
+    })
   })
 
   describe("partial config validation", () => {
@@ -146,6 +169,16 @@ describe("security validation", () => {
       expect(
         isPartialConfig({ webpack_compile_flags: ["--progress", true] })
       ).toBe(false)
+      expect(isPartialConfig({ webpack_compile_flags: ["--"] })).toBe(false)
+    })
+
+    it("rejects invalid additional paths in production", () => {
+      process.env.NODE_ENV = "production"
+      delete process.env.SHAKAPACKER_STRICT_VALIDATION
+
+      expect(isPartialConfig({ additional_paths: ["./safe", true] })).toBe(
+        false
+      )
     })
   })
 

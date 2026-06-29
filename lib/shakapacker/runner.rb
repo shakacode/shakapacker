@@ -116,6 +116,7 @@ module Shakapacker
 
           # If this build uses dev server, delegate to DevServerRunner
           if loader.uses_dev_server?(build_config)
+            # Include passthrough --json so Shakapacker logs stay off stdout when bundler JSON is requested.
             log = log_output_for(runner_argv + passthrough_argv)
             log.puts "[Shakapacker] Build '#{build_name}' requires dev server"
             log.puts "[Shakapacker] Running: bin/shakapacker-dev-server --build #{build_name}"
@@ -197,6 +198,7 @@ module Shakapacker
       # This ensures the bundler override (from --bundler or build config) is respected
       ENV["SHAKAPACKER_ASSETS_BUNDLER"] = build_config[:bundler]
 
+      # Include passthrough --json so Shakapacker logs stay off stdout when bundler JSON is requested.
       log = log_output_for(argv + passthrough_argv)
       log.puts "[Shakapacker] Running build: #{build_config[:name]}"
       log.puts "[Shakapacker] Description: #{build_config[:description]}" if build_config[:description]
@@ -233,13 +235,14 @@ module Shakapacker
 
     def initialize(argv, build_config = nil, bundler_override = nil, passthrough_argv = nil)
       @argv, @passthrough_argv =
-        if !passthrough_argv.nil?
+        unless passthrough_argv.nil?
           [argv, passthrough_argv]
         else
           self.class.split_passthrough_argv(argv)
         end
       @build_config = build_config
       @bundler_override = bundler_override
+      # Bundler --json writes machine-readable output to stdout; route Shakapacker logs to stderr too.
       @json_output = self.class.json_output?(bundler_argv)
 
       @app_path           = File.expand_path(".", Dir.pwd)
@@ -273,6 +276,7 @@ module Shakapacker
       cmd = build_cmd
       log_output.puts "[Shakapacker] Base command: #{cmd.join(" ")}"
 
+      # Shakapacker-owned Node flags must appear before --; passthrough args belong to the bundler.
       if @argv.delete("--debug-shakapacker")
         log_output.puts "[Shakapacker] Debug mode enabled (--debug-shakapacker)"
         env["NODE_OPTIONS"] = "#{env["NODE_OPTIONS"]} --inspect-brk"

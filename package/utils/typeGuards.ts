@@ -55,6 +55,10 @@ function isStringArray(value: unknown): value is string[] {
   return Array.isArray(value) && value.every((item) => typeof item === "string")
 }
 
+function isWebpackCompileFlags(value: unknown): value is string[] {
+  return isStringArray(value) && !value.includes("--")
+}
+
 // Debug logging for cache operations
 const debugCache = process.env.SHAKAPACKER_DEBUG_CACHE === "true"
 
@@ -184,7 +188,7 @@ export function isValidConfig(obj: unknown): obj is Config {
   }
 
   // Check arrays
-  if (!Array.isArray(config.additional_paths)) {
+  if (!isStringArray(config.additional_paths)) {
     // Cache negative result
     validatedConfigs.set(obj, {
       result: false,
@@ -195,7 +199,7 @@ export function isValidConfig(obj: unknown): obj is Config {
 
   if (
     config.webpack_compile_flags !== undefined &&
-    !isStringArray(config.webpack_compile_flags)
+    !isWebpackCompileFlags(config.webpack_compile_flags)
   ) {
     validatedConfigs.set(obj, {
       result: false,
@@ -206,7 +210,7 @@ export function isValidConfig(obj: unknown): obj is Config {
 
   // SECURITY: Path traversal validation for additional_paths ALWAYS runs (not subject to shouldValidate)
   // This critical security check ensures user-provided paths cannot escape the project directory
-  for (const additionalPath of config.additional_paths as string[]) {
+  for (const additionalPath of config.additional_paths) {
     if (!isPathTraversalSafe(additionalPath)) {
       console.warn(
         `[SHAKAPACKER SECURITY] Invalid additional_path: ${additionalPath}`
@@ -349,8 +353,12 @@ export function isPartialConfig(obj: unknown): obj is Partial<Config> {
   // This is a deliberate CLI argv safety exception, not the default pattern for new fields.
   if (
     config.webpack_compile_flags !== undefined &&
-    !isStringArray(config.webpack_compile_flags)
+    !isWebpackCompileFlags(config.webpack_compile_flags)
   ) {
+    return false
+  }
+
+  if ("additional_paths" in config && !isStringArray(config.additional_paths)) {
     return false
   }
 
@@ -389,11 +397,6 @@ export function isPartialConfig(obj: unknown): obj is Partial<Config> {
     if (field in config && typeof config[field] !== "boolean") {
       return false
     }
-  }
-
-  // Check arrays if present
-  if ("additional_paths" in config && !Array.isArray(config.additional_paths)) {
-    return false
   }
 
   return true

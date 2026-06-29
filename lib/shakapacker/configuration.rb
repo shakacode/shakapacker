@@ -240,8 +240,8 @@ class Shakapacker::Configuration
     flags = fetch(:webpack_compile_flags)
     return [] if flags.nil?
 
-    unless flags.is_a?(Array) && flags.all? { |flag| flag.is_a?(String) }
-      raise "Shakapacker configuration error: webpack_compile_flags must be an array of strings"
+    unless flags.is_a?(Array) && flags.all? { |flag| flag.is_a?(String) && flag != "--" }
+      raise "Shakapacker configuration error: webpack_compile_flags must be an array of strings and must not include \"--\""
     end
 
     flags

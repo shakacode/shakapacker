@@ -265,6 +265,7 @@ module Shakapacker
       UNSUPPORTED_SWITCHES = %w[--host --port]
       private_constant :UNSUPPORTED_SWITCHES
       def detect_unsupported_switches!
+        # Host/port stay config-owned even after -- because Shakapacker assembles the dev-server command.
         unsupported_switches = UNSUPPORTED_SWITCHES & bundler_argv
         if unsupported_switches.any?
           $stdout.puts(
