@@ -6,6 +6,7 @@ require_relative "compiler_strategy"
 
 class Shakapacker::Compiler
   SpawnFailure = Class.new(StandardError)
+  private_constant :SpawnFailure
 
   # Additional environment variables that the compiler is being run with
   # Shakapacker::Compiler.env['FRONTEND_API_KEY'] = 'your_secret_key'
@@ -38,11 +39,16 @@ class Shakapacker::Compiler
     else
       acquire_ipc_lock do
         run_precompile_hook if should_run_precompile_hook?
-        success = run_webpack
-        after_compile_hook
+        spawn_failed = false
+        begin
+          success = run_webpack
+        rescue SpawnFailure
+          spawn_failed = true
+          success = false
+        end
+
+        after_compile_hook unless spawn_failed
         success
-      rescue SpawnFailure
-        false
       end
     end
   end
@@ -226,7 +232,7 @@ class Shakapacker::Compiler
       config.root_path.join("bin/shakapacker")
     end
 
-    def shakapacker_command(compile_flags = config.webpack_compile_flags)
+    def shakapacker_command(compile_flags)
       runner = optional_ruby_runner
       bin_path = bin_shakapacker_path.to_s
       flags_part = compile_flags.any? ? ["--", *compile_flags] : []

@@ -61,12 +61,31 @@ const SHAKAPACKER_NODE_FLAGS = [
   "--no-deprecation"
 ]
 
+const SHAKAPACKER_RUNNER_COMMANDS = [
+  "help",
+  "h",
+  "--help",
+  "-h",
+  "--help=verbose",
+  "version",
+  "v",
+  "--version",
+  "-v",
+  "info",
+  "i"
+]
+
+const DISALLOWED_WEBPACK_COMPILE_FLAGS = [
+  ...SHAKAPACKER_NODE_FLAGS,
+  ...SHAKAPACKER_RUNNER_COMMANDS
+]
+
 function isWebpackCompileFlags(value: unknown): value is string[] {
   return (
     isStringArray(value) &&
     value.every((flag) => flag.length > 0) &&
     !value.includes("--") &&
-    !SHAKAPACKER_NODE_FLAGS.some((flag) => value.includes(flag))
+    !DISALLOWED_WEBPACK_COMPILE_FLAGS.some((flag) => value.includes(flag))
   )
 }
 

@@ -178,6 +178,17 @@ describe("security validation", () => {
 
       expect(isValidConfig(unsafeConfig)).toBe(false)
     })
+
+    it("rejects runner short-circuit flags in webpack compile flags", () => {
+      process.env.NODE_ENV = "development"
+
+      const unsafeConfig = {
+        ...baseConfig,
+        webpack_compile_flags: ["--help=verbose"]
+      }
+
+      expect(isValidConfig(unsafeConfig)).toBe(false)
+    })
   })
 
   describe("partial config validation", () => {
@@ -196,11 +207,32 @@ describe("security validation", () => {
       expect(
         isPartialConfig({ webpack_compile_flags: ["--trace-deprecation"] })
       ).toBe(false)
+      expect(isPartialConfig({ webpack_compile_flags: ["--help"] })).toBe(false)
+      expect(
+        isPartialConfig({ webpack_compile_flags: ["--help=verbose"] })
+      ).toBe(false)
     })
 
-    it("rejects invalid additional paths in production", () => {
+    it("rejects invalid additional paths before the production fast path", () => {
       process.env.NODE_ENV = "production"
       delete process.env.SHAKAPACKER_STRICT_VALIDATION
+
+      expect(isPartialConfig({ additional_paths: ["./safe", true] })).toBe(
+        false
+      )
+    })
+
+    it("rejects invalid additional paths outside the production fast path", () => {
+      process.env.NODE_ENV = "development"
+
+      expect(isPartialConfig({ additional_paths: ["./safe", true] })).toBe(
+        false
+      )
+    })
+
+    it("rejects invalid additional paths in production strict mode", () => {
+      process.env.NODE_ENV = "production"
+      process.env.SHAKAPACKER_STRICT_VALIDATION = "true"
 
       expect(isPartialConfig({ additional_paths: ["./safe", true] })).toBe(
         false

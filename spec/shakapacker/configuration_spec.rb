@@ -1028,7 +1028,29 @@ describe "Shakapacker::Configuration" do
         env: "production"
       )
 
-      expect { config.webpack_compile_flags }.to raise_error(/Shakapacker-specific wrapper flags/)
+      expect { config.webpack_compile_flags }.to raise_error(/wrapper\/short-circuit flags/)
+
+      test_config.close
+      test_config.unlink
+    end
+
+    it "raises error when compile flags include runner short-circuit flags" do
+      test_config = Tempfile.new(["shakapacker", ".yml"])
+      test_config.write(<<~YAML)
+        production:
+          source_path: app/javascript
+          webpack_compile_flags:
+            - "--help=verbose"
+      YAML
+      test_config.rewind
+
+      config = Shakapacker::Configuration.new(
+        root_path: ROOT_PATH,
+        config_path: Pathname.new(test_config.path),
+        env: "production"
+      )
+
+      expect { config.webpack_compile_flags }.to raise_error(/wrapper\/short-circuit flags/)
 
       test_config.close
       test_config.unlink

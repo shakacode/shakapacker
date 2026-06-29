@@ -30,6 +30,12 @@ class Shakapacker::Configuration
   SHAKAPACKER_NODE_FLAGS = %w[--debug-shakapacker --trace-deprecation --no-deprecation].freeze
   private_constant :SHAKAPACKER_NODE_FLAGS
 
+  SHAKAPACKER_RUNNER_COMMANDS = %w[help h --help -h --help=verbose version v --version -v info i].freeze
+  private_constant :SHAKAPACKER_RUNNER_COMMANDS
+
+  DISALLOWED_WEBPACK_COMPILE_FLAGS = (SHAKAPACKER_NODE_FLAGS + SHAKAPACKER_RUNNER_COMMANDS).freeze
+  private_constant :DISALLOWED_WEBPACK_COMPILE_FLAGS
+
   class << self
     # Flag indicating whether Shakapacker is currently being installed
     # Used to suppress certain validations during installation
@@ -247,14 +253,14 @@ class Shakapacker::Configuration
       flag.is_a?(String) &&
         !flag.empty? &&
         flag != "--" &&
-        !SHAKAPACKER_NODE_FLAGS.include?(flag)
+        !DISALLOWED_WEBPACK_COMPILE_FLAGS.include?(flag)
     end
 
     unless valid_flags
-      wrapper_flags = SHAKAPACKER_NODE_FLAGS.join(", ")
+      disallowed_flags = DISALLOWED_WEBPACK_COMPILE_FLAGS.join(", ")
       raise "Shakapacker configuration error: webpack_compile_flags must be an array of " \
             "non-empty strings and must not include \"--\" or Shakapacker-specific " \
-            "wrapper flags (#{wrapper_flags})"
+            "wrapper/short-circuit flags (#{disallowed_flags})"
     end
 
     flags
