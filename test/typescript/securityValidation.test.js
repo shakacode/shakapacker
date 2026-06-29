@@ -102,6 +102,15 @@ describe("security validation", () => {
       expect(isValidConfig(safeConfig)).toBe(true)
     })
 
+    it("allows configs that omit webpack compile flags for backward compatibility", () => {
+      process.env.NODE_ENV = "development"
+
+      const configWithoutCompileFlags = { ...baseConfig }
+      delete configWithoutCompileFlags.webpack_compile_flags
+
+      expect(isValidConfig(configWithoutCompileFlags)).toBe(true)
+    })
+
     it("rejects non-array webpack compile flags", () => {
       process.env.NODE_ENV = "development"
 

@@ -190,8 +190,9 @@ export function isValidConfig(obj: unknown): obj is Config {
   }
 
   if (
-    !Array.isArray(config.webpack_compile_flags) ||
-    !config.webpack_compile_flags.every((flag) => typeof flag === "string")
+    "webpack_compile_flags" in config &&
+    (!Array.isArray(config.webpack_compile_flags) ||
+      !config.webpack_compile_flags.every((flag) => typeof flag === "string"))
   ) {
     validatedConfigs.set(obj, {
       result: false,
