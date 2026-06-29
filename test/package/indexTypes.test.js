@@ -48,6 +48,8 @@ describe("compiled package output", () => {
       /declare const baseConfig: RspackConfigWithDevServer/
     )
     expect(declaration).toMatch(/declare const rules: RuleSetRule\[\]/)
+    expect(declaration).toContain("Base rspack configuration")
+    expect(declaration).toContain("Shared loader rules")
     expect(declaration).toContain("generateRspackConfig")
     expect(declaration).toContain("env")
     expect(declaration).toContain("moduleExists")
