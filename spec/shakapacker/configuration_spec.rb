@@ -937,7 +937,7 @@ describe "Shakapacker::Configuration" do
         env: "production"
       )
 
-      expect { config.webpack_compile_flags }.to raise_error(/webpack_compile_flags must be an array of strings/)
+      expect { config.webpack_compile_flags }.to raise_error(/webpack_compile_flags must be an array of non-empty strings/)
 
       test_config.close
       test_config.unlink
@@ -960,7 +960,7 @@ describe "Shakapacker::Configuration" do
         env: "production"
       )
 
-      expect { config.webpack_compile_flags }.to raise_error(/webpack_compile_flags must be an array of strings/)
+      expect { config.webpack_compile_flags }.to raise_error(/webpack_compile_flags must be an array of non-empty strings/)
 
       test_config.close
       test_config.unlink
@@ -984,6 +984,29 @@ describe "Shakapacker::Configuration" do
       )
 
       expect { config.webpack_compile_flags }.to raise_error(/must not include "--"/)
+
+      test_config.close
+      test_config.unlink
+    end
+
+    it "raises error when compile flags include an empty string" do
+      test_config = Tempfile.new(["shakapacker", ".yml"])
+      test_config.write(<<~YAML)
+        production:
+          source_path: app/javascript
+          webpack_compile_flags:
+            - "--progress"
+            - ""
+      YAML
+      test_config.rewind
+
+      config = Shakapacker::Configuration.new(
+        root_path: ROOT_PATH,
+        config_path: Pathname.new(test_config.path),
+        env: "production"
+      )
+
+      expect { config.webpack_compile_flags }.to raise_error(/non-empty strings/)
 
       test_config.close
       test_config.unlink

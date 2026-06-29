@@ -158,7 +158,7 @@ describe "Shakapacker::Compiler" do
     expect(mocked_strategy).to have_received(:after_compile_hook)
   end
 
-  it "returns false with structured logging when the binstub cannot be spawned" do
+  it "returns false without after_compile_hook when the binstub cannot be spawned" do
     mocked_strategy = spy("Strategy")
     allow(mocked_strategy).to receive(:stale?).and_return(true)
     allow(mocked_strategy).to receive(:after_compile_hook)
@@ -172,7 +172,29 @@ describe "Shakapacker::Compiler" do
     expect(Shakapacker.compiler.compile).to be false
     expect(Shakapacker.logger).to have_received(:error).with(/COMPILATION FAILED:\nErrno::EACCES:/)
     expect(Shakapacker.logger).to have_received(:info).with(/shakapacker:doctor/).once
-    expect(mocked_strategy).to have_received(:after_compile_hook)
+    expect(mocked_strategy).not_to have_received(:after_compile_hook)
+  end
+
+  it "returns false with structured logging when the binstub is missing" do
+    mocked_strategy = spy("Strategy")
+    allow(mocked_strategy).to receive(:stale?).and_return(true)
+    allow(mocked_strategy).to receive(:after_compile_hook)
+
+    allow(Shakapacker.compiler).to receive(:strategy).and_return(mocked_strategy)
+    allow(Shakapacker.config).to receive(:webpack_compile_flags).and_return([])
+    bin_pathname = Shakapacker.config.root_path.join("bin/shakapacker")
+    allow(File).to receive(:readlines).and_call_original
+    allow(File).to receive(:readlines).with(bin_pathname).and_raise(Errno::ENOENT.new("bin/shakapacker"))
+    allow(Open3).to receive(:capture3)
+    allow(Shakapacker.logger).to receive(:error)
+    allow(Shakapacker.logger).to receive(:info)
+    Shakapacker::Compiler.doctor_hint_shown = false
+
+    expect(Shakapacker.compiler.compile).to be false
+    expect(Open3).not_to have_received(:capture3)
+    expect(Shakapacker.logger).to have_received(:error).with(/COMPILATION FAILED:\nErrno::ENOENT:/)
+    expect(Shakapacker.logger).to have_received(:info).with(/shakapacker:doctor/).once
+    expect(mocked_strategy).not_to have_received(:after_compile_hook)
   end
 
   describe "doctor hint messages" do

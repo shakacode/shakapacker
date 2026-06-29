@@ -26,6 +26,9 @@ module Shakapacker
       "i"
     ].freeze
 
+    SHAKAPACKER_NODE_FLAGS = %w[--debug-shakapacker --trace-deprecation --no-deprecation].freeze
+    private_constant :SHAKAPACKER_NODE_FLAGS
+
     def self.json_output?(argv)
       argv.include?("--json") || argv.include?("-j")
     end
@@ -284,6 +287,8 @@ module Shakapacker
       cmd = build_cmd
       log_output.puts "[Shakapacker] Base command: #{cmd.join(" ")}"
 
+      detect_shakapacker_flags_in_passthrough!
+
       # Shakapacker-owned Node flags must appear before --; passthrough args belong to the bundler.
       if @argv.delete("--debug-shakapacker")
         log_output.puts "[Shakapacker] Debug mode enabled (--debug-shakapacker)"
@@ -355,6 +360,16 @@ module Shakapacker
 
       def config_incompatible_args
         bundler_argv & assets_bundler_commands
+      end
+
+      def detect_shakapacker_flags_in_passthrough!(flags = SHAKAPACKER_NODE_FLAGS)
+        misplaced_flags = @passthrough_argv & flags
+        return if misplaced_flags.empty?
+
+        log_output.puts(
+          "The following Shakapacker-specific options must appear before --: #{misplaced_flags.join(' ')}."
+        )
+        exit(1)
       end
 
       def print_config_not_found_error(bundler_type, config_path, config_dir)

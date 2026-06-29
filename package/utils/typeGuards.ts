@@ -56,7 +56,11 @@ function isStringArray(value: unknown): value is string[] {
 }
 
 function isWebpackCompileFlags(value: unknown): value is string[] {
-  return isStringArray(value) && !value.includes("--")
+  return (
+    isStringArray(value) &&
+    value.every((flag) => flag.length > 0) &&
+    !value.includes("--")
+  )
 }
 
 // Debug logging for cache operations

@@ -196,6 +196,28 @@ describe "RspackRunner" do
   end
 
   describe "passthrough separator" do
+    it "rejects Shakapacker node flags after --" do
+      Dir.chdir(test_app_path) do
+        allow(Shakapacker::Utils::Manager).to receive(
+          :error_unless_package_manager_is_obvious!
+        )
+
+        runner_argv, passthrough_argv = Shakapacker::Runner.split_passthrough_argv(
+          ["--", "--debug-shakapacker"]
+        )
+        instance = Shakapacker::Runner.new(runner_argv, nil, "rspack", passthrough_argv)
+        instance.extend(Module.new do
+          def build_cmd
+            package_json.manager.native_exec_command("rspack")
+          end
+        end)
+
+        expect { instance.run }
+          .to output(/must appear before --: --debug-shakapacker/).to_stdout
+          .and raise_error(SystemExit)
+      end
+    end
+
     it "does not let passthrough build suppress config injection" do
       Dir.chdir(test_app_path) do
         allow(Shakapacker::Utils::Manager).to receive(

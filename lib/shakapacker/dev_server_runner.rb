@@ -104,7 +104,8 @@ module Shakapacker
           --build <name>          Run a specific build configuration
 
           Put Shakapacker-specific options before --. Arguments after -- are
-          passed directly to the selected bundler.
+          passed directly to the selected bundler, except --host and --port,
+          which remain managed by config/shakapacker.yml.
 
         Build configurations (config/shakapacker-builds.yml):
           bin/shakapacker-dev-server --build dev-hmr    # Run the 'dev-hmr' build
@@ -297,6 +298,8 @@ module Shakapacker
         env["NODE_OPTIONS"] = ENV["NODE_OPTIONS"] || ""
 
         cmd = build_cmd
+
+        detect_shakapacker_flags_in_passthrough!(["--debug-shakapacker"])
 
         # Shakapacker-owned debug flag must appear before --; passthrough args belong to the bundler.
         if @argv.delete("--debug-shakapacker")

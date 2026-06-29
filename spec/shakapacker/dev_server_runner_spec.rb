@@ -137,6 +137,21 @@ describe "DevServerRunner" do
   end
 
   describe "passthrough separator" do
+    it "rejects the debug flag after --" do
+      Dir.chdir(test_app_path) do
+        runner_argv, passthrough_argv = Shakapacker::DevServerRunner.split_passthrough_argv(
+          ["--", "--debug-shakapacker"]
+        )
+        instance = Shakapacker::DevServerRunner.new(runner_argv, nil, nil, passthrough_argv)
+
+        expect do
+          instance.send(:detect_shakapacker_flags_in_passthrough!, ["--debug-shakapacker"])
+        end
+          .to output(/must appear before --: --debug-shakapacker/).to_stdout
+          .and raise_error(SystemExit)
+      end
+    end
+
     it "rejects unsupported dev-server flags after --" do
       Dir.chdir(test_app_path) do
         allow(Shakapacker::Utils::Manager).to receive(
