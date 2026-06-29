@@ -3,8 +3,36 @@ const { chdirTestApp } = require("../helpers")
 const rootPath = process.cwd()
 chdirTestApp()
 
+const envKeys = [
+  "NODE_ENV",
+  "RAILS_ENV",
+  "SHAKAPACKER_DEV_SERVER_HOST",
+  "SHAKAPACKER_DEV_SERVER_PORT",
+  "SHAKAPACKER_DEV_SERVER_DISABLE_HOST_CHECK",
+  "TEST_SHAKAPACKER_DEV_SERVER_HOST",
+  "TEST_SHAKAPACKER_DEV_SERVER_PORT"
+]
+
 describe("DevServer", () => {
-  beforeEach(() => jest.resetModules())
+  let originalEnv
+
+  beforeEach(() => {
+    originalEnv = Object.fromEntries(
+      envKeys.map((key) => [key, process.env[key]])
+    )
+    jest.resetModules()
+  })
+
+  afterEach(() => {
+    envKeys.forEach((key) => {
+      if (originalEnv[key] === undefined) {
+        delete process.env[key]
+      } else {
+        process.env[key] = originalEnv[key]
+      }
+    })
+  })
+
   afterAll(() => process.chdir(rootPath))
 
   test("with NODE_ENV and RAILS_ENV set to development", () => {
