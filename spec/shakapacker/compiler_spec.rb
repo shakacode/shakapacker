@@ -134,6 +134,23 @@ describe "Shakapacker::Compiler" do
     expect(mocked_strategy).to have_received(:after_compile_hook)
   end
 
+  it "returns false with structured logging when the binstub cannot be spawned" do
+    mocked_strategy = spy("Strategy")
+    allow(mocked_strategy).to receive(:stale?).and_return(true)
+    allow(mocked_strategy).to receive(:after_compile_hook)
+
+    allow(Shakapacker.compiler).to receive(:strategy).and_return(mocked_strategy)
+    allow(Open3).to receive(:capture3).and_raise(Errno::EACCES.new("bin/shakapacker"))
+    allow(Shakapacker.logger).to receive(:error)
+    allow(Shakapacker.logger).to receive(:info)
+    Shakapacker::Compiler.doctor_hint_shown = false
+
+    expect(Shakapacker.compiler.compile).to be false
+    expect(Shakapacker.logger).to have_received(:error).with(/COMPILATION FAILED:\nErrno::EACCES:/)
+    expect(Shakapacker.logger).to have_received(:info).with(/shakapacker:doctor/).once
+    expect(mocked_strategy).to have_received(:after_compile_hook)
+  end
+
   describe "doctor hint messages" do
     let(:mocked_strategy) do
       spy("Strategy").tap do |s|

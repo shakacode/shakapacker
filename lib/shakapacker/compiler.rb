@@ -177,11 +177,17 @@ class Shakapacker::Compiler
     def run_webpack
       logger.info "Compiling..."
 
-      stdout, stderr, status = Open3.capture3(
-        webpack_env,
-        *shakapacker_command,
-        chdir: File.expand_path(config.root_path)
-      )
+      begin
+        stdout, stderr, status = Open3.capture3(
+          webpack_env,
+          *shakapacker_command,
+          chdir: File.expand_path(config.root_path)
+        )
+      rescue Errno::EACCES, Errno::ENOENT => e
+        logger.error "\nCOMPILATION FAILED:\n#{e.class}: #{e.message}"
+        show_doctor_hint_once
+        return false
+      end
 
       if status.success?
         logger.info "Compiled all packs in #{config.public_output_path}"
