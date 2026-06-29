@@ -104,6 +104,30 @@ const shakapacker = {
   ...webpackMerge
 }
 
+// Preserve Node native-ESM named imports for the non-lazy CommonJS exports used
+// by generated TypeScript configs. Do not add baseConfig/rules here: those stay
+// accessor-only so importing them by name cannot eagerly load optional bundler
+// dependencies.
+exports.config = config
+exports.devServer = devServer
+exports.generateWebpackConfig = generateWebpackConfig
+exports.env = env
+exports.moduleExists = moduleExists
+exports.canProcess = canProcess
+exports.inliningCss = inliningCss
+exports.isRspack = isRspack
+exports.isWebpack = isWebpack
+exports.getBundler = getBundler
+exports.getCssExtractPlugin = getCssExtractPlugin
+exports.getCssExtractPluginLoader = getCssExtractPluginLoader
+exports.getDefinePlugin = getDefinePlugin
+exports.getEnvironmentPlugin = getEnvironmentPlugin
+exports.getProvidePlugin = getProvidePlugin
+exports.merge = webpackMerge.merge
+exports.mergeWithCustomize = webpackMerge.mergeWithCustomize
+exports.mergeWithRules = webpackMerge.mergeWithRules
+exports.unique = webpackMerge.unique
+
 // Override semantics (assignment override, defineProperty bypass) are
 // documented on createLazyExport. A `shakapacker.baseConfig = custom` override
 // changes `generateWebpackConfig` output ONLY in the fallback case where no

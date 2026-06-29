@@ -72,7 +72,15 @@ const generateRspackConfig = (
 // cjs-module-lexer reject named imports for the lazy values. ESM consumers must
 // use the default import or require() for baseConfig/rules. The compiled-output
 // contract is locked in by test/package/indexTypes.test.js.
+/**
+ * Base rspack configuration, lazily loaded on first access through the default
+ * or CommonJS namespace export.
+ */
 export declare const baseConfig: RspackConfigWithDevServer
+/**
+ * Shared loader rules, lazily loaded on first access through the default or
+ * CommonJS namespace export.
+ */
 export declare const rules: RuleSetRule[]
 
 // Re-export webpack-merge utilities for backward compatibility

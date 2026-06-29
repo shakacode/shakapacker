@@ -74,19 +74,15 @@ describe("compiled package output", () => {
   // (EPERM), so the native-ESM consumer specs are skipped there; the
   // declaration-emit test above does not symlink and still runs.
   const describeOrSkip = process.platform === "win32" ? describe.skip : describe
+  const libDir = join(process.cwd(), "lib")
+  const describeOrSkipLib = existsSync(libDir) ? describeOrSkip : describe.skip
 
-  describeOrSkip("native ESM consumers", () => {
+  describeOrSkipLib("native ESM consumers", () => {
     beforeAll(() => {
       symlinkSync(
         join(process.cwd(), "node_modules"),
         join(sharedRootDir, "node_modules")
       )
-      const libDir = join(process.cwd(), "lib")
-      if (!existsSync(libDir)) {
-        throw new Error(
-          "lib/ directory missing — run these specs from the repo root with the gem files present"
-        )
-      }
       symlinkSync(libDir, join(sharedRootDir, "lib"))
     })
 
@@ -130,14 +126,9 @@ describe("compiled package output", () => {
       })
     })
 
-    // Locks in the documented breaking change: members assembled in a local
-    // object before `export =` (webpack entry) or lazy values installed only as
-    // Object.defineProperty accessors (rspack entry) are not statically
-    // detectable by Node's cjs-module-lexer, so a native ESM named import throws
-    // SyntaxError at load time; consumers must use the default import. This also
-    // guards against a future toolchain change silently re-enabling the named
-    // import. Returns the error thrown by the consumer process for the test to
-    // assert.
+    // Lazy values installed only as Object.defineProperty accessors are not
+    // statically detectable by Node's cjs-module-lexer, so native ESM named
+    // imports for baseConfig/rules throw. Returns that error for assertions.
     const runFailingConsumer = (fileName, importLine) => {
       const consumerPath = join(sharedRootDir, fileName)
       writeFileSync(consumerPath, `${importLine}\n`)
@@ -156,6 +147,21 @@ describe("compiled package output", () => {
     }
 
     describe("webpack entry", () => {
+      test("supports native ESM named imports of static exports", () => {
+        const output = runConsumer("webpack-esm-named-static-consumer.mjs", [
+          'import { generateWebpackConfig, env } from "./package/index.js"',
+          'if (typeof generateWebpackConfig !== "function") {',
+          '  throw new Error("generateWebpackConfig was not imported")',
+          "}",
+          'if (typeof env !== "object") {',
+          '  throw new Error("env was not imported")',
+          "}",
+          'console.log("webpack ESM named static imports ok")'
+        ])
+
+        expect(output).toContain("webpack ESM named static imports ok")
+      })
+
       test("exposes lazy exports via the default import", () => {
         // Reads the property descriptors rather than the values so the lazy
         // loaders (and their manifest side effects) stay deferred; the getter's
@@ -178,14 +184,14 @@ describe("compiled package output", () => {
         expect(output).toContain("webpack ESM default import ok")
       })
 
-      test("rejects native ESM named imports", () => {
+      test("rejects native ESM named imports of lazy exports", () => {
         const error = runFailingConsumer(
-          "webpack-esm-named-consumer.mjs",
-          'import { config } from "./package/index.js"'
+          "webpack-esm-named-lazy-consumer.mjs",
+          'import { baseConfig } from "./package/index.js"'
         )
 
         expect(error).toBeDefined()
-        expect(error.stderr).toMatch(/Named export 'config' not found/)
+        expect(error.stderr).toMatch(/Named export 'baseConfig' not found/)
       })
     })
 
