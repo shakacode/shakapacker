@@ -8,13 +8,12 @@ const commonOptions = {
   ignoreWarnings: [/Module not found: Can't resolve 'react-dom\/client'/]
 }
 
-// rspack-manifest-plugin exports RspackManifestPlugin as an alias of its
-// WebpackManifestPlugin class, so match manifest plugins by constructor-name
-// suffix rather than enumerating each alias. The match is intentionally broad:
-// any plugin whose constructor name ends in `ManifestPlugin` is stripped from
-// the server config, not just the known aliases.
+// rspack-manifest-plugin exposes both names across versions; remove only those
+// known manifest plugins from the server config so unrelated app plugins remain.
 const shouldRemoveServerPlugin = (name) =>
-  name === 'CssExtractRspackPlugin' || name.endsWith('ManifestPlugin')
+  name === 'CssExtractRspackPlugin' ||
+  name === 'RspackManifestPlugin' ||
+  name === 'WebpackManifestPlugin'
 
 const loaderName = (loader) => {
   if (typeof loader === 'string') {

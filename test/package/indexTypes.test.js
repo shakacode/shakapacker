@@ -72,6 +72,36 @@ describe("compiled package output", () => {
     )
   })
 
+  test("webpack compiled output marks non-lazy exports for native ESM", () => {
+    const compiled = readFileSync(join(outDir, "index.js"), "utf8")
+    const staticExportNames = [
+      "config",
+      "devServer",
+      "generateWebpackConfig",
+      "env",
+      "moduleExists",
+      "canProcess",
+      "inliningCss",
+      "isRspack",
+      "isWebpack",
+      "getBundler",
+      "getCssExtractPlugin",
+      "getCssExtractPluginLoader",
+      "getDefinePlugin",
+      "getEnvironmentPlugin",
+      "getProvidePlugin",
+      "merge",
+      "mergeWithCustomize",
+      "mergeWithRules",
+      "unique"
+    ]
+
+    staticExportNames.forEach((name) => {
+      expect(compiled).toContain(`exports.${name} =`)
+    })
+    expect(compiled).not.toMatch(/exports\.(baseConfig|rules)\s*=/)
+  })
+
   // symlinkSync to node_modules/lib requires elevated privileges on Windows
   // (EPERM), so the native-ESM consumer specs are skipped there; the
   // declaration-emit test above does not symlink and still runs.
