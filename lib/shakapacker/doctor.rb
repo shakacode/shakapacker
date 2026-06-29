@@ -28,22 +28,7 @@ module Shakapacker
       sass-embedded
     ].freeze
 
-    LEGACY_SASS_IMPLEMENTATION_PACKAGES = %w[
-      node-sass
-    ].freeze
-
-    ALL_SASS_IMPLEMENTATION_PACKAGES = (
-      SASS_IMPLEMENTATION_PACKAGES + LEGACY_SASS_IMPLEMENTATION_PACKAGES
-    ).freeze
-
-    SASS_LOADER_NODE_SASS_UNSUPPORTED_MAJOR = 17
-
     SASS_IMPLEMENTATION_DEPENDENCY_MESSAGE = (
-      "Missing required dependency 'sass', 'sass-embedded', or 'node-sass' " \
-      "for Sass/SCSS implementation"
-    ).freeze
-
-    MODERN_SASS_IMPLEMENTATION_DEPENDENCY_MESSAGE = (
       "Missing required dependency 'sass' or 'sass-embedded' " \
       "for Sass/SCSS implementation"
     ).freeze
@@ -974,14 +959,14 @@ module Shakapacker
         return resolved unless resolved.nil?
 
         %w[@rspack/core @rspack/cli].each do |package_name|
-          major = package_major_from_specifier(package_json_dependency_version(package_name))
+          major = rspack_major_from_specifier(package_json_dependency_version(package_name))
           return major unless major.nil?
         end
 
         nil
       end
 
-      def package_major_from_specifier(version)
+      def rspack_major_from_specifier(version)
         return nil unless version
 
         # Only trust specifiers starting with a digit or ^/~ prefix followed by
@@ -998,7 +983,14 @@ module Shakapacker
       end
 
       def installed_rspack_major_version
-        installed_package_major_version("@rspack/core")
+        rspack_pkg = root_path.join("node_modules/@rspack/core/package.json")
+        return nil unless rspack_pkg.exist?
+
+        version = JSON.parse(File.read(rspack_pkg))["version"]
+        match = version.to_s.match(/\A(\d+)\./)
+        match && match[1].to_i
+      rescue JSON::ParserError, SystemCallError
+        nil
       end
 
       def package_json_dependency_version(name)
@@ -1033,35 +1025,9 @@ module Shakapacker
 
       def check_sass_dependencies
         check_dependency("sass-loader", @issues, "Sass/SCSS")
-
-        implementation_packages = sass_implementation_packages
-        unless implementation_packages.any? { |package_name| package_installed?(package_name) }
-          @issues << sass_implementation_dependency_message(implementation_packages)
+        unless SASS_IMPLEMENTATION_PACKAGES.any? { |package_name| package_installed?(package_name) }
+          @issues << SASS_IMPLEMENTATION_DEPENDENCY_MESSAGE
         end
-      end
-
-      def sass_implementation_packages
-        return ALL_SASS_IMPLEMENTATION_PACKAGES if sass_loader_supports_node_sass?
-
-        SASS_IMPLEMENTATION_PACKAGES
-      end
-
-      def sass_implementation_dependency_message(implementation_packages)
-        if implementation_packages.include?("node-sass")
-          SASS_IMPLEMENTATION_DEPENDENCY_MESSAGE
-        else
-          MODERN_SASS_IMPLEMENTATION_DEPENDENCY_MESSAGE
-        end
-      end
-
-      def sass_loader_supports_node_sass?
-        major = sass_loader_major_version
-        major.nil? || major < SASS_LOADER_NODE_SASS_UNSUPPORTED_MAJOR
-      end
-
-      def sass_loader_major_version
-        installed_package_major_version("sass-loader") ||
-          package_major_from_specifier(package_json_dependency_version("sass-loader"))
       end
 
       def check_less_dependencies
@@ -1097,17 +1063,6 @@ module Shakapacker
         package_json = read_package_json
         dependencies = (package_json["dependencies"] || {}).merge(package_json["devDependencies"] || {})
         dependencies.key?(package_name)
-      end
-
-      def installed_package_major_version(package_name)
-        package_path = root_path.join("node_modules", *package_name.split("/"), "package.json")
-        return nil unless package_path.exist?
-
-        version = JSON.parse(File.read(package_path))["version"]
-        match = version.to_s.match(/\A(\d+)\./)
-        match && match[1].to_i
-      rescue JSON::ParserError, SystemCallError
-        nil
       end
 
       def package_json_exists?

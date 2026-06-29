@@ -2042,8 +2042,8 @@ describe Shakapacker::Doctor do
         expect(doctor.issues).to include(match(/sass/))
       end
 
-      %w[sass sass-embedded node-sass].each do |sass_package|
-        it "accepts #{sass_package} as a Sass implementation for sass-loader v16" do
+      %w[sass sass-embedded].each do |sass_package|
+        it "accepts #{sass_package} as a Sass implementation" do
           package_json = {
             "devDependencies" => {
               "sass-loader" => "^16.0.0",
@@ -2058,48 +2058,14 @@ describe Shakapacker::Doctor do
         end
       end
 
-      it "accepts sass-embedded as a Sass implementation for sass-loader v17" do
+      it "does not accept node-sass as a Sass implementation for the default modern Sass API" do
         package_json = {
           "devDependencies" => {
-            "sass-loader" => "^17.0.0",
-            "sass-embedded" => "^1.0.0"
-          }
-        }
-        File.write(package_json_path, JSON.generate(package_json))
-
-        doctor.send(:check_file_type_dependencies)
-
-        expect(doctor.issues).to be_empty
-      end
-
-      it "does not accept node-sass as a Sass implementation for sass-loader v17" do
-        package_json = {
-          "devDependencies" => {
-            "sass-loader" => "^17.0.0",
+            "sass-loader" => "^16.0.0",
             "node-sass" => "^9.0.0"
           }
         }
         File.write(package_json_path, JSON.generate(package_json))
-
-        doctor.send(:check_file_type_dependencies)
-
-        expect(doctor.issues).to include(
-          "Missing required dependency 'sass' or 'sass-embedded' for Sass/SCSS implementation"
-        )
-      end
-
-      it "uses the installed sass-loader version when package.json uses a compound range" do
-        package_json = {
-          "devDependencies" => {
-            "sass-loader" => "^16.0.0 || ^17.0.0",
-            "node-sass" => "^9.0.0"
-          }
-        }
-        File.write(package_json_path, JSON.generate(package_json))
-
-        sass_loader_package_path = root_path.join("node_modules/sass-loader/package.json")
-        FileUtils.mkdir_p(sass_loader_package_path.dirname)
-        File.write(sass_loader_package_path, JSON.generate({ "name" => "sass-loader", "version" => "17.0.1" }))
 
         doctor.send(:check_file_type_dependencies)
 
