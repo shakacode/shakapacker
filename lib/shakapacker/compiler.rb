@@ -83,6 +83,7 @@ class Shakapacker::Compiler
       config.root_path.join("tmp/shakapacker.lock")
     end
 
+    # Returns one executable path for array-form Open3, not a shell command snippet.
     def optional_ruby_runner
       first_line = File.readlines(bin_shakapacker_path).first.chomp
       /ruby/.match?(first_line) ? RbConfig.ruby : ""
