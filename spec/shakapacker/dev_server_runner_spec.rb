@@ -134,6 +134,12 @@ describe "DevServerRunner" do
         .to output(/--host.*Set from dev_server\.host/).to_stdout
         .and raise_error(SystemExit)
     end
+
+    it "mentions supported Node flags in help" do
+      expect { Shakapacker::DevServerRunner.run(["--help"]) }
+        .to output(/--trace-deprecation.*--no-deprecation/m).to_stdout
+        .and raise_error(SystemExit)
+    end
   end
 
   describe "passthrough separator" do

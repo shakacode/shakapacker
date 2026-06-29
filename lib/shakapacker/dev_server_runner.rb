@@ -101,6 +101,8 @@ module Shakapacker
           -h, --help              Show this help message
           -v, --version           Show Shakapacker version
           --debug-shakapacker     Enable Node.js debugging (--inspect-brk)
+          --trace-deprecation     Show stack traces for Node.js deprecations
+          --no-deprecation        Silence Node.js deprecation warnings
           --build <name>          Run a specific build configuration
 
           Put Shakapacker-specific options before --. Arguments after -- are
@@ -122,6 +124,7 @@ module Shakapacker
           bin/shakapacker-dev-server --no-hot           # Disable HMR
           bin/shakapacker-dev-server --open             # Open browser automatically
           bin/shakapacker-dev-server --debug-shakapacker # Debug with Node inspector
+          bin/shakapacker-dev-server --trace-deprecation # Show Node deprecation traces
 
       HELP
 
