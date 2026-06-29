@@ -51,6 +51,10 @@ function shouldValidate(): boolean {
   )
 }
 
+function isStringArray(value: unknown): value is string[] {
+  return Array.isArray(value) && value.every((item) => typeof item === "string")
+}
+
 // Debug logging for cache operations
 const debugCache = process.env.SHAKAPACKER_DEBUG_CACHE === "true"
 
@@ -191,8 +195,7 @@ export function isValidConfig(obj: unknown): obj is Config {
 
   if (
     config.webpack_compile_flags !== undefined &&
-    (!Array.isArray(config.webpack_compile_flags) ||
-      !config.webpack_compile_flags.every((flag) => typeof flag === "string"))
+    !isStringArray(config.webpack_compile_flags)
   ) {
     validatedConfigs.set(obj, {
       result: false,
@@ -342,12 +345,11 @@ export function isPartialConfig(obj: unknown): obj is Partial<Config> {
 
   const config = obj as Record<string, unknown>
 
-  // CONFIG CONTRACT: compile flags shape is always checked before the production fast path
-  // so malformed CLI argv config cannot be silently cast into Config.
+  // CONFIG CONTRACT: compile flags shape is always checked before the production fast path.
+  // This is a deliberate CLI argv safety exception, not the default pattern for new fields.
   if (
     config.webpack_compile_flags !== undefined &&
-    (!Array.isArray(config.webpack_compile_flags) ||
-      !config.webpack_compile_flags.every((flag) => typeof flag === "string"))
+    !isStringArray(config.webpack_compile_flags)
   ) {
     return false
   }

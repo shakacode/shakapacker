@@ -264,7 +264,10 @@ module Shakapacker
       def detect_unsupported_switches!
         unsupported_switches = UNSUPPORTED_SWITCHES & bundler_argv
         if unsupported_switches.any?
-          $stdout.puts "The following CLI switches are not supported by Shakapacker: #{unsupported_switches.join(' ')}. Please edit your command and try again."
+          $stdout.puts(
+            "The following CLI switches are not supported by Shakapacker: #{unsupported_switches.join(' ')}. " \
+            "Please set dev_server.host or dev_server.port in shakapacker.yml instead."
+          )
           exit!
         end
 

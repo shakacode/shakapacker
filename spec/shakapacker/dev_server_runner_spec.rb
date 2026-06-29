@@ -150,7 +150,7 @@ describe "DevServerRunner" do
         allow(instance).to receive(:exit!).and_raise(SystemExit)
 
         expect { instance.send(:detect_unsupported_switches!) }
-          .to output(/--host/).to_stdout
+          .to output(/--host.*dev_server\.host/).to_stdout
           .and raise_error(SystemExit)
       end
     end
