@@ -104,7 +104,7 @@ module Shakapacker
           --build <name>          Run a specific build configuration
 
           Put Shakapacker-specific options before --. Arguments after -- are
-          passed directly to the selected bundler, except --host and --port,
+          passed directly to the selected bundler, except --host, --port, and --https,
           which remain managed by config/shakapacker.yml.
 
         Build configurations (config/shakapacker-builds.yml):
