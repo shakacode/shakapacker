@@ -1,6 +1,5 @@
 const { execFileSync } = require("child_process")
 const {
-  existsSync,
   mkdtempSync,
   readFileSync,
   rmSync,
@@ -99,17 +98,41 @@ describe("compiled package output", () => {
     staticExportNames.forEach((name) => {
       expect(compiled).toContain(`exports.${name} =`)
     })
+
+    const source = readFileSync(
+      join(process.cwd(), "package", "index.ts"),
+      "utf8"
+    )
+    const shakapackerObject = source.match(
+      /const shakapacker = \{([\s\S]*?)\n\}/
+    )[1]
+    const webpackMergeStaticExportNames = [
+      "merge",
+      "mergeWithCustomize",
+      "mergeWithRules",
+      "unique"
+    ]
+    const sourceNonLazyExportNames = [
+      ...Array.from(
+        shakapackerObject.matchAll(/^\s{2}([A-Za-z]\w*),$/gm),
+        (match) => match[1]
+      ),
+      ...webpackMergeStaticExportNames
+    ]
+    expect([...staticExportNames].sort()).toStrictEqual(
+      sourceNonLazyExportNames.sort()
+    )
+
     expect(compiled).not.toMatch(/exports\.(baseConfig|rules)\s*=/)
   })
 
-  // symlinkSync to node_modules/lib requires elevated privileges on Windows
-  // (EPERM), so the native-ESM consumer specs are skipped there; the
-  // declaration-emit test above does not symlink and still runs.
+  // symlinkSync requires elevated privileges on Windows (EPERM), so the
+  // native-ESM consumer specs are skipped there; the declaration-emit test above
+  // does not symlink and still runs.
   const describeOrSkip = process.platform === "win32" ? describe.skip : describe
   const libDir = join(process.cwd(), "lib")
-  const describeOrSkipLib = existsSync(libDir) ? describeOrSkip : describe.skip
 
-  describeOrSkipLib("native ESM consumers", () => {
+  describeOrSkip("native ESM consumers", () => {
     beforeAll(() => {
       symlinkSync(
         join(process.cwd(), "node_modules"),

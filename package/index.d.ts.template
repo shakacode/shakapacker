@@ -31,7 +31,9 @@ interface ShakapackerExports {
    * Direct assignment (`shakapacker.baseConfig = custom`) overrides the value read back here. It only
    * changes `generateWebpackConfig` output in the fallback case where no `environments/<NODE_ENV>.js`
    * file exists; normal NODE_ENV builds load `environments/<env>.js` (which require the real base) and
-   * are unaffected. `Object.defineProperty` with a value descriptor bypasses the setter entirely.
+   * are unaffected. `Object.defineProperty` with a value descriptor bypasses the setter entirely and
+   * does not propagate to `generateWebpackConfig`; direct assignment is the only path that affects
+   * config generation.
    */
   baseConfig: Configuration
   /** Environment configuration (railsEnv, nodeEnv, etc.) */
