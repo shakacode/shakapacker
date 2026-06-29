@@ -33,6 +33,31 @@ describe("createLazyExport", () => {
     expect(load).toHaveBeenCalledTimes(1)
   })
 
+  test("retries load on next get after load throws", () => {
+    const load = jest
+      .fn()
+      .mockImplementationOnce(() => {
+        throw new Error("transient failure")
+      })
+      .mockReturnValue("recovered")
+    const lazy = createLazyExport(load)
+
+    expect(() => lazy.get()).toThrow("transient failure")
+    expect(lazy.get()).toBe("recovered")
+    expect(load).toHaveBeenCalledTimes(2)
+  })
+
+  test("does not cache failures from load", () => {
+    const load = jest.fn(() => {
+      throw new Error("always fails")
+    })
+    const lazy = createLazyExport(load)
+
+    expect(() => lazy.get()).toThrow("always fails")
+    expect(() => lazy.get()).toThrow("always fails")
+    expect(load).toHaveBeenCalledTimes(2)
+  })
+
   test("exposes a configurable, enumerable accessor descriptor", () => {
     const lazy = createLazyExport(() => "value")
 

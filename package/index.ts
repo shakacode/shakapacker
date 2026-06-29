@@ -104,10 +104,12 @@ const shakapacker = {
   ...webpackMerge
 }
 
-// Preserve Node native-ESM named imports for the non-lazy CommonJS exports used
-// by generated TypeScript configs. Do not add baseConfig/rules here: those stay
-// accessor-only so importing them by name cannot eagerly load optional bundler
-// dependencies.
+// cjs-module-lexer static-analysis only: TypeScript's `export = shakapacker`
+// emits `module.exports = shakapacker`, which replaces the exports object after
+// these runtime no-op assignments run. Node reads this source text to detect
+// native ESM named exports, then serves them from `module.exports`. Do not add
+// baseConfig/rules here: they stay accessor-only so ESM named imports of the
+// lazy values throw instead of eagerly loading optional bundler dependencies.
 exports.config = config
 exports.devServer = devServer
 exports.generateWebpackConfig = generateWebpackConfig
