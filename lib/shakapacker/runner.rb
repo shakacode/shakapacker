@@ -38,7 +38,7 @@ module Shakapacker
       separator_index = argv.index("--")
       return [argv.dup, []] unless separator_index
 
-      [argv[0...separator_index], argv[(separator_index + 1)..] || []]
+      [argv[0...separator_index], argv[(separator_index + 1)..]]
     end
 
     def self.run(argv)
@@ -233,7 +233,7 @@ module Shakapacker
 
     def initialize(argv, build_config = nil, bundler_override = nil, passthrough_argv = nil)
       @argv, @passthrough_argv =
-        if passthrough_argv
+        if !passthrough_argv.nil?
           [argv, passthrough_argv]
         else
           self.class.split_passthrough_argv(argv)
