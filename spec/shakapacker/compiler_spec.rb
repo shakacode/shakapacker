@@ -76,6 +76,28 @@ describe "Shakapacker::Compiler" do
     expect(command_args).to eq([RbConfig.ruby, bin_path, "--", "--progress"])
   end
 
+  it "uses exec argv form with configured webpack compile flags when no Ruby runner is present" do
+    mocked_strategy = spy("Strategy")
+    allow(mocked_strategy).to receive(:stale?).and_return(true)
+    allow(Shakapacker.compiler).to receive(:strategy).and_return(mocked_strategy)
+    allow(Shakapacker.config).to receive(:webpack_compile_flags).and_return(["--progress"])
+    allow(Shakapacker.compiler).to receive(:optional_ruby_runner).and_return("")
+
+    status = instance_double(Process::Status, success?: true)
+    captured_args = nil
+    allow(Open3).to receive(:capture3) do |_env, *args|
+      captured_args = args
+      ["", "", status]
+    end
+
+    expect(Shakapacker.compiler.compile).to be true
+    expect(Open3).to have_received(:capture3).once
+
+    command_args = captured_args.take_while { |arg| !arg.is_a?(Hash) }
+    bin_path = Shakapacker.config.root_path.join("bin/shakapacker").to_s
+    expect(command_args).to eq([[bin_path, bin_path], "--", "--progress"])
+  end
+
   it "uses exec argv form when no Ruby runner or compile flags are present" do
     mocked_strategy = spy("Strategy")
     allow(mocked_strategy).to receive(:stale?).and_return(true)
