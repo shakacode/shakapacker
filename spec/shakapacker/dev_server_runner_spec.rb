@@ -137,18 +137,18 @@ describe "DevServerRunner" do
   end
 
   describe "passthrough separator" do
-    it "rejects the debug flag after --" do
+    it "rejects Shakapacker node flags after --" do
       Dir.chdir(test_app_path) do
-        runner_argv, passthrough_argv = Shakapacker::DevServerRunner.split_passthrough_argv(
-          ["--", "--debug-shakapacker"]
-        )
-        instance = Shakapacker::DevServerRunner.new(runner_argv, nil, nil, passthrough_argv)
+        %w[--debug-shakapacker --trace-deprecation --no-deprecation].each do |flag|
+          runner_argv, passthrough_argv = Shakapacker::DevServerRunner.split_passthrough_argv(
+            ["--", flag]
+          )
+          instance = Shakapacker::DevServerRunner.new(runner_argv, nil, nil, passthrough_argv)
 
-        expect do
-          instance.send(:detect_shakapacker_flags_in_passthrough!, ["--debug-shakapacker"])
+          expect { instance.send(:detect_shakapacker_flags_in_passthrough!) }
+            .to output(/must appear before --: #{Regexp.escape(flag)}/).to_stdout
+            .and raise_error(SystemExit)
         end
-          .to output(/must appear before --: --debug-shakapacker/).to_stdout
-          .and raise_error(SystemExit)
       end
     end
 
@@ -167,6 +167,29 @@ describe "DevServerRunner" do
         expect { instance.send(:detect_unsupported_switches!) }
           .to output(/--host.*dev_server\.host/).to_stdout
           .and raise_error(SystemExit)
+      end
+    end
+
+    it "translates Shakapacker node flags before -- into NODE_OPTIONS" do
+      Dir.chdir(test_app_path) do
+        allow(Shakapacker::Utils::Manager).to receive(
+          :error_unless_package_manager_is_obvious!
+        )
+
+        cmd = PackageJson.read(test_app_path).manager.native_exec_command(
+          "webpack",
+          ["serve", "--config", "#{test_app_path}/config/webpack/webpack.config.js"]
+        )
+        env = Shakapacker::Compiler.env
+        env["WEBPACK_SERVE"] = "true"
+        env["NODE_OPTIONS"] =
+          "#{ENV["NODE_OPTIONS"] || ""} --trace-deprecation --no-deprecation"
+
+        verify_command(
+          cmd,
+          argv: ["--trace-deprecation", "--no-deprecation"],
+          env: env
+        )
       end
     end
   end

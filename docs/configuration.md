@@ -360,7 +360,7 @@ webpack_compile_output: false
 **Type:** `array`
 **Default:** `[]`
 
-Extra command-line flags to pass to webpack/rspack when Shakapacker compiles assets through `bin/shakapacker`, including `bundle exec rake shakapacker:compile` and `bundle exec rake assets:precompile`. Do not include `--`; Shakapacker inserts the passthrough separator before these flags.
+Extra command-line flags to pass to webpack/rspack when Shakapacker compiles assets through `bin/shakapacker`, including `bundle exec rake shakapacker:compile` and `bundle exec rake assets:precompile`. Do not include `--` or Shakapacker wrapper flags such as `--debug-shakapacker`, `--trace-deprecation`, or `--no-deprecation`; Shakapacker inserts the passthrough separator before these flags.
 
 ```yaml
 webpack_compile_flags:

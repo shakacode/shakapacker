@@ -1011,6 +1011,28 @@ describe "Shakapacker::Configuration" do
       test_config.close
       test_config.unlink
     end
+
+    it "raises error when compile flags include Shakapacker wrapper flags" do
+      test_config = Tempfile.new(["shakapacker", ".yml"])
+      test_config.write(<<~YAML)
+        production:
+          source_path: app/javascript
+          webpack_compile_flags:
+            - "--debug-shakapacker"
+      YAML
+      test_config.rewind
+
+      config = Shakapacker::Configuration.new(
+        root_path: ROOT_PATH,
+        config_path: Pathname.new(test_config.path),
+        env: "production"
+      )
+
+      expect { config.webpack_compile_flags }.to raise_error(/Shakapacker-specific wrapper flags/)
+
+      test_config.close
+      test_config.unlink
+    end
   end
 
   context "with completely missing environment and no default section" do

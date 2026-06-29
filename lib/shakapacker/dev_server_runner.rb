@@ -299,11 +299,19 @@ module Shakapacker
 
         cmd = build_cmd
 
-        detect_shakapacker_flags_in_passthrough!(["--debug-shakapacker"])
+        detect_shakapacker_flags_in_passthrough!
 
-        # Shakapacker-owned debug flag must appear before --; passthrough args belong to the bundler.
+        # Shakapacker-owned Node flags must appear before --; passthrough args belong to the bundler.
         if @argv.delete("--debug-shakapacker")
           env["NODE_OPTIONS"] = "#{env["NODE_OPTIONS"]} --inspect-brk --trace-warnings"
+        end
+
+        if @argv.delete("--trace-deprecation")
+          env["NODE_OPTIONS"] = "#{env["NODE_OPTIONS"]} --trace-deprecation"
+        end
+
+        if @argv.delete("--no-deprecation")
+          env["NODE_OPTIONS"] = "#{env["NODE_OPTIONS"]} --no-deprecation"
         end
 
         # Add config file

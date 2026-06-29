@@ -37,7 +37,7 @@ default: &default
   webpack_compile_output: true
 
   # Extra command-line flags passed to webpack/rspack when compiling.
-  # Do not include "--"; Shakapacker inserts the passthrough separator.
+  # Do not include "--" or Shakapacker wrapper flags such as "--debug-shakapacker".
   # Example: ["--progress", "--fail-on-warnings"]
   webpack_compile_flags: []
 

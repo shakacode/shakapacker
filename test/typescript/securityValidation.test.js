@@ -167,6 +167,17 @@ describe("security validation", () => {
 
       expect(isValidConfig(unsafeConfig)).toBe(false)
     })
+
+    it("rejects Shakapacker wrapper flags in webpack compile flags", () => {
+      process.env.NODE_ENV = "development"
+
+      const unsafeConfig = {
+        ...baseConfig,
+        webpack_compile_flags: ["--debug-shakapacker"]
+      }
+
+      expect(isValidConfig(unsafeConfig)).toBe(false)
+    })
   })
 
   describe("partial config validation", () => {
@@ -182,6 +193,9 @@ describe("security validation", () => {
       ).toBe(false)
       expect(isPartialConfig({ webpack_compile_flags: ["--"] })).toBe(false)
       expect(isPartialConfig({ webpack_compile_flags: [""] })).toBe(false)
+      expect(
+        isPartialConfig({ webpack_compile_flags: ["--trace-deprecation"] })
+      ).toBe(false)
     })
 
     it("rejects invalid additional paths in production", () => {

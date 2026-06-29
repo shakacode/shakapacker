@@ -55,11 +55,18 @@ function isStringArray(value: unknown): value is string[] {
   return Array.isArray(value) && value.every((item) => typeof item === "string")
 }
 
+const SHAKAPACKER_NODE_FLAGS = [
+  "--debug-shakapacker",
+  "--trace-deprecation",
+  "--no-deprecation"
+]
+
 function isWebpackCompileFlags(value: unknown): value is string[] {
   return (
     isStringArray(value) &&
     value.every((flag) => flag.length > 0) &&
-    !value.includes("--")
+    !value.includes("--") &&
+    !SHAKAPACKER_NODE_FLAGS.some((flag) => value.includes(flag))
   )
 }
 

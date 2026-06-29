@@ -27,6 +27,9 @@ require "active_support/core_ext/hash/indifferent_access"
 #
 # @see https://github.com/shakacode/shakapacker/blob/main/docs/shakapacker.yml.md
 class Shakapacker::Configuration
+  SHAKAPACKER_NODE_FLAGS = %w[--debug-shakapacker --trace-deprecation --no-deprecation].freeze
+  private_constant :SHAKAPACKER_NODE_FLAGS
+
   class << self
     # Flag indicating whether Shakapacker is currently being installed
     # Used to suppress certain validations during installation
@@ -240,8 +243,18 @@ class Shakapacker::Configuration
     flags = fetch(:webpack_compile_flags)
     return [] if flags.nil?
 
-    unless flags.is_a?(Array) && flags.all? { |flag| flag.is_a?(String) && !flag.empty? && flag != "--" }
-      raise "Shakapacker configuration error: webpack_compile_flags must be an array of non-empty strings and must not include \"--\""
+    valid_flags = flags.is_a?(Array) && flags.all? do |flag|
+      flag.is_a?(String) &&
+        !flag.empty? &&
+        flag != "--" &&
+        !SHAKAPACKER_NODE_FLAGS.include?(flag)
+    end
+
+    unless valid_flags
+      wrapper_flags = SHAKAPACKER_NODE_FLAGS.join(", ")
+      raise "Shakapacker configuration error: webpack_compile_flags must be an array of " \
+            "non-empty strings and must not include \"--\" or Shakapacker-specific " \
+            "wrapper flags (#{wrapper_flags})"
     end
 
     flags
