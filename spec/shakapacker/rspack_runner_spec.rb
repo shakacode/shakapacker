@@ -195,6 +195,51 @@ describe "RspackRunner" do
     end
   end
 
+  describe "passthrough separator" do
+    it "does not let passthrough build suppress config injection" do
+      Dir.chdir(test_app_path) do
+        allow(Shakapacker::Utils::Manager).to receive(
+          :error_unless_package_manager_is_obvious!
+        )
+
+        klass = Shakapacker::Runner
+        runner_argv, passthrough_argv = klass.split_passthrough_argv(["--", "build"])
+        instance = klass.new(runner_argv, nil, "rspack", passthrough_argv)
+        instance.extend(Module.new do
+          def build_cmd
+            package_json.manager.native_exec_command("rspack")
+          end
+
+          def assets_bundler_commands
+            Shakapacker::Runner::BASE_COMMANDS + %w[build watch]
+          end
+
+          def config_incompatible_args
+            (bundler_argv & Shakapacker::Runner::BASE_COMMANDS) + (@argv & %w[build watch])
+          end
+        end)
+
+        cmd = PackageJson.read(test_app_path).manager.native_exec_command(
+          "rspack",
+          ["--config", "#{test_app_path}/config/webpack/webpack.config.js", "build"]
+        )
+
+        allow(instance).to receive(:spawn).and_return(12345)
+        allow(instance).to receive(:trap)
+        allow(Process).to receive(:wait).with(12345) do
+          system("true")
+        end
+
+        instance.run
+
+        expect(instance).to have_received(:spawn).with(
+          Shakapacker::Compiler.env,
+          *cmd
+        )
+      end
+    end
+  end
+
   private
 
     def capture_stdout

@@ -298,6 +298,7 @@ module Shakapacker
 
         cmd = build_cmd
 
+        # Shakapacker-owned debug flag must appear before --; passthrough args belong to the bundler.
         if @argv.delete("--debug-shakapacker")
           env["NODE_OPTIONS"] = "#{env["NODE_OPTIONS"]} --inspect-brk --trace-warnings"
         end

@@ -120,6 +120,30 @@ describe "Shakapacker::Compiler" do
     expect(command_args).to eq([[bin_path, bin_path]])
   end
 
+  it "uses exec argv form when the shakapacker binstub is empty" do
+    mocked_strategy = spy("Strategy")
+    allow(mocked_strategy).to receive(:stale?).and_return(true)
+    allow(Shakapacker.compiler).to receive(:strategy).and_return(mocked_strategy)
+    allow(Shakapacker.config).to receive(:webpack_compile_flags).and_return([])
+
+    bin_pathname = Shakapacker.config.root_path.join("bin/shakapacker")
+    allow(File).to receive(:readlines).and_call_original
+    allow(File).to receive(:readlines).with(bin_pathname).and_return([])
+
+    status = instance_double(Process::Status, success?: true)
+    captured_args = nil
+    allow(Open3).to receive(:capture3) do |_env, *args|
+      captured_args = args
+      ["", "", status]
+    end
+
+    expect(Shakapacker.compiler.compile).to be true
+
+    command_args = captured_args.take_while { |arg| !arg.is_a?(Hash) }
+    bin_path = bin_pathname.to_s
+    expect(command_args).to eq([[bin_path, bin_path]])
+  end
+
   it "returns false and calls after_compile_hook on failed compile" do
     mocked_strategy = spy("Strategy")
     allow(mocked_strategy).to receive(:stale?).and_return(true)

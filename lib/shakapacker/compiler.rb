@@ -85,7 +85,7 @@ class Shakapacker::Compiler
 
     # Returns one executable path for array-form Open3, not a shell command snippet.
     def optional_ruby_runner
-      first_line = File.readlines(bin_shakapacker_path).first.chomp
+      first_line = File.readlines(bin_shakapacker_path).first&.chomp || ""
       /ruby/.match?(first_line) ? RbConfig.ruby : ""
     end
 
@@ -177,10 +177,13 @@ class Shakapacker::Compiler
     def run_webpack
       logger.info "Compiling..."
 
+      # Build the command before the spawn rescue so configuration errors stay explicit.
+      command = shakapacker_command
+
       begin
         stdout, stderr, status = Open3.capture3(
           webpack_env,
-          *shakapacker_command,
+          *command,
           chdir: File.expand_path(config.root_path)
         )
       rescue Errno::EACCES, Errno::ENOENT => e

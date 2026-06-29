@@ -170,6 +170,10 @@ module Shakapacker
           def assets_bundler_commands
             BASE_COMMANDS + %w[build watch]
           end
+
+          def config_incompatible_args
+            (bundler_argv & BASE_COMMANDS) + (@argv & %w[build watch])
+          end
         end)
         runner.run
       else
@@ -219,6 +223,10 @@ module Shakapacker
 
           def assets_bundler_commands
             BASE_COMMANDS + %w[build watch]
+          end
+
+          def config_incompatible_args
+            (bundler_argv & BASE_COMMANDS) + (@argv & %w[build watch])
           end
         end)
         runner.run
@@ -293,11 +301,12 @@ module Shakapacker
       end
 
       # Commands are not compatible with --config option.
-      if (bundler_argv & assets_bundler_commands).empty?
+      incompatible_args = config_incompatible_args
+      if incompatible_args.empty?
         log_output.puts "[Shakapacker] Adding config file: #{@webpack_config}"
         cmd += ["--config", @webpack_config]
       else
-        log_output.puts "[Shakapacker] Skipping config file (running assets bundler command: #{(bundler_argv & assets_bundler_commands).join(", ")})"
+        log_output.puts "[Shakapacker] Skipping config file (running assets bundler command: #{incompatible_args.join(", ")})"
       end
 
       cmd += bundler_argv
@@ -342,6 +351,10 @@ module Shakapacker
 
       def assets_bundler_commands
         BASE_COMMANDS
+      end
+
+      def config_incompatible_args
+        bundler_argv & assets_bundler_commands
       end
 
       def print_config_not_found_error(bundler_type, config_path, config_dir)
