@@ -53,6 +53,19 @@ RSpec.describe "shakapacker:export_bundler_config" do
     end
   end
 
+  it "runs nodejs legacy binstubs with nodejs" do
+    Dir.mktmpdir("shakapacker-export-bundler-config-") do |app_path|
+      binstub_path = write_app_binstub(app_path, <<~JS)
+        #!/usr/bin/env nodejs
+        console.log("legacy binstub")
+      JS
+
+      expect(invoke_task(app_path, "--doctor")).to eq(
+        ["nodejs", binstub_path, "--doctor"]
+      )
+    end
+  end
+
   it "runs Ruby binstubs with the current Ruby interpreter" do
     Dir.mktmpdir("shakapacker-export-bundler-config-") do |app_path|
       binstub_path = write_app_binstub(app_path, <<~RUBY)
