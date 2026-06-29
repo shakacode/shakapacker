@@ -342,6 +342,8 @@ export function isPartialConfig(obj: unknown): obj is Partial<Config> {
 
   const config = obj as Record<string, unknown>
 
+  // CONFIG CONTRACT: compile flags shape is always checked before the production fast path
+  // so malformed CLI argv config cannot be silently cast into Config.
   if (
     config.webpack_compile_flags !== undefined &&
     (!Array.isArray(config.webpack_compile_flags) ||

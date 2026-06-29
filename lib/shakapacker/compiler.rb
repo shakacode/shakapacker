@@ -213,10 +213,13 @@ class Shakapacker::Compiler
 
     def shakapacker_command
       runner = optional_ruby_runner
-      command = [bin_shakapacker_path.to_s]
+      bin_path = bin_shakapacker_path.to_s
+      command = [bin_path]
       compile_flags = config.webpack_compile_flags
       command += ["--", *compile_flags] if compile_flags.any?
-      runner.empty? ? command : [runner, *command]
+
+      # Use the [cmd, argv0] form so Open3 never routes a lone binstub path through the shell.
+      runner.empty? ? [[bin_path, bin_path], *command.drop(1)] : [runner, *command]
     end
 
     # Fires only after a failed compile, so users in a healthy loop never see the tip.

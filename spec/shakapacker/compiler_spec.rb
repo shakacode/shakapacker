@@ -39,16 +39,41 @@ describe "Shakapacker::Compiler" do
     allow(Shakapacker.config).to receive(:webpack_compile_flags).and_return(["--progress", "--fail-on-warnings"])
 
     status = instance_double(Process::Status, success?: true)
-    allow(Open3).to receive(:capture3).and_return(["", "", status])
+    captured_args = nil
+    allow(Open3).to receive(:capture3) do |_env, *args|
+      captured_args = args
+      ["", "", status]
+    end
 
     expect(Shakapacker.compiler.compile).to be true
-    expect(Open3).to have_received(:capture3) do |_env, *args|
-      command_args = args.take_while { |arg| !arg.is_a?(Hash) }
-      separator_index = command_args.index("--")
+    expect(Open3).to have_received(:capture3).once
 
-      expect(separator_index).not_to be nil
-      expect(command_args[(separator_index + 1)..]).to eq(["--progress", "--fail-on-warnings"])
+    command_args = captured_args.take_while { |arg| !arg.is_a?(Hash) }
+    separator_index = command_args.index("--")
+    expect(separator_index).not_to be nil
+    expect(command_args[(separator_index + 1)..]).to eq(["--progress", "--fail-on-warnings"])
+  end
+
+  it "uses exec argv form when no Ruby runner or compile flags are present" do
+    mocked_strategy = spy("Strategy")
+    allow(mocked_strategy).to receive(:stale?).and_return(true)
+    allow(Shakapacker.compiler).to receive(:strategy).and_return(mocked_strategy)
+    allow(Shakapacker.config).to receive(:webpack_compile_flags).and_return([])
+    allow(Shakapacker.compiler).to receive(:optional_ruby_runner).and_return("")
+
+    status = instance_double(Process::Status, success?: true)
+    captured_args = nil
+    allow(Open3).to receive(:capture3) do |_env, *args|
+      captured_args = args
+      ["", "", status]
     end
+
+    expect(Shakapacker.compiler.compile).to be true
+    expect(Open3).to have_received(:capture3).once
+
+    command_args = captured_args.take_while { |arg| !arg.is_a?(Hash) }
+    bin_path = Shakapacker.config.root_path.join("bin/shakapacker").to_s
+    expect(command_args).to eq([[bin_path, bin_path]])
   end
 
   it "returns false and calls after_compile_hook on failed compile" do
