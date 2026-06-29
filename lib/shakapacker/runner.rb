@@ -371,6 +371,9 @@ module Shakapacker
           --bundler <webpack|rspack>
                                     Override bundler (defaults to shakapacker.yml)
 
+          Put Shakapacker-specific options before --. Arguments after -- are
+          passed directly to the selected bundler.
+
         Build configurations (config/shakapacker-builds.yml):
           --init                    Create config/shakapacker-builds.yml
           --list-builds             List available builds

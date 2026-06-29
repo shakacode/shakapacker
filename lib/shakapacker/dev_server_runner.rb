@@ -103,6 +103,9 @@ module Shakapacker
           --debug-shakapacker     Enable Node.js debugging (--inspect-brk)
           --build <name>          Run a specific build configuration
 
+          Put Shakapacker-specific options before --. Arguments after -- are
+          passed directly to the selected bundler.
+
         Build configurations (config/shakapacker-builds.yml):
           bin/shakapacker-dev-server --build dev-hmr    # Run the 'dev-hmr' build
 
