@@ -78,11 +78,15 @@ namespace :shakapacker do
           begin
             Kernel.exec(js_binstub_executable, bin_path.to_s, *ARGV[1..])
           rescue Errno::ENOENT, Errno::EACCES
-            abort "Error: '#{js_binstub_executable}' was not found in PATH or is not executable.\n" \
+            abort "Error: could not execute '#{js_binstub_executable}' because it was not found or is not executable.\n" \
                   "Run `bundle exec rake shakapacker:binstubs` to upgrade to the Ruby binstub."
           end
         else
-          Kernel.exec(RbConfig.ruby, bin_path.to_s, *ARGV[1..])
+          begin
+            Kernel.exec(RbConfig.ruby, bin_path.to_s, *ARGV[1..])
+          rescue Errno::ENOENT, Errno::EACCES
+            abort "Error: Ruby interpreter '#{RbConfig.ruby}' was not found or is not executable."
+          end
         end
       end
     end

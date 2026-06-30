@@ -22,8 +22,20 @@ RSpec.describe Shakapacker::Utils::Misc do
       end
     end
 
+    it "returns node for a node `env` shebang with CRLF line endings" do
+      with_binstub("#!/usr/bin/env node\r\nconsole.log('legacy')\n") do |path|
+        expect(described_class.js_binstub_executable(path)).to eq "node"
+      end
+    end
+
     it "returns node for a node `env` shebang with env flags" do
       with_binstub("#!/usr/bin/env -S node --no-warnings\nconsole.log('legacy')\n") do |path|
+        expect(described_class.js_binstub_executable(path)).to eq "node"
+      end
+    end
+
+    it "returns node for a node `env` shebang with env flags that take arguments" do
+      with_binstub("#!/usr/bin/env -u NODE_PATH -C /tmp node\nconsole.log('legacy')\n") do |path|
         expect(described_class.js_binstub_executable(path)).to eq "node"
       end
     end

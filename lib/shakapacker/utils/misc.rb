@@ -10,7 +10,9 @@ module Shakapacker
       extend FileUtils
 
       NODE_BINSTUB_EXECUTABLES = %w[node nodejs].freeze
+      ENV_FLAGS_WITH_ARGUMENTS = %w[-u --unset -C --chdir].freeze
       private_constant :NODE_BINSTUB_EXECUTABLES
+      private_constant :ENV_FLAGS_WITH_ARGUMENTS
 
       def self.uncommitted_changes?(message_handler)
         return false if ENV["COVERAGE"] == "true"
@@ -39,7 +41,7 @@ module Shakapacker
       def self.js_binstub_executable(path)
         return nil unless File.file?(path)
 
-        shebang = File.open(path, "rb") { |f| f.gets }.to_s
+        shebang = File.open(path, "rb") { |f| f.gets }.to_s.chomp
         return nil unless shebang.start_with?("#!")
 
         shebang_tokens = begin
@@ -51,7 +53,10 @@ module Shakapacker
 
         if File.basename(executable) == "env"
           shebang_tokens = shebang_tokens.drop(1)
-          shebang_tokens.shift while shebang_tokens.first&.start_with?("-")
+          while shebang_tokens.first&.start_with?("-")
+            env_flag = shebang_tokens.shift
+            shebang_tokens.shift if ENV_FLAGS_WITH_ARGUMENTS.include?(env_flag)
+          end
           executable = shebang_tokens.first.to_s
         end
 

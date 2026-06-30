@@ -95,7 +95,7 @@ RSpec.describe "shakapacker:export_bundler_config" do
 
       capture_stderr do |stderr_output|
         expect { invoke_task(app_path, "--doctor", exec_error: Errno::ENOENT.new) }.to raise_error(SystemExit)
-        expect(stderr_output.string).to include("'node' was not found in PATH or is not executable")
+        expect(stderr_output.string).to include("could not execute 'node' because it was not found or is not executable")
         expect(stderr_output.string).to include("rake shakapacker:binstubs")
       end
     end
@@ -110,7 +110,22 @@ RSpec.describe "shakapacker:export_bundler_config" do
 
       capture_stderr do |stderr_output|
         expect { invoke_task(app_path, "--doctor", exec_error: Errno::EACCES.new) }.to raise_error(SystemExit)
-        expect(stderr_output.string).to include("'node' was not found in PATH or is not executable")
+        expect(stderr_output.string).to include("could not execute 'node' because it was not found or is not executable")
+        expect(stderr_output.string).to include("rake shakapacker:binstubs")
+      end
+    end
+  end
+
+  it "aborts with guidance when a direct-path legacy JavaScript binstub executable is missing" do
+    Dir.mktmpdir("shakapacker-export-bundler-config-") do |app_path|
+      write_app_binstub(app_path, <<~JS)
+        #!/usr/local/bin/node
+        console.log("legacy binstub")
+      JS
+
+      capture_stderr do |stderr_output|
+        expect { invoke_task(app_path, "--doctor", exec_error: Errno::ENOENT.new) }.to raise_error(SystemExit)
+        expect(stderr_output.string).to include("could not execute '/usr/local/bin/node'")
         expect(stderr_output.string).to include("rake shakapacker:binstubs")
       end
     end
@@ -124,6 +139,20 @@ RSpec.describe "shakapacker:export_bundler_config" do
       RUBY
 
       expect(invoke_task(app_path, "--save")).to eq([RbConfig.ruby, binstub_path, "--save"])
+    end
+  end
+
+  it "aborts when the Ruby binstub interpreter is missing" do
+    Dir.mktmpdir("shakapacker-export-bundler-config-") do |app_path|
+      write_app_binstub(app_path, <<~RUBY)
+        #!/usr/bin/env ruby
+        puts "ruby binstub"
+      RUBY
+
+      capture_stderr do |stderr_output|
+        expect { invoke_task(app_path, "--save", exec_error: Errno::ENOENT.new) }.to raise_error(SystemExit)
+        expect(stderr_output.string).to include("Ruby interpreter '#{RbConfig.ruby}' was not found or is not executable")
+      end
     end
   end
 end
