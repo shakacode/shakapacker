@@ -53,9 +53,15 @@ module Shakapacker
 
         if File.basename(executable) == "env"
           shebang_tokens = shebang_tokens.drop(1)
-          while shebang_tokens.first&.start_with?("-")
-            env_flag = shebang_tokens.shift
-            shebang_tokens.shift if ENV_FLAGS_WITH_ARGUMENTS.include?(env_flag)
+          while (env_token = shebang_tokens.first)
+            if env_token.start_with?("-")
+              env_flag = shebang_tokens.shift
+              shebang_tokens.shift if ENV_FLAGS_WITH_ARGUMENTS.include?(env_flag)
+            elsif env_token.match?(/\A[A-Za-z_][A-Za-z0-9_]*=/)
+              shebang_tokens.shift
+            else
+              break
+            end
           end
           executable = shebang_tokens.first.to_s
         end

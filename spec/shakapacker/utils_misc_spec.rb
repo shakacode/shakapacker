@@ -40,6 +40,12 @@ RSpec.describe Shakapacker::Utils::Misc do
       end
     end
 
+    it "returns node for a node `env` shebang with environment assignments" do
+      with_binstub("#!/usr/bin/env NODE_PATH=/opt/local/lib PATH=/opt/node/bin node\nconsole.log('legacy')\n") do |path|
+        expect(described_class.js_binstub_executable(path)).to eq "node"
+      end
+    end
+
     it "returns the executable path for a direct node shebang" do
       with_binstub("#!/usr/local/bin/node\nconsole.log('legacy')\n") do |path|
         expect(described_class.js_binstub_executable(path)).to eq "/usr/local/bin/node"
