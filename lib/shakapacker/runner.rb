@@ -39,6 +39,7 @@ module Shakapacker
       end
 
       def config_incompatible_args
+        # Rspack build/watch are config-incompatible only before --; after -- they are bundler passthrough.
         (bundler_argv & BASE_COMMANDS) + (@argv & %w[build watch])
       end
     end
@@ -363,6 +364,7 @@ module Shakapacker
       end
 
       def exit_after_shakapacker_flag_error(status)
+        log_output.flush
         exit(status)
       end
 

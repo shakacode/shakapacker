@@ -27,6 +27,7 @@ require "active_support/core_ext/hash/indifferent_access"
 #
 # @see https://github.com/shakacode/shakapacker/blob/main/docs/shakapacker.yml.md
 class Shakapacker::Configuration
+  # Shared Ruby source of truth for Shakapacker-owned Node flags; Runner aliases this constant.
   SHAKAPACKER_NODE_FLAGS = %w[--debug-shakapacker --trace-deprecation --no-deprecation].freeze
 
   SHAKAPACKER_RUNNER_COMMANDS = %w[help h --help -h --help=verbose version v --version -v info i].freeze
@@ -38,8 +39,17 @@ class Shakapacker::Configuration
   SHAKAPACKER_WATCH_FLAG_PATTERN = /\A(?:--watch|-w)(?:=.*)?\z/
   private_constant :SHAKAPACKER_WATCH_FLAG_PATTERN
 
+  SHAKAPACKER_MANAGED_COMPILE_FLAGS =
+    %w[--config -c --node-env --nodeEnv --bundler --build --init --list-builds].freeze
+  private_constant :SHAKAPACKER_MANAGED_COMPILE_FLAGS
+
+  SHAKAPACKER_MANAGED_COMPILE_FLAG_PATTERN =
+    /\A(?:--config|-c|--node-env|--nodeEnv|--bundler|--build|--init|--list-builds)(?:=.*)?\z/
+  private_constant :SHAKAPACKER_MANAGED_COMPILE_FLAG_PATTERN
+
   DISALLOWED_WEBPACK_COMPILE_FLAGS =
-    (SHAKAPACKER_NODE_FLAGS + SHAKAPACKER_RUNNER_COMMANDS + SHAKAPACKER_WATCH_FLAGS).freeze
+    (SHAKAPACKER_NODE_FLAGS + SHAKAPACKER_RUNNER_COMMANDS + SHAKAPACKER_WATCH_FLAGS +
+      SHAKAPACKER_MANAGED_COMPILE_FLAGS).freeze
   private_constant :DISALLOWED_WEBPACK_COMPILE_FLAGS
 
   class << self
@@ -261,7 +271,7 @@ class Shakapacker::Configuration
       disallowed_flags = DISALLOWED_WEBPACK_COMPILE_FLAGS.join(", ")
       raise "Shakapacker configuration error: webpack_compile_flags must be an array of " \
             "non-empty strings and must not include \"--\" or Shakapacker-specific " \
-            "wrapper/short-circuit/watch flags (#{disallowed_flags})"
+            "wrapper/short-circuit/watch/managed flags (#{disallowed_flags})"
     end
 
     flags
@@ -438,7 +448,8 @@ class Shakapacker::Configuration
         !flag.empty? &&
         flag != "--" &&
         !DISALLOWED_WEBPACK_COMPILE_FLAGS.include?(flag) &&
-        !SHAKAPACKER_WATCH_FLAG_PATTERN.match?(flag)
+        !SHAKAPACKER_WATCH_FLAG_PATTERN.match?(flag) &&
+        !SHAKAPACKER_MANAGED_COMPILE_FLAG_PATTERN.match?(flag)
     end
 
     def default_javascript_transpiler

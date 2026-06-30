@@ -2,7 +2,7 @@ const {
   isValidConfig,
   isPartialConfig,
   clearValidationCache
-} = require("../../package/utils/typeGuards")
+} = require("../../package/utils/typeGuards.ts")
 
 describe("security validation", () => {
   const originalNodeEnv = process.env.NODE_ENV
@@ -204,6 +204,31 @@ describe("security validation", () => {
         expect(isValidConfig(unsafeConfig)).toBe(false)
       })
     })
+
+    it("rejects managed Shakapacker flags in webpack compile flags", () => {
+      process.env.NODE_ENV = "development"
+
+      const managedFlags = [
+        "--config",
+        "--config=custom.js",
+        "-c=custom.js",
+        "--node-env=development",
+        "--nodeEnv=development",
+        "--bundler",
+        "--build=dev",
+        "--init",
+        "--list-builds"
+      ]
+
+      managedFlags.forEach((managedFlag) => {
+        const unsafeConfig = {
+          ...baseConfig,
+          webpack_compile_flags: [managedFlag]
+        }
+
+        expect(isValidConfig(unsafeConfig)).toBe(false)
+      })
+    })
   })
 
   describe("partial config validation", () => {
@@ -230,6 +255,12 @@ describe("security validation", () => {
       expect(isPartialConfig({ webpack_compile_flags: ["--watch=true"] })).toBe(
         false
       )
+      expect(
+        isPartialConfig({ webpack_compile_flags: ["--config=custom.js"] })
+      ).toBe(false)
+      expect(
+        isPartialConfig({ webpack_compile_flags: ["--nodeEnv=development"] })
+      ).toBe(false)
     })
 
     it("rejects invalid additional paths before the production fast path", () => {

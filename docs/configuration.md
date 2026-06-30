@@ -360,7 +360,7 @@ webpack_compile_output: false
 **Type:** `array`
 **Default:** `[]`
 
-Extra command-line flags to pass to webpack/rspack when Shakapacker compiles assets through `bin/shakapacker`, including `bundle exec rake shakapacker:compile` and `bundle exec rake assets:precompile`. Do not include `--`, Shakapacker wrapper flags such as `--debug-shakapacker`, runner short-circuit flags such as `--help`/`--version`, or watch-mode flags such as `--watch`/`--watch=true`; Shakapacker inserts the passthrough separator before these flags and waits for the compile process to exit.
+Extra command-line flags to pass to webpack/rspack when Shakapacker compiles assets through `bin/shakapacker`, including `bundle exec rake shakapacker:compile` and `bundle exec rake assets:precompile`. Do not include `--`, Shakapacker wrapper flags such as `--debug-shakapacker`, runner short-circuit flags such as `--help`/`--version`, watch-mode flags such as `--watch`/`--watch=true`, or Shakapacker-managed flags such as `--config`/`--config=custom.js` or `--node-env`; Shakapacker inserts the passthrough separator before these flags and waits for the compile process to exit.
 
 ```yaml
 webpack_compile_flags:

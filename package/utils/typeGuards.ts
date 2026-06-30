@@ -78,11 +78,24 @@ const SHAKAPACKER_RUNNER_COMMANDS = [
 
 const SHAKAPACKER_WATCH_FLAGS = ["--watch", "-w"]
 const SHAKAPACKER_WATCH_FLAG_PATTERN = /^(?:--watch|-w)(?:=.*)?$/
+const SHAKAPACKER_MANAGED_COMPILE_FLAGS = [
+  "--config",
+  "-c",
+  "--node-env",
+  "--nodeEnv",
+  "--bundler",
+  "--build",
+  "--init",
+  "--list-builds"
+]
+const SHAKAPACKER_MANAGED_COMPILE_FLAG_PATTERN =
+  /^(?:--config|-c|--node-env|--nodeEnv|--bundler|--build|--init|--list-builds)(?:=.*)?$/
 
 const DISALLOWED_WEBPACK_COMPILE_FLAGS = [
   ...SHAKAPACKER_NODE_FLAGS,
   ...SHAKAPACKER_RUNNER_COMMANDS,
-  ...SHAKAPACKER_WATCH_FLAGS
+  ...SHAKAPACKER_WATCH_FLAGS,
+  ...SHAKAPACKER_MANAGED_COMPILE_FLAGS
 ]
 
 function isWebpackCompileFlags(value: unknown): value is string[] {
@@ -91,7 +104,8 @@ function isWebpackCompileFlags(value: unknown): value is string[] {
     value.every((flag) => flag.length > 0) &&
     !value.includes("--") &&
     !DISALLOWED_WEBPACK_COMPILE_FLAGS.some((flag) => value.includes(flag)) &&
-    !value.some((flag) => SHAKAPACKER_WATCH_FLAG_PATTERN.test(flag))
+    !value.some((flag) => SHAKAPACKER_WATCH_FLAG_PATTERN.test(flag)) &&
+    !value.some((flag) => SHAKAPACKER_MANAGED_COMPILE_FLAG_PATTERN.test(flag))
   )
 }
 
