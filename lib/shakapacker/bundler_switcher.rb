@@ -19,7 +19,8 @@ module Shakapacker
       prod: %w[webpack-merge]
     }.freeze
 
-    # Default dependencies for each bundler (package names only, no versions)
+    # Default dependencies for each bundler. Rspack entries include install-time
+    # version ranges; package_names strips them before removal and display.
     # Note: Excludes independent/optional dependencies like @swc/core, swc-loader (user-configured
     # transpilers)
     DEFAULT_RSPACK_DEPS = {

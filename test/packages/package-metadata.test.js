@@ -80,7 +80,7 @@ describe("lib/install/package.json", () => {
     expect(template).toContain(
       'if assets_bundler == "rspack" && common_deps.key?("css-loader")'
     )
-    expect(template).toContain('common_deps["css-loader"] = "^7.1.4"')
+    expect(template).toContain('peers["css-loader"] = "^7.1.4"')
   })
 })
 

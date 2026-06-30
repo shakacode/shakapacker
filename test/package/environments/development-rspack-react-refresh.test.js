@@ -47,6 +47,12 @@ const hasReactRefreshPluginInstance = (environmentConfig) => {
   )
 }
 
+const swcReactTransforms = (environmentConfig) =>
+  (environmentConfig.module?.rules || [])
+    .flatMap((rule) => (Array.isArray(rule.use) ? rule.use : []))
+    .filter((loader) => loader.loader === "builtin:swc-loader")
+    .map((loader) => loader.options.jsc.transform.react)
+
 describe("Rspack React refresh development config", () => {
   afterEach(() => {
     jest.restoreAllMocks()
@@ -70,6 +76,17 @@ describe("Rspack React refresh development config", () => {
         (plugin) => plugin instanceof ReactRefreshRspackPlugin
       )
     ).toBe(true)
+  })
+
+  test("enables the SWC React refresh transform when the plugin is loaded", () => {
+    const environmentConfig = loadRspackDevelopmentConfig()
+
+    expect(swcReactTransforms(environmentConfig)).toStrictEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ development: true, refresh: true }),
+        expect.objectContaining({ development: true, refresh: true })
+      ])
+    )
   })
 
   test("skips the legacy direct CommonJS export shape", () => {
@@ -133,9 +150,9 @@ describe("Rspack React refresh development config", () => {
     expect(writeToDisk("/packs/app.js")).toBe(true)
   })
 
-  test("omits lazyCompilation when webpack dev server is not running", () => {
+  test("sets lazyCompilation false when webpack dev server is not running", () => {
     const environmentConfig = loadRspackDevelopmentConfig(undefined, null)
 
-    expect(environmentConfig.lazyCompilation).toBeUndefined()
+    expect(environmentConfig.lazyCompilation).toBe(false)
   })
 })

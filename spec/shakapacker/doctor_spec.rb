@@ -527,15 +527,31 @@ describe Shakapacker::Doctor do
           }))
         end
 
-        it "adds a missing essential dev-server issue" do
+        it "adds a missing recommended dev-server warning" do
           doctor.send(:check_peer_dependencies)
-          expect(doctor.issues).to include(
+          expect(doctor.issues).not_to include(match(/@rspack\/dev-server/))
+          expect(warning_messages).to include(
+            "Missing recommended rspack dependency: @rspack/dev-server (^2.0.0) for Rspack dev server"
+          )
+        end
+
+        it "does not add a missing warning when dev-server is installed" do
+          dev_server_pkg = root_path.join("node_modules/@rspack/dev-server/package.json")
+          FileUtils.mkdir_p(dev_server_pkg.dirname)
+          File.write(dev_server_pkg, JSON.generate({ "name" => "@rspack/dev-server", "version" => "2.0.0" }))
+
+          doctor.send(:check_peer_dependencies)
+
+          expect(doctor.issues).not_to include(
             "Missing essential rspack dependency: @rspack/dev-server (^2.0.0)"
+          )
+          expect(warning_messages).not_to include(
+            "Missing recommended rspack dependency: @rspack/dev-server (^2.0.0) for Rspack dev server"
           )
         end
       end
 
-      context "with essential rspack dependencies declared as peers" do
+      context "with essential rspack dependencies declared only as peers" do
         before do
           File.write(package_json_path, JSON.generate({
             "peerDependencies" => {
@@ -549,9 +565,10 @@ describe Shakapacker::Doctor do
           }))
         end
 
-        it "does not report required rspack packages as missing" do
+        it "reports required rspack packages as missing" do
           doctor.send(:check_peer_dependencies)
-          expect(doctor.issues).not_to include(match(/Missing essential rspack dependency/))
+          expect(doctor.issues).to include(match(/Missing essential rspack dependency.*@rspack\/core/))
+          expect(doctor.issues).to include(match(/Missing essential rspack dependency.*@rspack\/cli/))
         end
       end
 
@@ -581,7 +598,7 @@ describe Shakapacker::Doctor do
           File.write(package_json_path, JSON.generate({
             "dependencies" => {
               "@rspack/core" => "^2.0.0",
-              "rspack-manifest-plugin" => "^5.1.0"
+              "rspack-manifest-plugin" => "^5.0.0"
             },
             "devDependencies" => {
               "@rspack/cli" => "^2.0.0"
@@ -591,7 +608,7 @@ describe Shakapacker::Doctor do
 
         it "adds an unsupported manifest plugin version issue" do
           doctor.send(:check_peer_dependencies)
-          expect(doctor.issues).to include(match(/rspack-manifest-plugin \^5\.2\.2/))
+          expect(doctor.issues).to include(match(/Declared rspack-manifest-plugin range.*\^5\.2\.2/))
         end
       end
 
@@ -607,7 +624,7 @@ describe Shakapacker::Doctor do
           File.write(package_json_path, JSON.generate({
             "dependencies" => {
               "@rspack/core" => "^1.0.0",
-              "rspack-manifest-plugin" => "^5.1.0"
+              "rspack-manifest-plugin" => "^5.2.0"
             },
             "devDependencies" => {
               "@rspack/cli" => "^2.0.0",
@@ -616,10 +633,32 @@ describe Shakapacker::Doctor do
           }))
         end
 
-        it "reports the stale declared ranges" do
+        it "warns on stale declarations even when installed packages are new" do
           doctor.send(:check_peer_dependencies)
-          expect(doctor.issues).to include(match(/Shakapacker supports Rspack v2 only/))
-          expect(doctor.issues).to include(match(/rspack-manifest-plugin \^5\.2\.2/))
+          expect(doctor.issues).to include(match(/Shakapacker supports Rspack v2 only.*@rspack\/core/))
+          expect(doctor.issues).to include(match(/Declared rspack-manifest-plugin range.*\^5\.2\.2/))
+          expect(doctor.issues).not_to include(match(/Unsupported rspack-manifest-plugin version/))
+        end
+      end
+
+      context "with a compound rspack range that still allows v1" do
+        before do
+          core_pkg = root_path.join("node_modules/@rspack/core/package.json")
+          FileUtils.mkdir_p(core_pkg.dirname)
+          File.write(core_pkg, JSON.generate({ "name" => "@rspack/core", "version" => "2.0.0" }))
+
+          File.write(package_json_path, JSON.generate({
+            "dependencies" => {
+              "@rspack/core" => "^1.0.0 || ^2.0.0-0",
+              "@rspack/cli" => "^2.0.0",
+              "rspack-manifest-plugin" => "^5.2.2"
+            }
+          }))
+        end
+
+        it "reports the declared v1-compatible rspack range" do
+          doctor.send(:check_peer_dependencies)
+          expect(doctor.issues).to include(match(/Shakapacker supports Rspack v2 only.*@rspack\/core/))
         end
       end
     end
@@ -1125,9 +1164,9 @@ describe Shakapacker::Doctor do
         }))
       end
 
-      it "warns about stale v1-compatible ranges even when node_modules has v2" do
+      it "trusts the installed v2 package over stale v1-compatible ranges" do
         doctor.send(:check_rspack_cache_configuration)
-        expect(warning_messages).to include(match(/Rspack v1 detected/))
+        expect(warning_messages).not_to include(match(/Rspack v1 detected/))
       end
     end
 
@@ -2253,6 +2292,36 @@ describe Shakapacker::Doctor do
       before do
         package_json = {
           "devDependencies" => {
+            "webpack" => "^5.0.0"
+          }
+        }
+        File.write(package_json_path, JSON.generate(package_json))
+      end
+
+      it "returns true" do
+        expect(doctor.send(:package_installed?, "webpack")).to be true
+      end
+    end
+
+    context "with package in peerDependencies" do
+      before do
+        package_json = {
+          "peerDependencies" => {
+            "webpack" => "^5.0.0"
+          }
+        }
+        File.write(package_json_path, JSON.generate(package_json))
+      end
+
+      it "returns false" do
+        expect(doctor.send(:package_installed?, "webpack")).to be false
+      end
+    end
+
+    context "with package in optionalDependencies" do
+      before do
+        package_json = {
+          "optionalDependencies" => {
             "webpack" => "^5.0.0"
           }
         }

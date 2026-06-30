@@ -33,6 +33,25 @@ module Shakapacker
       "for Sass/SCSS implementation"
     ).freeze
 
+    REQUIRED_RSPACK_DEPS = {
+      "@rspack/core" => "^2.0.0",
+      "@rspack/cli" => "^2.0.0",
+      "rspack-manifest-plugin" => "^5.2.2"
+    }.freeze
+
+    RSPACK_DEV_SERVER_DEP = {
+      "@rspack/dev-server" => "^2.0.0"
+    }.freeze
+
+    RSPACK_V2_ONLY_DEPS = REQUIRED_RSPACK_DEPS
+      .slice("@rspack/core", "@rspack/cli")
+      .merge(RSPACK_DEV_SERVER_DEP)
+      .freeze
+
+    OPTIONAL_RSPACK_V2_ONLY_DEPS = {
+      "@rspack/plugin-react-refresh" => "^2.0.0"
+    }.freeze
+
     def initialize(config = nil, root_path = nil, options = {})
       @config = config || Shakapacker.config
       @root_path = root_path || (defined?(Rails) ? Rails.root : Pathname.new(Dir.pwd))
@@ -317,29 +336,21 @@ module Shakapacker
       end
 
       def check_rspack_peer_deps(deps)
-        essential_rspack = {
-          "@rspack/core" => "^2.0.0",
-          "@rspack/cli" => "^2.0.0",
-          "@rspack/dev-server" => "^2.0.0",
-          "rspack-manifest-plugin" => "^5.2.2"
-        }
-
-        essential_rspack.each do |package, version|
-          unless deps[package]
+        REQUIRED_RSPACK_DEPS.each do |package, version|
+          unless deps[package] || installed_package_version(package)
             @issues << "Missing essential rspack dependency: #{package} (#{version})"
           end
         end
 
-        rspack_v2_only_packages = {
-          "@rspack/core" => "^2.0.0",
-          "@rspack/cli" => "^2.0.0",
-          "@rspack/dev-server" => "^2.0.0",
-          "@rspack/plugin-react-refresh" => "^2.0.0"
-        }
+        RSPACK_DEV_SERVER_DEP.each do |package, version|
+          unless deps[package] || installed_package_version(package)
+            add_warning("Missing recommended rspack dependency: #{package} (#{version}) for Rspack dev server")
+          end
+        end
 
-        unsupported_packages = rspack_v2_only_packages.keys.select do |package|
+        unsupported_packages = RSPACK_V2_ONLY_DEPS.keys.select do |package|
           deps[package] &&
-          rspack_major_version_for(package) == 1
+          (rspack_major_version_for(package) == 1 || rspack_declared_major_version_for(package) == 1)
         end
 
         if unsupported_packages.any?
@@ -347,9 +358,25 @@ module Shakapacker
                      "Upgrade #{unsupported_packages.join(' and ')} to ^2.0.0."
         end
 
-        if deps["rspack-manifest-plugin"] && package_version_below?("rspack-manifest-plugin", "5.2.2")
+        unsupported_optional_packages = OPTIONAL_RSPACK_V2_ONLY_DEPS.keys.select do |package|
+          deps[package] &&
+          (rspack_major_version_for(package) == 1 || rspack_declared_major_version_for(package) == 1)
+        end
+
+        if unsupported_optional_packages.any?
+          add_warning("Unsupported optional rspack dependency version: Shakapacker supports Rspack v2 only. " \
+                      "Upgrade #{unsupported_optional_packages.join(' and ')} to ^2.0.0.")
+        end
+
+        manifest_status = package_version_status("rspack-manifest-plugin", "5.2.2")
+        if deps["rspack-manifest-plugin"] && manifest_status[:installed_below]
           @issues << "Unsupported rspack-manifest-plugin version: Shakapacker requires rspack-manifest-plugin " \
                      "^5.2.2 for Rspack v2."
+        end
+
+        if deps["rspack-manifest-plugin"] && manifest_status[:declared_below]
+          @issues << "Declared rspack-manifest-plugin range allows unsupported versions. " \
+                     "Update package.json to require rspack-manifest-plugin ^5.2.2 for Rspack v2."
         end
       end
 
@@ -987,12 +1014,14 @@ module Shakapacker
       end
 
       def rspack_major_version_for(package_name)
-        declared = rspack_major_from_specifier(package_json_dependency_version(package_name))
         installed = installed_rspack_major_version(package_name)
+        return installed if installed
 
-        return 1 if declared == 1 || installed == 1
+        rspack_declared_major_version_for(package_name)
+      end
 
-        installed || declared
+      def rspack_declared_major_version_for(package_name)
+        rspack_major_from_specifier(package_json_dependency_version(package_name))
       end
 
       def rspack_major_from_specifier(version)
@@ -1035,18 +1064,27 @@ module Shakapacker
         declared_package_dependencies(read_package_json)[name]
       end
 
-      def package_version_below?(package_name, minimum_version)
+      def package_version_status(package_name, minimum_version)
         minimum = Gem::Version.new(minimum_version)
-        declared = package_version_from_specifier(package_json_dependency_version(package_name))
+        declared_specifier = package_json_dependency_version(package_name)
+        declared = package_version_from_specifier(declared_specifier)
         installed = installed_package_version(package_name)
 
-        [declared, installed].compact.any? { |version| version < minimum }
+        {
+          declared_below: declared && declared < minimum,
+          installed_below: installed && installed < minimum
+        }
       end
 
       def package_version_from_specifier(version)
         return nil unless version
 
         cleaned = version.strip
+        if cleaned.include?("||")
+          versions = cleaned.split("||").filter_map { |specifier| package_version_from_specifier(specifier) }
+          return versions.min
+        end
+
         return nil unless cleaned.match?(/\A[\^~]?\d/)
         return nil if cleaned.match?(/(\s|\|\||[<>=:]|\A(?:git|file|link|workspace|npm):)/)
 
@@ -1058,8 +1096,11 @@ module Shakapacker
 
       def declared_package_dependencies(package_json)
         # Later sections take precedence when the same package is declared in more than one section.
-        (package_json["peerDependencies"] || {})
-          .merge(package_json["optionalDependencies"] || {})
+        installable_package_dependencies(package_json)
+      end
+
+      def installable_package_dependencies(package_json)
+        (package_json["optionalDependencies"] || {})
           .merge(package_json["devDependencies"] || {})
           .merge(package_json["dependencies"] || {})
       end
@@ -1132,9 +1173,7 @@ module Shakapacker
       def package_installed?(package_name)
         return false unless package_json_exists?
 
-        package_json = read_package_json
-        dependencies = (package_json["dependencies"] || {}).merge(package_json["devDependencies"] || {})
-        dependencies.key?(package_name)
+        installable_package_dependencies(read_package_json).key?(package_name)
       end
 
       def package_json_exists?
