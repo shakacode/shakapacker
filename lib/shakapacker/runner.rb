@@ -36,6 +36,13 @@ module Shakapacker
     end
     private_constant :RSPACK_RUNNER_EXTENSION
 
+    WEBPACK_RUNNER_EXTENSION = Module.new do
+      def build_cmd
+        package_json.manager.native_exec_command("webpack")
+      end
+    end
+    private_constant :WEBPACK_RUNNER_EXTENSION
+
     def self.json_output?(argv)
       argv.include?("--json") || argv.include?("-j")
     end
@@ -177,11 +184,7 @@ module Shakapacker
         require_relative "webpack_runner"
         # Extend the runner instance with webpack-specific methods
         # This avoids creating a new WebpackRunner which would reload the configuration
-        runner.extend(Module.new do
-          def build_cmd
-            package_json.manager.native_exec_command("webpack")
-          end
-        end)
+        runner.extend(WEBPACK_RUNNER_EXTENSION)
         runner.run
       end
     end
@@ -217,11 +220,7 @@ module Shakapacker
         runner.run
       else
         require_relative "webpack_runner"
-        runner.extend(Module.new do
-          def build_cmd
-            package_json.manager.native_exec_command("webpack")
-          end
-        end)
+        runner.extend(WEBPACK_RUNNER_EXTENSION)
         runner.run
       end
     end
