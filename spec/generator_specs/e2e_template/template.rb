@@ -5,7 +5,8 @@ require "package_json"
 package_json = PackageJson.new
 
 # install react
-# Align with spec/dummy; React 18 and Babel 7 match this template's app stack.
+# Keep generated apps on React 18/Babel 7: preset-react 8 peers on @babel/core 8,
+# but this template uses @babel/core 7.
 package_json.manager.add([
   "react@^18.3.1",
   "react-dom@^18.3.1",
