@@ -254,13 +254,11 @@ module Shakapacker
           end
 
           def safe_load_pnpm_lock(lockfile)
-            return YAML.safe_load(lockfile, permitted_classes: [Time, Date]) if safe_load_supports_permitted_classes_keyword?
+            YAML.safe_load(lockfile, permitted_classes: [Time, Date])
+          rescue ArgumentError => error
+            raise unless error.message.include?("unknown keyword")
 
             safe_load_pnpm_lock_legacy(lockfile)
-          end
-
-          def safe_load_supports_permitted_classes_keyword?
-            YAML.method(:safe_load).parameters.any? { |(_, name)| name == :permitted_classes }
           end
 
           def safe_load_pnpm_lock_legacy(lockfile)
