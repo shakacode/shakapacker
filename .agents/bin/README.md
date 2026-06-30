@@ -13,4 +13,6 @@ means that capability is n/a here.
 | `lint` | Lint / format (pass `-A` to fix RuboCop) | `bundle exec rubocop` + `yarn lint` (eslint) |
 | `build` | Build / type-check | `yarn build` + `yarn type-check` |
 
-Non-command policy lives in [`../agent-workflow.yml`](../agent-workflow.yml).
+Canonical non-command policy lives in [`../../AGENTS.md`](../../AGENTS.md).
+[`../agent-workflow.yml`](../agent-workflow.yml) is retained only as a
+compatibility summary for older workflow copies.
