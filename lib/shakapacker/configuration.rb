@@ -32,7 +32,14 @@ class Shakapacker::Configuration
   SHAKAPACKER_RUNNER_COMMANDS = %w[help h --help -h --help=verbose version v --version -v info i].freeze
   private_constant :SHAKAPACKER_RUNNER_COMMANDS
 
-  DISALLOWED_WEBPACK_COMPILE_FLAGS = (SHAKAPACKER_NODE_FLAGS + SHAKAPACKER_RUNNER_COMMANDS).freeze
+  SHAKAPACKER_WATCH_FLAGS = %w[--watch -w].freeze
+  private_constant :SHAKAPACKER_WATCH_FLAGS
+
+  SHAKAPACKER_WATCH_FLAG_PATTERN = /\A(?:--watch|-w)(?:=.*)?\z/
+  private_constant :SHAKAPACKER_WATCH_FLAG_PATTERN
+
+  DISALLOWED_WEBPACK_COMPILE_FLAGS =
+    (SHAKAPACKER_NODE_FLAGS + SHAKAPACKER_RUNNER_COMMANDS + SHAKAPACKER_WATCH_FLAGS).freeze
   private_constant :DISALLOWED_WEBPACK_COMPILE_FLAGS
 
   class << self
@@ -248,18 +255,13 @@ class Shakapacker::Configuration
     flags = fetch(:webpack_compile_flags)
     return [] if flags.nil?
 
-    valid_flags = flags.is_a?(Array) && flags.all? do |flag|
-      flag.is_a?(String) &&
-        !flag.empty? &&
-        flag != "--" &&
-        !DISALLOWED_WEBPACK_COMPILE_FLAGS.include?(flag)
-    end
+    valid_flags = flags.is_a?(Array) && flags.all? { |flag| valid_webpack_compile_flag?(flag) }
 
     unless valid_flags
       disallowed_flags = DISALLOWED_WEBPACK_COMPILE_FLAGS.join(", ")
       raise "Shakapacker configuration error: webpack_compile_flags must be an array of " \
             "non-empty strings and must not include \"--\" or Shakapacker-specific " \
-            "wrapper/short-circuit flags (#{disallowed_flags})"
+            "wrapper/short-circuit/watch flags (#{disallowed_flags})"
     end
 
     flags
@@ -430,6 +432,14 @@ class Shakapacker::Configuration
   end
 
   private
+
+    def valid_webpack_compile_flag?(flag)
+      flag.is_a?(String) &&
+        !flag.empty? &&
+        flag != "--" &&
+        !DISALLOWED_WEBPACK_COMPILE_FLAGS.include?(flag) &&
+        !SHAKAPACKER_WATCH_FLAG_PATTERN.match?(flag)
+    end
 
     def default_javascript_transpiler
       # RSpack has built-in SWC support, use it by default

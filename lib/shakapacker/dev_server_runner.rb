@@ -106,7 +106,7 @@ module Shakapacker
           --build <name>          Run a specific build configuration
 
           Put Shakapacker-specific options before --. Arguments after -- are
-          passed directly to the selected bundler, except --host, --port, and --https,
+          passed directly to the selected bundler, except --host and --port,
           which remain managed by config/shakapacker.yml.
 
         Build configurations (config/shakapacker-builds.yml):
@@ -135,12 +135,13 @@ module Shakapacker
         Options managed by Shakapacker (configured in config/shakapacker.yml):
           --host                  Set from dev_server.host (default: localhost)
           --port                  Set from dev_server.port (default: 3035)
-          --https                 Set from dev_server.server (http or https)
+          --https                 Requires dev_server.server: https before forwarding
           --config                Set automatically to config/webpack/webpack.config.js
                                   or config/rspack/rspack.config.js
 
-        Note: CLI flags for --host, --port, and --https are NOT supported.
-        Configure these in config/shakapacker.yml instead.
+        Note: CLI flags for --host and --port are NOT supported.
+        Configure these in config/shakapacker.yml instead. --https is accepted
+        only when dev_server.server is already set to https.
       HELP
     end
 

@@ -1028,7 +1028,7 @@ describe "Shakapacker::Configuration" do
         env: "production"
       )
 
-      expect { config.webpack_compile_flags }.to raise_error(/wrapper\/short-circuit flags/)
+      expect { config.webpack_compile_flags }.to raise_error(/wrapper\/short-circuit\/watch flags/)
 
       test_config.close
       test_config.unlink
@@ -1050,10 +1050,37 @@ describe "Shakapacker::Configuration" do
         env: "production"
       )
 
-      expect { config.webpack_compile_flags }.to raise_error(/wrapper\/short-circuit flags/)
+      expect { config.webpack_compile_flags }.to raise_error(/wrapper\/short-circuit\/watch flags/)
 
       test_config.close
       test_config.unlink
+    end
+
+    it "raises error when compile flags include watch-mode flags" do
+      ["--watch", "--watch=true", "-w=true"].each do |watch_flag|
+        test_config = Tempfile.new(["shakapacker", ".yml"])
+
+        begin
+          test_config.write(<<~YAML)
+            production:
+              source_path: app/javascript
+              webpack_compile_flags:
+                - #{watch_flag.inspect}
+          YAML
+          test_config.rewind
+
+          config = Shakapacker::Configuration.new(
+            root_path: ROOT_PATH,
+            config_path: Pathname.new(test_config.path),
+            env: "production"
+          )
+
+          expect { config.webpack_compile_flags }.to raise_error(/wrapper\/short-circuit\/watch flags/)
+        ensure
+          test_config.close
+          test_config.unlink
+        end
+      end
     end
   end
 

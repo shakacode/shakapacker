@@ -189,6 +189,21 @@ describe("security validation", () => {
 
       expect(isValidConfig(unsafeConfig)).toBe(false)
     })
+
+    it("rejects watch-mode flags in webpack compile flags", () => {
+      process.env.NODE_ENV = "development"
+
+      const watchFlags = ["--watch", "--watch=true", "-w=true"]
+
+      watchFlags.forEach((watchFlag) => {
+        const unsafeConfig = {
+          ...baseConfig,
+          webpack_compile_flags: [watchFlag]
+        }
+
+        expect(isValidConfig(unsafeConfig)).toBe(false)
+      })
+    })
   })
 
   describe("partial config validation", () => {
@@ -211,6 +226,10 @@ describe("security validation", () => {
       expect(
         isPartialConfig({ webpack_compile_flags: ["--help=verbose"] })
       ).toBe(false)
+      expect(isPartialConfig({ webpack_compile_flags: ["-w"] })).toBe(false)
+      expect(isPartialConfig({ webpack_compile_flags: ["--watch=true"] })).toBe(
+        false
+      )
     })
 
     it("rejects invalid additional paths before the production fast path", () => {
