@@ -50,7 +50,12 @@ RSpec.describe "shakapacker:export_bundler_config" do
         console.log("legacy binstub")
       JS
 
+      stderr_output = StringIO.new
+      allow($stderr).to receive(:puts) { |message| stderr_output.puts(message) }
+
       expect(invoke_task(app_path, "--doctor")).to eq(["node", binstub_path, "--doctor"])
+      expect(stderr_output.string).to include("legacy JavaScript binstub")
+      expect(stderr_output.string).to include("rake shakapacker:binstubs")
     end
   end
 
