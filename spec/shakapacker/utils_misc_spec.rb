@@ -28,9 +28,9 @@ RSpec.describe Shakapacker::Utils::Misc do
       end
     end
 
-    it "returns node for a direct node shebang" do
+    it "returns the executable path for a direct node shebang" do
       with_binstub("#!/usr/local/bin/node\nconsole.log('legacy')\n") do |path|
-        expect(described_class.js_binstub_executable(path)).to eq "node"
+        expect(described_class.js_binstub_executable(path)).to eq "/usr/local/bin/node"
       end
     end
 
@@ -40,9 +40,9 @@ RSpec.describe Shakapacker::Utils::Misc do
       end
     end
 
-    it "returns nodejs for a direct nodejs shebang" do
+    it "returns the executable path for a direct nodejs shebang" do
       with_binstub("#!/usr/bin/nodejs\nconsole.log('legacy')\n") do |path|
-        expect(described_class.js_binstub_executable(path)).to eq "nodejs"
+        expect(described_class.js_binstub_executable(path)).to eq "/usr/bin/nodejs"
       end
     end
 

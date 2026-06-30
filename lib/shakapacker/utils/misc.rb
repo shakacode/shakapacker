@@ -43,15 +43,15 @@ module Shakapacker
         return nil unless shebang.start_with?("#!")
 
         shebang_tokens = Shellwords.split(shebang.delete_prefix("#!"))
-        executable = File.basename(shebang_tokens.first.to_s)
+        executable = shebang_tokens.first.to_s
 
-        if executable == "env"
+        if File.basename(executable) == "env"
           shebang_tokens = shebang_tokens.drop(1)
           shebang_tokens.shift while shebang_tokens.first&.start_with?("-")
-          executable = File.basename(shebang_tokens.first.to_s)
+          executable = shebang_tokens.first.to_s
         end
 
-        NODE_BINSTUB_EXECUTABLES.include?(executable) ? executable : nil
+        NODE_BINSTUB_EXECUTABLES.include?(File.basename(executable)) ? executable : nil
       end
     end
   end
