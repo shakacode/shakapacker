@@ -10,7 +10,7 @@ module Shakapacker
       extend FileUtils
 
       NODE_BINSTUB_EXECUTABLES = %w[node nodejs].freeze
-      ENV_FLAGS_WITH_ARGUMENTS = %w[-u --unset -C --chdir].freeze
+      ENV_FLAGS_WITH_ARGUMENTS = %w[-u --unset -C --chdir -P --path -a --argv0].freeze
       private_constant :NODE_BINSTUB_EXECUTABLES
       private_constant :ENV_FLAGS_WITH_ARGUMENTS
 
@@ -60,6 +60,7 @@ module Shakapacker
           executable = shebang_tokens.first.to_s
         end
 
+        # Preserve direct interpreter paths so stale absolute Node shebangs fail with actionable binstub guidance.
         NODE_BINSTUB_EXECUTABLES.include?(File.basename(executable)) ? executable : nil
       end
     end

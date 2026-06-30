@@ -142,6 +142,15 @@ RSpec.describe "shakapacker:export_bundler_config" do
     end
   end
 
+  it "uses the gem version when bin/shakapacker-config is a directory" do
+    Dir.mktmpdir("shakapacker-export-bundler-config-") do |app_path|
+      FileUtils.mkdir_p(File.join(app_path, "bin", "shakapacker-config"))
+      gem_bin_path = File.expand_path("../../lib/install/bin/shakapacker-config", __dir__)
+
+      expect(invoke_task(app_path)).to eq([RbConfig.ruby, gem_bin_path])
+    end
+  end
+
   it "aborts when the Ruby binstub interpreter is missing" do
     Dir.mktmpdir("shakapacker-export-bundler-config-") do |app_path|
       write_app_binstub(app_path, <<~RUBY)

@@ -35,7 +35,7 @@ RSpec.describe Shakapacker::Utils::Misc do
     end
 
     it "returns node for a node `env` shebang with env flags that take arguments" do
-      with_binstub("#!/usr/bin/env -u NODE_PATH -C /tmp node\nconsole.log('legacy')\n") do |path|
+      with_binstub("#!/usr/bin/env -u NODE_PATH -C /tmp -P /opt/node/bin -a node-shim node\nconsole.log('legacy')\n") do |path|
         expect(described_class.js_binstub_executable(path)).to eq "node"
       end
     end
