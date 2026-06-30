@@ -408,8 +408,16 @@ describe Shakapacker::BundlerSwitcher do
         expect(manager).to receive(:remove).with(["webpack", "webpack-cli", "webpack-dev-server", "@pmmmwh/react-refresh-webpack-plugin", "webpack-assets-manifest"]).and_return(true)
 
         # Expect add calls for rspack deps (including shared deps)
-        expect(manager).to receive(:add).with(["@rspack/cli", "@rspack/dev-server", "@rspack/plugin-react-refresh"], type: :dev).and_return(true)
-        expect(manager).to receive(:add).with(["@rspack/core", "rspack-manifest-plugin", "webpack-merge"], type: :production).and_return(true)
+        expect(manager).to receive(:add).with([
+          "@rspack/cli@^2.0.0",
+          "@rspack/dev-server@^2.0.0",
+          "@rspack/plugin-react-refresh@^2.0.0"
+        ], type: :dev).and_return(true)
+        expect(manager).to receive(:add).with([
+          "@rspack/core@^2.0.0",
+          "rspack-manifest-plugin@^5.2.2",
+          "webpack-merge"
+        ], type: :production).and_return(true)
 
         # Expect install call to resolve optional dependencies
         expect(manager).to receive(:install).and_return(true)
@@ -432,8 +440,16 @@ describe Shakapacker::BundlerSwitcher do
         expect(manager).not_to receive(:remove)
 
         # Should only call add (including shared deps)
-        expect(manager).to receive(:add).with(["@rspack/cli", "@rspack/dev-server", "@rspack/plugin-react-refresh"], type: :dev).and_return(true)
-        expect(manager).to receive(:add).with(["@rspack/core", "rspack-manifest-plugin", "webpack-merge"], type: :production).and_return(true)
+        expect(manager).to receive(:add).with([
+          "@rspack/cli@^2.0.0",
+          "@rspack/dev-server@^2.0.0",
+          "@rspack/plugin-react-refresh@^2.0.0"
+        ], type: :dev).and_return(true)
+        expect(manager).to receive(:add).with([
+          "@rspack/core@^2.0.0",
+          "rspack-manifest-plugin@^5.2.2",
+          "webpack-merge"
+        ], type: :production).and_return(true)
 
         # Should call install to resolve optional dependencies
         expect(manager).to receive(:install).and_return(true)
@@ -459,9 +475,9 @@ describe Shakapacker::BundlerSwitcher do
     it "includes default rspack dependencies" do
       switcher.init_config
       config = load_yaml_for_test(custom_config_path)
-      expect(config["rspack"]["devDependencies"]).to include("@rspack/cli")
-      expect(config["rspack"]["devDependencies"]).to include("@rspack/dev-server")
-      expect(config["rspack"]["dependencies"]).to include("@rspack/core")
+      expect(config["rspack"]["devDependencies"]).to include("@rspack/cli@^2.0.0")
+      expect(config["rspack"]["devDependencies"]).to include("@rspack/dev-server@^2.0.0")
+      expect(config["rspack"]["dependencies"]).to include("@rspack/core@^2.0.0")
     end
 
     it "includes default webpack dependencies" do

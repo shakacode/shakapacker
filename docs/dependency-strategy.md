@@ -195,8 +195,8 @@ Supplemental package for the rspack managed build experience.
 
 | Package                      | Range                                                         | When needed      |
 | ---------------------------- | ------------------------------------------------------------- | ---------------- |
-| @rspack/plugin-react-refresh | `^2.0.0`                                                       | React HMR        |
-| css-loader                   | `^7.1.4`                                                       | CSS processing   |
+| @rspack/plugin-react-refresh | `^2.0.0`                                                      | React HMR        |
+| css-loader                   | `^7.1.4`                                                      | CSS processing   |
 | sass                         | `^1.50.0`                                                     | SCSS/Sass files  |
 | sass-loader                  | `^13.0.0 \|\| ^14.0.0 \|\| ^15.0.0 \|\| ^16.0.0 \|\| ^17.0.0` | Paired with sass |
 

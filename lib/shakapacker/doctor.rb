@@ -289,7 +289,7 @@ module Shakapacker
 
         bundler = config.assets_bundler
         package_json = read_package_json
-        all_deps = (package_json["dependencies"] || {}).merge(package_json["devDependencies"] || {})
+        all_deps = declared_package_dependencies(package_json)
 
         if bundler == "webpack"
           check_webpack_peer_deps(all_deps)
@@ -987,12 +987,12 @@ module Shakapacker
       end
 
       def rspack_major_version_for(package_name)
-        # Prefer the resolved version from node_modules, since package.json specifiers
-        # (ranges, git refs, file paths) often don't parse to a clean major number.
-        resolved = installed_rspack_major_version(package_name)
-        return resolved unless resolved.nil?
+        declared = rspack_major_from_specifier(package_json_dependency_version(package_name))
+        installed = installed_rspack_major_version(package_name)
 
-        rspack_major_from_specifier(package_json_dependency_version(package_name))
+        return 1 if declared == 1 || installed == 1
+
+        installed || declared
       end
 
       def rspack_major_from_specifier(version)
@@ -1025,19 +1025,15 @@ module Shakapacker
       def package_json_dependency_version(name)
         return nil unless package_json_exists?
 
-        pkg = read_package_json
-        # Production dependencies take precedence on key conflict so the version
-        # actually shipped in production wins over a devDependencies override.
-        deps = (pkg["devDependencies"] || {}).merge(pkg["dependencies"] || {})
-        deps[name]
+        declared_package_dependencies(read_package_json)[name]
       end
 
       def package_version_below?(package_name, minimum_version)
-        version = installed_package_version(package_name) ||
-                  package_version_from_specifier(package_json_dependency_version(package_name))
-        return false unless version
+        minimum = Gem::Version.new(minimum_version)
+        declared = package_version_from_specifier(package_json_dependency_version(package_name))
+        installed = installed_package_version(package_name)
 
-        version < Gem::Version.new(minimum_version)
+        [declared, installed].compact.any? { |version| version < minimum }
       end
 
       def package_version_from_specifier(version)
@@ -1051,6 +1047,14 @@ module Shakapacker
         match && Gem::Version.new(match[1])
       rescue ArgumentError
         nil
+      end
+
+      def declared_package_dependencies(package_json)
+        # Later sections take precedence when the same package is declared in more than one section.
+        (package_json["peerDependencies"] || {})
+          .merge(package_json["optionalDependencies"] || {})
+          .merge(package_json["devDependencies"] || {})
+          .merge(package_json["dependencies"] || {})
       end
 
       def installed_package_version(package_name)
