@@ -1035,25 +1035,30 @@ describe "Shakapacker::Configuration" do
     end
 
     it "raises error when compile flags include runner short-circuit flags" do
-      test_config = Tempfile.new(["shakapacker", ".yml"])
-      test_config.write(<<~YAML)
-        production:
-          source_path: app/javascript
-          webpack_compile_flags:
-            - "--help=verbose"
-      YAML
-      test_config.rewind
+      ["--help=verbose", "--help=compact", "-h=compact"].each do |help_flag|
+        test_config = Tempfile.new(["shakapacker", ".yml"])
 
-      config = Shakapacker::Configuration.new(
-        root_path: ROOT_PATH,
-        config_path: Pathname.new(test_config.path),
-        env: "production"
-      )
+        begin
+          test_config.write(<<~YAML)
+            production:
+              source_path: app/javascript
+              webpack_compile_flags:
+                - #{help_flag.inspect}
+          YAML
+          test_config.rewind
 
-      expect { config.webpack_compile_flags }.to raise_error(/wrapper\/short-circuit\/watch\/managed flags/)
+          config = Shakapacker::Configuration.new(
+            root_path: ROOT_PATH,
+            config_path: Pathname.new(test_config.path),
+            env: "production"
+          )
 
-      test_config.close
-      test_config.unlink
+          expect { config.webpack_compile_flags }.to raise_error(/wrapper\/short-circuit\/watch\/managed flags/)
+        ensure
+          test_config.close
+          test_config.unlink
+        end
+      end
     end
 
     it "raises error when compile flags include watch-mode flags" do

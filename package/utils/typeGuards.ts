@@ -75,6 +75,7 @@ const SHAKAPACKER_RUNNER_COMMANDS = [
   "info",
   "i"
 ]
+const SHAKAPACKER_HELP_FLAG_PATTERN = /^(?:--help|-h)(?:=.*)?$/
 
 const SHAKAPACKER_WATCH_FLAGS = ["--watch", "-w"]
 const SHAKAPACKER_WATCH_FLAG_PATTERN = /^(?:--watch|-w)(?:=.*)?$/
@@ -104,6 +105,7 @@ function isWebpackCompileFlags(value: unknown): value is string[] {
     value.every((flag) => flag.length > 0) &&
     !value.includes("--") &&
     !DISALLOWED_WEBPACK_COMPILE_FLAGS.some((flag) => value.includes(flag)) &&
+    !value.some((flag) => SHAKAPACKER_HELP_FLAG_PATTERN.test(flag)) &&
     !value.some((flag) => SHAKAPACKER_WATCH_FLAG_PATTERN.test(flag)) &&
     !value.some((flag) => SHAKAPACKER_MANAGED_COMPILE_FLAG_PATTERN.test(flag))
   )

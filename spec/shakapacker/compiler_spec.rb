@@ -175,6 +175,25 @@ describe "Shakapacker::Compiler" do
     expect(mocked_strategy).not_to have_received(:after_compile_hook)
   end
 
+  [Errno::ENOEXEC, Errno::EPERM, Errno::ENOTDIR].each do |spawn_error|
+    it "returns false without after_compile_hook when spawn raises #{spawn_error}" do
+      mocked_strategy = spy("Strategy")
+      allow(mocked_strategy).to receive(:stale?).and_return(true)
+      allow(mocked_strategy).to receive(:after_compile_hook)
+
+      allow(Shakapacker.compiler).to receive(:strategy).and_return(mocked_strategy)
+      allow(Open3).to receive(:capture3).and_raise(spawn_error.new("bin/shakapacker"))
+      allow(Shakapacker.logger).to receive(:error)
+      allow(Shakapacker.logger).to receive(:info)
+      Shakapacker::Compiler.doctor_hint_shown = false
+
+      expect(Shakapacker.compiler.compile).to be false
+      expect(Shakapacker.logger).to have_received(:error).with(/COMPILATION FAILED:\n#{spawn_error.name}:/)
+      expect(Shakapacker.logger).to have_received(:info).with(/shakapacker:doctor/).once
+      expect(mocked_strategy).not_to have_received(:after_compile_hook)
+    end
+  end
+
   it "returns false with structured logging when the binstub is missing" do
     mocked_strategy = spy("Strategy")
     allow(mocked_strategy).to receive(:stale?).and_return(true)

@@ -33,6 +33,9 @@ class Shakapacker::Configuration
   SHAKAPACKER_RUNNER_COMMANDS = %w[help h --help -h --help=verbose version v --version -v info i].freeze
   private_constant :SHAKAPACKER_RUNNER_COMMANDS
 
+  SHAKAPACKER_HELP_FLAG_PATTERN = /\A(?:--help|-h)(?:=.*)?\z/
+  private_constant :SHAKAPACKER_HELP_FLAG_PATTERN
+
   SHAKAPACKER_WATCH_FLAGS = %w[--watch -w].freeze
   private_constant :SHAKAPACKER_WATCH_FLAGS
 
@@ -448,6 +451,7 @@ class Shakapacker::Configuration
         !flag.empty? &&
         flag != "--" &&
         !DISALLOWED_WEBPACK_COMPILE_FLAGS.include?(flag) &&
+        !SHAKAPACKER_HELP_FLAG_PATTERN.match?(flag) &&
         !SHAKAPACKER_WATCH_FLAG_PATTERN.match?(flag) &&
         !SHAKAPACKER_MANAGED_COMPILE_FLAG_PATTERN.match?(flag)
     end

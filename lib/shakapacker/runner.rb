@@ -34,10 +34,6 @@ module Shakapacker
         package_json.manager.native_exec_command("rspack")
       end
 
-      def assets_bundler_commands
-        BASE_COMMANDS + %w[build watch]
-      end
-
       def config_incompatible_args
         # Rspack build/watch are config-incompatible only before --; after -- they are bundler passthrough.
         (bundler_argv & BASE_COMMANDS) + (@argv & %w[build watch])

@@ -197,7 +197,7 @@ class Shakapacker::Compiler
           *command,
           chdir: File.expand_path(config.root_path)
         )
-      rescue Errno::EACCES, Errno::ENOENT => e
+      rescue Errno::EACCES, Errno::ENOENT, Errno::ENOEXEC, Errno::EPERM, Errno::ENOTDIR => e
         logger.error "\nCOMPILATION FAILED:\n#{e.class}: #{e.message}"
         show_doctor_hint_once
         raise SpawnFailure

@@ -232,10 +232,6 @@ describe "RspackRunner" do
             package_json.manager.native_exec_command("rspack")
           end
 
-          def assets_bundler_commands
-            Shakapacker::Runner::BASE_COMMANDS + %w[build watch]
-          end
-
           def config_incompatible_args
             (bundler_argv & Shakapacker::Runner::BASE_COMMANDS) + (@argv & %w[build watch])
           end

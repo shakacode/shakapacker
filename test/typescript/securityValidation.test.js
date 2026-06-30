@@ -181,13 +181,16 @@ describe("security validation", () => {
 
     it("rejects runner short-circuit flags in webpack compile flags", () => {
       process.env.NODE_ENV = "development"
+      ;["--help=verbose", "--help=compact", "-h=compact"].forEach(
+        (helpFlag) => {
+          const unsafeConfig = {
+            ...baseConfig,
+            webpack_compile_flags: [helpFlag]
+          }
 
-      const unsafeConfig = {
-        ...baseConfig,
-        webpack_compile_flags: ["--help=verbose"]
-      }
-
-      expect(isValidConfig(unsafeConfig)).toBe(false)
+          expect(isValidConfig(unsafeConfig)).toBe(false)
+        }
+      )
     })
 
     it("rejects watch-mode flags in webpack compile flags", () => {
@@ -250,6 +253,9 @@ describe("security validation", () => {
       expect(isPartialConfig({ webpack_compile_flags: ["--help"] })).toBe(false)
       expect(
         isPartialConfig({ webpack_compile_flags: ["--help=verbose"] })
+      ).toBe(false)
+      expect(
+        isPartialConfig({ webpack_compile_flags: ["--help=compact"] })
       ).toBe(false)
       expect(isPartialConfig({ webpack_compile_flags: ["-w"] })).toBe(false)
       expect(isPartialConfig({ webpack_compile_flags: ["--watch=true"] })).toBe(
