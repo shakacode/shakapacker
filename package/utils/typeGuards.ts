@@ -63,6 +63,7 @@ const SHAKAPACKER_NODE_FLAGS = [
 ]
 
 const SHAKAPACKER_RUNNER_COMMANDS = [
+  // Keep in sync with Shakapacker::Configuration::SHAKAPACKER_RUNNER_COMMANDS.
   "help",
   "h",
   "--help",
@@ -75,11 +76,15 @@ const SHAKAPACKER_RUNNER_COMMANDS = [
   "info",
   "i"
 ]
+// Keep in sync with Shakapacker::Configuration::SHAKAPACKER_HELP_FLAG_PATTERN.
 const SHAKAPACKER_HELP_FLAG_PATTERN = /^(?:--help|-h)(?:=.*)?$/
 
+// Keep in sync with Shakapacker::Configuration::SHAKAPACKER_WATCH_FLAGS.
 const SHAKAPACKER_WATCH_FLAGS = ["--watch", "-w"]
+// Keep in sync with Shakapacker::Configuration::SHAKAPACKER_WATCH_FLAG_PATTERN.
 const SHAKAPACKER_WATCH_FLAG_PATTERN = /^(?:--watch|-w)(?:=.*)?$/
 const SHAKAPACKER_MANAGED_COMPILE_FLAGS = [
+  // Keep in sync with Shakapacker::Configuration::SHAKAPACKER_MANAGED_COMPILE_FLAGS.
   "--config",
   "-c",
   "--node-env",
@@ -89,9 +94,11 @@ const SHAKAPACKER_MANAGED_COMPILE_FLAGS = [
   "--init",
   "--list-builds"
 ]
+// Keep in sync with Shakapacker::Configuration::SHAKAPACKER_MANAGED_COMPILE_FLAG_PATTERN.
 const SHAKAPACKER_MANAGED_COMPILE_FLAG_PATTERN =
   /^(?:--config|-c|--node-env|--nodeEnv|--bundler|--build|--init|--list-builds)(?:=.*)?$/
 
+// Keep in sync with Shakapacker::Configuration::DISALLOWED_WEBPACK_COMPILE_FLAGS.
 const DISALLOWED_WEBPACK_COMPILE_FLAGS = [
   ...SHAKAPACKER_NODE_FLAGS,
   ...SHAKAPACKER_RUNNER_COMMANDS,

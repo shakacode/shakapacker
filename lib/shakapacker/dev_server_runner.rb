@@ -344,11 +344,6 @@ module Shakapacker
         package_json.manager.native_exec_command(command, ["serve"])
       end
 
-      def exit_after_shakapacker_flag_error(status)
-        log_output.flush
-        exit(status)
-      end
-
       def webpack?
         @config.webpack?
       end
