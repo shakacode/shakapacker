@@ -24,6 +24,14 @@ describe "Generator" do
         echo 'gem "concurrent-ruby", "1.3.4"' >> Gemfile
       ))
 
+      # i18n 1.15.0/1.15.1 call Fiber[] (Ruby 3.2+) unconditionally, crashing on Ruby 3.1.
+      # Fixed in 1.15.2; exclude the broken releases to keep generated app boots green.
+      if Gem::Version.new(RUBY_VERSION) < Gem::Version.new("3.2")
+        sh_in_dir({}, BASE_RAILS_APP_PATH, %(
+          echo 'gem "i18n", "!= 1.15.0", "!= 1.15.1"' >> Gemfile
+        ))
+      end
+
       if RUBY_VERSION.start_with?("2.")
         # Bundler's version compatible with Ruby 2 does not support "--path" switch
         # Overwriting "rack" version due to unless Rack::Handler::Puma.respond_to?(:config) in Capybara gem v3.39.2 or earlier.
