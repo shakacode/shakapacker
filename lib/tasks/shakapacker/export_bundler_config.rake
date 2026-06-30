@@ -1,21 +1,6 @@
+require "shakapacker/utils/misc"
+
 namespace :shakapacker do
-  def shakapacker_config_binstub_command(bin_path)
-    # Read in binary mode so Windows CRLF line endings do not leak \r into the shebang.
-    shebang = File.open(bin_path, "rb", &:gets).to_s
-    command = shebang.delete_prefix("#!").strip.split(/\s+/)
-    executable = File.basename(command.first.to_s)
-
-    if executable == "env"
-      executable = File.basename(command.drop(1).find { |part| !part.start_with?("-") }.to_s)
-    end
-
-    # Legacy JS binstubs are dispatched via PATH lookup; Kernel#exec resolves
-    # "node" through the shell's PATH. The Ruby binstubs perform their own
-    # explicit lookup via shakapacker_find_executable, which matters more on
-    # Windows where PATHEXT is involved.
-    executable == "node" ? ["node", bin_path.to_s] : [RbConfig.ruby, bin_path.to_s]
-  end
-
   desc <<~DESC
     Export webpack or rspack configuration for debugging and analysis
 
@@ -62,7 +47,7 @@ namespace :shakapacker do
     # Try to use the binstub if it exists, otherwise use the gem's version
     bin_path = Rails.root.join("bin/shakapacker-config")
 
-    unless File.exist?(bin_path)
+    unless File.file?(bin_path)
       # Binstub not installed, use the gem's version directly
       gem_bin_path = File.expand_path("../../install/bin/shakapacker-config", __dir__)
 
@@ -75,10 +60,34 @@ namespace :shakapacker do
       end
     else
       # Pass through command-line arguments after the task name.
-      # Ruby binstubs run under the same Ruby as Rake; legacy JavaScript
-      # binstubs from upgraded apps still need Node until users refresh them.
+      #
+      # Modern Ruby binstubs (the current default) are invoked with
+      # RbConfig.ruby so they run under the same Ruby as Rake — this avoids
+      # version-manager/shebang mismatches and works on Windows.
+      #
+      # Legacy JavaScript binstubs left over from earlier Shakapacker
+      # versions (`#!/usr/bin/env node`) are invoked through Node until
+      # users refresh them with `rake shakapacker:binstubs`.
+      js_binstub_executable = Shakapacker::Utils::Misc.js_binstub_executable(bin_path)
+
       Dir.chdir(Rails.root) do
-        Kernel.exec(*shakapacker_config_binstub_command(bin_path), *ARGV[1..])
+        if js_binstub_executable
+          $stderr.puts "Note: bin/shakapacker-config is a legacy JavaScript binstub."
+          $stderr.puts "Run `bundle exec rake shakapacker:binstubs` to upgrade to the Ruby binstub."
+          $stderr.puts ""
+          begin
+            Kernel.exec(js_binstub_executable, bin_path.to_s, *ARGV[1..])
+          rescue Errno::ENOENT, Errno::EACCES
+            abort "Error: could not execute '#{js_binstub_executable}' because it was not found or is not executable.\n" \
+                  "Run `bundle exec rake shakapacker:binstubs` to upgrade to the Ruby binstub."
+          end
+        else
+          begin
+            Kernel.exec(RbConfig.ruby, bin_path.to_s, *ARGV[1..])
+          rescue Errno::ENOENT, Errno::EACCES
+            abort "Error: Ruby interpreter '#{RbConfig.ruby}' was not found or is not executable."
+          end
+        end
       end
     end
   end
