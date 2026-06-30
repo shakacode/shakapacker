@@ -73,7 +73,6 @@ module Shakapacker
         # Bare "..foo" (two dots, no slash, non-empty suffix) and bare "." are intentionally not
         # matched — package managers don't emit those forms for shakapacker installs.
         LOCAL_PATH_REGEX = %r{\A(\./|\.\.(/|\z)|file:)}.freeze
-        PSYCH_SAFE_LOAD_ACCEPTS_PERMITTED_CLASSES = YAML.method(:safe_load).parameters.any? { |(_, name)| name == :permitted_classes }
 
         attr_reader :package_json
 
@@ -236,8 +235,10 @@ module Shakapacker
 
             packages.each do |key, value|
               # git-based constraints will include a "version" key with their pseudo semantic version
-              return value["version"] if key.start_with?("shakapacker") && value.key?("version")
-              return value["version"] if value["name"] == "shakapacker"
+              if value.is_a?(Hash)
+                return value["version"] if key.start_with?("shakapacker") && value.key?("version")
+                return value["version"] if value["name"] == "shakapacker"
+              end
 
               # v9+ uses the same key format just without the leading slash, so we just add one in
               key = "/#{key}" unless key.start_with?("/")
@@ -257,14 +258,7 @@ module Shakapacker
           end
 
           def safe_load_pnpm_lock(lockfile)
-            return YAML.safe_load(lockfile, permitted_classes: [Time, Date]) if PSYCH_SAFE_LOAD_ACCEPTS_PERMITTED_CLASSES
-
-            safe_load_pnpm_lock_legacy(lockfile)
-          end
-
-          def safe_load_pnpm_lock_legacy(lockfile)
-            # Ruby < 3.0 / Psych < 3.3.0 uses positional whitelist_classes instead of the permitted_classes: keyword.
-            YAML.safe_load(lockfile, [Time, Date])
+            YAML.safe_load(lockfile, permitted_classes: [Time, Date])
           end
       end
   end

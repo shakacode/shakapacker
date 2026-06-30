@@ -1645,27 +1645,10 @@ describe "VersionChecker::NodePackageVersion" do
         end
       end
 
-      it "#raw supports Psych versions that use positional permitted classes" do
-        parsed_lockfile = {
-          "packages" => {
-            "shakapacker@8.4.0" => {}
-          }
-        }
-
+      it "#raw parses package entries with nil values from the package key" do
         Dir.mktmpdir do |dir|
-          node_package_version = build_node_package_version(dir, lockfile_with_time)
-          stub_const(
-            "Shakapacker::VersionChecker::NodePackageVersion::PSYCH_SAFE_LOAD_ACCEPTS_PERMITTED_CLASSES",
-            false
-          )
-
-          without_partial_double_verification do
-            expect(YAML).to receive(:safe_load)
-              .with(lockfile_with_time, [Time, Date])
-              .and_return(parsed_lockfile)
-
-            expect(node_package_version.raw).to eq "8.4.0"
-          end
+          node_package_version = build_node_package_version(dir, "packages:\n  shakapacker@8.4.0:\n")
+          expect(node_package_version.raw).to eq "8.4.0"
         end
       end
     end
