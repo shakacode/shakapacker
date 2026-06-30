@@ -125,7 +125,7 @@ RSpec.describe "shakapacker:export_bundler_config" do
 
       capture_stderr do |stderr_output|
         expect { invoke_task(app_path, "--doctor", exec_error: Errno::ENOENT.new) }.to raise_error(SystemExit)
-        expect(stderr_output.string).to include("could not execute '/usr/local/bin/node'")
+        expect(stderr_output.string).to include("could not execute '/usr/local/bin/node' because it was not found or is not executable")
         expect(stderr_output.string).to include("rake shakapacker:binstubs")
       end
     end
