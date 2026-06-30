@@ -2,6 +2,7 @@ require "fileutils"
 require "pathname"
 require "rake"
 require "rbconfig"
+require "stringio"
 require "tmpdir"
 
 RSpec.describe "shakapacker:export_bundler_config" do
@@ -53,16 +54,21 @@ RSpec.describe "shakapacker:export_bundler_config" do
     end
   end
 
-  it "runs nodejs legacy binstubs with nodejs" do
+  it "runs nodejs legacy binstubs with nodejs and warns about the legacy binstub" do
     Dir.mktmpdir("shakapacker-export-bundler-config-") do |app_path|
       binstub_path = write_app_binstub(app_path, <<~JS)
         #!/usr/bin/env nodejs
         console.log("legacy binstub")
       JS
 
+      stderr_output = StringIO.new
+      allow($stderr).to receive(:puts) { |message| stderr_output.puts(message) }
+
       expect(invoke_task(app_path, "--doctor")).to eq(
         ["nodejs", binstub_path, "--doctor"]
       )
+      expect(stderr_output.string).to include("legacy JavaScript binstub")
+      expect(stderr_output.string).to include("rake shakapacker:binstubs")
     end
   end
 
