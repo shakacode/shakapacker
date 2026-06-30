@@ -9,6 +9,8 @@ describe("DevServer", () => {
     resetEnv()
   })
 
+  afterEach(() => resetEnv())
+
   afterAll(() => process.chdir(rootPath))
 
   test("with NODE_ENV and RAILS_ENV set to development", () => {
