@@ -28,7 +28,6 @@ require "active_support/core_ext/hash/indifferent_access"
 # @see https://github.com/shakacode/shakapacker/blob/main/docs/shakapacker.yml.md
 class Shakapacker::Configuration
   SHAKAPACKER_NODE_FLAGS = %w[--debug-shakapacker --trace-deprecation --no-deprecation].freeze
-  private_constant :SHAKAPACKER_NODE_FLAGS
 
   SHAKAPACKER_RUNNER_COMMANDS = %w[help h --help -h --help=verbose version v --version -v info i].freeze
   private_constant :SHAKAPACKER_RUNNER_COMMANDS

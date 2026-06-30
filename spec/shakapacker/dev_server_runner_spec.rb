@@ -150,11 +150,31 @@ describe "DevServerRunner" do
             ["--", flag]
           )
           instance = Shakapacker::DevServerRunner.new(runner_argv, nil, nil, passthrough_argv)
+          allow(instance).to receive(:exit!).and_raise(SystemExit)
 
           expect { instance.send(:detect_shakapacker_flags_in_passthrough!) }
             .to output(/must appear before --: #{Regexp.escape(flag)}/).to_stdout
             .and raise_error(SystemExit)
         end
+      end
+    end
+
+    it "flushes misplaced Shakapacker node flag diagnostics before hard exit" do
+      Dir.chdir(test_app_path) do
+        runner_argv, passthrough_argv = Shakapacker::DevServerRunner.split_passthrough_argv(
+          ["--", "--trace-deprecation"]
+        )
+        instance = Shakapacker::DevServerRunner.new(runner_argv, nil, nil, passthrough_argv)
+        output = StringIO.new
+
+        allow(instance).to receive(:log_output).and_return(output)
+        allow(output).to receive(:flush).and_call_original
+        allow(instance).to receive(:exit!).and_raise(SystemExit)
+
+        expect { instance.send(:detect_shakapacker_flags_in_passthrough!) }
+          .to raise_error(SystemExit)
+        expect(output.string).to match(/must appear before --: --trace-deprecation/)
+        expect(output).to have_received(:flush)
       end
     end
 

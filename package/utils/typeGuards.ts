@@ -56,6 +56,7 @@ function isStringArray(value: unknown): value is string[] {
 }
 
 const SHAKAPACKER_NODE_FLAGS = [
+  // Keep in sync with Shakapacker::Configuration::SHAKAPACKER_NODE_FLAGS.
   "--debug-shakapacker",
   "--trace-deprecation",
   "--no-deprecation"

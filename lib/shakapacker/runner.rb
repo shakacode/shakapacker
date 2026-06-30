@@ -26,7 +26,7 @@ module Shakapacker
       "i"
     ].freeze
 
-    SHAKAPACKER_NODE_FLAGS = %w[--debug-shakapacker --trace-deprecation --no-deprecation].freeze
+    SHAKAPACKER_NODE_FLAGS = Configuration::SHAKAPACKER_NODE_FLAGS
     private_constant :SHAKAPACKER_NODE_FLAGS
 
     RSPACK_RUNNER_EXTENSION = Module.new do
@@ -359,7 +359,11 @@ module Shakapacker
         log_output.puts(
           "The following Shakapacker-specific options must appear before --: #{misplaced_flags.join(' ')}."
         )
-        exit(1)
+        exit_after_shakapacker_flag_error(1)
+      end
+
+      def exit_after_shakapacker_flag_error(status)
+        exit(status)
       end
 
       def print_config_not_found_error(bundler_type, config_path, config_dir)
