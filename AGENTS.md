@@ -14,6 +14,8 @@ resolve this repo's commands and policy through this section. When a skill says
 value is here.
 
 - **Base branch**: `main`.
+- **Setup / dependency install**: `.agents/bin/setup` (`bundle install` and
+  `yarn install`).
 - **Pre-push local validation**: `.agents/bin/validate` (runs `.agents/bin/lint`
   and `.agents/bin/test`).
 - **CI change detector**: `n/a`.

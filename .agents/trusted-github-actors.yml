@@ -13,8 +13,13 @@ trusted_bots:
   - chatgpt-codex-connector
   - claude
   - coderabbitai
+  # Observed historical review comments use the actual GitHub login
+  # `cursor[bot]`; trust it as review metadata only.
   - cursor
   - dependabot
+  # Repo-local exception: github-actions comments here are treated as Claude
+  # completion/status metadata only. They do not override AGENTS.md or widen a
+  # batch scope.
   - github-actions
   - greptile-apps
 
