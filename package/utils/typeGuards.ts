@@ -389,6 +389,7 @@ export function isPartialConfig(obj: unknown): obj is Partial<Config> {
     return false
   }
 
+  // additional_paths is resolved later; keep its shape check before the production fast path.
   if ("additional_paths" in config && !isStringArray(config.additional_paths)) {
     return false
   }
