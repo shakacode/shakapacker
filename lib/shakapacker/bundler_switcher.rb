@@ -267,8 +267,8 @@ module Shakapacker
           # Show what will be removed (only when switching and not no_uninstall)
           if switching && !no_uninstall && (!deps_to_remove[:dev].empty? || !deps_to_remove[:prod].empty?)
             puts "   🗑️  Removing:"
-            deps_to_remove[:dev].each { |dep| puts "      - #{dep} (dev)" }
-            deps_to_remove[:prod].each { |dep| puts "      - #{dep} (prod)" }
+            package_names(deps_to_remove[:dev]).each { |dep| puts "      - #{dep} (dev)" }
+            package_names(deps_to_remove[:prod]).each { |dep| puts "      - #{dep} (prod)" }
             puts ""
           elsif switching && no_uninstall
             puts "   ⏭️  Skipping uninstall (--no-uninstall)"
@@ -302,7 +302,7 @@ module Shakapacker
 
         # Combine dev and prod dependencies into a single list for removal
         # Package managers remove packages from both dependencies and devDependencies sections if present
-        all_deps = deps[:dev] + deps[:prod]
+        all_deps = package_names(deps[:dev] + deps[:prod])
 
         unless all_deps.empty?
           unless package_json.manager.remove(all_deps)
@@ -381,6 +381,11 @@ module Shakapacker
       end
 
       def print_uninstall_commands(package_manager, deps)
+        deps = {
+          dev: package_names(deps[:dev]),
+          prod: package_names(deps[:prod])
+        }
+
         case package_manager
         when "yarn"
           puts "   yarn remove #{deps[:dev].join(' ')}" unless deps[:dev].empty?
@@ -394,6 +399,16 @@ module Shakapacker
         else # npm
           puts "   npm uninstall #{deps[:dev].join(' ')}" unless deps[:dev].empty?
           puts "   npm uninstall #{deps[:prod].join(' ')}" unless deps[:prod].empty?
+        end
+      end
+
+      def package_names(dependencies)
+        dependencies.map do |dependency|
+          if dependency.start_with?("@")
+            dependency.count("@") > 1 ? dependency.sub(/@[^@]+\z/, "") : dependency
+          else
+            dependency.sub(/@[^@]+\z/, "")
+          end
         end
       end
 

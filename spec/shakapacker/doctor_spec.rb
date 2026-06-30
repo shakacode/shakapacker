@@ -1111,7 +1111,7 @@ describe Shakapacker::Doctor do
       end
     end
 
-    context "when node_modules reports a v2 install even though package.json pins v1" do
+    context "when node_modules reports a v2 install even though package.json allows v1" do
       before do
         node_modules_pkg = root_path.join("node_modules/@rspack/core/package.json")
         FileUtils.mkdir_p(node_modules_pkg.dirname)
@@ -1119,13 +1119,13 @@ describe Shakapacker::Doctor do
 
         File.write(package_json_path, JSON.generate({
           "devDependencies" => {
-            "@rspack/core" => "^1.0.0",
+            "@rspack/core" => "^1.0.0 || ^2.0.0-0",
             "@rspack/cli" => "^2.0.0"
           }
         }))
       end
 
-      it "warns about stale declared v1 ranges even when node_modules has v2" do
+      it "warns about stale v1-compatible ranges even when node_modules has v2" do
         doctor.send(:check_rspack_cache_configuration)
         expect(warning_messages).to include(match(/Rspack v1 detected/))
       end
@@ -1169,7 +1169,7 @@ describe Shakapacker::Doctor do
       end
     end
 
-    context "when the rspack version specifier is a compound range" do
+    context "when the rspack version specifier is a v1-compatible compound range" do
       before do
         File.write(package_json_path, JSON.generate({
           "devDependencies" => {
@@ -1178,9 +1178,9 @@ describe Shakapacker::Doctor do
         }))
       end
 
-      it "does not falsely classify it as v1" do
+      it "warns because the declared range still allows v1" do
         doctor.send(:check_rspack_cache_configuration)
-        expect(warning_messages).not_to include(match(/Rspack v1 detected/))
+        expect(warning_messages).to include(match(/Rspack v1 detected/))
       end
     end
 

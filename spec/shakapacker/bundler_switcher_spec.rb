@@ -456,6 +456,30 @@ describe Shakapacker::BundlerSwitcher do
 
         switcher.switch_to("rspack", install_deps: true, no_uninstall: true)
       end
+
+      it "removes versionless rspack package names when switching back to webpack" do
+        config_content = File.read(config_path)
+        config_content.gsub!("webpack", "rspack")
+        File.write(config_path, config_content)
+
+        package_json = instance_double("PackageJson")
+        manager = instance_double("PackageJson::Managers::Base")
+        allow(switcher).to receive(:get_package_json).and_return(package_json)
+        allow(package_json).to receive(:manager).and_return(manager)
+
+        expect(manager).to receive(:remove).with([
+          "@rspack/cli",
+          "@rspack/dev-server",
+          "@rspack/plugin-react-refresh",
+          "@rspack/core",
+          "rspack-manifest-plugin"
+        ]).and_return(true)
+        expect(manager).to receive(:add).with(["webpack", "webpack-cli", "webpack-dev-server", "@pmmmwh/react-refresh-webpack-plugin"], type: :dev).and_return(true)
+        expect(manager).to receive(:add).with(["webpack-assets-manifest", "webpack-merge"], type: :production).and_return(true)
+        expect(manager).to receive(:install).and_return(true)
+
+        switcher.switch_to("webpack", install_deps: true)
+      end
     end
   end
 

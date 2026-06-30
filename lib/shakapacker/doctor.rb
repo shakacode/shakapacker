@@ -1003,8 +1003,15 @@ module Shakapacker
         # ">=1.5 <2". Accept shorthand forms (e.g. `^1`, `~1`, `1`, `1.x`) so
         # we still emit the v1 advisory when node_modules isn't populated yet.
         cleaned = version.strip
+        if cleaned.include?("||")
+          majors = cleaned.split("||").filter_map { |specifier| rspack_major_from_specifier(specifier) }
+          return 1 if majors.include?(1)
+
+          return majors.first
+        end
+
         return nil unless cleaned.match?(/\A[\^~]?\d/)
-        return nil if cleaned.match?(/(\s|\|\||[<>=:]|\A(?:git|file|link|workspace|npm):)/)
+        return nil if cleaned.match?(/(\s|[<>=:]|\A(?:git|file|link|workspace|npm):)/)
         return nil unless cleaned.match?(/\A[\^~]?\d+(?:\.(?:\d+|x|\*)){0,2}(?:-[0-9A-Za-z.-]+)?\z/i)
 
         match = cleaned.sub(/\A[\^~]/, "").match(/\A(\d+)/)
