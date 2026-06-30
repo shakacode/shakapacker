@@ -5,6 +5,9 @@ require "shellwords"
 require_relative "compiler_strategy"
 
 class Shakapacker::Compiler
+  SpawnFailure = Class.new(StandardError)
+  private_constant :SpawnFailure
+
   # Additional environment variables that the compiler is being run with
   # Shakapacker::Compiler.env['FRONTEND_API_KEY'] = 'your_secret_key'
   cattr_accessor(:env) { {} }
@@ -36,9 +39,16 @@ class Shakapacker::Compiler
     else
       acquire_ipc_lock do
         run_precompile_hook if should_run_precompile_hook?
-        run_webpack.tap do |success|
-          after_compile_hook
+        spawn_failed = false
+        begin
+          success = run_webpack
+        rescue SpawnFailure
+          spawn_failed = true
+          success = false
         end
+
+        after_compile_hook unless spawn_failed
+        success
       end
     end
   end
@@ -83,8 +93,9 @@ class Shakapacker::Compiler
       config.root_path.join("tmp/shakapacker.lock")
     end
 
+    # Returns one executable path for array-form Open3, not a shell command snippet.
     def optional_ruby_runner
-      first_line = File.readlines(bin_shakapacker_path).first.chomp
+      first_line = File.readlines(bin_shakapacker_path).first&.chomp || ""
       /ruby/.match?(first_line) ? RbConfig.ruby : ""
     end
 
@@ -176,11 +187,21 @@ class Shakapacker::Compiler
     def run_webpack
       logger.info "Compiling..."
 
-      stdout, stderr, status = Open3.capture3(
-        webpack_env,
-        "#{optional_ruby_runner} '#{bin_shakapacker_path}'",
-        chdir: File.expand_path(config.root_path)
-      )
+      # Fetch compile flags before the spawn rescue so configuration errors stay explicit.
+      compile_flags = config.webpack_compile_flags
+
+      begin
+        command = shakapacker_command(compile_flags)
+        stdout, stderr, status = Open3.capture3(
+          webpack_env,
+          *command,
+          chdir: File.expand_path(config.root_path)
+        )
+      rescue Errno::EACCES, Errno::ENOENT, Errno::ENOEXEC, Errno::EPERM, Errno::ENOTDIR => e
+        logger.error "\nCOMPILATION FAILED:\n#{e.class}: #{e.message}"
+        show_doctor_hint_once
+        raise SpawnFailure
+      end
 
       if status.success?
         logger.info "Compiled all packs in #{config.public_output_path}"
@@ -209,6 +230,15 @@ class Shakapacker::Compiler
 
     def bin_shakapacker_path
       config.root_path.join("bin/shakapacker")
+    end
+
+    def shakapacker_command(compile_flags)
+      runner = optional_ruby_runner
+      bin_path = bin_shakapacker_path.to_s
+      flags_part = compile_flags.any? ? ["--", *compile_flags] : []
+
+      # Use the [cmd, argv0] form so Open3 never routes a lone binstub path through the shell.
+      runner.empty? ? [[bin_path, bin_path], *flags_part] : [runner, bin_path, *flags_part]
     end
 
     # Fires only after a failed compile, so users in a healthy loop never see the tip.

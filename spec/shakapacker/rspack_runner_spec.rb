@@ -57,6 +57,12 @@ describe "RspackRunner" do
         verify_command(cmd, argv: (["--watch"]))
       end
 
+      it "passes config to the rspack build command" do
+        cmd = package_json.manager.native_exec_command("rspack", ["--config", "#{test_app_path}/config/webpack/webpack.config.js", "build"])
+
+        verify_command(cmd, argv: ["build"])
+      end
+
       it "loads webpack.config.ts if present" do
         ts_config = "#{test_app_path}/config/webpack/webpack.config.ts"
         FileUtils.touch(ts_config)
@@ -191,6 +197,63 @@ describe "RspackRunner" do
         output = capture_stdout { klass.run(["-w"]) }
 
         expect(output).not_to match(/Completed (webpack|rspack) build/)
+      end
+    end
+  end
+
+  describe "passthrough separator" do
+    it "rejects Shakapacker node flags after --" do
+      Dir.chdir(test_app_path) do
+        allow(Shakapacker::Utils::Manager).to receive(
+          :error_unless_package_manager_is_obvious!
+        )
+
+        runner_argv, passthrough_argv = Shakapacker::Runner.split_passthrough_argv(
+          ["--", "--debug-shakapacker"]
+        )
+        instance = Shakapacker::Runner.new(runner_argv, nil, "rspack", passthrough_argv)
+        instance.extend(Module.new do
+          def build_cmd
+            package_json.manager.native_exec_command("rspack")
+          end
+        end)
+
+        expect { instance.run }
+          .to output(/must appear before --: --debug-shakapacker/).to_stdout
+          .and raise_error(SystemExit)
+      end
+    end
+
+    it "passes config to rspack build through the top-level runner" do
+      Dir.chdir(test_app_path) do
+        original_assets_bundler = ENV["SHAKAPACKER_ASSETS_BUNDLER"]
+        allow(Shakapacker::Utils::Manager).to receive(
+          :error_unless_package_manager_is_obvious!
+        )
+
+        klass = Shakapacker::Runner
+        instance = klass.new(["build"], nil, "rspack", [])
+
+        cmd = PackageJson.read(test_app_path).manager.native_exec_command(
+          "rspack",
+          ["--config", "#{test_app_path}/config/webpack/webpack.config.js", "build"]
+        )
+
+        allow(klass).to receive(:new).and_return(instance)
+        allow(instance).to receive(:spawn).and_return(12345)
+        allow(instance).to receive(:trap)
+        allow(Process).to receive(:wait).with(12345) do
+          system("true")
+        end
+
+        klass.run(["--bundler", "rspack", "build"])
+
+        expect(instance).to have_received(:spawn).with(
+          Shakapacker::Compiler.env,
+          *cmd
+        )
+      ensure
+        ENV["SHAKAPACKER_ASSETS_BUNDLER"] = original_assets_bundler
       end
     end
   end

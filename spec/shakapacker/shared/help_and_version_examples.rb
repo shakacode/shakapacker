@@ -18,6 +18,12 @@ RSpec.shared_examples "help and version flags" do |runner_class, help_header_tex
         .and raise_error(SystemExit)
     end
 
+    it "explains where Shakapacker-specific options belong with passthrough arguments" do
+      expect { runner_class.run(["--help"]) }
+        .to output(/Put Shakapacker-specific options before --/).to_stdout
+        .and raise_error(SystemExit)
+    end
+
     it "shows options managed by Shakapacker" do
       expect { runner_class.run(["--help"]) }
         .to output(/Options managed by Shakapacker/).to_stdout

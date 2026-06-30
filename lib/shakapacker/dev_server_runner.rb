@@ -9,11 +9,13 @@ require_relative "version"
 module Shakapacker
   class DevServerRunner < Shakapacker::Runner
     def self.run(argv)
+      runner_argv, passthrough_argv = split_passthrough_argv(argv)
+
       # Show Shakapacker help and exit (don't call bundler)
-      if argv.include?("--help") || argv.include?("-h")
+      if runner_argv.include?("--help") || runner_argv.include?("-h")
         print_help
         exit(0)
-      elsif argv.include?("--version") || argv.include?("-v")
+      elsif runner_argv.include?("--version") || runner_argv.include?("-v")
         print_version
         exit(0)
       end
@@ -21,9 +23,9 @@ module Shakapacker
       Shakapacker.ensure_node_env!
 
       # Check for --build flag
-      build_index = argv.index("--build")
+      build_index = runner_argv.index("--build")
       if build_index
-        build_name = argv[build_index + 1]
+        build_name = runner_argv[build_index + 1]
 
         unless build_name
           $stderr.puts "[Shakapacker] Error: --build requires a build name"
@@ -51,11 +53,11 @@ module Shakapacker
           end
 
           # Remove --build and build name from argv
-          remaining_argv = argv.dup
+          remaining_argv = runner_argv.dup
           remaining_argv.delete_at(build_index + 1)
           remaining_argv.delete_at(build_index)
 
-          run_with_build_config(remaining_argv, build_config)
+          run_with_build_config(remaining_argv, build_config, passthrough_argv)
           return
         rescue ArgumentError => e
           $stderr.puts "[Shakapacker] #{e.message}"
@@ -63,10 +65,10 @@ module Shakapacker
         end
       end
 
-      new(argv).run
+      new(runner_argv, nil, nil, passthrough_argv).run
     end
 
-    def self.run_with_build_config(argv, build_config)
+    def self.run_with_build_config(argv, build_config, passthrough_argv = [])
       Shakapacker.ensure_node_env!
 
       # Apply build config environment variables
@@ -84,7 +86,7 @@ module Shakapacker
       puts "[Shakapacker] Config file: #{build_config[:config_file]}" if build_config[:config_file]
 
       # Pass bundler override so Configuration.assets_bundler reflects the build
-      new(argv, build_config, build_config[:bundler]).run
+      new(argv, build_config, build_config[:bundler], passthrough_argv).run
     end
 
     def self.print_help
@@ -99,7 +101,13 @@ module Shakapacker
           -h, --help              Show this help message
           -v, --version           Show Shakapacker version
           --debug-shakapacker     Enable Node.js debugging (--inspect-brk)
+          --trace-deprecation     Show stack traces for Node.js deprecations
+          --no-deprecation        Silence Node.js deprecation warnings
           --build <name>          Run a specific build configuration
+
+          Put Shakapacker-specific options before --. Arguments after -- are
+          passed directly to the selected bundler, except --host and --port,
+          which remain managed by config/shakapacker.yml.
 
         Build configurations (config/shakapacker-builds.yml):
           bin/shakapacker-dev-server --build dev-hmr    # Run the 'dev-hmr' build
@@ -116,6 +124,7 @@ module Shakapacker
           bin/shakapacker-dev-server --no-hot           # Disable HMR
           bin/shakapacker-dev-server --open             # Open browser automatically
           bin/shakapacker-dev-server --debug-shakapacker # Debug with Node inspector
+          bin/shakapacker-dev-server --trace-deprecation # Show Node deprecation traces
 
       HELP
 
@@ -126,12 +135,13 @@ module Shakapacker
         Options managed by Shakapacker (configured in config/shakapacker.yml):
           --host                  Set from dev_server.host (default: localhost)
           --port                  Set from dev_server.port (default: 3035)
-          --https                 Set from dev_server.server (http or https)
+          --https                 Requires dev_server.server: https before forwarding
           --config                Set automatically to config/webpack/webpack.config.js
                                   or config/rspack/rspack.config.js
 
-        Note: CLI flags for --host, --port, and --https are NOT supported.
-        Configure these in config/shakapacker.yml instead.
+        Note: CLI flags for --host and --port are NOT supported.
+        Configure these in config/shakapacker.yml instead. --https is accepted
+        only when dev_server.server is already set to https.
       HELP
     end
 
@@ -260,15 +270,19 @@ module Shakapacker
       UNSUPPORTED_SWITCHES = %w[--host --port]
       private_constant :UNSUPPORTED_SWITCHES
       def detect_unsupported_switches!
-        unsupported_switches = UNSUPPORTED_SWITCHES & @argv
+        # Host/port stay config-owned even after -- because Shakapacker assembles the dev-server command.
+        unsupported_switches = UNSUPPORTED_SWITCHES & bundler_argv
         if unsupported_switches.any?
-          $stdout.puts "The following CLI switches are not supported by Shakapacker: #{unsupported_switches.join(' ')}. Please edit your command and try again."
-          exit!
+          log_output.puts(
+            "The following CLI switches are not supported by Shakapacker: #{unsupported_switches.join(' ')}. " \
+            "Please set dev_server.host or dev_server.port in shakapacker.yml instead."
+          )
+          exit_after_shakapacker_flag_error(1)
         end
 
-        if @argv.include?("--https") && !@https
-          $stdout.puts "--https requires that 'server' in shakapacker.yml is set to 'https'"
-          exit!
+        if bundler_argv.include?("--https") && !@https
+          log_output.puts "--https requires that 'server' in shakapacker.yml is set to 'https'"
+          exit_after_shakapacker_flag_error(1)
         end
       end
 
@@ -289,8 +303,19 @@ module Shakapacker
 
         cmd = build_cmd
 
+        detect_shakapacker_flags_in_passthrough!
+
+        # Shakapacker-owned Node flags must appear before --; passthrough args belong to the bundler.
         if @argv.delete("--debug-shakapacker")
           env["NODE_OPTIONS"] = "#{env["NODE_OPTIONS"]} --inspect-brk --trace-warnings"
+        end
+
+        if @argv.delete("--trace-deprecation")
+          env["NODE_OPTIONS"] = "#{env["NODE_OPTIONS"]} --trace-deprecation"
+        end
+
+        if @argv.delete("--no-deprecation")
+          env["NODE_OPTIONS"] = "#{env["NODE_OPTIONS"]} --no-deprecation"
         end
 
         # Add config file
@@ -307,7 +332,7 @@ module Shakapacker
           cmd += ["--hot"] if @hot && @hot != false
         end
 
-        cmd += @argv
+        cmd += bundler_argv
 
         Dir.chdir(@app_path) do
           exec(env, *cmd)

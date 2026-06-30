@@ -1,7 +1,8 @@
 const {
   isValidConfig,
+  isPartialConfig,
   clearValidationCache
-} = require("../../package/utils/typeGuards")
+} = require("../../package/utils/typeGuards.ts")
 
 describe("security validation", () => {
   const originalNodeEnv = process.env.NODE_ENV
@@ -24,6 +25,7 @@ describe("security validation", () => {
       nested_entries: false,
       css_extract_ignore_order_warnings: false,
       webpack_compile_output: true,
+      webpack_compile_flags: [],
       shakapacker_precompile: true,
       cache_manifest: false,
       ensure_consistent_versioning: false,
@@ -67,6 +69,18 @@ describe("security validation", () => {
       expect(isValidConfig(unsafeConfig)).toBe(false)
     })
 
+    it("rejects non-string additional_paths entries before path traversal checks", () => {
+      process.env.NODE_ENV = "production"
+      delete process.env.SHAKAPACKER_STRICT_VALIDATION
+
+      const unsafeConfig = {
+        ...baseConfig,
+        additional_paths: ["./safe/path", true]
+      }
+
+      expect(isValidConfig(unsafeConfig)).toBe(false)
+    })
+
     it("always validates path traversal in additional_paths in development", () => {
       process.env.NODE_ENV = "development"
 
@@ -100,6 +114,186 @@ describe("security validation", () => {
 
       expect(isValidConfig(safeConfig)).toBe(true)
     })
+
+    it("allows configs that omit webpack compile flags for backward compatibility", () => {
+      process.env.NODE_ENV = "development"
+
+      const configWithoutCompileFlags = { ...baseConfig }
+      delete configWithoutCompileFlags.webpack_compile_flags
+
+      expect(isValidConfig(configWithoutCompileFlags)).toBe(true)
+    })
+
+    it("rejects non-array webpack compile flags", () => {
+      process.env.NODE_ENV = "development"
+
+      const unsafeConfig = {
+        ...baseConfig,
+        webpack_compile_flags: "--progress"
+      }
+
+      expect(isValidConfig(unsafeConfig)).toBe(false)
+    })
+
+    it("rejects non-string webpack compile flag entries", () => {
+      process.env.NODE_ENV = "development"
+
+      const unsafeConfig = {
+        ...baseConfig,
+        webpack_compile_flags: ["--progress", true]
+      }
+
+      expect(isValidConfig(unsafeConfig)).toBe(false)
+    })
+
+    it("rejects webpack compile flags that include the passthrough separator", () => {
+      process.env.NODE_ENV = "development"
+
+      const unsafeConfig = {
+        ...baseConfig,
+        webpack_compile_flags: ["--", "--progress"]
+      }
+
+      expect(isValidConfig(unsafeConfig)).toBe(false)
+    })
+
+    it("rejects empty webpack compile flag entries", () => {
+      process.env.NODE_ENV = "development"
+
+      const unsafeConfig = {
+        ...baseConfig,
+        webpack_compile_flags: ["--progress", ""]
+      }
+
+      expect(isValidConfig(unsafeConfig)).toBe(false)
+    })
+
+    it("rejects Shakapacker wrapper flags in webpack compile flags", () => {
+      process.env.NODE_ENV = "development"
+
+      const unsafeConfig = {
+        ...baseConfig,
+        webpack_compile_flags: ["--debug-shakapacker"]
+      }
+
+      expect(isValidConfig(unsafeConfig)).toBe(false)
+    })
+
+    it("rejects runner short-circuit flags in webpack compile flags", () => {
+      process.env.NODE_ENV = "development"
+      ;["--help=verbose", "--help=compact", "-h=compact"].forEach(
+        (helpFlag) => {
+          const unsafeConfig = {
+            ...baseConfig,
+            webpack_compile_flags: [helpFlag]
+          }
+
+          expect(isValidConfig(unsafeConfig)).toBe(false)
+        }
+      )
+    })
+
+    it("rejects watch-mode flags in webpack compile flags", () => {
+      process.env.NODE_ENV = "development"
+
+      const watchFlags = ["--watch", "--watch=true", "-w=true"]
+
+      watchFlags.forEach((watchFlag) => {
+        const unsafeConfig = {
+          ...baseConfig,
+          webpack_compile_flags: [watchFlag]
+        }
+
+        expect(isValidConfig(unsafeConfig)).toBe(false)
+      })
+    })
+
+    it("rejects managed Shakapacker flags in webpack compile flags", () => {
+      process.env.NODE_ENV = "development"
+
+      const managedFlags = [
+        "--config",
+        "--config=custom.js",
+        "-c=custom.js",
+        "--node-env=development",
+        "--nodeEnv=development",
+        "--bundler",
+        "--build=dev",
+        "--init",
+        "--list-builds"
+      ]
+
+      managedFlags.forEach((managedFlag) => {
+        const unsafeConfig = {
+          ...baseConfig,
+          webpack_compile_flags: [managedFlag]
+        }
+
+        expect(isValidConfig(unsafeConfig)).toBe(false)
+      })
+    })
+  })
+
+  describe("partial config validation", () => {
+    it("rejects invalid webpack compile flags in production", () => {
+      process.env.NODE_ENV = "production"
+      delete process.env.SHAKAPACKER_STRICT_VALIDATION
+
+      expect(isPartialConfig({ webpack_compile_flags: "--progress" })).toBe(
+        false
+      )
+      expect(
+        isPartialConfig({ webpack_compile_flags: ["--progress", true] })
+      ).toBe(false)
+      expect(isPartialConfig({ webpack_compile_flags: ["--"] })).toBe(false)
+      expect(isPartialConfig({ webpack_compile_flags: [""] })).toBe(false)
+      expect(
+        isPartialConfig({ webpack_compile_flags: ["--trace-deprecation"] })
+      ).toBe(false)
+      expect(isPartialConfig({ webpack_compile_flags: ["--help"] })).toBe(false)
+      expect(
+        isPartialConfig({ webpack_compile_flags: ["--help=verbose"] })
+      ).toBe(false)
+      expect(
+        isPartialConfig({ webpack_compile_flags: ["--help=compact"] })
+      ).toBe(false)
+      expect(isPartialConfig({ webpack_compile_flags: ["-w"] })).toBe(false)
+      expect(isPartialConfig({ webpack_compile_flags: ["--watch=true"] })).toBe(
+        false
+      )
+      expect(
+        isPartialConfig({ webpack_compile_flags: ["--config=custom.js"] })
+      ).toBe(false)
+      expect(
+        isPartialConfig({ webpack_compile_flags: ["--nodeEnv=development"] })
+      ).toBe(false)
+    })
+
+    it("rejects invalid additional paths before the production fast path", () => {
+      process.env.NODE_ENV = "production"
+      delete process.env.SHAKAPACKER_STRICT_VALIDATION
+
+      expect(isPartialConfig({ additional_paths: ["./safe", true] })).toBe(
+        false
+      )
+    })
+
+    it("rejects invalid additional paths outside the production fast path", () => {
+      process.env.NODE_ENV = "development"
+
+      expect(isPartialConfig({ additional_paths: ["./safe", true] })).toBe(
+        false
+      )
+    })
+
+    it("rejects invalid additional paths in production strict mode", () => {
+      process.env.NODE_ENV = "production"
+      process.env.SHAKAPACKER_STRICT_VALIDATION = "true"
+
+      expect(isPartialConfig({ additional_paths: ["./safe", true] })).toBe(
+        false
+      )
+    })
   })
 
   describe("optional field validation", () => {
@@ -113,6 +307,7 @@ describe("security validation", () => {
       nested_entries: false,
       css_extract_ignore_order_warnings: false,
       webpack_compile_output: true,
+      webpack_compile_flags: [],
       shakapacker_precompile: true,
       cache_manifest: false,
       ensure_consistent_versioning: false,

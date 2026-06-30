@@ -32,6 +32,118 @@ describe "Shakapacker::Compiler" do
     expect(mocked_strategy).to have_received(:after_compile_hook)
   end
 
+  it "passes configured webpack compile flags to the shakapacker binstub" do
+    mocked_strategy = spy("Strategy")
+    allow(mocked_strategy).to receive(:stale?).and_return(true)
+    allow(Shakapacker.compiler).to receive(:strategy).and_return(mocked_strategy)
+    allow(Shakapacker.config).to receive(:webpack_compile_flags).and_return(["--progress", "--fail-on-warnings"])
+
+    status = instance_double(Process::Status, success?: true)
+    captured_args = nil
+    allow(Open3).to receive(:capture3) do |_env, *args|
+      captured_args = args
+      ["", "", status]
+    end
+
+    expect(Shakapacker.compiler.compile).to be true
+    expect(Open3).to have_received(:capture3).once
+
+    command_args = captured_args.take_while { |arg| !arg.is_a?(Hash) }
+    separator_index = command_args.index("--")
+    expect(separator_index).not_to be nil
+    expect(command_args[(separator_index + 1)..]).to eq(["--progress", "--fail-on-warnings"])
+  end
+
+  it "passes configured webpack compile flags after the Ruby runner when present" do
+    mocked_strategy = spy("Strategy")
+    allow(mocked_strategy).to receive(:stale?).and_return(true)
+    allow(Shakapacker.compiler).to receive(:strategy).and_return(mocked_strategy)
+    allow(Shakapacker.config).to receive(:webpack_compile_flags).and_return(["--progress"])
+    allow(Shakapacker.compiler).to receive(:optional_ruby_runner).and_return(RbConfig.ruby)
+
+    status = instance_double(Process::Status, success?: true)
+    captured_args = nil
+    allow(Open3).to receive(:capture3) do |_env, *args|
+      captured_args = args
+      ["", "", status]
+    end
+
+    expect(Shakapacker.compiler.compile).to be true
+    expect(Open3).to have_received(:capture3).once
+
+    command_args = captured_args.take_while { |arg| !arg.is_a?(Hash) }
+    bin_path = Shakapacker.config.root_path.join("bin/shakapacker").to_s
+    expect(command_args).to eq([RbConfig.ruby, bin_path, "--", "--progress"])
+  end
+
+  it "uses exec argv form with configured webpack compile flags when no Ruby runner is present" do
+    mocked_strategy = spy("Strategy")
+    allow(mocked_strategy).to receive(:stale?).and_return(true)
+    allow(Shakapacker.compiler).to receive(:strategy).and_return(mocked_strategy)
+    allow(Shakapacker.config).to receive(:webpack_compile_flags).and_return(["--progress"])
+    allow(Shakapacker.compiler).to receive(:optional_ruby_runner).and_return("")
+
+    status = instance_double(Process::Status, success?: true)
+    captured_args = nil
+    allow(Open3).to receive(:capture3) do |_env, *args|
+      captured_args = args
+      ["", "", status]
+    end
+
+    expect(Shakapacker.compiler.compile).to be true
+    expect(Open3).to have_received(:capture3).once
+
+    command_args = captured_args.take_while { |arg| !arg.is_a?(Hash) }
+    bin_path = Shakapacker.config.root_path.join("bin/shakapacker").to_s
+    expect(command_args).to eq([[bin_path, bin_path], "--", "--progress"])
+  end
+
+  it "uses exec argv form when no Ruby runner or compile flags are present" do
+    mocked_strategy = spy("Strategy")
+    allow(mocked_strategy).to receive(:stale?).and_return(true)
+    allow(Shakapacker.compiler).to receive(:strategy).and_return(mocked_strategy)
+    allow(Shakapacker.config).to receive(:webpack_compile_flags).and_return([])
+    allow(Shakapacker.compiler).to receive(:optional_ruby_runner).and_return("")
+
+    status = instance_double(Process::Status, success?: true)
+    captured_args = nil
+    allow(Open3).to receive(:capture3) do |_env, *args|
+      captured_args = args
+      ["", "", status]
+    end
+
+    expect(Shakapacker.compiler.compile).to be true
+    expect(Open3).to have_received(:capture3).once
+
+    command_args = captured_args.take_while { |arg| !arg.is_a?(Hash) }
+    bin_path = Shakapacker.config.root_path.join("bin/shakapacker").to_s
+    expect(command_args).to eq([[bin_path, bin_path]])
+  end
+
+  it "uses exec argv form when the shakapacker binstub is empty" do
+    mocked_strategy = spy("Strategy")
+    allow(mocked_strategy).to receive(:stale?).and_return(true)
+    allow(Shakapacker.compiler).to receive(:strategy).and_return(mocked_strategy)
+    allow(Shakapacker.config).to receive(:webpack_compile_flags).and_return([])
+
+    bin_pathname = Shakapacker.config.root_path.join("bin/shakapacker")
+    allow(File).to receive(:readlines).and_call_original
+    allow(File).to receive(:readlines).with(bin_pathname).and_return([])
+
+    status = instance_double(Process::Status, success?: true)
+    captured_args = nil
+    allow(Open3).to receive(:capture3) do |_env, *args|
+      captured_args = args
+      ["", "", status]
+    end
+
+    expect(Shakapacker.compiler.compile).to be true
+
+    command_args = captured_args.take_while { |arg| !arg.is_a?(Hash) }
+    bin_path = bin_pathname.to_s
+    expect(command_args).to eq([[bin_path, bin_path]])
+  end
+
   it "returns false and calls after_compile_hook on failed compile" do
     mocked_strategy = spy("Strategy")
     allow(mocked_strategy).to receive(:stale?).and_return(true)
@@ -44,6 +156,64 @@ describe "Shakapacker::Compiler" do
 
     expect(Shakapacker.compiler.compile).to be false
     expect(mocked_strategy).to have_received(:after_compile_hook)
+  end
+
+  it "returns false without after_compile_hook when the binstub cannot be spawned" do
+    mocked_strategy = spy("Strategy")
+    allow(mocked_strategy).to receive(:stale?).and_return(true)
+    allow(mocked_strategy).to receive(:after_compile_hook)
+
+    allow(Shakapacker.compiler).to receive(:strategy).and_return(mocked_strategy)
+    allow(Open3).to receive(:capture3).and_raise(Errno::EACCES.new("bin/shakapacker"))
+    allow(Shakapacker.logger).to receive(:error)
+    allow(Shakapacker.logger).to receive(:info)
+    Shakapacker::Compiler.doctor_hint_shown = false
+
+    expect(Shakapacker.compiler.compile).to be false
+    expect(Shakapacker.logger).to have_received(:error).with(/COMPILATION FAILED:\nErrno::EACCES:/)
+    expect(Shakapacker.logger).to have_received(:info).with(/shakapacker:doctor/).once
+    expect(mocked_strategy).not_to have_received(:after_compile_hook)
+  end
+
+  [Errno::ENOEXEC, Errno::EPERM, Errno::ENOTDIR].each do |spawn_error|
+    it "returns false without after_compile_hook when spawn raises #{spawn_error}" do
+      mocked_strategy = spy("Strategy")
+      allow(mocked_strategy).to receive(:stale?).and_return(true)
+      allow(mocked_strategy).to receive(:after_compile_hook)
+
+      allow(Shakapacker.compiler).to receive(:strategy).and_return(mocked_strategy)
+      allow(Open3).to receive(:capture3).and_raise(spawn_error.new("bin/shakapacker"))
+      allow(Shakapacker.logger).to receive(:error)
+      allow(Shakapacker.logger).to receive(:info)
+      Shakapacker::Compiler.doctor_hint_shown = false
+
+      expect(Shakapacker.compiler.compile).to be false
+      expect(Shakapacker.logger).to have_received(:error).with(/COMPILATION FAILED:\n#{spawn_error.name}:/)
+      expect(Shakapacker.logger).to have_received(:info).with(/shakapacker:doctor/).once
+      expect(mocked_strategy).not_to have_received(:after_compile_hook)
+    end
+  end
+
+  it "returns false with structured logging when the binstub is missing" do
+    mocked_strategy = spy("Strategy")
+    allow(mocked_strategy).to receive(:stale?).and_return(true)
+    allow(mocked_strategy).to receive(:after_compile_hook)
+
+    allow(Shakapacker.compiler).to receive(:strategy).and_return(mocked_strategy)
+    allow(Shakapacker.config).to receive(:webpack_compile_flags).and_return([])
+    bin_pathname = Shakapacker.config.root_path.join("bin/shakapacker")
+    allow(File).to receive(:readlines).and_call_original
+    allow(File).to receive(:readlines).with(bin_pathname).and_raise(Errno::ENOENT.new("bin/shakapacker"))
+    allow(Open3).to receive(:capture3)
+    allow(Shakapacker.logger).to receive(:error)
+    allow(Shakapacker.logger).to receive(:info)
+    Shakapacker::Compiler.doctor_hint_shown = false
+
+    expect(Shakapacker.compiler.compile).to be false
+    expect(Open3).not_to have_received(:capture3)
+    expect(Shakapacker.logger).to have_received(:error).with(/COMPILATION FAILED:\nErrno::ENOENT:/)
+    expect(Shakapacker.logger).to have_received(:info).with(/shakapacker:doctor/).once
+    expect(mocked_strategy).not_to have_received(:after_compile_hook)
   end
 
   describe "doctor hint messages" do

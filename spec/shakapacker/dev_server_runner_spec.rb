@@ -134,6 +134,107 @@ describe "DevServerRunner" do
         .to output(/--host.*Set from dev_server\.host/).to_stdout
         .and raise_error(SystemExit)
     end
+
+    it "mentions supported Node flags in help" do
+      expect { Shakapacker::DevServerRunner.run(["--help"]) }
+        .to output(/--trace-deprecation.*--no-deprecation/m).to_stdout
+        .and raise_error(SystemExit)
+    end
+  end
+
+  describe "passthrough separator" do
+    it "rejects Shakapacker node flags after --" do
+      Dir.chdir(test_app_path) do
+        %w[--debug-shakapacker --trace-deprecation --no-deprecation].each do |flag|
+          runner_argv, passthrough_argv = Shakapacker::DevServerRunner.split_passthrough_argv(
+            ["--", flag]
+          )
+          instance = Shakapacker::DevServerRunner.new(runner_argv, nil, nil, passthrough_argv)
+          allow(instance).to receive(:exit!).and_raise(SystemExit)
+
+          expect { instance.send(:detect_shakapacker_flags_in_passthrough!) }
+            .to output(/must appear before --: #{Regexp.escape(flag)}/).to_stdout
+            .and raise_error(SystemExit)
+        end
+      end
+    end
+
+    it "flushes misplaced Shakapacker node flag diagnostics before hard exit" do
+      Dir.chdir(test_app_path) do
+        runner_argv, passthrough_argv = Shakapacker::DevServerRunner.split_passthrough_argv(
+          ["--", "--trace-deprecation"]
+        )
+        instance = Shakapacker::DevServerRunner.new(runner_argv, nil, nil, passthrough_argv)
+        output = StringIO.new
+
+        allow(instance).to receive(:log_output).and_return(output)
+        allow(output).to receive(:flush).and_call_original
+        allow(instance).to receive(:exit!).and_raise(SystemExit)
+
+        expect { instance.send(:detect_shakapacker_flags_in_passthrough!) }
+          .to raise_error(SystemExit)
+        expect(output.string).to match(/must appear before --: --trace-deprecation/)
+        expect(output).to have_received(:flush)
+      end
+    end
+
+    it "rejects unsupported dev-server flags after --" do
+      Dir.chdir(test_app_path) do
+        allow(Shakapacker::Utils::Manager).to receive(
+          :error_unless_package_manager_is_obvious!
+        )
+
+        runner_argv, passthrough_argv = Shakapacker::DevServerRunner.split_passthrough_argv(
+          ["--", "--host", "0.0.0.0"]
+        )
+        instance = Shakapacker::DevServerRunner.new(runner_argv, nil, nil, passthrough_argv)
+
+        expect { instance.send(:detect_unsupported_switches!) }
+          .to output(/--host.*dev_server\.host/).to_stdout
+          .and raise_error(SystemExit)
+      end
+    end
+
+    it "flushes unsupported dev-server switch diagnostics before exit" do
+      Dir.chdir(test_app_path) do
+        runner_argv, passthrough_argv = Shakapacker::DevServerRunner.split_passthrough_argv(
+          ["--", "--port", "3036"]
+        )
+        instance = Shakapacker::DevServerRunner.new(runner_argv, nil, nil, passthrough_argv)
+        output = StringIO.new
+
+        allow(instance).to receive(:log_output).and_return(output)
+        allow(output).to receive(:flush).and_call_original
+
+        expect { instance.send(:detect_unsupported_switches!) }
+          .to raise_error(SystemExit)
+        expect(output.string).to match(/--port.*dev_server\.port/)
+        expect(output).to have_received(:flush)
+      end
+    end
+
+    it "translates Shakapacker node flags before -- into NODE_OPTIONS" do
+      Dir.chdir(test_app_path) do
+        allow(Shakapacker::Utils::Manager).to receive(
+          :error_unless_package_manager_is_obvious!
+        )
+
+        cmd = PackageJson.read(test_app_path).manager.native_exec_command(
+          "webpack",
+          ["serve", "--config", "#{test_app_path}/config/webpack/webpack.config.js"]
+        )
+        env = Shakapacker::Compiler.env
+        env["WEBPACK_SERVE"] = "true"
+        env["NODE_OPTIONS"] =
+          "#{ENV["NODE_OPTIONS"] || ""} --trace-deprecation --no-deprecation"
+
+        verify_command(
+          cmd,
+          argv: ["--trace-deprecation", "--no-deprecation"],
+          env: env
+        )
+      end
+    end
   end
 
   describe "NODE_ENV environment variable" do

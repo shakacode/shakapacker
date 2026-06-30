@@ -21,6 +21,7 @@ export interface Config {
   private_output_path?: string
   cache_path: string
   webpack_compile_output: boolean
+  webpack_compile_flags?: string[]
   shakapacker_precompile: boolean
   additional_paths: string[]
   cache_manifest: boolean

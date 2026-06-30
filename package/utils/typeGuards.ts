@@ -51,6 +51,73 @@ function shouldValidate(): boolean {
   )
 }
 
+function isStringArray(value: unknown): value is string[] {
+  return Array.isArray(value) && value.every((item) => typeof item === "string")
+}
+
+const SHAKAPACKER_NODE_FLAGS = [
+  // Keep in sync with Shakapacker::Configuration::SHAKAPACKER_NODE_FLAGS.
+  "--debug-shakapacker",
+  "--trace-deprecation",
+  "--no-deprecation"
+]
+
+const SHAKAPACKER_RUNNER_COMMANDS = [
+  // Keep in sync with Shakapacker::Configuration::SHAKAPACKER_RUNNER_COMMANDS.
+  "help",
+  "h",
+  "--help",
+  "-h",
+  "--help=verbose",
+  "version",
+  "v",
+  "--version",
+  "-v",
+  "info",
+  "i"
+]
+// Keep in sync with Shakapacker::Configuration::SHAKAPACKER_HELP_FLAG_PATTERN.
+const SHAKAPACKER_HELP_FLAG_PATTERN = /^(?:--help|-h)(?:=.*)?$/
+
+// Keep in sync with Shakapacker::Configuration::SHAKAPACKER_WATCH_FLAGS.
+const SHAKAPACKER_WATCH_FLAGS = ["--watch", "-w"]
+// Keep in sync with Shakapacker::Configuration::SHAKAPACKER_WATCH_FLAG_PATTERN.
+const SHAKAPACKER_WATCH_FLAG_PATTERN = /^(?:--watch|-w)(?:=.*)?$/
+const SHAKAPACKER_MANAGED_COMPILE_FLAGS = [
+  // Keep in sync with Shakapacker::Configuration::SHAKAPACKER_MANAGED_COMPILE_FLAGS.
+  "--config",
+  "-c",
+  "--node-env",
+  "--nodeEnv",
+  "--bundler",
+  "--build",
+  "--init",
+  "--list-builds"
+]
+// Keep in sync with Shakapacker::Configuration::SHAKAPACKER_MANAGED_COMPILE_FLAG_PATTERN.
+const SHAKAPACKER_MANAGED_COMPILE_FLAG_PATTERN =
+  /^(?:--config|-c|--node-env|--nodeEnv|--bundler|--build|--init|--list-builds)(?:=.*)?$/
+
+// Keep in sync with Shakapacker::Configuration::DISALLOWED_WEBPACK_COMPILE_FLAGS.
+const DISALLOWED_WEBPACK_COMPILE_FLAGS = [
+  ...SHAKAPACKER_NODE_FLAGS,
+  ...SHAKAPACKER_RUNNER_COMMANDS,
+  ...SHAKAPACKER_WATCH_FLAGS,
+  ...SHAKAPACKER_MANAGED_COMPILE_FLAGS
+]
+
+function isWebpackCompileFlags(value: unknown): value is string[] {
+  return (
+    isStringArray(value) &&
+    value.every((flag) => flag.length > 0) &&
+    !value.includes("--") &&
+    !DISALLOWED_WEBPACK_COMPILE_FLAGS.some((flag) => value.includes(flag)) &&
+    !value.some((flag) => SHAKAPACKER_HELP_FLAG_PATTERN.test(flag)) &&
+    !value.some((flag) => SHAKAPACKER_WATCH_FLAG_PATTERN.test(flag)) &&
+    !value.some((flag) => SHAKAPACKER_MANAGED_COMPILE_FLAG_PATTERN.test(flag))
+  )
+}
+
 // Debug logging for cache operations
 const debugCache = process.env.SHAKAPACKER_DEBUG_CACHE === "true"
 
@@ -180,8 +247,19 @@ export function isValidConfig(obj: unknown): obj is Config {
   }
 
   // Check arrays
-  if (!Array.isArray(config.additional_paths)) {
+  if (!isStringArray(config.additional_paths)) {
     // Cache negative result
+    validatedConfigs.set(obj, {
+      result: false,
+      timestamp: Date.now()
+    })
+    return false
+  }
+
+  if (
+    config.webpack_compile_flags !== undefined &&
+    !isWebpackCompileFlags(config.webpack_compile_flags)
+  ) {
     validatedConfigs.set(obj, {
       result: false,
       timestamp: Date.now()
@@ -191,7 +269,7 @@ export function isValidConfig(obj: unknown): obj is Config {
 
   // SECURITY: Path traversal validation for additional_paths ALWAYS runs (not subject to shouldValidate)
   // This critical security check ensures user-provided paths cannot escape the project directory
-  for (const additionalPath of config.additional_paths as string[]) {
+  for (const additionalPath of config.additional_paths) {
     if (!isPathTraversalSafe(additionalPath)) {
       console.warn(
         `[SHAKAPACKER SECURITY] Invalid additional_path: ${additionalPath}`
@@ -328,12 +406,26 @@ export function isPartialConfig(obj: unknown): obj is Partial<Config> {
     return false
   }
 
+  const config = obj as Record<string, unknown>
+
+  // CONFIG CONTRACT: compile flags shape is always checked before the production fast path.
+  // This is a deliberate CLI argv safety exception, not the default pattern for new fields.
+  if (
+    config.webpack_compile_flags !== undefined &&
+    !isWebpackCompileFlags(config.webpack_compile_flags)
+  ) {
+    return false
+  }
+
+  // additional_paths is resolved later; keep its shape check before the production fast path.
+  if ("additional_paths" in config && !isStringArray(config.additional_paths)) {
+    return false
+  }
+
   // In production, skip deep validation unless explicitly enabled
   if (!shouldValidate()) {
     return true
   }
-
-  const config = obj as Record<string, unknown>
 
   // Check string fields if present
   const stringFields = [
@@ -365,11 +457,6 @@ export function isPartialConfig(obj: unknown): obj is Partial<Config> {
     if (field in config && typeof config[field] !== "boolean") {
       return false
     }
-  }
-
-  // Check arrays if present
-  if ("additional_paths" in config && !Array.isArray(config.additional_paths)) {
-    return false
   }
 
   return true

@@ -878,6 +878,254 @@ describe "Shakapacker::Configuration" do
     end
   end
 
+  describe "#webpack_compile_flags" do
+    it "returns configured compile flags" do
+      test_config = Tempfile.new(["shakapacker", ".yml"])
+      test_config.write(<<~YAML)
+        production:
+          source_path: app/javascript
+          webpack_compile_flags:
+            - "--progress"
+            - "--fail-on-warnings"
+      YAML
+      test_config.rewind
+
+      config = Shakapacker::Configuration.new(
+        root_path: ROOT_PATH,
+        config_path: Pathname.new(test_config.path),
+        env: "production"
+      )
+
+      expect(config.webpack_compile_flags).to eq ["--progress", "--fail-on-warnings"]
+
+      test_config.close
+      test_config.unlink
+    end
+
+    it "returns an empty array when compile flags are not configured" do
+      test_config = Tempfile.new(["shakapacker", ".yml"])
+      test_config.write(<<~YAML)
+        production:
+          source_path: app/javascript
+      YAML
+      test_config.rewind
+
+      config = Shakapacker::Configuration.new(
+        root_path: ROOT_PATH,
+        config_path: Pathname.new(test_config.path),
+        env: "production"
+      )
+
+      expect(config.webpack_compile_flags).to eq []
+
+      test_config.close
+      test_config.unlink
+    end
+
+    it "raises error when compile flags are not an array" do
+      test_config = Tempfile.new(["shakapacker", ".yml"])
+      test_config.write(<<~YAML)
+        production:
+          source_path: app/javascript
+          webpack_compile_flags: "--progress"
+      YAML
+      test_config.rewind
+
+      config = Shakapacker::Configuration.new(
+        root_path: ROOT_PATH,
+        config_path: Pathname.new(test_config.path),
+        env: "production"
+      )
+
+      expect { config.webpack_compile_flags }.to raise_error(/compile flags \(webpack_compile_flags\) must be an array of non-empty strings/)
+
+      test_config.close
+      test_config.unlink
+    end
+
+    it "raises error when any compile flag is not a string" do
+      test_config = Tempfile.new(["shakapacker", ".yml"])
+      test_config.write(<<~YAML)
+        production:
+          source_path: app/javascript
+          webpack_compile_flags:
+            - "--progress"
+            - true
+      YAML
+      test_config.rewind
+
+      config = Shakapacker::Configuration.new(
+        root_path: ROOT_PATH,
+        config_path: Pathname.new(test_config.path),
+        env: "production"
+      )
+
+      expect { config.webpack_compile_flags }.to raise_error(/compile flags \(webpack_compile_flags\) must be an array of non-empty strings/)
+
+      test_config.close
+      test_config.unlink
+    end
+
+    it "raises error when compile flags include the passthrough separator" do
+      test_config = Tempfile.new(["shakapacker", ".yml"])
+      test_config.write(<<~YAML)
+        production:
+          source_path: app/javascript
+          webpack_compile_flags:
+            - "--"
+            - "--progress"
+      YAML
+      test_config.rewind
+
+      config = Shakapacker::Configuration.new(
+        root_path: ROOT_PATH,
+        config_path: Pathname.new(test_config.path),
+        env: "production"
+      )
+
+      expect { config.webpack_compile_flags }.to raise_error(/must not include "--"/)
+
+      test_config.close
+      test_config.unlink
+    end
+
+    it "raises error when compile flags include an empty string" do
+      test_config = Tempfile.new(["shakapacker", ".yml"])
+      test_config.write(<<~YAML)
+        production:
+          source_path: app/javascript
+          webpack_compile_flags:
+            - "--progress"
+            - ""
+      YAML
+      test_config.rewind
+
+      config = Shakapacker::Configuration.new(
+        root_path: ROOT_PATH,
+        config_path: Pathname.new(test_config.path),
+        env: "production"
+      )
+
+      expect { config.webpack_compile_flags }.to raise_error(/non-empty strings/)
+
+      test_config.close
+      test_config.unlink
+    end
+
+    it "raises error when compile flags include Shakapacker wrapper flags" do
+      test_config = Tempfile.new(["shakapacker", ".yml"])
+      test_config.write(<<~YAML)
+        production:
+          source_path: app/javascript
+          webpack_compile_flags:
+            - "--debug-shakapacker"
+      YAML
+      test_config.rewind
+
+      config = Shakapacker::Configuration.new(
+        root_path: ROOT_PATH,
+        config_path: Pathname.new(test_config.path),
+        env: "production"
+      )
+
+      expect { config.webpack_compile_flags }.to raise_error(/wrapper\/short-circuit\/watch\/managed flags/)
+
+      test_config.close
+      test_config.unlink
+    end
+
+    it "raises error when compile flags include runner short-circuit flags" do
+      ["--help=verbose", "--help=compact", "-h=compact"].each do |help_flag|
+        test_config = Tempfile.new(["shakapacker", ".yml"])
+
+        begin
+          test_config.write(<<~YAML)
+            production:
+              source_path: app/javascript
+              webpack_compile_flags:
+                - #{help_flag.inspect}
+          YAML
+          test_config.rewind
+
+          config = Shakapacker::Configuration.new(
+            root_path: ROOT_PATH,
+            config_path: Pathname.new(test_config.path),
+            env: "production"
+          )
+
+          expect { config.webpack_compile_flags }.to raise_error(/wrapper\/short-circuit\/watch\/managed flags/)
+        ensure
+          test_config.close
+          test_config.unlink
+        end
+      end
+    end
+
+    it "raises error when compile flags include watch-mode flags" do
+      ["--watch", "--watch=true", "-w=true"].each do |watch_flag|
+        test_config = Tempfile.new(["shakapacker", ".yml"])
+
+        begin
+          test_config.write(<<~YAML)
+            production:
+              source_path: app/javascript
+              webpack_compile_flags:
+                - #{watch_flag.inspect}
+          YAML
+          test_config.rewind
+
+          config = Shakapacker::Configuration.new(
+            root_path: ROOT_PATH,
+            config_path: Pathname.new(test_config.path),
+            env: "production"
+          )
+
+          expect { config.webpack_compile_flags }.to raise_error(/wrapper\/short-circuit\/watch\/managed flags/)
+        ensure
+          test_config.close
+          test_config.unlink
+        end
+      end
+    end
+
+    it "raises error when compile flags include managed Shakapacker flags" do
+      [
+        "--config",
+        "--config=custom.js",
+        "-c=custom.js",
+        "--node-env=development",
+        "--nodeEnv=development",
+        "--bundler",
+        "--build=dev",
+        "--init",
+        "--list-builds"
+      ].each do |managed_flag|
+        test_config = Tempfile.new(["shakapacker", ".yml"])
+
+        begin
+          test_config.write(<<~YAML)
+            production:
+              source_path: app/javascript
+              webpack_compile_flags:
+                - #{managed_flag.inspect}
+          YAML
+          test_config.rewind
+
+          config = Shakapacker::Configuration.new(
+            root_path: ROOT_PATH,
+            config_path: Pathname.new(test_config.path),
+            env: "production"
+          )
+
+          expect { config.webpack_compile_flags }.to raise_error(/wrapper\/short-circuit\/watch\/managed flags/)
+        ensure
+          test_config.close
+          test_config.unlink
+        end
+      end
+    end
+  end
+
   context "with completely missing environment and no default section" do
     it "handles missing default section gracefully" do
       # Create a minimal config file with no default or development sections

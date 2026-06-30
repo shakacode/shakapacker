@@ -26,6 +26,23 @@ module Shakapacker
       "i"
     ].freeze
 
+    SHAKAPACKER_NODE_FLAGS = Configuration::SHAKAPACKER_NODE_FLAGS
+    private_constant :SHAKAPACKER_NODE_FLAGS
+
+    RSPACK_RUNNER_EXTENSION = Module.new do
+      def build_cmd
+        package_json.manager.native_exec_command("rspack")
+      end
+    end
+    private_constant :RSPACK_RUNNER_EXTENSION
+
+    WEBPACK_RUNNER_EXTENSION = Module.new do
+      def build_cmd
+        package_json.manager.native_exec_command("webpack")
+      end
+    end
+    private_constant :WEBPACK_RUNNER_EXTENSION
+
     def self.json_output?(argv)
       argv.include?("--json") || argv.include?("-j")
     end
@@ -34,31 +51,39 @@ module Shakapacker
       json_output?(argv) ? $stderr : $stdout
     end
 
+    def self.split_passthrough_argv(argv)
+      separator_index = argv.index("--")
+      return [argv.dup, []] unless separator_index
+
+      [argv[0...separator_index], argv[(separator_index + 1)..]]
+    end
+
     def self.run(argv)
       $stdout.sync = true
+      runner_argv, passthrough_argv = split_passthrough_argv(argv)
 
       # Show Shakapacker help and exit (don't call bundler)
       # Support --help, -h, and --help=verbose formats
-      help_verbose = argv.any? { |arg| arg == "--help=verbose" }
-      if argv.include?("--help") || argv.include?("-h") || help_verbose
+      help_verbose = runner_argv.any? { |arg| arg == "--help=verbose" }
+      if runner_argv.include?("--help") || runner_argv.include?("-h") || help_verbose
         print_help(verbose: help_verbose)
         exit(0)
-      elsif argv.include?("--version") || argv.include?("-v")
+      elsif runner_argv.include?("--version") || runner_argv.include?("-v")
         print_version
         exit(0)
-      elsif argv.include?("--init")
+      elsif runner_argv.include?("--init")
         init_config_file
         exit(0)
-      elsif argv.include?("--list-builds")
+      elsif runner_argv.include?("--list-builds")
         list_builds
         exit(0)
       end
 
       # Check for --bundler flag
       bundler_override = nil
-      bundler_index = argv.index("--bundler")
+      bundler_index = runner_argv.index("--bundler")
       if bundler_index
-        bundler_value = argv[bundler_index + 1]
+        bundler_value = runner_argv[bundler_index + 1]
         unless bundler_value && %w[webpack rspack].include?(bundler_value)
           $stderr.puts "[Shakapacker] Error: --bundler requires 'webpack' or 'rspack'"
           $stderr.puts "Usage: bin/shakapacker --bundler <webpack|rspack>"
@@ -68,9 +93,9 @@ module Shakapacker
       end
 
       # Check for --build flag
-      build_index = argv.index("--build")
+      build_index = runner_argv.index("--build")
       if build_index
-        build_name = argv[build_index + 1]
+        build_name = runner_argv[build_index + 1]
 
         unless build_name
           $stderr.puts "[Shakapacker] Error: --build requires a build name"
@@ -93,7 +118,7 @@ module Shakapacker
           build_config = loader.resolve_build_config(build_name, **resolve_opts)
 
           # Remove --build and build name from argv
-          remaining_argv = argv.dup
+          remaining_argv = runner_argv.dup
           remaining_argv.delete_at(build_index + 1)
           remaining_argv.delete_at(build_index)
 
@@ -108,17 +133,18 @@ module Shakapacker
 
           # If this build uses dev server, delegate to DevServerRunner
           if loader.uses_dev_server?(build_config)
-            log = log_output_for(argv)
+            # Include passthrough --json so Shakapacker logs stay off stdout when bundler JSON is requested.
+            log = log_output_for(runner_argv + passthrough_argv)
             log.puts "[Shakapacker] Build '#{build_name}' requires dev server"
             log.puts "[Shakapacker] Running: bin/shakapacker-dev-server --build #{build_name}"
             log.puts ""
             require_relative "dev_server_runner"
-            DevServerRunner.run_with_build_config(remaining_argv, build_config)
+            DevServerRunner.run_with_build_config(remaining_argv, build_config, passthrough_argv)
             return
           end
 
           # Otherwise run with this build config
-          run_with_build_config(remaining_argv, build_config)
+          run_with_build_config(remaining_argv, build_config, passthrough_argv)
           return
         rescue ArgumentError => e
           $stderr.puts "[Shakapacker] #{e.message}"
@@ -129,7 +155,7 @@ module Shakapacker
       Shakapacker.ensure_node_env!
 
       # Remove --bundler flag from argv if present (not using --build)
-      remaining_argv = argv.dup
+      remaining_argv = runner_argv.dup
       if bundler_index
         bundler_idx = remaining_argv.index("--bundler")
         if bundler_idx
@@ -144,39 +170,26 @@ module Shakapacker
 
       # Create a single runner instance to avoid loading configuration twice.
       # We extend it with the appropriate build command based on the bundler type.
-      runner = new(remaining_argv, nil, bundler_override)
+      runner = new(remaining_argv, nil, bundler_override, passthrough_argv)
 
       # Determine which bundler to use (override takes precedence)
       use_rspack = bundler_override ? (bundler_override == "rspack") : runner.config.rspack?
 
       if use_rspack
         require_relative "rspack_runner"
-        # Extend the runner instance with rspack-specific methods
-        # This avoids creating a new RspackRunner which would reload the configuration
-        runner.extend(Module.new do
-          def build_cmd
-            package_json.manager.native_exec_command("rspack")
-          end
-
-          def assets_bundler_commands
-            BASE_COMMANDS + %w[build watch]
-          end
-        end)
+        # Extend the runner instance to avoid creating a new RspackRunner and reloading configuration.
+        runner.extend(RSPACK_RUNNER_EXTENSION)
         runner.run
       else
         require_relative "webpack_runner"
         # Extend the runner instance with webpack-specific methods
         # This avoids creating a new WebpackRunner which would reload the configuration
-        runner.extend(Module.new do
-          def build_cmd
-            package_json.manager.native_exec_command("webpack")
-          end
-        end)
+        runner.extend(WEBPACK_RUNNER_EXTENSION)
         runner.run
       end
     end
 
-    def self.run_with_build_config(argv, build_config)
+    def self.run_with_build_config(argv, build_config, passthrough_argv = [])
       $stdout.sync = true
       Shakapacker.ensure_node_env!
 
@@ -189,7 +202,8 @@ module Shakapacker
       # This ensures the bundler override (from --bundler or build config) is respected
       ENV["SHAKAPACKER_ASSETS_BUNDLER"] = build_config[:bundler]
 
-      log = log_output_for(argv)
+      # Include passthrough --json so Shakapacker logs stay off stdout when bundler JSON is requested.
+      log = log_output_for(argv + passthrough_argv)
       log.puts "[Shakapacker] Running build: #{build_config[:name]}"
       log.puts "[Shakapacker] Description: #{build_config[:description]}" if build_config[:description]
       log.puts "[Shakapacker] Bundler: #{build_config[:bundler]}"
@@ -197,37 +211,31 @@ module Shakapacker
 
       # Create runner with modified argv and bundler from build_config
       # The build_config[:bundler] already has any CLI --bundler override applied
-      runner = new(argv, build_config, build_config[:bundler])
+      runner = new(argv, build_config, build_config[:bundler], passthrough_argv)
 
       # Use bundler from build_config (which includes CLI override)
       if build_config[:bundler] == "rspack"
         require_relative "rspack_runner"
-        runner.extend(Module.new do
-          def build_cmd
-            package_json.manager.native_exec_command("rspack")
-          end
-
-          def assets_bundler_commands
-            BASE_COMMANDS + %w[build watch]
-          end
-        end)
+        runner.extend(RSPACK_RUNNER_EXTENSION)
         runner.run
       else
         require_relative "webpack_runner"
-        runner.extend(Module.new do
-          def build_cmd
-            package_json.manager.native_exec_command("webpack")
-          end
-        end)
+        runner.extend(WEBPACK_RUNNER_EXTENSION)
         runner.run
       end
     end
 
-    def initialize(argv, build_config = nil, bundler_override = nil)
-      @argv = argv
+    def initialize(argv, build_config = nil, bundler_override = nil, passthrough_argv = nil)
+      @argv, @passthrough_argv =
+        unless passthrough_argv.nil?
+          [argv, passthrough_argv]
+        else
+          self.class.split_passthrough_argv(argv)
+        end
       @build_config = build_config
       @bundler_override = bundler_override
-      @json_output = self.class.json_output?(argv)
+      # Bundler --json writes machine-readable output to stdout; route Shakapacker logs to stderr too.
+      @json_output = self.class.json_output?(bundler_argv)
 
       @app_path           = File.expand_path(".", Dir.pwd)
       @shakapacker_config = ENV["SHAKAPACKER_CONFIG"] || File.join(@app_path, "config/shakapacker.yml")
@@ -260,6 +268,9 @@ module Shakapacker
       cmd = build_cmd
       log_output.puts "[Shakapacker] Base command: #{cmd.join(" ")}"
 
+      detect_shakapacker_flags_in_passthrough!
+
+      # Shakapacker-owned Node flags must appear before --; passthrough args belong to the bundler.
       if @argv.delete("--debug-shakapacker")
         log_output.puts "[Shakapacker] Debug mode enabled (--debug-shakapacker)"
         env["NODE_OPTIONS"] = "#{env["NODE_OPTIONS"]} --inspect-brk"
@@ -276,18 +287,19 @@ module Shakapacker
       end
 
       # Commands are not compatible with --config option.
-      if (@argv & assets_bundler_commands).empty?
+      incompatible_args = config_incompatible_args
+      if incompatible_args.empty?
         log_output.puts "[Shakapacker] Adding config file: #{@webpack_config}"
         cmd += ["--config", @webpack_config]
       else
-        log_output.puts "[Shakapacker] Skipping config file (running assets bundler command: #{(@argv & assets_bundler_commands).join(", ")})"
+        log_output.puts "[Shakapacker] Skipping config file (running assets bundler command: #{incompatible_args.join(", ")})"
       end
 
-      cmd += @argv
+      cmd += bundler_argv
       log_output.puts "[Shakapacker] Final command: #{cmd.join(" ")}"
       log_output.puts "[Shakapacker] Working directory: #{@app_path}"
 
-      watch_mode = @argv.include?("--watch") || @argv.include?("-w")
+      watch_mode = bundler_argv.include?("--watch") || bundler_argv.include?("-w")
       start_time = Time.now unless watch_mode
 
       Dir.chdir(@app_path) do
@@ -319,8 +331,31 @@ module Shakapacker
 
     protected
 
+      def bundler_argv
+        @argv + @passthrough_argv
+      end
+
       def assets_bundler_commands
         BASE_COMMANDS
+      end
+
+      def config_incompatible_args
+        bundler_argv & assets_bundler_commands
+      end
+
+      def detect_shakapacker_flags_in_passthrough!(flags = SHAKAPACKER_NODE_FLAGS)
+        misplaced_flags = @passthrough_argv & flags
+        return if misplaced_flags.empty?
+
+        log_output.puts(
+          "The following Shakapacker-specific options must appear before --: #{misplaced_flags.join(' ')}."
+        )
+        exit_after_shakapacker_flag_error(1)
+      end
+
+      def exit_after_shakapacker_flag_error(status)
+        log_output.flush
+        exit(status)
       end
 
       def print_config_not_found_error(bundler_type, config_path, config_dir)
@@ -353,6 +388,9 @@ module Shakapacker
           --no-deprecation          Silence deprecation warnings
           --bundler <webpack|rspack>
                                     Override bundler (defaults to shakapacker.yml)
+
+          Put Shakapacker-specific options before --. Arguments after -- are
+          passed directly to the selected bundler.
 
         Build configurations (config/shakapacker-builds.yml):
           --init                    Create config/shakapacker-builds.yml

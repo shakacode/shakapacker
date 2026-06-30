@@ -90,6 +90,20 @@ describe("typescript build", () => {
       expect(isPartialConfig(validPartial)).toBe(true)
       expect(isPartialConfig(invalidPartial)).toBe(false)
     })
+
+    it("should reject invalid webpack compile flags in generated runtime code", () => {
+      const { isPartialConfig } = require("../../package/utils/typeGuards")
+
+      expect(
+        isPartialConfig({ webpack_compile_flags: ["--help=compact"] })
+      ).toBe(false)
+      expect(
+        isPartialConfig({ webpack_compile_flags: ["--config=custom.js"] })
+      ).toBe(false)
+      expect(
+        isPartialConfig({ webpack_compile_flags: ["--nodeEnv=development"] })
+      ).toBe(false)
+    })
   })
 
   describe("error helpers", () => {

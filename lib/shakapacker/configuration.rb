@@ -27,6 +27,34 @@ require "active_support/core_ext/hash/indifferent_access"
 #
 # @see https://github.com/shakacode/shakapacker/blob/main/docs/shakapacker.yml.md
 class Shakapacker::Configuration
+  # Shared Ruby source of truth for Shakapacker-owned Node flags; Runner aliases this constant.
+  SHAKAPACKER_NODE_FLAGS = %w[--debug-shakapacker --trace-deprecation --no-deprecation].freeze
+
+  SHAKAPACKER_RUNNER_COMMANDS = %w[help h --help -h --help=verbose version v --version -v info i].freeze
+  private_constant :SHAKAPACKER_RUNNER_COMMANDS
+
+  SHAKAPACKER_HELP_FLAG_PATTERN = /\A(?:--help|-h)(?:=.*)?\z/
+  private_constant :SHAKAPACKER_HELP_FLAG_PATTERN
+
+  SHAKAPACKER_WATCH_FLAGS = %w[--watch -w].freeze
+  private_constant :SHAKAPACKER_WATCH_FLAGS
+
+  SHAKAPACKER_WATCH_FLAG_PATTERN = /\A(?:--watch|-w)(?:=.*)?\z/
+  private_constant :SHAKAPACKER_WATCH_FLAG_PATTERN
+
+  SHAKAPACKER_MANAGED_COMPILE_FLAGS =
+    %w[--config -c --node-env --nodeEnv --bundler --build --init --list-builds].freeze
+  private_constant :SHAKAPACKER_MANAGED_COMPILE_FLAGS
+
+  SHAKAPACKER_MANAGED_COMPILE_FLAG_PATTERN =
+    /\A(?:--config|-c|--node-env|--nodeEnv|--bundler|--build|--init|--list-builds)(?:=.*)?\z/
+  private_constant :SHAKAPACKER_MANAGED_COMPILE_FLAG_PATTERN
+
+  DISALLOWED_WEBPACK_COMPILE_FLAGS =
+    (SHAKAPACKER_NODE_FLAGS + SHAKAPACKER_RUNNER_COMMANDS + SHAKAPACKER_WATCH_FLAGS +
+      SHAKAPACKER_MANAGED_COMPILE_FLAGS).freeze
+  private_constant :DISALLOWED_WEBPACK_COMPILE_FLAGS
+
   class << self
     # Flag indicating whether Shakapacker is currently being installed
     # Used to suppress certain validations during installation
@@ -233,6 +261,25 @@ class Shakapacker::Configuration
     fetch(:webpack_compile_output)
   end
 
+  # Returns extra command-line flags passed to the webpack/rspack compile command
+  #
+  # @return [Array<String>] bundler CLI flags
+  def webpack_compile_flags
+    flags = fetch(:webpack_compile_flags)
+    return [] if flags.nil?
+
+    valid_flags = flags.is_a?(Array) && flags.all? { |flag| valid_webpack_compile_flag?(flag) }
+
+    unless valid_flags
+      disallowed_flags = DISALLOWED_WEBPACK_COMPILE_FLAGS.join(", ")
+      raise "Shakapacker configuration error: compile flags (webpack_compile_flags) must be an array of " \
+            "non-empty strings and must not include \"--\" or Shakapacker-specific " \
+            "wrapper/short-circuit/watch/managed flags (#{disallowed_flags})"
+    end
+
+    flags
+  end
+
   # Returns the compiler strategy for determining staleness
   #
   # Options:
@@ -398,6 +445,16 @@ class Shakapacker::Configuration
   end
 
   private
+
+    def valid_webpack_compile_flag?(flag)
+      flag.is_a?(String) &&
+        !flag.empty? &&
+        flag != "--" &&
+        !DISALLOWED_WEBPACK_COMPILE_FLAGS.include?(flag) &&
+        !SHAKAPACKER_HELP_FLAG_PATTERN.match?(flag) &&
+        !SHAKAPACKER_WATCH_FLAG_PATTERN.match?(flag) &&
+        !SHAKAPACKER_MANAGED_COMPILE_FLAG_PATTERN.match?(flag)
+    end
 
     def default_javascript_transpiler
       # RSpack has built-in SWC support, use it by default
