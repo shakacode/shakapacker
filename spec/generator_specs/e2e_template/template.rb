@@ -5,7 +5,8 @@ require "package_json"
 package_json = PackageJson.new
 
 # install react
-# preset-react 8 peers on @babel/core 8; pin to v7 to match the generated app's @babel/core.
+# react-dom 19 is not compatible with this generated app config.
+# preset-react 8 peers on @babel/core 8, so keep the generated app on React 18 and preset-react 7.
 package_json.manager.add([
   "react@^18.3.1",
   "react-dom@^18.3.1",
