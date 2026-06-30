@@ -42,7 +42,11 @@ module Shakapacker
         shebang = File.open(path, "rb") { |f| f.gets }.to_s
         return nil unless shebang.start_with?("#!")
 
-        shebang_tokens = Shellwords.split(shebang.delete_prefix("#!"))
+        shebang_tokens = begin
+          Shellwords.split(shebang.delete_prefix("#!"))
+        rescue ArgumentError
+          return nil
+        end
         executable = shebang_tokens.first.to_s
 
         if File.basename(executable) == "env"

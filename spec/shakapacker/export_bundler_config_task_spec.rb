@@ -61,12 +61,11 @@ RSpec.describe "shakapacker:export_bundler_config" do
         console.log("legacy binstub")
       JS
 
-      stderr_output = StringIO.new
-      allow($stderr).to receive(:puts) { |message| stderr_output.puts(message) }
+      allow($stderr).to receive(:puts)
 
       expect(invoke_task(app_path, "--doctor")).to eq(["node", binstub_path, "--doctor"])
-      expect(stderr_output.string).to include("legacy JavaScript binstub")
-      expect(stderr_output.string).to include("rake shakapacker:binstubs")
+      expect($stderr).to have_received(:puts).with(a_string_including("legacy JavaScript binstub"))
+      expect($stderr).to have_received(:puts).with(a_string_including("rake shakapacker:binstubs"))
     end
   end
 
@@ -77,14 +76,13 @@ RSpec.describe "shakapacker:export_bundler_config" do
         console.log("legacy binstub")
       JS
 
-      stderr_output = StringIO.new
-      allow($stderr).to receive(:puts) { |message| stderr_output.puts(message) }
+      allow($stderr).to receive(:puts)
 
       expect(invoke_task(app_path, "--doctor")).to eq(
         ["nodejs", binstub_path, "--doctor"]
       )
-      expect(stderr_output.string).to include("legacy JavaScript binstub")
-      expect(stderr_output.string).to include("rake shakapacker:binstubs")
+      expect($stderr).to have_received(:puts).with(a_string_including("legacy JavaScript binstub"))
+      expect($stderr).to have_received(:puts).with(a_string_including("rake shakapacker:binstubs"))
     end
   end
 
@@ -97,7 +95,22 @@ RSpec.describe "shakapacker:export_bundler_config" do
 
       capture_stderr do |stderr_output|
         expect { invoke_task(app_path, "--doctor", exec_error: Errno::ENOENT.new) }.to raise_error(SystemExit)
-        expect(stderr_output.string).to include("'node' was not found in PATH")
+        expect(stderr_output.string).to include("'node' was not found in PATH or is not executable")
+        expect(stderr_output.string).to include("rake shakapacker:binstubs")
+      end
+    end
+  end
+
+  it "aborts with upgrade guidance when a legacy JavaScript binstub executable is not executable" do
+    Dir.mktmpdir("shakapacker-export-bundler-config-") do |app_path|
+      write_app_binstub(app_path, <<~JS)
+        #!/usr/bin/env node
+        console.log("legacy binstub")
+      JS
+
+      capture_stderr do |stderr_output|
+        expect { invoke_task(app_path, "--doctor", exec_error: Errno::EACCES.new) }.to raise_error(SystemExit)
+        expect(stderr_output.string).to include("'node' was not found in PATH or is not executable")
         expect(stderr_output.string).to include("rake shakapacker:binstubs")
       end
     end

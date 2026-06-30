@@ -76,6 +76,12 @@ RSpec.describe Shakapacker::Utils::Misc do
       end
     end
 
+    it "returns nil for malformed shebangs" do
+      with_binstub("#!/usr/bin/env 'node\nconsole.log('legacy')\n") do |path|
+        expect(described_class.js_binstub_executable(path)).to be_nil
+      end
+    end
+
     it "returns nil for an empty file" do
       with_binstub("") do |path|
         expect(described_class.js_binstub_executable(path)).to be_nil
