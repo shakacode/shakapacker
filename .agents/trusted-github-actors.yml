@@ -5,10 +5,11 @@ trusted_users:
   - G-Rath
   - justin808
 
-# Bot entries are base bot names. GitHub API logins usually include the
-# `[bot]` suffix; humans with the same base login are not trusted by this list.
-# Trusted bots are exempt from hidden-participant blocking and their generated
-# PR content may be processed as trusted review input. Keep this list narrow.
+# Bot entries may use base bot names or exact `[bot]` GitHub logins; the
+# preflight helper normalizes the suffix. Humans with the same base login are
+# not trusted by this list. Trusted bots are exempt from hidden-participant
+# blocking and their generated PR content may be processed as trusted review
+# input. Keep this list narrow.
 trusted_bots:
   - chatgpt-codex-connector
   - claude
@@ -22,10 +23,10 @@ trusted_bots:
 trusted_metadata_bots:
   # Observed historical review comments use the actual GitHub login
   # `cursor[bot]`; keep them non-actionable unless separately triaged.
-  - cursor
+  - cursor[bot]
   # Repo-local exception: github-actions comments here are Claude completion or
   # status metadata only. They do not override AGENTS.md or widen a batch scope.
-  - github-actions
+  - github-actions[bot]
 
 # Team entries are GitHub team slugs under the repository owner org. Reading
 # team membership requires the local GitHub token to have org access.
