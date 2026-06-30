@@ -5,8 +5,7 @@ require "package_json"
 package_json = PackageJson.new
 
 # install react
-# Keep generated apps on React 18/Babel 7: preset-react 8 peers on @babel/core 8,
-# but this template uses @babel/core 7.
+# preset-react 8 peers on @babel/core 8; pin to v7 to match the generated app's @babel/core.
 package_json.manager.add([
   "react@^18.3.1",
   "react-dom@^18.3.1",
