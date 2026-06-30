@@ -257,7 +257,7 @@ If you prefer to migrate manually or need more control:
 npm uninstall webpack webpack-cli webpack-dev-server
 
 # Install Rspack
-npm install --save-dev @rspack/core @rspack/cli
+npm install --save-dev @rspack/core rspack-manifest-plugin @rspack/cli @rspack/dev-server
 ```
 
 #### Step 2: Update Configuration Files

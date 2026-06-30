@@ -100,11 +100,11 @@ For major version upgrades, always consult the version-specific upgrade guides f
 
 ## Adopting Supplemental Packages (10.1+)
 
-Shakapacker 10.1 introduces two optional npm packages — `shakapacker-webpack` and `shakapacker-rspack` — that bundle the managed-build stack as direct dependencies. Adopting one of them lets you replace four explicit `devDependencies` (`shakapacker` + bundler + CLI + manifest plugin) with a single package that lockstep-pins to the exact versions Shakapacker is tested against.
+Shakapacker 10.1 introduces two optional npm packages — `shakapacker-webpack` and `shakapacker-rspack` — that bundle the managed-build stack as direct dependencies. Adopting one of them lets you replace explicit managed-build `devDependencies` (`shakapacker` + bundler + CLI + dev-server + manifest plugin for Rspack, or the webpack equivalents) with a single package that lockstep-pins to the exact versions Shakapacker is tested against.
 
 **This is opt-in.** Apps that don't change anything keep working on 10.1 exactly as they did on 10.0.
 
-**Rspack apps** can replace `shakapacker` + `@rspack/core` + `@rspack/cli` + `rspack-manifest-plugin` with a single `shakapacker-rspack` dev dependency.
+**Rspack apps** can replace `shakapacker` + `@rspack/core` + `@rspack/cli` + `@rspack/dev-server` + `rspack-manifest-plugin` with a single `shakapacker-rspack` dev dependency.
 
 **Webpack apps** can replace `shakapacker` + `webpack` + `webpack-cli` + `webpack-assets-manifest` with a single `shakapacker-webpack` dev dependency. One caveat: `shakapacker-webpack` pins `webpack-assets-manifest` to `~6.5.1`, so apps still on `webpack-assets-manifest@5.x` need to upgrade to v6 when adopting it.
 
@@ -474,13 +474,13 @@ If you prefer manual control:
 ```bash
 # Install Rspack dependencies
 # Using Yarn
-yarn add --dev @rspack/core @rspack/cli
+yarn add --dev @rspack/core @rspack/cli @rspack/dev-server rspack-manifest-plugin
 
 # Using npm
-npm install --save-dev @rspack/core @rspack/cli
+npm install --save-dev @rspack/core @rspack/cli @rspack/dev-server rspack-manifest-plugin
 
 # Using pnpm
-pnpm add --save-dev @rspack/core @rspack/cli
+pnpm add --save-dev @rspack/core @rspack/cli @rspack/dev-server rspack-manifest-plugin
 
 # Remove webpack dependencies (optional)
 yarn remove webpack webpack-cli webpack-dev-server

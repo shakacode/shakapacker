@@ -13,7 +13,7 @@ If you're starting a new app today on npm 7+:
 npm install --save-dev shakapacker-rspack
 ```
 
-That's it for npm 7+. The required peers (`@rspack/core`, `@rspack/cli`, `rspack-manifest-plugin`) auto-install with the supplemental, and `shakapacker` comes along as a direct dependency. Webpack users get the same shape with `shakapacker-webpack`. pnpm and Yarn PnP users should keep packages imported by app config files as explicit app dependencies; the Rails installer handles this for you.
+That's it for npm 7+. The required peers (`@rspack/core`, `@rspack/cli`, `@rspack/dev-server`, `rspack-manifest-plugin`) auto-install with the supplemental, and `shakapacker` comes along as a direct dependency. Webpack users get the same shape with `shakapacker-webpack`. pnpm and Yarn PnP users should keep packages imported by app config files as explicit app dependencies; the Rails installer handles this for you.
 
 If you're already on Shakapacker 10.0, you can collapse the now-managed deps in your `devDependencies` into the supplemental package. Nothing breaks if you don't.
 
@@ -23,10 +23,10 @@ Until now, a typical Shakapacker install meant listing the gem, the npm package,
 
 10.1 shifts that responsibility to the supplemental packages. Each one declares the singleton bundler stack as **required peer dependencies** so package managers surface version conflicts as warnings rather than silently installing duplicate instances of webpack:
 
-- `shakapacker-rspack` requires `@rspack/core`, `@rspack/cli`, `rspack-manifest-plugin` as peers; `shakapacker` rides along as a direct dependency.
+- `shakapacker-rspack` requires `@rspack/core`, `@rspack/cli`, `@rspack/dev-server`, `rspack-manifest-plugin` as peers; `shakapacker` rides along as a direct dependency.
 - `shakapacker-webpack` requires `webpack`, `webpack-cli`, `webpack-assets-manifest` as peers; `shakapacker` and `terser-webpack-plugin` ride along as direct dependencies.
 
-Optional features — transpilers (swc / babel / esbuild for webpack), CSS preprocessors, dev-server, react-refresh — stay as opt-in `peerDependencies` so you only download what you actually use. (Bundling sass into every install would force a 10MB native-binding download on apps that don't even import a `.scss` file. We're not doing that.)
+Optional features — transpilers (swc / babel / esbuild for webpack), CSS preprocessors, webpack dev-server, and react-refresh — stay as opt-in `peerDependencies` so you only download what you actually use. Rspack dev-server is part of the required `shakapacker-rspack` managed stack. (Bundling sass into every install would force a 10MB native-binding download on apps that don't even import a `.scss` file. We're not doing that.)
 
 ## Adopting in an existing app
 
@@ -38,7 +38,8 @@ On npm 7+, replace the explicit deps with the supplemental package:
 -    "shakapacker": "^10.0.0",
 -    "@rspack/core": "^2.0.0",
 -    "@rspack/cli": "^2.0.0",
--    "rspack-manifest-plugin": "^5.0.0"
+-    "@rspack/dev-server": "^2.0.0",
+-    "rspack-manifest-plugin": "^5.2.2"
 +    "shakapacker-rspack": "~10.1.0"
    }
  }

@@ -2,6 +2,7 @@ require_relative "spec_helper_initializer"
 
 describe "RakeTasks" do
   TEST_APP_PATH = File.expand_path("./test_app", __dir__)
+  TEST_APP_CONFIG_PATH = File.join(TEST_APP_PATH, "config", "shakapacker.yml")
 
   it "`rake -T` lists Shakapacker tasks" do
     output = Dir.chdir(TEST_APP_PATH) { `rake -T` }
@@ -86,7 +87,14 @@ describe "RakeTasks" do
 
   describe "`shakapacker:switch_bundler`" do
     before :all do
+      @original_dir = Dir.pwd
+      @original_shakapacker_config = File.binread(TEST_APP_CONFIG_PATH)
       Dir.chdir(TEST_APP_PATH)
+    end
+
+    after :all do
+      File.binwrite(TEST_APP_CONFIG_PATH, @original_shakapacker_config)
+      Dir.chdir(@original_dir)
     end
 
     it "shows error when called with rails command" do

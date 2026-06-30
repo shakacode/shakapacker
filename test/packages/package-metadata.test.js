@@ -10,6 +10,9 @@ const rspackManifestPath = join(
   repoRoot,
   "packages/shakapacker-rspack/package.json"
 )
+const mainManifestPath = join(repoRoot, "package.json")
+const installManifestPath = join(repoRoot, "lib/install/package.json")
+const installTemplatePath = join(repoRoot, "lib/install/template.rb")
 
 const readManifest = (filePath) => JSON.parse(readFileSync(filePath, "utf8"))
 
@@ -39,8 +42,47 @@ const WEBPACK_SINGLETONS = ["webpack", "webpack-cli", "webpack-assets-manifest"]
 const RSPACK_SINGLETONS = [
   "@rspack/core",
   "@rspack/cli",
+  "@rspack/dev-server",
   "rspack-manifest-plugin"
 ]
+
+describe("main shakapacker/package.json", () => {
+  const manifest = readManifest(mainManifestPath)
+  const peers = manifest.peerDependencies || {}
+
+  test("declares rspack peers as v2-only", () => {
+    expect(peers).toMatchObject({
+      "@rspack/core": "^2.0.0",
+      "@rspack/cli": "^2.0.0",
+      "@rspack/dev-server": "^2.0.0",
+      "@rspack/plugin-react-refresh": "^2.0.0",
+      "rspack-manifest-plugin": "^5.2.2"
+    })
+  })
+})
+
+describe("lib/install/package.json", () => {
+  const manifest = readManifest(installManifestPath)
+  const rspackDeps = manifest.rspack || {}
+
+  test("installs rspack v2 dependencies only", () => {
+    expect(rspackDeps).toMatchObject({
+      "@rspack/core": "^2.0.0",
+      "@rspack/cli": "^2.0.0",
+      "@rspack/dev-server": "^2.0.0",
+      "rspack-manifest-plugin": "^5.2.2"
+    })
+    expect(rspackDeps).not.toHaveProperty("css-loader")
+  })
+
+  test("applies rspack css-loader floor only through common loader override", () => {
+    const template = readFileSync(installTemplatePath, "utf8")
+    expect(template).toContain(
+      'if assets_bundler == "rspack" && common_deps.key?("css-loader")'
+    )
+    expect(template).toContain('peers["css-loader"] = "^7.1.4"')
+  })
+})
 
 describe("shakapacker-webpack/package.json", () => {
   const manifest = readManifest(webpackManifestPath)
@@ -106,7 +148,7 @@ describe("supplemental peer ranges align with main shakapacker", () => {
   // The supplemental packages should never be stricter than the package
   // they wrap. A user on bare `shakapacker` with a valid peer version
   // should be able to adopt the supplemental without changing that peer.
-  const mainManifest = readManifest(join(repoRoot, "package.json"))
+  const mainManifest = readManifest(mainManifestPath)
   const mainPeers = mainManifest.peerDependencies || {}
 
   const collectMismatches = (supplementalManifestPath) => {
@@ -158,29 +200,23 @@ describe("supplemental peer ranges align with main shakapacker", () => {
   })
 
   test("webpack supplemental peers match main peer ranges where both exist", () => {
-    // The supplemental is allowed to *narrow* via curation (e.g., drop
-    // webpack-cli v4-v6), but where both declare a peer, the ranges
-    // should be identical so the supplemental doesn't reject a peer
-    // version that bare shakapacker would accept.
-    const knownIntentionalNarrowings = new Set([
+    // Most shared peers should stay aligned with core shakapacker. Listed
+    // mismatches are intentional curation or bundler-specific compatibility.
+    const knownIntentionalMismatches = new Set([
       "webpack-cli", // supplemental curates to v7+
       "webpack-assets-manifest" // supplemental requires v6 (v5 has ENOENT bug)
     ])
     expect(() =>
       expectOnlyKnownMismatches(
         collectMismatches(webpackManifestPath),
-        knownIntentionalNarrowings
+        knownIntentionalMismatches
       )
     ).not.toThrow()
   })
 
   test("rspack supplemental peers match main peer ranges where both exist", () => {
-    // Mirrors the webpack alignment check. @rspack/core and @rspack/cli
-    // are intentionally narrower (supplemental targets v2+; main still
-    // accepts v1 for back-compat).
     const knownIntentionalNarrowings = new Set([
-      "@rspack/core", // supplemental curates to v2+ (rspack 1.x unsupported)
-      "@rspack/cli" // same rationale as @rspack/core
+      "css-loader" // v7.1.4+ declares Rspack v2 peer compatibility
     ])
     expect(() =>
       expectOnlyKnownMismatches(

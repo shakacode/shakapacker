@@ -476,6 +476,189 @@ describe Shakapacker::Doctor do
           doctor.send(:check_peer_dependencies)
           expect(doctor.issues).to include(match(/Missing essential rspack dependency.*@rspack\/core/))
           expect(doctor.issues).to include(match(/Missing essential rspack dependency.*@rspack\/cli/))
+          expect(doctor.issues).to include(match(/Missing essential rspack dependency.*rspack-manifest-plugin/))
+        end
+      end
+
+      context "unsupported rspack v1 dependencies" do
+        before do
+          File.write(package_json_path, JSON.generate({
+            "devDependencies" => {
+              "@rspack/core" => "^1.0.0",
+              "@rspack/cli" => "^1.0.0",
+              "rspack-manifest-plugin" => "^5.2.2"
+            }
+          }))
+        end
+
+        it "adds an unsupported rspack version issue" do
+          doctor.send(:check_peer_dependencies)
+          expect(doctor.issues).to include(match(/Shakapacker supports Rspack v2 only/))
+          expect(doctor.issues).to include(match(/Upgrade @rspack\/core and @rspack\/cli to \^2\.0\.0/))
+        end
+      end
+
+      context "mixed rspack v2 core and v1 cli dependencies" do
+        before do
+          File.write(package_json_path, JSON.generate({
+            "devDependencies" => {
+              "@rspack/core" => "^2.0.0",
+              "@rspack/cli" => "^1.0.0",
+              "rspack-manifest-plugin" => "^5.2.2"
+            }
+          }))
+        end
+
+        it "adds an unsupported cli version issue" do
+          doctor.send(:check_peer_dependencies)
+          expect(doctor.issues).to include(match(/Shakapacker supports Rspack v2 only/))
+          expect(doctor.issues).to include(match(/Upgrade @rspack\/cli to \^2\.0\.0/))
+        end
+      end
+
+      context "missing rspack dev-server dependency" do
+        before do
+          File.write(package_json_path, JSON.generate({
+            "dependencies" => {
+              "@rspack/core" => "^2.0.0",
+              "@rspack/cli" => "^2.0.0",
+              "rspack-manifest-plugin" => "^5.2.2"
+            }
+          }))
+        end
+
+        it "adds a missing recommended dev-server warning" do
+          doctor.send(:check_peer_dependencies)
+          expect(doctor.issues).not_to include(match(/@rspack\/dev-server/))
+          expect(warning_messages).to include(
+            "Missing recommended rspack dependency: @rspack/dev-server (^2.0.0) for Rspack dev server"
+          )
+        end
+
+        it "does not add a missing warning when dev-server is installed" do
+          dev_server_pkg = root_path.join("node_modules/@rspack/dev-server/package.json")
+          FileUtils.mkdir_p(dev_server_pkg.dirname)
+          File.write(dev_server_pkg, JSON.generate({ "name" => "@rspack/dev-server", "version" => "2.0.0" }))
+
+          doctor.send(:check_peer_dependencies)
+
+          expect(doctor.issues).not_to include(
+            "Missing essential rspack dependency: @rspack/dev-server (^2.0.0)"
+          )
+          expect(warning_messages).not_to include(
+            "Missing recommended rspack dependency: @rspack/dev-server (^2.0.0) for Rspack dev server"
+          )
+        end
+      end
+
+      context "with essential rspack dependencies declared only as peers" do
+        before do
+          File.write(package_json_path, JSON.generate({
+            "peerDependencies" => {
+              "@rspack/core" => "^2.0.0",
+              "@rspack/cli" => "^2.0.0"
+            },
+            "optionalDependencies" => {
+              "@rspack/dev-server" => "^2.0.0",
+              "rspack-manifest-plugin" => "^5.2.2"
+            }
+          }))
+        end
+
+        it "reports required rspack packages as missing" do
+          doctor.send(:check_peer_dependencies)
+          expect(doctor.issues).to include(match(/Missing essential rspack dependency.*@rspack\/core/))
+          expect(doctor.issues).to include(match(/Missing essential rspack dependency.*@rspack\/cli/))
+        end
+      end
+
+      context "mixed rspack v2 core and v1 dev-server dependencies" do
+        before do
+          File.write(package_json_path, JSON.generate({
+            "dependencies" => {
+              "@rspack/core" => "^2.0.0",
+              "rspack-manifest-plugin" => "^5.2.2"
+            },
+            "devDependencies" => {
+              "@rspack/cli" => "^2.0.0",
+              "@rspack/dev-server" => "^1.0.0"
+            }
+          }))
+        end
+
+        it "adds an unsupported dev-server version issue" do
+          doctor.send(:check_peer_dependencies)
+          expect(doctor.issues).to include(match(/Shakapacker supports Rspack v2 only/))
+          expect(doctor.issues).to include(match(/Upgrade @rspack\/dev-server to \^2\.0\.0/))
+        end
+      end
+
+      context "with stale rspack-manifest-plugin dependency" do
+        before do
+          File.write(package_json_path, JSON.generate({
+            "dependencies" => {
+              "@rspack/core" => "^2.0.0",
+              "rspack-manifest-plugin" => "^5.0.0"
+            },
+            "devDependencies" => {
+              "@rspack/cli" => "^2.0.0"
+            }
+          }))
+        end
+
+        it "adds an unsupported manifest plugin version issue" do
+          doctor.send(:check_peer_dependencies)
+          expect(doctor.issues).to include(match(/Declared rspack-manifest-plugin range.*\^5\.2\.2/))
+        end
+      end
+
+      context "with stale package.json ranges but newer packages installed" do
+        before do
+          core_pkg = root_path.join("node_modules/@rspack/core/package.json")
+          manifest_pkg = root_path.join("node_modules/rspack-manifest-plugin/package.json")
+          FileUtils.mkdir_p(core_pkg.dirname)
+          FileUtils.mkdir_p(manifest_pkg.dirname)
+          File.write(core_pkg, JSON.generate({ "name" => "@rspack/core", "version" => "2.0.0" }))
+          File.write(manifest_pkg, JSON.generate({ "name" => "rspack-manifest-plugin", "version" => "5.2.2" }))
+
+          File.write(package_json_path, JSON.generate({
+            "dependencies" => {
+              "@rspack/core" => "^1.0.0",
+              "rspack-manifest-plugin" => "^5.2.0"
+            },
+            "devDependencies" => {
+              "@rspack/cli" => "^2.0.0",
+              "@rspack/dev-server" => "^2.0.0"
+            }
+          }))
+        end
+
+        it "warns on stale declarations even when installed packages are new" do
+          doctor.send(:check_peer_dependencies)
+          expect(doctor.issues).to include(match(/Shakapacker supports Rspack v2 only.*@rspack\/core/))
+          expect(doctor.issues).to include(match(/Declared rspack-manifest-plugin range.*\^5\.2\.2/))
+          expect(doctor.issues).not_to include(match(/Unsupported rspack-manifest-plugin version/))
+        end
+      end
+
+      context "with a compound rspack range that still allows v1" do
+        before do
+          core_pkg = root_path.join("node_modules/@rspack/core/package.json")
+          FileUtils.mkdir_p(core_pkg.dirname)
+          File.write(core_pkg, JSON.generate({ "name" => "@rspack/core", "version" => "2.0.0" }))
+
+          File.write(package_json_path, JSON.generate({
+            "dependencies" => {
+              "@rspack/core" => "^1.0.0 || ^2.0.0-0",
+              "@rspack/cli" => "^2.0.0",
+              "rspack-manifest-plugin" => "^5.2.2"
+            }
+          }))
+        end
+
+        it "reports the declared v1-compatible rspack range" do
+          doctor.send(:check_peer_dependencies)
+          expect(doctor.issues).to include(match(/Shakapacker supports Rspack v2 only.*@rspack\/core/))
         end
       end
     end
@@ -485,7 +668,7 @@ describe Shakapacker::Doctor do
         package_json = {
           "dependencies" => {
             "webpack" => "^5.0.0",
-            "@rspack/core" => "^1.0.0"
+            "@rspack/core" => "^2.0.0"
           }
         }
         File.write(package_json_path, JSON.generate(package_json))
@@ -671,9 +854,10 @@ describe Shakapacker::Doctor do
         }))
       end
 
-      it "warns that v1 cache is experimental and recommends upgrading" do
+      it "warns that v1 is unsupported and recommends upgrading" do
         doctor.send(:check_rspack_cache_configuration)
         expect(warning_messages).to include(match(/Rspack v1 detected/))
+        expect(warning_messages).to include(match(/Shakapacker supports Rspack v2 only/))
         expect(warning_messages).to include(match(/Bump @rspack\/core and @rspack\/cli/))
       end
     end
@@ -966,7 +1150,7 @@ describe Shakapacker::Doctor do
       end
     end
 
-    context "when node_modules reports a v2 install even though package.json pins v1" do
+    context "when node_modules reports a v2 install even though package.json allows v1" do
       before do
         node_modules_pkg = root_path.join("node_modules/@rspack/core/package.json")
         FileUtils.mkdir_p(node_modules_pkg.dirname)
@@ -975,12 +1159,12 @@ describe Shakapacker::Doctor do
         File.write(package_json_path, JSON.generate({
           "devDependencies" => {
             "@rspack/core" => "^1.0.0 || ^2.0.0-0",
-            "@rspack/cli" => "^1.0.0 || ^2.0.0-0"
+            "@rspack/cli" => "^2.0.0"
           }
         }))
       end
 
-      it "prefers the installed version and does not warn about v1" do
+      it "trusts the installed v2 package over stale v1-compatible ranges" do
         doctor.send(:check_rspack_cache_configuration)
         expect(warning_messages).not_to include(match(/Rspack v1 detected/))
       end
@@ -1024,7 +1208,7 @@ describe Shakapacker::Doctor do
       end
     end
 
-    context "when the rspack version specifier is a compound range" do
+    context "when the rspack version specifier is a v1-compatible compound range" do
       before do
         File.write(package_json_path, JSON.generate({
           "devDependencies" => {
@@ -1033,9 +1217,9 @@ describe Shakapacker::Doctor do
         }))
       end
 
-      it "does not falsely classify it as v1" do
+      it "warns because the declared range still allows v1" do
         doctor.send(:check_rspack_cache_configuration)
-        expect(warning_messages).not_to include(match(/Rspack v1 detected/))
+        expect(warning_messages).to include(match(/Rspack v1 detected/))
       end
     end
 
@@ -2108,6 +2292,36 @@ describe Shakapacker::Doctor do
       before do
         package_json = {
           "devDependencies" => {
+            "webpack" => "^5.0.0"
+          }
+        }
+        File.write(package_json_path, JSON.generate(package_json))
+      end
+
+      it "returns true" do
+        expect(doctor.send(:package_installed?, "webpack")).to be true
+      end
+    end
+
+    context "with package in peerDependencies" do
+      before do
+        package_json = {
+          "peerDependencies" => {
+            "webpack" => "^5.0.0"
+          }
+        }
+        File.write(package_json_path, JSON.generate(package_json))
+      end
+
+      it "returns false" do
+        expect(doctor.send(:package_installed?, "webpack")).to be false
+      end
+    end
+
+    context "with package in optionalDependencies" do
+      before do
+        package_json = {
+          "optionalDependencies" => {
             "webpack" => "^5.0.0"
           }
         }

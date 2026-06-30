@@ -4,7 +4,7 @@
 
 ## Install
 
-`shakapacker-rspack` ships `shakapacker` as a direct dependency and declares `@rspack/core`, `@rspack/cli`, and `rspack-manifest-plugin` as **required peer dependencies**. On npm 7+, a single install pulls in the full managed build stack via auto-peer-install:
+`shakapacker-rspack` ships `shakapacker` as a direct dependency and declares `@rspack/core`, `@rspack/cli`, `@rspack/dev-server`, and `rspack-manifest-plugin` as **required peer dependencies**. On npm 7+, a single install pulls in the full managed build stack via auto-peer-install:
 
 ```sh
 # npm 7+ — auto-installs required peers
@@ -15,10 +15,10 @@ pnpm and Yarn PnP keep dependency boundaries strict: packages imported by your a
 
 ```sh
 # pnpm
-pnpm add --save-dev shakapacker-rspack shakapacker @rspack/core @rspack/cli rspack-manifest-plugin
+pnpm add --save-dev shakapacker-rspack shakapacker @rspack/core @rspack/cli @rspack/dev-server rspack-manifest-plugin
 
 # yarn
-yarn add --dev shakapacker-rspack shakapacker @rspack/core @rspack/cli rspack-manifest-plugin
+yarn add --dev shakapacker-rspack shakapacker @rspack/core @rspack/cli @rspack/dev-server rspack-manifest-plugin
 ```
 
 (The Rails `shakapacker:install` task writes all required deps into your `package.json` regardless of package manager.)
@@ -39,7 +39,8 @@ If your app already runs Shakapacker on Rspack, you can drop the managed-build d
     "shakapacker": "^10.0.0",
     "@rspack/core": "^2.0.0",
     "@rspack/cli": "^2.0.0",
-    "rspack-manifest-plugin": "^5.0.0"
+    "@rspack/dev-server": "^2.0.0",
+    "rspack-manifest-plugin": "^5.2.2"
   }
 }
 ```
@@ -54,4 +55,4 @@ If your app already runs Shakapacker on Rspack, you can drop the managed-build d
 }
 ```
 
-Optional peers (`@rspack/plugin-react-refresh`, `css-loader`, `sass`, `sass-loader`) stay only if your app uses those features. Run `yarn install` (or the npm/pnpm equivalent) and the lockfile collapses to the managed stack. npm 7+ can auto-install the required peers; pnpm and Yarn users should keep `shakapacker`, `@rspack/core`, `@rspack/cli`, and `rspack-manifest-plugin` as explicit `devDependencies` unless their config imports the wrapper package directly.
+Optional peers (`@rspack/plugin-react-refresh`, `css-loader`, `sass`, `sass-loader`) stay only if your app uses those features. Run `yarn install` (or the npm/pnpm equivalent) and the lockfile collapses to the managed stack. npm 7+ can auto-install the required peers; pnpm and Yarn users should keep `shakapacker`, `@rspack/core`, `@rspack/cli`, `@rspack/dev-server`, and `rspack-manifest-plugin` as explicit `devDependencies` unless their config imports the wrapper package directly.

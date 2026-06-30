@@ -33,6 +33,25 @@ module Shakapacker
       "for Sass/SCSS implementation"
     ).freeze
 
+    REQUIRED_RSPACK_DEPS = {
+      "@rspack/core" => "^2.0.0",
+      "@rspack/cli" => "^2.0.0",
+      "rspack-manifest-plugin" => "^5.2.2"
+    }.freeze
+
+    RSPACK_DEV_SERVER_DEP = {
+      "@rspack/dev-server" => "^2.0.0"
+    }.freeze
+
+    RSPACK_V2_ONLY_DEPS = REQUIRED_RSPACK_DEPS
+      .slice("@rspack/core", "@rspack/cli")
+      .merge(RSPACK_DEV_SERVER_DEP)
+      .freeze
+
+    OPTIONAL_RSPACK_V2_ONLY_DEPS = {
+      "@rspack/plugin-react-refresh" => "^2.0.0"
+    }.freeze
+
     def initialize(config = nil, root_path = nil, options = {})
       @config = config || Shakapacker.config
       @root_path = root_path || (defined?(Rails) ? Rails.root : Pathname.new(Dir.pwd))
@@ -289,7 +308,7 @@ module Shakapacker
 
         bundler = config.assets_bundler
         package_json = read_package_json
-        all_deps = (package_json["dependencies"] || {}).merge(package_json["devDependencies"] || {})
+        all_deps = declared_package_dependencies(package_json)
 
         if bundler == "webpack"
           check_webpack_peer_deps(all_deps)
@@ -317,15 +336,47 @@ module Shakapacker
       end
 
       def check_rspack_peer_deps(deps)
-        essential_rspack = {
-          "@rspack/cli" => "^1.0.0",
-          "@rspack/core" => "^1.0.0"
-        }
-
-        essential_rspack.each do |package, version|
-          unless deps[package]
+        REQUIRED_RSPACK_DEPS.each do |package, version|
+          unless deps[package] || installed_package_version(package)
             @issues << "Missing essential rspack dependency: #{package} (#{version})"
           end
+        end
+
+        RSPACK_DEV_SERVER_DEP.each do |package, version|
+          unless deps[package] || installed_package_version(package)
+            add_warning("Missing recommended rspack dependency: #{package} (#{version}) for Rspack dev server")
+          end
+        end
+
+        unsupported_packages = RSPACK_V2_ONLY_DEPS.keys.select do |package|
+          deps[package] &&
+          (rspack_major_version_for(package) == 1 || rspack_declared_major_version_for(package) == 1)
+        end
+
+        if unsupported_packages.any?
+          @issues << "Unsupported rspack dependency version: Shakapacker supports Rspack v2 only. " \
+                     "Upgrade #{unsupported_packages.join(' and ')} to ^2.0.0."
+        end
+
+        unsupported_optional_packages = OPTIONAL_RSPACK_V2_ONLY_DEPS.keys.select do |package|
+          deps[package] &&
+          (rspack_major_version_for(package) == 1 || rspack_declared_major_version_for(package) == 1)
+        end
+
+        if unsupported_optional_packages.any?
+          add_warning("Unsupported optional rspack dependency version: Shakapacker supports Rspack v2 only. " \
+                      "Upgrade #{unsupported_optional_packages.join(' and ')} to ^2.0.0.")
+        end
+
+        manifest_status = package_version_status("rspack-manifest-plugin", "5.2.2")
+        if deps["rspack-manifest-plugin"] && manifest_status[:installed_below]
+          @issues << "Unsupported rspack-manifest-plugin version: Shakapacker requires rspack-manifest-plugin " \
+                     "^5.2.2 for Rspack v2."
+        end
+
+        if deps["rspack-manifest-plugin"] && manifest_status[:declared_below]
+          @issues << "Declared rspack-manifest-plugin range allows unsupported versions. " \
+                     "Update package.json to require rspack-manifest-plugin ^5.2.2 for Rspack v2."
         end
       end
 
@@ -708,9 +759,9 @@ module Shakapacker
         rspack_major = rspack_major_version
 
         if rspack_major == 1
-          add_warning("Rspack v1 detected: persistent caching is experimental in v1 and requires manual opt-in. " \
-                      "Upgrading to Rspack v2 enables stable persistent caching out of the box for significantly faster rebuilds.")
-          add_fix_hint("Bump @rspack/core and @rspack/cli to ^2.0.0-0 in package.json. See https://rspack.rs/config/cache and docs/rspack.md for details.")
+          add_warning("Rspack v1 detected: Shakapacker supports Rspack v2 only. " \
+                      "Upgrade to Rspack v2 for supported builds and stable persistent caching.")
+          add_fix_hint("Bump @rspack/core and @rspack/cli to ^2.0.0 in package.json. See https://rspack.rs/config/cache and docs/rspack.md for details.")
         end
 
         path = active_assets_bundler_config_path
@@ -953,17 +1004,24 @@ module Shakapacker
       end
 
       def rspack_major_version
-        # Prefer the resolved version from node_modules, since package.json specifiers
-        # (ranges, git refs, file paths) often don't parse to a clean major number.
-        resolved = installed_rspack_major_version
-        return resolved unless resolved.nil?
-
-        %w[@rspack/core @rspack/cli].each do |package_name|
-          major = rspack_major_from_specifier(package_json_dependency_version(package_name))
-          return major unless major.nil?
+        majors = %w[@rspack/core @rspack/cli].filter_map do |package_name|
+          rspack_major_version_for(package_name)
         end
 
-        nil
+        return 1 if majors.include?(1)
+
+        majors.first
+      end
+
+      def rspack_major_version_for(package_name)
+        installed = installed_rspack_major_version(package_name)
+        return installed if installed
+
+        rspack_declared_major_version_for(package_name)
+      end
+
+      def rspack_declared_major_version_for(package_name)
+        rspack_major_from_specifier(package_json_dependency_version(package_name))
       end
 
       def rspack_major_from_specifier(version)
@@ -974,16 +1032,23 @@ module Shakapacker
         # ">=1.5 <2". Accept shorthand forms (e.g. `^1`, `~1`, `1`, `1.x`) so
         # we still emit the v1 advisory when node_modules isn't populated yet.
         cleaned = version.strip
+        if cleaned.include?("||")
+          majors = cleaned.split("||").filter_map { |specifier| rspack_major_from_specifier(specifier) }
+          return 1 if majors.include?(1)
+
+          return majors.first
+        end
+
         return nil unless cleaned.match?(/\A[\^~]?\d/)
-        return nil if cleaned.match?(/(\s|\|\||[<>=:]|\A(?:git|file|link|workspace|npm):)/)
+        return nil if cleaned.match?(/(\s|[<>=:]|\A(?:git|file|link|workspace|npm):)/)
         return nil unless cleaned.match?(/\A[\^~]?\d+(?:\.(?:\d+|x|\*)){0,2}(?:-[0-9A-Za-z.-]+)?\z/i)
 
         match = cleaned.sub(/\A[\^~]/, "").match(/\A(\d+)/)
         match && match[1].to_i
       end
 
-      def installed_rspack_major_version
-        rspack_pkg = root_path.join("node_modules/@rspack/core/package.json")
+      def installed_rspack_major_version(package_name)
+        rspack_pkg = root_path.join("node_modules", package_name, "package.json")
         return nil unless rspack_pkg.exist?
 
         version = JSON.parse(File.read(rspack_pkg))["version"]
@@ -996,11 +1061,59 @@ module Shakapacker
       def package_json_dependency_version(name)
         return nil unless package_json_exists?
 
-        pkg = read_package_json
-        # Production dependencies take precedence on key conflict so the version
-        # actually shipped in production wins over a devDependencies override.
-        deps = (pkg["devDependencies"] || {}).merge(pkg["dependencies"] || {})
-        deps[name]
+        declared_package_dependencies(read_package_json)[name]
+      end
+
+      def package_version_status(package_name, minimum_version)
+        minimum = Gem::Version.new(minimum_version)
+        declared_specifier = package_json_dependency_version(package_name)
+        declared = package_version_from_specifier(declared_specifier)
+        installed = installed_package_version(package_name)
+
+        {
+          declared_below: declared && declared < minimum,
+          installed_below: installed && installed < minimum
+        }
+      end
+
+      def package_version_from_specifier(version)
+        return nil unless version
+
+        cleaned = version.strip
+        if cleaned.include?("||")
+          versions = cleaned.split("||").filter_map { |specifier| package_version_from_specifier(specifier) }
+          return versions.min
+        end
+
+        return nil unless cleaned.match?(/\A[\^~]?\d/)
+        return nil if cleaned.match?(/(\s|\|\||[<>=:]|\A(?:git|file|link|workspace|npm):)/)
+
+        match = cleaned.sub(/\A[\^~]/, "").match(/\A(\d+(?:\.\d+){0,2})(?:-[0-9A-Za-z.-]+)?\z/)
+        match && Gem::Version.new(match[1])
+      rescue ArgumentError
+        nil
+      end
+
+      def declared_package_dependencies(package_json)
+        # Later sections take precedence when the same package is declared in more than one section.
+        installable_package_dependencies(package_json)
+      end
+
+      def installable_package_dependencies(package_json)
+        (package_json["optionalDependencies"] || {})
+          .merge(package_json["devDependencies"] || {})
+          .merge(package_json["dependencies"] || {})
+      end
+
+      def installed_package_version(package_name)
+        package_json = root_path.join("node_modules", package_name, "package.json")
+        return nil unless package_json.exist?
+
+        version = JSON.parse(File.read(package_json))["version"]
+        match = version.to_s.match(/\A(\d+(?:\.\d+){0,2})/)
+        match && Gem::Version.new(match[1])
+      rescue JSON::ParserError, SystemCallError, ArgumentError
+        nil
       end
 
       def check_file_type_dependencies
@@ -1060,9 +1173,7 @@ module Shakapacker
       def package_installed?(package_name)
         return false unless package_json_exists?
 
-        package_json = read_package_json
-        dependencies = (package_json["dependencies"] || {}).merge(package_json["devDependencies"] || {})
-        dependencies.key?(package_name)
+        installable_package_dependencies(read_package_json).key?(package_name)
       end
 
       def package_json_exists?

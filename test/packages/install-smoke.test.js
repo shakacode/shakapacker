@@ -205,9 +205,15 @@ const supplementalSpecs = [
     explicitDeps: {
       "@rspack/core": "^2.0.0",
       "@rspack/cli": "^2.0.0",
-      "rspack-manifest-plugin": "^5.0.0"
+      "@rspack/dev-server": "^2.0.0",
+      "rspack-manifest-plugin": "^5.2.2"
     },
-    requiredPeers: ["@rspack/core", "@rspack/cli", "rspack-manifest-plugin"],
+    requiredPeers: [
+      "@rspack/core",
+      "@rspack/cli",
+      "@rspack/dev-server",
+      "rspack-manifest-plugin"
+    ],
     appRootAssertions: []
   }
 ]

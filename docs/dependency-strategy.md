@@ -12,7 +12,7 @@ Shakapacker is split into **three npm packages** to cleanly separate concerns:
 
 1. **`shakapacker`** — core package (config loading, manifest reading, dev server proxy, CLI). Zero bundler-specific peer deps.
 2. **`shakapacker-webpack`** — managed webpack build. **Declares `webpack`, `webpack-cli`, `webpack-assets-manifest` as required peer dependencies** so the host app owns the singleton bundler stack. npm 7+ can auto-install them; pnpm and Yarn PnP users should list packages imported by app config files directly. `terser-webpack-plugin` (imported directly by core's default minimizer) ships as a direct `dependency`.
-3. **`shakapacker-rspack`** — managed rspack build. **Declares `@rspack/core`, `@rspack/cli`, `rspack-manifest-plugin` as required peer dependencies** — same singleton guarantee.
+3. **`shakapacker-rspack`** — managed rspack build. **Declares `@rspack/core`, `@rspack/cli`, `@rspack/dev-server`, `rspack-manifest-plugin` as required peer dependencies** — same singleton guarantee.
 
 > **Why peer deps instead of direct dependencies?** Bundler packages (`webpack`, `@rspack/core`) are singletons — plugin and loader code checks `compiler instanceof webpack.Compiler` and shares types like `webpack.Compilation`. Two copies in the tree silently break those checks. Required peer dependencies surface version conflicts instead of hiding them as silent duplicate installs. See [issue #1131](https://github.com/shakacode/shakapacker/issues/1131) for the discussion that led to this shape. npm 7+ auto-installs required peers; pnpm and Yarn PnP users should keep packages imported by app config files as explicit app dependencies (the Rails installer handles this automatically).
 
@@ -188,26 +188,27 @@ Supplemental package for the rspack managed build experience.
 | ---------------------- | -------- | ---------------------------------------------------------------------- |
 | @rspack/core           | `^2.0.0` | Singleton — rspack plugins do the same `instanceof` checks as webpack. |
 | @rspack/cli            | `^2.0.0` | `bin/shakapacker` shells out to the `rspack` CLI binary.               |
-| rspack-manifest-plugin | `^5.0.0` | Generates the manifest the Rails view helpers read.                    |
+| @rspack/dev-server     | `^2.0.0` | Rspack CLI v2 uses this package for `rspack serve`.                    |
+| rspack-manifest-plugin | `^5.2.2` | Generates the manifest the Rails view helpers read.                    |
 
 **Peer dependencies (optional):**
 
 | Package                      | Range                                                         | When needed      |
 | ---------------------------- | ------------------------------------------------------------- | ---------------- |
-| @rspack/plugin-react-refresh | `^1.0.0 \|\| ^2.0.0`                                          | React HMR        |
-| css-loader                   | `^6.8.1 \|\| ^7.0.0`                                          | CSS processing   |
+| @rspack/plugin-react-refresh | `^2.0.0`                                                      | React HMR        |
+| css-loader                   | `^7.1.4`                                                      | CSS processing   |
 | sass                         | `^1.50.0`                                                     | SCSS/Sass files  |
 | sass-loader                  | `^13.0.0 \|\| ^14.0.0 \|\| ^15.0.0 \|\| ^16.0.0 \|\| ^17.0.0` | Paired with sass |
 
 Note: rspack has built-in SWC transpilation, so no external transpiler deps are needed.
 
-Rspack v2 is stable, so the supplemental rspack package pins to the current v2 GA line. Older Rspack v1 and v2 pre-releases remain allowed only through the legacy optional peer ranges in core `shakapacker` during the v10.x compatibility window.
+Rspack v2 is stable, so both the supplemental rspack package and core `shakapacker` peer ranges target the current v2 GA line.
 
 GA release-prep note: while 10.1 is still in release-candidate state, the dependency tables intentionally show `~10.1.0-rc.1` for the lockstep `shakapacker` dependency. Update those rows and examples to `~10.1.0` when publishing the GA supplemental packages.
 
 ### Version Pinning Philosophy
 
-The core `shakapacker` package keeps its broad optional peer ranges during v10.x so existing applications are not broken by an additive release. The supplemental packages use a different policy — but **not** the strictest one.
+The core `shakapacker` package keeps intentional optional peer ranges where compatibility is still supported, while Rspack now follows the v2-only range used by `shakapacker-rspack`. The supplemental packages use a curated policy, but **not** the strictest one.
 
 - **Lockstep only for `shakapacker`.** The wrapper's `dependencies.shakapacker` uses a tilde (`~10.1.0-rc.1`) because the wrapper's runtime code calls into core's internal `package/config` subpath; mismatched minors could break that. All _other_ constraints use caret ranges with sensible floors.
 - **Caret ranges for everything else.** Webpack, rspack, loaders, transpilers, and CSS preprocessors all use `^` so a routine upstream patch or minor release is immediately available to users without a coordinated Shakapacker release. The earlier RC pinned everything with `~`, which was reverted after [issue #1131](https://github.com/shakacode/shakapacker/issues/1131) pointed out the release-cadence trap (every upstream minor would obligate a supplemental release).
@@ -241,12 +242,12 @@ The core `shakapacker` package keeps its broad optional peer ranges during v10.x
 {
   "devDependencies": {
     "shakapacker-rspack": "^11.0.0",
-    "css-loader": "^7.0.0"
+    "css-loader": "^7.1.4"
   }
 }
 ```
 
-`shakapacker` comes along as a direct dependency. npm 7+ auto-installs `@rspack/core`, `@rspack/cli`, and `rspack-manifest-plugin` via the required peer declarations. pnpm and Yarn PnP users should list them directly if app config files import them.
+`shakapacker` comes along as a direct dependency. npm 7+ auto-installs `@rspack/core`, `@rspack/cli`, `@rspack/dev-server`, and `rspack-manifest-plugin` via the required peer declarations. pnpm and Yarn PnP users should list them directly if app config files import them.
 
 **Custom build (manifest-only):**
 

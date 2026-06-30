@@ -161,7 +161,7 @@ If you get errors about missing packages after switching bundlers:
 yarn install
 
 # Or specifically for rspack
-yarn add @rspack/core @rspack/cli rspack-manifest-plugin
+yarn add @rspack/core @rspack/cli @rspack/dev-server rspack-manifest-plugin
 ```
 
 ### Configuration Issues

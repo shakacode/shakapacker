@@ -253,6 +253,7 @@ describe "DevServerRunner" do
 
           # Stub build_cmd and exec to prevent actual execution
           allow(instance).to receive(:build_cmd).and_return(["webpack", "serve"])
+          allow(instance).to receive(:detect_port!)
           allow(instance).to receive(:exec)
 
           klass.run([])
@@ -273,6 +274,7 @@ describe "DevServerRunner" do
         instance = klass.new(argv)
 
         allow(klass).to receive(:new).and_return(instance)
+        allow(instance).to receive(:detect_port!)
         allow(instance).to receive(:exec)
 
         klass.run(argv)

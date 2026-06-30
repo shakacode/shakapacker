@@ -19,12 +19,13 @@ module Shakapacker
       prod: %w[webpack-merge]
     }.freeze
 
-    # Default dependencies for each bundler (package names only, no versions)
+    # Default dependencies for each bundler. Rspack entries include install-time
+    # version ranges; package_names strips them before removal and display.
     # Note: Excludes independent/optional dependencies like @swc/core, swc-loader (user-configured
     # transpilers)
     DEFAULT_RSPACK_DEPS = {
-      dev: %w[@rspack/cli @rspack/plugin-react-refresh],
-      prod: %w[@rspack/core rspack-manifest-plugin]
+      dev: %w[@rspack/cli@^2.0.0 @rspack/dev-server@^2.0.0 @rspack/plugin-react-refresh@^2.0.0],
+      prod: %w[@rspack/core@^2.0.0 rspack-manifest-plugin@^5.2.2]
     }.freeze
 
     DEFAULT_WEBPACK_DEPS = {
@@ -267,8 +268,8 @@ module Shakapacker
           # Show what will be removed (only when switching and not no_uninstall)
           if switching && !no_uninstall && (!deps_to_remove[:dev].empty? || !deps_to_remove[:prod].empty?)
             puts "   🗑️  Removing:"
-            deps_to_remove[:dev].each { |dep| puts "      - #{dep} (dev)" }
-            deps_to_remove[:prod].each { |dep| puts "      - #{dep} (prod)" }
+            package_names(deps_to_remove[:dev]).each { |dep| puts "      - #{dep} (dev)" }
+            package_names(deps_to_remove[:prod]).each { |dep| puts "      - #{dep} (prod)" }
             puts ""
           elsif switching && no_uninstall
             puts "   ⏭️  Skipping uninstall (--no-uninstall)"
@@ -302,7 +303,7 @@ module Shakapacker
 
         # Combine dev and prod dependencies into a single list for removal
         # Package managers remove packages from both dependencies and devDependencies sections if present
-        all_deps = deps[:dev] + deps[:prod]
+        all_deps = package_names(deps[:dev] + deps[:prod])
 
         unless all_deps.empty?
           unless package_json.manager.remove(all_deps)
@@ -381,6 +382,11 @@ module Shakapacker
       end
 
       def print_uninstall_commands(package_manager, deps)
+        deps = {
+          dev: package_names(deps[:dev]),
+          prod: package_names(deps[:prod])
+        }
+
         case package_manager
         when "yarn"
           puts "   yarn remove #{deps[:dev].join(' ')}" unless deps[:dev].empty?
@@ -394,6 +400,16 @@ module Shakapacker
         else # npm
           puts "   npm uninstall #{deps[:dev].join(' ')}" unless deps[:dev].empty?
           puts "   npm uninstall #{deps[:prod].join(' ')}" unless deps[:prod].empty?
+        end
+      end
+
+      def package_names(dependencies)
+        dependencies.map do |dependency|
+          if dependency.start_with?("@")
+            dependency.count("@") > 1 ? dependency.sub(/@[^@]+\z/, "") : dependency
+          else
+            dependency.sub(/@[^@]+\z/, "")
+          end
         end
       end
 

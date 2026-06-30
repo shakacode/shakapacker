@@ -4,7 +4,9 @@ const rootPath = process.cwd()
 chdirTestApp()
 
 const loadRspackDevelopmentConfig = (
-  reactRefreshModule = function ReactRefreshRspackPlugin() {},
+  reactRefreshModule = {
+    ReactRefreshRspackPlugin: function ReactRefreshRspackPlugin() {}
+  },
   webpackServe = "true"
 ) => {
   jest.resetModules()
@@ -45,6 +47,12 @@ const hasReactRefreshPluginInstance = (environmentConfig) => {
   )
 }
 
+const swcReactTransforms = (environmentConfig) =>
+  (environmentConfig.module?.rules || [])
+    .flatMap((rule) => (Array.isArray(rule.use) ? rule.use : []))
+    .filter((loader) => loader.loader === "builtin:swc-loader")
+    .map((loader) => loader.options.jsc.transform.react)
+
 describe("Rspack React refresh development config", () => {
   afterEach(() => {
     jest.restoreAllMocks()
@@ -70,32 +78,43 @@ describe("Rspack React refresh development config", () => {
     ).toBe(true)
   })
 
-  test("keeps compatibility with the direct CommonJS export", () => {
+  test("enables the SWC React refresh transform when the plugin is loaded", () => {
+    const environmentConfig = loadRspackDevelopmentConfig()
+
+    expect(swcReactTransforms(environmentConfig)).toStrictEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ development: true, refresh: true }),
+        expect.objectContaining({ development: true, refresh: true })
+      ])
+    )
+  })
+
+  test("skips the legacy direct CommonJS export shape", () => {
+    const warn = jest.spyOn(console, "warn").mockImplementation(() => {})
     function ReactRefreshRspackPlugin() {}
 
     const environmentConfig = loadRspackDevelopmentConfig(
       ReactRefreshRspackPlugin
     )
 
-    expect(
-      environmentConfig.plugins.some(
-        (plugin) => plugin instanceof ReactRefreshRspackPlugin
-      )
-    ).toBe(true)
+    expect(warn).toHaveBeenCalledWith(
+      "[SHAKAPACKER WARNING] Could not resolve a constructor from @rspack/plugin-react-refresh; React Refresh will be skipped in development."
+    )
+    expect(hasReactRefreshPluginInstance(environmentConfig)).toBe(false)
   })
 
-  test("falls back to .default when only a default export is present", () => {
+  test("skips the legacy default-only export shape", () => {
+    const warn = jest.spyOn(console, "warn").mockImplementation(() => {})
     function ReactRefreshRspackPlugin() {}
 
     const environmentConfig = loadRspackDevelopmentConfig({
       default: ReactRefreshRspackPlugin
     })
 
-    expect(
-      environmentConfig.plugins.some(
-        (plugin) => plugin instanceof ReactRefreshRspackPlugin
-      )
-    ).toBe(true)
+    expect(warn).toHaveBeenCalledWith(
+      "[SHAKAPACKER WARNING] Could not resolve a constructor from @rspack/plugin-react-refresh; React Refresh will be skipped in development."
+    )
+    expect(hasReactRefreshPluginInstance(environmentConfig)).toBe(false)
   })
 
   test("skips the plugin when no known export shape is present", () => {
@@ -122,11 +141,18 @@ describe("Rspack React refresh development config", () => {
     const environmentConfig = loadRspackDevelopmentConfig()
 
     expect(environmentConfig.devServer).toBeDefined()
+    expect(environmentConfig.lazyCompilation).toBe(false)
     expect(environmentConfig.devServer.devMiddleware.writeToDisk).toStrictEqual(
       expect.any(Function)
     )
     const { writeToDisk } = environmentConfig.devServer.devMiddleware
     expect(writeToDisk("/packs/app.hot-update.js")).toBe(false)
     expect(writeToDisk("/packs/app.js")).toBe(true)
+  })
+
+  test("sets lazyCompilation false when webpack dev server is not running", () => {
+    const environmentConfig = loadRspackDevelopmentConfig(undefined, null)
+
+    expect(environmentConfig.lazyCompilation).toBe(false)
   })
 })

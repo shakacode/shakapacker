@@ -1,5 +1,6 @@
 /* eslint-disable func-names, jest/no-conditional-in-test, max-classes-per-file */
 
+const { resolve } = require("path")
 const { chdirTestApp } = require("../../helpers")
 
 const rootPath = process.cwd()
@@ -97,10 +98,40 @@ describe("rspack/index", () => {
 
   // Relies on env.ts computing nodeEnv eagerly at require() time (plain const,
   // not a getter), so restoring NODE_ENV after require() is safe.
-  const loadRspackIndex = (nodeEnv = "development") => {
-    const previousNodeEnv = process.env.NODE_ENV
+  const loadRspackIndex = (nodeEnv = "development", envOverrides = {}) => {
+    const previousEnv = { ...process.env }
     jest.resetModules()
-    process.env.NODE_ENV = nodeEnv
+    process.env = {
+      ...previousEnv,
+      NODE_ENV: nodeEnv,
+      ...envOverrides
+    }
+    const environmentConfigPath = resolve(
+      rootPath,
+      "package/environments",
+      `${nodeEnv}.js`
+    )
+
+    jest.doMock("fs", () => {
+      const actualFs = jest.requireActual("fs")
+      return {
+        ...actualFs,
+        existsSync: (path) =>
+          path === environmentConfigPath || actualFs.existsSync(path)
+      }
+    })
+    jest.doMock(
+      environmentConfigPath,
+      () => jest.requireActual(`../../../package/environments/${nodeEnv}`),
+      { virtual: true }
+    )
+    jest.doMock(
+      "@rspack/plugin-react-refresh",
+      () => ({
+        ReactRefreshRspackPlugin: function ReactRefreshRspackPlugin() {}
+      }),
+      { virtual: true }
+    )
 
     try {
       const loadedRspackIndex = require("../../../package/rspack/index")
@@ -113,11 +144,7 @@ describe("rspack/index", () => {
         validateRspackDependencies: loadedValidateRspackDependencies
       }
     } finally {
-      if (previousNodeEnv === undefined) {
-        delete process.env.NODE_ENV
-      } else {
-        process.env.NODE_ENV = previousNodeEnv
-      }
+      process.env = previousEnv
     }
   }
 
@@ -244,6 +271,40 @@ describe("rspack/index", () => {
       expect(config).toHaveProperty("optimization.splitChunks.chunks", "all")
       expect(config).toHaveProperty("optimization.runtimeChunk", "single")
       expect(config.optimization).not.toHaveProperty("minimize")
+    })
+
+    test("sets top-level lazyCompilation false for rspack dev-server by default", () => {
+      const { rspackIndex: devServerRspackIndex } = loadRspackIndex(
+        "development",
+        {
+          RAILS_ENV: "development",
+          WEBPACK_SERVE: "true"
+        }
+      )
+
+      const config = devServerRspackIndex.generateRspackConfig()
+
+      expect(config.lazyCompilation).toBe(false)
+    })
+
+    test("preserves explicit top-level lazyCompilation overrides for rspack dev-server", () => {
+      const { rspackIndex: devServerRspackIndex } = loadRspackIndex(
+        "development",
+        {
+          RAILS_ENV: "development",
+          WEBPACK_SERVE: "true"
+        }
+      )
+      const lazyCompilation = {
+        imports: false,
+        entries: true
+      }
+
+      const config = devServerRspackIndex.generateRspackConfig({
+        lazyCompilation
+      })
+
+      expect(config.lazyCompilation).toStrictEqual(lazyCompilation)
     })
 
     test("errors if multiple configs are provided", () => {

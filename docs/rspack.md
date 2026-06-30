@@ -6,17 +6,13 @@ Shakapacker supports [Rspack](https://rspack.rs) as an alternative assets bundle
 
 ## Version Compatibility
 
-Shakapacker supports both Rspack v1 (`^1.0.0`) and Rspack v2 (`^2.0.0-0`). No configuration changes are needed when upgrading between rspack versions — shakapacker's generated config works with both.
+Shakapacker supports Rspack v2 (`^2.0.0`) going forward. Rspack v1 is no longer a supported target for new Shakapacker releases.
 
-Fresh installs default to the latest supported Rspack range from `lib/install/package.json`, which is currently the Rspack v2 prerelease line (`^2.0.0-0`).
+Fresh installs use the supported Rspack v2 ranges from `lib/install/package.json`.
 
 **Rspack v2 note:** Rspack v2 ships as a pure ESM package and requires **Node.js 20.19.0+**.
 
-**Rspack v1 note:** Rspack v1 itself supports older Node versions, but Shakapacker requires Node 20+.
-
-**Current CI coverage note:** Shakapacker currently validates rspack v2 using `2.0.0-rc.0`. The rspack v2 dev dependencies are intentionally pinned while v2 is pre-release and should be revisited when stable `2.0.0` is released.
-
-### Why upgrade to Rspack v2?
+### Why Rspack v2?
 
 - **Persistent cache with proper invalidation** — Rspack v2 promotes persistent caching (`cache.type: 'filesystem'`) from experimental to stable, with portable cache support (`cache.portable`) and read-only cache for CI (`cache.readonly`). This means fast rebuilds that survive process restarts and are properly invalidated when dependencies change.
 - **Incremental compilation (stable)** — The `incremental` option moves from `experiments` to a top-level config, signaling it's production-ready. Incremental builds skip unchanged work in the dependency graph.
@@ -32,7 +28,7 @@ See the [Rspack v2 breaking changes discussion](https://github.com/web-infra-dev
 
 ### Recommended (Shakapacker 10.1+): `shakapacker-rspack`
 
-`shakapacker-rspack` bundles `shakapacker`, `@rspack/core`, `@rspack/cli`, and `rspack-manifest-plugin` as direct dependencies, so a single install pulls in the full managed Rspack stack:
+`shakapacker-rspack` bundles `shakapacker`, `@rspack/core`, `@rspack/cli`, `@rspack/dev-server`, and `rspack-manifest-plugin` as direct dependencies, so a single install pulls in the full managed Rspack stack:
 
 ```bash
 npm install shakapacker-rspack -D
@@ -46,18 +42,18 @@ bun add shakapacker-rspack -D
 
 See [`packages/shakapacker-rspack/README.md`](../packages/shakapacker-rspack/README.md) for the full install reference and the [v10.1 supplemental packages migration guide](./migration/v10.1-supplemental-packages.md) for swapping an existing rspack install over to the supplemental package.
 
-### Manual install (Shakapacker 10.0 and earlier, or self-managed versions)
+### Manual install (self-managed versions)
 
-If you're on Shakapacker 10.0 or prefer to manage `@rspack/core`, `@rspack/cli`, and `rspack-manifest-plugin` versions yourself, install them directly:
+If you prefer to manage `@rspack/core`, `@rspack/cli`, `@rspack/dev-server`, and `rspack-manifest-plugin` versions yourself, install them directly:
 
 ```bash
-npm install @rspack/core @rspack/cli rspack-manifest-plugin -D
+npm install @rspack/core @rspack/cli @rspack/dev-server rspack-manifest-plugin -D
 # or
-yarn add @rspack/core @rspack/cli rspack-manifest-plugin -D
+yarn add @rspack/core @rspack/cli @rspack/dev-server rspack-manifest-plugin -D
 # or
-pnpm add @rspack/core @rspack/cli rspack-manifest-plugin -D
+pnpm add @rspack/core @rspack/cli @rspack/dev-server rspack-manifest-plugin -D
 # or
-bun add @rspack/core @rspack/cli rspack-manifest-plugin -D
+bun add @rspack/core @rspack/cli @rspack/dev-server rspack-manifest-plugin -D
 ```
 
 Note: These packages are already listed as optional peer dependencies in Shakapacker, so you may see warnings if they're not installed.
@@ -147,10 +143,12 @@ optimization: {
   minimize: true,
   minimizer: [
     new rspack.SwcJsMinimizerRspackPlugin(),
-    new rspack.SwcCssMinimizerRspackPlugin()
+    new rspack.LightningCssMinimizerRspackPlugin()
   ]
 }
 ```
+
+Shakapacker's generated Rspack config preserves the shared optimization defaults from the base config, including `optimization.splitChunks.chunks = "all"` and `optimization.runtimeChunk = "single"`. In production it also preserves compression plugins and Rspack's SWC/Lightning CSS minimizers.
 
 ## Limitations
 
@@ -174,6 +172,23 @@ All existing Shakapacker commands work the same way and automatically use Rspack
 
 The same dev server configuration in `shakapacker.yml` applies to both webpack and rspack.
 
+### Lazy Compilation
+
+Rspack v2 uses top-level `lazyCompilation`; do not rely on `experiments.lazyCompilation`. For Rails split dev-server topology, Shakapacker sets top-level `lazyCompilation: false` in the generated Rspack development config when the dev server is running. This avoids Rspack CLI dev-server auto-lazy behavior sending dynamic imports through lazy trigger URLs that Rails does not serve.
+
+If your app has a custom, safe lazy-compilation setup, configure the top-level field explicitly in `config/rspack/rspack.config.js`:
+
+```javascript
+const { generateRspackConfig } = require("shakapacker/rspack")
+
+module.exports = generateRspackConfig({
+  lazyCompilation: {
+    imports: false,
+    entries: true
+  }
+})
+```
+
 ## Performance Benefits
 
 Rspack typically provides:
@@ -190,7 +205,7 @@ Actual gains depend on project size, configuration, source maps, cache state, an
 1. **Install Rspack dependencies:**
 
    ```bash
-   npm install @rspack/core @rspack/cli -D
+   npm install @rspack/core @rspack/cli @rspack/dev-server rspack-manifest-plugin -D
    ```
 
 2. **Update configuration:**
