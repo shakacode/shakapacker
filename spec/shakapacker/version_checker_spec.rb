@@ -1639,11 +1639,18 @@ describe "VersionChecker::NodePackageVersion" do
 
           node_package_version = build_node_package_version(dir, "false\n")
           expect(node_package_version.raw).to eq "8.4.0"
+
+          node_package_version = build_node_package_version(dir, "packages:\n")
+          expect(node_package_version.raw).to eq "8.4.0"
         end
       end
 
       it "#raw supports Psych versions that use positional permitted classes" do
-        parsed_lockfile = YAML.safe_load(lockfile_with_time, permitted_classes: [Time, Date])
+        parsed_lockfile = {
+          "packages" => {
+            "shakapacker@8.4.0" => {}
+          }
+        }
 
         Dir.mktmpdir do |dir|
           node_package_version = build_node_package_version(dir, lockfile_with_time)

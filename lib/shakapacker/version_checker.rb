@@ -229,7 +229,7 @@ module Shakapacker
             # pnpm >= 10.16 writes a `time:` section; permit Time/Date so Psych 4+ doesn't raise DisallowedClass.
             content = safe_load_pnpm_lock(File.read(@pnpm_lock))
 
-            packages = content.is_a?(Hash) ? content.fetch("packages", {}) : {}
+            packages = content.is_a?(Hash) ? (content["packages"] || {}) : {}
 
             packages.each do |key, value|
               # git-based constraints will include a "version" key with their pseudo semantic version
@@ -264,7 +264,7 @@ module Shakapacker
           end
 
           def safe_load_pnpm_lock_legacy(lockfile)
-            # Psych < 3.3 uses a positional whitelist_classes argument instead of the permitted_classes: keyword.
+            # Ruby < 3.0 / Psych < 3.3.0 uses positional whitelist_classes instead of the permitted_classes: keyword.
             YAML.safe_load(lockfile, [Time, Date])
           end
       end
