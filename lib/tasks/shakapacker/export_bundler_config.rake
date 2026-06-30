@@ -68,14 +68,19 @@ namespace :shakapacker do
       # Legacy JavaScript binstubs left over from earlier Shakapacker
       # versions (`#!/usr/bin/env node`) are invoked through Node until
       # users refresh them with `rake shakapacker:binstubs`.
-      Dir.chdir(Rails.root) do
-        js_binstub_executable = Shakapacker::Utils::Misc.js_binstub_executable(bin_path)
+      js_binstub_executable = Shakapacker::Utils::Misc.js_binstub_executable(bin_path)
 
+      Dir.chdir(Rails.root) do
         if js_binstub_executable
           $stderr.puts "Note: bin/shakapacker-config is a legacy JavaScript binstub."
           $stderr.puts "Run `bundle exec rake shakapacker:binstubs` to upgrade to the Ruby binstub."
           $stderr.puts ""
-          Kernel.exec(js_binstub_executable, bin_path.to_s, *ARGV[1..])
+          begin
+            Kernel.exec(js_binstub_executable, bin_path.to_s, *ARGV[1..])
+          rescue Errno::ENOENT
+            abort "Error: '#{js_binstub_executable}' was not found in PATH.\n" \
+                  "Run `bundle exec rake shakapacker:binstubs` to upgrade to the Ruby binstub."
+          end
         else
           Kernel.exec(RbConfig.ruby, bin_path.to_s, *ARGV[1..])
         end

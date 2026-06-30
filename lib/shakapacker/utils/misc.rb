@@ -2,6 +2,7 @@
 
 require "English"
 require "rake/file_utils"
+require "shellwords"
 
 module Shakapacker
   module Utils
@@ -9,6 +10,7 @@ module Shakapacker
       extend FileUtils
 
       NODE_BINSTUB_EXECUTABLES = %w[node nodejs].freeze
+      private_constant :NODE_BINSTUB_EXECUTABLES
 
       def self.uncommitted_changes?(message_handler)
         return false if ENV["COVERAGE"] == "true"
@@ -40,12 +42,16 @@ module Shakapacker
         shebang = File.open(path, "rb") { |f| f.gets }.to_s
         return nil unless shebang.start_with?("#!")
 
-        shebang.delete_prefix("#!").split.each do |token|
-          executable = File.basename(token)
-          return executable if NODE_BINSTUB_EXECUTABLES.include?(executable)
+        shebang_tokens = Shellwords.split(shebang.delete_prefix("#!"))
+        executable = File.basename(shebang_tokens.first.to_s)
+
+        if executable == "env"
+          shebang_tokens = shebang_tokens.drop(1)
+          shebang_tokens.shift while shebang_tokens.first&.start_with?("-")
+          executable = File.basename(shebang_tokens.first.to_s)
         end
 
-        nil
+        NODE_BINSTUB_EXECUTABLES.include?(executable) ? executable : nil
       end
     end
   end

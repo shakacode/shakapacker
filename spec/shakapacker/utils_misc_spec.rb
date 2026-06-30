@@ -12,11 +12,18 @@ RSpec.describe Shakapacker::Utils::Misc do
       file.close
       yield file.path
     ensure
+      file&.close
       file&.unlink
     end
 
     it "returns node for a node `env` shebang" do
       with_binstub("#!/usr/bin/env node\nconsole.log('legacy')\n") do |path|
+        expect(described_class.js_binstub_executable(path)).to eq "node"
+      end
+    end
+
+    it "returns node for a node `env` shebang with env flags" do
+      with_binstub("#!/usr/bin/env -S node --no-warnings\nconsole.log('legacy')\n") do |path|
         expect(described_class.js_binstub_executable(path)).to eq "node"
       end
     end
@@ -47,6 +54,12 @@ RSpec.describe Shakapacker::Utils::Misc do
 
     it "returns nil for a direct ruby shebang" do
       with_binstub("#!/usr/bin/ruby\nputs 'ruby'\n") do |path|
+        expect(described_class.js_binstub_executable(path)).to be_nil
+      end
+    end
+
+    it "returns nil when node appears after the shebang interpreter" do
+      with_binstub("#!/usr/bin/ruby node\nputs 'ruby'\n") do |path|
         expect(described_class.js_binstub_executable(path)).to be_nil
       end
     end
