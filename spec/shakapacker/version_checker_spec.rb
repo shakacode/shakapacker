@@ -1646,20 +1646,23 @@ describe "VersionChecker::NodePackageVersion" do
       end
 
       it "#raw supports Psych versions that use positional permitted classes" do
+        parsed_lockfile = {
+          "packages" => {
+            "shakapacker@8.4.0" => {}
+          }
+        }
+
         Dir.mktmpdir do |dir|
           node_package_version = build_node_package_version(dir, lockfile_with_time)
-          original_safe_load = YAML.method(:safe_load)
+          stub_const(
+            "Shakapacker::VersionChecker::NodePackageVersion::PSYCH_SAFE_LOAD_ACCEPTS_PERMITTED_CLASSES",
+            false
+          )
 
           without_partial_double_verification do
-            allow(YAML).to receive(:safe_load) do |lockfile, *args, **kwargs|
-              raise ArgumentError, "unknown keyword: :permitted_classes" if kwargs.key?(:permitted_classes)
-
-              if args == [[Time, Date]]
-                original_safe_load.call(lockfile, permitted_classes: args.first)
-              else
-                original_safe_load.call(lockfile, **kwargs)
-              end
-            end
+            expect(YAML).to receive(:safe_load)
+              .with(lockfile_with_time, [Time, Date])
+              .and_return(parsed_lockfile)
 
             expect(node_package_version.raw).to eq "8.4.0"
           end

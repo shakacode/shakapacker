@@ -1,4 +1,6 @@
 # frozen_string_literal: true
+require "yaml"
+
 require_relative "version"
 
 module Shakapacker
@@ -71,6 +73,7 @@ module Shakapacker
         # Bare "..foo" (two dots, no slash, non-empty suffix) and bare "." are intentionally not
         # matched — package managers don't emit those forms for shakapacker installs.
         LOCAL_PATH_REGEX = %r{\A(\./|\.\.(/|\z)|file:)}.freeze
+        PSYCH_SAFE_LOAD_ACCEPTS_PERMITTED_CLASSES = YAML.method(:safe_load).parameters.any? { |(_, name)| name == :permitted_classes }
 
         attr_reader :package_json
 
@@ -254,9 +257,7 @@ module Shakapacker
           end
 
           def safe_load_pnpm_lock(lockfile)
-            YAML.safe_load(lockfile, permitted_classes: [Time, Date])
-          rescue ArgumentError => error
-            raise unless error.message.include?("unknown keyword")
+            return YAML.safe_load(lockfile, permitted_classes: [Time, Date]) if PSYCH_SAFE_LOAD_ACCEPTS_PERMITTED_CLASSES
 
             safe_load_pnpm_lock_legacy(lockfile)
           end
