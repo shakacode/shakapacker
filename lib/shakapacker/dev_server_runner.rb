@@ -273,16 +273,16 @@ module Shakapacker
         # Host/port stay config-owned even after -- because Shakapacker assembles the dev-server command.
         unsupported_switches = UNSUPPORTED_SWITCHES & bundler_argv
         if unsupported_switches.any?
-          $stdout.puts(
+          log_output.puts(
             "The following CLI switches are not supported by Shakapacker: #{unsupported_switches.join(' ')}. " \
             "Please set dev_server.host or dev_server.port in shakapacker.yml instead."
           )
-          exit!
+          exit_after_shakapacker_flag_error(1)
         end
 
         if bundler_argv.include?("--https") && !@https
-          $stdout.puts "--https requires that 'server' in shakapacker.yml is set to 'https'"
-          exit!
+          log_output.puts "--https requires that 'server' in shakapacker.yml is set to 'https'"
+          exit_after_shakapacker_flag_error(1)
         end
       end
 
@@ -346,7 +346,7 @@ module Shakapacker
 
       def exit_after_shakapacker_flag_error(status)
         log_output.flush
-        exit!(status)
+        exit(status)
       end
 
       def webpack?

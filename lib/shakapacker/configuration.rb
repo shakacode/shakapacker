@@ -272,7 +272,7 @@ class Shakapacker::Configuration
 
     unless valid_flags
       disallowed_flags = DISALLOWED_WEBPACK_COMPILE_FLAGS.join(", ")
-      raise "Shakapacker configuration error: webpack_compile_flags must be an array of " \
+      raise "Shakapacker configuration error: compile flags (webpack_compile_flags) must be an array of " \
             "non-empty strings and must not include \"--\" or Shakapacker-specific " \
             "wrapper/short-circuit/watch/managed flags (#{disallowed_flags})"
     end

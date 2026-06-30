@@ -188,11 +188,28 @@ describe "DevServerRunner" do
           ["--", "--host", "0.0.0.0"]
         )
         instance = Shakapacker::DevServerRunner.new(runner_argv, nil, nil, passthrough_argv)
-        allow(instance).to receive(:exit!).and_raise(SystemExit)
 
         expect { instance.send(:detect_unsupported_switches!) }
           .to output(/--host.*dev_server\.host/).to_stdout
           .and raise_error(SystemExit)
+      end
+    end
+
+    it "flushes unsupported dev-server switch diagnostics before exit" do
+      Dir.chdir(test_app_path) do
+        runner_argv, passthrough_argv = Shakapacker::DevServerRunner.split_passthrough_argv(
+          ["--", "--port", "3036"]
+        )
+        instance = Shakapacker::DevServerRunner.new(runner_argv, nil, nil, passthrough_argv)
+        output = StringIO.new
+
+        allow(instance).to receive(:log_output).and_return(output)
+        allow(output).to receive(:flush).and_call_original
+
+        expect { instance.send(:detect_unsupported_switches!) }
+          .to raise_error(SystemExit)
+        expect(output.string).to match(/--port.*dev_server\.port/)
+        expect(output).to have_received(:flush)
       end
     end
 

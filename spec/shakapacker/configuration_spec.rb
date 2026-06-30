@@ -937,7 +937,7 @@ describe "Shakapacker::Configuration" do
         env: "production"
       )
 
-      expect { config.webpack_compile_flags }.to raise_error(/webpack_compile_flags must be an array of non-empty strings/)
+      expect { config.webpack_compile_flags }.to raise_error(/compile flags \(webpack_compile_flags\) must be an array of non-empty strings/)
 
       test_config.close
       test_config.unlink
@@ -960,7 +960,7 @@ describe "Shakapacker::Configuration" do
         env: "production"
       )
 
-      expect { config.webpack_compile_flags }.to raise_error(/webpack_compile_flags must be an array of non-empty strings/)
+      expect { config.webpack_compile_flags }.to raise_error(/compile flags \(webpack_compile_flags\) must be an array of non-empty strings/)
 
       test_config.close
       test_config.unlink
