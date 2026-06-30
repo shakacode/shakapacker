@@ -5,7 +5,13 @@ require "package_json"
 package_json = PackageJson.new
 
 # install react
-package_json.manager.add(["react", "react-dom", "@babel/preset-react@^7.17.0"])
+# react-dom 19 is not compatible with this generated app config.
+# preset-react 8 peers on @babel/core 8, so keep the generated app on React 18 and preset-react 7.
+package_json.manager.add([
+  "react@^18.3.1",
+  "react-dom@^18.3.1",
+  "@babel/preset-react@^7.18.6"
+])
 
 # update webpack presets for react
 package_json.merge! do |pj|
