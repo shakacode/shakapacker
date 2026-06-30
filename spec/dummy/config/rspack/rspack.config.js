@@ -8,10 +8,12 @@ const commonOptions = {
   ignoreWarnings: [/Module not found: Can't resolve 'react-dom\/client'/]
 }
 
-const constructorNamesToRemove = new Set([
-  'RspackManifestPlugin',
-  'CssExtractRspackPlugin'
-])
+// rspack-manifest-plugin exposes both names across versions; remove only those
+// known manifest plugins from the server config so unrelated app plugins remain.
+const shouldRemoveServerPlugin = (name) =>
+  name === 'CssExtractRspackPlugin' ||
+  name === 'RspackManifestPlugin' ||
+  name === 'WebpackManifestPlugin'
 
 const loaderName = (loader) => {
   if (typeof loader === 'string') {
@@ -108,9 +110,9 @@ const serverConfig = () => {
   // Filter by constructor name — works in dev/test where class names are preserved.
   // MUST NEVER run against a minified shakapacker bundle: production minification
   // mangles these class names to single letters and the filter would silently no-op.
-  // Optional chaining guards against null/raw-function/POJO plugins.
+  // Optional chaining + the '' fallback guard against null/raw-function/POJO plugins.
   config.plugins = config.plugins.filter(
-    (plugin) => !constructorNamesToRemove.has(plugin?.constructor?.name)
+    (plugin) => !shouldRemoveServerPlugin(plugin?.constructor?.name ?? '')
   )
 
   config.module.rules = configureRulesForServer(config.module.rules)

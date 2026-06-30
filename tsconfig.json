@@ -1,6 +1,11 @@
 {
   "compilerOptions": {
     "target": "ES2020",
+    // Required: the package entry points compile as CommonJS so runtime exports
+    // can be assembled with configurable lazy accessors. In package/rspack/index.ts,
+    // baseConfig/rules are `export declare const` types only; the real runtime
+    // properties are installed with Object.defineProperty, which keeps Node's
+    // native CJS/ESM interop from treating those lazy values as named imports.
     "module": "commonjs",
     "lib": ["ES2020"],
     "importHelpers": false,
