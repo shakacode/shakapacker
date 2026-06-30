@@ -1,4 +1,6 @@
 # frozen_string_literal: true
+require "yaml"
+
 require_relative "version"
 
 module Shakapacker
@@ -224,13 +226,19 @@ module Shakapacker
 
           def from_pnpm_lock
             require "yaml"
+            require "date"
 
-            content = YAML.load_file(@pnpm_lock)
+            # pnpm >= 10.16 writes a `time:` section; permit Time/Date so Psych 4+ doesn't raise DisallowedClass.
+            content = safe_load_pnpm_lock(File.read(@pnpm_lock))
 
-            content.fetch("packages", {}).each do |key, value|
+            packages = content.is_a?(Hash) ? (content["packages"] || {}) : {}
+
+            packages.each do |key, value|
               # git-based constraints will include a "version" key with their pseudo semantic version
-              return value["version"] if key.start_with?("shakapacker") && value.key?("version")
-              return value["version"] if value["name"] == "shakapacker"
+              if value.is_a?(Hash)
+                return value["version"] if key.start_with?("shakapacker") && value.key?("version")
+                return value["version"] if value["name"] == "shakapacker"
+              end
 
               # v9+ uses the same key format just without the leading slash, so we just add one in
               key = "/#{key}" unless key.start_with?("/")
@@ -247,6 +255,10 @@ module Shakapacker
             end
 
             nil
+          end
+
+          def safe_load_pnpm_lock(lockfile)
+            YAML.safe_load(lockfile, permitted_classes: [Time, Date])
           end
       end
   end
