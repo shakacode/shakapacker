@@ -1814,7 +1814,6 @@ describe Shakapacker::Doctor do
         "webpack" => "^5.0.0",
         "babel-loader" => "^9.0.0"
       )
-      expect(doctor.send(:read_package_json).dig("dependencies", "webpack")).to eq("^5.0.0")
     end
 
     it "memoizes the Rails root fallback when source_path is outside the app root" do
@@ -1944,6 +1943,8 @@ describe Shakapacker::Doctor do
     end
 
     context "with Babel transpiler" do
+      let(:config_data) { super().merge(javascript_transpiler: "babel") }
+
       before do
         allow(config).to receive(:javascript_transpiler).and_return("babel")
       end
@@ -2091,6 +2092,29 @@ describe Shakapacker::Doctor do
             ).to eq(described_class::CATEGORY_INFO)
             expect(warning_messages).not_to include(match(/Both SWC and Babel dependencies are installed/))
             expect(warning_messages).not_to include(match(/\.swcrc file detected.*migrate to config\/swc\.config\.js/))
+          end
+
+          it "uses real Configuration defaults as an inferred SWC doctor check" do
+            File.write(config_path, <<~YAML)
+              test:
+                source_path: app/javascript
+                source_entry_path: packs
+                integrity:
+                  enabled: false
+            YAML
+
+            real_config = Shakapacker::Configuration.new(
+              root_path: root_path,
+              config_path: config_path,
+              env: "test"
+            )
+            real_doctor = described_class.new(real_config, root_path)
+            real_doctor.send(:check_javascript_transpiler_dependencies)
+            real_warnings = real_doctor.warnings.map { |warning| warning[:message] }
+
+            expect(real_doctor.issues).not_to include(match(/Missing required dependency '@swc\/core'/))
+            expect(real_doctor.issues).not_to include(match(/Missing required dependency 'swc-loader'/))
+            expect(real_warnings).to include(match(/Detected an inferred webpack\/SWC setup.*Skipping SWC dependency issue checks/))
           end
 
           it "reports an empty assets_bundler env override instead of substituting defaults" do
@@ -2272,6 +2296,8 @@ describe Shakapacker::Doctor do
     end
 
     context "with esbuild transpiler" do
+      let(:config_data) { super().merge(javascript_transpiler: "esbuild") }
+
       before do
         allow(config).to receive(:javascript_transpiler).and_return("esbuild")
       end
@@ -2326,6 +2352,8 @@ describe Shakapacker::Doctor do
     end
 
     context "when transpiler is none" do
+      let(:config_data) { super().merge(javascript_transpiler: "none") }
+
       before do
         allow(config).to receive(:javascript_transpiler).and_return("none")
       end
@@ -2337,6 +2365,8 @@ describe Shakapacker::Doctor do
     end
 
     context "transpiler config consistency" do
+      let(:config_data) { super().merge(javascript_transpiler: "swc") }
+
       before do
         allow(config).to receive(:javascript_transpiler).and_return("swc")
       end

@@ -510,7 +510,7 @@ module Shakapacker
       end
 
       def check_javascript_transpiler_dependencies
-        transpiler = javascript_transpiler
+        transpiler = configured_javascript_transpiler
 
         # Default to SWC for v9+ if not configured
         if transpiler.nil?
@@ -615,8 +615,7 @@ module Shakapacker
 
         # Check if package.json has babel config
         if package_json_exists?
-          package_json = read_package_json
-          babel_in_package_json = package_json.key?("babel")
+          babel_in_package_json = package_json_key?("babel")
           babel_config_exists ||= babel_in_package_json
         end
 
@@ -733,11 +732,9 @@ module Shakapacker
       def stimulus_likely_used?
         return false unless package_json_exists?
 
-        package_json = read_package_json
-        dependencies = (package_json["dependencies"] || {}).merge(package_json["devDependencies"] || {})
-
         # Check for @hotwired/stimulus or stimulus package
-        dependencies.key?("@hotwired/stimulus") || dependencies.key?("stimulus")
+        declared_package_dependencies.key?("@hotwired/stimulus") ||
+          declared_package_dependencies.key?("stimulus")
       end
 
       def check_css_dependencies
@@ -1267,6 +1264,10 @@ module Shakapacker
         javascript_transpiler_env_override || config.javascript_transpiler
       end
 
+      def configured_javascript_transpiler
+        javascript_transpiler_env_override || (config.javascript_transpiler if javascript_transpiler_configured?)
+      end
+
       def javascript_transpiler_env_override
         value = ENV["SHAKAPACKER_JAVASCRIPT_TRANSPILER"]
         return nil if value.nil? || value.empty?
@@ -1319,21 +1320,17 @@ module Shakapacker
         data[key]
       end
 
-      def read_package_json
-        @package_json ||= begin
-          package_json_paths.reverse_each.reduce({}) do |package_json, path|
-            parsed_package_json = parse_package_json(path)
-            next package_json unless parsed_package_json
-
-            merge_package_json(package_json, parsed_package_json)
-          end
-        end
-      end
-
       def parse_package_json(path)
         JSON.parse(File.read(path))
       rescue JSON::ParserError, SystemCallError
         nil
+      end
+
+      def package_json_key?(key)
+        package_json_paths.any? do |path|
+          package_json = parse_package_json(path)
+          package_json.is_a?(Hash) && package_json.key?(key)
+        end
       end
 
       def package_json_paths
@@ -1342,25 +1339,22 @@ module Shakapacker
           .select(&:exist?)
       end
 
-      def merge_package_json(base, override)
-        merged = base.merge(override)
-
-        %w[dependencies devDependencies optionalDependencies].each do |key|
-          next unless base[key].is_a?(Hash) || override[key].is_a?(Hash)
-
-          merged[key] = (base[key] || {}).merge(override[key] || {})
-        end
-
-        merged
-      end
-
       def javascript_package_root_path
         @javascript_package_root_path ||= begin
           source_path = config.source_path.expand_path
           app_root = root_path.expand_path
 
           if path_within?(source_path, app_root)
-            path_ancestors(source_path, app_root).find { |path| package_root_marker?(path) } || root_path
+            current = source_path
+            loop do
+              break current if package_root_marker?(current)
+              break root_path if current == app_root
+
+              parent = current.dirname
+              break root_path if parent == current
+
+              current = parent
+            end
           else
             root_path
           end
@@ -1390,20 +1384,6 @@ module Shakapacker
       def package_root_marker?(path)
         # Keep aligned with shakapacker_package_root_marker? in the helper binstubs.
         PACKAGE_ROOT_MARKERS.any? { |entry| path.join(entry).exist? }
-      end
-
-      def path_ancestors(path, stop_path)
-        paths = []
-        current = path
-
-        loop do
-          paths << current
-          break if current == stop_path || current.dirname == current
-
-          current = current.dirname
-        end
-
-        paths
       end
 
       def path_within?(path, parent)
