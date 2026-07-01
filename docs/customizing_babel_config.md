@@ -65,8 +65,7 @@ module.exports = function (api) {
       [
         "@babel/preset-react",
         {
-          development: isDevelopmentEnv || isTestEnv,
-          useBuiltIns: true
+          development: isDevelopmentEnv || isTestEnv
         }
       ]
     ].filter(Boolean),
@@ -87,3 +86,27 @@ module.exports = function (api) {
   return resultConfig
 }
 ```
+
+### Babel 8
+
+Shakapacker supports Babel 7 and Babel 8. If you use Babel 8, install matching
+Babel 8 packages for the Shakapacker preset and use `babel-loader` 10 or newer:
+
+```bash
+npm install --save-dev @babel/core@^8 @babel/plugin-transform-runtime@^8 @babel/preset-env@^8 @babel/runtime@^8 babel-loader@^10
+```
+
+Babel 8 requires Node `^22.18.0 || >=24.11.0` while running the build. It also
+removed some Babel 7 configuration options. The Shakapacker preset omits those
+removed options when Babel 8 is running, but app-level custom Babel config should
+also avoid Babel 7-only options such as `useBuiltIns` on `@babel/preset-react`
+or `helpers` on `@babel/plugin-transform-runtime`.
+
+Shakapacker validates the loader/core pairing when `javascript_transpiler:
+"babel"` is active. If your app installs Babel 8, install `babel-loader` 10 or
+newer; older `babel-loader` majors are only supported with Babel 7.
+
+If your app relied on Babel 7 `@babel/preset-env` `useBuiltIns: "entry"`
+polyfill rewriting, move polyfill injection to your app config for Babel 8, for
+example with `babel-plugin-polyfill-corejs3`, or keep explicit `core-js` imports
+that match your browser support policy.

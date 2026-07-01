@@ -56,10 +56,10 @@ releases support.
 Installed when you explicitly use `javascript_transpiler: "babel"`:
 
 ```text
-"@babel/core": "^7.17.9"
-"@babel/plugin-transform-runtime": "^7.17.0"
-"@babel/preset-env": "^7.16.11"
-"@babel/runtime": "^7.17.9"
+"@babel/core": "^7.17.9 || ^8.0.0"
+"@babel/plugin-transform-runtime": "^7.17.0 || ^8.0.0"
+"@babel/preset-env": "^7.16.11 || ^8.0.0"
+"@babel/runtime": "^7.17.9 || ^8.0.0"
 "babel-loader": "^8.2.4 || ^9.0.0 || ^10.0.0"
 ```
 
