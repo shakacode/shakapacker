@@ -114,6 +114,42 @@ RSpec.describe "helper binstubs" do
       end
     end
 
+    it "falls back to the Rails-root #{command} package script when source_path is not a string" do
+      Dir.mktmpdir("shakapacker-binstub-") do |app_path|
+        File.write(File.join(app_path, "Gemfile"), "")
+        FileUtils.mkdir_p(File.join(app_path, "bin"))
+        FileUtils.mkdir_p(File.join(app_path, "config"))
+        File.write(
+          File.join(app_path, "config/shakapacker.yml"),
+          <<~YAML
+            development:
+              source_path:
+                nested: true
+          YAML
+        )
+        install_fake_node_script(app_path, command)
+
+        binstub_path = File.join(app_path, "bin", command)
+        FileUtils.cp(File.join(gem_root, "lib", "install", "bin", command), binstub_path)
+        FileUtils.chmod(0o755, binstub_path)
+
+        output_path = File.join(app_path, "binstub-output.json")
+        _stdout, stderr, status = Open3.capture3(
+          { "SHAKAPACKER_BINSTUB_OUTPUT" => output_path },
+          binstub_path,
+          "--doctor",
+          chdir: app_path
+        )
+
+        expect(status).to be_success, stderr
+        expect(JSON.parse(File.read(output_path))).to include(
+          "cwd" => File.realpath(app_path),
+          "scriptPath" => File.realpath(File.join(app_path, "node_modules/shakapacker/package/bin/#{command}.cjs")),
+          "argv" => ["--doctor"]
+        )
+      end
+    end
+
     it "falls back to the Rails-root #{command} package script when client dependencies are hoisted" do
       Dir.mktmpdir("shakapacker-binstub-") do |app_path|
         client_path = File.join(app_path, "client")

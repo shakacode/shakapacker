@@ -1815,6 +1815,15 @@ describe Shakapacker::Doctor do
       )
       expect(doctor.send(:read_package_json).dig("dependencies", "webpack")).to eq("^5.0.0")
     end
+
+    it "memoizes the Rails root fallback when source_path is outside the app root" do
+      outside_source_path = root_path.dirname.join("outside-client/app/javascript")
+      allow(config).to receive(:source_path).and_return(outside_source_path)
+
+      expect(doctor.send(:javascript_package_root_path)).to eq(root_path)
+      expect(doctor.send(:javascript_package_root_path)).to eq(root_path)
+      expect(config).to have_received(:source_path).once
+    end
   end
 
   describe "binstub checks" do
@@ -2045,15 +2054,16 @@ describe Shakapacker::Doctor do
             }))
           end
 
-          it "warns about the inferred custom-hybrid boundary while keeping default SWC checks" do
+          it "skips inferred default SWC dependency issues for custom-hybrid package graphs" do
             doctor.send(:check_javascript_transpiler_dependencies)
-            expect(doctor.issues).to include(match(/Missing required dependency '@swc\/core'/))
-            expect(doctor.issues).to include(match(/Missing required dependency 'swc-loader'/))
-            expect(warning_messages).to include(match(/Detected an inferred webpack\/SWC setup.*custom hybrid webpack\/Rspack configs/))
+            expect(doctor.issues).not_to include(match(/Missing required dependency '@swc\/core'/))
+            expect(doctor.issues).not_to include(match(/Missing required dependency 'swc-loader'/))
+            expect(warning_messages).to include(match(/Detected an inferred webpack\/SWC setup.*Skipping SWC dependency issue checks/))
             expect(
               doctor.warnings.find { |warning| warning[:message].match?(/Detected an inferred webpack\/SWC setup/) }[:category]
             ).to eq(described_class::CATEGORY_INFO)
-            expect(warning_messages).to include(match(/\.swcrc file detected.*migrate to config\/swc\.config\.js/))
+            expect(warning_messages).not_to include(match(/Both SWC and Babel dependencies are installed/))
+            expect(warning_messages).not_to include(match(/\.swcrc file detected.*migrate to config\/swc\.config\.js/))
           end
 
           it "reports an empty assets_bundler env override instead of substituting defaults" do

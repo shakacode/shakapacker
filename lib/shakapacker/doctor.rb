@@ -516,9 +516,10 @@ module Shakapacker
         return if transpiler == "none"
 
         bundler = assets_bundler
-        if inferred_hybrid_loader_graph?(transpiler, bundler)
+        inferred_hybrid_graph = inferred_hybrid_loader_graph?(transpiler, bundler)
+        if inferred_hybrid_graph
           add_info_warning("Detected an inferred webpack/SWC setup with webpack, Rspack, and non-SWC loader packages installed. " \
-                           "Doctor will still validate the default webpack/SWC dependencies. For custom hybrid webpack/Rspack configs, " \
+                           "Skipping SWC dependency issue checks for this inferred default. For custom hybrid webpack/Rspack configs, " \
                            "set javascript_transpiler: \"none\" when Shakapacker should not validate loader dependencies, " \
                            "or set javascript_transpiler/assets_bundler explicitly when Shakapacker owns that build path.")
         end
@@ -528,7 +529,7 @@ module Shakapacker
           check_babel_dependencies
           check_babel_performance_suggestion
         when "swc"
-          check_swc_dependencies(bundler)
+          check_swc_dependencies(bundler) unless inferred_hybrid_graph
         when "esbuild"
           check_esbuild_dependencies
         else
@@ -539,7 +540,7 @@ module Shakapacker
           end
         end
 
-        check_transpiler_config_consistency(transpiler)
+        check_transpiler_config_consistency(transpiler, inferred_hybrid_graph: inferred_hybrid_graph)
       end
 
       def check_babel_dependencies
@@ -593,7 +594,9 @@ module Shakapacker
         end
       end
 
-      def check_transpiler_config_consistency(transpiler = javascript_transpiler)
+      def check_transpiler_config_consistency(transpiler = javascript_transpiler, inferred_hybrid_graph: nil)
+        inferred_hybrid_graph = inferred_hybrid_loader_graph?(transpiler, assets_bundler) if inferred_hybrid_graph.nil?
+
         babel_configs = [
           root_path.join(".babelrc"),
           root_path.join(".babelrc.js"),
@@ -612,7 +615,7 @@ module Shakapacker
           babel_config_exists ||= babel_in_package_json
         end
 
-        if babel_config_exists && transpiler != "babel"
+        if babel_config_exists && transpiler != "babel" && !inferred_hybrid_graph
           babel_files = babel_configs.select(&:exist?).map { |f| f.relative_path_from(root_path) }
           babel_files << "package.json" if babel_in_package_json
           babel_files_str = babel_files.join(", ")
@@ -621,7 +624,7 @@ module Shakapacker
         end
 
         # Check for redundant dependencies
-        if transpiler == "swc" && package_installed?("babel-loader")
+        if transpiler == "swc" && package_installed?("babel-loader") && !inferred_hybrid_graph
           add_warning("Both SWC and Babel dependencies are installed. Consider removing Babel dependencies to reduce node_modules size")
         end
 
@@ -630,7 +633,7 @@ module Shakapacker
         end
 
         # Check for SWC configuration conflicts
-        if transpiler == "swc"
+        if transpiler == "swc" && !inferred_hybrid_graph
           check_swc_config_conflicts
         end
       end
@@ -1328,9 +1331,11 @@ module Shakapacker
           source_path = config.source_path.expand_path
           app_root = root_path.expand_path
 
-          return root_path unless path_within?(source_path, app_root)
-
-          path_ancestors(source_path, app_root).find { |path| package_root_marker?(path) } || root_path
+          if path_within?(source_path, app_root)
+            path_ancestors(source_path, app_root).find { |path| package_root_marker?(path) } || root_path
+          else
+            root_path
+          end
         rescue StandardError
           root_path
         end

@@ -602,7 +602,8 @@ def shakapacker_source_path(app_root)
   env_config = config[env] || config["production"]
   return nil unless env_config.is_a?(Hash)
 
-  env_config["source_path"]
+  source_path = env_config["source_path"]
+  source_path if source_path.is_a?(String)
 rescue Psych::Exception, SystemCallError
   nil
 end
