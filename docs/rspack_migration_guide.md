@@ -11,6 +11,7 @@
   - [Server-Side Rendering (SSR) Considerations](#server-side-rendering-ssr-considerations)
 - [Key Differences from Webpack](#key-differences-from-webpack)
 - [Migration Steps](#migration-steps)
+- [Migrating Custom Webpack Configs](#migrating-custom-webpack-configs)
 - [Build Verification](#build-verification)
 - [Configuration Best Practices](#configuration-best-practices)
 - [Common Migration Issues](#common-migration-issues)
@@ -121,7 +122,7 @@ Rspack provides built-in loaders for better performance:
 
 The following webpack plugins are NOT compatible with Rspack:
 
-- `webpack.optimize.LimitChunkCountPlugin` - Use `optimization.splitChunks` configuration instead
+- `webpack.optimize.LimitChunkCountPlugin` - Use `rspack.optimize.LimitChunkCountPlugin` when you need equivalent chunk-limit behavior, or `optimization.splitChunks` when the old plugin was only approximating chunk strategy
 - `webpack-manifest-plugin` - Use `rspack-manifest-plugin` instead
 - Git revision plugins - Use alternative approaches
 
@@ -310,6 +311,81 @@ bin/shakapacker --mode production
 - [ ] Update CI/CD pipelines
 - [ ] Deploy to staging
 - [ ] Monitor performance improvements
+
+## Migrating Custom Webpack Configs
+
+Apps with a hand-rolled webpack builder should migrate in two passes: first preserve behavior, then simplify toward Shakapacker's generated structure. Avoid rewriting every customization while also changing bundlers.
+
+### Start from the generated rspack config when possible
+
+Prefer `generateRspackConfig()` as the base config because it wires Shakapacker's expected defaults, output paths, dev-server behavior, and manifest integration:
+
+```javascript
+// config/rspack/rspack.config.js
+const { generateRspackConfig, merge } = require("shakapacker/rspack")
+
+const baseConfig = generateRspackConfig()
+
+module.exports = merge(baseConfig, {
+  resolve: {
+    extensions: [".js", ".jsx", ".ts", ".tsx", ".bs.js"]
+  }
+})
+```
+
+If your webpack setup currently has a `client/webpack/builder.js` plus a series of `set-*.js` modules, map those concerns onto the generated config shape:
+
+- Put shared loaders, aliases, extensions, CSS-module rules, and polyfills in the common config.
+- Put browser-only plugins, dev-server behavior, HMR, and React Refresh in the client config.
+- Put SSR-only output, target, externals, and CSS-extraction filtering in the server config.
+- Express customizations as `merge(baseConfig, customOptions)` or small functions that return a fresh config. Avoid mutating a module-level config object that can leak state between client, server, development, and production builds.
+
+### Preserve real custom behavior explicitly
+
+Custom builders often include app-specific behavior that generated configs cannot infer. Recreate only the pieces the app still needs:
+
+- SCSS-as-CSS-modules rules or custom `css-loader` module options.
+- `sass-resources-loader` or global Sass resource injection.
+- Node polyfills and `resolve.fallback` entries.
+- A non-SWC `babel-loader` rule with a custom `caller`.
+- Extra extensions such as ReScript `.bs.js`.
+- Import shims, such as `imports-loader` rules for legacy packages.
+
+For apps whose JavaScript source lives under a subdirectory such as `client/`, keep the binstub or wrapper that changes into that directory or sets `SHAKAPACKER_CONFIG` before invoking Shakapacker. The important invariant is that the config file, `config/shakapacker.yml`, generated output paths, and deployed runtime paths all agree on the same project root.
+
+### Plugin and manifest migration notes
+
+The plugin replacement tables above cover the common swaps. Fully custom configs should also check these cases:
+
+| Webpack usage                            | Rspack migration note                                                     |
+| ---------------------------------------- | ------------------------------------------------------------------------- |
+| `webpack.DefinePlugin`                   | Use `rspack.DefinePlugin` from `@rspack/core`                             |
+| `webpack.ProvidePlugin`                  | Use `rspack.ProvidePlugin` from `@rspack/core`                            |
+| `webpack.optimize.LimitChunkCountPlugin` | Use `rspack.optimize.LimitChunkCountPlugin` or `splitChunks`              |
+| `webpack-assets-manifest`                | Prefer Shakapacker's generated rspack config and `rspack-manifest-plugin` |
+
+If you cannot use `generateRspackConfig()`, verify that your custom manifest still has the shape Shakapacker view helpers and React on Rails integrations expect, including top-level file entries and `entrypoints.{name}.assets.js` / `entrypoints.{name}.assets.css`. Shakapacker's internal manifest-generation code is not a documented public helper yet, so prefer the generated config path instead of copying internals into long-lived app code.
+
+### Prove the custom migration with semantic diffs
+
+Before deleting the old webpack builder, export and compare the resolved configs:
+
+```bash
+# Export webpack state before the migration
+bin/shakapacker-config --doctor
+cp -R shakapacker-config-exports shakapacker-config-exports-webpack
+
+# Export rspack state after the migration
+bin/shakapacker-config --doctor
+
+# Compare the important build targets
+bin/diff-bundler-config \
+  --left=shakapacker-config-exports-webpack/webpack-production-client.yml \
+  --right=shakapacker-config-exports/rspack-production-client.yml \
+  --format=summary
+```
+
+Run the same comparison for SSR/server bundles when the app renders server-side. Expected differences include plugin class names and Rspack's built-in loaders; unexpected differences in entrypoints, aliases, output paths, CSS-module options, or split-chunk strategy deserve a closer look before shipping the migration.
 
 ## Build Verification
 
@@ -596,6 +672,61 @@ module.exports = merge({}, baseConfig, commonOptions)
 - [ ] Run full test suite multiple times
 - [ ] Check for error patterns listed in Build Verification
 
+### 5. Native Rspack Binding Missing After Optional Dependencies Were Skipped
+
+**Problem**: Rspack loads a platform-specific native binding from optional dependencies. Install commands that skip optional dependencies can leave `@rspack/core` installed without the native package it needs at runtime.
+
+**Symptoms**:
+
+- Error: `Cannot find module '@rspack/binding-linux-x64-gnu'`
+- Similar missing modules for the current platform, such as `@rspack/binding-darwin-arm64`
+- CI only fails after a cache miss or after clearing `node_modules`
+
+**Solution**: Install the Rspack project without optional-dependency skip flags:
+
+- Yarn Classic: remove `yarn install --ignore-optional`
+- npm: remove `npm install --omit=optional` or the legacy `npm install --no-optional`
+- pnpm: remove `pnpm install --no-optional`
+
+Then clear the stale install cache for that project and reinstall dependencies. If your CI image skips optional dependencies for other JavaScript projects, scope that optimization so the Shakapacker/Rspack app install still includes optional dependencies.
+
+### 6. Testing with Jest or Older CommonJS Resolvers
+
+**Problem**: Under `assets_bundler: rspack`, tests that import Shakapacker config modules may pull Rspack packages into the CommonJS require graph. Older Jest resolvers can fail on package `exports` maps, ESM-only packages, or `node:` built-in specifiers used by Rspack dependencies.
+
+**Symptoms**:
+
+- Error: `Cannot find module '@rspack/core'`
+- Error: `Cannot find module 'node:path'`
+- Unit tests fail while the actual Shakapacker build succeeds
+
+**Solution**: Prefer upgrading Jest to a version whose resolver understands modern package exports and `node:` specifiers. If you must stay on an older Jest version, isolate config tests from the real Rspack packages with mocks:
+
+```javascript
+// jest.config.js
+module.exports = {
+  moduleNameMapper: {
+    "^@rspack/core$": "<rootDir>/__mocks__/@rspack/core.js",
+    "^@rspack/plugin-react-refresh$":
+      "<rootDir>/__mocks__/@rspack/plugin-react-refresh.js",
+    "^rspack-manifest-plugin$": "<rootDir>/__mocks__/rspack-manifest-plugin.js"
+  }
+}
+```
+
+For specs that only need Shakapacker paths or manifest values, mock `shakapacker` itself instead of loading the full bundler config:
+
+```javascript
+jest.mock("shakapacker", () => ({
+  config: {
+    manifestPath: "public/packs-test/manifest.json",
+    publicPathWithoutCDN: "/packs-test/"
+  }
+}))
+```
+
+Keep those mocks limited to tests that inspect app configuration. Build verification should still run the real `bin/shakapacker` command so Rspack integration failures are not hidden.
+
 ### Configuration Differences: webpack vs Rspack Summary
 
 Quick reference for the key differences that cause migration issues:
@@ -775,7 +906,7 @@ npx patch-package @package/name
 
 **Error:** `Cannot read properties of undefined (reading 'tap')`
 
-**Solution:** Remove `webpack.optimize.LimitChunkCountPlugin` and use `splitChunks` configuration instead.
+**Solution:** Replace `webpack.optimize.LimitChunkCountPlugin` with `rspack.optimize.LimitChunkCountPlugin` when you need equivalent chunk-limit behavior, or move the intent into `optimization.splitChunks` when the old plugin was only approximating chunk strategy.
 
 ### Issue: Missing Loaders
 
@@ -835,8 +966,8 @@ bin/shakapacker-config --doctor
 
 # Compare with semantic config diffing
 bin/diff-bundler-config \
-  --left=shakapacker-config-exports/webpack-production-client.yaml \
-  --right=shakapacker-config-exports/rspack-production-client.yaml \
+  --left=shakapacker-config-exports/webpack-production-client.yml \
+  --right=shakapacker-config-exports/rspack-production-client.yml \
   --format=summary
 ```
 
