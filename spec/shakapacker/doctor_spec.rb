@@ -1752,6 +1752,20 @@ describe Shakapacker::Doctor do
       end
     end
 
+    context "when a stray client lockfile conflicts with the Rails-root package manager" do
+      let(:source_path) { root_path.join("client/app/javascript") }
+
+      before do
+        FileUtils.mkdir_p(root_path.join("client"))
+        File.write(root_path.join("client/package-lock.json"), "")
+        File.write(root_path.join("yarn.lock"), "")
+      end
+
+      it "prefers the Rails-root lockfile until the client directory is a package root" do
+        expect(doctor.send(:detect_package_manager)).to eq("yarn")
+      end
+    end
+
     context "when bun.lockb exists" do
       before do
         File.write(root_path.join("bun.lockb"), "")
@@ -2049,6 +2063,42 @@ describe Shakapacker::Doctor do
           end
         end
 
+        [
+          ["nil", nil, "babel"],
+          ["an empty string", "", ""]
+        ].each do |description, config_value, runtime_value|
+          context "when javascript_transpiler is present as #{description}" do
+            let(:config_data) { super().merge(javascript_transpiler: config_value) }
+
+            before do
+              allow(config).to receive(:javascript_transpiler).and_return(runtime_value)
+              File.write(package_json_path, JSON.generate({
+                "dependencies" => {
+                  "webpack" => "^5.0.0"
+                },
+                "devDependencies" => {
+                  "@babel/core" => "^7.20.0",
+                  "@babel/preset-env" => "^7.20.0",
+                  "@babel/preset-typescript" => "^7.20.0",
+                  "babel-loader" => "^9.0.0"
+                }
+              }))
+              File.write(packs_path.join("application.ts"), "")
+            end
+
+            it "uses the bundler default instead of forcing the omitted-key SWC default" do
+              doctor.send(:check_javascript_transpiler_dependencies)
+              doctor.send(:check_file_type_dependencies)
+
+              expect(doctor.info).not_to include(match(/defaulting to SWC/))
+              expect(warning_messages).not_to include(match(/ts-loader/))
+              expect(doctor.issues).not_to include(match(/Missing required dependency '-loader'/))
+              expect(doctor.issues).not_to include(match(/Missing required dependency '@swc\/core'/))
+              expect(doctor.issues).not_to include(match(/Missing required dependency 'swc-loader'/))
+            end
+          end
+        end
+
         context "when inferred webpack/SWC defaults have a hybrid-looking package graph without matching configs" do
           before do
             allow(config).to receive(:javascript_transpiler).and_return(nil)
@@ -2100,7 +2150,7 @@ describe Shakapacker::Doctor do
               doctor.warnings.find { |warning| warning[:message].match?(/Detected a custom hybrid webpack\/Rspack setup/) }[:category]
             ).to eq(described_class::CATEGORY_INFO)
             expect(warning_messages).not_to include(match(/Both SWC and Babel dependencies are installed/))
-            expect(warning_messages).not_to include(match(/\.swcrc file detected.*migrate to config\/swc\.config\.js/))
+            expect(warning_messages).to include(match(/\.swcrc file detected.*migrate to config\/swc\.config\.js/))
           end
 
           it "uses real Configuration defaults as an inferred SWC doctor check" do

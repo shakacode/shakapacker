@@ -521,7 +521,11 @@ module Shakapacker
 
         bundler = assets_bundler
         unconfigured_hybrid_graph = unconfigured_hybrid_loader_graph?
-        inferred_hybrid_graph = inferred_hybrid_loader_graph?(transpiler, bundler)
+        inferred_hybrid_graph = inferred_hybrid_loader_graph?(
+          transpiler,
+          bundler,
+          unconfigured_hybrid_graph: unconfigured_hybrid_graph
+        )
         if inferred_hybrid_graph
           add_info_warning("Detected a custom hybrid webpack/Rspack setup while Doctor inferred webpack/SWC. " \
                            "Skipping SWC dependency issue checks for this inferred default. For custom hybrid webpack/Rspack configs, " \
@@ -642,15 +646,17 @@ module Shakapacker
         end
 
         # Check for SWC configuration conflicts
-        if transpiler == "swc" && !inferred_hybrid_graph
+        if transpiler == "swc"
           check_swc_config_conflicts
         end
       end
 
-      def inferred_hybrid_loader_graph?(transpiler, bundler)
+      def inferred_hybrid_loader_graph?(transpiler, bundler, unconfigured_hybrid_graph: nil)
+        unconfigured_hybrid_graph = unconfigured_hybrid_loader_graph? if unconfigured_hybrid_graph.nil?
+
         transpiler == "swc" &&
           bundler == "webpack" &&
-          unconfigured_hybrid_loader_graph?
+          unconfigured_hybrid_graph
       end
 
       def unconfigured_hybrid_loader_graph?
@@ -1265,16 +1271,20 @@ module Shakapacker
 
       def javascript_transpiler_configured?
         !javascript_transpiler_env_override.nil? ||
-          config_key_present?(:javascript_transpiler) ||
-          config_key_present?(:webpack_loader)
+          config_key_defined?(:javascript_transpiler) ||
+          config_key_defined?(:webpack_loader)
       end
 
       def javascript_transpiler
-        javascript_transpiler_env_override || config.javascript_transpiler
+        transpiler = javascript_transpiler_env_override || config.javascript_transpiler
+        blank_config_value?(transpiler) ? default_javascript_transpiler : transpiler
       end
 
       def explicit_javascript_transpiler
-        javascript_transpiler_env_override || (config.javascript_transpiler if javascript_transpiler_configured?)
+        return javascript_transpiler_env_override if javascript_transpiler_env_override
+        return nil unless javascript_transpiler_configured?
+
+        javascript_transpiler
       end
 
       def javascript_transpiler_env_override
@@ -1322,8 +1332,19 @@ module Shakapacker
         value.nil? || (value.respond_to?(:empty?) && value.empty?)
       end
 
+      def default_javascript_transpiler
+        assets_bundler == "rspack" ? "swc" : "babel"
+      end
+
       def config_key_present?(key)
         !blank_config_value?(config_value(key))
+      end
+
+      def config_key_defined?(key)
+        return false unless config.respond_to?(:data)
+
+        data = config.data
+        data.respond_to?(:key?) && data.key?(key)
       end
 
       def config_value(key)
@@ -1435,10 +1456,23 @@ module Shakapacker
       end
 
       def detect_package_manager
+        root_package_manager = package_manager_for(root_path)
+
         package_root_paths.each do |package_root|
-          PACKAGE_MANAGER_LOCKFILES.each do |lockfile, package_manager_name|
-            return package_manager_name if File.exist?(package_root.join(lockfile))
-          end
+          next if package_root == root_path
+
+          package_manager_name = package_manager_for(package_root)
+          next unless package_manager_name
+
+          return package_manager_name if package_root.join("package.json").exist? || root_package_manager.nil?
+        end
+
+        root_package_manager
+      end
+
+      def package_manager_for(package_root)
+        PACKAGE_MANAGER_LOCKFILES.each do |lockfile, package_manager_name|
+          return package_manager_name if File.exist?(package_root.join(lockfile))
         end
 
         nil

@@ -604,7 +604,7 @@ def shakapacker_source_path(app_root)
 
   source_path = env_config["source_path"]
   source_path if source_path.is_a?(String)
-rescue Psych::Exception, SystemCallError
+rescue Psych::Exception, SystemCallError, ArgumentError
   nil
 end
 
