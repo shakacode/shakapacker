@@ -67,6 +67,15 @@ describe Shakapacker::Doctor do
     $stdout = old_stdout
   end
 
+  def capture_stderr
+    old_stderr = $stderr
+    $stderr = StringIO.new
+    yield
+    $stderr.string
+  ensure
+    $stderr = old_stderr
+  end
+
   describe "warning formatting" do
     it "stores fix hints as recommended warnings by default with the :fix marker" do
       doctor.send(:add_fix_hint, "Test fix instruction")
@@ -2086,9 +2095,9 @@ describe Shakapacker::Doctor do
             doctor.send(:check_javascript_transpiler_dependencies)
             expect(doctor.issues).not_to include(match(/Missing required dependency '@swc\/core'/))
             expect(doctor.issues).not_to include(match(/Missing required dependency 'swc-loader'/))
-            expect(warning_messages).to include(match(/Detected an inferred webpack\/SWC setup.*Skipping SWC dependency issue checks/))
+            expect(warning_messages).to include(match(/Detected a custom hybrid webpack\/Rspack setup.*Skipping SWC dependency issue checks/))
             expect(
-              doctor.warnings.find { |warning| warning[:message].match?(/Detected an inferred webpack\/SWC setup/) }[:category]
+              doctor.warnings.find { |warning| warning[:message].match?(/Detected a custom hybrid webpack\/Rspack setup/) }[:category]
             ).to eq(described_class::CATEGORY_INFO)
             expect(warning_messages).not_to include(match(/Both SWC and Babel dependencies are installed/))
             expect(warning_messages).not_to include(match(/\.swcrc file detected.*migrate to config\/swc\.config\.js/))
@@ -2109,12 +2118,13 @@ describe Shakapacker::Doctor do
               env: "test"
             )
             real_doctor = described_class.new(real_config, root_path)
-            real_doctor.send(:check_javascript_transpiler_dependencies)
+            stderr = capture_stderr { real_doctor.send(:check_javascript_transpiler_dependencies) }
             real_warnings = real_doctor.warnings.map { |warning| warning[:message] }
 
+            expect(stderr).not_to include("Transpiler Configuration Mismatch Detected")
             expect(real_doctor.issues).not_to include(match(/Missing required dependency '@swc\/core'/))
             expect(real_doctor.issues).not_to include(match(/Missing required dependency 'swc-loader'/))
-            expect(real_warnings).to include(match(/Detected an inferred webpack\/SWC setup.*Skipping SWC dependency issue checks/))
+            expect(real_warnings).to include(match(/Detected a custom hybrid webpack\/Rspack setup.*Skipping SWC dependency issue checks/))
           end
 
           it "reports an empty assets_bundler env override instead of substituting defaults" do
@@ -2139,7 +2149,7 @@ describe Shakapacker::Doctor do
 
             expect(real_config.assets_bundler).to eq("")
             expect(real_doctor.issues).to include(match(/SHAKAPACKER_ASSETS_BUNDLER is set but empty/))
-            expect(real_doctor.warnings.map { |warning| warning[:message] }).not_to include(match(/Detected an inferred webpack\/SWC setup/))
+            expect(real_doctor.warnings.map { |warning| warning[:message] }).not_to include(match(/Detected a custom hybrid webpack\/Rspack setup/))
           ensure
             if previous_value.nil?
               ENV.delete("SHAKAPACKER_ASSETS_BUNDLER")
@@ -2186,6 +2196,27 @@ describe Shakapacker::Doctor do
             else
               ENV["SHAKAPACKER_ASSETS_BUNDLER"] = previous_value
             end
+          end
+
+          it "treats a Configuration bundler override as explicit bundler config" do
+            File.write(config_path, <<~YAML)
+              test:
+                source_path: app/javascript
+                source_entry_path: packs
+                integrity:
+                  enabled: false
+            YAML
+
+            real_config = Shakapacker::Configuration.new(
+              root_path: root_path,
+              config_path: config_path,
+              env: "test",
+              bundler_override: "rspack"
+            )
+            real_doctor = described_class.new(real_config, root_path)
+
+            expect(real_doctor.send(:assets_bundler)).to eq("rspack")
+            expect(real_doctor.send(:assets_bundler_configured?)).to be(true)
           end
 
           it "honors a SWC transpiler env override as explicit doctor config" do

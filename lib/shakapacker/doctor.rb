@@ -510,9 +510,8 @@ module Shakapacker
       end
 
       def check_javascript_transpiler_dependencies
-        transpiler = configured_javascript_transpiler
+        transpiler = explicit_javascript_transpiler
 
-        # Default to SWC for v9+ if not configured
         if transpiler.nil?
           @info << "No javascript_transpiler configured - defaulting to SWC (20x faster than Babel)"
           transpiler = "swc"
@@ -521,11 +520,17 @@ module Shakapacker
         return if transpiler == "none"
 
         bundler = assets_bundler
+        unconfigured_hybrid_graph = unconfigured_hybrid_loader_graph?
         inferred_hybrid_graph = inferred_hybrid_loader_graph?(transpiler, bundler)
         if inferred_hybrid_graph
-          add_info_warning("Detected an inferred webpack/SWC setup with webpack, Rspack, and non-SWC loader packages installed. " \
+          add_info_warning("Detected a custom hybrid webpack/Rspack setup while Doctor inferred webpack/SWC. " \
                            "Skipping SWC dependency issue checks for this inferred default. For custom hybrid webpack/Rspack configs, " \
                            "set javascript_transpiler: \"none\" when Shakapacker should not validate loader dependencies, " \
+                           "or set javascript_transpiler/assets_bundler explicitly when Shakapacker owns that build path.")
+        elsif unconfigured_hybrid_graph
+          add_info_warning("Detected a custom hybrid webpack/Rspack setup with inferred Shakapacker defaults. " \
+                           "Doctor is validating the active #{bundler}/#{transpiler} default only. " \
+                           "Set javascript_transpiler: \"none\" when Shakapacker should not validate loader dependencies, " \
                            "or set javascript_transpiler/assets_bundler explicitly when Shakapacker owns that build path.")
         end
 
@@ -645,7 +650,11 @@ module Shakapacker
       def inferred_hybrid_loader_graph?(transpiler, bundler)
         transpiler == "swc" &&
           bundler == "webpack" &&
-          !javascript_transpiler_configured? &&
+          unconfigured_hybrid_loader_graph?
+      end
+
+      def unconfigured_hybrid_loader_graph?
+        !javascript_transpiler_configured? &&
           !assets_bundler_configured? &&
           package_installed?("webpack") &&
           package_installed?("@rspack/core") &&
@@ -1264,7 +1273,7 @@ module Shakapacker
         javascript_transpiler_env_override || config.javascript_transpiler
       end
 
-      def configured_javascript_transpiler
+      def explicit_javascript_transpiler
         javascript_transpiler_env_override || (config.javascript_transpiler if javascript_transpiler_configured?)
       end
 
@@ -1276,7 +1285,9 @@ module Shakapacker
       end
 
       def assets_bundler_configured?
-        !assets_bundler_env_override.nil? ||
+        assets_bundler_override_configured? ||
+          ENV.key?("SHAKAPACKER_ASSETS_BUNDLER") ||
+          !assets_bundler_env_override.nil? ||
           config_key_present?(:assets_bundler) ||
           config_key_present?(:bundler)
       end
@@ -1290,6 +1301,10 @@ module Shakapacker
         return nil if value.nil? || value.empty?
 
         value
+      end
+
+      def assets_bundler_override_configured?
+        config.respond_to?(:bundler_override) && !blank_config_value?(config.bundler_override)
       end
 
       def empty_assets_bundler_env_override?
