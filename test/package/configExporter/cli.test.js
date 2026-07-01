@@ -612,6 +612,29 @@ describe("configExporter/cli", () => {
       expect(content).toContain("## React on Rails Standard Configuration")
     })
 
+    test("does not detect React on Rails from an unrelated ancestor above the project boundary", () => {
+      const {
+        writeAiAnalysisPrompt
+      } = require("../../../package/configExporter/cli")
+      const outerRoot = join(tempDir, "outer")
+      const projectRoot = join(outerRoot, "nested-project")
+      const frontendRoot = join(projectRoot, "client")
+      mkdirSync(frontendRoot, { recursive: true })
+      mkdirSync(join(projectRoot, ".git"))
+      writeFileSync(join(outerRoot, "Gemfile"), "gem 'react_on_rails'\n")
+      const createdFiles = [join(tempDir, "webpack-development-all.yml")]
+
+      const filename = writeAiAnalysisPrompt(
+        createdFiles,
+        tempDir,
+        new Set(["webpack"]),
+        frontendRoot
+      )
+
+      const content = readFileSync(join(tempDir, filename), "utf8")
+      expect(content).not.toContain("## React on Rails Standard Configuration")
+    })
+
     test("includes React on Rails context when Gemfile.lock includes react_on_rails", () => {
       const {
         writeAiAnalysisPrompt

@@ -1117,7 +1117,7 @@ function reactOnRailsDetectionRoots(appRoot: string): string[] {
 
   while (true) {
     roots.push(current)
-    if (railsRootMarkerExists(current)) {
+    if (railsRootMarkerExists(current) || projectBoundaryExists(current)) {
       break
     }
 
@@ -1130,6 +1130,10 @@ function reactOnRailsDetectionRoots(appRoot: string): string[] {
   }
 
   return roots
+}
+
+function projectBoundaryExists(path: string): boolean {
+  return existsSync(resolve(path, ".git"))
 }
 
 function railsRootMarkerExists(path: string): boolean {
