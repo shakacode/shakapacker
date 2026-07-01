@@ -268,6 +268,20 @@ describe("AiPromptGenerator", () => {
     expect(prompt).not.toContain("spec/dummy")
   })
 
+  test("generatePrompt omits React on Rails context when explicitly disabled", () => {
+    const prompt = AiPromptGenerator.generatePrompt(
+      ["webpack-development-client.yml"],
+      "/path/to/exports",
+      "webpack",
+      { includeReactOnRailsContext: false }
+    )
+
+    expect(prompt).not.toContain("## React on Rails Standard Configuration")
+    expect(prompt).not.toContain(
+      "https://reactonrails.com/docs/core-concepts/webpack-configuration"
+    )
+  })
+
   test("generatePrompt includes analysis objectives", () => {
     const exportedFiles = ["rspack-development-client.yml"]
     const targetDir = "/path/to/exports"

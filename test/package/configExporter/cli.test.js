@@ -3,7 +3,8 @@ const {
   mkdirSync,
   mkdtempSync,
   readFileSync,
-  rmSync
+  rmSync,
+  writeFileSync
 } = require("fs")
 const { tmpdir } = require("os")
 const { join, resolve } = require("path")
@@ -518,6 +519,164 @@ describe("configExporter/cli", () => {
       const content = readFileSync(promptPath, "utf8")
       expect(content).toContain("`webpack-development-all.yml`")
       expect(content).toContain("**Bundler**: webpack")
+    })
+
+    test("omits React on Rails context when app root has no React on Rails usage", () => {
+      const {
+        writeAiAnalysisPrompt
+      } = require("../../../package/configExporter/cli")
+      const createdFiles = [join(tempDir, "webpack-development-all.yml")]
+
+      const filename = writeAiAnalysisPrompt(
+        createdFiles,
+        tempDir,
+        new Set(["webpack"]),
+        tempDir
+      )
+
+      const content = readFileSync(join(tempDir, filename), "utf8")
+      expect(content).not.toContain("## React on Rails Standard Configuration")
+      expect(content).not.toContain(
+        "https://reactonrails.com/docs/core-concepts/webpack-configuration"
+      )
+    })
+
+    test("includes React on Rails context when package.json uses react-on-rails", () => {
+      const {
+        writeAiAnalysisPrompt
+      } = require("../../../package/configExporter/cli")
+      const appRoot = join(tempDir, "app")
+      mkdirSync(appRoot)
+      writeFileSync(
+        join(appRoot, "package.json"),
+        JSON.stringify({ dependencies: { "react-on-rails": "^14.0.0" } })
+      )
+      const createdFiles = [join(tempDir, "webpack-development-all.yml")]
+
+      const filename = writeAiAnalysisPrompt(
+        createdFiles,
+        tempDir,
+        new Set(["webpack"]),
+        appRoot
+      )
+
+      const content = readFileSync(join(tempDir, filename), "utf8")
+      expect(content).toContain("## React on Rails Standard Configuration")
+      expect(content).toContain(
+        "https://reactonrails.com/docs/core-concepts/webpack-configuration"
+      )
+    })
+
+    test("includes React on Rails context when Gemfile uses react_on_rails", () => {
+      const {
+        writeAiAnalysisPrompt
+      } = require("../../../package/configExporter/cli")
+      const appRoot = join(tempDir, "app")
+      mkdirSync(appRoot)
+      writeFileSync(join(appRoot, "Gemfile"), "gem 'react_on_rails'\n")
+      const createdFiles = [join(tempDir, "webpack-development-all.yml")]
+
+      const filename = writeAiAnalysisPrompt(
+        createdFiles,
+        tempDir,
+        new Set(["webpack"]),
+        appRoot
+      )
+
+      const content = readFileSync(join(tempDir, filename), "utf8")
+      expect(content).toContain("## React on Rails Standard Configuration")
+    })
+
+    test("includes React on Rails context when a nested frontend root has a parent Rails Gemfile", () => {
+      const {
+        writeAiAnalysisPrompt
+      } = require("../../../package/configExporter/cli")
+      const railsRoot = join(tempDir, "app")
+      const frontendRoot = join(railsRoot, "client")
+      mkdirSync(frontendRoot, { recursive: true })
+      writeFileSync(join(railsRoot, "Gemfile"), "gem 'react_on_rails'\n")
+      writeFileSync(
+        join(frontendRoot, "package.json"),
+        JSON.stringify({ dependencies: { webpack: "^5.0.0" } })
+      )
+      const createdFiles = [join(tempDir, "webpack-development-all.yml")]
+
+      const filename = writeAiAnalysisPrompt(
+        createdFiles,
+        tempDir,
+        new Set(["webpack"]),
+        frontendRoot
+      )
+
+      const content = readFileSync(join(tempDir, filename), "utf8")
+      expect(content).toContain("## React on Rails Standard Configuration")
+    })
+
+    test("does not detect React on Rails from an unrelated ancestor above the project boundary", () => {
+      const {
+        writeAiAnalysisPrompt
+      } = require("../../../package/configExporter/cli")
+      const outerRoot = join(tempDir, "outer")
+      const projectRoot = join(outerRoot, "nested-project")
+      const frontendRoot = join(projectRoot, "client")
+      mkdirSync(frontendRoot, { recursive: true })
+      mkdirSync(join(projectRoot, ".git"))
+      writeFileSync(join(outerRoot, "Gemfile"), "gem 'react_on_rails'\n")
+      const createdFiles = [join(tempDir, "webpack-development-all.yml")]
+
+      const filename = writeAiAnalysisPrompt(
+        createdFiles,
+        tempDir,
+        new Set(["webpack"]),
+        frontendRoot
+      )
+
+      const content = readFileSync(join(tempDir, filename), "utf8")
+      expect(content).not.toContain("## React on Rails Standard Configuration")
+    })
+
+    test("includes React on Rails context when Gemfile.lock includes react_on_rails", () => {
+      const {
+        writeAiAnalysisPrompt
+      } = require("../../../package/configExporter/cli")
+      const appRoot = join(tempDir, "app")
+      mkdirSync(appRoot)
+      writeFileSync(
+        join(appRoot, "Gemfile.lock"),
+        "GEM\n  specs:\n    react_on_rails (14.0.0)\n"
+      )
+      const createdFiles = [join(tempDir, "webpack-development-all.yml")]
+
+      const filename = writeAiAnalysisPrompt(
+        createdFiles,
+        tempDir,
+        new Set(["webpack"]),
+        appRoot
+      )
+
+      const content = readFileSync(join(tempDir, filename), "utf8")
+      expect(content).toContain("## React on Rails Standard Configuration")
+    })
+
+    test("still writes the prompt when Rails marker files cannot be read", () => {
+      const {
+        writeAiAnalysisPrompt
+      } = require("../../../package/configExporter/cli")
+      const appRoot = join(tempDir, "app")
+      mkdirSync(join(appRoot, "Gemfile"), { recursive: true })
+      mkdirSync(join(appRoot, "Gemfile.lock"), { recursive: true })
+      const createdFiles = [join(tempDir, "webpack-development-all.yml")]
+
+      const filename = writeAiAnalysisPrompt(
+        createdFiles,
+        tempDir,
+        new Set(["webpack"]),
+        appRoot
+      )
+
+      expect(filename).toBe("AI-ANALYSIS-PROMPT.md")
+      const content = readFileSync(join(tempDir, filename), "utf8")
+      expect(content).not.toContain("## React on Rails Standard Configuration")
     })
 
     test("lists each config once when createdFiles contains duplicates", () => {
