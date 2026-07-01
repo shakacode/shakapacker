@@ -1,6 +1,8 @@
 // Common configuration applying to client and server configuration
 
-const { generateWebpackConfig, merge } = require('shakapacker')
+const { requireShakapacker } = require('../shakapacker_package')
+
+const { generateWebpackConfig, merge } = requireShakapacker()
 const commonOptions = {
   resolve: {
     extensions: ['.css', '.ts', '.tsx']

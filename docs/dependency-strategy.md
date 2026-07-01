@@ -462,6 +462,7 @@ Rejected because:
 - **Versioning**: Lockstep — all three npm packages share the same version number
 - **Rollout**: Phased — v10.1.0 (additive), v11.0.0 (breaking)
 - **Supplemental dependency policy**: bundler singletons (`webpack`, `@rspack/core`, etc.) as required peer dependencies with caret ranges aligned to main `shakapacker`'s peer ranges; `shakapacker` itself as a tilde-pinned direct dependency for lockstep release coupling. Updated from the v10.1.0-rc.1 shape (tilde across the board, singletons as direct deps) after [issue #1131](https://github.com/shakacode/shakapacker/issues/1131).
+- **Install-path smoke coverage**: the existing dummy app stays shared across webpack/rspack, but the bundler workflow opts into `SHAKAPACKER_SUPPLEMENTAL_ENTRYPOINT=1` so webpack builds import `shakapacker-webpack` and rspack builds import `shakapacker-rspack`. The custom-build smoke uses bare `shakapacker` with `compile: false` and a hand-written manifest, covering manifest-reader/view-helper behavior without invoking a managed bundler.
 
 ## References
 

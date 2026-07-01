@@ -1,6 +1,8 @@
 const ForkTsCheckerWebpackPlugin = require('fork-ts-checker-webpack-plugin')
 const path = require('path')
-const { devServer, inliningCss } = require('shakapacker')
+const { requireShakapacker } = require('../shakapacker_package')
+
+const { devServer, inliningCss } = requireShakapacker()
 
 const webpackConfig = require('./ServerClientOrBoth')
 
