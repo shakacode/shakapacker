@@ -178,6 +178,8 @@ module Shakapacker
       end
 
       def check_config_file
+        report_empty_assets_bundler_env_override if empty_assets_bundler_env_override?
+
         unless config.config_path.exist?
           @issues << "Configuration file not found at #{config.config_path}"
         end
@@ -264,10 +266,9 @@ module Shakapacker
       def check_version_consistency
         return unless package_json_exists?
 
-        # Check if shakapacker npm package version matches gem version
-        package_json = read_package_json
-        npm_version = package_json.dig("dependencies", "shakapacker") ||
-                     package_json.dig("devDependencies", "shakapacker")
+        # Check if shakapacker npm package version matches gem version. Use the
+        # flattened dependency map so a nearer package root wins across sections.
+        npm_version = package_json_dependency_version("shakapacker")
 
         if npm_version
           # Skip version check for github/file references
@@ -516,10 +517,10 @@ module Shakapacker
 
         bundler = assets_bundler
         if inferred_hybrid_loader_graph?(transpiler, bundler)
-          add_warning("Detected an inferred webpack/SWC setup with webpack, Rspack, and non-SWC loader packages installed. " \
-                      "Doctor will still validate the default webpack/SWC dependencies. For custom hybrid webpack/Rspack configs, " \
-                      "set javascript_transpiler: \"none\" when Shakapacker should not validate loader dependencies, " \
-                      "or set javascript_transpiler/assets_bundler explicitly when Shakapacker owns that build path.")
+          add_info_warning("Detected an inferred webpack/SWC setup with webpack, Rspack, and non-SWC loader packages installed. " \
+                           "Doctor will still validate the default webpack/SWC dependencies. For custom hybrid webpack/Rspack configs, " \
+                           "set javascript_transpiler: \"none\" when Shakapacker should not validate loader dependencies, " \
+                           "or set javascript_transpiler/assets_bundler explicitly when Shakapacker owns that build path.")
         end
 
         case transpiler
@@ -1134,11 +1135,12 @@ module Shakapacker
 
       def declared_package_dependencies
         @declared_package_dependencies ||= begin
-          package_json_paths.reverse_each.reduce({}) do |dependencies, path|
-            dependencies.merge(installable_package_dependencies(JSON.parse(File.read(path))))
+          package_json_paths.reverse_each.each_with_object({}) do |path, dependencies|
+            package_json = parse_package_json(path)
+            next unless package_json
+
+            dependencies.merge!(installable_package_dependencies(package_json))
           end
-        rescue JSON::ParserError, SystemCallError
-          {}
         end
       end
 
@@ -1248,10 +1250,7 @@ module Shakapacker
       end
 
       def assets_bundler
-        value = config.assets_bundler
-        report_empty_assets_bundler_env_override if empty_assets_bundler_env_override?
-
-        value
+        config.assets_bundler
       end
 
       def assets_bundler_env_override
@@ -1292,11 +1291,18 @@ module Shakapacker
       def read_package_json
         @package_json ||= begin
           package_json_paths.reverse_each.reduce({}) do |package_json, path|
-            merge_package_json(package_json, JSON.parse(File.read(path)))
+            parsed_package_json = parse_package_json(path)
+            next package_json unless parsed_package_json
+
+            merge_package_json(package_json, parsed_package_json)
           end
-        rescue JSON::ParserError, SystemCallError
-          {}
         end
+      end
+
+      def parse_package_json(path)
+        JSON.parse(File.read(path))
+      rescue JSON::ParserError, SystemCallError
+        nil
       end
 
       def package_json_paths
@@ -1516,9 +1522,7 @@ module Shakapacker
           def print_version_info
             return unless doctor.send(:package_json_exists?)
 
-            package_json = doctor.send(:read_package_json)
-            npm_version = package_json.dig("dependencies", "shakapacker") ||
-                          package_json.dig("devDependencies", "shakapacker")
+            npm_version = doctor.send(:package_json_dependency_version, "shakapacker")
             puts "  • Shakapacker gem version: #{Shakapacker::VERSION}"
             puts "  • Shakapacker npm version: #{npm_version || 'not installed'}"
           end

@@ -380,6 +380,38 @@ describe Shakapacker::Doctor do
         expect(warning_messages).to include(match(/Version mismatch/))
       end
     end
+
+    context "with package.json files in the Rails root and configured client root" do
+      let(:source_path) { root_path.join("client/app/javascript") }
+      let(:client_package_json_path) { root_path.join("client/package.json") }
+
+      before do
+        FileUtils.mkdir_p(client_package_json_path.dirname)
+        File.write(package_json_path, JSON.generate({
+          "dependencies" => {
+            "shakapacker" => "^9.0.0"
+          }
+        }))
+        File.write(client_package_json_path, JSON.generate({
+          "devDependencies" => {
+            "shakapacker" => "^8.0.0"
+          }
+        }))
+      end
+
+      it "uses the nearer client package version across dependency sections" do
+        doctor.send(:check_version_consistency)
+        expect(warning_messages).to include(match(/Version mismatch.*npm package is \^8\.0\.0/))
+      end
+
+      it "prints the same nearer client package version in verbose diagnostics" do
+        reporter = described_class::Reporter.new(doctor)
+
+        output = capture_stdout { reporter.send(:print_version_info) }
+
+        expect(output).to include("Shakapacker npm version: ^8.0.0")
+      end
+    end
   end
 
   describe "environment consistency checks" do
@@ -1759,6 +1791,32 @@ describe Shakapacker::Doctor do
     end
   end
 
+  describe "package.json aggregation" do
+    let(:source_path) { root_path.join("client/app/javascript") }
+    let(:client_package_json_path) { root_path.join("client/package.json") }
+
+    before do
+      FileUtils.mkdir_p(client_package_json_path.dirname)
+      File.write(package_json_path, JSON.generate({
+        "dependencies" => {
+          "webpack" => "^5.0.0"
+        },
+        "devDependencies" => {
+          "babel-loader" => "^9.0.0"
+        }
+      }))
+      File.write(client_package_json_path, "{invalid")
+    end
+
+    it "keeps valid package roots when another package.json is malformed" do
+      expect(doctor.send(:declared_package_dependencies)).to include(
+        "webpack" => "^5.0.0",
+        "babel-loader" => "^9.0.0"
+      )
+      expect(doctor.send(:read_package_json).dig("dependencies", "webpack")).to eq("^5.0.0")
+    end
+  end
+
   describe "binstub checks" do
     let(:binstub_path) { root_path.join("bin/shakapacker") }
     let(:dev_server_binstub_path) { root_path.join("bin/shakapacker-dev-server") }
@@ -1992,6 +2050,9 @@ describe Shakapacker::Doctor do
             expect(doctor.issues).to include(match(/Missing required dependency '@swc\/core'/))
             expect(doctor.issues).to include(match(/Missing required dependency 'swc-loader'/))
             expect(warning_messages).to include(match(/Detected an inferred webpack\/SWC setup.*custom hybrid webpack\/Rspack configs/))
+            expect(
+              doctor.warnings.find { |warning| warning[:message].match?(/Detected an inferred webpack\/SWC setup/) }[:category]
+            ).to eq(described_class::CATEGORY_INFO)
             expect(warning_messages).to include(match(/\.swcrc file detected.*migrate to config\/swc\.config\.js/))
           end
 
@@ -2012,6 +2073,7 @@ describe Shakapacker::Doctor do
               env: "test"
             )
             real_doctor = described_class.new(real_config, root_path)
+            real_doctor.send(:check_config_file)
             real_doctor.send(:check_javascript_transpiler_dependencies)
 
             expect(real_config.assets_bundler).to eq("")
@@ -2053,6 +2115,7 @@ describe Shakapacker::Doctor do
 
             expect(real_config.assets_bundler).to eq("")
             expect(real_doctor.send(:assets_bundler)).to eq("")
+            real_doctor.send(:check_config_file)
             real_doctor.send(:check_bundler_dependencies)
             expect(real_doctor.issues).to include(match(/SHAKAPACKER_ASSETS_BUNDLER is set but empty/))
             expect(real_doctor.issues).not_to include(match(/Missing required dependency 'webpack'/))
