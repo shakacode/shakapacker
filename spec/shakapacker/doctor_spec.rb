@@ -31,6 +31,7 @@ describe Shakapacker::Doctor do
            cache_path: cache_path,
            javascript_transpiler: "babel",
            assets_bundler: "webpack",
+           assets_bundler_config_path: "config/webpack",
            data: config_data,
            nested_entries?: false,
            ensure_consistent_versioning?: false,
@@ -2038,10 +2039,36 @@ describe Shakapacker::Doctor do
           end
         end
 
+        context "when inferred webpack/SWC defaults have a hybrid-looking package graph without matching configs" do
+          before do
+            allow(config).to receive(:javascript_transpiler).and_return(nil)
+            File.write(package_json_path, JSON.generate({
+              "dependencies" => {
+                "webpack" => "^5.0.0",
+                "@rspack/core" => "^2.0.0"
+              },
+              "devDependencies" => {
+                "babel-loader" => "^9.0.0"
+              }
+            }))
+          end
+
+          it "continues reporting missing SWC dependencies for the inferred webpack build" do
+            doctor.send(:check_javascript_transpiler_dependencies)
+            expect(doctor.issues).to include(match(/Missing required dependency '@swc\/core'/))
+            expect(doctor.issues).to include(match(/Missing required dependency 'swc-loader'/))
+            expect(warning_messages).not_to include(match(/Skipping SWC dependency issue checks/))
+          end
+        end
+
         context "when inferred webpack/SWC defaults meet a hybrid webpack and Rspack package graph" do
           before do
             allow(config).to receive(:javascript_transpiler).and_return(nil)
             File.write(root_path.join(".swcrc"), "{}")
+            FileUtils.mkdir_p(root_path.join("config/webpack"))
+            FileUtils.mkdir_p(root_path.join("config/rspack"))
+            File.write(root_path.join("config/webpack/webpack.config.js"), "module.exports = {}")
+            File.write(root_path.join("config/rspack/rspack.config.js"), "module.exports = {}")
             File.write(package_json_path, JSON.generate({
               "dependencies" => {
                 "webpack" => "^5.0.0",
@@ -2152,6 +2179,41 @@ describe Shakapacker::Doctor do
             else
               ENV["SHAKAPACKER_JAVASCRIPT_TRANSPILER"] = previous_value
             end
+          end
+        end
+
+        context "when inferred hybrid configs live in a custom assets_bundler_config_path" do
+          before do
+            allow(config).to receive(:javascript_transpiler).and_return(nil)
+            allow(config).to receive(:assets_bundler_config_path).and_return("build_configs")
+            FileUtils.mkdir_p(root_path.join("build_configs"))
+            File.write(root_path.join("build_configs/webpack.config.js"), "module.exports = {}")
+            File.write(root_path.join("build_configs/rspack.config.js"), "module.exports = {}")
+            File.write(package_json_path, JSON.generate({
+              "dependencies" => {
+                "webpack" => "^5.0.0",
+                "@rspack/core" => "^2.0.0"
+              },
+              "devDependencies" => {
+                "babel-loader" => "^9.0.0"
+              }
+            }))
+          end
+
+          it "uses the custom config directory as hybrid evidence" do
+            doctor.send(:check_javascript_transpiler_dependencies)
+            expect(doctor.issues).not_to include(match(/Missing required dependency '@swc\/core'/))
+            expect(doctor.issues).not_to include(match(/Missing required dependency 'swc-loader'/))
+            expect(warning_messages).to include(match(/Skipping SWC dependency issue checks/))
+          end
+
+          it "matches runner path semantics for leading-slash config directories" do
+            allow(config).to receive(:assets_bundler_config_path).and_return("/build_configs")
+
+            doctor.send(:check_javascript_transpiler_dependencies)
+            expect(doctor.issues).not_to include(match(/Missing required dependency '@swc\/core'/))
+            expect(doctor.issues).not_to include(match(/Missing required dependency 'swc-loader'/))
+            expect(warning_messages).to include(match(/Skipping SWC dependency issue checks/))
           end
         end
 

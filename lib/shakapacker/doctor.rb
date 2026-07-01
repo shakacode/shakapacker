@@ -65,6 +65,11 @@ module Shakapacker
       ts-loader
     ].freeze
 
+    BUNDLER_CONFIG_EXTENSIONS = %w[
+      ts
+      js
+    ].freeze
+
     PACKAGE_ROOT_MARKERS = (["package.json"] + PACKAGE_MANAGER_LOCKFILES.keys + ["node_modules"]).freeze
 
     def initialize(config = nil, root_path = nil, options = {})
@@ -645,7 +650,30 @@ module Shakapacker
           !assets_bundler_configured? &&
           package_installed?("webpack") &&
           package_installed?("@rspack/core") &&
+          inferred_hybrid_bundler_config_present? &&
           custom_hybrid_loader_dependency?
+      end
+
+      def inferred_hybrid_bundler_config_present?
+        same_directory_hybrid_config_present?(config.assets_bundler_config_path.to_s) ||
+          default_split_hybrid_config_present?
+      end
+
+      def same_directory_hybrid_config_present?(directory)
+        bundler_config_present?(directory, "webpack") &&
+          bundler_config_present?(directory, "rspack")
+      end
+
+      def default_split_hybrid_config_present?
+        bundler_config_present?("config/webpack", "webpack") &&
+          (bundler_config_present?("config/rspack", "rspack") ||
+            bundler_config_present?("config/rspack", "webpack"))
+      end
+
+      def bundler_config_present?(directory, basename)
+        BUNDLER_CONFIG_EXTENSIONS.any? do |extension|
+          Pathname.new(File.join(root_path.to_s, directory.to_s, "#{basename}.config.#{extension}")).exist?
+        end
       end
 
       def custom_hybrid_loader_dependency?
