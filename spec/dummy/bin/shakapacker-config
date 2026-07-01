@@ -3,11 +3,7 @@
 
 require "rbconfig"
 
-# Keep helper logic in sync across:
-# - lib/install/bin/shakapacker-config
-# - lib/install/bin/diff-bundler-config
-# - spec/dummy/bin/shakapacker-config
-# - package/configExporter/cli.ts (createBinStub).
+# This binstub is managed by Shakapacker. Regenerate it by rerunning the install or init command.
 def shakapacker_app_root
   candidate = File.expand_path("..", __dir__)
   return candidate if File.exist?(File.join(candidate, "Gemfile"))
