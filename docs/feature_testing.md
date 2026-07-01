@@ -6,6 +6,7 @@ This guide shows how to manually verify that Shakapacker features are working co
 
 - [HTTP 103 Early Hints](#http-103-early-hints)
 - [Asset Compilation](#asset-compilation)
+  - [Test Environment Packs](#test-environment-packs)
 - [Code Splitting](#code-splitting)
 - [Subresource Integrity (SRI)](#subresource-integrity-sri)
 - [Source Maps](#source-maps)
@@ -272,6 +273,36 @@ ls -lh public/packs/
 <script src="/packs/application-xyz789.js"></script>
 ```
 
+### Test Environment Packs
+
+Development and test builds can write to different output directories. A typical `test` section in `config/shakapacker.yml` uses `public_output_path: packs-test`, so `bin/shakapacker` in development refreshes `public/packs` while `RAILS_ENV=test bin/shakapacker` refreshes `public/packs-test`.
+
+Before Rails tests that render pack helpers, prerender React components, or depend on React on Rails/RSC manifests, build the test packs explicitly:
+
+```bash
+RAILS_ENV=test bin/shakapacker
+RAILS_ENV=test bin/rails test
+```
+
+If your app uses an external React renderer during tests, start it as your app requires and keep the Rails test command in the test environment:
+
+```bash
+RAILS_ENV=test REACT_RENDERER_URL=http://127.0.0.1:3800 bin/rails test
+```
+
+In CI, run the test-environment Shakapacker build before the Rails test job:
+
+```bash
+bundle install
+yarn install --frozen-lockfile
+RAILS_ENV=test bin/shakapacker
+RAILS_ENV=test bin/rails test
+```
+
+For React on Rails or RSC test suites, the test build may also produce server bundles, client-reference manifests, or RSC manifests outside `public/packs-test`. Those files are still tied to `RAILS_ENV=test`; a development build does not prove the test manifests are fresh.
+
+Repeated "stale test assets detected" messages are expected after source changes or after removing generated test assets. They point to a misconfiguration when every test run rebuilds immediately after a clean `RAILS_ENV=test bin/shakapacker`. In that case, compare the test `public_output_path`, any server/RSC manifest paths, and the environment variables used by the prebuild and test commands.
+
 ## Code Splitting
 
 ### Verify Chunks Are Created
@@ -436,6 +467,7 @@ Use this checklist to verify a complete Shakapacker setup:
 
 - [ ] **Assets compile:** `bundle exec rake assets:precompile` succeeds
 - [ ] **Manifest exists:** `public/packs/manifest.json` contains entrypoints
+- [ ] **Test manifest exists:** `RAILS_ENV=test bin/shakapacker` refreshes `public/packs-test/manifest.json` before Rails tests that need packs
 - [ ] **Assets load:** Page loads without 404s for pack files
 - [ ] **Code splitting works:** Multiple chunks load in Network tab
 - [ ] **Source maps work:** Can debug original source in DevTools

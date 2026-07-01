@@ -4,6 +4,8 @@ Shakapacker includes a semantic configuration diff workflow for webpack/rspack c
 
 This gives you structured, meaningful diffs instead of raw line-by-line file diffs.
 
+Use this during webpack-to-Rspack migrations whenever you need to confirm that a generated or hand-rolled rspack config preserved the important behavior of the old webpack config. It is especially useful before deleting a custom webpack builder, changing SSR/client split configs, or replacing plugin chains.
+
 ## Why use this instead of `diff`?
 
 Traditional file diff tools are great for source code, but generated bundler configs are noisy and deeply nested.
@@ -26,8 +28,8 @@ bin/shakapacker-config --doctor
 
 # Compare development vs production client config
 bin/diff-bundler-config \
-  --left=shakapacker-config-exports/webpack-development-client.yaml \
-  --right=shakapacker-config-exports/webpack-production-client.yaml
+  --left=shakapacker-config-exports/webpack-development-client.yml \
+  --right=shakapacker-config-exports/webpack-production-client.yml
 ```
 
 ## Common Workflows
@@ -38,8 +40,8 @@ bin/diff-bundler-config \
 bin/shakapacker-config --doctor
 
 bin/diff-bundler-config \
-  --left=shakapacker-config-exports/webpack-development-client.yaml \
-  --right=shakapacker-config-exports/webpack-production-client.yaml \
+  --left=shakapacker-config-exports/webpack-development-client.yml \
+  --right=shakapacker-config-exports/webpack-production-client.yml \
   --format=summary
 ```
 
@@ -49,8 +51,8 @@ bin/diff-bundler-config \
 bin/shakapacker-config --doctor
 
 bin/diff-bundler-config \
-  --left=shakapacker-config-exports/webpack-production-client.yaml \
-  --right=shakapacker-config-exports/webpack-production-server.yaml
+  --left=shakapacker-config-exports/webpack-production-client.yml \
+  --right=shakapacker-config-exports/webpack-production-server.yml
 ```
 
 ### 3. Webpack to Rspack migration validation
@@ -67,10 +69,12 @@ bin/shakapacker-config --doctor
 
 # Compare two snapshots (rename or copy files as needed)
 bin/diff-bundler-config \
-  --left=webpack-production-client.yaml \
-  --right=rspack-production-client.yaml \
+  --left=webpack-production-client.yml \
+  --right=rspack-production-client.yml \
   --ignore-paths="plugins.*"
 ```
+
+Run this comparison for each important build target, such as development client, production client, and SSR/server bundles. Start with `--format=summary`, then rerun without it for detailed paths when the summary shows a behavioral difference you did not expect.
 
 ### 4. Capture machine-readable report for CI or PR artifacts
 

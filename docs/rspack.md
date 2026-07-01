@@ -28,16 +28,20 @@ See the [Rspack v2 breaking changes discussion](https://github.com/web-infra-dev
 
 ### Recommended (Shakapacker 10.1+): `shakapacker-rspack`
 
-`shakapacker-rspack` bundles `shakapacker`, `@rspack/core`, `@rspack/cli`, `@rspack/dev-server`, and `rspack-manifest-plugin` as direct dependencies, so a single install pulls in the full managed Rspack stack:
+`shakapacker-rspack` ships `shakapacker` as a direct dependency and declares `@rspack/core`, `@rspack/cli`, `@rspack/dev-server`, and `rspack-manifest-plugin` as required peer dependencies. npm 7+ auto-installs those peers, so npm users can install the managed Rspack stack with one command:
 
 ```bash
 npm install shakapacker-rspack -D
+```
+
+npm <7, Yarn Classic, pnpm, and Yarn PnP users should keep app-imported packages explicit in `package.json`. The default generated rspack config imports `shakapacker/rspack`, so list the supplemental package, `shakapacker`, and the required peers together:
+
+```bash
+npm install shakapacker-rspack shakapacker @rspack/core @rspack/cli @rspack/dev-server rspack-manifest-plugin -D
 # or
-yarn add shakapacker-rspack -D
+yarn add shakapacker-rspack shakapacker @rspack/core @rspack/cli @rspack/dev-server rspack-manifest-plugin -D
 # or
-pnpm add shakapacker-rspack -D
-# or
-bun add shakapacker-rspack -D
+pnpm add shakapacker-rspack shakapacker @rspack/core @rspack/cli @rspack/dev-server rspack-manifest-plugin -D
 ```
 
 See [`packages/shakapacker-rspack/README.md`](../packages/shakapacker-rspack/README.md) for the full install reference and the [v10.1 supplemental packages migration guide](./migration/v10.1-supplemental-packages.md) for swapping an existing rspack install over to the supplemental package.
@@ -227,6 +231,8 @@ Actual gains depend on project size, configuration, source maps, cache state, an
 4. **Remove CoffeeScript files** (if any) - not supported by Rspack
 
 5. **Test your application** - same commands work automatically
+
+6. **Compare the generated configs** - use [`bin/diff-bundler-config`](./config-diff.md) when you are converting custom webpack configuration or need to prove the rspack config kept the same entrypoints, loaders, output paths, and plugin intent.
 
 ## Troubleshooting
 

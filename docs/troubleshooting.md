@@ -54,20 +54,20 @@ If you're experiencing FOUC where content briefly appears unstyled before CSS lo
    ```bash
    # Save current environment configs with auto-generated names
    bin/shakapacker-config --save
-   # Creates: webpack-development-client.yaml, webpack-development-server.yaml
+   # Creates: webpack-development-client.yml, webpack-development-server.yml
 
    # Save to specific directory
    bin/shakapacker-config --save --save-dir=./debug-configs
 
    # Export only client config for production
    bin/shakapacker-config --save --env=production --client-only
-   # Creates: webpack-production-client.yaml
+   # Creates: webpack-production-client.yml
 
    # Compare development vs production configs
    bin/shakapacker-config --save --save-dir=./configs
    bin/diff-bundler-config \
-     --left=configs/webpack-development-client.yaml \
-     --right=configs/webpack-production-client.yaml \
+     --left=configs/webpack-development-client.yml \
+     --right=configs/webpack-production-client.yml \
      --format=summary
 
    # View config in terminal (no files created)
@@ -81,7 +81,7 @@ If you're experiencing FOUC where content briefly appears unstyled before CSS lo
    ```
 
    **Config files are automatically named:** `{bundler}-{env}-{type}.{ext}`
-   - Examples: `webpack-development-client.yaml`, `rspack-production-server.yaml`
+   - Examples: `webpack-development-client.yml`, `rspack-production-server.yml`
    - YAML format includes inline documentation explaining each config key
    - Separate files for client and server bundles (cleaner than combined)
    - Pair with `bin/diff-bundler-config` for semantic comparisons
@@ -335,6 +335,24 @@ In `package.json`:
   Therefore, make sure webpack
   (i.e `./bin/shakapacker-dev-server`) is running and has
   completed the compilation successfully before loading a view.
+
+## Rspack dev server listens but requests hang
+
+If `bin/shakapacker-dev-server` or `rspack serve` starts and accepts TCP connections, but every request hangs with no response body, inspect the dev-server build output before changing Rails or proxy settings. A common signature is:
+
+- The dev-server port is open, but `curl --max-time 5 http://localhost:3035/packs/manifest.json` times out.
+- Rails pages that load assets from the dev server hang because the asset request never finishes.
+- One-shot builds such as `bin/shakapacker` still succeed.
+- CPU stays low and no obvious compile error reaches the browser.
+
+One cause is a desktop-notification plugin, such as a `webpack-notifier` or `node-notifier` wrapper, throwing from a native helper spawn inside an rspack plugin callback. That can leave the dev middleware waiting forever while the server socket remains open.
+
+To diagnose and work around it:
+
+1. Run the dev server in the foreground and keep the bundler pane visible.
+2. Temporarily disable notifier plugins for dev-server builds. The dev server already provides terminal output and browser overlays.
+3. Re-test a real asset or manifest endpoint with `curl --max-time 5`.
+4. If disabling the notifier fixes the hang, keep it disabled under `WEBPACK_SERVE=true` or guard the notifier so spawn failures are caught and logged instead of escaping the plugin hook.
 
 ## throw er; // Unhandled 'error' event
 
