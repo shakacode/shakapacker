@@ -17,6 +17,8 @@ describe "Shakapacker::Doctor with optional peer dependencies" do
 
   let(:config_data) do
     {
+      assets_bundler: assets_bundler,
+      javascript_transpiler: javascript_transpiler,
       source_entry_path: "packs",
       integrity: { enabled: false }
     }

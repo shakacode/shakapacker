@@ -1,5 +1,6 @@
 require_relative "../spec_helper"
 require "shakapacker"
+require "shakapacker/configuration"
 require "shakapacker/doctor"
 require "fileutils"
 require "tmpdir"
@@ -30,6 +31,7 @@ describe Shakapacker::Doctor do
            cache_path: cache_path,
            javascript_transpiler: "babel",
            assets_bundler: "webpack",
+           assets_bundler_config_path: "config/webpack",
            data: config_data,
            nested_entries?: false,
            ensure_consistent_versioning?: false,
@@ -63,6 +65,15 @@ describe Shakapacker::Doctor do
     $stdout.string
   ensure
     $stdout = old_stdout
+  end
+
+  def capture_stderr
+    old_stderr = $stderr
+    $stderr = StringIO.new
+    yield
+    $stderr.string
+  ensure
+    $stderr = old_stderr
   end
 
   describe "warning formatting" do
@@ -379,6 +390,38 @@ describe Shakapacker::Doctor do
         expect(warning_messages).to include(match(/Version mismatch/))
       end
     end
+
+    context "with package.json files in the Rails root and configured client root" do
+      let(:source_path) { root_path.join("client/app/javascript") }
+      let(:client_package_json_path) { root_path.join("client/package.json") }
+
+      before do
+        FileUtils.mkdir_p(client_package_json_path.dirname)
+        File.write(package_json_path, JSON.generate({
+          "dependencies" => {
+            "shakapacker" => "^9.0.0"
+          }
+        }))
+        File.write(client_package_json_path, JSON.generate({
+          "devDependencies" => {
+            "shakapacker" => "^8.0.0"
+          }
+        }))
+      end
+
+      it "uses the nearer client package version across dependency sections" do
+        doctor.send(:check_version_consistency)
+        expect(warning_messages).to include(match(/Version mismatch.*npm package is \^8\.0\.0/))
+      end
+
+      it "prints the same nearer client package version in verbose diagnostics" do
+        reporter = described_class::Reporter.new(doctor)
+
+        output = capture_stdout { reporter.send(:print_version_info) }
+
+        expect(output).to include("Shakapacker npm version: ^8.0.0")
+      end
+    end
   end
 
   describe "environment consistency checks" do
@@ -495,6 +538,32 @@ describe Shakapacker::Doctor do
           doctor.send(:check_peer_dependencies)
           expect(doctor.issues).to include(match(/Shakapacker supports Rspack v2 only/))
           expect(doctor.issues).to include(match(/Upgrade @rspack\/core and @rspack\/cli to \^2\.0\.0/))
+        end
+      end
+
+      context "with a subdirectory client dependency declared in a different section than the Rails root" do
+        let(:source_path) { root_path.join("client/app/javascript") }
+
+        before do
+          File.write(root_path.join("client/package.json"), JSON.generate({
+            "devDependencies" => {
+              "@rspack/core" => "^1.0.0",
+              "@rspack/cli" => "^2.0.0"
+            }
+          }))
+          File.write(package_json_path, JSON.generate({
+            "dependencies" => {
+              "@rspack/core" => "^2.0.0",
+              "rspack-manifest-plugin" => "^5.2.2"
+            }
+          }))
+        end
+
+        it "lets the client package root override the Rails root across dependency sections" do
+          doctor.send(:check_peer_dependencies)
+          expect(doctor.issues).to include(match(/Shakapacker supports Rspack v2 only.*@rspack\/core/))
+          expect(doctor.issues).not_to include(match(/Missing essential rspack dependency.*@rspack\/cli/))
+          expect(doctor.issues).not_to include(match(/Missing essential rspack dependency.*rspack-manifest-plugin/))
         end
       end
 
@@ -677,6 +746,7 @@ describe Shakapacker::Doctor do
       it "adds warning about conflicting installations" do
         doctor.send(:check_peer_dependencies)
         expect(warning_messages).to include(match(/Both webpack and rspack are installed/))
+        expect(warning_messages).to include(match(/assets_bundler is inferred/))
       end
     end
   end
@@ -1170,6 +1240,50 @@ describe Shakapacker::Doctor do
       end
     end
 
+    context "when subdirectory client node_modules reports a v2 install even though package.json allows v1" do
+      let(:source_path) { root_path.join("client/app/javascript") }
+
+      before do
+        node_modules_pkg = root_path.join("client/node_modules/@rspack/core/package.json")
+        FileUtils.mkdir_p(node_modules_pkg.dirname)
+        File.write(node_modules_pkg, JSON.generate({ "name" => "@rspack/core", "version" => "2.0.0-rc.0" }))
+
+        File.write(root_path.join("client/package.json"), JSON.generate({
+          "devDependencies" => {
+            "@rspack/core" => "^1.0.0 || ^2.0.0-0",
+            "@rspack/cli" => "^2.0.0"
+          }
+        }))
+      end
+
+      it "trusts the installed client v2 package over stale v1-compatible ranges" do
+        doctor.send(:check_rspack_cache_configuration)
+        expect(warning_messages).not_to include(match(/Rspack v1 detected/))
+      end
+    end
+
+    context "when root node_modules reports a v2 install for a subdirectory client package" do
+      let(:source_path) { root_path.join("client/app/javascript") }
+
+      before do
+        node_modules_pkg = root_path.join("node_modules/@rspack/core/package.json")
+        FileUtils.mkdir_p(node_modules_pkg.dirname)
+        File.write(node_modules_pkg, JSON.generate({ "name" => "@rspack/core", "version" => "2.0.0-rc.0" }))
+
+        File.write(root_path.join("client/package.json"), JSON.generate({
+          "devDependencies" => {
+            "@rspack/core" => "^1.0.0 || ^2.0.0-0",
+            "@rspack/cli" => "^2.0.0"
+          }
+        }))
+      end
+
+      it "uses the root install when workspace dependencies are hoisted" do
+        doctor.send(:check_rspack_cache_configuration)
+        expect(warning_messages).not_to include(match(/Rspack v1 detected/))
+      end
+    end
+
     context "when the installed rspack package file is unreadable" do
       before do
         node_modules_pkg = root_path.join("node_modules/@rspack/core/package.json")
@@ -1613,6 +1727,45 @@ describe Shakapacker::Doctor do
   end
 
   describe "package manager checks" do
+    context "when yarn.lock exists in the configured subdirectory client root" do
+      let(:source_path) { root_path.join("client/app/javascript") }
+
+      before do
+        File.write(root_path.join("client/yarn.lock"), "")
+      end
+
+      it "detects yarn without requiring a Rails-root lock file" do
+        expect(doctor.send(:detect_package_manager)).to eq("yarn")
+      end
+    end
+
+    context "when a root lockfile backs a configured subdirectory package" do
+      let(:source_path) { root_path.join("client/app/javascript") }
+
+      before do
+        File.write(root_path.join("client/package.json"), JSON.generate("private" => true))
+        File.write(root_path.join("yarn.lock"), "")
+      end
+
+      it "falls back to the Rails-root package manager lockfile" do
+        expect(doctor.send(:detect_package_manager)).to eq("yarn")
+      end
+    end
+
+    context "when a stray client lockfile conflicts with the Rails-root package manager" do
+      let(:source_path) { root_path.join("client/app/javascript") }
+
+      before do
+        FileUtils.mkdir_p(root_path.join("client"))
+        File.write(root_path.join("client/package-lock.json"), "")
+        File.write(root_path.join("yarn.lock"), "")
+      end
+
+      it "prefers the Rails-root lockfile until the client directory is a package root" do
+        expect(doctor.send(:detect_package_manager)).to eq("yarn")
+      end
+    end
+
     context "when bun.lockb exists" do
       before do
         File.write(root_path.join("bun.lockb"), "")
@@ -1659,6 +1812,40 @@ describe Shakapacker::Doctor do
         doctor.send(:check_package_manager)
         expect(doctor.issues).to include(match(/No package manager lock file found/))
       end
+    end
+  end
+
+  describe "package.json aggregation" do
+    let(:source_path) { root_path.join("client/app/javascript") }
+    let(:client_package_json_path) { root_path.join("client/package.json") }
+
+    before do
+      FileUtils.mkdir_p(client_package_json_path.dirname)
+      File.write(package_json_path, JSON.generate({
+        "dependencies" => {
+          "webpack" => "^5.0.0"
+        },
+        "devDependencies" => {
+          "babel-loader" => "^9.0.0"
+        }
+      }))
+      File.write(client_package_json_path, "{invalid")
+    end
+
+    it "keeps valid package roots when another package.json is malformed" do
+      expect(doctor.send(:declared_package_dependencies)).to include(
+        "webpack" => "^5.0.0",
+        "babel-loader" => "^9.0.0"
+      )
+    end
+
+    it "memoizes the Rails root fallback when source_path is outside the app root" do
+      outside_source_path = root_path.dirname.join("outside-client/app/javascript")
+      allow(config).to receive(:source_path).and_return(outside_source_path)
+
+      expect(doctor.send(:javascript_package_root_path)).to eq(root_path)
+      expect(doctor.send(:javascript_package_root_path)).to eq(root_path)
+      expect(config).to have_received(:source_path).once
     end
   end
 
@@ -1779,6 +1966,8 @@ describe Shakapacker::Doctor do
     end
 
     context "with Babel transpiler" do
+      let(:config_data) { super().merge(javascript_transpiler: "babel") }
+
       before do
         allow(config).to receive(:javascript_transpiler).and_return("babel")
       end
@@ -1854,6 +2043,308 @@ describe Shakapacker::Doctor do
             expect(doctor.issues).to include(match(/Missing required dependency 'swc-loader'/))
           end
         end
+
+        context "when inferred webpack/SWC defaults have an unrelated Rspack package" do
+          before do
+            allow(config).to receive(:javascript_transpiler).and_return(nil)
+            File.write(package_json_path, JSON.generate({
+              "dependencies" => {
+                "webpack" => "^5.0.0",
+                "@rspack/core" => "^2.0.0"
+              }
+            }))
+          end
+
+          it "continues reporting missing SWC dependencies for the default webpack build" do
+            doctor.send(:check_javascript_transpiler_dependencies)
+            expect(doctor.issues).to include(match(/Missing required dependency '@swc\/core'/))
+            expect(doctor.issues).to include(match(/Missing required dependency 'swc-loader'/))
+            expect(warning_messages).not_to include(match(/Skipping SWC dependency issue checks/))
+          end
+        end
+
+        [
+          ["nil", nil, "babel"],
+          ["an empty string", "", ""]
+        ].each do |description, config_value, runtime_value|
+          context "when javascript_transpiler is present as #{description}" do
+            let(:config_data) { super().merge(javascript_transpiler: config_value) }
+
+            before do
+              allow(config).to receive(:javascript_transpiler).and_return(runtime_value)
+              File.write(package_json_path, JSON.generate({
+                "dependencies" => {
+                  "webpack" => "^5.0.0"
+                },
+                "devDependencies" => {
+                  "@babel/core" => "^7.20.0",
+                  "@babel/preset-env" => "^7.20.0",
+                  "@babel/preset-typescript" => "^7.20.0",
+                  "babel-loader" => "^9.0.0"
+                }
+              }))
+              File.write(packs_path.join("application.ts"), "")
+            end
+
+            it "uses the bundler default instead of forcing the omitted-key SWC default" do
+              doctor.send(:check_javascript_transpiler_dependencies)
+              doctor.send(:check_file_type_dependencies)
+
+              expect(doctor.info).not_to include(match(/defaulting to SWC/))
+              expect(warning_messages).not_to include(match(/ts-loader/))
+              expect(doctor.issues).not_to include(match(/Missing required dependency '-loader'/))
+              expect(doctor.issues).not_to include(match(/Missing required dependency '@swc\/core'/))
+              expect(doctor.issues).not_to include(match(/Missing required dependency 'swc-loader'/))
+            end
+          end
+        end
+
+        context "when inferred webpack/SWC defaults have a hybrid-looking package graph without matching configs" do
+          before do
+            allow(config).to receive(:javascript_transpiler).and_return(nil)
+            File.write(package_json_path, JSON.generate({
+              "dependencies" => {
+                "webpack" => "^5.0.0",
+                "@rspack/core" => "^2.0.0"
+              },
+              "devDependencies" => {
+                "babel-loader" => "^9.0.0"
+              }
+            }))
+          end
+
+          it "continues reporting missing SWC dependencies for the inferred webpack build" do
+            doctor.send(:check_javascript_transpiler_dependencies)
+            expect(doctor.issues).to include(match(/Missing required dependency '@swc\/core'/))
+            expect(doctor.issues).to include(match(/Missing required dependency 'swc-loader'/))
+            expect(warning_messages).not_to include(match(/Skipping SWC dependency issue checks/))
+          end
+        end
+
+        context "when inferred webpack/SWC defaults meet a hybrid webpack and Rspack package graph" do
+          before do
+            allow(config).to receive(:javascript_transpiler).and_return(nil)
+            File.write(root_path.join(".swcrc"), "{}")
+            FileUtils.mkdir_p(root_path.join("config/webpack"))
+            FileUtils.mkdir_p(root_path.join("config/rspack"))
+            File.write(root_path.join("config/webpack/webpack.config.js"), "module.exports = {}")
+            File.write(root_path.join("config/rspack/rspack.config.js"), "module.exports = {}")
+            File.write(package_json_path, JSON.generate({
+              "dependencies" => {
+                "webpack" => "^5.0.0",
+                "@rspack/core" => "^2.0.0"
+              },
+              "devDependencies" => {
+                "babel-loader" => "^9.0.0",
+                "@babel/core" => "^7.20.0"
+              }
+            }))
+          end
+
+          it "skips inferred default SWC dependency issues for custom-hybrid package graphs" do
+            doctor.send(:check_javascript_transpiler_dependencies)
+            expect(doctor.issues).not_to include(match(/Missing required dependency '@swc\/core'/))
+            expect(doctor.issues).not_to include(match(/Missing required dependency 'swc-loader'/))
+            expect(warning_messages).to include(match(/Detected a custom hybrid webpack\/Rspack setup.*Skipping SWC dependency issue checks/))
+            expect(
+              doctor.warnings.find { |warning| warning[:message].match?(/Detected a custom hybrid webpack\/Rspack setup/) }[:category]
+            ).to eq(described_class::CATEGORY_INFO)
+            expect(warning_messages).not_to include(match(/Both SWC and Babel dependencies are installed/))
+            expect(warning_messages).to include(match(/\.swcrc file detected.*migrate to config\/swc\.config\.js/))
+          end
+
+          it "uses real Configuration defaults as an inferred SWC doctor check" do
+            File.write(config_path, <<~YAML)
+              test:
+                source_path: app/javascript
+                source_entry_path: packs
+                integrity:
+                  enabled: false
+            YAML
+
+            real_config = Shakapacker::Configuration.new(
+              root_path: root_path,
+              config_path: config_path,
+              env: "test"
+            )
+            real_doctor = described_class.new(real_config, root_path)
+            stderr = capture_stderr { real_doctor.send(:check_javascript_transpiler_dependencies) }
+            real_warnings = real_doctor.warnings.map { |warning| warning[:message] }
+
+            expect(stderr).not_to include("Transpiler Configuration Mismatch Detected")
+            expect(real_doctor.issues).not_to include(match(/Missing required dependency '@swc\/core'/))
+            expect(real_doctor.issues).not_to include(match(/Missing required dependency 'swc-loader'/))
+            expect(real_warnings).to include(match(/Detected a custom hybrid webpack\/Rspack setup.*Skipping SWC dependency issue checks/))
+          end
+
+          it "reports an empty assets_bundler env override instead of substituting defaults" do
+            previous_value = ENV["SHAKAPACKER_ASSETS_BUNDLER"]
+            ENV["SHAKAPACKER_ASSETS_BUNDLER"] = ""
+            File.write(config_path, <<~YAML)
+              test:
+                source_path: app/javascript
+                source_entry_path: packs
+                integrity:
+                  enabled: false
+            YAML
+
+            real_config = Shakapacker::Configuration.new(
+              root_path: root_path,
+              config_path: config_path,
+              env: "test"
+            )
+            real_doctor = described_class.new(real_config, root_path)
+            real_doctor.send(:check_config_file)
+            real_doctor.send(:check_javascript_transpiler_dependencies)
+
+            expect(real_config.assets_bundler).to eq("")
+            expect(real_doctor.issues).to include(match(/SHAKAPACKER_ASSETS_BUNDLER is set but empty/))
+            expect(real_doctor.warnings.map { |warning| warning[:message] }).not_to include(match(/Detected a custom hybrid webpack\/Rspack setup/))
+          ensure
+            if previous_value.nil?
+              ENV.delete("SHAKAPACKER_ASSETS_BUNDLER")
+            else
+              ENV["SHAKAPACKER_ASSETS_BUNDLER"] = previous_value
+            end
+          end
+
+          it "does not silently substitute deprecated bundler config when the assets_bundler env override is empty" do
+            previous_value = ENV["SHAKAPACKER_ASSETS_BUNDLER"]
+            ENV["SHAKAPACKER_ASSETS_BUNDLER"] = ""
+            File.write(config_path, <<~YAML)
+              test:
+                source_path: app/javascript
+                source_entry_path: packs
+                bundler: rspack
+                javascript_transpiler: swc
+                integrity:
+                  enabled: false
+            YAML
+            File.write(package_json_path, JSON.generate({
+              "dependencies" => {
+                "@rspack/core" => "^2.0.0",
+                "@rspack/cli" => "^2.0.0"
+              }
+            }))
+
+            real_config = Shakapacker::Configuration.new(
+              root_path: root_path,
+              config_path: config_path,
+              env: "test"
+            )
+            real_doctor = described_class.new(real_config, root_path)
+
+            expect(real_config.assets_bundler).to eq("")
+            expect(real_doctor.send(:assets_bundler)).to eq("")
+            real_doctor.send(:check_config_file)
+            real_doctor.send(:check_bundler_dependencies)
+            expect(real_doctor.issues).to include(match(/SHAKAPACKER_ASSETS_BUNDLER is set but empty/))
+            expect(real_doctor.issues).not_to include(match(/Missing required dependency 'webpack'/))
+          ensure
+            if previous_value.nil?
+              ENV.delete("SHAKAPACKER_ASSETS_BUNDLER")
+            else
+              ENV["SHAKAPACKER_ASSETS_BUNDLER"] = previous_value
+            end
+          end
+
+          it "treats a Configuration bundler override as explicit bundler config" do
+            File.write(config_path, <<~YAML)
+              test:
+                source_path: app/javascript
+                source_entry_path: packs
+                integrity:
+                  enabled: false
+            YAML
+
+            real_config = Shakapacker::Configuration.new(
+              root_path: root_path,
+              config_path: config_path,
+              env: "test",
+              bundler_override: "rspack"
+            )
+            real_doctor = described_class.new(real_config, root_path)
+
+            expect(real_doctor.send(:assets_bundler)).to eq("rspack")
+            expect(real_doctor.send(:assets_bundler_configured?)).to be(true)
+          end
+
+          it "honors a SWC transpiler env override as explicit doctor config" do
+            previous_value = ENV["SHAKAPACKER_JAVASCRIPT_TRANSPILER"]
+            ENV["SHAKAPACKER_JAVASCRIPT_TRANSPILER"] = "swc"
+
+            doctor.send(:check_javascript_transpiler_dependencies)
+
+            expect(doctor.issues).to include(match(/Missing required dependency '@swc\/core'/))
+            expect(doctor.issues).to include(match(/Missing required dependency 'swc-loader'/))
+            expect(warning_messages).not_to include(match(/Skipping SWC dependency issue checks/))
+          ensure
+            if previous_value.nil?
+              ENV.delete("SHAKAPACKER_JAVASCRIPT_TRANSPILER")
+            else
+              ENV["SHAKAPACKER_JAVASCRIPT_TRANSPILER"] = previous_value
+            end
+          end
+        end
+
+        context "when inferred hybrid configs live in a custom assets_bundler_config_path" do
+          before do
+            allow(config).to receive(:javascript_transpiler).and_return(nil)
+            allow(config).to receive(:assets_bundler_config_path).and_return("build_configs")
+            FileUtils.mkdir_p(root_path.join("build_configs"))
+            File.write(root_path.join("build_configs/webpack.config.js"), "module.exports = {}")
+            File.write(root_path.join("build_configs/rspack.config.js"), "module.exports = {}")
+            File.write(package_json_path, JSON.generate({
+              "dependencies" => {
+                "webpack" => "^5.0.0",
+                "@rspack/core" => "^2.0.0"
+              },
+              "devDependencies" => {
+                "babel-loader" => "^9.0.0"
+              }
+            }))
+          end
+
+          it "uses the custom config directory as hybrid evidence" do
+            doctor.send(:check_javascript_transpiler_dependencies)
+            expect(doctor.issues).not_to include(match(/Missing required dependency '@swc\/core'/))
+            expect(doctor.issues).not_to include(match(/Missing required dependency 'swc-loader'/))
+            expect(warning_messages).to include(match(/Skipping SWC dependency issue checks/))
+          end
+
+          it "matches runner path semantics for leading-slash config directories" do
+            allow(config).to receive(:assets_bundler_config_path).and_return("/build_configs")
+
+            doctor.send(:check_javascript_transpiler_dependencies)
+            expect(doctor.issues).not_to include(match(/Missing required dependency '@swc\/core'/))
+            expect(doctor.issues).not_to include(match(/Missing required dependency 'swc-loader'/))
+            expect(warning_messages).to include(match(/Skipping SWC dependency issue checks/))
+          end
+        end
+
+        context "when webpack/SWC is explicit in a hybrid package graph" do
+          let(:config_data) do
+            super().merge(
+              assets_bundler: "webpack",
+              javascript_transpiler: "swc"
+            )
+          end
+
+          before do
+            File.write(package_json_path, JSON.generate({
+              "dependencies" => {
+                "webpack" => "^5.0.0",
+                "@rspack/core" => "^2.0.0"
+              }
+            }))
+          end
+
+          it "keeps reporting missing SWC dependencies" do
+            doctor.send(:check_javascript_transpiler_dependencies)
+            expect(doctor.issues).to include(match(/Missing required dependency '@swc\/core'/))
+            expect(doctor.issues).to include(match(/Missing required dependency 'swc-loader'/))
+          end
+        end
       end
 
       context "with rspack bundler" do
@@ -1886,6 +2377,8 @@ describe Shakapacker::Doctor do
     end
 
     context "with esbuild transpiler" do
+      let(:config_data) { super().merge(javascript_transpiler: "esbuild") }
+
       before do
         allow(config).to receive(:javascript_transpiler).and_return("esbuild")
       end
@@ -1940,6 +2433,8 @@ describe Shakapacker::Doctor do
     end
 
     context "when transpiler is none" do
+      let(:config_data) { super().merge(javascript_transpiler: "none") }
+
       before do
         allow(config).to receive(:javascript_transpiler).and_return("none")
       end
@@ -1951,6 +2446,8 @@ describe Shakapacker::Doctor do
     end
 
     context "transpiler config consistency" do
+      let(:config_data) { super().merge(javascript_transpiler: "swc") }
+
       before do
         allow(config).to receive(:javascript_transpiler).and_return("swc")
       end
@@ -2273,6 +2770,46 @@ describe Shakapacker::Doctor do
   end
 
   describe "package_installed?" do
+    context "with package.json next to a configured subdirectory client source" do
+      let(:source_path) { root_path.join("client/app/javascript") }
+      let(:client_package_json_path) { root_path.join("client/package.json") }
+
+      before do
+        File.write(
+          client_package_json_path,
+          JSON.generate(
+            "dependencies" => {
+              "webpack" => "^5.0.0"
+            }
+          )
+        )
+      end
+
+      it "reads dependencies from the client package root" do
+        expect(doctor.send(:package_installed?, "webpack")).to be true
+      end
+    end
+
+    context "with root package.json dependencies hoisted for a configured subdirectory client source" do
+      let(:source_path) { root_path.join("client/app/javascript") }
+
+      before do
+        File.write(root_path.join("client/package.json"), JSON.generate("private" => true))
+        File.write(
+          package_json_path,
+          JSON.generate(
+            "devDependencies" => {
+              "webpack" => "^5.0.0"
+            }
+          )
+        )
+      end
+
+      it "falls back to dependencies declared at the Rails root" do
+        expect(doctor.send(:package_installed?, "webpack")).to be true
+      end
+    end
+
     context "with package in dependencies" do
       before do
         package_json = {
