@@ -4,6 +4,8 @@
 **Original RFC date:** 2026-03-28 (revised 2026-05-10)
 **Author:** Justin Gordon
 
+> **Current planning status:** The original RFC framing mentioned a v17 dependency cleanup and a v10.0 support-matrix cleanup. Those release targets are superseded. The shipped policy is the additive v10.1 supplemental-package phase. Dropping EOL Ruby/Rails support remains a v11 product and release decision, so CI, gemspec, and gemfile support edits should wait for that decision.
+
 > **Looking for the user-facing migration steps?** See [`docs/migration/v10.1-supplemental-packages.md`](migration/v10.1-supplemental-packages.md). This doc captures the design rationale, alternatives considered, and the v11 roadmap — read it if you want to understand _why_ the dependency surface looks the way it does.
 
 ## Summary
@@ -81,7 +83,7 @@ What ships:
 - Users must install `shakapacker-webpack` or `shakapacker-rspack`
 - Drop old major versions (webpack-cli v4/v5, sass-loader v13-15, etc.)
 - Collapse esbuild from 14 ranges to `>=0.24.0 <1.0.0` (caret on 0.x locks to the minor in npm semver, so a literal `<1.0.0` ceiling is required to keep esbuild 0.25+ in scope)
-- Ruby 3.4+, Rails 7.2+ (Ruby 3.1/3.2 are EOL; Ruby 3.3 reaches EOL 2027-03; Rails 7.0/7.1 are unsupported)
+- Candidate support floor: Ruby 3.4+, Rails 7.2+ (Ruby 3.1/3.2 are EOL; Ruby 3.3 reaches EOL 2027-03; Rails 7.0/7.1 are unsupported). Confirm the final floor when v11 has a release target.
 
 ### Three npm Packages
 
@@ -131,10 +133,10 @@ Supplemental package for the standard webpack managed build experience.
 
 **Direct dependencies (always installed):**
 
-| Package               | Range          | Reason                                                                                                      |
-| --------------------- | -------------- | ----------------------------------------------------------------------------------------------------------- |
-| shakapacker           | `~10.1.0-rc.1` | Tilde locks to the lockstep release line (the wrapper imports core's internal `package/config` subpath).    |
-| terser-webpack-plugin | `^5.3.1`       | `package/optimization/webpack.ts` does `requireOrError("terser-webpack-plugin")` for the default minimizer. |
+| Package               | Range     | Reason                                                                                                      |
+| --------------------- | --------- | ----------------------------------------------------------------------------------------------------------- |
+| shakapacker           | `~10.1.0` | Tilde locks to the lockstep release line (the wrapper imports core's internal `package/config` subpath).    |
+| terser-webpack-plugin | `^5.3.1`  | `package/optimization/webpack.ts` does `requireOrError("terser-webpack-plugin")` for the default minimizer. |
 
 **Required peer dependencies (singleton bundler stack):**
 
@@ -178,9 +180,9 @@ Supplemental package for the rspack managed build experience.
 
 **Direct dependencies (always installed):**
 
-| Package     | Range          | Reason                                                                                                   |
-| ----------- | -------------- | -------------------------------------------------------------------------------------------------------- |
-| shakapacker | `~10.1.0-rc.1` | Tilde locks to the lockstep release line (the wrapper imports core's internal `package/config` subpath). |
+| Package     | Range     | Reason                                                                                                   |
+| ----------- | --------- | -------------------------------------------------------------------------------------------------------- |
+| shakapacker | `~10.1.0` | Tilde locks to the lockstep release line (the wrapper imports core's internal `package/config` subpath). |
 
 **Required peer dependencies (singleton bundler stack):**
 
@@ -204,13 +206,11 @@ Note: rspack has built-in SWC transpilation, so no external transpiler deps are 
 
 Rspack v2 is stable, so both the supplemental rspack package and core `shakapacker` peer ranges target the current v2 GA line.
 
-GA release-prep note: while 10.1 is still in release-candidate state, the dependency tables intentionally show `~10.1.0-rc.1` for the lockstep `shakapacker` dependency. Update those rows and examples to `~10.1.0` when publishing the GA supplemental packages.
-
 ### Version Pinning Philosophy
 
 The core `shakapacker` package keeps intentional optional peer ranges where compatibility is still supported, while Rspack now follows the v2-only range used by `shakapacker-rspack`. The supplemental packages use a curated policy, but **not** the strictest one.
 
-- **Lockstep only for `shakapacker`.** The wrapper's `dependencies.shakapacker` uses a tilde (`~10.1.0-rc.1`) because the wrapper's runtime code calls into core's internal `package/config` subpath; mismatched minors could break that. All _other_ constraints use caret ranges with sensible floors.
+- **Lockstep only for `shakapacker`.** The wrapper's `dependencies.shakapacker` uses a tilde (`~10.1.0`) because the wrapper's runtime code calls into core's internal `package/config` subpath; mismatched minors could break that. All _other_ constraints use caret ranges with sensible floors.
 - **Caret ranges for everything else.** Webpack, rspack, loaders, transpilers, and CSS preprocessors all use `^` so a routine upstream patch or minor release is immediately available to users without a coordinated Shakapacker release. The earlier RC pinned everything with `~`, which was reverted after [issue #1131](https://github.com/shakacode/shakapacker/issues/1131) pointed out the release-cadence trap (every upstream minor would obligate a supplemental release).
 - **Align with main `shakapacker`'s peer ranges.** Where a peer appears in both main and a supplemental, the supplemental uses the same range (or narrower only when the curated stack deliberately drops legacy versions, e.g., `webpack-cli` v4–v6 or `webpack-assets-manifest` v5). The supplemental is never _stricter_ than main for an overlapping peer.
 - **Avoid pre-release pins unless deliberately testing a pre-release line.** For example, `webpack-subresource-integrity` stays on the latest stable 5.1.x release even though its npm `latest` dist-tag currently points at a release candidate.
