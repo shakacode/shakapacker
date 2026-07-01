@@ -65,7 +65,7 @@ def shakapacker_source_path(app_root)
   return nil unless config.is_a?(Hash)
 
   env = ENV["RAILS_ENV"] || ENV["RACK_ENV"] || "development"
-  env_config = config[env] || config["production"] || config["default"]
+  env_config = config[env] || config["production"]
   return nil unless env_config.is_a?(Hash)
 
   env_config["source_path"]

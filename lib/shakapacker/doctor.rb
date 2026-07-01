@@ -497,7 +497,7 @@ module Shakapacker
       end
 
       def check_javascript_transpiler_dependencies
-        transpiler = config.javascript_transpiler
+        transpiler = javascript_transpiler
 
         # Default to SWC for v9+ if not configured
         if transpiler.nil?
@@ -587,7 +587,7 @@ module Shakapacker
         end
       end
 
-      def check_transpiler_config_consistency(transpiler = config.javascript_transpiler)
+      def check_transpiler_config_consistency(transpiler = javascript_transpiler)
         babel_configs = [
           root_path.join(".babelrc"),
           root_path.join(".babelrc.js"),
@@ -1156,7 +1156,7 @@ module Shakapacker
       end
 
       def check_typescript_dependencies
-        transpiler = config.javascript_transpiler
+        transpiler = javascript_transpiler
         if transpiler == "babel"
           check_optional_dependency("@babel/preset-typescript", @warnings, "TypeScript with Babel")
         elsif transpiler != "esbuild" && transpiler != "swc"
@@ -1213,9 +1213,20 @@ module Shakapacker
       end
 
       def javascript_transpiler_configured?
-        ENV.key?("SHAKAPACKER_JAVASCRIPT_TRANSPILER") ||
+        !javascript_transpiler_env_override.nil? ||
           config_key_present?(:javascript_transpiler) ||
           config_key_present?(:webpack_loader)
+      end
+
+      def javascript_transpiler
+        javascript_transpiler_env_override || config.javascript_transpiler
+      end
+
+      def javascript_transpiler_env_override
+        value = ENV["SHAKAPACKER_JAVASCRIPT_TRANSPILER"]
+        return nil if value.nil? || value.empty?
+
+        value
       end
 
       def assets_bundler_configured?
@@ -1532,7 +1543,7 @@ module Shakapacker
           end
 
           def print_transpiler_status
-            transpiler = doctor.config.javascript_transpiler
+            transpiler = doctor.send(:javascript_transpiler)
             return if transpiler.nil? || transpiler == "none"
 
             loader_name = "#{transpiler}-loader"

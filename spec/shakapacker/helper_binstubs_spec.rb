@@ -196,6 +196,42 @@ RSpec.describe "helper binstubs" do
       end
     end
 
+    it "does not use a bare default #{command} source_path fallback" do
+      Dir.mktmpdir("shakapacker-binstub-") do |app_path|
+        client_path = File.join(app_path, "client")
+        File.write(File.join(app_path, "Gemfile"), "")
+        FileUtils.mkdir_p(File.join(app_path, "bin"))
+        FileUtils.mkdir_p(File.join(app_path, "config"))
+        FileUtils.mkdir_p(File.join(client_path, "app/javascript"))
+        File.write(
+          File.join(app_path, "config/shakapacker.yml"),
+          <<~YAML
+            default:
+              source_path: client/app/javascript
+          YAML
+        )
+        install_fake_node_script(app_path, command)
+        install_fake_node_script(client_path, command)
+
+        binstub_path = File.join(app_path, "bin", command)
+        FileUtils.cp(File.join(gem_root, "lib", "install", "bin", command), binstub_path)
+        FileUtils.chmod(0o755, binstub_path)
+
+        output_path = File.join(app_path, "binstub-output.json")
+        _stdout, stderr, status = Open3.capture3(
+          { "RAILS_ENV" => "staging", "SHAKAPACKER_BINSTUB_OUTPUT" => output_path },
+          binstub_path,
+          chdir: app_path
+        )
+
+        expect(status).to be_success, stderr
+        expect(JSON.parse(File.read(output_path))).to include(
+          "cwd" => File.realpath(app_path),
+          "scriptPath" => File.realpath(File.join(app_path, "node_modules/shakapacker/package/bin/#{command}.cjs"))
+        )
+      end
+    end
+
     it "resolves a relative SHAKAPACKER_CONFIG for #{command} from the Rails root" do
       Dir.mktmpdir("shakapacker-binstub-") do |app_path|
         client_path = File.join(app_path, "client")

@@ -1948,6 +1948,23 @@ describe Shakapacker::Doctor do
             expect(warning_messages).to include(match(/Skipping SWC dependency issue checks.*custom hybrid webpack\/Rspack configs/))
             expect(warning_messages).to include(match(/\.swcrc file detected.*migrate to config\/swc\.config\.js/))
           end
+
+          it "honors a SWC transpiler env override as explicit doctor config" do
+            previous_value = ENV["SHAKAPACKER_JAVASCRIPT_TRANSPILER"]
+            ENV["SHAKAPACKER_JAVASCRIPT_TRANSPILER"] = "swc"
+
+            doctor.send(:check_javascript_transpiler_dependencies)
+
+            expect(doctor.issues).to include(match(/Missing required dependency '@swc\/core'/))
+            expect(doctor.issues).to include(match(/Missing required dependency 'swc-loader'/))
+            expect(warning_messages).not_to include(match(/Skipping SWC dependency issue checks/))
+          ensure
+            if previous_value.nil?
+              ENV.delete("SHAKAPACKER_JAVASCRIPT_TRANSPILER")
+            else
+              ENV["SHAKAPACKER_JAVASCRIPT_TRANSPILER"] = previous_value
+            end
+          end
         end
 
         context "when webpack/SWC is explicit in a hybrid package graph" do
