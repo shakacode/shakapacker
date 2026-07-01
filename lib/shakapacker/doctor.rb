@@ -314,8 +314,7 @@ module Shakapacker
         return unless package_json_exists?
 
         bundler = config.assets_bundler
-        package_json = read_package_json
-        all_deps = declared_package_dependencies(package_json)
+        all_deps = declared_package_dependencies
 
         if bundler == "webpack"
           check_webpack_peer_deps(all_deps)
@@ -1089,7 +1088,7 @@ module Shakapacker
       def package_json_dependency_version(name)
         return nil unless package_json_exists?
 
-        declared_package_dependencies(read_package_json)[name]
+        declared_package_dependencies[name]
       end
 
       def package_version_status(package_name, minimum_version)
@@ -1122,12 +1121,18 @@ module Shakapacker
         nil
       end
 
-      def declared_package_dependencies(package_json)
-        # Later sections take precedence when the same package is declared in more than one section.
-        installable_package_dependencies(package_json)
+      def declared_package_dependencies
+        @declared_package_dependencies ||= begin
+          package_json_paths.reverse_each.reduce({}) do |dependencies, path|
+            dependencies.merge(installable_package_dependencies(JSON.parse(File.read(path))))
+          end
+        rescue JSON::ParserError, SystemCallError
+          {}
+        end
       end
 
       def installable_package_dependencies(package_json)
+        # Later sections take precedence when the same package is declared in more than one section.
         (package_json["optionalDependencies"] || {})
           .merge(package_json["devDependencies"] || {})
           .merge(package_json["dependencies"] || {})
@@ -1201,7 +1206,7 @@ module Shakapacker
       def package_installed?(package_name)
         return false unless package_json_exists?
 
-        installable_package_dependencies(read_package_json).key?(package_name)
+        declared_package_dependencies.key?(package_name)
       end
 
       def package_json_exists?

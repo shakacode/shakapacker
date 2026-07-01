@@ -498,6 +498,32 @@ describe Shakapacker::Doctor do
         end
       end
 
+      context "with a subdirectory client dependency declared in a different section than the Rails root" do
+        let(:source_path) { root_path.join("client/app/javascript") }
+
+        before do
+          File.write(root_path.join("client/package.json"), JSON.generate({
+            "devDependencies" => {
+              "@rspack/core" => "^1.0.0",
+              "@rspack/cli" => "^2.0.0"
+            }
+          }))
+          File.write(package_json_path, JSON.generate({
+            "dependencies" => {
+              "@rspack/core" => "^2.0.0",
+              "rspack-manifest-plugin" => "^5.2.2"
+            }
+          }))
+        end
+
+        it "lets the client package root override the Rails root across dependency sections" do
+          doctor.send(:check_peer_dependencies)
+          expect(doctor.issues).to include(match(/Shakapacker supports Rspack v2 only.*@rspack\/core/))
+          expect(doctor.issues).not_to include(match(/Missing essential rspack dependency.*@rspack\/cli/))
+          expect(doctor.issues).not_to include(match(/Missing essential rspack dependency.*rspack-manifest-plugin/))
+        end
+      end
+
       context "mixed rspack v2 core and v1 cli dependencies" do
         before do
           File.write(package_json_path, JSON.generate({
