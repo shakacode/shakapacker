@@ -1,0 +1,15 @@
+default: &default
+  source_path: app/javascript
+  source_entry_path: packs
+  public_root_path: public
+  public_output_path: packs
+  cache_path: tmp/shakapacker
+  cache_manifest: false
+  compile: false
+  assets_bundler: custom
+  ensure_consistent_versioning: false
+  integrity:
+    enabled: false
+
+test:
+  <<: *default

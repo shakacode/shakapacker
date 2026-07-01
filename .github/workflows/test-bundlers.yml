@@ -9,6 +9,7 @@ on:
       - "**.js"
       - "**.ts"
       - "package.json"
+      - "packages/**/package.json"
       - "yarn.lock"
       - ".github/workflows/test-bundlers.yml"
   push:
@@ -58,23 +59,31 @@ jobs:
         run: |
           cd ../..
           yalc publish
+          cd packages/shakapacker-webpack
+          yalc publish
 
       - name: Install dependencies
         run: |
           yarn install
           yalc add shakapacker
+          yalc add shakapacker-webpack
           yarn install
           yalc link shakapacker
+          yalc link shakapacker-webpack
 
       - name: Switch to Webpack
         run: bin/test-bundler webpack
 
       - name: Build with Webpack
         run: bin/shakapacker
+        env:
+          SHAKAPACKER_SUPPLEMENTAL_ENTRYPOINT: "1"
 
       - name: Run tests with Webpack
         run: |
           bundle exec rspec
+        env:
+          SHAKAPACKER_SUPPLEMENTAL_ENTRYPOINT: "1"
 
   test-rspack:
     name: Test with RSpack
@@ -113,23 +122,31 @@ jobs:
         run: |
           cd ../..
           yalc publish
+          cd packages/shakapacker-rspack
+          yalc publish
 
       - name: Install dependencies
         run: |
           yarn install
           yalc add shakapacker
+          yalc add shakapacker-rspack
           yarn install
           yalc link shakapacker
+          yalc link shakapacker-rspack
 
       - name: Switch to RSpack
         run: bin/test-bundler rspack
 
       - name: Build with RSpack
         run: bin/shakapacker
+        env:
+          SHAKAPACKER_SUPPLEMENTAL_ENTRYPOINT: "1"
 
       - name: Run tests with RSpack
         run: |
           bundle exec rspec
+        env:
+          SHAKAPACKER_SUPPLEMENTAL_ENTRYPOINT: "1"
 
   test-switching:
     name: Test Bundler Switching
@@ -168,13 +185,21 @@ jobs:
         run: |
           cd ../..
           yalc publish
+          cd packages/shakapacker-webpack
+          yalc publish
+          cd ../shakapacker-rspack
+          yalc publish
 
       - name: Install dependencies
         run: |
           yarn install
           yalc add shakapacker
+          yalc add shakapacker-webpack
+          yalc add shakapacker-rspack
           yarn install
           yalc link shakapacker
+          yalc link shakapacker-webpack
+          yalc link shakapacker-rspack
 
       - name: Test switching between bundlers
         run: |
@@ -189,3 +214,5 @@ jobs:
           # Switch back to webpack
           bin/test-bundler webpack
           bin/shakapacker
+        env:
+          SHAKAPACKER_SUPPLEMENTAL_ENTRYPOINT: "1"
