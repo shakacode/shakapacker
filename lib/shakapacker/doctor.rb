@@ -59,6 +59,12 @@ module Shakapacker
       "@rspack/plugin-react-refresh" => "^2.0.0"
     }.freeze
 
+    CUSTOM_HYBRID_LOADER_DEPS = %w[
+      babel-loader
+      esbuild-loader
+      ts-loader
+    ].freeze
+
     def initialize(config = nil, root_path = nil, options = {})
       @config = config || Shakapacker.config
       @root_path = root_path || (defined?(Rails) ? Rails.root : Pathname.new(Dir.pwd))
@@ -509,7 +515,7 @@ module Shakapacker
         bundler = config.assets_bundler
         if inferred_hybrid_swc_dependency_check?(transpiler, bundler)
           add_warning("Skipping SWC dependency issue checks because javascript_transpiler and assets_bundler are inferred " \
-                      "while both webpack and Rspack packages are installed. For custom hybrid webpack/Rspack configs, " \
+                      "while webpack, Rspack, and non-SWC loader packages are installed. For custom hybrid webpack/Rspack configs, " \
                       "set javascript_transpiler: \"none\" when Shakapacker should not validate loader dependencies, " \
                       "or set javascript_transpiler/assets_bundler explicitly when Shakapacker owns that build path.")
           check_transpiler_config_consistency(transpiler)
@@ -634,7 +640,12 @@ module Shakapacker
           !javascript_transpiler_configured? &&
           !assets_bundler_configured? &&
           package_installed?("webpack") &&
-          package_installed?("@rspack/core")
+          package_installed?("@rspack/core") &&
+          custom_hybrid_loader_dependency?
+      end
+
+      def custom_hybrid_loader_dependency?
+        CUSTOM_HYBRID_LOADER_DEPS.any? { |package_name| package_installed?(package_name) }
       end
 
       def check_swc_config_conflicts

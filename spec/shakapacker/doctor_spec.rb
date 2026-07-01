@@ -1951,6 +1951,25 @@ describe Shakapacker::Doctor do
           end
         end
 
+        context "when inferred webpack/SWC defaults have an unrelated Rspack package" do
+          before do
+            allow(config).to receive(:javascript_transpiler).and_return(nil)
+            File.write(package_json_path, JSON.generate({
+              "dependencies" => {
+                "webpack" => "^5.0.0",
+                "@rspack/core" => "^2.0.0"
+              }
+            }))
+          end
+
+          it "continues reporting missing SWC dependencies for the default webpack build" do
+            doctor.send(:check_javascript_transpiler_dependencies)
+            expect(doctor.issues).to include(match(/Missing required dependency '@swc\/core'/))
+            expect(doctor.issues).to include(match(/Missing required dependency 'swc-loader'/))
+            expect(warning_messages).not_to include(match(/Skipping SWC dependency issue checks/))
+          end
+        end
+
         context "when inferred webpack/SWC defaults meet a hybrid webpack and Rspack package graph" do
           before do
             allow(config).to receive(:javascript_transpiler).and_return(nil)
