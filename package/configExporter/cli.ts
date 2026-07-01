@@ -935,7 +935,8 @@ async function runDoctorMode(
         const aiPromptFilename = writeAiAnalysisPrompt(
           createdFiles,
           targetDir,
-          detectedBundlers
+          detectedBundlers,
+          appRoot
         )
 
         // Print summary and exit early
@@ -1043,7 +1044,8 @@ async function runDoctorMode(
     const aiPromptFilename = writeAiAnalysisPrompt(
       createdFiles,
       targetDir,
-      detectedBundlers
+      detectedBundlers,
+      appRoot
     )
 
     printDoctorSummary(createdFiles, targetDir, aiPromptFilename)
@@ -1067,7 +1069,8 @@ async function runDoctorMode(
 export function writeAiAnalysisPrompt(
   createdFiles: string[],
   targetDir: string,
-  bundlers: Set<string>
+  bundlers: Set<string>,
+  appRoot: string = process.cwd()
 ): string | null {
   if (createdFiles.length === 0) {
     return null
@@ -1081,7 +1084,8 @@ export function writeAiAnalysisPrompt(
     const aiPromptContent = AiPromptGenerator.generatePrompt(
       fileBasenames,
       targetDir,
-      bundler
+      bundler,
+      { includeReactOnRailsContext: detectReactOnRailsUsage(appRoot) }
     )
     const aiPromptFilename = AiPromptGenerator.PROMPT_FILENAME
     const aiPromptPath = resolve(targetDir, aiPromptFilename)
@@ -1096,6 +1100,67 @@ export function writeAiAnalysisPrompt(
     console.warn("   The exported configuration files are unaffected.")
     return null
   }
+}
+
+function detectReactOnRailsUsage(appRoot: string): boolean {
+  return (
+    packageJsonUsesReactOnRails(appRoot) ||
+    gemfileUsesReactOnRails(appRoot) ||
+    gemfileLockUsesReactOnRails(appRoot)
+  )
+}
+
+function packageJsonUsesReactOnRails(appRoot: string): boolean {
+  const packageJsonPath = resolve(appRoot, "package.json")
+  if (!existsSync(packageJsonPath)) {
+    return false
+  }
+
+  try {
+    const packageJson = JSON.parse(readFileSync(packageJsonPath, "utf8")) as {
+      dependencies?: Record<string, unknown>
+      devDependencies?: Record<string, unknown>
+      optionalDependencies?: Record<string, unknown>
+      peerDependencies?: Record<string, unknown>
+    }
+
+    return [
+      packageJson.dependencies,
+      packageJson.devDependencies,
+      packageJson.optionalDependencies,
+      packageJson.peerDependencies
+    ].some(
+      (dependencies) =>
+        dependencies &&
+        Object.prototype.hasOwnProperty.call(dependencies, "react-on-rails")
+    )
+  } catch {
+    return false
+  }
+}
+
+function gemfileUsesReactOnRails(appRoot: string): boolean {
+  const gemfilePath = resolve(appRoot, "Gemfile")
+  if (!existsSync(gemfilePath)) {
+    return false
+  }
+
+  const gemfile = readFileSync(gemfilePath, "utf8")
+  return gemfile
+    .split(/\r?\n/)
+    .some((line) => /^\s*gem\s+["']react_on_rails["']/.test(line))
+}
+
+function gemfileLockUsesReactOnRails(appRoot: string): boolean {
+  const gemfileLockPath = resolve(appRoot, "Gemfile.lock")
+  if (!existsSync(gemfileLockPath)) {
+    return false
+  }
+
+  const gemfileLock = readFileSync(gemfileLockPath, "utf8")
+  return gemfileLock
+    .split(/\r?\n/)
+    .some((line) => /^\s+react_on_rails \(/.test(line))
 }
 
 function printDoctorSummary(

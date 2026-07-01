@@ -25,10 +25,15 @@ export class AiPromptGenerator {
   static generatePrompt(
     exportedFiles: string[],
     targetDir: string,
-    bundler: string
+    bundler: string,
+    options: { includeReactOnRailsContext?: boolean } = {}
   ): string {
     const timestamp = new Date().toISOString()
     const configFiles = AiPromptGenerator.buildConfigFilesSection(exportedFiles)
+    const reactOnRailsContext =
+      options.includeReactOnRailsContext === false
+        ? ""
+        : AiPromptGenerator.REACT_ON_RAILS_CONTEXT
 
     // Only the directory name is included in Context: users are encouraged to
     // paste this prompt into external AI assistants, so the absolute path
@@ -48,7 +53,7 @@ Please analyze these configurations and provide recommendations.
 
 ${configFiles}
 
-${AiPromptGenerator.REACT_ON_RAILS_CONTEXT}## Analysis Objectives
+${reactOnRailsContext}## Analysis Objectives
 
 Please analyze the exported configuration files and provide:
 
