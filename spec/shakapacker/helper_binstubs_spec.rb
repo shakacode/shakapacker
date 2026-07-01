@@ -27,6 +27,7 @@ RSpec.describe "helper binstubs" do
         process.env.SHAKAPACKER_BINSTUB_OUTPUT,
         JSON.stringify({
           cwd: process.cwd(),
+          scriptPath: __filename,
           argv: process.argv.slice(2),
           env: {
             RAILS_ENV: process.env.RAILS_ENV,
@@ -69,6 +70,171 @@ RSpec.describe "helper binstubs" do
         expect(JSON.parse(File.read(output_path))).to include(
           "cwd" => File.realpath(app_path),
           "argv" => ["--flag", "value"]
+        )
+      end
+    end
+
+    it "loads #{command} from the configured subdirectory client package root" do
+      Dir.mktmpdir("shakapacker-binstub-") do |app_path|
+        client_path = File.join(app_path, "client")
+        File.write(File.join(app_path, "Gemfile"), "")
+        FileUtils.mkdir_p(File.join(app_path, "bin"))
+        FileUtils.mkdir_p(File.join(app_path, "config"))
+        FileUtils.mkdir_p(File.join(client_path, "app/javascript"))
+        File.write(
+          File.join(app_path, "config/shakapacker.yml"),
+          <<~YAML
+            default: &default
+              source_path: client/app/javascript
+
+            development:
+              <<: *default
+          YAML
+        )
+        install_fake_node_script(client_path, command)
+
+        binstub_path = File.join(app_path, "bin", command)
+        FileUtils.cp(File.join(gem_root, "lib", "install", "bin", command), binstub_path)
+        FileUtils.chmod(0o755, binstub_path)
+
+        output_path = File.join(app_path, "binstub-output.json")
+        _stdout, stderr, status = Open3.capture3(
+          { "SHAKAPACKER_BINSTUB_OUTPUT" => output_path },
+          binstub_path,
+          "--doctor",
+          chdir: app_path
+        )
+
+        expect(status).to be_success, stderr
+        expect(JSON.parse(File.read(output_path))).to include(
+          "cwd" => File.realpath(app_path),
+          "scriptPath" => File.realpath(File.join(client_path, "node_modules/shakapacker/package/bin/#{command}.cjs")),
+          "argv" => ["--doctor"]
+        )
+      end
+    end
+
+    it "falls back to the Rails-root #{command} package script when client dependencies are hoisted" do
+      Dir.mktmpdir("shakapacker-binstub-") do |app_path|
+        client_path = File.join(app_path, "client")
+        File.write(File.join(app_path, "Gemfile"), "")
+        FileUtils.mkdir_p(client_path)
+        File.write(File.join(client_path, "package.json"), JSON.generate("private" => true))
+        FileUtils.mkdir_p(File.join(app_path, "bin"))
+        FileUtils.mkdir_p(File.join(app_path, "config"))
+        FileUtils.mkdir_p(File.join(client_path, "app/javascript"))
+        File.write(
+          File.join(app_path, "config/shakapacker.yml"),
+          <<~YAML
+            default: &default
+              source_path: client/app/javascript
+
+            development:
+              <<: *default
+          YAML
+        )
+        install_fake_node_script(app_path, command)
+
+        binstub_path = File.join(app_path, "bin", command)
+        FileUtils.cp(File.join(gem_root, "lib", "install", "bin", command), binstub_path)
+        FileUtils.chmod(0o755, binstub_path)
+
+        output_path = File.join(app_path, "binstub-output.json")
+        _stdout, stderr, status = Open3.capture3(
+          { "SHAKAPACKER_BINSTUB_OUTPUT" => output_path },
+          binstub_path,
+          "--doctor",
+          chdir: app_path
+        )
+
+        expect(status).to be_success, stderr
+        expect(JSON.parse(File.read(output_path))).to include(
+          "cwd" => File.realpath(app_path),
+          "scriptPath" => File.realpath(File.join(app_path, "node_modules/shakapacker/package/bin/#{command}.cjs")),
+          "argv" => ["--doctor"]
+        )
+      end
+    end
+
+    it "uses the production #{command} source_path fallback for missing custom environments" do
+      Dir.mktmpdir("shakapacker-binstub-") do |app_path|
+        client_path = File.join(app_path, "client")
+        File.write(File.join(app_path, "Gemfile"), "")
+        FileUtils.mkdir_p(File.join(app_path, "bin"))
+        FileUtils.mkdir_p(File.join(app_path, "config"))
+        FileUtils.mkdir_p(File.join(app_path, "app/javascript"))
+        FileUtils.mkdir_p(File.join(client_path, "app/javascript"))
+        File.write(
+          File.join(app_path, "config/shakapacker.yml"),
+          <<~YAML
+            default: &default
+              source_path: app/javascript
+
+            production:
+              <<: *default
+              source_path: client/app/javascript
+          YAML
+        )
+        install_fake_node_script(client_path, command)
+
+        binstub_path = File.join(app_path, "bin", command)
+        FileUtils.cp(File.join(gem_root, "lib", "install", "bin", command), binstub_path)
+        FileUtils.chmod(0o755, binstub_path)
+
+        output_path = File.join(app_path, "binstub-output.json")
+        _stdout, stderr, status = Open3.capture3(
+          { "RAILS_ENV" => "staging", "SHAKAPACKER_BINSTUB_OUTPUT" => output_path },
+          binstub_path,
+          chdir: app_path
+        )
+
+        expect(status).to be_success, stderr
+        expect(JSON.parse(File.read(output_path))).to include(
+          "cwd" => File.realpath(app_path),
+          "scriptPath" => File.realpath(File.join(client_path, "node_modules/shakapacker/package/bin/#{command}.cjs"))
+        )
+      end
+    end
+
+    it "resolves a relative SHAKAPACKER_CONFIG for #{command} from the Rails root" do
+      Dir.mktmpdir("shakapacker-binstub-") do |app_path|
+        client_path = File.join(app_path, "client")
+        launch_path = File.join(app_path, "tmp/launch")
+        File.write(File.join(app_path, "Gemfile"), "")
+        FileUtils.mkdir_p(File.join(app_path, "bin"))
+        FileUtils.mkdir_p(File.join(app_path, "config"))
+        FileUtils.mkdir_p(File.join(client_path, "app/javascript"))
+        FileUtils.mkdir_p(launch_path)
+        File.write(
+          File.join(app_path, "config/custom-shakapacker.yml"),
+          <<~YAML
+            default: &default
+              source_path: client/app/javascript
+
+            production:
+              <<: *default
+          YAML
+        )
+        install_fake_node_script(client_path, command)
+
+        binstub_path = File.join(app_path, "bin", command)
+        FileUtils.cp(File.join(gem_root, "lib", "install", "bin", command), binstub_path)
+        FileUtils.chmod(0o755, binstub_path)
+
+        output_path = File.join(app_path, "binstub-output.json")
+        _stdout, stderr, status = Open3.capture3(
+          {
+            "SHAKAPACKER_CONFIG" => "config/custom-shakapacker.yml",
+            "SHAKAPACKER_BINSTUB_OUTPUT" => output_path
+          },
+          binstub_path,
+          chdir: launch_path
+        )
+
+        expect(status).to be_success, stderr
+        expect(JSON.parse(File.read(output_path))).to include(
+          "cwd" => File.realpath(app_path),
+          "scriptPath" => File.realpath(File.join(client_path, "node_modules/shakapacker/package/bin/#{command}.cjs"))
         )
       end
     end

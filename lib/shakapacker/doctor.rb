@@ -23,6 +23,13 @@ module Shakapacker
       bin/diff-bundler-config
     ].freeze
 
+    PACKAGE_MANAGER_LOCKFILES = {
+      "bun.lockb" => "bun",
+      "pnpm-lock.yaml" => "pnpm",
+      "yarn.lock" => "yarn",
+      "package-lock.json" => "npm"
+    }.freeze
+
     SASS_IMPLEMENTATION_PACKAGES = %w[
       sass
       sass-embedded
@@ -318,7 +325,13 @@ module Shakapacker
 
         # Check for conflicting installations
         if package_installed?("webpack") && package_installed?("@rspack/core")
-          add_warning("Both webpack and rspack are installed - ensure assets_bundler is set correctly")
+          if assets_bundler_configured?
+            add_warning("Both webpack and rspack are installed - ensure assets_bundler is set correctly")
+          else
+            add_warning("Both webpack and rspack are installed while assets_bundler is inferred as '#{bundler}'. " \
+                        "This can be intentional for custom hybrid webpack/Rspack setups; set assets_bundler " \
+                        "explicitly to document the active Shakapacker-managed bundler.")
+          end
         end
       end
 
@@ -495,6 +508,14 @@ module Shakapacker
         return if transpiler == "none"
 
         bundler = config.assets_bundler
+        if inferred_hybrid_swc_dependency_check?(transpiler, bundler)
+          add_warning("Skipping SWC dependency issue checks because javascript_transpiler and assets_bundler are inferred " \
+                      "while both webpack and Rspack packages are installed. For custom hybrid webpack/Rspack configs, " \
+                      "set javascript_transpiler: \"none\" when Shakapacker should not validate loader dependencies, " \
+                      "or set javascript_transpiler/assets_bundler explicitly when Shakapacker owns that build path.")
+          check_transpiler_config_consistency(transpiler)
+          return
+        end
 
         case transpiler
         when "babel"
@@ -512,7 +533,7 @@ module Shakapacker
           end
         end
 
-        check_transpiler_config_consistency
+        check_transpiler_config_consistency(transpiler)
       end
 
       def check_babel_dependencies
@@ -566,7 +587,7 @@ module Shakapacker
         end
       end
 
-      def check_transpiler_config_consistency
+      def check_transpiler_config_consistency(transpiler = config.javascript_transpiler)
         babel_configs = [
           root_path.join(".babelrc"),
           root_path.join(".babelrc.js"),
@@ -584,8 +605,6 @@ module Shakapacker
           babel_in_package_json = package_json.key?("babel")
           babel_config_exists ||= babel_in_package_json
         end
-
-        transpiler = config.javascript_transpiler
 
         if babel_config_exists && transpiler != "babel"
           babel_files = babel_configs.select(&:exist?).map { |f| f.relative_path_from(root_path) }
@@ -608,6 +627,15 @@ module Shakapacker
         if transpiler == "swc"
           check_swc_config_conflicts
         end
+      end
+
+      def inferred_hybrid_swc_dependency_check?(transpiler, bundler)
+        transpiler == "swc" &&
+          bundler == "webpack" &&
+          !javascript_transpiler_configured? &&
+          !assets_bundler_configured? &&
+          package_installed?("webpack") &&
+          package_installed?("@rspack/core")
       end
 
       def check_swc_config_conflicts
@@ -1048,7 +1076,7 @@ module Shakapacker
       end
 
       def installed_rspack_major_version(package_name)
-        rspack_pkg = root_path.join("node_modules", package_name, "package.json")
+        rspack_pkg = installed_package_json_path(package_name)
         return nil unless rspack_pkg.exist?
 
         version = JSON.parse(File.read(rspack_pkg))["version"]
@@ -1106,7 +1134,7 @@ module Shakapacker
       end
 
       def installed_package_version(package_name)
-        package_json = root_path.join("node_modules", package_name, "package.json")
+        package_json = installed_package_json_path(package_name)
         return nil unless package_json.exist?
 
         version = JSON.parse(File.read(package_json))["version"]
@@ -1177,19 +1205,123 @@ module Shakapacker
       end
 
       def package_json_exists?
-        package_json_path.exist?
+        package_json_paths.any?
       end
 
       def package_json_path
-        root_path.join("package.json")
+        javascript_package_root_path.join("package.json")
+      end
+
+      def javascript_transpiler_configured?
+        ENV.key?("SHAKAPACKER_JAVASCRIPT_TRANSPILER") ||
+          config_key_present?(:javascript_transpiler) ||
+          config_key_present?(:webpack_loader)
+      end
+
+      def assets_bundler_configured?
+        ENV.key?("SHAKAPACKER_ASSETS_BUNDLER") ||
+          config_key_present?(:assets_bundler) ||
+          config_key_present?(:bundler)
+      end
+
+      def config_key_present?(key)
+        return false unless config.respond_to?(:data)
+
+        data = config.data
+        return false unless data.respond_to?(:key?) && data.key?(key)
+
+        value = data[key]
+        return false if value.nil?
+
+        !(value.respond_to?(:empty?) && value.empty?)
       end
 
       def read_package_json
         @package_json ||= begin
-          JSON.parse(File.read(package_json_path))
-        rescue JSON::ParserError
+          package_json_paths.reverse_each.reduce({}) do |package_json, path|
+            merge_package_json(package_json, JSON.parse(File.read(path)))
+          end
+        rescue JSON::ParserError, SystemCallError
           {}
         end
+      end
+
+      def package_json_paths
+        @package_json_paths ||= package_root_paths
+          .map { |path| path.join("package.json") }
+          .select(&:exist?)
+      end
+
+      def merge_package_json(base, override)
+        merged = base.merge(override)
+
+        %w[dependencies devDependencies optionalDependencies peerDependencies].each do |key|
+          next unless base[key].is_a?(Hash) || override[key].is_a?(Hash)
+
+          merged[key] = (base[key] || {}).merge(override[key] || {})
+        end
+
+        merged
+      end
+
+      def javascript_package_root_path
+        @javascript_package_root_path ||= begin
+          source_path = config.source_path.expand_path
+          app_root = root_path.expand_path
+
+          return root_path unless path_within?(source_path, app_root)
+
+          path_ancestors(source_path, app_root).find { |path| package_root_marker?(path) } || root_path
+        rescue StandardError
+          root_path
+        end
+      end
+
+      def node_modules_path
+        node_modules_paths.first
+      end
+
+      def node_modules_paths
+        @node_modules_paths ||= package_root_paths.map { |path| path.join("node_modules") }
+      end
+
+      def installed_package_json_path(package_name)
+        node_modules_paths
+          .map { |path| path.join(package_name, "package.json") }
+          .find(&:exist?) || node_modules_path.join(package_name, "package.json")
+      end
+
+      def package_root_paths
+        @package_root_paths ||= [javascript_package_root_path, root_path].uniq
+      end
+
+      def package_root_marker?(path)
+        %w[
+          package.json
+          bun.lockb
+          pnpm-lock.yaml
+          yarn.lock
+          package-lock.json
+          node_modules
+        ].any? { |entry| path.join(entry).exist? }
+      end
+
+      def path_ancestors(path, stop_path)
+        paths = []
+        current = path
+
+        loop do
+          paths << current
+          break if current == stop_path || current.dirname == current
+
+          current = current.dirname
+        end
+
+        paths
+      end
+
+      def path_within?(path, parent)
+        path.to_s == parent.to_s || path.to_s.start_with?("#{parent}#{File::SEPARATOR}")
       end
 
       def config_exists?
@@ -1222,10 +1354,12 @@ module Shakapacker
       end
 
       def detect_package_manager
-        return "bun" if File.exist?(root_path.join("bun.lockb"))
-        return "pnpm" if File.exist?(root_path.join("pnpm-lock.yaml"))
-        return "yarn" if File.exist?(root_path.join("yarn.lock"))
-        return "npm" if File.exist?(root_path.join("package-lock.json"))
+        package_root_paths.each do |package_root|
+          PACKAGE_MANAGER_LOCKFILES.each do |lockfile, package_manager_name|
+            return package_manager_name if File.exist?(package_root.join(lockfile))
+          end
+        end
+
         nil
       end
 

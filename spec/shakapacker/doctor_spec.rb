@@ -677,6 +677,7 @@ describe Shakapacker::Doctor do
       it "adds warning about conflicting installations" do
         doctor.send(:check_peer_dependencies)
         expect(warning_messages).to include(match(/Both webpack and rspack are installed/))
+        expect(warning_messages).to include(match(/assets_bundler is inferred/))
       end
     end
   end
@@ -1170,6 +1171,50 @@ describe Shakapacker::Doctor do
       end
     end
 
+    context "when subdirectory client node_modules reports a v2 install even though package.json allows v1" do
+      let(:source_path) { root_path.join("client/app/javascript") }
+
+      before do
+        node_modules_pkg = root_path.join("client/node_modules/@rspack/core/package.json")
+        FileUtils.mkdir_p(node_modules_pkg.dirname)
+        File.write(node_modules_pkg, JSON.generate({ "name" => "@rspack/core", "version" => "2.0.0-rc.0" }))
+
+        File.write(root_path.join("client/package.json"), JSON.generate({
+          "devDependencies" => {
+            "@rspack/core" => "^1.0.0 || ^2.0.0-0",
+            "@rspack/cli" => "^2.0.0"
+          }
+        }))
+      end
+
+      it "trusts the installed client v2 package over stale v1-compatible ranges" do
+        doctor.send(:check_rspack_cache_configuration)
+        expect(warning_messages).not_to include(match(/Rspack v1 detected/))
+      end
+    end
+
+    context "when root node_modules reports a v2 install for a subdirectory client package" do
+      let(:source_path) { root_path.join("client/app/javascript") }
+
+      before do
+        node_modules_pkg = root_path.join("node_modules/@rspack/core/package.json")
+        FileUtils.mkdir_p(node_modules_pkg.dirname)
+        File.write(node_modules_pkg, JSON.generate({ "name" => "@rspack/core", "version" => "2.0.0-rc.0" }))
+
+        File.write(root_path.join("client/package.json"), JSON.generate({
+          "devDependencies" => {
+            "@rspack/core" => "^1.0.0 || ^2.0.0-0",
+            "@rspack/cli" => "^2.0.0"
+          }
+        }))
+      end
+
+      it "uses the root install when workspace dependencies are hoisted" do
+        doctor.send(:check_rspack_cache_configuration)
+        expect(warning_messages).not_to include(match(/Rspack v1 detected/))
+      end
+    end
+
     context "when the installed rspack package file is unreadable" do
       before do
         node_modules_pkg = root_path.join("node_modules/@rspack/core/package.json")
@@ -1613,6 +1658,31 @@ describe Shakapacker::Doctor do
   end
 
   describe "package manager checks" do
+    context "when yarn.lock exists in the configured subdirectory client root" do
+      let(:source_path) { root_path.join("client/app/javascript") }
+
+      before do
+        File.write(root_path.join("client/yarn.lock"), "")
+      end
+
+      it "detects yarn without requiring a Rails-root lock file" do
+        expect(doctor.send(:detect_package_manager)).to eq("yarn")
+      end
+    end
+
+    context "when a root lockfile backs a configured subdirectory package" do
+      let(:source_path) { root_path.join("client/app/javascript") }
+
+      before do
+        File.write(root_path.join("client/package.json"), JSON.generate("private" => true))
+        File.write(root_path.join("yarn.lock"), "")
+      end
+
+      it "falls back to the Rails-root package manager lockfile" do
+        expect(doctor.send(:detect_package_manager)).to eq("yarn")
+      end
+    end
+
     context "when bun.lockb exists" do
       before do
         File.write(root_path.join("bun.lockb"), "")
@@ -1849,6 +1919,55 @@ describe Shakapacker::Doctor do
           end
 
           it "adds missing dependency issues" do
+            doctor.send(:check_javascript_transpiler_dependencies)
+            expect(doctor.issues).to include(match(/Missing required dependency '@swc\/core'/))
+            expect(doctor.issues).to include(match(/Missing required dependency 'swc-loader'/))
+          end
+        end
+
+        context "when inferred webpack/SWC defaults meet a hybrid webpack and Rspack package graph" do
+          before do
+            allow(config).to receive(:javascript_transpiler).and_return(nil)
+            File.write(root_path.join(".swcrc"), "{}")
+            File.write(package_json_path, JSON.generate({
+              "dependencies" => {
+                "webpack" => "^5.0.0",
+                "@rspack/core" => "^2.0.0"
+              },
+              "devDependencies" => {
+                "babel-loader" => "^9.0.0",
+                "@babel/core" => "^7.20.0"
+              }
+            }))
+          end
+
+          it "warns about the inferred custom-hybrid boundary instead of adding missing SWC issues" do
+            doctor.send(:check_javascript_transpiler_dependencies)
+            expect(doctor.issues).not_to include(match(/Missing required dependency '@swc\/core'/))
+            expect(doctor.issues).not_to include(match(/Missing required dependency 'swc-loader'/))
+            expect(warning_messages).to include(match(/Skipping SWC dependency issue checks.*custom hybrid webpack\/Rspack configs/))
+            expect(warning_messages).to include(match(/\.swcrc file detected.*migrate to config\/swc\.config\.js/))
+          end
+        end
+
+        context "when webpack/SWC is explicit in a hybrid package graph" do
+          let(:config_data) do
+            super().merge(
+              assets_bundler: "webpack",
+              javascript_transpiler: "swc"
+            )
+          end
+
+          before do
+            File.write(package_json_path, JSON.generate({
+              "dependencies" => {
+                "webpack" => "^5.0.0",
+                "@rspack/core" => "^2.0.0"
+              }
+            }))
+          end
+
+          it "keeps reporting missing SWC dependencies" do
             doctor.send(:check_javascript_transpiler_dependencies)
             expect(doctor.issues).to include(match(/Missing required dependency '@swc\/core'/))
             expect(doctor.issues).to include(match(/Missing required dependency 'swc-loader'/))
@@ -2273,6 +2392,46 @@ describe Shakapacker::Doctor do
   end
 
   describe "package_installed?" do
+    context "with package.json next to a configured subdirectory client source" do
+      let(:source_path) { root_path.join("client/app/javascript") }
+      let(:client_package_json_path) { root_path.join("client/package.json") }
+
+      before do
+        File.write(
+          client_package_json_path,
+          JSON.generate(
+            "dependencies" => {
+              "webpack" => "^5.0.0"
+            }
+          )
+        )
+      end
+
+      it "reads dependencies from the client package root" do
+        expect(doctor.send(:package_installed?, "webpack")).to be true
+      end
+    end
+
+    context "with root package.json dependencies hoisted for a configured subdirectory client source" do
+      let(:source_path) { root_path.join("client/app/javascript") }
+
+      before do
+        File.write(root_path.join("client/package.json"), JSON.generate("private" => true))
+        File.write(
+          package_json_path,
+          JSON.generate(
+            "devDependencies" => {
+              "webpack" => "^5.0.0"
+            }
+          )
+        )
+      end
+
+      it "falls back to dependencies declared at the Rails root" do
+        expect(doctor.send(:package_installed?, "webpack")).to be true
+      end
+    end
+
     context "with package in dependencies" do
       before do
         package_json = {
