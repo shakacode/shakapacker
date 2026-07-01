@@ -1,5 +1,6 @@
 require_relative "../spec_helper"
 require "shakapacker"
+require "shakapacker/configuration"
 require "shakapacker/doctor"
 require "fileutils"
 require "tmpdir"
@@ -1986,12 +1987,81 @@ describe Shakapacker::Doctor do
             }))
           end
 
-          it "warns about the inferred custom-hybrid boundary instead of adding missing SWC issues" do
+          it "warns about the inferred custom-hybrid boundary while keeping default SWC checks" do
             doctor.send(:check_javascript_transpiler_dependencies)
-            expect(doctor.issues).not_to include(match(/Missing required dependency '@swc\/core'/))
-            expect(doctor.issues).not_to include(match(/Missing required dependency 'swc-loader'/))
-            expect(warning_messages).to include(match(/Skipping SWC dependency issue checks.*custom hybrid webpack\/Rspack configs/))
+            expect(doctor.issues).to include(match(/Missing required dependency '@swc\/core'/))
+            expect(doctor.issues).to include(match(/Missing required dependency 'swc-loader'/))
+            expect(warning_messages).to include(match(/Detected an inferred webpack\/SWC setup.*custom hybrid webpack\/Rspack configs/))
             expect(warning_messages).to include(match(/\.swcrc file detected.*migrate to config\/swc\.config\.js/))
+          end
+
+          it "reports an empty assets_bundler env override instead of substituting defaults" do
+            previous_value = ENV["SHAKAPACKER_ASSETS_BUNDLER"]
+            ENV["SHAKAPACKER_ASSETS_BUNDLER"] = ""
+            File.write(config_path, <<~YAML)
+              test:
+                source_path: app/javascript
+                source_entry_path: packs
+                integrity:
+                  enabled: false
+            YAML
+
+            real_config = Shakapacker::Configuration.new(
+              root_path: root_path,
+              config_path: config_path,
+              env: "test"
+            )
+            real_doctor = described_class.new(real_config, root_path)
+            real_doctor.send(:check_javascript_transpiler_dependencies)
+
+            expect(real_config.assets_bundler).to eq("")
+            expect(real_doctor.issues).to include(match(/SHAKAPACKER_ASSETS_BUNDLER is set but empty/))
+            expect(real_doctor.warnings.map { |warning| warning[:message] }).not_to include(match(/Detected an inferred webpack\/SWC setup/))
+          ensure
+            if previous_value.nil?
+              ENV.delete("SHAKAPACKER_ASSETS_BUNDLER")
+            else
+              ENV["SHAKAPACKER_ASSETS_BUNDLER"] = previous_value
+            end
+          end
+
+          it "does not silently substitute deprecated bundler config when the assets_bundler env override is empty" do
+            previous_value = ENV["SHAKAPACKER_ASSETS_BUNDLER"]
+            ENV["SHAKAPACKER_ASSETS_BUNDLER"] = ""
+            File.write(config_path, <<~YAML)
+              test:
+                source_path: app/javascript
+                source_entry_path: packs
+                bundler: rspack
+                javascript_transpiler: swc
+                integrity:
+                  enabled: false
+            YAML
+            File.write(package_json_path, JSON.generate({
+              "dependencies" => {
+                "@rspack/core" => "^2.0.0",
+                "@rspack/cli" => "^2.0.0"
+              }
+            }))
+
+            real_config = Shakapacker::Configuration.new(
+              root_path: root_path,
+              config_path: config_path,
+              env: "test"
+            )
+            real_doctor = described_class.new(real_config, root_path)
+
+            expect(real_config.assets_bundler).to eq("")
+            expect(real_doctor.send(:assets_bundler)).to eq("")
+            real_doctor.send(:check_bundler_dependencies)
+            expect(real_doctor.issues).to include(match(/SHAKAPACKER_ASSETS_BUNDLER is set but empty/))
+            expect(real_doctor.issues).not_to include(match(/Missing required dependency 'webpack'/))
+          ensure
+            if previous_value.nil?
+              ENV.delete("SHAKAPACKER_ASSETS_BUNDLER")
+            else
+              ENV["SHAKAPACKER_ASSETS_BUNDLER"] = previous_value
+            end
           end
 
           it "honors a SWC transpiler env override as explicit doctor config" do

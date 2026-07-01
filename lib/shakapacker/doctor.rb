@@ -65,6 +65,8 @@ module Shakapacker
       ts-loader
     ].freeze
 
+    PACKAGE_ROOT_MARKERS = (["package.json"] + PACKAGE_MANAGER_LOCKFILES.keys + ["node_modules"]).freeze
+
     def initialize(config = nil, root_path = nil, options = {})
       @config = config || Shakapacker.config
       @root_path = root_path || (defined?(Rails) ? Rails.root : Pathname.new(Dir.pwd))
@@ -301,7 +303,7 @@ module Shakapacker
         integrity_config = config.integrity
         return unless integrity_config&.dig(:enabled)
 
-        bundler = config.assets_bundler
+        bundler = assets_bundler
         if bundler == "webpack"
           unless package_installed?("webpack-subresource-integrity")
             @issues << "SRI is enabled but 'webpack-subresource-integrity' is not installed"
@@ -319,7 +321,7 @@ module Shakapacker
       def check_peer_dependencies
         return unless package_json_exists?
 
-        bundler = config.assets_bundler
+        bundler = assets_bundler
         all_deps = declared_package_dependencies
 
         if bundler == "webpack"
@@ -512,14 +514,12 @@ module Shakapacker
 
         return if transpiler == "none"
 
-        bundler = config.assets_bundler
-        if inferred_hybrid_swc_dependency_check?(transpiler, bundler)
-          add_warning("Skipping SWC dependency issue checks because javascript_transpiler and assets_bundler are inferred " \
-                      "while webpack, Rspack, and non-SWC loader packages are installed. For custom hybrid webpack/Rspack configs, " \
+        bundler = assets_bundler
+        if inferred_hybrid_loader_graph?(transpiler, bundler)
+          add_warning("Detected an inferred webpack/SWC setup with webpack, Rspack, and non-SWC loader packages installed. " \
+                      "Doctor will still validate the default webpack/SWC dependencies. For custom hybrid webpack/Rspack configs, " \
                       "set javascript_transpiler: \"none\" when Shakapacker should not validate loader dependencies, " \
                       "or set javascript_transpiler/assets_bundler explicitly when Shakapacker owns that build path.")
-          check_transpiler_config_consistency(transpiler)
-          return
         end
 
         case transpiler
@@ -634,7 +634,7 @@ module Shakapacker
         end
       end
 
-      def inferred_hybrid_swc_dependency_check?(transpiler, bundler)
+      def inferred_hybrid_loader_graph?(transpiler, bundler)
         transpiler == "swc" &&
           bundler == "webpack" &&
           !javascript_transpiler_configured? &&
@@ -780,7 +780,7 @@ module Shakapacker
       end
 
       def check_bundler_dependencies
-        bundler = config.assets_bundler
+        bundler = assets_bundler
         case bundler
         when "webpack"
           check_dependency("webpack", @issues, "webpack")
@@ -1224,10 +1224,6 @@ module Shakapacker
         package_json_paths.any?
       end
 
-      def package_json_path
-        javascript_package_root_path.join("package.json")
-      end
-
       def javascript_transpiler_configured?
         !javascript_transpiler_env_override.nil? ||
           config_key_present?(:javascript_transpiler) ||
@@ -1246,21 +1242,51 @@ module Shakapacker
       end
 
       def assets_bundler_configured?
-        ENV.key?("SHAKAPACKER_ASSETS_BUNDLER") ||
+        !assets_bundler_env_override.nil? ||
           config_key_present?(:assets_bundler) ||
           config_key_present?(:bundler)
       end
 
+      def assets_bundler
+        value = config.assets_bundler
+        report_empty_assets_bundler_env_override if empty_assets_bundler_env_override?
+
+        value
+      end
+
+      def assets_bundler_env_override
+        value = ENV["SHAKAPACKER_ASSETS_BUNDLER"]
+        return nil if value.nil? || value.empty?
+
+        value
+      end
+
+      def empty_assets_bundler_env_override?
+        ENV.key?("SHAKAPACKER_ASSETS_BUNDLER") && ENV["SHAKAPACKER_ASSETS_BUNDLER"].empty?
+      end
+
+      def report_empty_assets_bundler_env_override
+        return if @empty_assets_bundler_env_override_reported
+
+        @issues << "SHAKAPACKER_ASSETS_BUNDLER is set but empty. Unset it, or set it to 'webpack' or 'rspack'."
+        @empty_assets_bundler_env_override_reported = true
+      end
+
+      def blank_config_value?(value)
+        value.nil? || (value.respond_to?(:empty?) && value.empty?)
+      end
+
       def config_key_present?(key)
-        return false unless config.respond_to?(:data)
+        !blank_config_value?(config_value(key))
+      end
+
+      def config_value(key)
+        return nil unless config.respond_to?(:data)
 
         data = config.data
-        return false unless data.respond_to?(:key?) && data.key?(key)
+        return nil unless data.respond_to?(:key?) && data.key?(key)
 
-        value = data[key]
-        return false if value.nil?
-
-        !(value.respond_to?(:empty?) && value.empty?)
+        data[key]
       end
 
       def read_package_json
@@ -1282,7 +1308,7 @@ module Shakapacker
       def merge_package_json(base, override)
         merged = base.merge(override)
 
-        %w[dependencies devDependencies optionalDependencies peerDependencies].each do |key|
+        %w[dependencies devDependencies optionalDependencies].each do |key|
           next unless base[key].is_a?(Hash) || override[key].is_a?(Hash)
 
           merged[key] = (base[key] || {}).merge(override[key] || {})
@@ -1323,14 +1349,8 @@ module Shakapacker
       end
 
       def package_root_marker?(path)
-        %w[
-          package.json
-          bun.lockb
-          pnpm-lock.yaml
-          yarn.lock
-          package-lock.json
-          node_modules
-        ].any? { |entry| path.join(entry).exist? }
+        # Keep aligned with shakapacker_package_root_marker? in the helper binstubs.
+        PACKAGE_ROOT_MARKERS.any? { |entry| path.join(entry).exist? }
       end
 
       def path_ancestors(path, stop_path)
@@ -1460,7 +1480,7 @@ module Shakapacker
               config_relative_path = doctor.config.config_path.relative_path_from(doctor.root_path)
               puts "✓ Configuration file found (#{config_relative_path})"
               if verbose?
-                puts "  Assets bundler: #{doctor.config.assets_bundler}"
+                puts "  Assets bundler: #{doctor.send(:assets_bundler)}"
                 puts "  Source path: #{doctor.config.source_path.relative_path_from(doctor.root_path)}"
                 puts "  Public output path: #{doctor.config.public_output_path.relative_path_from(doctor.root_path)}"
               end
@@ -1569,7 +1589,7 @@ module Shakapacker
           end
 
           def print_bundler_status
-            bundler = doctor.config.assets_bundler
+            bundler = doctor.send(:assets_bundler)
             case bundler
             when "webpack"
               print_package_status("webpack", "webpack")
