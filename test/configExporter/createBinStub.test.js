@@ -46,7 +46,7 @@ describe("createBinStub template parity", () => {
 
       expect(generated).toBe(installed)
       expect(generated).toContain(
-        "# This binstub is managed by Shakapacker. Regenerate it by rerunning the install or init command."
+        "# This binstub is managed by Shakapacker. Delete it and rerun the install or init command to regenerate it."
       )
       expect(generated).not.toContain("# Keep helper logic in sync across:")
       expect(generated).not.toContain("package/configExporter/cli.ts")

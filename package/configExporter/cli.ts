@@ -537,7 +537,7 @@ export function createBinStub(binStubPath: string): void {
 
 require "rbconfig"
 
-# This binstub is managed by Shakapacker. Regenerate it by rerunning the install or init command.
+# This binstub is managed by Shakapacker. Delete it and rerun the install or init command to regenerate it.
 def shakapacker_app_root
   candidate = File.expand_path("..", __dir__)
   return candidate if File.exist?(File.join(candidate, "Gemfile"))
