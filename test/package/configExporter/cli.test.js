@@ -587,6 +587,31 @@ describe("configExporter/cli", () => {
       expect(content).toContain("## React on Rails Standard Configuration")
     })
 
+    test("includes React on Rails context when a nested frontend root has a parent Rails Gemfile", () => {
+      const {
+        writeAiAnalysisPrompt
+      } = require("../../../package/configExporter/cli")
+      const railsRoot = join(tempDir, "app")
+      const frontendRoot = join(railsRoot, "client")
+      mkdirSync(frontendRoot, { recursive: true })
+      writeFileSync(join(railsRoot, "Gemfile"), "gem 'react_on_rails'\n")
+      writeFileSync(
+        join(frontendRoot, "package.json"),
+        JSON.stringify({ dependencies: { webpack: "^5.0.0" } })
+      )
+      const createdFiles = [join(tempDir, "webpack-development-all.yml")]
+
+      const filename = writeAiAnalysisPrompt(
+        createdFiles,
+        tempDir,
+        new Set(["webpack"]),
+        frontendRoot
+      )
+
+      const content = readFileSync(join(tempDir, filename), "utf8")
+      expect(content).toContain("## React on Rails Standard Configuration")
+    })
+
     test("includes React on Rails context when Gemfile.lock includes react_on_rails", () => {
       const {
         writeAiAnalysisPrompt
@@ -608,6 +633,27 @@ describe("configExporter/cli", () => {
 
       const content = readFileSync(join(tempDir, filename), "utf8")
       expect(content).toContain("## React on Rails Standard Configuration")
+    })
+
+    test("still writes the prompt when Rails marker files cannot be read", () => {
+      const {
+        writeAiAnalysisPrompt
+      } = require("../../../package/configExporter/cli")
+      const appRoot = join(tempDir, "app")
+      mkdirSync(join(appRoot, "Gemfile"), { recursive: true })
+      mkdirSync(join(appRoot, "Gemfile.lock"), { recursive: true })
+      const createdFiles = [join(tempDir, "webpack-development-all.yml")]
+
+      const filename = writeAiAnalysisPrompt(
+        createdFiles,
+        tempDir,
+        new Set(["webpack"]),
+        appRoot
+      )
+
+      expect(filename).toBe("AI-ANALYSIS-PROMPT.md")
+      const content = readFileSync(join(tempDir, filename), "utf8")
+      expect(content).not.toContain("## React on Rails Standard Configuration")
     })
 
     test("lists each config once when createdFiles contains duplicates", () => {

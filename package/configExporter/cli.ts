@@ -1103,10 +1103,40 @@ export function writeAiAnalysisPrompt(
 }
 
 function detectReactOnRailsUsage(appRoot: string): boolean {
+  return reactOnRailsDetectionRoots(appRoot).some(
+    (root) =>
+      packageJsonUsesReactOnRails(root) ||
+      gemfileUsesReactOnRails(root) ||
+      gemfileLockUsesReactOnRails(root)
+  )
+}
+
+function reactOnRailsDetectionRoots(appRoot: string): string[] {
+  const roots: string[] = []
+  let current = resolve(appRoot)
+
+  while (true) {
+    roots.push(current)
+    if (railsRootMarkerExists(current)) {
+      break
+    }
+
+    const parent = dirname(current)
+    if (parent === current) {
+      break
+    }
+
+    current = parent
+  }
+
+  return roots
+}
+
+function railsRootMarkerExists(path: string): boolean {
   return (
-    packageJsonUsesReactOnRails(appRoot) ||
-    gemfileUsesReactOnRails(appRoot) ||
-    gemfileLockUsesReactOnRails(appRoot)
+    existsSync(resolve(path, "Gemfile")) ||
+    existsSync(resolve(path, "Gemfile.lock")) ||
+    existsSync(resolve(path, "config", "shakapacker.yml"))
   )
 }
 
@@ -1145,10 +1175,14 @@ function gemfileUsesReactOnRails(appRoot: string): boolean {
     return false
   }
 
-  const gemfile = readFileSync(gemfilePath, "utf8")
-  return gemfile
-    .split(/\r?\n/)
-    .some((line) => /^\s*gem\s+["']react_on_rails["']/.test(line))
+  try {
+    const gemfile = readFileSync(gemfilePath, "utf8")
+    return gemfile
+      .split(/\r?\n/)
+      .some((line) => /^\s*gem\s+["']react_on_rails["']/.test(line))
+  } catch {
+    return false
+  }
 }
 
 function gemfileLockUsesReactOnRails(appRoot: string): boolean {
@@ -1157,10 +1191,14 @@ function gemfileLockUsesReactOnRails(appRoot: string): boolean {
     return false
   }
 
-  const gemfileLock = readFileSync(gemfileLockPath, "utf8")
-  return gemfileLock
-    .split(/\r?\n/)
-    .some((line) => /^\s+react_on_rails \(/.test(line))
+  try {
+    const gemfileLock = readFileSync(gemfileLockPath, "utf8")
+    return gemfileLock
+      .split(/\r?\n/)
+      .some((line) => /^\s+react_on_rails \(/.test(line))
+  } catch {
+    return false
+  }
 }
 
 function printDoctorSummary(
