@@ -887,6 +887,80 @@ bin/shakapacker --build prod        # Client and server bundles for production
 bin/shakapacker --build dev         # Client bundle for development
 ```
 
+### Multi-Process Development for SSR and RSC
+
+SSR and React Server Components setups often need more than one long-running
+bundle process in development. Keep each target as its own named build, then run
+the builds together with the same process supervisor you use for Rails, such as
+`bin/dev`, Foreman, or Overmind.
+
+Start from the SSR build template when you need separate client and server
+targets:
+
+```bash
+bin/shakapacker-config --init --ssr
+```
+
+Then run the generated development builds together:
+
+```Procfile
+web: bin/rails server -p 3000
+client: bin/shakapacker --build dev-client-hmr
+server: bin/shakapacker --build dev-server -- --watch
+```
+
+Use the same pattern for an app-specific RSC bundle. Define one build per
+long-running process, point it at the config that owns that target, and pass
+watch mode after `--` so it goes to webpack or Rspack:
+
+```yaml
+builds:
+  dev-client-hmr:
+    description: Development client bundle with HMR
+    dev_server: true
+    environment:
+      NODE_ENV: development
+      RAILS_ENV: development
+      WEBPACK_SERVE: "true"
+      CLIENT_BUNDLE_ONLY: "yes"
+    outputs:
+      - client
+
+  dev-server:
+    description: Development SSR server bundle
+    environment:
+      NODE_ENV: development
+      RAILS_ENV: development
+      SERVER_BUNDLE_ONLY: "yes"
+    outputs:
+      - server
+
+  dev-rsc:
+    description: Development RSC bundle
+    bundler: rspack
+    config: config/rspack/rsc.config.js
+    environment:
+      NODE_ENV: development
+      RAILS_ENV: development
+    outputs:
+      - rsc
+```
+
+```Procfile
+web: bin/rails server -p 3000
+client: bin/shakapacker --build dev-client-hmr
+server: bin/shakapacker --build dev-server -- --watch
+rsc: bin/shakapacker --build dev-rsc -- --watch
+```
+
+This is process orchestration rather than a single Shakapacker supervisor. The
+client HMR build routes to `bin/shakapacker-dev-server`; the server and RSC
+builds are regular webpack/Rspack watch processes. If a target does not rebuild
+or writes the wrong output, check that the build's `environment` or `config`
+selects the expected bundle and verify the command uses `-- --watch`. Do not put
+watch flags in `webpack_compile_flags`; Shakapacker rejects those flags because
+compile flags are for commands that should exit.
+
 ### Build Configuration Format
 
 Example `config/shakapacker-builds.yml`:
