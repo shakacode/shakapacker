@@ -3,6 +3,11 @@ import type { ConfigAPI, PluginItem } from "@babel/core"
 
 const CORE_JS_VERSION_REGEX = /^\d+\.\d+/
 
+const babelMajorVersion = (api: ConfigAPI & { version?: string }): number => {
+  const version = api.version?.match(/^\d+/)
+  return version ? parseInt(version[0], 10) : 7
+}
+
 const coreJsVersion = (): string => {
   try {
     const version = packageFullVersion("core-js").match(CORE_JS_VERSION_REGEX)
@@ -33,23 +38,33 @@ export = function config(api: ConfigAPI): {
     )
   }
 
-  const presets: PluginItem[] = [
-    isTestEnv && ["@babel/preset-env", { targets: { node: "current" } }],
-    (isProductionEnv || isDevelopmentEnv) && [
-      "@babel/preset-env",
-      {
+  const isBabel8 = babelMajorVersion(api) >= 8
+  const presetEnvOptions = isBabel8
+    ? {
+        modules: "auto",
+        exclude: ["transform-typeof-symbol"]
+      }
+    : {
         useBuiltIns: "entry",
         corejs: coreJsVersion(),
         modules: "auto",
         bugfixes: true,
         exclude: ["transform-typeof-symbol"]
       }
+
+  const presets: PluginItem[] = [
+    isTestEnv && ["@babel/preset-env", { targets: { node: "current" } }],
+    (isProductionEnv || isDevelopmentEnv) && [
+      "@babel/preset-env",
+      presetEnvOptions
     ],
     moduleExists("@babel/preset-typescript") && "@babel/preset-typescript"
   ].filter(Boolean) as PluginItem[]
 
   const plugins: PluginItem[] = [
-    ["@babel/plugin-transform-runtime", { helpers: false }]
+    isBabel8
+      ? "@babel/plugin-transform-runtime"
+      : ["@babel/plugin-transform-runtime", { helpers: false }]
   ].filter(Boolean) as PluginItem[]
 
   return {

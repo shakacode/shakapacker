@@ -102,10 +102,10 @@
     "webpack-subresource-integrity": "5.1.0"
   },
   "peerDependencies": {
-    "@babel/core": "^7.17.9",
-    "@babel/plugin-transform-runtime": "^7.17.0",
-    "@babel/preset-env": "^7.16.11",
-    "@babel/runtime": "^7.17.9",
+    "@babel/core": "^7.17.9 || ^8.0.0",
+    "@babel/plugin-transform-runtime": "^7.17.0 || ^8.0.0",
+    "@babel/preset-env": "^7.16.11 || ^8.0.0",
+    "@babel/runtime": "^7.17.9 || ^8.0.0",
     "@rspack/cli": "^2.0.0",
     "@rspack/core": "^2.0.0",
     "@rspack/dev-server": "^2.0.0",
