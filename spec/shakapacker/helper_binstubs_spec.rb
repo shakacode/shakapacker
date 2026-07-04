@@ -630,5 +630,43 @@ RSpec.describe "helper binstubs" do
         expect(stderr).to include('[Shakapacker] Could not find Node.js executable "node"')
       end
     end
+
+    it "exits with a contextual error when native exec reports node is not executable for #{command}" do
+      Dir.mktmpdir("shakapacker-binstub-") do |app_path|
+        File.write(File.join(app_path, "Gemfile"), "")
+        FileUtils.mkdir_p(File.join(app_path, "bin"))
+        install_fake_node_script(app_path, command)
+
+        binstub_path = File.join(app_path, "bin", command)
+        FileUtils.cp(File.join(gem_root, "lib", "install", "bin", command), binstub_path)
+        FileUtils.chmod(0o755, binstub_path)
+
+        wrapper_path = File.join(app_path, "deny_exec.rb")
+        File.write(wrapper_path, <<~RUBY)
+          module Kernel
+            def exec(*)
+              raise Errno::EACCES, "node"
+            end
+          end
+
+          binstub_path = ARGV.fetch(0)
+          ARGV.replace([])
+          load binstub_path
+        RUBY
+
+        _stdout, stderr, status = Bundler.with_unbundled_env do
+          Open3.capture3(
+            { "BUNDLE_GEMFILE" => nil, "RUBYOPT" => nil },
+            RbConfig.ruby,
+            wrapper_path,
+            binstub_path,
+            chdir: app_path
+          )
+        end
+
+        expect(status.exitstatus).to eq(1)
+        expect(stderr).to include('[Shakapacker] Could not find Node.js executable "node"')
+      end
+    end
   end
 end

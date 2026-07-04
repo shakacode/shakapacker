@@ -575,7 +575,7 @@ def shakapacker_exec_node(script_path, argv, launch_dir)
   else
     exec exec_env, shakapacker_node_binary, script_path, *argv
   end
-rescue Errno::ENOENT
+rescue Errno::ENOENT, Errno::EACCES
   shakapacker_warn_missing_node
 end
 
