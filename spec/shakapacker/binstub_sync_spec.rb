@@ -1,7 +1,16 @@
 require "spec_helper"
+require "shakapacker/doctor"
 
 describe "binstub synchronization" do
   gem_root = File.expand_path("../..", __dir__)
+
+  def helper_package_root_markers(path)
+    content = File.read(path)
+    marker_function = content.match(/def shakapacker_package_root_marker\?\(path\).*?%w\[\s*(.*?)\s*\]/m)
+    expect(marker_function).not_to be_nil, "Could not find shakapacker_package_root_marker? marker list in #{path}"
+
+    marker_function[1].split
+  end
 
   # Binstubs that exist in both bin/ and lib/install/bin/ must stay identical,
   # except for the entries below which intentionally diverge.
@@ -72,5 +81,20 @@ describe "binstub synchronization" do
     expect(normalized).to eq(shakapacker_config),
       "lib/install/bin/diff-bundler-config and lib/install/bin/shakapacker-config have diverged " \
       "beyond the intentional .cjs script name difference. Update both files to keep them in sync."
+  end
+
+  it "helper package-root markers stay aligned with Doctor" do
+    helper_paths = [
+      File.join(gem_root, "lib", "install", "bin", "shakapacker-config"),
+      File.join(gem_root, "lib", "install", "bin", "diff-bundler-config"),
+      File.join(gem_root, "spec", "dummy", "bin", "shakapacker-config"),
+      File.join(gem_root, "package", "configExporter", "cli.ts")
+    ]
+    doctor_markers = Shakapacker::Doctor::PACKAGE_ROOT_MARKERS
+
+    helper_paths.each do |path|
+      expect(helper_package_root_markers(path)).to eq(doctor_markers),
+        "#{path} package-root markers diverged from Shakapacker::Doctor::PACKAGE_ROOT_MARKERS"
+    end
   end
 end

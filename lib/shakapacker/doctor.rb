@@ -23,6 +23,13 @@ module Shakapacker
       bin/diff-bundler-config
     ].freeze
 
+    PACKAGE_MANAGER_LOCKFILES = {
+      "bun.lockb" => "bun",
+      "pnpm-lock.yaml" => "pnpm",
+      "yarn.lock" => "yarn",
+      "package-lock.json" => "npm"
+    }.freeze
+
     SASS_IMPLEMENTATION_PACKAGES = %w[
       sass
       sass-embedded
@@ -51,6 +58,19 @@ module Shakapacker
     OPTIONAL_RSPACK_V2_ONLY_DEPS = {
       "@rspack/plugin-react-refresh" => "^2.0.0"
     }.freeze
+
+    CUSTOM_HYBRID_LOADER_DEPS = %w[
+      babel-loader
+      esbuild-loader
+      ts-loader
+    ].freeze
+
+    BUNDLER_CONFIG_EXTENSIONS = %w[
+      ts
+      js
+    ].freeze
+
+    PACKAGE_ROOT_MARKERS = (["package.json"] + PACKAGE_MANAGER_LOCKFILES.keys + ["node_modules"]).freeze
 
     def initialize(config = nil, root_path = nil, options = {})
       @config = config || Shakapacker.config
@@ -163,6 +183,8 @@ module Shakapacker
       end
 
       def check_config_file
+        report_empty_assets_bundler_env_override if empty_assets_bundler_env_override?
+
         unless config.config_path.exist?
           @issues << "Configuration file not found at #{config.config_path}"
         end
@@ -249,10 +271,9 @@ module Shakapacker
       def check_version_consistency
         return unless package_json_exists?
 
-        # Check if shakapacker npm package version matches gem version
-        package_json = read_package_json
-        npm_version = package_json.dig("dependencies", "shakapacker") ||
-                     package_json.dig("devDependencies", "shakapacker")
+        # Check if shakapacker npm package version matches gem version. Use the
+        # flattened dependency map so a nearer package root wins across sections.
+        npm_version = package_json_dependency_version("shakapacker")
 
         if npm_version
           # Skip version check for github/file references
@@ -288,7 +309,7 @@ module Shakapacker
         integrity_config = config.integrity
         return unless integrity_config&.dig(:enabled)
 
-        bundler = config.assets_bundler
+        bundler = assets_bundler
         if bundler == "webpack"
           unless package_installed?("webpack-subresource-integrity")
             @issues << "SRI is enabled but 'webpack-subresource-integrity' is not installed"
@@ -306,9 +327,8 @@ module Shakapacker
       def check_peer_dependencies
         return unless package_json_exists?
 
-        bundler = config.assets_bundler
-        package_json = read_package_json
-        all_deps = declared_package_dependencies(package_json)
+        bundler = assets_bundler
+        all_deps = declared_package_dependencies
 
         if bundler == "webpack"
           check_webpack_peer_deps(all_deps)
@@ -318,7 +338,13 @@ module Shakapacker
 
         # Check for conflicting installations
         if package_installed?("webpack") && package_installed?("@rspack/core")
-          add_warning("Both webpack and rspack are installed - ensure assets_bundler is set correctly")
+          if assets_bundler_configured?
+            add_warning("Both webpack and rspack are installed - ensure assets_bundler is set correctly")
+          else
+            add_warning("Both webpack and rspack are installed while assets_bundler is inferred as '#{bundler}'. " \
+                        "This can be intentional for custom hybrid webpack/Rspack setups; set assets_bundler " \
+                        "explicitly to document the active Shakapacker-managed bundler.")
+          end
         end
       end
 
@@ -484,9 +510,8 @@ module Shakapacker
       end
 
       def check_javascript_transpiler_dependencies
-        transpiler = config.javascript_transpiler
+        transpiler = explicit_javascript_transpiler
 
-        # Default to SWC for v9+ if not configured
         if transpiler.nil?
           @info << "No javascript_transpiler configured - defaulting to SWC (20x faster than Babel)"
           transpiler = "swc"
@@ -494,14 +519,31 @@ module Shakapacker
 
         return if transpiler == "none"
 
-        bundler = config.assets_bundler
+        bundler = assets_bundler
+        unconfigured_hybrid_graph = unconfigured_hybrid_loader_graph?
+        inferred_hybrid_graph = inferred_hybrid_loader_graph?(
+          transpiler,
+          bundler,
+          unconfigured_hybrid_graph: unconfigured_hybrid_graph
+        )
+        if inferred_hybrid_graph
+          add_info_warning("Detected a custom hybrid webpack/Rspack setup while Doctor inferred webpack/SWC. " \
+                           "Skipping SWC dependency issue checks for this inferred default. For custom hybrid webpack/Rspack configs, " \
+                           "set javascript_transpiler: \"none\" when Shakapacker should not validate loader dependencies, " \
+                           "or set javascript_transpiler/assets_bundler explicitly when Shakapacker owns that build path.")
+        elsif unconfigured_hybrid_graph
+          add_info_warning("Detected a custom hybrid webpack/Rspack setup with inferred Shakapacker defaults. " \
+                           "Doctor is validating the active #{bundler}/#{transpiler} default only. " \
+                           "Set javascript_transpiler: \"none\" when Shakapacker should not validate loader dependencies, " \
+                           "or set javascript_transpiler/assets_bundler explicitly when Shakapacker owns that build path.")
+        end
 
         case transpiler
         when "babel"
           check_babel_dependencies
           check_babel_performance_suggestion
         when "swc"
-          check_swc_dependencies(bundler)
+          check_swc_dependencies(bundler) unless inferred_hybrid_graph
         when "esbuild"
           check_esbuild_dependencies
         else
@@ -512,7 +554,7 @@ module Shakapacker
           end
         end
 
-        check_transpiler_config_consistency
+        check_transpiler_config_consistency(transpiler, inferred_hybrid_graph: inferred_hybrid_graph)
       end
 
       def check_babel_dependencies
@@ -566,7 +608,9 @@ module Shakapacker
         end
       end
 
-      def check_transpiler_config_consistency
+      def check_transpiler_config_consistency(transpiler = javascript_transpiler, inferred_hybrid_graph: nil)
+        inferred_hybrid_graph = inferred_hybrid_loader_graph?(transpiler, assets_bundler) if inferred_hybrid_graph.nil?
+
         babel_configs = [
           root_path.join(".babelrc"),
           root_path.join(".babelrc.js"),
@@ -580,14 +624,11 @@ module Shakapacker
 
         # Check if package.json has babel config
         if package_json_exists?
-          package_json = read_package_json
-          babel_in_package_json = package_json.key?("babel")
+          babel_in_package_json = package_json_key?("babel")
           babel_config_exists ||= babel_in_package_json
         end
 
-        transpiler = config.javascript_transpiler
-
-        if babel_config_exists && transpiler != "babel"
+        if babel_config_exists && transpiler != "babel" && !inferred_hybrid_graph
           babel_files = babel_configs.select(&:exist?).map { |f| f.relative_path_from(root_path) }
           babel_files << "package.json" if babel_in_package_json
           babel_files_str = babel_files.join(", ")
@@ -596,7 +637,7 @@ module Shakapacker
         end
 
         # Check for redundant dependencies
-        if transpiler == "swc" && package_installed?("babel-loader")
+        if transpiler == "swc" && package_installed?("babel-loader") && !inferred_hybrid_graph
           add_warning("Both SWC and Babel dependencies are installed. Consider removing Babel dependencies to reduce node_modules size")
         end
 
@@ -608,6 +649,49 @@ module Shakapacker
         if transpiler == "swc"
           check_swc_config_conflicts
         end
+      end
+
+      def inferred_hybrid_loader_graph?(transpiler, bundler, unconfigured_hybrid_graph: nil)
+        unconfigured_hybrid_graph = unconfigured_hybrid_loader_graph? if unconfigured_hybrid_graph.nil?
+
+        transpiler == "swc" &&
+          bundler == "webpack" &&
+          unconfigured_hybrid_graph
+      end
+
+      def unconfigured_hybrid_loader_graph?
+        !javascript_transpiler_configured? &&
+          !assets_bundler_configured? &&
+          package_installed?("webpack") &&
+          package_installed?("@rspack/core") &&
+          inferred_hybrid_bundler_config_present? &&
+          custom_hybrid_loader_dependency?
+      end
+
+      def inferred_hybrid_bundler_config_present?
+        same_directory_hybrid_config_present?(config.assets_bundler_config_path.to_s) ||
+          default_split_hybrid_config_present?
+      end
+
+      def same_directory_hybrid_config_present?(directory)
+        bundler_config_present?(directory, "webpack") &&
+          bundler_config_present?(directory, "rspack")
+      end
+
+      def default_split_hybrid_config_present?
+        bundler_config_present?("config/webpack", "webpack") &&
+          (bundler_config_present?("config/rspack", "rspack") ||
+            bundler_config_present?("config/rspack", "webpack"))
+      end
+
+      def bundler_config_present?(directory, basename)
+        BUNDLER_CONFIG_EXTENSIONS.any? do |extension|
+          Pathname.new(File.join(root_path.to_s, directory.to_s, "#{basename}.config.#{extension}")).exist?
+        end
+      end
+
+      def custom_hybrid_loader_dependency?
+        CUSTOM_HYBRID_LOADER_DEPS.any? { |package_name| package_installed?(package_name) }
       end
 
       def check_swc_config_conflicts
@@ -663,11 +747,9 @@ module Shakapacker
       def stimulus_likely_used?
         return false unless package_json_exists?
 
-        package_json = read_package_json
-        dependencies = (package_json["dependencies"] || {}).merge(package_json["devDependencies"] || {})
-
         # Check for @hotwired/stimulus or stimulus package
-        dependencies.key?("@hotwired/stimulus") || dependencies.key?("stimulus")
+        declared_package_dependencies.key?("@hotwired/stimulus") ||
+          declared_package_dependencies.key?("stimulus")
       end
 
       def check_css_dependencies
@@ -742,7 +824,7 @@ module Shakapacker
       end
 
       def check_bundler_dependencies
-        bundler = config.assets_bundler
+        bundler = assets_bundler
         case bundler
         when "webpack"
           check_dependency("webpack", @issues, "webpack")
@@ -1048,7 +1130,7 @@ module Shakapacker
       end
 
       def installed_rspack_major_version(package_name)
-        rspack_pkg = root_path.join("node_modules", package_name, "package.json")
+        rspack_pkg = installed_package_json_path(package_name)
         return nil unless rspack_pkg.exist?
 
         version = JSON.parse(File.read(rspack_pkg))["version"]
@@ -1061,7 +1143,7 @@ module Shakapacker
       def package_json_dependency_version(name)
         return nil unless package_json_exists?
 
-        declared_package_dependencies(read_package_json)[name]
+        declared_package_dependencies[name]
       end
 
       def package_version_status(package_name, minimum_version)
@@ -1094,19 +1176,26 @@ module Shakapacker
         nil
       end
 
-      def declared_package_dependencies(package_json)
-        # Later sections take precedence when the same package is declared in more than one section.
-        installable_package_dependencies(package_json)
+      def declared_package_dependencies
+        @declared_package_dependencies ||= begin
+          package_json_paths.reverse_each.each_with_object({}) do |path, dependencies|
+            package_json = parse_package_json(path)
+            next unless package_json
+
+            dependencies.merge!(installable_package_dependencies(package_json))
+          end
+        end
       end
 
       def installable_package_dependencies(package_json)
+        # Later sections take precedence when the same package is declared in more than one section.
         (package_json["optionalDependencies"] || {})
           .merge(package_json["devDependencies"] || {})
           .merge(package_json["dependencies"] || {})
       end
 
       def installed_package_version(package_name)
-        package_json = root_path.join("node_modules", package_name, "package.json")
+        package_json = installed_package_json_path(package_name)
         return nil unless package_json.exist?
 
         version = JSON.parse(File.read(package_json))["version"]
@@ -1128,7 +1217,7 @@ module Shakapacker
       end
 
       def check_typescript_dependencies
-        transpiler = config.javascript_transpiler
+        transpiler = javascript_transpiler
         if transpiler == "babel"
           check_optional_dependency("@babel/preset-typescript", @warnings, "TypeScript with Babel")
         elsif transpiler != "esbuild" && transpiler != "swc"
@@ -1173,23 +1262,168 @@ module Shakapacker
       def package_installed?(package_name)
         return false unless package_json_exists?
 
-        installable_package_dependencies(read_package_json).key?(package_name)
+        declared_package_dependencies.key?(package_name)
       end
 
       def package_json_exists?
-        package_json_path.exist?
+        package_json_paths.any?
       end
 
-      def package_json_path
-        root_path.join("package.json")
+      def javascript_transpiler_configured?
+        !javascript_transpiler_env_override.nil? ||
+          config_key_defined?(:javascript_transpiler) ||
+          config_key_defined?(:webpack_loader)
       end
 
-      def read_package_json
-        @package_json ||= begin
-          JSON.parse(File.read(package_json_path))
-        rescue JSON::ParserError
-          {}
+      def javascript_transpiler
+        transpiler = javascript_transpiler_env_override || config.javascript_transpiler
+        blank_config_value?(transpiler) ? default_javascript_transpiler : transpiler
+      end
+
+      def explicit_javascript_transpiler
+        return javascript_transpiler_env_override if javascript_transpiler_env_override
+        return nil unless javascript_transpiler_configured?
+
+        javascript_transpiler
+      end
+
+      def javascript_transpiler_env_override
+        value = ENV["SHAKAPACKER_JAVASCRIPT_TRANSPILER"]
+        return nil if value.nil? || value.empty?
+
+        value
+      end
+
+      def assets_bundler_configured?
+        assets_bundler_override_configured? ||
+          ENV.key?("SHAKAPACKER_ASSETS_BUNDLER") ||
+          !assets_bundler_env_override.nil? ||
+          config_key_present?(:assets_bundler) ||
+          config_key_present?(:bundler)
+      end
+
+      def assets_bundler
+        config.assets_bundler
+      end
+
+      def assets_bundler_env_override
+        value = ENV["SHAKAPACKER_ASSETS_BUNDLER"]
+        return nil if value.nil? || value.empty?
+
+        value
+      end
+
+      def assets_bundler_override_configured?
+        config.respond_to?(:bundler_override) && !blank_config_value?(config.bundler_override)
+      end
+
+      def empty_assets_bundler_env_override?
+        ENV.key?("SHAKAPACKER_ASSETS_BUNDLER") && ENV["SHAKAPACKER_ASSETS_BUNDLER"].empty?
+      end
+
+      def report_empty_assets_bundler_env_override
+        return if @empty_assets_bundler_env_override_reported
+
+        @issues << "SHAKAPACKER_ASSETS_BUNDLER is set but empty. Unset it, or set it to 'webpack' or 'rspack'."
+        @empty_assets_bundler_env_override_reported = true
+      end
+
+      def blank_config_value?(value)
+        value.nil? || (value.respond_to?(:empty?) && value.empty?)
+      end
+
+      def default_javascript_transpiler
+        assets_bundler == "rspack" ? "swc" : "babel"
+      end
+
+      def config_key_present?(key)
+        !blank_config_value?(config_value(key))
+      end
+
+      def config_key_defined?(key)
+        return false unless config.respond_to?(:data)
+
+        data = config.data
+        data.respond_to?(:key?) && data.key?(key)
+      end
+
+      def config_value(key)
+        return nil unless config.respond_to?(:data)
+
+        data = config.data
+        return nil unless data.respond_to?(:key?) && data.key?(key)
+
+        data[key]
+      end
+
+      def parse_package_json(path)
+        JSON.parse(File.read(path))
+      rescue JSON::ParserError, SystemCallError
+        nil
+      end
+
+      def package_json_key?(key)
+        package_json_paths.any? do |path|
+          package_json = parse_package_json(path)
+          package_json.is_a?(Hash) && package_json.key?(key)
         end
+      end
+
+      def package_json_paths
+        @package_json_paths ||= package_root_paths
+          .map { |path| path.join("package.json") }
+          .select(&:exist?)
+      end
+
+      def javascript_package_root_path
+        @javascript_package_root_path ||= begin
+          source_path = config.source_path.expand_path
+          app_root = root_path.expand_path
+
+          if path_within?(source_path, app_root)
+            current = source_path
+            loop do
+              break current if package_root_marker?(current)
+              break root_path if current == app_root
+
+              parent = current.dirname
+              break root_path if parent == current
+
+              current = parent
+            end
+          else
+            root_path
+          end
+        rescue StandardError
+          root_path
+        end
+      end
+
+      def node_modules_path
+        node_modules_paths.first
+      end
+
+      def node_modules_paths
+        @node_modules_paths ||= package_root_paths.map { |path| path.join("node_modules") }
+      end
+
+      def installed_package_json_path(package_name)
+        node_modules_paths
+          .map { |path| path.join(package_name, "package.json") }
+          .find(&:exist?) || node_modules_path.join(package_name, "package.json")
+      end
+
+      def package_root_paths
+        @package_root_paths ||= [javascript_package_root_path, root_path].uniq
+      end
+
+      def package_root_marker?(path)
+        # Keep aligned with shakapacker_package_root_marker? in the helper binstubs.
+        PACKAGE_ROOT_MARKERS.any? { |entry| path.join(entry).exist? }
+      end
+
+      def path_within?(path, parent)
+        path.to_s == parent.to_s || path.to_s.start_with?("#{parent}#{File::SEPARATOR}")
       end
 
       def config_exists?
@@ -1222,10 +1456,25 @@ module Shakapacker
       end
 
       def detect_package_manager
-        return "bun" if File.exist?(root_path.join("bun.lockb"))
-        return "pnpm" if File.exist?(root_path.join("pnpm-lock.yaml"))
-        return "yarn" if File.exist?(root_path.join("yarn.lock"))
-        return "npm" if File.exist?(root_path.join("package-lock.json"))
+        root_package_manager = package_manager_for(root_path)
+
+        package_root_paths.each do |package_root|
+          next if package_root == root_path
+
+          package_manager_name = package_manager_for(package_root)
+          next unless package_manager_name
+
+          return package_manager_name if package_root.join("package.json").exist? || root_package_manager.nil?
+        end
+
+        root_package_manager
+      end
+
+      def package_manager_for(package_root)
+        PACKAGE_MANAGER_LOCKFILES.each do |lockfile, package_manager_name|
+          return package_manager_name if File.exist?(package_root.join(lockfile))
+        end
+
         nil
       end
 
@@ -1299,7 +1548,7 @@ module Shakapacker
               config_relative_path = doctor.config.config_path.relative_path_from(doctor.root_path)
               puts "✓ Configuration file found (#{config_relative_path})"
               if verbose?
-                puts "  Assets bundler: #{doctor.config.assets_bundler}"
+                puts "  Assets bundler: #{doctor.send(:assets_bundler)}"
                 puts "  Source path: #{doctor.config.source_path.relative_path_from(doctor.root_path)}"
                 puts "  Public output path: #{doctor.config.public_output_path.relative_path_from(doctor.root_path)}"
               end
@@ -1335,9 +1584,7 @@ module Shakapacker
           def print_version_info
             return unless doctor.send(:package_json_exists?)
 
-            package_json = doctor.send(:read_package_json)
-            npm_version = package_json.dig("dependencies", "shakapacker") ||
-                          package_json.dig("devDependencies", "shakapacker")
+            npm_version = doctor.send(:package_json_dependency_version, "shakapacker")
             puts "  • Shakapacker gem version: #{Shakapacker::VERSION}"
             puts "  • Shakapacker npm version: #{npm_version || 'not installed'}"
           end
@@ -1398,7 +1645,7 @@ module Shakapacker
           end
 
           def print_transpiler_status
-            transpiler = doctor.config.javascript_transpiler
+            transpiler = doctor.send(:javascript_transpiler)
             return if transpiler.nil? || transpiler == "none"
 
             loader_name = "#{transpiler}-loader"
@@ -1408,7 +1655,7 @@ module Shakapacker
           end
 
           def print_bundler_status
-            bundler = doctor.config.assets_bundler
+            bundler = doctor.send(:assets_bundler)
             case bundler
             when "webpack"
               print_package_status("webpack", "webpack")
