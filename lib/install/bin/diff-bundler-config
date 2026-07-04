@@ -1,7 +1,6 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
-require "rbconfig"
 require "yaml"
 
 # This binstub is managed by Shakapacker. Delete it and rerun the install or init command to regenerate it.
@@ -14,36 +13,36 @@ def shakapacker_app_root
   Dir.pwd
 end
 
-def shakapacker_executable_candidates(executable)
-  extensions = [
-    RbConfig::CONFIG["EXEEXT"],
-    *ENV.fetch("PATHEXT", "").split(File::PATH_SEPARATOR)
-  ].compact.reject(&:empty?)
-  return [executable] if extensions.empty? || File.extname(executable) != ""
-
-  ([executable] + extensions.map { |extension| "#{executable}#{extension}" }).uniq
-end
-
-def shakapacker_find_executable(executable)
-  ENV.fetch("PATH", "").split(File::PATH_SEPARATOR, -1).each do |path|
-    search_path = path.empty? ? Dir.pwd : path
-
-    shakapacker_executable_candidates(executable).each do |candidate|
-      executable_path = File.join(search_path, candidate)
-      return executable_path if File.file?(executable_path) && File.executable?(executable_path)
-    end
-  end
-
-  nil
-end
-
 def shakapacker_node_binary
-  node_bin = shakapacker_find_executable("node")
-  return node_bin if node_bin
+  "node"
+end
 
+def shakapacker_warn_missing_node
   warn '[Shakapacker] Could not find Node.js executable "node". ' \
        "Install Node.js and try again."
   exit 1
+end
+
+def shakapacker_exec_env(launch_dir)
+  return {} unless ENV.key?("PATH")
+
+  normalized_path = ENV["PATH"].split(File::PATH_SEPARATOR, -1).map do |entry|
+    entry.empty? ? launch_dir : File.absolute_path(entry, launch_dir)
+  end.join(File::PATH_SEPARATOR)
+
+  { "PATH" => normalized_path }
+end
+
+def shakapacker_exec_node(script_path, argv, launch_dir)
+  exec_env = shakapacker_exec_env(launch_dir)
+
+  if exec_env.empty?
+    exec shakapacker_node_binary, script_path, *argv
+  else
+    exec exec_env, shakapacker_node_binary, script_path, *argv
+  end
+rescue Errno::ENOENT, Errno::EACCES
+  shakapacker_warn_missing_node
 end
 
 def shakapacker_node_env
@@ -130,9 +129,9 @@ end
 ENV["RAILS_ENV"] ||= ENV["RACK_ENV"] || "development"
 ENV["NODE_ENV"] ||= shakapacker_node_env
 
+launch_dir = Dir.pwd
 app_root = shakapacker_app_root
 client_root = shakapacker_client_root(app_root)
-node_bin = shakapacker_node_binary
 script_paths = shakapacker_package_script_paths(app_root, client_root, "diff-bundler-config.cjs")
 script_path = script_paths.find { |path| File.file?(path) }
 
@@ -142,5 +141,5 @@ unless script_path
 end
 
 Dir.chdir(app_root) do
-  exec node_bin, script_path, *ARGV
+  shakapacker_exec_node(script_path, ARGV, launch_dir)
 end
