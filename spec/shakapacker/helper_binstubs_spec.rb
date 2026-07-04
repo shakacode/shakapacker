@@ -442,6 +442,100 @@ RSpec.describe "helper binstubs" do
       end
     end
 
+    it "delegates unset PATH handling to Ruby's native exec for #{command}" do
+      Dir.mktmpdir("shakapacker-binstub-") do |app_path|
+        File.write(File.join(app_path, "Gemfile"), "")
+        FileUtils.mkdir_p(File.join(app_path, "bin"))
+        install_fake_node_script(app_path, command)
+
+        binstub_path = File.join(app_path, "bin", command)
+        FileUtils.cp(File.join(gem_root, "lib", "install", "bin", command), binstub_path)
+        FileUtils.chmod(0o755, binstub_path)
+
+        wrapper_path = File.join(app_path, "capture_exec.rb")
+        File.write(wrapper_path, <<~RUBY)
+          require "json"
+
+          module Kernel
+            def exec(*args)
+              File.write(ENV.fetch("SHAKAPACKER_EXEC_ARGS_OUTPUT"), JSON.generate(args))
+              exit 0
+            end
+          end
+
+          binstub_path = ARGV.fetch(0)
+          ARGV.replace([])
+          load binstub_path
+        RUBY
+
+        exec_args_path = File.join(app_path, "exec-args.json")
+        _stdout, stderr, status = Bundler.with_unbundled_env do
+          Open3.capture3(
+            {
+              "BUNDLE_GEMFILE" => nil,
+              "PATH" => nil,
+              "RUBYOPT" => nil,
+              "SHAKAPACKER_EXEC_ARGS_OUTPUT" => exec_args_path
+            },
+            RbConfig.ruby,
+            wrapper_path,
+            binstub_path,
+            chdir: app_path
+          )
+        end
+
+        expect(status).to be_success, stderr
+        expect(JSON.parse(File.read(exec_args_path))).to eq(
+          ["node", File.realpath(File.join(app_path, "node_modules/shakapacker/package/bin/#{command}.cjs"))]
+        )
+      end
+    end
+
+    it "honors a relative PATH entry from the launch directory for #{command}" do
+      Dir.mktmpdir("shakapacker-binstub-") do |app_path|
+        File.write(File.join(app_path, "Gemfile"), "")
+        FileUtils.mkdir_p(File.join(app_path, "bin"))
+        install_fake_node_script(app_path, command)
+
+        node_path = real_node_path
+        skip "node not found in PATH" unless node_path
+
+        launch_path = File.join(app_path, "launch")
+        relative_bin_path = File.join(launch_path, "relative-bin")
+        FileUtils.mkdir_p(relative_bin_path)
+        fake_node_path = File.join(relative_bin_path, "node")
+        File.write(fake_node_path, <<~SH)
+          #!/bin/sh
+          exec #{node_path.shellescape} "$@"
+        SH
+        FileUtils.chmod(0o755, fake_node_path)
+
+        binstub_path = File.join(app_path, "bin", command)
+        FileUtils.cp(File.join(gem_root, "lib", "install", "bin", command), binstub_path)
+        FileUtils.chmod(0o755, binstub_path)
+
+        output_path = File.join(app_path, "binstub-output.json")
+        _stdout, stderr, status = Bundler.with_unbundled_env do
+          Open3.capture3(
+            {
+              "BUNDLE_GEMFILE" => nil,
+              "PATH" => "relative-bin#{File::PATH_SEPARATOR}/nonexistent",
+              "RUBYOPT" => nil,
+              "SHAKAPACKER_BINSTUB_OUTPUT" => output_path
+            },
+            RbConfig.ruby,
+            binstub_path,
+            chdir: launch_path
+          )
+        end
+
+        expect(status).to be_success, stderr
+        expect(JSON.parse(File.read(output_path))).to include(
+          "cwd" => File.realpath(app_path)
+        )
+      end
+    end
+
     {
       "leading" => "#{File::PATH_SEPARATOR}/nonexistent",
       "trailing" => "/nonexistent#{File::PATH_SEPARATOR}"
