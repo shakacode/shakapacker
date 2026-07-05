@@ -26,7 +26,10 @@ end
 def shakapacker_exec_env(launch_dir)
   return {} unless ENV.key?("PATH")
 
-  normalized_path = ENV["PATH"].split(File::PATH_SEPARATOR, -1).map do |entry|
+  path_entries = ENV["PATH"].split(File::PATH_SEPARATOR, -1)
+  path_entries = [""] if path_entries.empty?
+
+  normalized_path = path_entries.map do |entry|
     entry.empty? ? launch_dir : File.absolute_path(entry, launch_dir)
   end.join(File::PATH_SEPARATOR)
 
