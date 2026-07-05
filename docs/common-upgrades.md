@@ -606,6 +606,21 @@ module.exports = {
 }
 ```
 
+When upgrading an existing Rspack config to `@rspack/plugin-react-refresh` v2,
+replace the old v1 default-export constructor pattern
+(`const ReactRefreshPlugin = require("@rspack/plugin-react-refresh")` followed by
+`new ReactRefreshPlugin()`). It can fail with
+`ReactRefreshPlugin is not a constructor`. Use the named export above, or this
+compatibility form if the same config still needs to run against both plugin
+export shapes:
+
+```javascript
+const ReactRefresh = require("@rspack/plugin-react-refresh")
+const ReactRefreshRspackPlugin =
+  ReactRefresh.ReactRefreshRspackPlugin || ReactRefresh.default || ReactRefresh
+plugins: [new ReactRefreshRspackPlugin()]
+```
+
 #### 8. Test your build
 
 ```bash

@@ -1472,6 +1472,317 @@ describe Shakapacker::Doctor do
     end
   end
 
+  describe "rspack React Refresh plugin constructor checks" do
+    let(:rspack_config_dir) { root_path.join("config/rspack") }
+    let(:rspack_config_path) { rspack_config_dir.join("rspack.config.js") }
+
+    before do
+      allow(config).to receive(:assets_bundler).and_return("rspack")
+      allow(config).to receive(:rspack?).and_return(true)
+      allow(config).to receive(:assets_bundler_config_path).and_return("config/rspack")
+
+      FileUtils.mkdir_p(rspack_config_dir)
+      File.write(config_path, "test: config")
+      File.write(package_json_path, JSON.generate({
+        "devDependencies" => {
+          "@rspack/core" => "^2.0.0",
+          "@rspack/cli" => "^2.0.0",
+          "@rspack/plugin-react-refresh" => "^2.0.0"
+        }
+      }))
+    end
+
+    it "warns when Rspack React Refresh v2 uses the v1 default-export constructor pattern" do
+      File.write(rspack_config_path, <<~JS)
+        const ReactRefreshPlugin = require("@rspack/plugin-react-refresh")
+
+        module.exports = {
+          plugins: [new ReactRefreshPlugin()]
+        }
+      JS
+
+      doctor.send(:perform_checks)
+
+      expect(warning_messages).to include(match(/config\/rspack\/rspack\.config\.js/))
+      expect(warning_messages).to include(match(/ReactRefreshPlugin is not a constructor/))
+      expect(warning_messages).to include(match(/ReactRefreshRspackPlugin.*default.*ReactRefresh/))
+    end
+
+    it "uses the installed React Refresh plugin v2 version over a stale v1 declaration" do
+      plugin_package_json_path = root_path.join("node_modules/@rspack/plugin-react-refresh/package.json")
+      FileUtils.mkdir_p(plugin_package_json_path.dirname)
+      File.write(plugin_package_json_path, JSON.generate({
+        "name" => "@rspack/plugin-react-refresh",
+        "version" => "2.0.0"
+      }))
+      File.write(package_json_path, JSON.generate({
+        "devDependencies" => {
+          "@rspack/core" => "^2.0.0",
+          "@rspack/cli" => "^2.0.0",
+          "@rspack/plugin-react-refresh" => "^1.0.0"
+        }
+      }))
+      File.write(rspack_config_path, <<~JS)
+        const ReactRefreshPlugin = require("@rspack/plugin-react-refresh")
+
+        module.exports = {
+          plugins: [new ReactRefreshPlugin()]
+        }
+      JS
+
+      doctor.send(:check_rspack_react_refresh_plugin_constructor)
+
+      expect(warning_messages).to include(match(/ReactRefreshPlugin is not a constructor/))
+    end
+
+    it "warns for unconfigured hybrid webpack and Rspack graphs" do
+      allow(config).to receive(:assets_bundler).and_return("webpack")
+      allow(config).to receive(:rspack?).and_return(false)
+      allow(config).to receive(:assets_bundler_config_path).and_return("config/webpack")
+
+      webpack_config_path = root_path.join("config/webpack/webpack.config.js")
+      FileUtils.mkdir_p(webpack_config_path.dirname)
+      File.write(webpack_config_path, "module.exports = {}")
+      File.write(package_json_path, JSON.generate({
+        "devDependencies" => {
+          "webpack" => "^5.0.0",
+          "babel-loader" => "^9.0.0",
+          "@rspack/core" => "^2.0.0",
+          "@rspack/cli" => "^2.0.0",
+          "@rspack/plugin-react-refresh" => "^2.0.0"
+        }
+      }))
+      File.write(rspack_config_path, <<~JS)
+        const ReactRefreshPlugin = require("@rspack/plugin-react-refresh")
+
+        module.exports = {
+          plugins: [new ReactRefreshPlugin()]
+        }
+      JS
+
+      doctor.send(:check_rspack_react_refresh_plugin_constructor)
+
+      expect(warning_messages).to include(match(/config\/rspack\/rspack\.config\.js/))
+      expect(warning_messages).to include(match(/ReactRefreshPlugin is not a constructor/))
+    end
+
+    it "detects the legacy constructor pattern in TypeScript Rspack config files" do
+      FileUtils.rm_f(rspack_config_path)
+      rspack_config_ts_path = rspack_config_dir.join("rspack.config.ts")
+      File.write(rspack_config_ts_path, <<~TS)
+        const ReactRefreshPlugin = require("@rspack/plugin-react-refresh")
+
+        export default {
+          plugins: [new ReactRefreshPlugin()]
+        }
+      TS
+
+      doctor.send(:check_rspack_react_refresh_plugin_constructor)
+
+      expect(warning_messages).to include(match(/config\/rspack\/rspack\.config\.ts/))
+      expect(warning_messages).to include(match(/ReactRefreshPlugin is not a constructor/))
+    end
+
+    it "detects the legacy constructor pattern in TypeScript default imports" do
+      FileUtils.rm_f(rspack_config_path)
+      rspack_config_ts_path = rspack_config_dir.join("rspack.config.ts")
+      File.write(rspack_config_ts_path, <<~TS)
+        import ReactRefreshPlugin from "@rspack/plugin-react-refresh"
+
+        export default {
+          plugins: [new ReactRefreshPlugin()]
+        }
+      TS
+
+      doctor.send(:check_rspack_react_refresh_plugin_constructor)
+
+      expect(warning_messages).to include(match(/config\/rspack\/rspack\.config\.ts/))
+      expect(warning_messages).to include(match(/ReactRefreshPlugin is not a constructor/))
+    end
+
+    it "only checks the active Rspack config file" do
+      rspack_config_ts_path = rspack_config_dir.join("rspack.config.ts")
+      File.write(rspack_config_ts_path, <<~TS)
+        const { ReactRefreshRspackPlugin } = require("@rspack/plugin-react-refresh")
+        export default { plugins: [new ReactRefreshRspackPlugin()] }
+      TS
+      File.write(rspack_config_path, <<~JS)
+        const ReactRefreshPlugin = require("@rspack/plugin-react-refresh")
+        module.exports = { plugins: [new ReactRefreshPlugin()] }
+      JS
+
+      doctor.send(:check_rspack_react_refresh_plugin_constructor)
+
+      expect(warning_messages).not_to include(match(/ReactRefreshPlugin is not a constructor/))
+    end
+
+    it "warns for declared React Refresh plugin lower-bound ranges at v2 or newer" do
+      File.write(package_json_path, JSON.generate({
+        "devDependencies" => {
+          "@rspack/core" => "^2.0.0",
+          "@rspack/cli" => "^2.0.0",
+          "@rspack/plugin-react-refresh" => ">=2.0.0"
+        }
+      }))
+      File.write(rspack_config_path, <<~JS)
+        const ReactRefreshPlugin = require("@rspack/plugin-react-refresh")
+
+        module.exports = {
+          plugins: [new ReactRefreshPlugin()]
+        }
+      JS
+
+      doctor.send(:check_rspack_react_refresh_plugin_constructor)
+
+      expect(warning_messages).to include(match(/ReactRefreshPlugin is not a constructor/))
+    end
+
+    it "warns for declared React Refresh plugin equality ranges at v2" do
+      File.write(package_json_path, JSON.generate({
+        "devDependencies" => {
+          "@rspack/core" => "^2.0.0",
+          "@rspack/cli" => "^2.0.0",
+          "@rspack/plugin-react-refresh" => "=2.0.0"
+        }
+      }))
+      File.write(rspack_config_path, <<~JS)
+        const ReactRefreshPlugin = require("@rspack/plugin-react-refresh")
+
+        module.exports = {
+          plugins: [new ReactRefreshPlugin()]
+        }
+      JS
+
+      doctor.send(:check_rspack_react_refresh_plugin_constructor)
+
+      expect(warning_messages).to include(match(/ReactRefreshPlugin is not a constructor/))
+    end
+
+    it "warns when declared React Refresh plugin ranges can resolve to v2" do
+      File.write(package_json_path, JSON.generate({
+        "devDependencies" => {
+          "@rspack/core" => "^2.0.0",
+          "@rspack/cli" => "^2.0.0",
+          "@rspack/plugin-react-refresh" => ">=1.5.0 <2.5.0"
+        }
+      }))
+      File.write(rspack_config_path, <<~JS)
+        const ReactRefreshPlugin = require("@rspack/plugin-react-refresh")
+
+        module.exports = {
+          plugins: [new ReactRefreshPlugin()]
+        }
+      JS
+
+      doctor.send(:check_rspack_react_refresh_plugin_constructor)
+
+      expect(warning_messages).to include(match(/ReactRefreshPlugin is not a constructor/))
+    end
+
+    it "does not warn when declared React Refresh plugin ranges stay below v2" do
+      File.write(package_json_path, JSON.generate({
+        "devDependencies" => {
+          "@rspack/core" => "^2.0.0",
+          "@rspack/cli" => "^2.0.0",
+          "@rspack/plugin-react-refresh" => ">=1.5.0 <2.0.0"
+        }
+      }))
+      File.write(rspack_config_path, <<~JS)
+        const ReactRefreshPlugin = require("@rspack/plugin-react-refresh")
+
+        module.exports = {
+          plugins: [new ReactRefreshPlugin()]
+        }
+      JS
+
+      doctor.send(:check_rspack_react_refresh_plugin_constructor)
+
+      expect(warning_messages).not_to include(match(/ReactRefreshPlugin is not a constructor/))
+    end
+
+    it "does not warn for named-export, property, or compat constructor patterns" do
+      supported_configs = [
+        <<~JS,
+          const { ReactRefreshRspackPlugin } = require("@rspack/plugin-react-refresh")
+          module.exports = { plugins: [new ReactRefreshRspackPlugin()] }
+        JS
+        <<~JS,
+          const ReactRefresh = require("@rspack/plugin-react-refresh")
+          module.exports = { plugins: [new ReactRefresh.ReactRefreshRspackPlugin()] }
+        JS
+        <<~JS,
+          const ReactRefresh = require("@rspack/plugin-react-refresh")
+          const ReactRefreshRspackPlugin =
+            ReactRefresh.ReactRefreshRspackPlugin || ReactRefresh.default || ReactRefresh
+          module.exports = { plugins: [new ReactRefreshRspackPlugin()] }
+        JS
+        <<~JS,
+          const ReactRefreshPlugin = require("@rspack/plugin-react-refresh").default
+          module.exports = { plugins: [new ReactRefreshPlugin()] }
+        JS
+        <<~JS
+          // const ReactRefreshPlugin = require("@rspack/plugin-react-refresh")
+          // module.exports = { plugins: [new ReactRefreshPlugin()] }
+          const ReactRefresh = require("@rspack/plugin-react-refresh")
+          const ReactRefreshRspackPlugin =
+            ReactRefresh.ReactRefreshRspackPlugin || ReactRefresh.default || ReactRefresh
+          module.exports = { plugins: [new ReactRefreshRspackPlugin()] }
+        JS
+      ]
+
+      supported_configs.each do |content|
+        doctor.instance_variable_set(:@warnings, [])
+        File.write(rspack_config_path, content)
+
+        doctor.send(:check_rspack_react_refresh_plugin_constructor)
+
+        expect(warning_messages).not_to include(match(/ReactRefreshPlugin is not a constructor/))
+      end
+    end
+
+    it "skips webpack-only apps" do
+      allow(config).to receive(:assets_bundler).and_return("webpack")
+      allow(config).to receive(:rspack?).and_return(false)
+      File.write(rspack_config_path, <<~JS)
+        const ReactRefreshPlugin = require("@rspack/plugin-react-refresh")
+        module.exports = { plugins: [new ReactRefreshPlugin()] }
+      JS
+
+      doctor.send(:check_rspack_react_refresh_plugin_constructor)
+
+      expect(warning_messages).not_to include(match(/ReactRefreshPlugin is not a constructor/))
+    end
+
+    it "skips when the React Refresh plugin is absent or below v2" do
+      [
+        {
+          "devDependencies" => {
+            "@rspack/core" => "^2.0.0",
+            "@rspack/cli" => "^2.0.0"
+          }
+        },
+        {
+          "devDependencies" => {
+            "@rspack/core" => "^2.0.0",
+            "@rspack/cli" => "^2.0.0",
+            "@rspack/plugin-react-refresh" => "^1.0.0"
+          }
+        }
+      ].each do |package_json|
+        doctor.instance_variable_set(:@warnings, [])
+        File.write(package_json_path, JSON.generate(package_json))
+        File.write(rspack_config_path, <<~JS)
+          const ReactRefreshPlugin = require("@rspack/plugin-react-refresh")
+          module.exports = { plugins: [new ReactRefreshPlugin()] }
+        JS
+
+        doctor.send(:check_rspack_react_refresh_plugin_constructor)
+
+        expect(warning_messages).not_to include(match(/ReactRefreshPlugin is not a constructor/))
+      end
+    end
+  end
+
   # Contract spec: doctor and runner must resolve to the same active config file.
   # If Runner#find_rspack_config_with_fallback gains a new extension or reorders
   # candidates, this spec will fail loudly so Doctor#active_assets_bundler_config_path
