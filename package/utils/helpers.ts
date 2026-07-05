@@ -1,4 +1,6 @@
 const { isModuleNotFoundError, getErrorMessage } = require("./errorHelpers")
+const { existsSync, readFileSync } = require("fs") as typeof import("fs")
+const nodePath = require("path") as typeof import("path")
 
 const isBoolean = (str: string): boolean =>
   /^true/.test(str) || /^false/.test(str)
@@ -19,6 +21,42 @@ const resolvedPath = (packageName: string): string | null => {
 
 const moduleExists = (packageName: string): boolean =>
   !!resolvedPath(packageName)
+
+const packageDependencyExists = (
+  packageName: string,
+  packageRootPaths: string[]
+): boolean =>
+  packageRootPaths.some((packageRootPath) => {
+    const packageJsonPath = nodePath.join(packageRootPath, "package.json")
+    if (!existsSync(packageJsonPath)) {
+      return false
+    }
+
+    try {
+      const packageJson = JSON.parse(readFileSync(packageJsonPath, "utf8")) as {
+        dependencies?: Record<string, unknown>
+        devDependencies?: Record<string, unknown>
+        optionalDependencies?: Record<string, unknown>
+      }
+
+      return (
+        Object.prototype.hasOwnProperty.call(
+          packageJson.dependencies || {},
+          packageName
+        ) ||
+        Object.prototype.hasOwnProperty.call(
+          packageJson.devDependencies || {},
+          packageName
+        ) ||
+        Object.prototype.hasOwnProperty.call(
+          packageJson.optionalDependencies || {},
+          packageName
+        )
+      )
+    } catch {
+      return false
+    }
+  })
 
 const canProcess = <T = unknown>(
   rule: string,
@@ -91,6 +129,7 @@ export {
   isBoolean,
   ensureTrailingSlash,
   canProcess,
+  packageDependencyExists,
   moduleExists,
   loaderMatches,
   packageFullVersion,

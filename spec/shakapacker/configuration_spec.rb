@@ -1,5 +1,7 @@
 require_relative "spec_helper_initializer"
 require "tempfile"
+require "tmpdir"
+require "fileutils"
 
 describe "Shakapacker::Configuration" do
   ROOT_PATH = Pathname.new(File.expand_path("./test_app", __dir__))
@@ -578,6 +580,7 @@ describe "Shakapacker::Configuration" do
       end
 
       it "returns the configured javascript_transpiler" do
+        allow(config).to receive(:fetch).and_call_original
         allow(config).to receive(:fetch).with(:javascript_transpiler).and_return("swc")
         allow(config).to receive(:fetch).with(:webpack_loader).and_return(nil)
         expect(config.javascript_transpiler).to eq "swc"
@@ -594,6 +597,7 @@ describe "Shakapacker::Configuration" do
       end
 
       it "falls back to webpack_loader when javascript_transpiler is not set" do
+        allow(config).to receive(:fetch).and_call_original
         allow(config).to receive(:fetch).with(:javascript_transpiler).and_return(nil)
         allow(config).to receive(:fetch).with(:webpack_loader).and_return("esbuild")
         expect(config.javascript_transpiler).to eq "esbuild"
@@ -610,11 +614,283 @@ describe "Shakapacker::Configuration" do
       end
 
       it "defaults to 'babel'" do
+        allow(config).to receive(:fetch).and_call_original
         allow(config).to receive(:fetch).with(:javascript_transpiler).and_return(nil)
         allow(config).to receive(:fetch).with(:webpack_loader).and_return(nil)
         allow(config).to receive(:fetch).with(:assets_bundler).and_return(nil)
         allow(config).to receive(:fetch).with(:bundler).and_return(nil)
         expect(config.javascript_transpiler).to eq "babel"
+      end
+    end
+
+    context "with bundled-default SWC and no app transpiler key" do
+      let(:app_root) { Pathname.new(Dir.mktmpdir) }
+      let(:config_path) { app_root.join("config/shakapacker.yml") }
+      let(:config) do
+        Shakapacker::Configuration.new(
+          root_path: app_root,
+          config_path: config_path,
+          env: "test"
+        )
+      end
+
+      before do
+        FileUtils.mkdir_p(config_path.dirname)
+      end
+
+      after do
+        FileUtils.rm_rf(app_root)
+      end
+
+      def write_config(contents)
+        File.write(config_path, contents)
+      end
+
+      def write_package_json(dev_dependencies)
+        File.write(app_root.join("package.json"), JSON.generate({ "devDependencies" => dev_dependencies }))
+      end
+
+      it "falls back to Babel for webpack when swc-loader is missing and Babel is present" do
+        write_config(<<~YAML)
+          test:
+            source_path: app/javascript
+            source_entry_path: entrypoints
+            public_root_path: public
+            public_output_path: packs
+            assets_bundler: webpack
+        YAML
+        write_package_json(
+          "babel-loader" => "^10.0.0",
+          "@babel/core" => "^7.0.0"
+        )
+
+        expect($stderr).to receive(:puts).with(/Shakapacker defaults to SWC.*Babel was detected/)
+        expect(config.javascript_transpiler).to eq("babel")
+      end
+
+      it "prints the implicit Babel fallback warning only once across repeated calls" do
+        write_config(<<~YAML)
+          test:
+            source_path: app/javascript
+            source_entry_path: entrypoints
+            public_root_path: public
+            public_output_path: packs
+            assets_bundler: webpack
+        YAML
+        write_package_json(
+          "babel-loader" => "^10.0.0",
+          "@babel/core" => "^7.0.0"
+        )
+
+        expect($stderr).to receive(:puts).with(/Shakapacker defaults to SWC.*Babel was detected/).once
+        expect(config.javascript_transpiler).to eq("babel")
+        expect(config.javascript_transpiler).to eq("babel")
+      end
+
+      it "keeps bundled-default SWC for webpack when swc-loader is installed" do
+        write_config(<<~YAML)
+          test:
+            source_path: app/javascript
+            source_entry_path: entrypoints
+            public_root_path: public
+            public_output_path: packs
+            assets_bundler: webpack
+        YAML
+        write_package_json(
+          "@swc/core" => "^1.0.0",
+          "swc-loader" => "^0.2.0",
+          "babel-loader" => "^10.0.0"
+        )
+
+        expect($stderr).not_to receive(:puts).with(/Shakapacker defaults to SWC/)
+        expect(config.javascript_transpiler).to eq("swc")
+      end
+
+      it "preserves explicit SWC when only Babel is installed" do
+        write_config(<<~YAML)
+          test:
+            source_path: app/javascript
+            source_entry_path: entrypoints
+            public_root_path: public
+            public_output_path: packs
+            assets_bundler: webpack
+            javascript_transpiler: swc
+        YAML
+        write_package_json(
+          "babel-loader" => "^10.0.0",
+          "@babel/core" => "^7.0.0"
+        )
+
+        expect($stderr).not_to receive(:puts).with(/Shakapacker defaults to SWC/)
+        expect(config.javascript_transpiler).to eq("swc")
+      end
+
+      it "preserves explicit webpack_loader when bundled defaults include SWC" do
+        write_config(<<~YAML)
+          test:
+            source_path: app/javascript
+            source_entry_path: entrypoints
+            public_root_path: public
+            public_output_path: packs
+            assets_bundler: webpack
+            webpack_loader: babel
+        YAML
+        write_package_json(
+          "babel-loader" => "^10.0.0",
+          "@babel/core" => "^7.0.0"
+        )
+
+        expect($stderr).to receive(:puts).with(/DEPRECATION WARNING.*webpack_loader.*deprecated.*javascript_transpiler/)
+        expect(config.javascript_transpiler).to eq("babel")
+      end
+
+      it "treats blank webpack_loader as implicit and falls back to Babel" do
+        write_config(<<~YAML)
+          test:
+            source_path: app/javascript
+            source_entry_path: entrypoints
+            public_root_path: public
+            public_output_path: packs
+            assets_bundler: webpack
+            webpack_loader:
+        YAML
+        write_package_json(
+          "babel-loader" => "^10.0.0",
+          "@babel/core" => "^7.0.0"
+        )
+
+        expect($stderr).to receive(:puts).with(/Shakapacker defaults to SWC.*Babel was detected/)
+        expect(config.javascript_transpiler).to eq("babel")
+      end
+
+      it "treats blank javascript_transpiler as implicit and falls back to Babel" do
+        write_config(<<~YAML)
+          test:
+            source_path: app/javascript
+            source_entry_path: entrypoints
+            public_root_path: public
+            public_output_path: packs
+            assets_bundler: webpack
+            javascript_transpiler:
+        YAML
+        write_package_json(
+          "babel-loader" => "^10.0.0",
+          "@babel/core" => "^7.0.0"
+        )
+
+        expect($stderr).to receive(:puts).with(/Shakapacker defaults to SWC.*Babel was detected/)
+        expect(config.javascript_transpiler).to eq("babel")
+      end
+
+      it "treats non-string webpack_loader as implicit and falls back to Babel" do
+        write_config(<<~YAML)
+          test:
+            source_path: app/javascript
+            source_entry_path: entrypoints
+            public_root_path: public
+            public_output_path: packs
+            assets_bundler: webpack
+            webpack_loader: 123
+        YAML
+        write_package_json(
+          "babel-loader" => "^10.0.0",
+          "@babel/core" => "^7.0.0"
+        )
+
+        expect($stderr).to receive(:puts).with(/Shakapacker defaults to SWC.*Babel was detected/)
+        expect(config.javascript_transpiler).to eq("babel")
+      end
+
+      it "detects Babel dependencies from the configured JavaScript package root" do
+        write_config(<<~YAML)
+          test:
+            source_path: client/app/javascript
+            source_entry_path: entrypoints
+            public_root_path: public
+            public_output_path: packs
+            assets_bundler: webpack
+        YAML
+        FileUtils.mkdir_p(app_root.join("client"))
+        File.write(
+          app_root.join("client/package.json"),
+          JSON.generate({ "devDependencies" => { "babel-loader" => "^10.0.0" } })
+        )
+
+        expect($stderr).to receive(:puts).with(/Shakapacker defaults to SWC.*Babel was detected/)
+        expect(config.javascript_transpiler).to eq("babel")
+      end
+
+      it "continues past bare node_modules markers to find package.json declarations" do
+        write_config(<<~YAML)
+          test:
+            source_path: workspace/nested/app/javascript
+            source_entry_path: entrypoints
+            public_root_path: public
+            public_output_path: packs
+            assets_bundler: webpack
+        YAML
+        FileUtils.mkdir_p(app_root.join("workspace/nested/node_modules"))
+        File.write(
+          app_root.join("workspace/package.json"),
+          JSON.generate({ "devDependencies" => { "babel-loader" => "^10.0.0" } })
+        )
+
+        expect($stderr).to receive(:puts).with(/Shakapacker defaults to SWC.*Babel was detected/)
+        expect(config.javascript_transpiler).to eq("babel")
+      end
+
+      it "does not warn about a false transpiler mismatch for the configured JavaScript package root" do
+        previous_node_env = ENV["NODE_ENV"]
+        ENV["NODE_ENV"] = "development"
+        write_config(<<~YAML)
+          test:
+            source_path: client/app/javascript
+            source_entry_path: entrypoints
+            public_root_path: public
+            public_output_path: packs
+            assets_bundler: webpack
+        YAML
+        FileUtils.mkdir_p(app_root.join("client"))
+        File.write(
+          app_root.join("client/package.json"),
+          JSON.generate({
+            "devDependencies" => {
+              "babel-loader" => "^10.0.0",
+              "@babel/core" => "^7.0.0"
+            }
+          })
+        )
+        write_package_json(
+          "@swc/core" => "^1.0.0"
+        )
+
+        expect($stderr).to receive(:puts).with(/Shakapacker defaults to SWC.*Babel was detected/)
+        expect($stderr).not_to receive(:puts).with(/Transpiler Configuration Mismatch Detected/)
+        expect(config.javascript_transpiler).to eq("babel")
+      ensure
+        if previous_node_env.nil?
+          ENV.delete("NODE_ENV")
+        else
+          ENV["NODE_ENV"] = previous_node_env
+        end
+      end
+
+      it "preserves rspack SWC behavior without swc-loader" do
+        write_config(<<~YAML)
+          test:
+            source_path: app/javascript
+            source_entry_path: entrypoints
+            public_root_path: public
+            public_output_path: packs
+            assets_bundler: rspack
+        YAML
+        write_package_json(
+          "babel-loader" => "^10.0.0",
+          "@babel/core" => "^7.0.0"
+        )
+
+        expect($stderr).not_to receive(:puts).with(/Shakapacker defaults to SWC/)
+        expect(config.javascript_transpiler).to eq("swc")
       end
     end
   end
@@ -651,6 +927,7 @@ describe "Shakapacker::Configuration" do
       it "shows deprecation warning and returns javascript_transpiler value" do
         data_mock = { webpack_loader: "swc" }
         allow(config).to receive(:data).and_return(data_mock)
+        allow(config).to receive(:fetch).and_call_original
         allow(config).to receive(:fetch).with(:javascript_transpiler).and_return(nil)
         allow(config).to receive(:fetch).with(:webpack_loader).and_return("swc")
         allow(config).to receive(:fetch).with(:assets_bundler).and_return(nil)

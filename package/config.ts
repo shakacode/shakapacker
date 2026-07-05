@@ -1,11 +1,22 @@
-import { resolve } from "path"
+import { dirname, resolve, sep } from "path"
 import { load } from "js-yaml"
 import { existsSync, readFileSync } from "fs"
 import { merge } from "webpack-merge"
-const { ensureTrailingSlash } = require("./utils/helpers")
+const { ensureTrailingSlash, packageDependencyExists } =
+  require("./utils/helpers") as {
+    ensureTrailingSlash: (path: string) => string
+    packageDependencyExists: (
+      packageName: string,
+      packageRootPaths: string[]
+    ) => boolean
+  }
 const { railsEnv } = require("./env")
 const configPath = require("./utils/configPath")
 const defaultConfigPath = require("./utils/defaultConfigPath")
+const { sanitizeEnvValue } = require("./utils/pathValidation") as {
+  sanitizeEnvValue: (value: string | undefined) => string | undefined
+}
+const requestedRailsEnv = sanitizeEnvValue(process.env.RAILS_ENV) || railsEnv
 import { Config, YamlConfig } from "./types"
 const {
   isValidYamlConfig,
@@ -22,7 +33,11 @@ const loadAndValidateYaml = (path: string): YamlConfig => {
   const yamlContent = load(fileContent)
 
   if (!isValidYamlConfig(yamlContent)) {
-    throw createConfigValidationError(path, railsEnv, "Invalid YAML structure")
+    throw createConfigValidationError(
+      path,
+      requestedRailsEnv,
+      "Invalid YAML structure"
+    )
   }
 
   return yamlContent as YamlConfig
@@ -31,7 +46,7 @@ const loadAndValidateYaml = (path: string): YamlConfig => {
 const getDefaultConfig = (): Partial<Config> => {
   try {
     const defaultConfig = loadAndValidateYaml(defaultConfigPath)
-    return defaultConfig[railsEnv] || defaultConfig.production || {}
+    return defaultConfig[requestedRailsEnv] || defaultConfig.production || {}
   } catch (error) {
     if (isFileNotFoundError(error)) {
       throw createFileOperationError(
@@ -46,20 +61,86 @@ const getDefaultConfig = (): Partial<Config> => {
 
 const defaults = getDefaultConfig()
 let config: Config
+let appConfigHasJavascriptTranspiler = false
+let appConfigHasWebpackLoader = false
+let appConfigWebpackLoader: string | undefined
+let cachedPackageRootPaths: string[] | undefined
+
+const pathWithin = (path: string, parent: string): boolean =>
+  path === parent || path.startsWith(`${parent}${sep}`)
+
+const javascriptPackageRootPath = (): string => {
+  const sourcePath = resolve(config.source_path)
+  const appRoot = resolve(process.cwd())
+
+  if (!pathWithin(sourcePath, appRoot)) {
+    return appRoot
+  }
+
+  let current = sourcePath
+  while (true) {
+    if (existsSync(resolve(current, "package.json"))) {
+      return current
+    }
+    if (current === appRoot) {
+      return appRoot
+    }
+
+    const parent = dirname(current)
+    if (parent === current) {
+      return appRoot
+    }
+
+    current = parent
+  }
+}
+
+const packageRootPaths = (): string[] => {
+  cachedPackageRootPaths ||= [
+    ...new Set([javascriptPackageRootPath(), resolve(process.cwd())])
+  ]
+  return cachedPackageRootPaths
+}
+
+const packageDependencyInstalled = (packageName: string): boolean =>
+  packageDependencyExists(packageName, packageRootPaths())
+
+const presentString = (value: unknown): value is string =>
+  typeof value === "string" && value.trim().length > 0
+
+const configuredValue = (value: unknown): boolean =>
+  value !== null &&
+  value !== undefined &&
+  !(typeof value === "string" && value.trim().length === 0)
 
 if (existsSync(configPath)) {
   try {
     const appYmlObject = loadAndValidateYaml(configPath)
 
-    const envAppConfig = appYmlObject[railsEnv]
+    const requestedEnvAppConfig = appYmlObject[requestedRailsEnv]
+    const envAppConfig = requestedEnvAppConfig || appYmlObject.production
+    if (envAppConfig) {
+      const envAppConfigRecord = envAppConfig as Record<string, unknown>
+      const javascriptTranspiler = envAppConfigRecord.javascript_transpiler
+      appConfigHasJavascriptTranspiler =
+        Object.prototype.hasOwnProperty.call(
+          envAppConfigRecord,
+          "javascript_transpiler"
+        ) && configuredValue(javascriptTranspiler)
+      const webpackLoader = envAppConfigRecord.webpack_loader
+      if (presentString(webpackLoader)) {
+        appConfigHasWebpackLoader = true
+        appConfigWebpackLoader = webpackLoader
+      }
+    }
 
-    if (!envAppConfig) {
+    if (!requestedEnvAppConfig) {
       console.warn(
-        `[SHAKAPACKER WARNING] Environment '${railsEnv}' not found in ${configPath}\n` +
+        `[SHAKAPACKER WARNING] Environment '${requestedRailsEnv}' not found in ${configPath}\n` +
           `Available environments: ${Object.keys(appYmlObject).join(", ")}\n` +
           `Using 'production' configuration as fallback.\n\n` +
           `To fix this, either:\n` +
-          `  - Add a '${railsEnv}' section to your shakapacker.yml\n` +
+          `  - Add a '${requestedRailsEnv}' section to your shakapacker.yml\n` +
           `  - Set RAILS_ENV to one of the available environments\n` +
           `  - Copy settings from another environment as a starting point`
       )
@@ -72,7 +153,7 @@ if (existsSync(configPath)) {
     if (!isPartialConfig(mergedConfig)) {
       throw createConfigValidationError(
         configPath,
-        railsEnv,
+        requestedRailsEnv,
         `Invalid configuration structure in ${configPath}. Please check your shakapacker.yml syntax and ensure all required fields are properly defined.`
       )
     }
@@ -86,7 +167,7 @@ if (existsSync(configPath)) {
       if (!isPartialConfig(defaults)) {
         throw createConfigValidationError(
           defaultConfigPath,
-          railsEnv,
+          requestedRailsEnv,
           `Invalid default configuration. This may indicate a corrupted Shakapacker installation. Try reinstalling with 'yarn add shakapacker --force'.`
         )
       }
@@ -101,7 +182,7 @@ if (existsSync(configPath)) {
   if (!isPartialConfig(defaults)) {
     throw createConfigValidationError(
       defaultConfigPath,
-      railsEnv,
+      requestedRailsEnv,
       `Invalid default configuration. This may indicate a corrupted Shakapacker installation. Try reinstalling with 'yarn add shakapacker --force'.`
     )
   }
@@ -153,29 +234,49 @@ if (process.env.SHAKAPACKER_ASSETS_BUNDLER) {
 const DEFAULT_JAVASCRIPT_TRANSPILER =
   config.assets_bundler === "rspack" ? "swc" : "babel"
 
-// Backward compatibility: Check for webpack_loader using proper type guard
-function hasWebpackLoader(
-  obj: unknown
-): obj is Config & { webpack_loader: string } {
-  return (
-    typeof obj === "object" &&
-    obj !== null &&
-    "webpack_loader" in obj &&
-    typeof (obj as Record<string, unknown>).webpack_loader === "string"
-  )
+const IMPLICIT_SWC_BABEL_FALLBACK_WARNING =
+  "`javascript_transpiler` is not set in config/shakapacker.yml. " +
+  "Shakapacker defaults to SWC, but swc-loader is not installed and Babel was detected, so Babel will be used. " +
+  "Set `javascript_transpiler: babel` (or `swc`) explicitly to silence this message. " +
+  "See https://github.com/shakacode/shakapacker/blob/main/docs/transpiler-migration.md"
+
+const transpilerConfiguredByApp =
+  appConfigHasJavascriptTranspiler || appConfigHasWebpackLoader
+
+const shouldFallbackImplicitSwcToBabel = (): boolean =>
+  !transpilerConfiguredByApp &&
+  config.assets_bundler === "webpack" &&
+  config.javascript_transpiler === "swc" &&
+  !packageDependencyInstalled("swc-loader") &&
+  packageDependencyInstalled("babel-loader")
+
+if (
+  !appConfigHasJavascriptTranspiler &&
+  !appConfigHasWebpackLoader &&
+  !config.javascript_transpiler
+) {
+  config.javascript_transpiler =
+    defaults.javascript_transpiler || DEFAULT_JAVASCRIPT_TRANSPILER
 }
 
 // Allow environment variable to override javascript_transpiler
 if (process.env.SHAKAPACKER_JAVASCRIPT_TRANSPILER) {
   config.javascript_transpiler = process.env.SHAKAPACKER_JAVASCRIPT_TRANSPILER
-} else if (hasWebpackLoader(config) && !config.javascript_transpiler) {
+} else if (
+  appConfigHasWebpackLoader &&
+  !appConfigHasJavascriptTranspiler &&
+  appConfigWebpackLoader
+) {
   console.warn(
     "[SHAKAPACKER DEPRECATION] The 'webpack_loader' configuration option is deprecated.\n" +
       "Please use 'javascript_transpiler' instead as it better reflects its purpose of configuring JavaScript transpilation regardless of the bundler used."
   )
-  config.javascript_transpiler = config.webpack_loader
+  config.javascript_transpiler = appConfigWebpackLoader
 } else if (!config.javascript_transpiler) {
   config.javascript_transpiler = DEFAULT_JAVASCRIPT_TRANSPILER
+} else if (shouldFallbackImplicitSwcToBabel()) {
+  console.warn(IMPLICIT_SWC_BABEL_FALLBACK_WARNING)
+  config.javascript_transpiler = "babel"
 }
 
 // Ensure webpack_loader is always available for backward compatibility

@@ -11,6 +11,8 @@
 
 ### Fixed
 
+- **Fixed implicit SWC defaults for existing webpack/Babel apps without `swc-loader`.** [PR #1206](https://github.com/shakacode/shakapacker/pull/1206) by [justin808](https://github.com/justin808). Webpack apps that omit both `javascript_transpiler` and the deprecated `webpack_loader` now fall back to Babel with a warning when Shakapacker's bundled SWC default is active, `swc-loader` is missing, and Babel is present. Explicit transpiler settings, webpack apps with `swc-loader`, and Rspack's built-in SWC path keep their existing behavior. Closes [#1203](https://github.com/shakacode/shakapacker/issues/1203).
+- **Fixed JavaScript config loading for missing Rails environments to use the production fallback.** [PR #1206](https://github.com/shakacode/shakapacker/pull/1206) by [justin808](https://github.com/justin808). When `RAILS_ENV` has no matching section in `config/shakapacker.yml`, the Node package config now merges the `production` section instead of only bundled defaults, matching Ruby configuration loading and honoring explicit production `javascript_transpiler`, `source_path`, `dev_server`, and related settings for custom environments such as staging.
 - **Fixed helper binstubs delegating Node resolution to Ruby `exec` in unset and empty `PATH` environments.** [PR #1200](https://github.com/shakacode/shakapacker/pull/1200) and [PR #1201](https://github.com/shakacode/shakapacker/pull/1201) by [justin808](https://github.com/justin808). Restores shell-compatible Node lookup for `bin/shakapacker-config` and `bin/diff-bundler-config` after the `v10.2.0` Ruby-binstub regression, while keeping friendly missing-Node errors for `ENOENT` and `EACCES`.
 
 ## [v10.2.0] - July 3, 2026

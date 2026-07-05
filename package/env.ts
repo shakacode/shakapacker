@@ -79,7 +79,7 @@ const validatedRailsEnv =
 if (initialRailsEnv && validatedRailsEnv !== initialRailsEnv) {
   console.warn(
     `[SHAKAPACKER WARNING] Environment '${initialRailsEnv}' not found in the configuration.\n` +
-      `Using '${DEFAULT}' configuration as a fallback.`
+      `Using '${DEFAULT}' as the NODE_ENV fallback. Configuration loading falls back separately.`
   )
 }
 

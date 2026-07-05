@@ -511,12 +511,14 @@ module Shakapacker
 
       def check_javascript_transpiler_dependencies
         transpiler = explicit_javascript_transpiler
+        implicit_babel_fallback = false
 
         if transpiler.nil?
-          @info << "No javascript_transpiler configured - defaulting to SWC (20x faster than Babel)"
-          transpiler = "swc"
+          transpiler = javascript_transpiler
+          implicit_babel_fallback = transpiler == "babel"
         end
 
+        @resolved_javascript_transpiler = transpiler
         return if transpiler == "none"
 
         bundler = assets_bundler
@@ -541,7 +543,7 @@ module Shakapacker
         case transpiler
         when "babel"
           check_babel_dependencies
-          check_babel_performance_suggestion
+          check_babel_performance_suggestion unless implicit_babel_fallback
         when "swc"
           check_swc_dependencies(bundler) unless inferred_hybrid_graph
         when "esbuild"
@@ -571,6 +573,20 @@ module Shakapacker
 
       def check_babel_performance_suggestion
         @info << "Consider switching to SWC for 20x faster compilation. Set javascript_transpiler: 'swc' in shakapacker.yml"
+      end
+
+      def implicit_javascript_transpiler
+        if assets_bundler == "webpack" && !package_installed?("swc-loader") && package_installed?("babel-loader")
+          @info << "`javascript_transpiler` is not set in config/shakapacker.yml. " \
+                   "Shakapacker defaults to SWC, but swc-loader is not installed and Babel was detected, so Babel will be used. " \
+                   "Set `javascript_transpiler: babel` (or `swc`) explicitly to silence this message. " \
+                   "See https://github.com/shakacode/shakapacker/blob/main/docs/transpiler-migration.md"
+          "babel"
+        else
+          @info << "No javascript_transpiler configured - using bundled SWC default. " \
+                   "Set javascript_transpiler: 'swc' or 'babel' explicitly in shakapacker.yml to silence this message."
+          "swc"
+        end
       end
 
       def check_swc_dependencies(bundler)
@@ -1271,13 +1287,20 @@ module Shakapacker
 
       def javascript_transpiler_configured?
         !javascript_transpiler_env_override.nil? ||
-          config_key_defined?(:javascript_transpiler) ||
-          config_key_defined?(:webpack_loader)
+          config_key_configured?(:javascript_transpiler) ||
+          config_key_present?(:webpack_loader)
       end
 
       def javascript_transpiler
-        transpiler = javascript_transpiler_env_override || config.javascript_transpiler
-        blank_config_value?(transpiler) ? default_javascript_transpiler : transpiler
+        return @resolved_javascript_transpiler if defined?(@resolved_javascript_transpiler)
+
+        @resolved_javascript_transpiler =
+          if javascript_transpiler_configured?
+            transpiler = javascript_transpiler_env_override || config.javascript_transpiler
+            blank_config_value?(transpiler) ? default_javascript_transpiler : transpiler
+          else
+            implicit_javascript_transpiler
+          end
       end
 
       def explicit_javascript_transpiler
@@ -1329,7 +1352,7 @@ module Shakapacker
       end
 
       def blank_config_value?(value)
-        value.nil? || (value.respond_to?(:empty?) && value.empty?)
+        value.nil? || (value.is_a?(String) && value.strip.empty?) || (value.respond_to?(:empty?) && value.empty?)
       end
 
       def default_javascript_transpiler
@@ -1337,14 +1360,15 @@ module Shakapacker
       end
 
       def config_key_present?(key)
-        !blank_config_value?(config_value(key))
+        value = config_value(key)
+        value.is_a?(String) && !value.strip.empty?
       end
 
-      def config_key_defined?(key)
+      def config_key_configured?(key)
         return false unless config.respond_to?(:data)
 
         data = config.data
-        data.respond_to?(:key?) && data.key?(key)
+        data.respond_to?(:key?) && data.key?(key) && !blank_config_value?(data[key])
       end
 
       def config_value(key)
@@ -1383,7 +1407,7 @@ module Shakapacker
           if path_within?(source_path, app_root)
             current = source_path
             loop do
-              break current if package_root_marker?(current)
+              break current if current.join("package.json").exist?
               break root_path if current == app_root
 
               parent = current.dirname
@@ -1458,7 +1482,7 @@ module Shakapacker
       def detect_package_manager
         root_package_manager = package_manager_for(root_path)
 
-        package_root_paths.each do |package_root|
+        package_manager_root_paths.each do |package_root|
           next if package_root == root_path
 
           package_manager_name = package_manager_for(package_root)
@@ -1476,6 +1500,34 @@ module Shakapacker
         end
 
         nil
+      end
+
+      def package_manager_root_paths
+        @package_manager_root_paths ||= [javascript_package_manager_root_path, root_path].uniq
+      end
+
+      def javascript_package_manager_root_path
+        @javascript_package_manager_root_path ||= begin
+          source_path = config.source_path.expand_path
+          app_root = root_path.expand_path
+
+          if path_within?(source_path, app_root)
+            current = source_path
+            loop do
+              break current if package_root_marker?(current)
+              break root_path if current == app_root
+
+              parent = current.dirname
+              break root_path if parent == current
+
+              current = parent
+            end
+          else
+            root_path
+          end
+        rescue StandardError
+          root_path
+        end
       end
 
       def versions_compatible?(gem_version, npm_version)
