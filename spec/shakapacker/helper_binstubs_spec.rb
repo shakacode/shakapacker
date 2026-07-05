@@ -537,10 +537,11 @@ RSpec.describe "helper binstubs" do
     end
 
     {
+      "wholly empty" => "",
       "leading" => "#{File::PATH_SEPARATOR}/nonexistent",
       "trailing" => "/nonexistent#{File::PATH_SEPARATOR}"
     }.each do |position, path_value|
-      it "honors a #{position} empty PATH entry as the current directory for #{command}" do
+      it "honors a #{position} PATH entry as the current directory for #{command}" do
         Dir.mktmpdir("shakapacker-binstub-") do |app_path|
           File.write(File.join(app_path, "Gemfile"), "")
           FileUtils.mkdir_p(File.join(app_path, "bin"))

@@ -9,6 +9,10 @@
 
 ## [Unreleased]
 
+### Fixed
+
+- **Fixed helper binstubs delegating Node resolution to Ruby `exec` in unset and empty `PATH` environments.** [PR #1200](https://github.com/shakacode/shakapacker/pull/1200) and [PR #1201](https://github.com/shakacode/shakapacker/pull/1201) by [justin808](https://github.com/justin808). Restores shell-compatible Node lookup for `bin/shakapacker-config` and `bin/diff-bundler-config` after the `v10.2.0` Ruby-binstub regression, while keeping friendly missing-Node errors for `ENOENT` and `EACCES`.
+
 ## [v10.2.0] - July 3, 2026
 
 ### Added
