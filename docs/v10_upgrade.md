@@ -155,6 +155,8 @@ Shakapacker 10.2 targets Rspack v2:
 - `rspack-manifest-plugin` must satisfy `^5.2.2`.
 - `@rspack/plugin-react-refresh` uses the v2 named
   `ReactRefreshRspackPlugin` export.
+- `css-loader` must satisfy `^7.1.4` when your Rspack build uses
+  Shakapacker-managed CSS loader rules.
 - Rspack v2 uses top-level `lazyCompilation`; Shakapacker disables it for the
   split Rails dev-server topology unless you explicitly configure a safe value.
 
@@ -163,11 +165,11 @@ Shakapacker 10.2 targets Rspack v2:
 Update the managed Rspack stack together:
 
 ```bash
-yarn add --dev @rspack/core@^2 @rspack/cli@^2 @rspack/dev-server@^2 rspack-manifest-plugin@^5.2.2 @rspack/plugin-react-refresh@^2
+yarn add --dev @rspack/core@^2 @rspack/cli@^2 @rspack/dev-server@^2 rspack-manifest-plugin@^5.2.2 @rspack/plugin-react-refresh@^2 css-loader@^7.1.4
 # or
-npm install --save-dev @rspack/core@^2 @rspack/cli@^2 @rspack/dev-server@^2 rspack-manifest-plugin@^5.2.2 @rspack/plugin-react-refresh@^2
+npm install --save-dev @rspack/core@^2 @rspack/cli@^2 @rspack/dev-server@^2 rspack-manifest-plugin@^5.2.2 @rspack/plugin-react-refresh@^2 css-loader@^7.1.4
 # or
-pnpm add --save-dev @rspack/core@^2 @rspack/cli@^2 @rspack/dev-server@^2 rspack-manifest-plugin@^5.2.2 @rspack/plugin-react-refresh@^2
+pnpm add --save-dev @rspack/core@^2 @rspack/cli@^2 @rspack/dev-server@^2 rspack-manifest-plugin@^5.2.2 @rspack/plugin-react-refresh@^2 css-loader@^7.1.4
 ```
 
 If you use React Refresh in a custom Rspack config, use the v2 named export:
