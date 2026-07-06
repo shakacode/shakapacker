@@ -8,6 +8,8 @@
 // Keep the pinned Babel 8 package versions below in sync during Babel
 // compatibility reviews. This smoke covers the published preset path; the
 // babel-loader version guard is covered by test/package/rules/babel.test.js.
+// Babel 8 transform targets are app-owned, so this avoids asserting
+// target-sensitive downlevel output.
 
 const { spawnSync } = require("child_process")
 const fs = require("fs")
@@ -104,6 +106,8 @@ const appRequire = createRequire(path.join(workRoot, "package.json"))
 
 const compiler = webpack({
   mode: "development",
+  devtool: false,
+  target: ["web", "es5"],
   context: workRoot,
   entry: path.join(srcDir, "index.js"),
   output: {
@@ -242,8 +246,7 @@ describe("Babel 8 preset smoke (issue #1191)", () => {
       env: { ...process.env, BABEL_ENV: "production" }
     })
 
-    expect(fs.readFileSync(path.join(distDir, "bundle.js"), "utf8")).toContain(
-      "42"
-    )
+    const bundle = fs.readFileSync(path.join(distDir, "bundle.js"), "utf8")
+    expect(bundle).toContain("42")
   }, 180000)
 })

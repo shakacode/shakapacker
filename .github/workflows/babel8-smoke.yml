@@ -9,7 +9,6 @@ on:
       - "package.json"
       - "yarn.lock"
       - "package/babel/**"
-      - "package/rules/babel.ts"
       - "package/utils/**"
       - "test/packages/babel8-smoke.test.js"
   pull_request:
@@ -18,7 +17,6 @@ on:
       - "package.json"
       - "yarn.lock"
       - "package/babel/**"
-      - "package/rules/babel.ts"
       - "package/utils/**"
       - "test/packages/babel8-smoke.test.js"
   workflow_dispatch:
