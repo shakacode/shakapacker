@@ -10,6 +10,8 @@
 
 ## [Unreleased]
 
+## [v10.2.1] - July 5, 2026
+
 ### Added
 
 - **Allowed `webpack-dev-server` v6**. [PR #1102](https://github.com/shakacode/shakapacker/pull/1102) by [G-Rath](https://github.com/G-Rath).
@@ -984,7 +986,8 @@ Note: [Rubygem is 6.3.0.pre.rc.1](https://rubygems.org/gems/shakapacker/versions
 
 See [CHANGELOG.md in rails/webpacker (up to v5.4.3)](https://github.com/rails/webpacker/blob/master/CHANGELOG.md)
 
-[Unreleased]: https://github.com/shakacode/shakapacker/compare/v10.2.0...main
+[Unreleased]: https://github.com/shakacode/shakapacker/compare/v10.2.1...main
+[v10.2.1]: https://github.com/shakacode/shakapacker/compare/v10.2.0...v10.2.1
 [v10.2.0]: https://github.com/shakacode/shakapacker/compare/v10.1.0...v10.2.0
 [v10.1.0]: https://github.com/shakacode/shakapacker/compare/v10.0.0...v10.1.0
 [v10.0.0]: https://github.com/shakacode/shakapacker/compare/v9.7.0...v10.0.0
