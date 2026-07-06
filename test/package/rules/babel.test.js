@@ -48,6 +48,35 @@ const loadBabelRuleWithPackageMajors = (packageMajors) => {
   return require("../../../package/rules/babel")
 }
 
+const loadBabelRuleWithMissingBabelCore = () => {
+  jest.resetModules()
+  jest.doMock("../../../package/config", () => ({
+    javascript_transpiler: "babel"
+  }))
+  jest.doMock("../../../package/env", () => ({
+    isProduction: false
+  }))
+  jest.doMock("../../../package/rules/jscommon", () => ({}))
+  jest.doMock("../../../package/utils/errorHelpers", () => ({
+    isModuleNotFoundError: (error) => error?.code === "MODULE_NOT_FOUND"
+  }))
+  jest.doMock("../../../package/utils/helpers", () => ({
+    loaderMatches: (_configLoader, _loaderToCheck, ruleFactory) =>
+      ruleFactory(),
+    packageMajorVersion: (packageName) => {
+      if (packageName === "@babel/core") {
+        const error = new Error("Cannot find module '@babel/core/package.json'")
+        error.code = "MODULE_NOT_FOUND"
+        throw error
+      }
+
+      return 10
+    }
+  }))
+
+  return require("../../../package/rules/babel")
+}
+
 // Skip tests if babel config is not available (not the active transpiler)
 if (!babelConfig) {
   // eslint-disable-next-line jest/no-disabled-tests
@@ -140,6 +169,12 @@ describe("babel loader compatibility", () => {
         "babel-loader": 10
       }).use[0].loader
     ).toContain("babel-loader")
+  })
+
+  test("raises an actionable error when @babel/core is missing", () => {
+    expect(() => loadBabelRuleWithMissingBabelCore()).toThrow(
+      /@babel\/core package is not installed/
+    )
   })
 })
 

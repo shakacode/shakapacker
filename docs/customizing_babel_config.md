@@ -65,6 +65,9 @@ module.exports = function (api) {
       [
         "@babel/preset-react",
         {
+          // Babel 7 defaults to "classic"; Babel 8 defaults to "automatic".
+          // Choose the runtime intentionally when upgrading.
+          runtime: "classic",
           development: isDevelopmentEnv || isTestEnv
         }
       ]
@@ -97,10 +100,22 @@ npm install --save-dev @babel/core@^8 @babel/plugin-transform-runtime@^8 @babel/
 ```
 
 Babel 8 requires Node `^22.18.0 || >=24.11.0` while running the build. It also
-removed some Babel 7 configuration options. The Shakapacker preset omits those
-removed options when Babel 8 is running, but app-level custom Babel config should
-also avoid Babel 7-only options such as `useBuiltIns` on `@babel/preset-react`
-or `helpers` on `@babel/plugin-transform-runtime`.
+removed some Babel 7 configuration options and changed several defaults. The
+Shakapacker preset omits options removed by Babel 8 when Babel 8 is running, but
+app-level custom Babel config should also avoid Babel 7-only options such as
+`useBuiltIns` on `@babel/preset-react`, `useBuiltIns` or `corejs` on
+`@babel/preset-env`, or `helpers` on `@babel/plugin-transform-runtime`.
+
+If your app does not have a Browserslist or top-level Babel `targets` setting,
+Babel 8's no-target fallback is different from Babel 7's historical all-browser
+fallback. Add an explicit top-level `targets` value before upgrading when you
+need to preserve the old output policy.
+
+If you use `@babel/preset-react` or `@babel/plugin-transform-react-jsx`, choose
+the React runtime explicitly. Babel 7 defaulted to `runtime: "classic"` while
+Babel 8 defaults to `runtime: "automatic"`. Keep `runtime: "classic"` to
+preserve the previous transform behavior, or switch to `runtime: "automatic"`
+intentionally after confirming your React/SSR setup supports it.
 
 Shakapacker validates the loader/core pairing when `javascript_transpiler:
 "babel"` is active. If your app installs Babel 8, install `babel-loader` 10 or
