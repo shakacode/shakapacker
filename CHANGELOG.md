@@ -1,4 +1,5 @@
 - For the changelog of versions prior to v6, see the [5.x stable branch of rails/webpacker](https://github.com/rails/webpacker/tree/5-x-stable).
+- **Please see the [v10 Upgrade Guide](./docs/v10_upgrade.md) for upgrading to version 10 and accounting for breaking changes.**
 - **Please see the [v9 Upgrade Guide](./docs/v9_upgrade.md) for upgrading to version 9 and accounting for breaking changes.**
 - Please see the [v8 Upgrade Guide](./docs/v8_upgrade.md) for upgrading to version 8 and accounting for breaking changes.
 - Please see the [v7 Upgrade Guide](./docs/v7_upgrade.md) for upgrading to new spelling in version 7.
