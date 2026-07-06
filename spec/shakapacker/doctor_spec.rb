@@ -2099,7 +2099,7 @@ describe Shakapacker::Doctor do
           end
         end
 
-        context "when inferred webpack/SWC defaults have a hybrid-looking package graph without matching configs" do
+        context "when inferred webpack/SWC defaults have Babel but no swc-loader" do
           before do
             allow(config).to receive(:javascript_transpiler).and_return(nil)
             File.write(package_json_path, JSON.generate({
@@ -2108,20 +2108,79 @@ describe Shakapacker::Doctor do
                 "@rspack/core" => "^2.0.0"
               },
               "devDependencies" => {
-                "babel-loader" => "^9.0.0"
+                "babel-loader" => "^9.0.0",
+                "@babel/core" => "^7.20.0",
+                "@babel/preset-env" => "^7.20.0"
               }
             }))
           end
 
-          it "continues reporting missing SWC dependencies for the inferred webpack build" do
+          it "falls back to Babel instead of reporting missing SWC dependencies" do
             doctor.send(:check_javascript_transpiler_dependencies)
-            expect(doctor.issues).to include(match(/Missing required dependency '@swc\/core'/))
-            expect(doctor.issues).to include(match(/Missing required dependency 'swc-loader'/))
+            expect(doctor.info).to include(match(/Shakapacker defaults to SWC.*Babel was detected/))
+            expect(doctor.info).not_to include(match(/Consider switching to SWC/))
+            expect(doctor.issues).not_to include(match(/Missing required dependency '@swc\/core'/))
+            expect(doctor.issues).not_to include(match(/Missing required dependency 'swc-loader'/))
             expect(warning_messages).not_to include(match(/Skipping SWC dependency issue checks/))
+          end
+
+          it "treats blank deprecated webpack_loader config as implicit" do
+            allow(config).to receive(:data).and_return(config_data.merge(webpack_loader: nil))
+
+            doctor.send(:check_javascript_transpiler_dependencies)
+
+            expect(doctor.info).to include(match(/Shakapacker defaults to SWC.*Babel was detected/))
+            expect(doctor.info).not_to include(match(/Consider switching to SWC/))
+            expect(doctor.issues).not_to include(match(/Missing required dependency 'swc-loader'/))
+          end
+
+          it "treats blank javascript_transpiler config as implicit" do
+            allow(config).to receive(:data).and_return(config_data.merge(javascript_transpiler: nil))
+
+            doctor.send(:check_javascript_transpiler_dependencies)
+
+            expect(doctor.info).to include(match(/Shakapacker defaults to SWC.*Babel was detected/))
+            expect(doctor.info).not_to include(match(/Consider switching to SWC/))
+            expect(doctor.issues).not_to include(match(/Missing required dependency 'swc-loader'/))
+          end
+
+          it "treats non-string deprecated webpack_loader config as implicit" do
+            allow(config).to receive(:data).and_return(config_data.merge(webpack_loader: 123))
+
+            doctor.send(:check_javascript_transpiler_dependencies)
+
+            expect(doctor.info).to include(match(/Shakapacker defaults to SWC.*Babel was detected/))
+            expect(doctor.info).not_to include(match(/Consider switching to SWC/))
+            expect(doctor.issues).not_to include(match(/Missing required dependency 'swc-loader'/))
+          end
+
+          it "continues past bare node_modules markers to find package.json declarations" do
+            nested_source_path = root_path.join("workspace/nested/app/javascript")
+            FileUtils.mkdir_p(nested_source_path)
+            FileUtils.mkdir_p(root_path.join("workspace/nested/node_modules"))
+            FileUtils.rm_f(package_json_path)
+            File.write(root_path.join("workspace/package.json"), JSON.generate({
+              "dependencies" => {
+                "webpack" => "^5.0.0"
+              },
+              "devDependencies" => {
+                "babel-loader" => "^9.0.0",
+                "@babel/core" => "^7.20.0",
+                "@babel/preset-env" => "^7.20.0"
+              }
+            }))
+            allow(config).to receive(:source_path).and_return(nested_source_path)
+
+            doctor.send(:check_javascript_transpiler_dependencies)
+
+            expect(doctor.info).to include(match(/Shakapacker defaults to SWC.*Babel was detected/))
+            expect(doctor.info).not_to include(match(/Consider switching to SWC/))
+            expect(doctor.issues).not_to include(match(/Missing required dependency '@swc\/core'/))
+            expect(doctor.issues).not_to include(match(/Missing required dependency 'swc-loader'/))
           end
         end
 
-        context "when inferred webpack/SWC defaults meet a hybrid webpack and Rspack package graph" do
+        context "when inferred webpack/SWC defaults meet a hybrid webpack and Rspack package graph with Babel fallback" do
           before do
             allow(config).to receive(:javascript_transpiler).and_return(nil)
             File.write(root_path.join(".swcrc"), "{}")
@@ -2136,24 +2195,23 @@ describe Shakapacker::Doctor do
               },
               "devDependencies" => {
                 "babel-loader" => "^9.0.0",
-                "@babel/core" => "^7.20.0"
+                "@babel/core" => "^7.20.0",
+                "@babel/preset-env" => "^7.20.0"
               }
             }))
           end
 
-          it "skips inferred default SWC dependency issues for custom-hybrid package graphs" do
+          it "falls back to Babel before custom-hybrid SWC dependency handling" do
             doctor.send(:check_javascript_transpiler_dependencies)
+            expect(doctor.info).to include(match(/Shakapacker defaults to SWC.*Babel was detected/))
             expect(doctor.issues).not_to include(match(/Missing required dependency '@swc\/core'/))
             expect(doctor.issues).not_to include(match(/Missing required dependency 'swc-loader'/))
-            expect(warning_messages).to include(match(/Detected a custom hybrid webpack\/Rspack setup.*Skipping SWC dependency issue checks/))
-            expect(
-              doctor.warnings.find { |warning| warning[:message].match?(/Detected a custom hybrid webpack\/Rspack setup/) }[:category]
-            ).to eq(described_class::CATEGORY_INFO)
+            expect(warning_messages).not_to include(match(/Detected a custom hybrid webpack\/Rspack setup.*Skipping SWC dependency issue checks/))
             expect(warning_messages).not_to include(match(/Both SWC and Babel dependencies are installed/))
-            expect(warning_messages).to include(match(/\.swcrc file detected.*migrate to config\/swc\.config\.js/))
+            expect(warning_messages).not_to include(match(/\.swcrc file detected.*migrate to config\/swc\.config\.js/))
           end
 
-          it "uses real Configuration defaults as an inferred SWC doctor check" do
+          it "uses real Configuration defaults as an inferred Babel fallback doctor check" do
             File.write(config_path, <<~YAML)
               test:
                 source_path: app/javascript
@@ -2172,9 +2230,57 @@ describe Shakapacker::Doctor do
             real_warnings = real_doctor.warnings.map { |warning| warning[:message] }
 
             expect(stderr).not_to include("Transpiler Configuration Mismatch Detected")
+            expect(real_doctor.info).to include(match(/Shakapacker defaults to SWC.*Babel was detected/))
             expect(real_doctor.issues).not_to include(match(/Missing required dependency '@swc\/core'/))
             expect(real_doctor.issues).not_to include(match(/Missing required dependency 'swc-loader'/))
-            expect(real_warnings).to include(match(/Detected a custom hybrid webpack\/Rspack setup.*Skipping SWC dependency issue checks/))
+            expect(real_warnings).not_to include(match(/Detected a custom hybrid webpack\/Rspack setup.*Skipping SWC dependency issue checks/))
+          end
+
+          it "does not print a duplicate raw fallback warning in a full doctor run" do
+            File.write(config_path, <<~YAML)
+              test:
+                source_path: app/javascript
+                source_entry_path: packs
+                integrity:
+                  enabled: false
+            YAML
+
+            real_config = Shakapacker::Configuration.new(
+              root_path: root_path,
+              config_path: config_path,
+              env: "test"
+            )
+            real_doctor = described_class.new(real_config, root_path)
+            allow(real_doctor).to receive(:exit)
+            stdout = nil
+            stderr = capture_stderr { stdout = capture_stdout { real_doctor.run } }
+
+            expect(stdout.scan(/Shakapacker defaults to SWC.*Babel was detected/).length).to eq(1)
+            expect(stderr).not_to include("Shakapacker defaults to SWC")
+          end
+
+          it "does not print a raw fallback warning when javascript_transpiler is read before dependency checks" do
+            File.write(config_path, <<~YAML)
+              test:
+                source_path: app/javascript
+                source_entry_path: packs
+                integrity:
+                  enabled: false
+            YAML
+
+            real_config = Shakapacker::Configuration.new(
+              root_path: root_path,
+              config_path: config_path,
+              env: "test"
+            )
+            real_doctor = described_class.new(real_config, root_path)
+            stderr = capture_stderr do
+              real_doctor.send(:javascript_transpiler)
+              real_doctor.send(:check_javascript_transpiler_dependencies)
+            end
+
+            expect(real_doctor.info.join("\n").scan(/Shakapacker defaults to SWC.*Babel was detected/).length).to eq(1)
+            expect(stderr).not_to include("Shakapacker defaults to SWC")
           end
 
           it "reports an empty assets_bundler env override instead of substituting defaults" do
@@ -2300,25 +2406,29 @@ describe Shakapacker::Doctor do
                 "@rspack/core" => "^2.0.0"
               },
               "devDependencies" => {
-                "babel-loader" => "^9.0.0"
+                "babel-loader" => "^9.0.0",
+                "@babel/core" => "^7.20.0",
+                "@babel/preset-env" => "^7.20.0"
               }
             }))
           end
 
-          it "uses the custom config directory as hybrid evidence" do
+          it "uses Babel fallback before custom config directory hybrid evidence" do
             doctor.send(:check_javascript_transpiler_dependencies)
+            expect(doctor.info).to include(match(/Shakapacker defaults to SWC.*Babel was detected/))
             expect(doctor.issues).not_to include(match(/Missing required dependency '@swc\/core'/))
             expect(doctor.issues).not_to include(match(/Missing required dependency 'swc-loader'/))
-            expect(warning_messages).to include(match(/Skipping SWC dependency issue checks/))
+            expect(warning_messages).not_to include(match(/Skipping SWC dependency issue checks/))
           end
 
           it "matches runner path semantics for leading-slash config directories" do
             allow(config).to receive(:assets_bundler_config_path).and_return("/build_configs")
 
             doctor.send(:check_javascript_transpiler_dependencies)
+            expect(doctor.info).to include(match(/Shakapacker defaults to SWC.*Babel was detected/))
             expect(doctor.issues).not_to include(match(/Missing required dependency '@swc\/core'/))
             expect(doctor.issues).not_to include(match(/Missing required dependency 'swc-loader'/))
-            expect(warning_messages).to include(match(/Skipping SWC dependency issue checks/))
+            expect(warning_messages).not_to include(match(/Skipping SWC dependency issue checks/))
           end
         end
 
@@ -2418,7 +2528,7 @@ describe Shakapacker::Doctor do
         allow(config).to receive(:javascript_transpiler).and_return(nil)
       end
 
-      it "defaults to SWC and adds info message" do
+      it "uses bundled SWC default and adds info message" do
         package_json = {
           "devDependencies" => {
             "@swc/core" => "^1.3.0",
@@ -2428,7 +2538,7 @@ describe Shakapacker::Doctor do
         File.write(package_json_path, JSON.generate(package_json))
 
         doctor.send(:check_javascript_transpiler_dependencies)
-        expect(doctor.info).to include(match(/No javascript_transpiler configured - defaulting to SWC/))
+        expect(doctor.info).to include(match(/No javascript_transpiler configured - using bundled SWC default/))
       end
     end
 
@@ -2700,6 +2810,8 @@ describe Shakapacker::Doctor do
     end
 
     context "with TypeScript files" do
+      let(:config_data) { super().merge(javascript_transpiler: "babel") }
+
       before do
         FileUtils.mkdir_p(source_path)
         File.write(source_path.join("app.tsx"), "")

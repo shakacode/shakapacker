@@ -50,6 +50,13 @@ class Shakapacker::Configuration
     /\A(?:--config|-c|--node-env|--nodeEnv|--bundler|--build|--init|--list-builds)(?:=.*)?\z/
   private_constant :SHAKAPACKER_MANAGED_COMPILE_FLAG_PATTERN
 
+  IMPLICIT_SWC_BABEL_FALLBACK_WARNING =
+    "`javascript_transpiler` is not set in config/shakapacker.yml. " \
+    "Shakapacker defaults to SWC, but swc-loader is not installed and Babel was detected, so Babel will be used. " \
+    "Set `javascript_transpiler: babel` (or `swc`) explicitly to silence this message. " \
+    "See https://github.com/shakacode/shakapacker/blob/main/docs/transpiler-migration.md"
+  private_constant :IMPLICIT_SWC_BABEL_FALLBACK_WARNING
+
   DISALLOWED_WEBPACK_COMPILE_FLAGS =
     (SHAKAPACKER_NODE_FLAGS + SHAKAPACKER_RUNNER_COMMANDS + SHAKAPACKER_WATCH_FLAGS +
       SHAKAPACKER_MANAGED_COMPILE_FLAGS).freeze
@@ -357,24 +364,54 @@ class Shakapacker::Configuration
   # Resolution order:
   # 1. javascript_transpiler setting in config file
   # 2. webpack_loader setting in config file (deprecated)
-  # 3. Default based on bundler (swc for rspack, babel for webpack)
+  # 3. Bundled defaults
+  # 4. Babel fallback for implicit webpack/SWC defaults when swc-loader is missing
   #
   # Validates that the configured transpiler matches installed packages.
   #
   # @return [String] "babel", "swc", or "esbuild"
   def javascript_transpiler
-    # Show deprecation warning if using old 'webpack_loader' key
-    if data.has_key?(:webpack_loader) && !data.has_key?(:javascript_transpiler)
-      $stderr.puts "⚠️  DEPRECATION WARNING: The 'webpack_loader' configuration option is deprecated. Please use 'javascript_transpiler' instead as it better reflects its purpose of configuring JavaScript transpilation regardless of the bundler used."
-    end
+    return @javascript_transpiler if defined?(@javascript_transpiler)
 
-    # Use explicit config if set, otherwise default based on bundler
-    transpiler = fetch(:javascript_transpiler) || fetch(:webpack_loader) || default_javascript_transpiler
+    @javascript_transpiler =
+      begin
+        javascript_transpiler_configured = config_value_configured?(:javascript_transpiler)
+        webpack_loader_configured = config_value_present?(:webpack_loader)
 
-    # Validate transpiler configuration
-    validate_transpiler_configuration(transpiler) unless self.class.installing
+        # Show deprecation warning if using old 'webpack_loader' key
+        if webpack_loader_configured && !javascript_transpiler_configured
+          $stderr.puts "⚠️  DEPRECATION WARNING: The 'webpack_loader' configuration option is deprecated. Please use 'javascript_transpiler' instead as it better reflects its purpose of configuring JavaScript transpilation regardless of the bundler used."
+        end
 
-    transpiler
+        # Use explicit config if set, otherwise default based on bundler
+        current_javascript_transpiler =
+          if javascript_transpiler_configured
+            fetch(:javascript_transpiler)
+          elsif data.has_key?(:javascript_transpiler)
+            defaults[:javascript_transpiler]
+          else
+            fetch(:javascript_transpiler)
+          end
+
+        transpiler =
+          if webpack_loader_configured && !javascript_transpiler_configured
+            fetch(:webpack_loader) || default_javascript_transpiler
+          else
+            current_javascript_transpiler || fetch(:webpack_loader) || default_javascript_transpiler
+          end
+
+        if !javascript_transpiler_configured &&
+            !webpack_loader_configured &&
+            implicit_swc_to_babel_fallback?(transpiler)
+          $stderr.puts IMPLICIT_SWC_BABEL_FALLBACK_WARNING
+          transpiler = "babel"
+        end
+
+        # Validate transpiler configuration
+        validate_transpiler_configuration(transpiler) unless self.class.installing
+
+        transpiler
+      end
   end
 
   # Deprecated alias for {#javascript_transpiler}
@@ -461,42 +498,124 @@ class Shakapacker::Configuration
       rspack? ? "swc" : "babel"
     end
 
+    def implicit_swc_to_babel_fallback?(transpiler)
+      webpack? &&
+        transpiler == "swc" &&
+        !package_dependency?("swc-loader") &&
+        package_dependency?("babel-loader")
+    end
+
+    def package_dependency?(package_name)
+      declared_package_dependencies.key?(package_name)
+    end
+
+    def config_value_present?(key)
+      return false unless data.has_key?(key)
+
+      value = data[key]
+      value.is_a?(String) && !value.strip.empty?
+    end
+
+    def config_value_configured?(key)
+      return false unless data.has_key?(key)
+
+      value = data[key]
+      return false if value.nil?
+      return false if value.is_a?(String) && value.strip.empty?
+
+      true
+    end
+
+    def declared_package_dependencies
+      return @declared_package_dependencies if defined?(@declared_package_dependencies)
+
+      @declared_package_dependencies =
+        package_json_paths.reverse_each.each_with_object({}) do |path, dependencies|
+          package_json = parse_package_json(path)
+          next unless package_json
+
+          dependencies.merge!(installable_package_dependencies(package_json))
+        end
+    end
+
+    def installable_package_dependencies(package_json)
+      (package_json["optionalDependencies"] || {})
+        .merge(package_json["devDependencies"] || {})
+        .merge(package_json["dependencies"] || {})
+    end
+
+    def package_json_paths
+      @package_json_paths ||= package_root_paths
+        .map { |path| path.join("package.json") }
+        .select(&:exist?)
+    end
+
+    def parse_package_json(path)
+      JSON.parse(File.read(path))
+    rescue JSON::ParserError, SystemCallError
+      nil
+    end
+
+    def package_root_paths
+      @package_root_paths ||= [javascript_package_root_path, root_path].uniq
+    end
+
+    def javascript_package_root_path
+      @javascript_package_root_path ||= begin
+        resolved_source_path = source_path.expand_path
+        app_root = root_path.expand_path
+
+        if path_within?(resolved_source_path, app_root)
+          current = resolved_source_path
+          loop do
+            break current if current.join("package.json").exist?
+            break root_path if current == app_root
+
+            parent = current.dirname
+            break root_path if parent == current
+
+            current = parent
+          end
+        else
+          root_path
+        end
+      rescue StandardError
+        root_path
+      end
+    end
+
+    def path_within?(path, parent)
+      path.to_s == parent.to_s || path.to_s.start_with?("#{parent}#{File::SEPARATOR}")
+    end
+
     def validate_transpiler_configuration(transpiler)
       return unless ENV["NODE_ENV"] != "test" # Skip validation in test environment
 
       # Skip validation if transpiler is set to 'none' (custom webpack config)
       return if transpiler == "none"
 
-      # Check if package.json exists
-      package_json_path = root_path.join("package.json")
-      return unless package_json_path.exist?
+      all_deps = declared_package_dependencies
+      return if all_deps.empty?
 
-      begin
-        package_json = JSON.parse(File.read(package_json_path))
-        all_deps = (package_json["dependencies"] || {}).merge(package_json["devDependencies"] || {})
+      # Check for transpiler mismatch
+      has_babel = all_deps.keys.any? { |pkg| pkg.start_with?("@babel/", "babel-") }
+      has_swc = all_deps.keys.any? { |pkg| pkg.include?("swc") }
+      has_esbuild = all_deps.keys.any? { |pkg| pkg.include?("esbuild") }
 
-        # Check for transpiler mismatch
-        has_babel = all_deps.keys.any? { |pkg| pkg.start_with?("@babel/", "babel-") }
-        has_swc = all_deps.keys.any? { |pkg| pkg.include?("swc") }
-        has_esbuild = all_deps.keys.any? { |pkg| pkg.include?("esbuild") }
-
-        case transpiler
-        when "babel"
-          if !has_babel && has_swc
-            warn_transpiler_mismatch("Babel", "SWC packages found but Babel is configured")
-          end
-        when "swc"
-          if !has_swc && has_babel
-            warn_transpiler_mismatch("SWC", "Babel packages found but SWC is configured")
-          end
-        when "esbuild"
-          if !has_esbuild && (has_babel || has_swc)
-            other = has_babel ? "Babel" : "SWC"
-            warn_transpiler_mismatch("esbuild", "#{other} packages found but esbuild is configured")
-          end
+      case transpiler
+      when "babel"
+        if !has_babel && has_swc
+          warn_transpiler_mismatch("Babel", "SWC packages found but Babel is configured")
         end
-      rescue JSON::ParserError
-        # Ignore if package.json is malformed
+      when "swc"
+        if !has_swc && has_babel
+          warn_transpiler_mismatch("SWC", "Babel packages found but SWC is configured")
+        end
+      when "esbuild"
+        if !has_esbuild && (has_babel || has_swc)
+          other = has_babel ? "Babel" : "SWC"
+          warn_transpiler_mismatch("esbuild", "#{other} packages found but esbuild is configured")
+        end
       end
     end
 
