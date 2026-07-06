@@ -59,6 +59,9 @@ module Shakapacker
       "@rspack/plugin-react-refresh" => "^2.0.0"
     }.freeze
 
+    RSPACK_REACT_REFRESH_PACKAGE = "@rspack/plugin-react-refresh".freeze
+    VERSION_UPPER_BOUND_OPERATORS = %w[< <=].freeze
+
     CUSTOM_HYBRID_LOADER_DEPS = %w[
       babel-loader
       esbuild-loader
@@ -170,6 +173,7 @@ module Shakapacker
         check_css_modules_configuration
         check_bundler_dependencies if config_exists?
         check_rspack_cache_configuration if config_exists?
+        check_rspack_react_refresh_plugin_constructor if config_exists?
         check_file_type_dependencies if config_exists?
         check_sri_dependencies if config_exists?
         check_peer_dependencies
@@ -878,14 +882,89 @@ module Shakapacker
                      "See https://rspack.rs/config/cache for options.")
       end
 
+      def check_rspack_react_refresh_plugin_constructor
+        return unless rspack_react_refresh_check_applicable?
+        return unless rspack_react_refresh_plugin_v2_or_newer?
+
+        rspack_react_refresh_config_paths.each do |path|
+          content = File.read(path)
+          next unless legacy_rspack_react_refresh_constructor?(content)
+
+          relative = config_path_for_warning(path)
+          add_action_required("Rspack React Refresh config #{relative} uses the " \
+                              "#{RSPACK_REACT_REFRESH_PACKAGE} v1 default-export constructor pattern. " \
+                              "With #{RSPACK_REACT_REFRESH_PACKAGE} v2, rspack may fail with " \
+                              "'ReactRefreshPlugin is not a constructor'.")
+          add_fix_hint("Use a compat constructor: const ReactRefresh = require(\"#{RSPACK_REACT_REFRESH_PACKAGE}\"); " \
+                       "const ReactRefreshRspackPlugin = ReactRefresh.ReactRefreshRspackPlugin || " \
+                       "ReactRefresh.default || ReactRefresh; then call new ReactRefreshRspackPlugin().")
+        rescue SystemCallError => e
+          add_info_warning("Unable to validate Rspack React Refresh config #{config_path_for_warning(path)}: #{e.message}")
+        end
+      end
+
+      def rspack_react_refresh_check_applicable?
+        assets_bundler == "rspack" || unconfigured_hybrid_loader_graph?
+      end
+
+      def rspack_react_refresh_plugin_v2_or_newer?
+        version = installed_package_version(RSPACK_REACT_REFRESH_PACKAGE)
+        return version >= Gem::Version.new("2.0.0") if version
+
+        package_specifier_allows_version_or_newer?(
+          package_json_dependency_version(RSPACK_REACT_REFRESH_PACKAGE),
+          Gem::Version.new("2.0.0")
+        )
+      end
+
+      def rspack_react_refresh_config_paths
+        config_dir = rspack_react_refresh_config_dir
+        config_dir_path = Pathname.new(File.join(root_path.to_s, config_dir))
+        return [] unless config_dir_path.directory?
+
+        path = active_bundler_config_path_in(config_dir)
+        path ? [path] : []
+      end
+
+      def rspack_react_refresh_config_dir
+        config_dir = config.assets_bundler_config_path.to_s
+
+        if assets_bundler == "rspack" || same_directory_hybrid_config_present?(config_dir)
+          config_dir
+        else
+          "config/rspack"
+        end
+      end
+
+      def legacy_rspack_react_refresh_constructor?(content)
+        stripped = strip_rspack_config_comments_and_literals(content, preserve_literals: [RSPACK_REACT_REFRESH_PACKAGE])
+        constructor_names = []
+
+        constructor_names.concat(stripped.scan(
+          /\b(?:const|let|var)\s+([A-Za-z_$][\w$]*)\s*=\s*require\(\s*["']#{Regexp.escape(RSPACK_REACT_REFRESH_PACKAGE)}["']\s*\)(?=\s*(?:[;,\)]|$))/
+        ).flatten)
+        constructor_names.concat(stripped.scan(
+          /\bimport\s+([A-Za-z_$][\w$]*)\s*(?:,\s*\{[^}]*\}\s*)?\s+from\s*["']#{Regexp.escape(RSPACK_REACT_REFRESH_PACKAGE)}["']/
+        ).flatten)
+        constructor_names.concat(stripped.scan(
+          /\bimport\s+\*\s+as\s+([A-Za-z_$][\w$]*)\s+from\s*["']#{Regexp.escape(RSPACK_REACT_REFRESH_PACKAGE)}["']/
+        ).flatten)
+
+        constructor_names.uniq.any? do |constructor_name|
+          stripped.match?(/\bnew\s+#{Regexp.escape(constructor_name)}\s*\(/)
+        end
+      end
+
       # Returns the single active config path the runner would load, or nil. Mirrors the
       # resolution order in Shakapacker::Runner#find_rspack_config_with_fallback so the
       # doctor inspects the same file the build will actually use (and so unused sibling
       # configs in the same directory don't trigger spurious warnings).
       # NOTE: keep this candidate list in sync with Runner#find_rspack_config_with_fallback.
       def active_assets_bundler_config_path
-        config_dir = config.assets_bundler_config_path.to_s
+        active_bundler_config_path_in(config.assets_bundler_config_path.to_s)
+      end
 
+      def active_bundler_config_path_in(config_dir)
         candidates = %w[ts js].map { |ext| Pathname.new(File.join(root_path.to_s, config_dir, "rspack.config.#{ext}")) }
         candidates += %w[ts js].map { |ext| Pathname.new(File.join(root_path.to_s, config_dir, "webpack.config.#{ext}")) }
         if default_rspack_config_dir?(config_dir)
@@ -944,7 +1023,7 @@ module Shakapacker
         stripped.gsub(%r{/(?:\\.|\[[^\]\n]*\]|[^/\n\\\[])+?/[gimsuy]*}, "")
       end
 
-      def strip_rspack_config_comments_and_literals(content)
+      def strip_rspack_config_comments_and_literals(content, preserve_literals: [])
         stripped = +""
         index = 0
 
@@ -987,8 +1066,12 @@ module Shakapacker
             end
 
             literal = content[index...literal_end]
-            stripped << '""'
-            stripped << literal.gsub(/[^\n]/, "")
+            if preserved_js_string_literal?(literal, char, preserve_literals)
+              stripped << literal
+            else
+              stripped << '""'
+              stripped << literal.gsub(/[^\n]/, "")
+            end
             index = literal_end
           elsif char == "`"
             literal_end = index + 1
@@ -1027,6 +1110,12 @@ module Shakapacker
         end
 
         stripped
+      end
+
+      def preserved_js_string_literal?(literal, quote, preserve_literals)
+        return false unless literal.end_with?(quote)
+
+        preserve_literals.include?(literal[1...-1])
       end
 
       def direct_export_cache_disabled?(stripped)
@@ -1183,13 +1272,56 @@ module Shakapacker
           return versions.min
         end
 
+        return package_version_from_range_specifier(cleaned) if cleaned.match?(/[<>=]/)
         return nil unless cleaned.match?(/\A[\^~]?\d/)
-        return nil if cleaned.match?(/(\s|\|\||[<>=:]|\A(?:git|file|link|workspace|npm):)/)
+        return nil if cleaned.match?(/(\s|\|\||:|\A(?:git|file|link|workspace|npm):)/)
 
         match = cleaned.sub(/\A[\^~]/, "").match(/\A(\d+(?:\.\d+){0,2})(?:-[0-9A-Za-z.-]+)?\z/)
         match && Gem::Version.new(match[1])
       rescue ArgumentError
         nil
+      end
+
+      def package_version_from_range_specifier(specifier)
+        lower_bounds = specifier.scan(/(?:\A|\s)(?:>=|>)\s*(\d+(?:\.\d+){0,2})(?:-[0-9A-Za-z.-]+)?/)
+        versions = lower_bounds.flatten.map { |version| Gem::Version.new(version) }
+
+        versions.max
+      rescue ArgumentError
+        nil
+      end
+
+      def package_specifier_allows_version_or_newer?(specifier, minimum)
+        return false unless specifier
+
+        cleaned = specifier.strip
+        if cleaned.include?("||")
+          return cleaned.split("||").any? { |part| package_specifier_allows_version_or_newer?(part, minimum) }
+        end
+        return false if cleaned.match?(/(:|\A(?:git|file|link|workspace|npm):)/)
+
+        if cleaned.match?(/[<>=]/)
+          return package_range_specifier_allows_version_or_newer?(cleaned, minimum)
+        end
+
+        version = package_version_from_specifier(cleaned)
+        version && version >= minimum
+      end
+
+      def package_range_specifier_allows_version_or_newer?(specifier, minimum)
+        comparators = specifier.scan(/(?:\A|\s)(<=|<|>=|>|=)\s*(\d+(?:\.\d+){0,2})(?:-[0-9A-Za-z.-]+)?/)
+        return false if comparators.empty?
+
+        equalities = comparators.select { |operator, _version| operator == "=" }
+        return equalities.any? { |_operator, version| Gem::Version.new(version) >= minimum } if equalities.any?
+
+        upper_bounds = comparators.select { |operator, _version| VERSION_UPPER_BOUND_OPERATORS.include?(operator) }
+        upper_bounds.all? do |operator, version|
+          parsed = Gem::Version.new(version)
+          operator == "<" ? parsed > minimum : parsed >= minimum
+        end
+      rescue ArgumentError
+        false
       end
 
       def declared_package_dependencies
