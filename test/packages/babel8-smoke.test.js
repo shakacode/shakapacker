@@ -4,6 +4,10 @@
 // Babel 7. Enable this smoke with RUN_BABEL8_SMOKE=1 after `yarn build`; it
 // installs Babel 8 packages into a temp app and runs Webpack through
 // babel-loader 10 with Shakapacker's built Babel preset.
+//
+// Keep the pinned Babel 8 package versions below in sync during Babel
+// compatibility reviews. This smoke covers the published preset path; the
+// babel-loader version guard is covered by test/package/rules/babel.test.js.
 
 const { spawnSync } = require("child_process")
 const fs = require("fs")
