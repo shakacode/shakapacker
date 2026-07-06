@@ -82,8 +82,7 @@ jobs:
           git fetch origin ${{ github.event.pull_request.base.sha }}
           if git diff --name-only ${{ github.event.pull_request.base.sha }} ${{ github.sha }} | grep -q '^.github/workflows'; then
             echo "changed=true" >> "$GITHUB_OUTPUT"
-            response=$(curl -sf https://api.github.com/repos/rhysd/actionlint/releases/latest)
-            if [ $? -eq 0 ]; then
+            if response=$(curl -sf https://api.github.com/repos/rhysd/actionlint/releases/latest); then
               actionlint_version=$(echo "$response" | jq -r .tag_name)
               if [ -z "$actionlint_version" ]; then
                 echo "Failed to parse Actionlint version"
@@ -141,7 +140,7 @@ jobs:
             --skipLibCheck \
             --moduleResolution bundler \
             --types node \
-            *.d.ts
+            ./*.d.ts
   test:
     name: Testing
     strategy:

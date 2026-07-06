@@ -1,0 +1,55 @@
+name: Babel 8 smoke
+
+on:
+  push:
+    branches:
+      - "main"
+    paths:
+      - ".github/workflows/babel8-smoke.yml"
+      - "package.json"
+      - "yarn.lock"
+      - "package/babel/**"
+      - "package/utils/**"
+      - "test/packages/babel8-smoke.test.js"
+  pull_request:
+    paths:
+      - ".github/workflows/babel8-smoke.yml"
+      - "package.json"
+      - "yarn.lock"
+      - "package/babel/**"
+      - "package/utils/**"
+      - "test/packages/babel8-smoke.test.js"
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  babel8-smoke:
+    name: Babel 8 smoke
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Use Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22.x"
+          cache: yarn
+
+      - name: Install dependencies
+        run: yarn --frozen-lockfile --non-interactive --prefer-offline
+
+      - name: Build TypeScript
+        run: yarn build
+
+      - name: Babel 8 smoke
+        run: yarn jest test/packages/babel8-smoke.test.js --runInBand
+        env:
+          BABEL_ENV: production
+          RUN_BABEL8_SMOKE: "1"
