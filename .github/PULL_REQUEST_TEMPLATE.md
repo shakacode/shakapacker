@@ -12,6 +12,7 @@
 - [ ] Add/update test to cover these changes
 - [ ] Update documentation
 - [ ] Update CHANGELOG file
+- [ ] Before merge, verify the current head with `.agents/bin/merge-readiness-check <PR_NUMBER>` so the full `gh pr checks` list and review threads are settled, not only required checks
 
 ### Other Information
 
