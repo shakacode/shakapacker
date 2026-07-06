@@ -88,7 +88,8 @@ Note that pre-release versions use different formats:
 
 For major version upgrades, always consult the version-specific upgrade guides for breaking changes and new features:
 
-- [v10.0.0 Release Notes](https://github.com/shakacode/shakapacker/releases/tag/v10.0.0) - Upgrading from v9 to v10 (includes webpack and dev-server minimum version changes)
+- [V10 Upgrade Guide](./v10_upgrade.md) - Upgrading from v9 to v10 (includes webpack/dev-server minimums, Node engine changes, Rspack v2, and 10.2 upgrade notes)
+- [v10.0.0 Release Notes](https://github.com/shakacode/shakapacker/releases/tag/v10.0.0) - Original v10.0.0 release notes
 - [V9 Upgrade Guide](./v9_upgrade.md) - Upgrading from v8 to v9 (includes CSS Modules changes, SWC defaults, and more)
 - [V8 Upgrade Guide](./v8_upgrade.md) - Upgrading from v7 to v8
 - [V7 Upgrade Guide](./v7_upgrade.md) - Upgrading from v6 to v7

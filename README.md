@@ -114,7 +114,8 @@ and release-to-release upgrade paths.
 
 Older major-version docs:
 
-- [v10.0.0 release notes](https://github.com/shakacode/shakapacker/releases/tag/v10.0.0)
+- [v10 upgrade guide](https://github.com/shakacode/shakapacker/blob/main/docs/v10_upgrade.md)
+  ([docs site](https://shakapacker.com/docs/v10_upgrade/))
 - [v9 upgrade guide](https://shakapacker.com/docs/v9_upgrade/)
 - [v8 upgrade guide](https://shakapacker.com/docs/v8_upgrade/)
 - [v7 upgrade guide](https://shakapacker.com/docs/v7_upgrade/)
