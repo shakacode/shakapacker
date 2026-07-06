@@ -1,0 +1,193 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require "json"
+require "open3"
+require "time"
+require "uri"
+
+READY_MERGE_STATE_STATUSES = %w[CLEAN HAS_HOOKS].freeze
+
+def usage
+  warn "Usage: .agents/bin/merge-readiness-check <PR_NUMBER> [--repo [HOST/]OWNER/REPO]"
+  exit 2
+end
+
+pr_number = ARGV.shift || usage
+repo = nil
+repo_part_pattern = /\A[A-Za-z0-9_.-]+\z/
+
+usage unless pr_number.match?(/\A\d+\z/)
+
+until ARGV.empty?
+  arg = ARGV.shift
+  case arg
+  when "--repo"
+    repo = ARGV.shift || usage
+  else
+    usage
+  end
+end
+
+def run(*cmd, allowed_exit_codes: [0])
+  stdout, stderr, status = Open3.capture3(*cmd)
+  return stdout if allowed_exit_codes.include?(status.exitstatus)
+
+  warn(stderr.empty? ? stdout : stderr)
+  exit 2
+end
+
+def run_json(*cmd, allowed_exit_codes: [0])
+  JSON.parse(run(*cmd, allowed_exit_codes: allowed_exit_codes))
+rescue JSON::ParserError => e
+  warn "Failed to parse JSON from #{cmd.join(" ")}: #{e.message}"
+  exit 2
+end
+
+def run_checks_json(*cmd)
+  stdout, stderr, status = Open3.capture3(*cmd)
+  combined_output = "#{stdout}\n#{stderr}"
+  return [] if [1, 8].include?(status.exitstatus) && stdout.strip.empty? && combined_output.match?(/no checks reported/i)
+
+  unless [0, 1, 8].include?(status.exitstatus)
+    warn(stderr.empty? ? stdout : stderr)
+    exit 2
+  end
+
+  JSON.parse(stdout)
+rescue JSON::ParserError => e
+  warn "Failed to parse JSON from #{cmd.join(" ")}: #{e.message}"
+  exit 2
+end
+
+def parse_time(value, label)
+  Time.parse(value)
+rescue ArgumentError => e
+  warn "Failed to parse #{label} timestamp #{value.inspect}: #{e.message}"
+  exit 2
+end
+
+def gh_repo
+  repo = run_json("gh", "repo", "view", "--json", "nameWithOwner,url")
+  name_with_owner = repo.fetch("nameWithOwner")
+  host = URI(repo.fetch("url")).host
+
+  host == "github.com" ? name_with_owner : "#{host}/#{name_with_owner}"
+end
+
+repo ||= gh_repo
+repo_parts = repo.split("/")
+usage unless [2, 3].include?(repo_parts.length)
+usage unless repo_parts.all? { |part| part.match?(repo_part_pattern) }
+
+api_args = []
+api_args = ["--hostname", repo_parts[0]] if repo_parts.length == 3
+owner, name = repo_parts.last(2)
+
+pr = run_json(
+  "gh", "pr", "view", pr_number,
+  "--repo", repo,
+  "--json", "number,title,state,isDraft,headRefOid,mergeStateStatus,mergedAt,url,reviewDecision"
+)
+
+checks = run_checks_json(
+  "gh", "pr", "checks", pr_number,
+  "--repo", repo,
+  "--json", "name,state,bucket,completedAt,startedAt,workflow,link"
+)
+
+query = <<~GRAPHQL
+  query($owner:String!, $name:String!, $pr:Int!, $endCursor:String) {
+    repository(owner:$owner, name:$name) {
+      pullRequest(number:$pr) {
+        reviewThreads(first:100, after:$endCursor) {
+          nodes {
+            id
+            isResolved
+          }
+          pageInfo { hasNextPage endCursor }
+        }
+      }
+    }
+  }
+GRAPHQL
+
+review_threads = []
+end_cursor = nil
+
+loop do
+  graphql_args = [
+    "gh", "api", *api_args, "graphql",
+    "-f", "owner=#{owner}",
+    "-f", "name=#{name}",
+    "-F", "pr=#{pr_number}",
+    "-f", "query=#{query}"
+  ]
+  graphql_args += ["-f", "endCursor=#{end_cursor}"] if end_cursor
+  thread_result = run_json(*graphql_args)
+
+  threads = thread_result.dig("data", "repository", "pullRequest", "reviewThreads")
+  review_threads.concat(threads.fetch("nodes"))
+
+  page_info = threads.fetch("pageInfo")
+  break unless page_info.fetch("hasNextPage")
+
+  end_cursor = page_info.fetch("endCursor")
+end
+
+unresolved_threads = review_threads.reject { |thread| thread.fetch("isResolved") }
+
+def ready_check?(check)
+  return true if check.fetch("bucket") == "pass"
+
+  check.fetch("bucket") == "skipping" && check.fetch("state").to_s.casecmp?("SKIPPED")
+end
+
+bad_checks = checks.reject { |check| ready_check?(check) }
+
+failures = []
+failures << "PR is draft" if pr.fetch("isDraft")
+if checks.empty?
+  failures << "no checks returned; readiness is UNKNOWN; path-filtered PRs need maintainer judgment"
+end
+failures << "#{bad_checks.length} check(s) are not pass/skipped: #{bad_checks.map { |check| check.fetch("name") }.join(", ")}" if bad_checks.any?
+failures << "#{unresolved_threads.length} unresolved review thread(s) remain" if unresolved_threads.any?
+failures << "reviewDecision is CHANGES_REQUESTED" if pr["reviewDecision"] == "CHANGES_REQUESTED"
+
+merged_at = pr["mergedAt"]
+
+if merged_at
+  merge_time = parse_time(merged_at, "merge")
+  late_checks = checks.select do |check|
+    completed_at = check["completedAt"]
+    # GitHub's GraphQL zero-time sentinel for queued or in-progress checks.
+    next false if completed_at.nil? || completed_at == "" || completed_at.start_with?("0001-01-01")
+
+    parse_time(completed_at, "#{check.fetch("name")} completedAt") > merge_time
+  end
+
+  failures << "#{late_checks.length} check(s) completed after merge: #{late_checks.map { |check| check.fetch("name") }.join(", ")}" if late_checks.any?
+else
+  failures << "PR is #{pr.fetch("state")}, expected OPEN" unless pr.fetch("state") == "OPEN"
+  unless READY_MERGE_STATE_STATUSES.include?(pr.fetch("mergeStateStatus"))
+    failures << "mergeStateStatus is #{pr.fetch("mergeStateStatus")}, expected #{READY_MERGE_STATE_STATUSES.join(" or ")}"
+  end
+end
+
+puts "PR ##{pr.fetch("number")}: #{pr.fetch("title")}"
+puts "URL: #{pr.fetch("url")}"
+puts "Head SHA: #{pr.fetch("headRefOid")}"
+puts "State: #{pr.fetch("state")}"
+puts "Review decision: #{pr["reviewDecision"] || "not reported"}"
+puts "Checks: #{checks.length} total; #{bad_checks.length} not pass/skipped"
+puts "Unresolved review threads: #{unresolved_threads.length}"
+puts "Merged at: #{merged_at || "not merged"}"
+puts "Replay source: current live check snapshot; check reruns can change historical conclusions and completion times." if merged_at
+
+if failures.any?
+  warn "MERGE_READINESS_NOT_READY"
+  failures.each { |failure| warn "- #{failure}" }
+  exit 1
+end
+
+puts "MERGE_READINESS_READY"

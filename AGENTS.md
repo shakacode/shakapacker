@@ -33,6 +33,10 @@ value is here.
   `yarn test --runInBand`).
 - **Build / type checks**: `.agents/bin/build` (`yarn build` and
   `yarn type-check`).
+- **Merge-readiness replay**: `.agents/bin/merge-readiness-check <PR_NUMBER>`
+  verifies the full current-head `gh pr checks` list, unresolved review threads,
+  mergeability, and historical post-merge timing for replay audits such as
+  PR #1183.
 - **Review gate**: AI reviewers are advisory unless they confirm a blocker; the
   merge gate is the full `gh pr checks` list green (not only `--required`), all
   review threads resolved, and mergeable clean.

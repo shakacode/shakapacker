@@ -12,6 +12,7 @@ means that capability is n/a here.
 | `test`     | Run tests                                | `bundle exec rake test` (rspec) + `yarn test --runInBand` (jest) |
 | `lint`     | Lint / format (pass `-A` to fix RuboCop) | `bundle exec rubocop` + `yarn lint` (eslint)                     |
 | `build`    | Build / type-check                       | `yarn build` + `yarn type-check`                                 |
+| `merge-readiness-check` | Pre-merge/replay readiness check | Verifies full `gh pr checks` completion, unresolved review threads, mergeability, and historical post-merge timing |
 
 Canonical non-command policy lives in [`../../AGENTS.md`](../../AGENTS.md).
 [`../agent-workflow.yml`](../agent-workflow.yml) is retained only as a

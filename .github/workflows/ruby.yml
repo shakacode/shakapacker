@@ -13,6 +13,7 @@ on:
       - "Rakefile"
       - "gemfiles/**"
       - ".rubocop.yml"
+      - ".agents/bin/merge-readiness-check"
       - "package.json"
       - "**.ts"
       - ".github/workflows/ruby.yml"
