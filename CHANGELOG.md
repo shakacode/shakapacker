@@ -10,6 +10,10 @@
 
 ## [Unreleased]
 
+### Fixed
+
+- **Fixed webpack Babel, SWC, and esbuild rules skipping explicitly included `.cjs` files.** [PR #1219](https://github.com/shakacode/shakapacker/pull/1219) by [oiahoon](https://github.com/oiahoon). Fixes [#1218](https://github.com/shakacode/shakapacker/issues/1218).
+
 ## [v10.3.0] - July 5, 2026
 
 ### Added
