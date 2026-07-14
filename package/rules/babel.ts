@@ -38,7 +38,7 @@ export = loaderMatches(javascriptTranspiler, "babel", () => {
   validateBabelLoaderCompatibility()
 
   return {
-    test: /\.(js|jsx|mjs|ts|tsx|coffee)?(\.erb)?$/,
+    test: /\.(js|jsx|mjs|cjs|ts|tsx|coffee)?(\.erb)?$/,
     ...jscommon,
     use: [
       {

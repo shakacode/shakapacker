@@ -65,4 +65,12 @@ describe("esbuild", () => {
     await compiler.run()
     expect(tracked[included]).toBeTruthy()
   })
+
+  test("explicitly included .cjs files should be transpiled", async () => {
+    const included = `${pathToNodeModulesIncluded}/a.cjs`
+    const [tracked, loader] = createTrackLoader()
+    const compiler = createTestCompiler(createWebpackConfig(included, loader))
+    await compiler.run()
+    expect(tracked[included]).toBeTruthy()
+  })
 })
