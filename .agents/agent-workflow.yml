@@ -1,7 +1,6 @@
 # Non-command agent-workflow configuration for portable shared skills.
 # Commands live as scripts in .agents/bin/ (see .agents/bin/README.md).
-# Compatibility summary for older workflow copies; canonical values live in
-# AGENTS.md.
+# AGENTS.md directs discovery here; this file is canonical for the values below.
 base_branch: main
 changelog: "CHANGELOG.md — user-visible changes only"
 follow_up_prefix: "Follow-up:"
