@@ -11,6 +11,8 @@ class Shakapacker::DevServerProxy < Rack::Proxy
 
   def perform_request(env)
     if env["PATH_INFO"].start_with?("/#{public_output_uri_path}") && dev_server.running?
+      # rack-proxy v1 refuses to derive the backend from the Host header.
+      env["rack.backend"] = URI("#{dev_server.protocol}://#{dev_server.host_with_port}")
       env["HTTP_HOST"] = env["HTTP_X_FORWARDED_HOST"] = dev_server.host
       env["HTTP_X_FORWARDED_SERVER"] = dev_server.host_with_port
       env["HTTP_PORT"] = env["HTTP_X_FORWARDED_PORT"] = dev_server.port.to_s
