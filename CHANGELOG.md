@@ -13,6 +13,7 @@
 ### Fixed
 
 - **Fixed webpack Babel, SWC, and esbuild rules skipping explicitly included `.cjs` files.** [PR #1219](https://github.com/shakacode/shakapacker/pull/1219) by [oiahoon](https://github.com/oiahoon). Fixes [#1218](https://github.com/shakacode/shakapacker/issues/1218).
+- **Fixed 502 responses for proxied dev server assets under `rack-proxy` v1.** [PR #1222](https://github.com/shakacode/shakapacker/pull/1222) by [jcbpl](https://github.com/jcbpl). Fixes [#1220](https://github.com/shakacode/shakapacker/issues/1220).
 
 ## [v10.3.0] - July 5, 2026
 
