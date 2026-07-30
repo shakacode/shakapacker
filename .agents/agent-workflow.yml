@@ -12,3 +12,4 @@ merge_ledger: n/a
 ci_parity_environment: "n/a — reproduce CI-only failures from the matching job in .github/workflows/**"
 hosted_ci_trigger: "n/a — CI runs on every PR"
 ci_change_detector: n/a
+repo_prefix: SP
