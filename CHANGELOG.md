@@ -12,6 +12,7 @@
 
 ### Fixed
 
+- **Fixed dev-server liveness checks treating refused macOS 27 connections as running.** The Ruby probe now verifies the connected socket's `SO_ERROR` result before proxying asset requests, avoiding false-positive dev-server detection and resulting 502 responses. Fixes [#1224](https://github.com/shakacode/shakapacker/issues/1224).
 - **Fixed webpack Babel, SWC, and esbuild rules skipping explicitly included `.cjs` files.** [PR #1219](https://github.com/shakacode/shakapacker/pull/1219) by [oiahoon](https://github.com/oiahoon). Fixes [#1218](https://github.com/shakacode/shakapacker/issues/1218).
 
 ## [v10.3.0] - July 5, 2026
