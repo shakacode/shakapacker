@@ -13,11 +13,13 @@ describe "DevServer" do
     allow(socket).to receive(:getsockopt)
       .with(Socket::SOL_SOCKET, Socket::SO_ERROR)
       .and_return(socket_error)
-    expect(socket).to receive(:close)
+    allow(socket).to receive(:close)
 
     with_rails_env("development") do
       expect(Shakapacker.dev_server.running?).to be false
     end
+
+    expect(socket).to have_received(:close)
   end
 
   it "runs when the connected socket reports no error" do
@@ -28,11 +30,13 @@ describe "DevServer" do
     allow(socket).to receive(:getsockopt)
       .with(Socket::SOL_SOCKET, Socket::SO_ERROR)
       .and_return(socket_error)
-    expect(socket).to receive(:close)
+    allow(socket).to receive(:close)
 
     with_rails_env("development") do
       expect(Shakapacker.dev_server.running?).to be true
     end
+
+    expect(socket).to have_received(:close)
   end
 
   it "uses localhost as host in development environment" do
