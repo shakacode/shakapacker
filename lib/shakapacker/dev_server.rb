@@ -47,8 +47,13 @@ class Shakapacker::DevServer
   # @return [Boolean] true if the dev server is running
   def running?
     if config.dev_server.present?
-      Socket.tcp(host, port, connect_timeout: connect_timeout).close
-      true
+      socket = Socket.tcp(host, port, connect_timeout: connect_timeout)
+
+      begin
+        socket.getsockopt(Socket::SOL_SOCKET, Socket::SO_ERROR).int.zero?
+      ensure
+        socket.close
+      end
     else
       false
     end
