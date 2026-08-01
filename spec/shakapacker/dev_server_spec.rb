@@ -5,6 +5,40 @@ describe "DevServer" do
     expect(Shakapacker.dev_server.running?).to be_falsy
   end
 
+  it "doesn't run when the connected socket reports an error" do
+    socket = instance_double(Socket)
+    socket_error = instance_double(Socket::Option, int: Errno::ECONNREFUSED::Errno)
+
+    allow(Socket).to receive(:tcp).and_return(socket)
+    allow(socket).to receive(:getsockopt)
+      .with(Socket::SOL_SOCKET, Socket::SO_ERROR)
+      .and_return(socket_error)
+    allow(socket).to receive(:close)
+
+    with_rails_env("development") do
+      expect(Shakapacker.dev_server.running?).to be false
+    end
+
+    expect(socket).to have_received(:close)
+  end
+
+  it "runs when the connected socket reports no error" do
+    socket = instance_double(Socket)
+    socket_error = instance_double(Socket::Option, int: 0)
+
+    allow(Socket).to receive(:tcp).and_return(socket)
+    allow(socket).to receive(:getsockopt)
+      .with(Socket::SOL_SOCKET, Socket::SO_ERROR)
+      .and_return(socket_error)
+    allow(socket).to receive(:close)
+
+    with_rails_env("development") do
+      expect(Shakapacker.dev_server.running?).to be true
+    end
+
+    expect(socket).to have_received(:close)
+  end
+
   it "uses localhost as host in development environment" do
     with_rails_env("development") do
       expect(Shakapacker.dev_server.host).to eq "localhost"

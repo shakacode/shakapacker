@@ -12,8 +12,9 @@
 
 ### Fixed
 
-- **Fixed webpack Babel, SWC, and esbuild rules skipping explicitly included `.cjs` files.** [PR #1219](https://github.com/shakacode/shakapacker/pull/1219) by [oiahoon](https://github.com/oiahoon). Fixes [#1218](https://github.com/shakacode/shakapacker/issues/1218).
 - **Fixed 502 responses for proxied dev server assets under `rack-proxy` v1.** [PR #1222](https://github.com/shakacode/shakapacker/pull/1222) by [jcbpl](https://github.com/jcbpl). Fixes [#1220](https://github.com/shakacode/shakapacker/issues/1220).
+- **Fixed dev-server liveness checks treating refused macOS 27 connections as running.** The Ruby probe now verifies the connected socket's `SO_ERROR` result before proxying asset requests, avoiding false-positive dev-server detection and resulting 502 responses. [PR #1225](https://github.com/shakacode/shakapacker/pull/1225) by [justin808](https://github.com/justin808). Fixes [#1224](https://github.com/shakacode/shakapacker/issues/1224).
+- **Fixed webpack Babel, SWC, and esbuild rules skipping explicitly included `.cjs` files.** [PR #1219](https://github.com/shakacode/shakapacker/pull/1219) by [oiahoon](https://github.com/oiahoon). Fixes [#1218](https://github.com/shakacode/shakapacker/issues/1218).
 
 ## [v10.3.0] - July 5, 2026
 
