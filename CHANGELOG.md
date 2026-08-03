@@ -10,11 +10,19 @@
 
 ## [Unreleased]
 
+## [v10.3.1] - August 3, 2026
+
 ### Fixed
 
 - **Fixed 502 responses for proxied dev server assets under `rack-proxy` v1.** [PR #1222](https://github.com/shakacode/shakapacker/pull/1222) by [jcbpl](https://github.com/jcbpl). Fixes [#1220](https://github.com/shakacode/shakapacker/issues/1220).
 - **Fixed dev-server liveness checks treating refused macOS 27 connections as running.** The Ruby probe now verifies the connected socket's `SO_ERROR` result before proxying asset requests, avoiding false-positive dev-server detection and resulting 502 responses. [PR #1225](https://github.com/shakacode/shakapacker/pull/1225) by [justin808](https://github.com/justin808). Fixes [#1224](https://github.com/shakacode/shakapacker/issues/1224).
 - **Fixed webpack Babel, SWC, and esbuild rules skipping explicitly included `.cjs` files.** [PR #1219](https://github.com/shakacode/shakapacker/pull/1219) by [oiahoon](https://github.com/oiahoon). Fixes [#1218](https://github.com/shakacode/shakapacker/issues/1218).
+- **Added a `shakapacker:doctor` warning for Rspack React Refresh v2 configs that still use the v1 default-export constructor pattern.** [PR #1207](https://github.com/shakacode/shakapacker/pull/1207) by [justin808](https://github.com/justin808). Existing configs with `const ReactRefreshPlugin = require("@rspack/plugin-react-refresh")` followed by `new ReactRefreshPlugin()` can fail after upgrading to `@rspack/plugin-react-refresh` v2 with `ReactRefreshPlugin is not a constructor`; Doctor now points to the affected JS/TS config file and suggests the named-export/default/module compatibility form. Fixes [#1204](https://github.com/shakacode/shakapacker/issues/1204).
+- **Fixed the missing-`@babel/core` failure to report an actionable install message.** [PR #1212](https://github.com/shakacode/shakapacker/pull/1212) by [justin808](https://github.com/justin808). Babel-transpiled builds whose app lacks `@babel/core` previously surfaced a raw module-resolution error from the Babel 8 compatibility check; the rule now explains which package to install and how to switch `javascript_transpiler` instead. Refs [#1163](https://github.com/shakacode/shakapacker/issues/1163).
+
+### Documentation
+
+- **Documented the required `css-loader@^7.1.4` in the v10 Rspack upgrade instructions.** [PR #1211](https://github.com/shakacode/shakapacker/pull/1211) by [justin808](https://github.com/justin808). The v10 upgrade guide's copy-paste Rspack v2 commands omitted `css-loader`, so apps following them could upgrade into an unsatisfied peer dependency.
 
 ## [v10.3.0] - July 5, 2026
 
@@ -26,7 +34,6 @@
 
 - **Fixed implicit SWC defaults for existing webpack/Babel apps without `swc-loader`.** [PR #1206](https://github.com/shakacode/shakapacker/pull/1206) by [justin808](https://github.com/justin808). Webpack apps that omit both `javascript_transpiler` and the deprecated `webpack_loader` now fall back to Babel with a warning when Shakapacker's bundled SWC default is active, `swc-loader` is missing, and Babel is present. Explicit transpiler settings, webpack apps with `swc-loader`, and Rspack's built-in SWC path keep their existing behavior. Closes [#1203](https://github.com/shakacode/shakapacker/issues/1203).
 - **Fixed JavaScript config loading for missing Rails environments to use the production fallback.** [PR #1206](https://github.com/shakacode/shakapacker/pull/1206) by [justin808](https://github.com/justin808). When `RAILS_ENV` has no matching section in `config/shakapacker.yml`, the Node package config now merges the `production` section instead of only bundled defaults, matching Ruby configuration loading and honoring explicit production `javascript_transpiler`, `source_path`, `dev_server`, and related settings for custom environments such as staging.
-- **Added a `shakapacker:doctor` warning for Rspack React Refresh v2 configs that still use the v1 default-export constructor pattern.** [PR #1207](https://github.com/shakacode/shakapacker/pull/1207) by [justin808](https://github.com/justin808). Existing configs with `const ReactRefreshPlugin = require("@rspack/plugin-react-refresh")` followed by `new ReactRefreshPlugin()` can fail after upgrading to `@rspack/plugin-react-refresh` v2 with `ReactRefreshPlugin is not a constructor`; Doctor now points to the affected JS/TS config file and suggests the named-export/default/module compatibility form. Fixes [#1204](https://github.com/shakacode/shakapacker/issues/1204).
 - **Fixed helper binstubs delegating Node resolution to Ruby `exec` in unset and empty `PATH` environments.** [PR #1200](https://github.com/shakacode/shakapacker/pull/1200) and [PR #1201](https://github.com/shakacode/shakapacker/pull/1201) by [justin808](https://github.com/justin808). Restores shell-compatible Node lookup for `bin/shakapacker-config` and `bin/diff-bundler-config` after the `v10.2.0` Ruby-binstub regression, while keeping friendly missing-Node errors for `ENOENT` and `EACCES`.
 
 ## [v10.2.0] - July 3, 2026
@@ -993,7 +1000,8 @@ Note: [Rubygem is 6.3.0.pre.rc.1](https://rubygems.org/gems/shakapacker/versions
 
 See [CHANGELOG.md in rails/webpacker (up to v5.4.3)](https://github.com/rails/webpacker/blob/master/CHANGELOG.md)
 
-[Unreleased]: https://github.com/shakacode/shakapacker/compare/v10.3.0...main
+[Unreleased]: https://github.com/shakacode/shakapacker/compare/v10.3.1...main
+[v10.3.1]: https://github.com/shakacode/shakapacker/compare/v10.3.0...v10.3.1
 [v10.3.0]: https://github.com/shakacode/shakapacker/compare/v10.2.0...v10.3.0
 [v10.2.0]: https://github.com/shakacode/shakapacker/compare/v10.1.0...v10.2.0
 [v10.1.0]: https://github.com/shakacode/shakapacker/compare/v10.0.0...v10.1.0
