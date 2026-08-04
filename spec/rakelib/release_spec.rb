@@ -128,16 +128,29 @@ RSpec.describe "release rake helpers" do
   describe "#validate_release_ci_status!" do
     let(:commit_sha) { "abc123" }
 
-    def stub_check_runs(rows, success: true)
+    def stub_gh_jsonl(path_fragment, objects, success: true)
       status = double("status", success?: success)
       allow(Open3).to receive(:capture2e)
-        .with("gh", "api", a_string_including("commits/#{commit_sha}/check-runs"), "--paginate", "--jq", anything)
-        .and_return([rows.map { |row| row.join("\t") }.join("\n"), status])
+        .with("gh", "api", "--paginate", "--jq", anything, a_string_including(path_fragment))
+        .and_return([objects.map(&:to_json).join("\n"), status])
+    end
+
+    # check_runs and legacy commit statuses come from separate endpoints and are evaluated together.
+    def stub_check_runs(rows, success: true)
+      objects = rows.map { |name, run_status, conclusion| { name: name, status: run_status, conclusion: conclusion } }
+      stub_gh_jsonl("check-runs", objects, success: success)
+    end
+
+    def stub_commit_statuses(rows, success: true)
+      objects = rows.map.with_index do |(context, state, created_at), index|
+        { id: index, context: context, state: state, created_at: created_at || "2026-01-0#{index + 1}T00:00:00Z" }
+      end
+      stub_gh_jsonl("/statuses", objects, success: success)
     end
 
     before do
       allow(ENV).to receive(:[]).and_call_original
-      allow(ENV).to receive(:[]).with("RELEASE_CI_POLICY_OVERRIDE").and_return(nil)
+      allow(ENV).to receive(:[]).with("RELEASE_CI_STATUS_OVERRIDE").and_return(nil)
 
       origin_status = double("status", success?: true)
       allow(Open3).to receive(:capture2e)
@@ -148,6 +161,9 @@ RSpec.describe "release rake helpers" do
       allow(Open3).to receive(:capture2e)
         .with("git", "-C", "/repo", "rev-parse", "HEAD")
         .and_return(["#{commit_sha}\n", head_status])
+
+      # Most examples exercise check_runs only; default the statuses endpoint to empty.
+      stub_commit_statuses([])
     end
 
     def validate(allow_override: false, dry_run: false)
@@ -202,7 +218,7 @@ RSpec.describe "release rake helpers" do
 
     it "fails closed when the GitHub CLI is missing" do
       allow(Open3).to receive(:capture2e)
-        .with("gh", "api", a_string_including("check-runs"), "--paginate", "--jq", anything)
+        .with("gh", "api", "--paginate", "--jq", anything, a_string_including("check-runs"))
         .and_raise(Errno::ENOENT)
 
       expect do
@@ -213,21 +229,71 @@ RSpec.describe "release rake helpers" do
     it "releases anyway when the override argument is set" do
       stub_check_runs([["Linting", "completed", "failure"]])
 
-      expect { validate(allow_override: true) }.to output(/CI POLICY OVERRIDE enabled/).to_stdout
+      expect { validate(allow_override: true) }.to output(/CI STATUS OVERRIDE enabled/).to_stdout
     end
 
-    it "releases anyway when RELEASE_CI_POLICY_OVERRIDE is set" do
-      allow(ENV).to receive(:[]).with("RELEASE_CI_POLICY_OVERRIDE").and_return("true")
+    it "releases anyway when RELEASE_CI_STATUS_OVERRIDE is set" do
+      allow(ENV).to receive(:[]).with("RELEASE_CI_STATUS_OVERRIDE").and_return("true")
       stub_check_runs([["Linting", "completed", "failure"]])
 
-      expect { validate(allow_override: ci_policy_override_enabled?(nil)) }
-        .to output(/CI POLICY OVERRIDE enabled/).to_stdout
+      expect { validate(allow_override: ci_status_override_enabled?(nil)) }
+        .to output(/CI STATUS OVERRIDE enabled/).to_stdout
     end
 
     it "reports instead of aborting during a dry run" do
       stub_check_runs([["Linting", "completed", "failure"]])
 
       expect { validate(dry_run: true) }.to output(/DRY RUN: Release would be blocked.*Linting \(failure\)/m).to_stdout
+    end
+
+    # Not every integration reports through the Checks API. CodeRabbit posts legacy commit
+    # statuses, so ignoring that endpoint would let a failing check read as green.
+    context "with legacy commit statuses" do
+      it "blocks on a failing commit status even when every check run passed" do
+        stub_check_runs([["Ruby based checks", "completed", "success"]])
+        stub_commit_statuses([["CodeRabbit", "failure"]])
+
+        expect do
+          expect { validate }.to raise_error(SystemExit)
+        end.to output(/Not passing \(1\):\n  - CodeRabbit \(failure\)/).to_stderr
+      end
+
+      it "blocks while a commit status is still pending" do
+        stub_check_runs([["Ruby based checks", "completed", "success"]])
+        stub_commit_statuses([["CodeRabbit", "pending"]])
+
+        expect do
+          expect { validate }.to raise_error(SystemExit)
+        end.to output(/Still running \(1\):\n  - CodeRabbit \(pending\)/).to_stderr
+      end
+
+      it "counts a successful commit status toward the green total" do
+        stub_check_runs([["Ruby based checks", "completed", "success"]])
+        stub_commit_statuses([["CodeRabbit", "success"]])
+
+        expect { validate }.to output(/✓ CI is green for #{commit_sha} \(2 checks\)/).to_stdout
+      end
+
+      it "uses only the most recent status per context" do
+        stub_check_runs([])
+        stub_commit_statuses(
+          [
+            ["CodeRabbit", "failure", "2026-01-01T00:00:00Z"],
+            ["CodeRabbit", "success", "2026-01-02T00:00:00Z"]
+          ]
+        )
+
+        expect { validate }.to output(/✓ CI is green for #{commit_sha} \(1 checks\)/).to_stdout
+      end
+
+      it "blocks on an unknown status state rather than assuming it passed" do
+        stub_check_runs([])
+        stub_commit_statuses([["Mystery", "banana"]])
+
+        expect do
+          expect { validate }.to raise_error(SystemExit)
+        end.to output(/Not passing \(1\):\n  - Mystery \(error\)/).to_stderr
+      end
     end
   end
 end

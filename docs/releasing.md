@@ -73,7 +73,7 @@ RELEASE_VERSION_POLICY_OVERRIDE=true bundle exec rake "release[10.1.0]"
 bundle exec rake "release[10.1.0,false,true]"
 
 # Override the CI status gate (use only for known-unrelated failures)
-RELEASE_CI_POLICY_OVERRIDE=true bundle exec rake "release[10.1.0]"
+RELEASE_CI_STATUS_OVERRIDE=true bundle exec rake "release[10.1.0]"
 bundle exec rake "release[10.1.0,false,false,true]"
 ```
 
@@ -105,7 +105,10 @@ Use override only when needed:
 released (the commit at `HEAD` after `git pull --rebase`, which is the parent of the
 version-bump commit the task creates):
 
-- Every check run for that commit must have completed with `success`, `skipped`, or `neutral`.
+- Both GitHub check runs and legacy commit statuses are evaluated. Some integrations
+  (CodeRabbit, for one) report only as commit statuses, so checking one endpoint would let a
+  failing check read as green. For commit statuses, only the most recent per context counts.
+- Every check must have completed with `success`, `skipped`, or `neutral`.
 - Checks that are still running block the release — wait for CI to finish and retry.
 - `failure`, `cancelled`, `timed_out`, and similar conclusions all block the release; a
   cancelled check is not evidence that the commit is good.
@@ -117,7 +120,7 @@ version-bump commit the task creates):
 Override only for failures you have confirmed are unrelated to the release — for example an
 upstream registry outage — never to paper over a real regression:
 
-- `RELEASE_CI_POLICY_OVERRIDE=true`
+- `RELEASE_CI_STATUS_OVERRIDE=true`
 - Or task arg override (`release[..., ..., ..., true]`)
 
 ### 3. What the Release Task Does
@@ -236,7 +239,7 @@ If the release aborts with `CI is not green for <sha>`:
 1. Read the listed checks. `Still running` means CI has not finished — wait and retry.
 2. For real failures, fix them on `main` and rerun the release once CI is green.
 3. If the failure is confirmed unrelated to the release (for example an upstream npm
-   registry outage), rerun with `RELEASE_CI_POLICY_OVERRIDE=true`.
+   registry outage), rerun with `RELEASE_CI_STATUS_OVERRIDE=true`.
 
 If it aborts with `No CI results found`, the commit is not on GitHub yet or CI never
 started. Push the branch and let CI run.
