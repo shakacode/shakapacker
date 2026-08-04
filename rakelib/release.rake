@@ -1,6 +1,7 @@
 require_relative File.join("..", "lib", "shakapacker", "utils", "version_syntax_converter")
 require_relative File.join("..", "lib", "shakapacker", "utils", "misc")
 require "English"
+require "bundler"
 require "rubygems/version"
 require "shellwords"
 require "open3"
@@ -498,6 +499,25 @@ def bump_supplemental_core_dep(full_pkg_dir, npm_version)
   File.write(pkg_json_path, "#{JSON.pretty_generate(pkg_json)}\n")
 end
 
+# spec/dummy is Yarn-managed, but package-lock.json is committed too for npm
+# compatibility/testing.
+#
+# The bundle install must run with the parent Bundler environment removed.
+# `bundle exec rake release` exports BUNDLE_GEMFILE pointing at the gem root, and a plain
+# `cd spec/dummy && bundle install` inherits it — so it re-resolves the ROOT Gemfile and
+# leaves spec/dummy/Gemfile.lock pinned to the pre-bump version. That drift then breaks CI
+# on the release commit, where spec/dummy installs in frozen mode. The Rakefile spec tasks
+# unbundle for the same reason.
+def refresh_spec_dummy_lockfiles(release_root)
+  spec_dummy_dir = File.join(release_root, "spec", "dummy")
+
+  Bundler.with_unbundled_env do
+    Shakapacker::Utils::Misc.sh_in_dir(spec_dummy_dir, "bundle install")
+  end
+  Shakapacker::Utils::Misc.sh_in_dir(spec_dummy_dir, "yarn install")
+  Shakapacker::Utils::Misc.sh_in_dir(spec_dummy_dir, "npm install")
+end
+
 def print_release_summary(release_result)
   released_gem_version = release_result[:released_gem_version]
   released_npm_version = release_result[:released_npm_version]
@@ -604,11 +624,7 @@ def perform_release(
     Shakapacker::Utils::Misc.sh_in_dir(release_root, "bundle install")
 
     # Update spec/dummy lockfiles BEFORE release-it so they are included in the release commit.
-    # spec/dummy is Yarn-managed, but we also commit package-lock.json for npm compatibility/testing.
-    spec_dummy_dir = File.join(release_root, "spec", "dummy")
-    Shakapacker::Utils::Misc.sh_in_dir(spec_dummy_dir, "bundle install")
-    Shakapacker::Utils::Misc.sh_in_dir(spec_dummy_dir, "yarn install")
-    Shakapacker::Utils::Misc.sh_in_dir(spec_dummy_dir, "npm install")
+    refresh_spec_dummy_lockfiles(release_root)
 
     # Explicitly stage all release-related changes so release-it includes them in its commit.
     # release-it only reliably stages files it modifies (package.json); other working tree

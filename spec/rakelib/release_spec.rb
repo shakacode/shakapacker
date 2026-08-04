@@ -70,6 +70,45 @@ RSpec.describe "release rake helpers" do
     end
   end
 
+  describe "#refresh_spec_dummy_lockfiles" do
+    # Tracks whether each command ran inside Bundler.with_unbundled_env. `bundle install`
+    # must, or it re-resolves the root Gemfile (BUNDLE_GEMFILE is inherited from
+    # `bundle exec rake release`) and leaves spec/dummy/Gemfile.lock at the pre-bump version.
+    let(:commands) { [] }
+
+    before do
+      unbundled = false
+
+      allow(Bundler).to receive(:with_unbundled_env) do |&block|
+        unbundled = true
+        begin
+          block.call
+        ensure
+          unbundled = false
+        end
+      end
+
+      allow(Shakapacker::Utils::Misc).to receive(:sh_in_dir) do |dir, command|
+        commands << { dir: dir, command: command, unbundled: unbundled }
+      end
+    end
+
+    it "runs the spec/dummy bundle install with the parent bundler env removed" do
+      refresh_spec_dummy_lockfiles("/repo")
+
+      expect(commands).to include(
+        { dir: "/repo/spec/dummy", command: "bundle install", unbundled: true }
+      )
+    end
+
+    it "refreshes the yarn and npm lockfiles in spec/dummy" do
+      refresh_spec_dummy_lockfiles("/repo")
+
+      expect(Shakapacker::Utils::Misc).to have_received(:sh_in_dir).with("/repo/spec/dummy", "yarn install")
+      expect(Shakapacker::Utils::Misc).to have_received(:sh_in_dir).with("/repo/spec/dummy", "npm install")
+    end
+  end
+
   describe "#with_release_checkout" do
     before do
       allow(Dir).to receive(:mktmpdir)
