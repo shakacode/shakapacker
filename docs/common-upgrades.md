@@ -107,7 +107,7 @@ Shakapacker 10.1 introduces two optional npm packages — `shakapacker-webpack` 
 
 **Rspack apps** on npm 7+ can replace `shakapacker` + `@rspack/core` + `@rspack/cli` + `@rspack/dev-server` + `rspack-manifest-plugin` with a single `shakapacker-rspack` dev dependency. npm <7, Yarn Classic, pnpm, and Yarn PnP apps should list `shakapacker-rspack`, `shakapacker`, and the required Rspack peers explicitly. If the app changes its config imports from `shakapacker/rspack` to `shakapacker-rspack`, it can drop only the direct `shakapacker` dependency; `@rspack/core`, `@rspack/cli`, `@rspack/dev-server`, and `rspack-manifest-plugin` still need to stay explicit.
 
-**Webpack apps** on npm 7+ can replace `shakapacker` + `webpack` + `webpack-cli` + `webpack-assets-manifest` with a single `shakapacker-webpack` dev dependency. npm <7, Yarn Classic, pnpm, and Yarn PnP apps should list direct imports explicitly. One caveat: `shakapacker-webpack` pins `webpack-assets-manifest` to `~6.5.1`, so apps still on `webpack-assets-manifest@5.x` need to upgrade to v6 when adopting it.
+**Webpack apps** on npm 7+ can replace `shakapacker` + `webpack` + `webpack-cli` + `webpack-assets-manifest` with a single `shakapacker-webpack` dev dependency. npm <7, Yarn Classic, pnpm, and Yarn PnP apps should list direct imports explicitly. One caveat: `shakapacker-webpack` requires `webpack-assets-manifest@^6.0.0`, so apps still on `webpack-assets-manifest@5.x` need to upgrade to v6 when adopting it.
 
 **Custom-build apps** (apps that ship their own webpack/rspack/Vite setup and only use Shakapacker to read `manifest.json`) should **not** install a supplemental package — continue using bare `shakapacker`.
 
