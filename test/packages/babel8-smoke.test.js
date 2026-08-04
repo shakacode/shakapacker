@@ -4,6 +4,8 @@
 // Babel 7. Enable this smoke with RUN_BABEL8_SMOKE=1 after `yarn build`; it
 // installs Babel 8 packages into a temp app and runs Webpack through
 // babel-loader 10 with Shakapacker's built Babel preset.
+// Set BABEL8_SMOKE_BYPASS_PRESET=1 only for the manual negative-control replay
+// that proves the transform assertion fails when the preset is removed.
 //
 // Keep the pinned Babel 8 package versions below in sync during Babel
 // compatibility reviews. This smoke covers the published preset path; the
@@ -142,6 +144,7 @@ const compiler = webpack({
         test: /\\.js$/,
         include: srcDir,
         use: [
+          // Capture Babel's CommonJS output before webpack processes it.
           { loader: captureLoaderPath },
           {
             loader: appRequire.resolve("babel-loader"),
@@ -149,8 +152,7 @@ const compiler = webpack({
               cacheDirectory: false,
               cwd: workRoot,
               envName: "production",
-              // Make preset-env's modules: "auto" decision deterministic and
-              // capture Babel's CommonJS output before webpack processes it.
+              // Make preset-env's modules: "auto" decision deterministic.
               caller: { supportsStaticESM: false },
               presets
             }
