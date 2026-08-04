@@ -4,6 +4,11 @@ AllCops:
   # RuboCop has a bunch of cops enabled by default. This setting tells RuboCop
   # to ignore them, so only the ones explicitly set in this file are enabled.
   DisabledByDefault: true
+  inherit_mode:
+    merge:
+      - Include
+  Include:
+    - ".agents/bin/merge-readiness-check"
   Exclude:
     - "lib/install/templates/**"
     - "vendor/**/*"
