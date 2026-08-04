@@ -251,7 +251,10 @@ describe("Babel 8 preset smoke (issue #1191)", () => {
     const distDir = path.join(workRoot, "dist")
     fs.mkdirSync(srcDir)
     const entryPath = path.join(srcDir, "index.js")
-    fs.writeFileSync(entryPath, "export const answer = 42\nconsole.log(answer)\n")
+    fs.writeFileSync(
+      entryPath,
+      "export const answer = 42\nconsole.log(answer)\n"
+    )
     const babelOutputPath = path.join(workRoot, "babel-output.js")
 
     const appRequire = createRequire(path.join(workRoot, "package.json"))
