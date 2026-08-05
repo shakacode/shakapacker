@@ -10,6 +10,11 @@ require "json"
 
 GITHUB_REPO_SLUG_PATTERN = /\A[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+\z/ unless defined?(GITHUB_REPO_SLUG_PATTERN)
 
+# A check run only counts as green when it finished with one of these conclusions.
+# Anything else (failure, timed_out, cancelled, action_required, stale, ...) blocks
+# the release, because none of them prove the released commit is good.
+CI_PASSING_CONCLUSIONS = %w[success skipped neutral].freeze unless defined?(CI_PASSING_CONCLUSIONS)
+
 unless defined?(AbortingMessageHandler)
   class AbortingMessageHandler
     def add_error(error)
@@ -267,6 +272,177 @@ def validate_release_version_policy!(gem_root:, target_gem_version:, allow_overr
   handle_version_policy_violation!(
     message: "❌ Version bump mismatch for #{target_gem_version}: CHANGELOG section #{changelog_source} implies #{expected_bump_type}, but version bump is #{actual_bump_type} from #{latest_stable_version}.",
     allow_override: allow_override
+  )
+end
+
+def ci_status_override_enabled?(override_flag)
+  Shakapacker::Utils::Misc.object_to_boolean(override_flag) ||
+    Shakapacker::Utils::Misc.object_to_boolean(ENV["RELEASE_CI_STATUS_OVERRIDE"])
+end
+
+def handle_ci_status_violation!(message:, allow_override:, dry_run:)
+  normalized = message.sub(/\A❌\s*/, "")
+
+  if allow_override
+    puts "⚠️ CI STATUS OVERRIDE enabled: #{normalized}"
+  elsif dry_run
+    puts "DRY RUN: Release would be blocked: #{normalized}"
+  else
+    abort message
+  end
+end
+
+def release_head_sha(gem_root)
+  output, status = Open3.capture2e("git", "-C", gem_root, "rev-parse", "HEAD")
+  output = output.strip
+  abort "❌ Unable to determine HEAD commit for CI status validation.\n\n#{output}" unless status.success?
+
+  output
+end
+
+# `gh api --paginate --jq` flattens paginated responses into JSONL, one object per line.
+# Returns [rows, error_message]; the error is surfaced through the violation handler so a
+# missing `gh` or an API failure blocks a live release but only reports during a dry run.
+def fetch_gh_jsonl(api_path, jq_filter)
+  begin
+    output, status = Open3.capture2e("gh", "api", "--paginate", "--jq", jq_filter, api_path)
+  rescue Errno::ENOENT
+    return [nil, "GitHub CLI is not installed or not available on PATH. Install `gh` and retry."]
+  end
+  return [nil, output.strip] unless status.success?
+
+  rows = output.lines.reject { |line| line.strip.empty? }.map { |line| JSON.parse(line) }
+  [rows, nil]
+rescue JSON::ParserError => e
+  [nil, "Failed to parse response from gh: #{e.message}"]
+end
+
+# `filter=latest` is the GitHub default and means re-running a failed job replaces its
+# earlier result, so a retried flake stops blocking the release once it passes.
+def fetch_commit_check_runs(repo_slug:, commit_sha:)
+  rows, error = fetch_gh_jsonl(
+    "repos/#{repo_slug}/commits/#{commit_sha}/check-runs?per_page=100&filter=latest",
+    ".check_runs[]"
+  )
+  return [nil, error] if error
+
+  [rows.map { |run| { name: run["name"].to_s, status: run["status"].to_s, conclusion: run["conclusion"].to_s } }, nil]
+end
+
+# Not every integration reports through the Checks API — CodeRabbit, for one, posts legacy
+# commit statuses. Ignoring those would let a failing check read as green, so they are folded
+# into the same evaluation.
+def fetch_commit_statuses(repo_slug:, commit_sha:)
+  rows, error = fetch_gh_jsonl("repos/#{repo_slug}/commits/#{commit_sha}/statuses?per_page=100", ".[]")
+  return [nil, error] if error
+
+  [latest_commit_statuses(rows).map { |status| normalize_status_as_check_run(status) }, nil]
+end
+
+# The statuses endpoint returns every status ever posted for a context, newest first is not
+# guaranteed, so keep only the most recent per context. GitHub emits ISO 8601 UTC timestamps,
+# which sort chronologically as strings.
+def latest_commit_statuses(statuses)
+  statuses.group_by { |status| status["context"] }.map do |_context, context_statuses|
+    context_statuses.max_by { |status| [status["created_at"].to_s, status["id"].to_i] }
+  end
+end
+
+def normalize_status_as_check_run(status)
+  conclusion = normalize_status_conclusion(status["state"])
+
+  {
+    name: status["context"].to_s,
+    # A nil conclusion means the status is still pending, which must block like an
+    # in-progress check run rather than counting as a pass.
+    status: conclusion.nil? ? "pending" : "completed",
+    conclusion: conclusion.to_s
+  }
+end
+
+def normalize_status_conclusion(state)
+  case state
+  when "success" then "success"
+  when "pending" then nil
+  when "failure", "error" then state
+  else
+    # GitHub documents error/failure/pending/success; anything else is unknown, so block.
+    "error"
+  end
+end
+
+def classify_check_runs(check_runs)
+  pending, failing = check_runs.partition { |run| run[:status] != "completed" }
+  failing = failing.reject { |run| CI_PASSING_CONCLUSIONS.include?(run[:conclusion]) }
+
+  { pending: pending, failing: failing }
+end
+
+def format_check_run_problems(pending:, failing:)
+  details = +""
+
+  unless failing.empty?
+    details << "\n\nNot passing (#{failing.length}):\n"
+    details << failing.map { |run| "  - #{run[:name]} (#{run[:conclusion]})" }.join("\n")
+  end
+
+  unless pending.empty?
+    details << "\n\nStill running (#{pending.length}):\n"
+    details << pending.map { |run| "  - #{run[:name]} (#{run[:status]})" }.join("\n")
+  end
+
+  details
+end
+
+# Gates the release on CI results for the commit that is about to be released.
+# The version-bump commit does not exist yet, so this validates its parent — the
+# code being published. Failing closed is deliberate: if CI status cannot be read,
+# the release stops rather than assuming green.
+def validate_release_ci_status!(gem_root:, allow_override:, dry_run:)
+  repo_slug = github_repo_slug(gem_root)
+  commit_sha = release_head_sha(gem_root)
+
+  check_runs, error = fetch_commit_check_runs(repo_slug: repo_slug, commit_sha: commit_sha)
+  statuses, status_error = fetch_commit_statuses(repo_slug: repo_slug, commit_sha: commit_sha) unless error
+  error ||= status_error
+
+  if error
+    handle_ci_status_violation!(
+      message: "❌ Unable to verify CI status for #{commit_sha} on #{repo_slug}.\n\n#{error}",
+      allow_override: allow_override,
+      dry_run: dry_run
+    )
+    return
+  end
+
+  all_checks = check_runs + statuses
+
+  if all_checks.empty?
+    handle_ci_status_violation!(
+      message: "❌ No CI results found for #{commit_sha} on #{repo_slug}. " \
+               "Push the commit and let CI finish before releasing.",
+      allow_override: allow_override,
+      dry_run: dry_run
+    )
+    return
+  end
+
+  classified = classify_check_runs(all_checks)
+  pending = classified[:pending]
+  failing = classified[:failing]
+
+  if pending.empty? && failing.empty?
+    puts "✓ CI is green for #{commit_sha} (#{all_checks.length} checks)"
+    return
+  end
+
+  handle_ci_status_violation!(
+    message: "❌ CI is not green for #{commit_sha}, the commit that would be released." \
+             "#{format_check_run_problems(pending: pending, failing: failing)}\n\n" \
+             "Fix CI (or wait for it to finish) and retry. " \
+             "To release anyway, set RELEASE_CI_STATUS_OVERRIDE=true.",
+    allow_override: allow_override,
+    dry_run: dry_run
   )
 end
 
@@ -548,6 +724,7 @@ def perform_release(
   dry_run:,
   check_uncommitted: true,
   allow_version_policy_override: false,
+  allow_ci_status_override: false,
   fetch_tags_for_policy: true
 )
   ensure_clean_worktree! if check_uncommitted
@@ -571,6 +748,13 @@ def perform_release(
 
   with_release_checkout(gem_root: gem_root, dry_run: dry_run) do |release_root|
     Shakapacker::Utils::Misc.sh_in_dir(release_root, "git pull --rebase") unless dry_run
+
+    # Gate on CI *after* the rebase so the validated commit is the one being released.
+    validate_release_ci_status!(
+      gem_root: release_root,
+      allow_override: allow_ci_status_override,
+      dry_run: dry_run
+    )
 
     # The release root may change after `git pull --rebase`, so patch-bump inference must happen after that step.
     resolved_target_gem_version = target_gem_version(gem_root: release_root, requested_gem_version: requested_gem_version)
@@ -720,6 +904,12 @@ Arguments:
 2nd argument: Perform a dry run by passing 'true' as second argument.
 3rd argument: Override release version policy checks by passing 'true'.
               Equivalent to setting RELEASE_VERSION_POLICY_OVERRIDE=true.
+4th argument: Override the CI status gate by passing 'true'.
+              Equivalent to setting RELEASE_CI_STATUS_OVERRIDE=true.
+
+The release aborts unless GitHub CI is green for the commit being released.
+Use the CI override only for known-unrelated failures (for example an upstream
+registry outage), never to paper over a real regression.
 
 Examples:
 - rake \"release\"                      # uses CHANGELOG.md version or patch bump
@@ -727,11 +917,13 @@ Examples:
 - rake \"release[9.6.0.rc.0]\"
 - rake \"release[9.6.0,true]\"
 - rake \"release[9.6.0,false,true]\"
+- rake \"release[9.6.0,false,false,true]\"  # skip the CI gate
 ")
-task :release, %i[gem_version dry_run override_version_policy] do |_t, args|
+task :release, %i[gem_version dry_run override_version_policy override_ci_status] do |_t, args|
   args_hash = args.to_hash
   is_dry_run = Shakapacker::Utils::Misc.object_to_boolean(args_hash[:dry_run])
   allow_override = version_policy_override_enabled?(args_hash[:override_version_policy])
+  allow_ci_override = ci_status_override_enabled?(args_hash[:override_ci_status])
 
   requested_version = args_hash[:gem_version].to_s.strip
   if requested_version.empty?
@@ -756,7 +948,8 @@ task :release, %i[gem_version dry_run override_version_policy] do |_t, args|
   release_result = perform_release(
     gem_version: requested_version,
     dry_run: is_dry_run,
-    allow_version_policy_override: allow_override
+    allow_version_policy_override: allow_override,
+    allow_ci_status_override: allow_ci_override
   )
   print_release_summary(release_result)
 end

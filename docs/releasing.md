@@ -71,6 +71,10 @@ AUTO_CONFIRM=true bundle exec rake release
 # Override version policy checks (monotonic + changelog/bump consistency)
 RELEASE_VERSION_POLICY_OVERRIDE=true bundle exec rake "release[10.1.0]"
 bundle exec rake "release[10.1.0,false,true]"
+
+# Override the CI status gate (use only for known-unrelated failures)
+RELEASE_CI_STATUS_OVERRIDE=true bundle exec rake "release[10.1.0]"
+bundle exec rake "release[10.1.0,false,false,true]"
 ```
 
 When called with no arguments, `release`:
@@ -97,6 +101,28 @@ Use override only when needed:
 - `RELEASE_VERSION_POLICY_OVERRIDE=true`
 - Or task arg override (`release[..., ..., true]`)
 
+`release` also refuses to publish unless GitHub CI is green for the commit being
+released (the commit at `HEAD` after `git pull --rebase`, which is the parent of the
+version-bump commit the task creates):
+
+- Both GitHub check runs and legacy commit statuses are evaluated. Some integrations
+  (CodeRabbit, for one) report only as commit statuses, so checking one endpoint would let a
+  failing check read as green. For commit statuses, only the most recent per context counts.
+- Every check must have completed with `success`, `skipped`, or `neutral`.
+- Checks that are still running block the release — wait for CI to finish and retry.
+- `failure`, `cancelled`, `timed_out`, and similar conclusions all block the release; a
+  cancelled check is not evidence that the commit is good.
+- A commit with no check runs at all blocks the release, so an unpushed commit or a CI
+  outage cannot look green.
+- The gate fails closed: if CI status cannot be read (no `gh`, API error), the release stops.
+- Dry runs report what the gate would do instead of aborting.
+
+Override only for failures you have confirmed are unrelated to the release — for example an
+upstream registry outage — never to paper over a real regression:
+
+- `RELEASE_CI_STATUS_OVERRIDE=true`
+- Or task arg override (`release[..., ..., ..., true]`)
+
 ### 3. What the Release Task Does
 
 The `release` task automatically:
@@ -104,7 +130,8 @@ The `release` task automatically:
 1. **Validates release prerequisites**:
    - Verifies npm authentication
    - Warns if CHANGELOG.md section is missing for the target version
-2. **Pulls latest changes** from the repository
+2. **Pulls latest changes** from the repository, then **aborts unless CI is green** for the
+   resulting commit
 3. **Bumps version numbers** in:
    - `lib/shakapacker/version.rb` (Ruby gem version)
    - `package.json` (npm package version - converted from Ruby format)
@@ -204,6 +231,21 @@ bundle exec rake "sync_github_release[10.6.0.rc.1]"
 `sync_github_release` reads release notes from the matching `CHANGELOG.md` section and creates/updates the GitHub release for the corresponding tag.
 
 ## Troubleshooting
+
+### Release Blocked by the CI Gate
+
+If the release aborts with `CI is not green for <sha>`:
+
+1. Read the listed checks. `Still running` means CI has not finished — wait and retry.
+2. For real failures, fix them on `main` and rerun the release once CI is green.
+3. If the failure is confirmed unrelated to the release (for example an upstream npm
+   registry outage), rerun with `RELEASE_CI_STATUS_OVERRIDE=true`.
+
+If it aborts with `No CI results found`, the commit is not on GitHub yet or CI never
+started. Push the branch and let CI run.
+
+If it aborts with `Unable to verify CI status`, the gate could not read CI results — check
+`gh auth status` and network access. The gate fails closed on purpose.
 
 ### Uncommitted Changes After Release
 
