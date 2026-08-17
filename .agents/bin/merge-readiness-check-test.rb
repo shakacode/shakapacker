@@ -157,6 +157,24 @@ class MergeReadinessCheckTest < Minitest::Test
       ],
       threads: []
     },
+    "fork_paginated_evidence" => {
+      pr: fork_pr(merge_state_status: "UNSTABLE", title: "Fork with evidence on second API pages"),
+      checks: [
+        check("Ruby specs", "SUCCESS", "pass"),
+        check("claude-review", "SKIPPED", "skipping")
+      ],
+      check_run_pages: [
+        Array.new(100) { |index| check_run("External check #{index}", "success", app: "external-reviewer") },
+        [check_run("claude-review", "skipped")]
+      ],
+      workflow_run_pages: [
+        Array.new(100) do |index|
+          workflow_run("Comment helper #{index}", "success", event: "pull_request_review_comment")
+        end,
+        [workflow_run("Ruby based checks", "success")]
+      ],
+      threads: []
+    },
     "fork_unapproved" => {
       pr: fork_pr(merge_state_status: "CLEAN", title: "Fork awaiting workflow approval"),
       checks: [check("CodeRabbit", "SUCCESS", "pass")],
@@ -257,6 +275,13 @@ class MergeReadinessCheckTest < Minitest::Test
     assert_includes result[:stdout], "MERGE_READINESS_READY"
   end
 
+  def test_second_api_pages_are_requested_and_combined
+    result = run_scenario("fork_paginated_evidence")
+
+    assert_equal 0, result[:status], result[:stderr]
+    assert_includes result[:stdout], "MERGE_READINESS_READY"
+  end
+
   def test_fork_with_only_a_skipped_actions_gate_is_not_ready
     assert_not_ready("fork_only_skipped", "no successful pull_request workflow-run evidence")
   end
@@ -310,6 +335,39 @@ class MergeReadinessCheckTest < Minitest::Test
       fixture = fixtures.fetch(ENV.fetch("MERGE_READINESS_SCENARIO"))
       args = ARGV
 
+      def api_page(args, expected_endpoint, expected_head_sha: nil)
+        unless args.each_cons(2).any? { |flag, value| flag == "--method" && value == "GET" }
+          abort "Expected GitHub API request to use GET: \#{args.inspect}"
+        end
+        abort "Unexpected GitHub API endpoint: \#{args.inspect}" unless args.include?(expected_endpoint)
+
+        fields = args.each_index.each_with_object({}) do |index, values|
+          next unless args[index] == "-f"
+
+          key, value = args.fetch(index + 1).split("=", 2)
+          values[key] = value
+        end
+        abort "Expected per_page=100: \#{args.inspect}" unless fields["per_page"] == "100"
+        if expected_head_sha && fields["head_sha"] != expected_head_sha
+          abort "Expected head_sha=\#{expected_head_sha}: \#{args.inspect}"
+        end
+
+        page = Integer(fields.fetch("page"), 10)
+        abort "Expected a 1-based page: \#{args.inspect}" unless page.positive?
+
+        page
+      rescue ArgumentError, KeyError
+        abort "Expected an integer page: \#{args.inspect}"
+      end
+
+      def api_collection(fixture, item_key, pages_key, page)
+        pages = fixture[pages_key] || [fixture.fetch(item_key)]
+        {
+          "total_count" => pages.sum(&:length),
+          item_key => pages.fetch(page - 1, [])
+        }
+      end
+
       output = if args[0, 2] == ["pr", "view"]
                  fixture.fetch("pr")
                elsif args[0, 2] == ["pr", "checks"]
@@ -328,11 +386,15 @@ class MergeReadinessCheckTest < Minitest::Test
                    }
                  }
                elsif args.any? { |arg| arg.include?("/check-runs") }
-                 runs = fixture.fetch("check_runs")
-                 { total_count: runs.length, check_runs: runs }
+                 head_sha = fixture.fetch("pr").fetch("headRefOid")
+                 endpoint = "repos/shakacode/shakapacker/commits/\#{head_sha}/check-runs"
+                 page = api_page(args, endpoint)
+                 api_collection(fixture, "check_runs", "check_run_pages", page)
                elsif args.any? { |arg| arg.include?("/actions/runs") }
-                 runs = fixture.fetch("workflow_runs")
-                 { total_count: runs.length, workflow_runs: runs }
+                 head_sha = fixture.fetch("pr").fetch("headRefOid")
+                 endpoint = "repos/shakacode/shakapacker/actions/runs"
+                 page = api_page(args, endpoint, expected_head_sha: head_sha)
+                 api_collection(fixture, "workflow_runs", "workflow_run_pages", page)
                else
                  warn "Unexpected gh invocation: \#{args.inspect}"
                  exit 2
