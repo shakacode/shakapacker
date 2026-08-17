@@ -218,6 +218,19 @@ class MergeReadinessCheckTest < Minitest::Test
       workflow_runs: [workflow_run("Ruby based checks", "success")],
       threads: []
     },
+    "fork_clean_unverified_skipped" => {
+      pr: fork_pr(merge_state_status: "CLEAN", title: "Fork with an unverified skipped check"),
+      checks: [
+        check("Ruby specs", "SUCCESS", "pass"),
+        check("external-review", "SKIPPED", "skipping")
+      ],
+      check_runs: [
+        check_run("Ruby specs", "success"),
+        check_run("external-review", "skipped", app: "external-reviewer")
+      ],
+      workflow_runs: [workflow_run("Ruby based checks", "success")],
+      threads: []
+    },
     "failing_check" => {
       pr: same_repo_pr,
       checks: [check("Ruby specs", "FAILURE", "fail")],
@@ -305,6 +318,10 @@ class MergeReadinessCheckTest < Minitest::Test
 
   def test_third_party_skipped_check_cannot_explain_fork_instability
     assert_not_ready("third_party_skipped", "mergeStateStatus is UNSTABLE")
+  end
+
+  def test_clean_fork_with_unverified_skipped_check_is_not_ready
+    assert_not_ready("fork_clean_unverified_skipped", "skipped check(s) lack matching GitHub Actions evidence")
   end
 
   def test_failing_check_remains_blocking
