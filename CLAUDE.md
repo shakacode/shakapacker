@@ -14,5 +14,5 @@ through Conductor. Shared project policy lives in `AGENTS.md`.
   `bin/conductor-exec bundle exec rubocop`.
 - The wrapper uses `mise exec` when mise is available and otherwise falls back
   to direct execution.
-- `conductor.json` scripts already use this wrapper, so it is not normally
-  needed manually.
+- The `run`, `test`, and `lint` scripts in `conductor.json` already use this
+  wrapper, so it is not normally needed manually for those commands.
