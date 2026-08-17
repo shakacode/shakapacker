@@ -275,6 +275,19 @@ class MergeReadinessCheckTest < Minitest::Test
       check_runs: [check_run("Ruby specs", "success")],
       workflow_runs: [workflow_run("Ruby based checks", "success")],
       threads: []
+    },
+    "merged_fork_without_run_association" => {
+      pr: fork_pr.merge(
+        title: "Merged fork whose workflow association expired",
+        state: "MERGED",
+        mergeStateStatus: "UNKNOWN",
+        mergedAt: "2026-08-01T13:00:00Z",
+        reviewDecision: "REVIEW_REQUIRED"
+      ),
+      checks: [check("Ruby specs", "SUCCESS", "pass")],
+      check_runs: [check_run("Ruby specs", "success")],
+      workflow_runs: [workflow_run("Ruby based checks", "success", pull_requests: [])],
+      threads: []
     }
   }.freeze
 
@@ -366,6 +379,13 @@ class MergeReadinessCheckTest < Minitest::Test
 
   def test_merged_replay_ignores_current_review_required_decision
     result = run_scenario("merged_review_required")
+
+    assert_equal 0, result[:status], result[:stderr]
+    assert_includes result[:stdout], "MERGE_READINESS_READY"
+  end
+
+  def test_merged_fork_replay_accepts_exact_head_run_without_current_association
+    result = run_scenario("merged_fork_without_run_association")
 
     assert_equal 0, result[:status], result[:stderr]
     assert_includes result[:stdout], "MERGE_READINESS_READY"

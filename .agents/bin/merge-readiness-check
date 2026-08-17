@@ -195,7 +195,7 @@ if pr.fetch("isCrossRepository")
     workflow_run.fetch("event").to_s.casecmp?("pull_request")
   end
   current_pull_request_workflow_runs = pull_request_workflow_runs.select do |workflow_run|
-    workflow_run.fetch("pull_requests", []).any? do |associated_pr|
+    pr["mergedAt"] || workflow_run.fetch("pull_requests", []).any? do |associated_pr|
       associated_pr["number"] == pr.fetch("number")
     end
   end
