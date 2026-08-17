@@ -14,6 +14,7 @@ on:
       - "gemfiles/**"
       - ".rubocop.yml"
       - ".agents/bin/merge-readiness-check"
+      - ".agents/bin/merge-readiness-check-test.rb"
       - "package.json"
       - "**.ts"
       - ".github/workflows/ruby.yml"
@@ -42,6 +43,9 @@ jobs:
 
       - name: Ruby rubocop
         run: bundle exec rubocop
+
+      - name: Merge readiness helper regression tests
+        run: ruby .agents/bin/merge-readiness-check-test.rb
 
   rbs-validate:
     name: RBS Type Validation

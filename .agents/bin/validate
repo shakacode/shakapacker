@@ -4,4 +4,5 @@ set -euo pipefail
 root="$(CDPATH= cd -- "$(dirname -- "$0")/../.." && pwd)"
 cd "$root"
 "$root/.agents/bin/lint"
+ruby "$root/.agents/bin/merge-readiness-check-test.rb"
 "$root/.agents/bin/test"
