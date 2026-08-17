@@ -35,13 +35,14 @@ class MergeReadinessCheckTest < Minitest::Test
         }
       end
 
-      def workflow_run(name, conclusion, event: "pull_request")
+      def workflow_run(name, conclusion, event: "pull_request", pull_requests: [123])
         {
           name: name,
           status: "completed",
           conclusion: conclusion,
           event: event,
-          head_sha: HEAD_SHA
+          head_sha: HEAD_SHA,
+          pull_requests: pull_requests.map { |number| { number: number } }
         }
       end
 
@@ -140,6 +141,13 @@ class MergeReadinessCheckTest < Minitest::Test
       ],
       threads: []
     },
+    "fork_other_pr_success_only" => {
+      pr: fork_pr(merge_state_status: "CLEAN", title: "Fork whose successful run belongs to another PR"),
+      checks: [check("Ruby specs", "SUCCESS", "pass")],
+      check_runs: [check_run("Ruby specs", "success")],
+      workflow_runs: [workflow_run("Ruby based checks", "success", pull_requests: [999])],
+      threads: []
+    },
     "fork_real_ci_with_auxiliary_action_required" => {
       pr: fork_pr(merge_state_status: "UNSTABLE", title: "Fork with real CI and auxiliary approval pending"),
       checks: [
@@ -154,6 +162,16 @@ class MergeReadinessCheckTest < Minitest::Test
         workflow_run("Ruby based checks", "success"),
         workflow_run("Comment helper", "action_required", event: "pull_request_review_comment"),
         workflow_run("Claude Code Review", "skipped")
+      ],
+      threads: []
+    },
+    "fork_current_ci_with_other_pr_action_required" => {
+      pr: fork_pr(merge_state_status: "CLEAN", title: "Fork with another PR awaiting workflow approval"),
+      checks: [check("Ruby specs", "SUCCESS", "pass")],
+      check_runs: [check_run("Ruby specs", "success")],
+      workflow_runs: [
+        workflow_run("Ruby based checks", "success"),
+        workflow_run("Other PR checks", "action_required", pull_requests: [999])
       ],
       threads: []
     },
@@ -294,8 +312,19 @@ class MergeReadinessCheckTest < Minitest::Test
     assert_not_ready("fork_auxiliary_success_only", "fork CI has not started")
   end
 
+  def test_successful_workflow_for_another_pr_does_not_prove_fork_ci_started
+    assert_not_ready("fork_other_pr_success_only", "fork CI has not started")
+  end
+
   def test_auxiliary_workflow_approval_does_not_block_real_fork_ci
     result = run_scenario("fork_real_ci_with_auxiliary_action_required")
+
+    assert_equal 0, result[:status], result[:stderr]
+    assert_includes result[:stdout], "MERGE_READINESS_READY"
+  end
+
+  def test_workflow_approval_for_another_pr_does_not_block_current_fork_ci
+    result = run_scenario("fork_current_ci_with_other_pr_action_required")
 
     assert_equal 0, result[:status], result[:stderr]
     assert_includes result[:stdout], "MERGE_READINESS_READY"

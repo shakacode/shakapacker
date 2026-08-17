@@ -194,11 +194,16 @@ if pr.fetch("isCrossRepository")
   pull_request_workflow_runs = workflow_runs.select do |workflow_run|
     workflow_run.fetch("event").to_s.casecmp?("pull_request")
   end
-  passing_pull_request_workflow_runs = pull_request_workflow_runs.select do |workflow_run|
+  current_pull_request_workflow_runs = pull_request_workflow_runs.select do |workflow_run|
+    workflow_run.fetch("pull_requests", []).any? do |associated_pr|
+      associated_pr["number"] == pr.fetch("number")
+    end
+  end
+  passing_pull_request_workflow_runs = current_pull_request_workflow_runs.select do |workflow_run|
     workflow_run.fetch("status").to_s.casecmp?("completed") &&
       workflow_run.fetch("conclusion").to_s.casecmp?("success")
   end
-  action_required_workflow_runs = pull_request_workflow_runs.select do |workflow_run|
+  action_required_workflow_runs = current_pull_request_workflow_runs.select do |workflow_run|
     workflow_run.fetch("conclusion").to_s.casecmp?("action_required")
   end
 end
