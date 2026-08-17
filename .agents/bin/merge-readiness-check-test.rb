@@ -35,12 +35,12 @@ class MergeReadinessCheckTest < Minitest::Test
         }
       end
 
-      def workflow_run(name, conclusion)
+      def workflow_run(name, conclusion, event: "pull_request")
         {
           name: name,
           status: "completed",
           conclusion: conclusion,
-          event: "pull_request",
+          event: event,
           head_sha: HEAD_SHA
         }
       end
@@ -120,6 +120,39 @@ class MergeReadinessCheckTest < Minitest::Test
       ],
       workflow_runs: [
         workflow_run("Ruby based checks", "success"),
+        workflow_run("Claude Code Review", "skipped")
+      ],
+      threads: []
+    },
+    "fork_auxiliary_success_only" => {
+      pr: fork_pr(merge_state_status: "UNSTABLE", title: "Fork with only auxiliary workflow success"),
+      checks: [
+        check("Comment helper", "SUCCESS", "pass"),
+        check("claude-review", "SKIPPED", "skipping")
+      ],
+      check_runs: [
+        check_run("Comment helper", "success"),
+        check_run("claude-review", "skipped")
+      ],
+      workflow_runs: [
+        workflow_run("Comment helper", "success", event: "pull_request_review_comment"),
+        workflow_run("Claude Code Review", "skipped")
+      ],
+      threads: []
+    },
+    "fork_real_ci_with_auxiliary_action_required" => {
+      pr: fork_pr(merge_state_status: "UNSTABLE", title: "Fork with real CI and auxiliary approval pending"),
+      checks: [
+        check("Ruby specs", "SUCCESS", "pass"),
+        check("claude-review", "SKIPPED", "skipping")
+      ],
+      check_runs: [
+        check_run("Ruby specs", "success"),
+        check_run("claude-review", "skipped")
+      ],
+      workflow_runs: [
+        workflow_run("Ruby based checks", "success"),
+        workflow_run("Comment helper", "action_required", event: "pull_request_review_comment"),
         workflow_run("Claude Code Review", "skipped")
       ],
       threads: []
@@ -213,8 +246,19 @@ class MergeReadinessCheckTest < Minitest::Test
     assert_not_ready("fork_skipped_review_required", "reviewDecision is REVIEW_REQUIRED")
   end
 
+  def test_auxiliary_workflow_success_does_not_prove_fork_ci_started
+    assert_not_ready("fork_auxiliary_success_only", "fork CI has not started")
+  end
+
+  def test_auxiliary_workflow_approval_does_not_block_real_fork_ci
+    result = run_scenario("fork_real_ci_with_auxiliary_action_required")
+
+    assert_equal 0, result[:status], result[:stderr]
+    assert_includes result[:stdout], "MERGE_READINESS_READY"
+  end
+
   def test_fork_with_only_a_skipped_actions_gate_is_not_ready
-    assert_not_ready("fork_only_skipped", "no passing GitHub Actions check-run evidence")
+    assert_not_ready("fork_only_skipped", "no successful pull_request workflow-run evidence")
   end
 
   def test_same_repository_unstable_state_remains_blocking

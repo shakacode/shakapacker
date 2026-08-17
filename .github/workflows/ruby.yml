@@ -45,7 +45,7 @@ jobs:
         run: bundle exec rubocop
 
       - name: Merge readiness helper regression tests
-        run: ruby .agents/bin/merge-readiness-check-test.rb
+        run: bundle exec ruby .agents/bin/merge-readiness-check-test.rb
 
   rbs-validate:
     name: RBS Type Validation

@@ -174,7 +174,7 @@ skipped_checks = checks.select do |check|
 end
 
 github_actions_check_runs = []
-passing_github_actions_check_runs = []
+passing_pull_request_workflow_runs = []
 action_required_workflow_runs = []
 
 if pr.fetch("isCrossRepository")
@@ -184,10 +184,6 @@ if pr.fetch("isCrossRepository")
     "check_runs"
   )
   github_actions_check_runs = check_runs.select { |check_run| check_run.dig("app", "slug") == "github-actions" }
-  passing_github_actions_check_runs = github_actions_check_runs.select do |check_run|
-    check_run.fetch("status").to_s.casecmp?("completed") &&
-      check_run.fetch("conclusion").to_s.casecmp?("success")
-  end
 
   workflow_runs = paginated_api_collection(
     api_args,
@@ -195,7 +191,14 @@ if pr.fetch("isCrossRepository")
     "workflow_runs",
     "head_sha" => pr.fetch("headRefOid")
   )
-  action_required_workflow_runs = workflow_runs.select do |workflow_run|
+  pull_request_workflow_runs = workflow_runs.select do |workflow_run|
+    workflow_run.fetch("event").to_s.casecmp?("pull_request")
+  end
+  passing_pull_request_workflow_runs = pull_request_workflow_runs.select do |workflow_run|
+    workflow_run.fetch("status").to_s.casecmp?("completed") &&
+      workflow_run.fetch("conclusion").to_s.casecmp?("success")
+  end
+  action_required_workflow_runs = pull_request_workflow_runs.select do |workflow_run|
     workflow_run.fetch("conclusion").to_s.casecmp?("action_required")
   end
 end
@@ -217,8 +220,8 @@ failures << "PR is draft" if pr.fetch("isDraft")
 if checks.empty?
   failures << "no checks returned; readiness is UNKNOWN; path-filtered PRs need maintainer judgment"
 end
-if pr.fetch("isCrossRepository") && passing_github_actions_check_runs.empty?
-  failures << "fork CI has not started; no passing GitHub Actions check-run evidence exists for the current head"
+if pr.fetch("isCrossRepository") && passing_pull_request_workflow_runs.empty?
+  failures << "fork CI has not started; no successful pull_request workflow-run evidence exists for the current head"
 end
 if action_required_workflow_runs.any?
   failures << "fork CI has not started; #{action_required_workflow_runs.length} workflow run(s) require approval"
