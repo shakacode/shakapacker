@@ -97,6 +97,33 @@ class MergeReadinessCheckTest < Minitest::Test
       ],
       threads: []
     },
+    "fork_skipped_review_required" => {
+      pr: {
+        number: 123,
+        title: "Fork with an intentional skipped gate awaiting review",
+        state: "OPEN",
+        isDraft: false,
+        isCrossRepository: true,
+        headRefOid: HEAD_SHA,
+        mergeStateStatus: "UNSTABLE",
+        mergedAt: nil,
+        url: "https://github.com/shakacode/shakapacker/pull/123",
+        reviewDecision: "REVIEW_REQUIRED"
+      },
+      checks: [
+        check("Ruby specs", "SUCCESS", "pass"),
+        check("claude-review", "SKIPPED", "skipping")
+      ],
+      check_runs: [
+        check_run("Ruby specs", "success"),
+        check_run("claude-review", "skipped")
+      ],
+      workflow_runs: [
+        workflow_run("Ruby based checks", "success"),
+        workflow_run("Claude Code Review", "skipped")
+      ],
+      threads: []
+    },
     "fork_unapproved" => {
       pr: fork_pr(merge_state_status: "CLEAN", title: "Fork awaiting workflow approval"),
       checks: [check("CodeRabbit", "SUCCESS", "pass")],
@@ -180,6 +207,10 @@ class MergeReadinessCheckTest < Minitest::Test
     assert_equal 1, result[:status]
     assert_includes result[:stderr], "MERGE_READINESS_NOT_READY"
     assert_includes result[:stderr], "fork CI has not started"
+  end
+
+  def test_intentional_skipped_fork_gate_still_requires_review
+    assert_not_ready("fork_skipped_review_required", "reviewDecision is REVIEW_REQUIRED")
   end
 
   def test_fork_with_only_a_skipped_actions_gate_is_not_ready

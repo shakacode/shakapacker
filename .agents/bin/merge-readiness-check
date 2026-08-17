@@ -226,6 +226,7 @@ end
 failures << "#{bad_checks.length} check(s) are not pass/skipped: #{bad_checks.map { |check| check.fetch("name") }.join(", ")}" if bad_checks.any?
 failures << "#{unresolved_threads.length} unresolved review thread(s) remain" if unresolved_threads.any?
 failures << "reviewDecision is CHANGES_REQUESTED" if pr["reviewDecision"] == "CHANGES_REQUESTED"
+failures << "reviewDecision is REVIEW_REQUIRED" if pr["reviewDecision"] == "REVIEW_REQUIRED"
 
 merged_at = pr["mergedAt"]
 
