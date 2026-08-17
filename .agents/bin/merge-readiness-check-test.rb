@@ -35,14 +35,21 @@ class MergeReadinessCheckTest < Minitest::Test
         }
       end
 
-      def workflow_run(name, conclusion, event: "pull_request", pull_requests: [123])
+      def workflow_job(conclusion)
+        { status: "completed", conclusion: conclusion }
+      end
+
+      def workflow_run(name, conclusion, event: "pull_request", pull_requests: [123], job_pages: nil)
+        @workflow_run_id = (@workflow_run_id || 0) + 1
         {
+          id: @workflow_run_id,
           name: name,
           status: "completed",
           conclusion: conclusion,
           event: event,
           head_sha: HEAD_SHA,
-          pull_requests: pull_requests.map { |number| { number: number } }
+          pull_requests: pull_requests.map { |number| { number: number } },
+          fixture_job_pages: job_pages || [[workflow_job(conclusion)]]
         }
       end
 
@@ -95,6 +102,40 @@ class MergeReadinessCheckTest < Minitest::Test
       workflow_runs: [
         workflow_run("Ruby based checks", "success"),
         workflow_run("Claude Code Review", "skipped")
+      ],
+      threads: []
+    },
+    "fork_success_run_with_only_skipped_jobs" => {
+      pr: fork_pr(merge_state_status: "UNSTABLE", title: "Fork whose successful run executed no jobs"),
+      checks: [
+        check("Ruby fork gate", "SKIPPED", "skipping"),
+        check("CodeRabbit", "SUCCESS", "pass")
+      ],
+      check_runs: [
+        check_run("Ruby fork gate", "skipped"),
+        check_run("CodeRabbit", "success", app: "coderabbit")
+      ],
+      workflow_runs: [
+        workflow_run("Ruby based checks", "success", job_pages: [[workflow_job("skipped")]])
+      ],
+      threads: []
+    },
+    "fork_successful_job_on_second_page" => {
+      pr: fork_pr(merge_state_status: "UNSTABLE", title: "Fork whose successful job is on page two"),
+      checks: [
+        check("Ruby fork gate", "SKIPPED", "skipping"),
+        check("CodeRabbit", "SUCCESS", "pass")
+      ],
+      check_runs: [
+        check_run("Ruby fork gate", "skipped"),
+        check_run("CodeRabbit", "success", app: "coderabbit")
+      ],
+      workflow_runs: [
+        workflow_run(
+          "Ruby based checks",
+          "success",
+          job_pages: [Array.new(100) { workflow_job("skipped") }, [workflow_job("success")]]
+        )
       ],
       threads: []
     },
@@ -309,6 +350,17 @@ class MergeReadinessCheckTest < Minitest::Test
     assert_includes result[:stdout], "MERGE_READINESS_READY"
   end
 
+  def test_successful_workflow_with_only_skipped_jobs_is_not_ready
+    assert_not_ready("fork_success_run_with_only_skipped_jobs", "fork CI has not started")
+  end
+
+  def test_successful_job_on_second_page_proves_fork_ci_started
+    result = run_scenario("fork_successful_job_on_second_page")
+
+    assert_equal 0, result[:status], result[:stderr]
+    assert_includes result[:stdout], "MERGE_READINESS_READY"
+  end
+
   def test_unapproved_fork_without_actions_check_evidence_is_not_ready
     result = run_scenario("fork_unapproved")
 
@@ -440,6 +492,11 @@ class MergeReadinessCheckTest < Minitest::Test
         if expected_head_sha && fields["head_sha"] != expected_head_sha
           abort "Expected head_sha=\#{expected_head_sha}: \#{args.inspect}"
         end
+        expected_fields = %w[page per_page]
+        expected_fields << "head_sha" if expected_head_sha
+        unless fields.keys.sort == expected_fields.sort
+          abort "Unexpected GitHub API query fields: \#{args.inspect}"
+        end
 
         page = Integer(fields.fetch("page"), 10)
         abort "Expected a 1-based page: \#{args.inspect}" unless page.positive?
@@ -451,10 +508,22 @@ class MergeReadinessCheckTest < Minitest::Test
 
       def api_collection(fixture, item_key, pages_key, page)
         pages = fixture[pages_key] || [fixture.fetch(item_key)]
+        collection_page(item_key, pages, page)
+      end
+
+      def collection_page(item_key, pages, page)
+        items = pages.fetch(page - 1, [])
+        if item_key == "workflow_runs"
+          items = items.map { |item| item.reject { |key, _value| key.start_with?("fixture_") } }
+        end
         {
           "total_count" => pages.sum(&:length),
-          item_key => pages.fetch(page - 1, [])
+          item_key => items
         }
+      end
+
+      jobs_endpoint = args.find do |arg|
+        arg.match?(%r{\\Arepos/shakacode/shakapacker/actions/runs/\\d+/jobs\\z})
       end
 
       output = if args[0, 2] == ["pr", "view"]
@@ -474,6 +543,14 @@ class MergeReadinessCheckTest < Minitest::Test
                      }
                    }
                  }
+               elsif jobs_endpoint
+                 run_id = Integer(jobs_endpoint.split("/").fetch(-2), 10)
+                 workflow_runs = fixture["workflow_runs"] || fixture.fetch("workflow_run_pages").flatten
+                 workflow_run = workflow_runs.find { |run| run.fetch("id") == run_id }
+                 abort "Unexpected workflow run id: \#{run_id}" unless workflow_run
+
+                 page = api_page(args, jobs_endpoint)
+                 collection_page("jobs", workflow_run.fetch("fixture_job_pages"), page)
                elsif args.any? { |arg| arg.include?("/check-runs") }
                  head_sha = fixture.fetch("pr").fetch("headRefOid")
                  endpoint = "repos/shakacode/shakapacker/commits/\#{head_sha}/check-runs"
