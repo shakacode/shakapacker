@@ -231,6 +231,19 @@ class MergeReadinessCheckTest < Minitest::Test
       check_runs: [check_run("Ruby specs", "success")],
       workflow_runs: [workflow_run("Ruby based checks", "success")],
       threads: [{ id: "thread-1", isResolved: false }]
+    },
+    "merged_review_required" => {
+      pr: same_repo_pr.merge(
+        title: "Merged PR whose current review decision drifted",
+        state: "MERGED",
+        mergeStateStatus: "UNKNOWN",
+        mergedAt: "2026-08-01T13:00:00Z",
+        reviewDecision: "REVIEW_REQUIRED"
+      ),
+      checks: [check("Ruby specs", "SUCCESS", "pass")],
+      check_runs: [check_run("Ruby specs", "success")],
+      workflow_runs: [workflow_run("Ruby based checks", "success")],
+      threads: []
     }
   }.freeze
 
@@ -300,6 +313,13 @@ class MergeReadinessCheckTest < Minitest::Test
 
   def test_unresolved_review_thread_remains_blocking
     assert_not_ready("unresolved_thread", "1 unresolved review thread(s) remain")
+  end
+
+  def test_merged_replay_ignores_current_review_required_decision
+    result = run_scenario("merged_review_required")
+
+    assert_equal 0, result[:status], result[:stderr]
+    assert_includes result[:stdout], "MERGE_READINESS_READY"
   end
 
   private
