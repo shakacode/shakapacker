@@ -238,7 +238,10 @@ class MergeReadinessCheckTest < Minitest::Test
       pr: fork_pr(merge_state_status: "CLEAN", title: "Fork awaiting workflow approval"),
       checks: [check("CodeRabbit", "SUCCESS", "pass")],
       check_runs: [],
-      workflow_runs: [workflow_run("Ruby based checks", "action_required")],
+      workflow_runs: [
+        workflow_run("Ruby based checks", "success"),
+        workflow_run("Ruby based checks", "action_required")
+      ],
       threads: []
     },
     "fork_only_skipped" => {
@@ -361,12 +364,12 @@ class MergeReadinessCheckTest < Minitest::Test
     assert_includes result[:stdout], "MERGE_READINESS_READY"
   end
 
-  def test_unapproved_fork_without_actions_check_evidence_is_not_ready
+  def test_unapproved_current_pull_request_workflow_is_not_ready
     result = run_scenario("fork_unapproved")
 
     assert_equal 1, result[:status]
     assert_includes result[:stderr], "MERGE_READINESS_NOT_READY"
-    assert_includes result[:stderr], "fork CI has not started"
+    assert_includes result[:stderr], "1 workflow run(s) require approval"
   end
 
   def test_intentional_skipped_fork_gate_still_requires_review
