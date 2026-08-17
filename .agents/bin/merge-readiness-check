@@ -195,9 +195,11 @@ if pr.fetch("isCrossRepository")
     workflow_run.fetch("event").to_s.casecmp?("pull_request")
   end
   current_pull_request_workflow_runs = pull_request_workflow_runs.select do |workflow_run|
-    pr["mergedAt"] || workflow_run.fetch("pull_requests", []).any? do |associated_pr|
+    associated_pull_requests = workflow_run.fetch("pull_requests", [])
+    associated_with_current_pr = associated_pull_requests.any? do |associated_pr|
       associated_pr["number"] == pr.fetch("number")
     end
+    associated_with_current_pr || (pr["mergedAt"] && associated_pull_requests.empty?)
   end
   passing_pull_request_workflow_runs = current_pull_request_workflow_runs.select do |workflow_run|
     next false unless workflow_run.fetch("status").to_s.casecmp?("completed")

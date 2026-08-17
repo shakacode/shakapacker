@@ -332,6 +332,35 @@ class MergeReadinessCheckTest < Minitest::Test
       check_runs: [check_run("Ruby specs", "success")],
       workflow_runs: [workflow_run("Ruby based checks", "success", pull_requests: [])],
       threads: []
+    },
+    "merged_fork_with_foreign_success" => {
+      pr: fork_pr.merge(
+        title: "Merged fork whose successful run belongs to another PR",
+        state: "MERGED",
+        mergeStateStatus: "UNKNOWN",
+        mergedAt: "2026-08-01T13:00:00Z",
+        reviewDecision: "REVIEW_REQUIRED"
+      ),
+      checks: [check("Ruby specs", "SUCCESS", "pass")],
+      check_runs: [check_run("Ruby specs", "success")],
+      workflow_runs: [workflow_run("Other PR checks", "success", pull_requests: [999])],
+      threads: []
+    },
+    "merged_fork_with_foreign_approval" => {
+      pr: fork_pr.merge(
+        title: "Merged fork whose approval-pending run belongs to another PR",
+        state: "MERGED",
+        mergeStateStatus: "UNKNOWN",
+        mergedAt: "2026-08-01T13:00:00Z",
+        reviewDecision: "REVIEW_REQUIRED"
+      ),
+      checks: [check("Ruby specs", "SUCCESS", "pass")],
+      check_runs: [check_run("Ruby specs", "success")],
+      workflow_runs: [
+        workflow_run("Ruby based checks", "success", pull_requests: []),
+        workflow_run("Other PR checks", "action_required", pull_requests: [999])
+      ],
+      threads: []
     }
   }.freeze
 
@@ -441,6 +470,17 @@ class MergeReadinessCheckTest < Minitest::Test
 
   def test_merged_fork_replay_accepts_exact_head_run_without_current_association
     result = run_scenario("merged_fork_without_run_association")
+
+    assert_equal 0, result[:status], result[:stderr]
+    assert_includes result[:stdout], "MERGE_READINESS_READY"
+  end
+
+  def test_merged_fork_replay_rejects_success_associated_with_another_pull_request
+    assert_not_ready("merged_fork_with_foreign_success", "no successful pull_request workflow-run evidence")
+  end
+
+  def test_merged_fork_replay_ignores_approval_pending_run_for_another_pull_request
+    result = run_scenario("merged_fork_with_foreign_approval")
 
     assert_equal 0, result[:status], result[:stderr]
     assert_includes result[:stdout], "MERGE_READINESS_READY"
