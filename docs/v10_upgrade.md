@@ -193,7 +193,7 @@ module.exports = {
 ```
 
 Issue [#1204](https://github.com/shakacode/shakapacker/issues/1204) tracks the
-10.2.1 doctor warning for old custom React Refresh config patterns. See also
+10.3.1 doctor warning for old custom React Refresh config patterns. See also
 [PR #1179](https://github.com/shakacode/shakapacker/pull/1179), the
 [Rspack guide](./rspack.md), and the
 [Rspack migration guide](./rspack_migration_guide.md).
