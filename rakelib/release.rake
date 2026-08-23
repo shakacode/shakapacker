@@ -20,6 +20,7 @@ REQUIRED_MAIN_PUSH_WORKFLOWS = [
   "Ruby based checks",
   "Test Both Bundlers"
 ].freeze unless defined?(REQUIRED_MAIN_PUSH_WORKFLOWS)
+CONDITIONAL_MAIN_PUSH_WORKFLOWS = ["Babel 8 smoke"].freeze unless defined?(CONDITIONAL_MAIN_PUSH_WORKFLOWS)
 
 unless defined?(AbortingMessageHandler)
   class AbortingMessageHandler
@@ -126,6 +127,25 @@ def target_gem_version(gem_root:, requested_gem_version:)
 
   major, minor, patch = match.captures.map(&:to_i)
   "#{major}.#{minor}.#{patch + 1}"
+end
+
+def resolve_implicit_release_version(gem_root:, dry_run:)
+  changelog_version = extract_latest_changelog_version(gem_root: gem_root)
+  current_version = current_gem_version(gem_root)
+
+  if changelog_version && Gem::Version.new(changelog_version) > Gem::Version.new(current_version)
+    puts "Found CHANGELOG.md version: #{changelog_version} (current: #{current_version})"
+    if dry_run
+      puts "DRY RUN: Skipping confirmation prompt for CHANGELOG.md version #{changelog_version}."
+    else
+      confirm_or_abort!("Release #{changelog_version} from CHANGELOG.md?")
+    end
+    return changelog_version
+  end
+
+  puts "No new version found in CHANGELOG.md (latest: #{changelog_version || 'none'}, current: #{current_version})."
+  puts "Falling back to patch bump."
+  ""
 end
 
 def prerelease_gem_version?(gem_version)
@@ -436,14 +456,15 @@ def validate_release_ci_status!(gem_root:, allow_override:, dry_run:)
     return
   end
 
-  required_workflow_runs = workflow_runs.select { |run| REQUIRED_MAIN_PUSH_WORKFLOWS.include?(run[:name]) }
-  workflow_results = classify_check_runs(required_workflow_runs, passing_conclusions: ["success"])
+  gating_workflow_names = REQUIRED_MAIN_PUSH_WORKFLOWS + CONDITIONAL_MAIN_PUSH_WORKFLOWS
+  gating_workflow_runs = workflow_runs.select { |run| gating_workflow_names.include?(run[:name]) }
+  workflow_results = classify_check_runs(gating_workflow_runs, passing_conclusions: CI_PASSING_CONCLUSIONS)
   status_results = classify_check_runs(statuses)
   pending = workflow_results[:pending] + status_results[:pending]
   failing = workflow_results[:failing] + status_results[:failing]
 
   if pending.empty? && failing.empty?
-    puts "✓ CI is green for #{commit_sha} (#{required_workflow_runs.length} main-push workflows, #{statuses.length} commit-status signals)"
+    puts "✓ CI is green for #{commit_sha} (#{gating_workflow_runs.length} main-push workflows, #{statuses.length} commit-status signals)"
     return
   end
 
@@ -795,6 +816,12 @@ def perform_release(
       dry_run: dry_run
     )
 
+    # An argument-less dry run refreshes only its detached worktree. Resolve the
+    # implicit version here so it reads the refreshed changelog and gem version.
+    if dry_run && requested_gem_version.empty?
+      requested_gem_version = resolve_implicit_release_version(gem_root: release_root, dry_run: true)
+    end
+
     # The release root may change after `git pull --rebase`, so patch-bump inference must happen after that step.
     resolved_target_gem_version = target_gem_version(gem_root: release_root, requested_gem_version: requested_gem_version)
 
@@ -961,23 +988,9 @@ task :release, %i[gem_version dry_run override_version_policy override_ci_status
   allow_ci_override = ci_status_override_enabled?(args_hash[:override_ci_status])
 
   requested_version = args_hash[:gem_version].to_s.strip
-  if requested_version.empty?
+  if requested_version.empty? && !is_dry_run
     gem_root = File.expand_path("..", __dir__)
-    changelog_version = extract_latest_changelog_version(gem_root: gem_root)
-    current_version = current_gem_version(gem_root)
-
-    if changelog_version && Gem::Version.new(changelog_version) > Gem::Version.new(current_version)
-      puts "Found CHANGELOG.md version: #{changelog_version} (current: #{current_version})"
-      if is_dry_run
-        puts "DRY RUN: Skipping confirmation prompt for CHANGELOG.md version #{changelog_version}."
-      else
-        confirm_or_abort!("Release #{changelog_version} from CHANGELOG.md?")
-      end
-      requested_version = changelog_version
-    else
-      puts "No new version found in CHANGELOG.md (latest: #{changelog_version || 'none'}, current: #{current_version})."
-      puts "Falling back to patch bump."
-    end
+    requested_version = resolve_implicit_release_version(gem_root: gem_root, dry_run: false)
   end
 
   release_result = perform_release(

@@ -12,7 +12,9 @@ RSpec.describe "release rake helpers" do
 
       expect do
         load File.expand_path("../../rakelib/release.rake", __dir__)
-      end.not_to output(/GITHUB_REPO_SLUG_PATTERN|CI_PASSING_CONCLUSIONS|AbortingMessageHandler/).to_stderr
+      end.not_to output(
+        /GITHUB_REPO_SLUG_PATTERN|CI_PASSING_CONCLUSIONS|CONDITIONAL_MAIN_PUSH_WORKFLOWS|AbortingMessageHandler/
+      ).to_stderr
     ensure
       $VERBOSE = previous_verbose
     end
@@ -142,23 +144,20 @@ RSpec.describe "release rake helpers" do
     end
 
     it "refreshes the detached dry-run worktree from origin/main before evaluating the release" do
-      commands = []
-      allow(Shakapacker::Utils::Misc).to receive(:sh_in_dir) do |dir, command|
-        commands << [dir, command]
-      end
+      allow(Shakapacker::Utils::Misc).to receive(:sh_in_dir)
 
       yielded_root = nil
       with_release_checkout(gem_root: "/repo", dry_run: true) { |release_root| yielded_root = release_root }
 
       expect(yielded_root).to eq("/tmp/shakapacker-release/worktree")
-      expect(commands).to eq(
-        [
-          ["/repo", "git worktree add --detach /tmp/shakapacker-release/worktree HEAD"],
-          ["/tmp/shakapacker-release/worktree", "git fetch origin main"],
-          ["/tmp/shakapacker-release/worktree", "git rebase origin/main"],
-          ["/repo", "git worktree remove --force /tmp/shakapacker-release/worktree"]
-        ]
-      )
+      expect(Shakapacker::Utils::Misc).to have_received(:sh_in_dir)
+        .with("/repo", "git worktree add --detach /tmp/shakapacker-release/worktree HEAD").ordered
+      expect(Shakapacker::Utils::Misc).to have_received(:sh_in_dir)
+        .with("/tmp/shakapacker-release/worktree", "git fetch origin main").ordered
+      expect(Shakapacker::Utils::Misc).to have_received(:sh_in_dir)
+        .with("/tmp/shakapacker-release/worktree", "git rebase origin/main").ordered
+      expect(Shakapacker::Utils::Misc).to have_received(:sh_in_dir)
+        .with("/repo", "git worktree remove --force /tmp/shakapacker-release/worktree").ordered
     end
 
     it "preserves the release failure when dry-run worktree cleanup also fails" do
@@ -209,6 +208,25 @@ RSpec.describe "release rake helpers" do
     end
   end
 
+  describe "#perform_release" do
+    it "resolves an implicit dry-run version from the refreshed release checkout" do
+      allow(self).to receive(:ensure_clean_worktree!)
+      allow(self).to receive(:with_release_checkout).and_yield("/refreshed")
+      allow(self).to receive(:validate_release_ci_status!)
+      allow(self).to receive(:extract_latest_changelog_version)
+        .with(gem_root: "/refreshed")
+        .and_return("10.4.0")
+      allow(self).to receive(:current_gem_version).with("/refreshed").and_return("10.3.1")
+      expect(self).to receive(:target_gem_version)
+        .with(gem_root: "/refreshed", requested_gem_version: "10.4.0")
+        .and_raise("stop after version resolution")
+
+      expect do
+        perform_release(gem_version: "", dry_run: true)
+      end.to raise_error(RuntimeError, "stop after version resolution")
+    end
+  end
+
   describe "#validate_release_ci_status!" do
     let(:commit_sha) { "abc123" }
 
@@ -217,12 +235,6 @@ RSpec.describe "release rake helpers" do
       allow(Open3).to receive(:capture2e)
         .with("gh", "api", "--paginate", "--jq", anything, a_string_including(path_fragment))
         .and_return([objects.map(&:to_json).join("\n"), status])
-    end
-
-    # PR check runs are stubbed only in regression examples proving they cannot satisfy the main-push gate.
-    def stub_check_runs(rows, success: true)
-      objects = rows.map { |name, run_status, conclusion| { name: name, status: run_status, conclusion: conclusion } }
-      stub_gh_jsonl("check-runs", objects, success: success)
     end
 
     def stub_commit_statuses(rows, success: true)
@@ -306,8 +318,7 @@ RSpec.describe "release rake helpers" do
       end.to output(/✓ CI is green for #{commit_sha} \(5 main-push workflows, 0 commit-status signals\)/).to_stdout
     end
 
-    it "blocks when successful PR checks exist before the expected main-push workflow suite starts" do
-      stub_check_runs([["Ruby based checks", "completed", "success"]])
+    it "blocks before the expected main-push workflow suite starts even when supplemental statuses are green" do
       stub_commit_statuses([["CodeRabbit", "success"]])
       stub_main_push_workflow_runs([])
 
@@ -317,7 +328,6 @@ RSpec.describe "release rake helpers" do
     end
 
     it "blocks while any expected main-push workflow is still queued" do
-      stub_check_runs([["Ruby PR checks", "completed", "success"]])
       stub_main_push_workflow_runs(
         [
           ["Dummy specs", "completed", "success"],
@@ -334,7 +344,6 @@ RSpec.describe "release rake helpers" do
     end
 
     it "blocks when any expected main-push workflow completed unsuccessfully" do
-      stub_check_runs([["Ruby PR checks", "completed", "success"]])
       stub_main_push_workflow_runs(
         [
           ["Dummy specs", "completed", "success"],
@@ -364,13 +373,6 @@ RSpec.describe "release rake helpers" do
       end.to output(/✓ CI is green for #{commit_sha} \(5 main-push workflows, 0 commit-status signals\)/).to_stdout
     end
 
-    it "ignores failed PR check runs once the expected main-push workflow suite is green" do
-      stub_check_runs([["PR Linting", "completed", "failure"]])
-
-      expect { validate }
-        .to output(/✓ CI is green for #{commit_sha} \(5 main-push workflows, 0 commit-status signals\)/).to_stdout
-    end
-
     it "does not gate on unrelated conditional push workflows" do
       stub_main_push_workflow_runs(
         successful_main_push_workflow_runs + [["Trigger docs site rebuild", "completed", "failure"]]
@@ -379,6 +381,35 @@ RSpec.describe "release rake helpers" do
       expect do
         expect { validate }.not_to raise_error
       end.to output(/✓ CI is green for #{commit_sha} \(5 main-push workflows, 0 commit-status signals\)/).to_stdout
+    end
+
+    it "blocks when a present Babel 8 smoke workflow run fails" do
+      stub_main_push_workflow_runs(
+        successful_main_push_workflow_runs + [["Babel 8 smoke", "completed", "failure"]]
+      )
+
+      expect do
+        expect { validate }.to raise_error(SystemExit)
+      end.to output(/Not passing.*Babel 8 smoke \(failure\)/m).to_stderr
+    end
+
+    it "blocks while a present Babel 8 smoke workflow run is pending" do
+      stub_main_push_workflow_runs(
+        successful_main_push_workflow_runs + [["Babel 8 smoke", "queued", nil]]
+      )
+
+      expect do
+        expect { validate }.to raise_error(SystemExit)
+      end.to output(/Still running.*Babel 8 smoke \(queued\)/m).to_stderr
+    end
+
+    it "passes when a present Babel 8 smoke workflow run succeeds" do
+      stub_main_push_workflow_runs(
+        successful_main_push_workflow_runs + [["Babel 8 smoke", "completed", "success"]]
+      )
+
+      expect { validate }
+        .to output(/✓ CI is green for #{commit_sha} \(6 main-push workflows, 0 commit-status signals\)/).to_stdout
     end
 
     it "aborts and names the failing main-push workflow" do

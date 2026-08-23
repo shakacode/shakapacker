@@ -87,6 +87,8 @@ When called with no arguments, `release`:
 Dry runs use a temporary git worktree so version bumps and installs do not modify your current checkout.
 The temporary worktree fetches and rebases onto `origin/main`, matching the commit a live
 release would evaluate instead of checking a potentially stale local `HEAD`.
+When no version argument is provided, changelog-version selection also happens after that
+refresh, so the preview uses the refreshed changelog and current gem version.
 Dry runs now also print explicit "skipping confirmation" messages and the would-run GitHub release command.
 
 `release` validates release-version policy before publishing:
@@ -113,6 +115,8 @@ version-bump commit the task creates):
   test matrices.
 - Every required workflow must be completed with a `success` conclusion. Missing, queued,
   in-progress, failed, cancelled, or timed-out workflows all block the release.
+- The path-conditional Babel 8 smoke workflow is not required when absent, but when GitHub
+  created a `push`/`main` run for the exact SHA, its latest run must also complete successfully.
 - Unrelated conditional push workflows, such as documentation rebuilds, are not part of the
   release-gating suite.
 - Legacy commit statuses are evaluated as supplemental fail-closed signals. Some integrations
