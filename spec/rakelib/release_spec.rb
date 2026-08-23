@@ -109,6 +109,31 @@ RSpec.describe "release rake helpers" do
     end
   end
 
+  describe "#refresh_release_root_lockfile" do
+    it "runs the release-root bundle install with the parent bundler env removed" do
+      unbundled = false
+      commands = []
+
+      allow(Bundler).to receive(:with_unbundled_env) do |&block|
+        unbundled = true
+        begin
+          block.call
+        ensure
+          unbundled = false
+        end
+      end
+      allow(Shakapacker::Utils::Misc).to receive(:sh_in_dir) do |dir, command|
+        commands << { dir: dir, command: command, unbundled: unbundled }
+      end
+
+      refresh_release_root_lockfile("/tmp/release-worktree")
+
+      expect(commands).to eq(
+        [{ dir: "/tmp/release-worktree", command: "bundle install", unbundled: true }]
+      )
+    end
+  end
+
   describe "#with_release_checkout" do
     before do
       allow(Dir).to receive(:mktmpdir)

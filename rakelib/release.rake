@@ -518,6 +518,12 @@ def refresh_spec_dummy_lockfiles(release_root)
   Shakapacker::Utils::Misc.sh_in_dir(spec_dummy_dir, "npm install")
 end
 
+def refresh_release_root_lockfile(release_root)
+  Bundler.with_unbundled_env do
+    Shakapacker::Utils::Misc.sh_in_dir(release_root, "bundle install")
+  end
+end
+
 def print_release_summary(release_result)
   released_gem_version = release_result[:released_gem_version]
   released_npm_version = release_result[:released_npm_version]
@@ -621,7 +627,7 @@ def perform_release(
       "gem bump --no-commit --version #{Shellwords.escape(requested_gem_version)}"
     end
     Shakapacker::Utils::Misc.sh_in_dir(release_root, bump_command)
-    Shakapacker::Utils::Misc.sh_in_dir(release_root, "bundle install")
+    refresh_release_root_lockfile(release_root)
 
     # Update spec/dummy lockfiles BEFORE release-it so they are included in the release commit.
     refresh_spec_dummy_lockfiles(release_root)
