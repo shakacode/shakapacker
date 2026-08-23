@@ -141,6 +141,13 @@ RSpec.describe "release rake helpers" do
       allow(Dir).to receive(:mktmpdir)
         .with("shakapacker-release-dry-run")
         .and_yield("/tmp/shakapacker-release")
+      successful_status = double("status", success?: true)
+      allow(Open3).to receive(:capture2e)
+        .with("git", "-C", "/tmp/shakapacker-release/worktree", "fetch", "origin", "main")
+        .and_return(["", successful_status])
+      allow(Open3).to receive(:capture2e)
+        .with("git", "-C", "/tmp/shakapacker-release/worktree", "rebase", "origin/main")
+        .and_return(["", successful_status])
     end
 
     it "refreshes the detached dry-run worktree from origin/main before evaluating the release" do
@@ -152,12 +159,44 @@ RSpec.describe "release rake helpers" do
       expect(yielded_root).to eq("/tmp/shakapacker-release/worktree")
       expect(Shakapacker::Utils::Misc).to have_received(:sh_in_dir)
         .with("/repo", "git worktree add --detach /tmp/shakapacker-release/worktree HEAD").ordered
-      expect(Shakapacker::Utils::Misc).to have_received(:sh_in_dir)
-        .with("/tmp/shakapacker-release/worktree", "git fetch origin main").ordered
-      expect(Shakapacker::Utils::Misc).to have_received(:sh_in_dir)
-        .with("/tmp/shakapacker-release/worktree", "git rebase origin/main").ordered
+      expect(Open3).to have_received(:capture2e)
+        .with("git", "-C", "/tmp/shakapacker-release/worktree", "fetch", "origin", "main").ordered
+      expect(Open3).to have_received(:capture2e)
+        .with("git", "-C", "/tmp/shakapacker-release/worktree", "rebase", "origin/main").ordered
       expect(Shakapacker::Utils::Misc).to have_received(:sh_in_dir)
         .with("/repo", "git worktree remove --force /tmp/shakapacker-release/worktree").ordered
+    end
+
+    it "aborts with an actionable message when the dry-run fetch fails" do
+      failed_status = double("status", success?: false)
+      allow(Open3).to receive(:capture2e)
+        .with("git", "-C", "/tmp/shakapacker-release/worktree", "fetch", "origin", "main")
+        .and_return(["network unavailable\n", failed_status])
+      allow(Shakapacker::Utils::Misc).to receive(:sh_in_dir)
+
+      expect do
+        expect do
+          with_release_checkout(gem_root: "/repo", dry_run: true) { "unreachable" }
+        end.to raise_error(SystemExit)
+      end.to output(/Unable to fetch origin\/main for the dry run.*network unavailable/m).to_stderr
+    end
+
+    it "aborts with an actionable message when the dry-run rebase fails" do
+      successful_status = double("status", success?: true)
+      failed_status = double("status", success?: false)
+      allow(Open3).to receive(:capture2e)
+        .with("git", "-C", "/tmp/shakapacker-release/worktree", "fetch", "origin", "main")
+        .and_return(["", successful_status])
+      allow(Open3).to receive(:capture2e)
+        .with("git", "-C", "/tmp/shakapacker-release/worktree", "rebase", "origin/main")
+        .and_return(["CONFLICT in release files\n", failed_status])
+      allow(Shakapacker::Utils::Misc).to receive(:sh_in_dir)
+
+      expect do
+        expect do
+          with_release_checkout(gem_root: "/repo", dry_run: true) { "unreachable" }
+        end.to raise_error(SystemExit)
+      end.to output(/Unable to rebase the dry run onto origin\/main.*CONFLICT in release files/m).to_stderr
     end
 
     it "preserves the release failure when dry-run worktree cleanup also fails" do
@@ -225,6 +264,38 @@ RSpec.describe "release rake helpers" do
         perform_release(gem_version: "", dry_run: true)
       end.to raise_error(RuntimeError, "stop after version resolution")
     end
+
+    it "preserves the refreshed checkout changelog result in the dry-run summary" do
+      allow(self).to receive(:with_release_checkout).and_yield("/refreshed")
+      allow(self).to receive(:validate_release_ci_status!)
+      allow(self).to receive(:target_gem_version).and_return("10.4.0")
+      allow(self).to receive(:warn_changelog_missing)
+      allow(self).to receive(:validate_release_version_policy!)
+      allow(self).to receive(:refresh_release_root_lockfile)
+      allow(self).to receive(:refresh_spec_dummy_lockfiles)
+      allow(self).to receive(:current_gem_version).with("/refreshed").and_return("10.4.0")
+      allow(self).to receive(:bump_supplemental_core_dep)
+      allow(Shakapacker::Utils::Misc).to receive(:sh_in_dir)
+      allow(self).to receive(:extract_changelog_section).and_return(nil)
+      allow(self).to receive(:extract_changelog_section)
+        .with(changelog_path: "/refreshed/CHANGELOG.md", npm_version: "10.4.0")
+        .and_return("release notes")
+
+      result = perform_release(gem_version: "10.4.0", dry_run: true, check_uncommitted: false)
+
+      expect(result[:changelog_section_found]).to be(true)
+    end
+  end
+
+  describe "#fetch_gh_jsonl" do
+    it "parses stdout without mixing in successful gh diagnostics from stderr" do
+      status = double("status", success?: true)
+      command = ["gh", "api", "--paginate", "--jq", ".workflow_runs[]", "repos/example/actions/runs"]
+      allow(Open3).to receive(:capture3).with(*command).and_return(["{\"id\":1}\n", "gh update available\n", status])
+
+      expect(fetch_gh_jsonl("repos/example/actions/runs", ".workflow_runs[]"))
+        .to eq([[{ "id" => 1 }], nil])
+    end
   end
 
   describe "#validate_release_ci_status!" do
@@ -232,9 +303,9 @@ RSpec.describe "release rake helpers" do
 
     def stub_gh_jsonl(path_fragment, objects, success: true)
       status = double("status", success?: success)
-      allow(Open3).to receive(:capture2e)
+      allow(Open3).to receive(:capture3)
         .with("gh", "api", "--paginate", "--jq", anything, a_string_including(path_fragment))
-        .and_return([objects.map(&:to_json).join("\n"), status])
+        .and_return([objects.map(&:to_json).join("\n"), "", status])
     end
 
     def stub_commit_statuses(rows, success: true)
@@ -473,7 +544,7 @@ RSpec.describe "release rake helpers" do
     end
 
     it "fails closed when the GitHub CLI is missing" do
-      allow(Open3).to receive(:capture2e)
+      allow(Open3).to receive(:capture3)
         .with("gh", "api", "--paginate", "--jq", anything, a_string_including("actions/runs"))
         .and_raise(Errno::ENOENT)
 

@@ -331,11 +331,14 @@ end
 # missing `gh` or an API failure blocks a live release but only reports during a dry run.
 def fetch_gh_jsonl(api_path, jq_filter)
   begin
-    output, status = Open3.capture2e("gh", "api", "--paginate", "--jq", jq_filter, api_path)
+    output, error_output, status = Open3.capture3("gh", "api", "--paginate", "--jq", jq_filter, api_path)
   rescue Errno::ENOENT
     return [nil, "GitHub CLI is not installed or not available on PATH. Install `gh` and retry."]
   end
-  return [nil, output.strip] unless status.success?
+  unless status.success?
+    diagnostics = [error_output, output].map(&:strip).reject(&:empty?).join("\n")
+    return [nil, diagnostics]
+  end
 
   rows = output.lines.reject { |line| line.strip.empty? }.map { |line| JSON.parse(line) }
   [rows, nil]
@@ -655,8 +658,15 @@ def with_release_checkout(gem_root:, dry_run:)
     Shakapacker::Utils::Misc.sh_in_dir(gem_root, "git worktree add --detach #{escaped_worktree_dir} HEAD")
     begin
       # Match the live `git pull --rebase` result without changing the maintainer's checkout.
-      Shakapacker::Utils::Misc.sh_in_dir(worktree_dir, "git fetch origin main")
-      Shakapacker::Utils::Misc.sh_in_dir(worktree_dir, "git rebase origin/main")
+      fetch_output, fetch_status = Open3.capture2e("git", "-C", worktree_dir, "fetch", "origin", "main")
+      unless fetch_status.success?
+        abort "❌ Unable to fetch origin/main for the dry run. Check network access and the origin remote.\n\n#{fetch_output.strip}"
+      end
+
+      rebase_output, rebase_status = Open3.capture2e("git", "-C", worktree_dir, "rebase", "origin/main")
+      unless rebase_status.success?
+        abort "❌ Unable to rebase the dry run onto origin/main. Update or reconcile the branch, then retry.\n\n#{rebase_output.strip}"
+      end
       yield(worktree_dir)
     ensure
       original_error = $ERROR_INFO
@@ -870,6 +880,12 @@ def perform_release(
       abort "❌ Expected gem bump to produce #{resolved_target_gem_version}, but found #{resolved_gem_version}."
     end
 
+    if dry_run
+      changelog_path = File.join(release_root, "CHANGELOG.md")
+      changelog_section = extract_changelog_section(changelog_path: changelog_path, npm_version: released_npm_version)
+      changelog_section_found = !changelog_section.nil?
+    end
+
     # Bump the supplemental packages to match core. publish-packages.sh enforces
     # version lockstep across all three packages, but release-it only knows about
     # the root package.json — so we pre-bump the supplementals and stage them.
@@ -925,16 +941,14 @@ def perform_release(
 
   # Check changelog availability for the summary (both dry-run and live paths).
   sync_gem_version = released_gem_version || gem_version.to_s.strip
-  if sync_gem_version && !sync_gem_version.empty?
+  if !dry_run && sync_gem_version && !sync_gem_version.empty?
     released_npm_version ||= Shakapacker::Utils::VersionSyntaxConverter.new.rubygem_to_npm(sync_gem_version)
     changelog_path = File.join(gem_root, "CHANGELOG.md")
     changelog_section = extract_changelog_section(changelog_path: changelog_path, npm_version: released_npm_version)
     changelog_section_found = !changelog_section.nil?
 
-    unless dry_run
-      sync_github_release_after_publish(gem_root: gem_root, gem_version: sync_gem_version, dry_run: dry_run,
-                                        changelog_section: changelog_section)
-    end
+    sync_github_release_after_publish(gem_root: gem_root, gem_version: sync_gem_version, dry_run: dry_run,
+                                      changelog_section: changelog_section)
   end
 
   {
