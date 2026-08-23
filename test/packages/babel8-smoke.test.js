@@ -4,6 +4,8 @@
 // Babel 7. Enable this smoke with RUN_BABEL8_SMOKE=1 after `yarn build`; it
 // installs Babel 8 packages into a temp app and runs Webpack through
 // babel-loader 10 with Shakapacker's built Babel preset.
+// Set BABEL8_SMOKE_BYPASS_PRESET=1 only for the manual negative-control replay
+// that proves the transform assertion fails when the preset is removed.
 //
 // Keep the pinned Babel 8 package versions below in sync during Babel
 // compatibility reviews. This smoke covers the published preset path; the
@@ -30,6 +32,8 @@ const babel8SmokePackages = [
 ]
 const optedIn = process.env.RUN_BABEL8_SMOKE === "1"
 const coreIsBuilt = fs.existsSync(builtPresetPath)
+const bypassPreset = process.env.BABEL8_SMOKE_BYPASS_PRESET === "1"
+const smokePresets = (presetPath) => (bypassPreset ? [] : [presetPath])
 
 const toolVersion = (cmd) => {
   const r = spawnSync(cmd, ["--version"], {
@@ -89,7 +93,26 @@ const installBuiltShakapackerPackage = (workRoot) => {
   })
 }
 
-const writeWebpackSmokeRunner = ({ workRoot, srcDir, distDir, presetPath }) => {
+const writeWebpackSmokeRunner = ({
+  workRoot,
+  srcDir,
+  distDir,
+  babelOutputPath,
+  presets
+}) => {
+  const captureLoaderPath = path.join(workRoot, "capture-babel-output.cjs")
+  fs.writeFileSync(
+    captureLoaderPath,
+    `
+const fs = require("fs")
+
+module.exports = function captureBabelOutput(source) {
+  fs.writeFileSync(${JSON.stringify(babelOutputPath)}, source)
+  return source
+}
+`
+  )
+
   const runnerPath = path.join(workRoot, "run-webpack-smoke.cjs")
   fs.writeFileSync(
     runnerPath,
@@ -101,7 +124,8 @@ const webpack = require(${JSON.stringify(webpackPath)})
 const workRoot = ${JSON.stringify(workRoot)}
 const srcDir = ${JSON.stringify(srcDir)}
 const distDir = ${JSON.stringify(distDir)}
-const presetPath = ${JSON.stringify(presetPath)}
+const captureLoaderPath = ${JSON.stringify(captureLoaderPath)}
+const presets = ${JSON.stringify(presets)}
 const appRequire = createRequire(path.join(workRoot, "package.json"))
 
 const compiler = webpack({
@@ -120,13 +144,17 @@ const compiler = webpack({
         test: /\\.js$/,
         include: srcDir,
         use: [
+          // Capture Babel's CommonJS output before webpack processes it.
+          { loader: captureLoaderPath },
           {
             loader: appRequire.resolve("babel-loader"),
             options: {
               cacheDirectory: false,
               cwd: workRoot,
               envName: "production",
-              presets: [presetPath]
+              // Make preset-env's modules: "auto" decision deterministic.
+              caller: { supportsStaticESM: false },
+              presets
             }
           }
         ]
@@ -188,7 +216,10 @@ describe("Babel 8 preset smoke (issue #1191)", () => {
   beforeAll(() => {
     if (!shouldRun) return
 
-    workRoot = fs.mkdtempSync(path.join(os.tmpdir(), "shaka-babel8-smoke-"))
+    // Webpack canonicalizes resource paths before applying `include` rules.
+    workRoot = fs.mkdtempSync(
+      path.join(fs.realpathSync(os.tmpdir()), "shaka-babel8-smoke-")
+    )
     fs.writeFileSync(
       path.join(workRoot, "package.json"),
       JSON.stringify({ name: "shaka-babel8-smoke", private: true }, null, 2)
@@ -222,7 +253,11 @@ describe("Babel 8 preset smoke (issue #1191)", () => {
     const distDir = path.join(workRoot, "dist")
     fs.mkdirSync(srcDir)
     const entryPath = path.join(srcDir, "index.js")
-    fs.writeFileSync(entryPath, "var answer = 42;\nconsole.log(answer);\n")
+    fs.writeFileSync(
+      entryPath,
+      "export const answer = 42\nconsole.log(answer)\n"
+    )
+    const babelOutputPath = path.join(workRoot, "babel-output.js")
 
     const appRequire = createRequire(path.join(workRoot, "package.json"))
     const presetPath = appRequire.resolve("shakapacker/package/babel/preset.js")
@@ -238,7 +273,8 @@ describe("Babel 8 preset smoke (issue #1191)", () => {
       workRoot,
       srcDir,
       distDir,
-      presetPath
+      babelOutputPath,
+      presets: smokePresets(presetPath)
     })
 
     run(process.execPath, [runnerPath], {
@@ -246,7 +282,10 @@ describe("Babel 8 preset smoke (issue #1191)", () => {
       env: { ...process.env, BABEL_ENV: "production" }
     })
 
+    const babelOutput = fs.readFileSync(babelOutputPath, "utf8")
     const bundle = fs.readFileSync(path.join(distDir, "bundle.js"), "utf8")
+    expect(babelOutput).toContain("exports.answer")
+    expect(babelOutput).not.toContain("export const answer")
     expect(bundle).toContain("42")
   }, 180000)
 })
