@@ -12,7 +12,9 @@ RSpec.describe "release rake helpers" do
 
       expect do
         load File.expand_path("../../rakelib/release.rake", __dir__)
-      end.not_to output(/GITHUB_REPO_SLUG_PATTERN|AbortingMessageHandler/).to_stderr
+      end.not_to output(
+        /GITHUB_REPO_SLUG_PATTERN|CI_PASSING_CONCLUSIONS|CONDITIONAL_MAIN_PUSH_WORKFLOWS|AbortingMessageHandler/
+      ).to_stderr
     ensure
       $VERBOSE = previous_verbose
     end
@@ -139,6 +141,62 @@ RSpec.describe "release rake helpers" do
       allow(Dir).to receive(:mktmpdir)
         .with("shakapacker-release-dry-run")
         .and_yield("/tmp/shakapacker-release")
+      successful_status = double("status", success?: true)
+      allow(Open3).to receive(:capture2e)
+        .with("git", "-C", "/tmp/shakapacker-release/worktree", "fetch", "origin", "main")
+        .and_return(["", successful_status])
+      allow(Open3).to receive(:capture2e)
+        .with("git", "-C", "/tmp/shakapacker-release/worktree", "rebase", "origin/main")
+        .and_return(["", successful_status])
+    end
+
+    it "refreshes the detached dry-run worktree from origin/main before evaluating the release" do
+      allow(Shakapacker::Utils::Misc).to receive(:sh_in_dir)
+
+      yielded_root = nil
+      with_release_checkout(gem_root: "/repo", dry_run: true) { |release_root| yielded_root = release_root }
+
+      expect(yielded_root).to eq("/tmp/shakapacker-release/worktree")
+      expect(Shakapacker::Utils::Misc).to have_received(:sh_in_dir)
+        .with("/repo", "git worktree add --detach /tmp/shakapacker-release/worktree HEAD").ordered
+      expect(Open3).to have_received(:capture2e)
+        .with("git", "-C", "/tmp/shakapacker-release/worktree", "fetch", "origin", "main").ordered
+      expect(Open3).to have_received(:capture2e)
+        .with("git", "-C", "/tmp/shakapacker-release/worktree", "rebase", "origin/main").ordered
+      expect(Shakapacker::Utils::Misc).to have_received(:sh_in_dir)
+        .with("/repo", "git worktree remove --force /tmp/shakapacker-release/worktree").ordered
+    end
+
+    it "aborts with an actionable message when the dry-run fetch fails" do
+      failed_status = double("status", success?: false)
+      allow(Open3).to receive(:capture2e)
+        .with("git", "-C", "/tmp/shakapacker-release/worktree", "fetch", "origin", "main")
+        .and_return(["network unavailable\n", failed_status])
+      allow(Shakapacker::Utils::Misc).to receive(:sh_in_dir)
+
+      expect do
+        expect do
+          with_release_checkout(gem_root: "/repo", dry_run: true) { "unreachable" }
+        end.to raise_error(SystemExit)
+      end.to output(/Unable to fetch origin\/main for the dry run.*network unavailable/m).to_stderr
+    end
+
+    it "aborts with an actionable message when the dry-run rebase fails" do
+      successful_status = double("status", success?: true)
+      failed_status = double("status", success?: false)
+      allow(Open3).to receive(:capture2e)
+        .with("git", "-C", "/tmp/shakapacker-release/worktree", "fetch", "origin", "main")
+        .and_return(["", successful_status])
+      allow(Open3).to receive(:capture2e)
+        .with("git", "-C", "/tmp/shakapacker-release/worktree", "rebase", "origin/main")
+        .and_return(["CONFLICT in release files\n", failed_status])
+      allow(Shakapacker::Utils::Misc).to receive(:sh_in_dir)
+
+      expect do
+        expect do
+          with_release_checkout(gem_root: "/repo", dry_run: true) { "unreachable" }
+        end.to raise_error(SystemExit)
+      end.to output(/Unable to rebase the dry run onto origin\/main.*CONFLICT in release files/m).to_stderr
     end
 
     it "preserves the release failure when dry-run worktree cleanup also fails" do
@@ -186,6 +244,379 @@ RSpec.describe "release rake helpers" do
           with_release_checkout(gem_root: "/repo", dry_run: true) { "ok" }
         end.to raise_error(RuntimeError, "cleanup failed")
       end.to output(/Failed to remove dry-run release worktree/).to_stderr
+    end
+  end
+
+  describe "#perform_release" do
+    it "resolves an implicit dry-run version from the refreshed release checkout" do
+      allow(self).to receive(:ensure_clean_worktree!)
+      allow(self).to receive(:with_release_checkout).and_yield("/refreshed")
+      allow(self).to receive(:validate_release_ci_status!)
+      allow(self).to receive(:extract_latest_changelog_version)
+        .with(gem_root: "/refreshed")
+        .and_return("10.4.0")
+      allow(self).to receive(:current_gem_version).with("/refreshed").and_return("10.3.1")
+      expect(self).to receive(:target_gem_version)
+        .with(gem_root: "/refreshed", requested_gem_version: "10.4.0")
+        .and_raise("stop after version resolution")
+
+      expect do
+        perform_release(gem_version: "", dry_run: true)
+      end.to raise_error(RuntimeError, "stop after version resolution")
+    end
+
+    it "preserves the refreshed checkout changelog result in the dry-run summary" do
+      allow(self).to receive(:with_release_checkout).and_yield("/refreshed")
+      allow(self).to receive(:validate_release_ci_status!)
+      allow(self).to receive(:target_gem_version).and_return("10.4.0")
+      allow(self).to receive(:warn_changelog_missing)
+      allow(self).to receive(:validate_release_version_policy!)
+      allow(self).to receive(:refresh_release_root_lockfile)
+      allow(self).to receive(:refresh_spec_dummy_lockfiles)
+      allow(self).to receive(:current_gem_version).with("/refreshed").and_return("10.4.0")
+      allow(self).to receive(:bump_supplemental_core_dep)
+      allow(Shakapacker::Utils::Misc).to receive(:sh_in_dir)
+      allow(self).to receive(:extract_changelog_section).and_return(nil)
+      allow(self).to receive(:extract_changelog_section)
+        .with(changelog_path: "/refreshed/CHANGELOG.md", npm_version: "10.4.0")
+        .and_return("release notes")
+
+      result = perform_release(gem_version: "10.4.0", dry_run: true, check_uncommitted: false)
+
+      expect(result[:changelog_section_found]).to be(true)
+    end
+  end
+
+  describe "#fetch_gh_jsonl" do
+    it "parses stdout without mixing in successful gh diagnostics from stderr" do
+      status = double("status", success?: true)
+      command = ["gh", "api", "--paginate", "--jq", ".workflow_runs[]", "repos/example/actions/runs"]
+      allow(Open3).to receive(:capture3).with(*command).and_return(["{\"id\":1}\n", "gh update available\n", status])
+
+      expect(fetch_gh_jsonl("repos/example/actions/runs", ".workflow_runs[]"))
+        .to eq([[{ "id" => 1 }], nil])
+    end
+  end
+
+  describe "#validate_release_ci_status!" do
+    let(:commit_sha) { "abc123" }
+
+    def stub_gh_jsonl(path_fragment, objects, success: true)
+      status = double("status", success?: success)
+      allow(Open3).to receive(:capture3)
+        .with("gh", "api", "--paginate", "--jq", anything, a_string_including(path_fragment))
+        .and_return([objects.map(&:to_json).join("\n"), "", status])
+    end
+
+    def stub_commit_statuses(rows, success: true)
+      objects = rows.map.with_index do |(context, state, created_at), index|
+        timestamp = created_at || "2026-01-0#{index + 1}T00:00:00Z"
+        {
+          id: index + 1,
+          node_id: "status-node-#{index + 1}",
+          url: "https://api.github.com/repos/shakacode/shakapacker/statuses/#{commit_sha}",
+          state: state,
+          description: "review status",
+          target_url: "https://example.test/status/#{index + 1}",
+          context: context,
+          created_at: timestamp,
+          updated_at: timestamp,
+          creator: { login: "review-bot" }
+        }
+      end
+      stub_gh_jsonl("/status", objects, success: success)
+    end
+
+    def stub_main_push_workflow_runs(rows, success: true)
+      objects = rows.map.with_index do |(name, run_status, conclusion), index|
+        {
+          id: index + 1,
+          name: name,
+          event: "push",
+          status: run_status,
+          conclusion: conclusion,
+          head_branch: "main",
+          head_sha: commit_sha,
+          run_attempt: 1,
+          created_at: "2026-08-23T09:30:00Z",
+          updated_at: "2026-08-23T09:31:00Z",
+          workflow_id: index + 100
+        }
+      end
+      stub_gh_jsonl(
+        "actions/runs?head_sha=#{commit_sha}&event=push&branch=main&per_page=100",
+        objects,
+        success: success
+      )
+    end
+
+    def successful_main_push_workflow_runs
+      [
+        ["Dummy specs", "completed", "success"],
+        ["Generator specs", "completed", "success"],
+        ["Node based checks", "completed", "success"],
+        ["Ruby based checks", "completed", "success"],
+        ["Test Both Bundlers", "completed", "success"]
+      ]
+    end
+
+    before do
+      allow(ENV).to receive(:[]).and_call_original
+      allow(ENV).to receive(:[]).with("RELEASE_CI_STATUS_OVERRIDE").and_return(nil)
+
+      origin_status = double("status", success?: true)
+      allow(Open3).to receive(:capture2e)
+        .with("git", "-C", "/repo", "remote", "get-url", "origin")
+        .and_return(["git@github.com:shakacode/shakapacker.git\n", origin_status])
+
+      head_status = double("status", success?: true)
+      allow(Open3).to receive(:capture2e)
+        .with("git", "-C", "/repo", "rev-parse", "HEAD")
+        .and_return(["#{commit_sha}\n", head_status])
+
+      stub_main_push_workflow_runs(successful_main_push_workflow_runs)
+      # Most examples exercise workflow runs only; default the statuses endpoint to empty.
+      stub_commit_statuses([])
+    end
+
+    def validate(allow_override: false, dry_run: false)
+      validate_release_ci_status!(gem_root: "/repo", allow_override: allow_override, dry_run: dry_run)
+    end
+
+    it "passes when every expected main-push workflow completed successfully" do
+      expect do
+        expect { validate }.not_to raise_error
+      end.to output(/✓ CI is green for #{commit_sha} \(5 main-push workflows, 0 commit-status signals\)/).to_stdout
+    end
+
+    it "blocks before the expected main-push workflow suite starts even when supplemental statuses are green" do
+      stub_commit_statuses([["CodeRabbit", "success"]])
+      stub_main_push_workflow_runs([])
+
+      expect do
+        expect { validate }.to raise_error(SystemExit)
+      end.to output(/Missing main-push workflows/).to_stderr
+    end
+
+    it "blocks while any expected main-push workflow is still queued" do
+      stub_main_push_workflow_runs(
+        [
+          ["Dummy specs", "completed", "success"],
+          ["Generator specs", "queued", nil],
+          ["Node based checks", "completed", "success"],
+          ["Ruby based checks", "completed", "success"],
+          ["Test Both Bundlers", "completed", "success"]
+        ]
+      )
+
+      expect do
+        expect { validate }.to raise_error(SystemExit)
+      end.to output(/Still running.*Generator specs \(queued\)/m).to_stderr
+    end
+
+    it "blocks when any expected main-push workflow completed unsuccessfully" do
+      stub_main_push_workflow_runs(
+        [
+          ["Dummy specs", "completed", "success"],
+          ["Generator specs", "completed", "success"],
+          ["Node based checks", "completed", "success"],
+          ["Ruby based checks", "completed", "failure"],
+          ["Test Both Bundlers", "completed", "success"]
+        ]
+      )
+
+      expect do
+        expect { validate }.to raise_error(SystemExit)
+      end.to output(/Not passing.*Ruby based checks \(failure\)/m).to_stderr
+    end
+
+    it "evaluates only the latest run for each expected main-push workflow" do
+      stub_main_push_workflow_runs(
+        successful_main_push_workflow_runs +
+          [
+            ["Generator specs", "completed", "failure"],
+            ["Generator specs", "completed", "success"]
+          ]
+      )
+
+      expect do
+        expect { validate }.not_to raise_error
+      end.to output(/✓ CI is green for #{commit_sha} \(5 main-push workflows, 0 commit-status signals\)/).to_stdout
+    end
+
+    it "does not gate on unrelated conditional push workflows" do
+      stub_main_push_workflow_runs(
+        successful_main_push_workflow_runs + [["Trigger docs site rebuild", "completed", "failure"]]
+      )
+
+      expect do
+        expect { validate }.not_to raise_error
+      end.to output(/✓ CI is green for #{commit_sha} \(5 main-push workflows, 0 commit-status signals\)/).to_stdout
+    end
+
+    it "blocks when a present Babel 8 smoke workflow run fails" do
+      stub_main_push_workflow_runs(
+        successful_main_push_workflow_runs + [["Babel 8 smoke", "completed", "failure"]]
+      )
+
+      expect do
+        expect { validate }.to raise_error(SystemExit)
+      end.to output(/Not passing.*Babel 8 smoke \(failure\)/m).to_stderr
+    end
+
+    it "blocks while a present Babel 8 smoke workflow run is pending" do
+      stub_main_push_workflow_runs(
+        successful_main_push_workflow_runs + [["Babel 8 smoke", "queued", nil]]
+      )
+
+      expect do
+        expect { validate }.to raise_error(SystemExit)
+      end.to output(/Still running.*Babel 8 smoke \(queued\)/m).to_stderr
+    end
+
+    it "passes when a present Babel 8 smoke workflow run succeeds" do
+      stub_main_push_workflow_runs(
+        successful_main_push_workflow_runs + [["Babel 8 smoke", "completed", "success"]]
+      )
+
+      expect { validate }
+        .to output(/✓ CI is green for #{commit_sha} \(6 main-push workflows, 0 commit-status signals\)/).to_stdout
+    end
+
+    it "aborts and names the failing main-push workflow" do
+      rows = successful_main_push_workflow_runs.map do |row|
+        row.first == "Node based checks" ? ["Node based checks", "completed", "failure"] : row
+      end
+      stub_main_push_workflow_runs(rows)
+
+      expect do
+        expect { validate }.to raise_error(SystemExit)
+      end.to output(/CI is not green.*Not passing \(1\):\n  - Node based checks \(failure\)/m).to_stderr
+    end
+
+    it "treats a cancelled main-push workflow as not passing" do
+      rows = successful_main_push_workflow_runs.map do |row|
+        row.first == "Generator specs" ? ["Generator specs", "completed", "cancelled"] : row
+      end
+      stub_main_push_workflow_runs(rows)
+
+      expect do
+        expect { validate }.to raise_error(SystemExit)
+      end.to output(/Not passing \(1\):\n  - Generator specs \(cancelled\)/).to_stderr
+    end
+
+    it "requires success rather than a neutral conclusion for every main-push workflow" do
+      rows = successful_main_push_workflow_runs.map do |row|
+        row.first == "Dummy specs" ? ["Dummy specs", "completed", "neutral"] : row
+      end
+      stub_main_push_workflow_runs(rows)
+
+      expect do
+        expect { validate }.to raise_error(SystemExit)
+      end.to output(/Not passing \(1\):\n  - Dummy specs \(neutral\)/).to_stderr
+    end
+
+    it "aborts while a main-push workflow is still running" do
+      rows = successful_main_push_workflow_runs.map do |row|
+        row.first == "Dummy specs" ? ["Dummy specs", "in_progress", nil] : row
+      end
+      stub_main_push_workflow_runs(rows)
+
+      expect do
+        expect { validate }.to raise_error(SystemExit)
+      end.to output(/Still running \(1\):\n  - Dummy specs \(in_progress\)/).to_stderr
+    end
+
+    it "aborts when the commit has no main-push workflow runs" do
+      stub_main_push_workflow_runs([])
+
+      expect do
+        expect { validate }.to raise_error(SystemExit)
+      end.to output(/Missing main-push workflows for #{commit_sha}/).to_stderr
+    end
+
+    it "fails closed when CI status cannot be read" do
+      stub_main_push_workflow_runs([], success: false)
+
+      expect do
+        expect { validate }.to raise_error(SystemExit)
+      end.to output(/Unable to verify CI status for #{commit_sha}/).to_stderr
+    end
+
+    it "fails closed when the GitHub CLI is missing" do
+      allow(Open3).to receive(:capture3)
+        .with("gh", "api", "--paginate", "--jq", anything, a_string_including("actions/runs"))
+        .and_raise(Errno::ENOENT)
+
+      expect do
+        expect { validate }.to raise_error(SystemExit)
+      end.to output(/GitHub CLI is not installed/).to_stderr
+    end
+
+    it "releases anyway when the override argument is set" do
+      stub_main_push_workflow_runs([])
+
+      expect { validate(allow_override: true) }.to output(/CI STATUS OVERRIDE enabled/).to_stdout
+    end
+
+    it "releases anyway when RELEASE_CI_STATUS_OVERRIDE is set" do
+      allow(ENV).to receive(:[]).with("RELEASE_CI_STATUS_OVERRIDE").and_return("true")
+      stub_main_push_workflow_runs([])
+
+      expect { validate(allow_override: ci_status_override_enabled?(nil)) }
+        .to output(/CI STATUS OVERRIDE enabled/).to_stdout
+    end
+
+    it "reports instead of aborting during a dry run" do
+      rows = successful_main_push_workflow_runs.map do |row|
+        row.first == "Node based checks" ? ["Node based checks", "completed", "failure"] : row
+      end
+      stub_main_push_workflow_runs(rows)
+
+      expect { validate(dry_run: true) }
+        .to output(/DRY RUN: Release would be blocked.*Node based checks \(failure\)/m).to_stdout
+    end
+
+    # Not every integration reports through GitHub Actions. CodeRabbit posts legacy commit
+    # statuses, so ignoring that endpoint would let a failing status read as green.
+    context "with legacy commit statuses" do
+      it "blocks on a failing commit status even when every required workflow passed" do
+        stub_commit_statuses([["CodeRabbit", "failure"]])
+
+        expect do
+          expect { validate }.to raise_error(SystemExit)
+        end.to output(/Not passing \(1\):\n  - CodeRabbit \(failure\)/).to_stderr
+      end
+
+      it "blocks while a commit status is still pending" do
+        stub_commit_statuses([["CodeRabbit", "pending"]])
+
+        expect do
+          expect { validate }.to raise_error(SystemExit)
+        end.to output(/Still running \(1\):\n  - CodeRabbit \(pending\)/).to_stderr
+      end
+
+      it "counts a successful commit status toward the green total" do
+        stub_commit_statuses([["CodeRabbit", "success"]])
+
+        expect { validate }
+          .to output(/✓ CI is green for #{commit_sha} \(5 main-push workflows, 1 commit-status signals\)/).to_stdout
+      end
+
+      it "uses the latest status per context returned by GitHub's combined-status endpoint" do
+        stub_commit_statuses([["CodeRabbit", "success", "2026-01-02T00:00:00Z"]])
+
+        expect { validate }
+          .to output(/✓ CI is green for #{commit_sha} \(5 main-push workflows, 1 commit-status signals\)/).to_stdout
+      end
+
+      it "blocks on an unknown status state rather than assuming it passed" do
+        stub_commit_statuses([["Mystery", "banana"]])
+
+        expect do
+          expect { validate }.to raise_error(SystemExit)
+        end.to output(/Not passing \(1\):\n  - Mystery \(error\)/).to_stderr
+      end
     end
   end
 end

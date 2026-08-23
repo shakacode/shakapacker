@@ -16,7 +16,7 @@ namespace :run_spec do
   desc "Run shakapacker specs"
   task :gem do
     puts "Running Shakapacker gem specs"
-    sh("bundle exec rspec spec/shakapacker/*_spec.rb")
+    sh("bundle exec rspec spec/shakapacker/*_spec.rb spec/rakelib/*_spec.rb")
   end
 
   desc "Run specs in the dummy app with webpack"

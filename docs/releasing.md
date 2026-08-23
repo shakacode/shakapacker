@@ -71,6 +71,10 @@ AUTO_CONFIRM=true bundle exec rake release
 # Override version policy checks (monotonic + changelog/bump consistency)
 RELEASE_VERSION_POLICY_OVERRIDE=true bundle exec rake "release[10.1.0]"
 bundle exec rake "release[10.1.0,false,true]"
+
+# Override the CI status gate (use only for known-unrelated failures)
+RELEASE_CI_STATUS_OVERRIDE=true bundle exec rake "release[10.1.0]"
+bundle exec rake "release[10.1.0,false,false,true]"
 ```
 
 When called with no arguments, `release`:
@@ -81,6 +85,10 @@ When called with no arguments, `release`:
 4. If no new version is found, falls back to a patch bump
 
 Dry runs use a temporary git worktree so version bumps and installs do not modify your current checkout.
+The temporary worktree fetches and rebases onto `origin/main`, matching the commit a live
+release would evaluate instead of checking a potentially stale local `HEAD`.
+When no version argument is provided, changelog-version selection also happens after that
+refresh, so the preview uses the refreshed changelog and current gem version.
 Dry runs now also print explicit "skipping confirmation" messages and the would-run GitHub release command.
 
 `release` validates release-version policy before publishing:
@@ -97,6 +105,32 @@ Use override only when needed:
 - `RELEASE_VERSION_POLICY_OVERRIDE=true`
 - Or task arg override (`release[..., ..., true]`)
 
+`release` also refuses to publish unless GitHub CI is green for the commit being
+released (the commit at `HEAD` after `git pull --rebase`, which is the parent of the
+version-bump commit the task creates):
+
+- The exact SHA must have a `push`/`main` run for every release-gating workflow: Dummy specs,
+  Generator specs, Node based checks, Ruby based checks, and Test Both Bundlers. Successful
+  pull-request checks cannot satisfy this requirement because the main workflows run broader
+  test matrices.
+- Every required workflow must be completed with a `success` conclusion. Missing, queued,
+  in-progress, failed, cancelled, or timed-out workflows all block the release.
+- The path-conditional Babel 8 smoke workflow is not required when absent, but when GitHub
+  created a `push`/`main` run for the exact SHA, its latest run must also complete successfully.
+- Unrelated conditional push workflows, such as documentation rebuilds, are not part of the
+  release-gating suite.
+- Legacy commit statuses are evaluated as supplemental fail-closed signals. Some integrations
+  (CodeRabbit, for one) report only as commit statuses; GitHub's combined-status endpoint
+  supplies only the most recent status per context.
+- The gate fails closed: if CI status cannot be read (no `gh`, API error), the release stops.
+- Dry runs report what the gate would do instead of aborting.
+
+Override only for failures you have confirmed are unrelated to the release — for example an
+upstream registry outage — never to paper over a real regression:
+
+- `RELEASE_CI_STATUS_OVERRIDE=true`
+- Or task arg override (`release[..., ..., ..., true]`)
+
 ### 3. What the Release Task Does
 
 The `release` task automatically:
@@ -104,7 +138,8 @@ The `release` task automatically:
 1. **Validates release prerequisites**:
    - Verifies npm authentication
    - Warns if CHANGELOG.md section is missing for the target version
-2. **Pulls latest changes** from the repository
+2. **Pulls latest changes** from the repository, then **aborts unless CI is green** for the
+   resulting commit
 3. **Bumps version numbers** in:
    - `lib/shakapacker/version.rb` (Ruby gem version)
    - `package.json` (npm package version - converted from Ruby format)
@@ -204,6 +239,21 @@ bundle exec rake "sync_github_release[10.6.0.rc.1]"
 `sync_github_release` reads release notes from the matching `CHANGELOG.md` section and creates/updates the GitHub release for the corresponding tag.
 
 ## Troubleshooting
+
+### Release Blocked by the CI Gate
+
+If the release aborts with `CI is not green for <sha>`:
+
+1. Read the listed workflows and statuses. `Still running` means CI has not finished — wait and retry.
+2. For real failures, fix them on `main` and rerun the release once CI is green.
+3. If the failure is confirmed unrelated to the release (for example an upstream npm
+   registry outage), rerun with `RELEASE_CI_STATUS_OVERRIDE=true`.
+
+If it aborts with `Missing main-push workflows`, the commit is not on `main` yet or the
+complete main suite has not started. Push or merge the commit to `main` and let CI run.
+
+If it aborts with `Unable to verify CI status`, the gate could not read CI results — check
+`gh auth status` and network access. The gate fails closed on purpose.
 
 ### Uncommitted Changes After Release
 
