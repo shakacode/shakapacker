@@ -33,7 +33,11 @@ module Shakapacker
         [true, "true", "yes", 1, "1", "t"].include?(value.instance_of?(String) ? value.downcase : value)
       end
 
-      # Executes a string or an array of strings in a shell in the given directory in an unbundled environment
+      # Executes a string or an array of strings in a shell in the given directory.
+      # NOTE: this does NOT unbundle. The caller's Bundler environment (BUNDLE_GEMFILE,
+      # RUBYOPT, ...) is inherited, so a `bundle` command run here against a different
+      # directory's Gemfile still resolves the caller's Gemfile. Wrap the call in
+      # Bundler.with_unbundled_env when that matters.
       def self.sh_in_dir(dir, *shell_commands)
         shell_commands.flatten.each { |shell_command| sh %(cd '#{dir}' && #{shell_command.strip}) }
       end
