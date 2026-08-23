@@ -1,6 +1,7 @@
 require_relative File.join("..", "lib", "shakapacker", "utils", "version_syntax_converter")
 require_relative File.join("..", "lib", "shakapacker", "utils", "misc")
 require "English"
+require "bundler"
 require "rubygems/version"
 require "shellwords"
 require "open3"
@@ -10,10 +11,15 @@ require "json"
 
 GITHUB_REPO_SLUG_PATTERN = /\A[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+\z/ unless defined?(GITHUB_REPO_SLUG_PATTERN)
 
-# A check run only counts as green when it finished with one of these conclusions.
-# Anything else (failure, timed_out, cancelled, action_required, stale, ...) blocks
-# the release, because none of them prove the released commit is good.
-CI_PASSING_CONCLUSIONS = %w[success skipped neutral].freeze unless defined?(CI_PASSING_CONCLUSIONS)
+# A release-gating result only counts as green when it finished successfully.
+CI_PASSING_CONCLUSIONS = %w[success].freeze unless defined?(CI_PASSING_CONCLUSIONS)
+REQUIRED_MAIN_PUSH_WORKFLOWS = [
+  "Dummy specs",
+  "Generator specs",
+  "Node based checks",
+  "Ruby based checks",
+  "Test Both Bundlers"
+].freeze unless defined?(REQUIRED_MAIN_PUSH_WORKFLOWS)
 
 unless defined?(AbortingMessageHandler)
   class AbortingMessageHandler
@@ -317,35 +323,38 @@ rescue JSON::ParserError => e
   [nil, "Failed to parse response from gh: #{e.message}"]
 end
 
-# `filter=latest` is the GitHub default and means re-running a failed job replaces its
-# earlier result, so a retried flake stops blocking the release once it passes.
-def fetch_commit_check_runs(repo_slug:, commit_sha:)
+def fetch_main_push_workflow_runs(repo_slug:, commit_sha:)
   rows, error = fetch_gh_jsonl(
-    "repos/#{repo_slug}/commits/#{commit_sha}/check-runs?per_page=100&filter=latest",
-    ".check_runs[]"
+    "repos/#{repo_slug}/actions/runs?head_sha=#{commit_sha}&event=push&branch=main&per_page=100",
+    ".workflow_runs[]"
   )
   return [nil, error] if error
 
-  [rows.map { |run| { name: run["name"].to_s, status: run["status"].to_s, conclusion: run["conclusion"].to_s } }, nil]
+  normalized_runs = rows.map do |run|
+    {
+      id: run["id"].to_i,
+      name: run["name"].to_s,
+      status: run["status"].to_s,
+      conclusion: run["conclusion"].to_s
+    }
+  end
+
+  # A workflow can be dispatched again for the same commit. Older failed or cancelled
+  # rows must not override the newest result for that workflow.
+  latest_runs = normalized_runs.group_by { |run| run[:name] }.values.map do |runs|
+    runs.max_by { |run| run[:id] }
+  end
+  [latest_runs, nil]
 end
 
-# Not every integration reports through the Checks API — CodeRabbit, for one, posts legacy
-# commit statuses. Ignoring those would let a failing check read as green, so they are folded
-# into the same evaluation.
+# Not every integration reports through GitHub Actions. CodeRabbit, for one, posts legacy
+# commit statuses, so those remain supplemental fail-closed signals. The combined-status
+# endpoint returns only the latest status per context.
 def fetch_commit_statuses(repo_slug:, commit_sha:)
-  rows, error = fetch_gh_jsonl("repos/#{repo_slug}/commits/#{commit_sha}/statuses?per_page=100", ".[]")
+  rows, error = fetch_gh_jsonl("repos/#{repo_slug}/commits/#{commit_sha}/status", ".statuses[]")
   return [nil, error] if error
 
-  [latest_commit_statuses(rows).map { |status| normalize_status_as_check_run(status) }, nil]
-end
-
-# The statuses endpoint returns every status ever posted for a context, newest first is not
-# guaranteed, so keep only the most recent per context. GitHub emits ISO 8601 UTC timestamps,
-# which sort chronologically as strings.
-def latest_commit_statuses(statuses)
-  statuses.group_by { |status| status["context"] }.map do |_context, context_statuses|
-    context_statuses.max_by { |status| [status["created_at"].to_s, status["id"].to_i] }
-  end
+  [rows.map { |status| normalize_status_as_check_run(status) }, nil]
 end
 
 def normalize_status_as_check_run(status)
@@ -371,9 +380,9 @@ def normalize_status_conclusion(state)
   end
 end
 
-def classify_check_runs(check_runs)
+def classify_check_runs(check_runs, passing_conclusions: CI_PASSING_CONCLUSIONS)
   pending, failing = check_runs.partition { |run| run[:status] != "completed" }
-  failing = failing.reject { |run| CI_PASSING_CONCLUSIONS.include?(run[:conclusion]) }
+  failing = failing.reject { |run| passing_conclusions.include?(run[:conclusion]) }
 
   { pending: pending, failing: failing }
 end
@@ -402,7 +411,7 @@ def validate_release_ci_status!(gem_root:, allow_override:, dry_run:)
   repo_slug = github_repo_slug(gem_root)
   commit_sha = release_head_sha(gem_root)
 
-  check_runs, error = fetch_commit_check_runs(repo_slug: repo_slug, commit_sha: commit_sha)
+  workflow_runs, error = fetch_main_push_workflow_runs(repo_slug: repo_slug, commit_sha: commit_sha)
   statuses, status_error = fetch_commit_statuses(repo_slug: repo_slug, commit_sha: commit_sha) unless error
   error ||= status_error
 
@@ -415,24 +424,26 @@ def validate_release_ci_status!(gem_root:, allow_override:, dry_run:)
     return
   end
 
-  all_checks = check_runs + statuses
-
-  if all_checks.empty?
+  workflow_names = workflow_runs.map { |run| run[:name] }
+  missing_workflows = REQUIRED_MAIN_PUSH_WORKFLOWS - workflow_names
+  unless missing_workflows.empty?
     handle_ci_status_violation!(
-      message: "❌ No CI results found for #{commit_sha} on #{repo_slug}. " \
-               "Push the commit and let CI finish before releasing.",
+      message: "❌ Missing main-push workflows for #{commit_sha}: #{missing_workflows.join(', ')}. " \
+               "Wait for the complete main CI suite to start before releasing.",
       allow_override: allow_override,
       dry_run: dry_run
     )
     return
   end
 
-  classified = classify_check_runs(all_checks)
-  pending = classified[:pending]
-  failing = classified[:failing]
+  required_workflow_runs = workflow_runs.select { |run| REQUIRED_MAIN_PUSH_WORKFLOWS.include?(run[:name]) }
+  workflow_results = classify_check_runs(required_workflow_runs, passing_conclusions: ["success"])
+  status_results = classify_check_runs(statuses)
+  pending = workflow_results[:pending] + status_results[:pending]
+  failing = workflow_results[:failing] + status_results[:failing]
 
   if pending.empty? && failing.empty?
-    puts "✓ CI is green for #{commit_sha} (#{all_checks.length} checks)"
+    puts "✓ CI is green for #{commit_sha} (#{required_workflow_runs.length} main-push workflows, #{statuses.length} commit-status signals)"
     return
   end
 
@@ -622,6 +633,9 @@ def with_release_checkout(gem_root:, dry_run:)
     # Dry runs should exercise the release flow without dirtying the maintainer's checkout.
     Shakapacker::Utils::Misc.sh_in_dir(gem_root, "git worktree add --detach #{escaped_worktree_dir} HEAD")
     begin
+      # Match the live `git pull --rebase` result without changing the maintainer's checkout.
+      Shakapacker::Utils::Misc.sh_in_dir(worktree_dir, "git fetch origin main")
+      Shakapacker::Utils::Misc.sh_in_dir(worktree_dir, "git rebase origin/main")
       yield(worktree_dir)
     ensure
       original_error = $ERROR_INFO
@@ -672,6 +686,31 @@ def bump_supplemental_core_dep(full_pkg_dir, npm_version)
   end
   pkg_json["dependencies"]["shakapacker"] = "~#{npm_version}"
   File.write(pkg_json_path, "#{JSON.pretty_generate(pkg_json)}\n")
+end
+
+# spec/dummy is Yarn-managed, but package-lock.json is committed too for npm
+# compatibility/testing.
+#
+# The bundle install must run with the parent Bundler environment removed.
+# `bundle exec rake release` exports BUNDLE_GEMFILE pointing at the gem root, and a plain
+# `cd spec/dummy && bundle install` inherits it — so it re-resolves the ROOT Gemfile and
+# leaves spec/dummy/Gemfile.lock pinned to the pre-bump version. That drift then breaks CI
+# on the release commit, where spec/dummy installs in frozen mode. The Rakefile spec tasks
+# unbundle for the same reason.
+def refresh_spec_dummy_lockfiles(release_root)
+  spec_dummy_dir = File.join(release_root, "spec", "dummy")
+
+  Bundler.with_unbundled_env do
+    Shakapacker::Utils::Misc.sh_in_dir(spec_dummy_dir, "bundle install")
+  end
+  Shakapacker::Utils::Misc.sh_in_dir(spec_dummy_dir, "yarn install")
+  Shakapacker::Utils::Misc.sh_in_dir(spec_dummy_dir, "npm install")
+end
+
+def refresh_release_root_lockfile(release_root)
+  Bundler.with_unbundled_env do
+    Shakapacker::Utils::Misc.sh_in_dir(release_root, "bundle install")
+  end
 end
 
 def print_release_summary(release_result)
@@ -785,14 +824,10 @@ def perform_release(
       "gem bump --no-commit --version #{Shellwords.escape(requested_gem_version)}"
     end
     Shakapacker::Utils::Misc.sh_in_dir(release_root, bump_command)
-    Shakapacker::Utils::Misc.sh_in_dir(release_root, "bundle install")
+    refresh_release_root_lockfile(release_root)
 
     # Update spec/dummy lockfiles BEFORE release-it so they are included in the release commit.
-    # spec/dummy is Yarn-managed, but we also commit package-lock.json for npm compatibility/testing.
-    spec_dummy_dir = File.join(release_root, "spec", "dummy")
-    Shakapacker::Utils::Misc.sh_in_dir(spec_dummy_dir, "bundle install")
-    Shakapacker::Utils::Misc.sh_in_dir(spec_dummy_dir, "yarn install")
-    Shakapacker::Utils::Misc.sh_in_dir(spec_dummy_dir, "npm install")
+    refresh_spec_dummy_lockfiles(release_root)
 
     # Explicitly stage all release-related changes so release-it includes them in its commit.
     # release-it only reliably stages files it modifies (package.json); other working tree

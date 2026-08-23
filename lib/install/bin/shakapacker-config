@@ -24,7 +24,7 @@ def shakapacker_warn_missing_node
 end
 
 def shakapacker_exec_env(launch_dir)
-  return {} unless ENV.key?("PATH")
+  return unless ENV.key?("PATH")
 
   path_entries = ENV["PATH"].split(File::PATH_SEPARATOR, -1)
   path_entries = [""] if path_entries.empty?
@@ -38,12 +38,9 @@ end
 
 def shakapacker_exec_node(script_path, argv, launch_dir)
   exec_env = shakapacker_exec_env(launch_dir)
+  shakapacker_warn_missing_node unless exec_env
 
-  if exec_env.empty?
-    exec shakapacker_node_binary, script_path, *argv
-  else
-    exec exec_env, shakapacker_node_binary, script_path, *argv
-  end
+  exec exec_env, shakapacker_node_binary, script_path, *argv
 rescue Errno::ENOENT, Errno::EACCES
   shakapacker_warn_missing_node
 end

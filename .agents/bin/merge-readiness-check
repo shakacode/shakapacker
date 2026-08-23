@@ -87,7 +87,7 @@ owner, name = repo_parts.last(2)
 pr = run_json(
   "gh", "pr", "view", pr_number,
   "--repo", repo,
-  "--json", "number,title,state,isDraft,headRefOid,mergeStateStatus,mergedAt,url,reviewDecision"
+  "--json", "number,title,state,isDraft,isCrossRepository,headRefOid,mergeStateStatus,mergedAt,url,reviewDecision"
 )
 
 checks = run_checks_json(
@@ -137,6 +137,31 @@ end
 
 unresolved_threads = review_threads.reject { |thread| thread.fetch("isResolved") }
 
+def paginated_api_collection(api_args, endpoint, collection_key, query = {})
+  collection = []
+  page = 1
+
+  loop do
+    query_args = query.flat_map { |key, value| ["-f", "#{key}=#{value}"] }
+    result = run_json(
+      "gh", "api", *api_args, "--method", "GET", endpoint,
+      "-f", "per_page=100", "-f", "page=#{page}", *query_args
+    )
+    page_items = result.fetch(collection_key)
+    collection.concat(page_items)
+    break if collection.length >= result.fetch("total_count")
+
+    if page_items.empty?
+      warn "GitHub API pagination stopped before all #{collection_key} were returned"
+      exit 2
+    end
+
+    page += 1
+  end
+
+  collection
+end
+
 def ready_check?(check)
   return true if check.fetch("bucket") == "pass"
 
@@ -144,15 +169,85 @@ def ready_check?(check)
 end
 
 bad_checks = checks.reject { |check| ready_check?(check) }
+skipped_checks = checks.select do |check|
+  check.fetch("bucket") == "skipping" && check.fetch("state").to_s.casecmp?("SKIPPED")
+end
+
+github_actions_check_runs = []
+passing_pull_request_workflow_runs = []
+action_required_workflow_runs = []
+
+if pr.fetch("isCrossRepository")
+  check_runs = paginated_api_collection(
+    api_args,
+    "repos/#{owner}/#{name}/commits/#{pr.fetch('headRefOid')}/check-runs",
+    "check_runs"
+  )
+  github_actions_check_runs = check_runs.select { |check_run| check_run.dig("app", "slug") == "github-actions" }
+
+  workflow_runs = paginated_api_collection(
+    api_args,
+    "repos/#{owner}/#{name}/actions/runs",
+    "workflow_runs",
+    "head_sha" => pr.fetch("headRefOid")
+  )
+  pull_request_workflow_runs = workflow_runs.select do |workflow_run|
+    workflow_run.fetch("event").to_s.casecmp?("pull_request")
+  end
+  current_pull_request_workflow_runs = pull_request_workflow_runs.select do |workflow_run|
+    associated_pull_requests = workflow_run.fetch("pull_requests", [])
+    associated_with_current_pr = associated_pull_requests.any? do |associated_pr|
+      associated_pr["number"] == pr.fetch("number")
+    end
+    associated_with_current_pr || (pr["mergedAt"] && associated_pull_requests.empty?)
+  end
+  passing_pull_request_workflow_runs = current_pull_request_workflow_runs.select do |workflow_run|
+    next false unless workflow_run.fetch("status").to_s.casecmp?("completed")
+    next false unless workflow_run.fetch("conclusion").to_s.casecmp?("success")
+
+    jobs = paginated_api_collection(
+      api_args,
+      "repos/#{owner}/#{name}/actions/runs/#{workflow_run.fetch('id')}/jobs",
+      "jobs"
+    )
+    jobs.any? do |job|
+      job.fetch("status").to_s.casecmp?("completed") && job.fetch("conclusion").to_s.casecmp?("success")
+    end
+  end
+  action_required_workflow_runs = current_pull_request_workflow_runs.select do |workflow_run|
+    workflow_run.fetch("conclusion").to_s.casecmp?("action_required")
+  end
+end
+
+skipped_check_names = skipped_checks.map { |check| check.fetch("name") }.tally
+trusted_skipped_check_names = github_actions_check_runs.filter_map do |check_run|
+  next unless check_run.fetch("status").to_s.casecmp?("completed")
+  next unless check_run.fetch("conclusion").to_s.casecmp?("skipped")
+
+  check_run.fetch("name")
+end.tally
+trusted_skipped_fork_evidence = pr.fetch("isCrossRepository") && skipped_check_names.any? &&
+                                skipped_check_names.all? do |check_name, count|
+                                  trusted_skipped_check_names.fetch(check_name, 0) >= count
+                                end
 
 failures = []
 failures << "PR is draft" if pr.fetch("isDraft")
 if checks.empty?
   failures << "no checks returned; readiness is UNKNOWN; path-filtered PRs need maintainer judgment"
 end
+if pr.fetch("isCrossRepository") && passing_pull_request_workflow_runs.empty?
+  failures << "fork CI has not started; no successful pull_request workflow-run evidence exists for the current head"
+end
+if action_required_workflow_runs.any?
+  failures << "fork CI has not started; #{action_required_workflow_runs.length} workflow run(s) require approval"
+end
 failures << "#{bad_checks.length} check(s) are not pass/skipped: #{bad_checks.map { |check| check.fetch("name") }.join(", ")}" if bad_checks.any?
 failures << "#{unresolved_threads.length} unresolved review thread(s) remain" if unresolved_threads.any?
 failures << "reviewDecision is CHANGES_REQUESTED" if pr["reviewDecision"] == "CHANGES_REQUESTED"
+if pr["reviewDecision"] == "REVIEW_REQUIRED" && pr["mergedAt"].nil?
+  failures << "reviewDecision is REVIEW_REQUIRED"
+end
 
 merged_at = pr["mergedAt"]
 
@@ -169,7 +264,10 @@ if merged_at
   failures << "#{late_checks.length} check(s) completed after merge: #{late_checks.map { |check| check.fetch("name") }.join(", ")}" if late_checks.any?
 else
   failures << "PR is #{pr.fetch("state")}, expected OPEN" unless pr.fetch("state") == "OPEN"
-  unless READY_MERGE_STATE_STATUSES.include?(pr.fetch("mergeStateStatus"))
+  merge_state_ready = READY_MERGE_STATE_STATUSES.include?(pr.fetch("mergeStateStatus"))
+  skipped_fork_gate_only = pr.fetch("mergeStateStatus") == "UNSTABLE" && bad_checks.empty? &&
+                           trusted_skipped_fork_evidence
+  unless merge_state_ready || skipped_fork_gate_only
     failures << "mergeStateStatus is #{pr.fetch("mergeStateStatus")}, expected #{READY_MERGE_STATE_STATUSES.join(" or ")}"
   end
 end
@@ -180,6 +278,7 @@ puts "Head SHA: #{pr.fetch("headRefOid")}"
 puts "State: #{pr.fetch("state")}"
 puts "Review decision: #{pr["reviewDecision"] || "not reported"}"
 puts "Checks: #{checks.length} total; #{bad_checks.length} not pass/skipped"
+puts "GitHub Actions check runs: #{github_actions_check_runs.length}" if pr.fetch("isCrossRepository")
 puts "Unresolved review threads: #{unresolved_threads.length}"
 puts "Merged at: #{merged_at || "not merged"}"
 puts "Replay source: current live check snapshot; check reruns can change historical conclusions and completion times." if merged_at
