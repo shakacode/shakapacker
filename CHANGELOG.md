@@ -10,6 +10,10 @@
 
 ## [Unreleased]
 
+### Fixed
+
+- **Fixed post-publish GitHub release failures hiding successful package publication details.** The release task now prints its normal publication summary and the exact `sync_github_release` recovery command before exiting nonzero. [PR #1250](https://github.com/shakacode/shakapacker/pull/1250) by [justin808](https://github.com/justin808).
+
 ## [v10.3.1] - August 3, 2026
 
 ### Fixed
