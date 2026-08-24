@@ -789,6 +789,13 @@ def print_release_summary(release_result)
   puts "  2. Run bundle exec rake \"sync_github_release[#{released_gem_version}]\""
 end
 
+def print_github_release_recovery(gem_version)
+  puts "\nPARTIAL RELEASE: GitHub release synchronization failed after publication."
+  puts "The Ruby gem, npm packages, and git tag were already published."
+  puts "After fixing the GitHub release failure, run:"
+  puts "bundle exec rake \"sync_github_release[#{gem_version}]\""
+end
+
 def perform_release(
   gem_version:,
   dry_run:,
@@ -947,8 +954,21 @@ def perform_release(
     changelog_section = extract_changelog_section(changelog_path: changelog_path, npm_version: released_npm_version)
     changelog_section_found = !changelog_section.nil?
 
-    sync_github_release_after_publish(gem_root: gem_root, gem_version: sync_gem_version, dry_run: dry_run,
-                                      changelog_section: changelog_section)
+    begin
+      sync_github_release_after_publish(gem_root: gem_root, gem_version: sync_gem_version, dry_run: dry_run,
+                                        changelog_section: changelog_section)
+    rescue SystemExit
+      release_result = {
+        dry_run: dry_run,
+        released_gem_version: released_gem_version,
+        released_npm_version: released_npm_version,
+        changelog_section_found: changelog_section_found,
+        staged_files: staged_files
+      }
+      print_release_summary(release_result)
+      print_github_release_recovery(sync_gem_version)
+      raise
+    end
   end
 
   {
