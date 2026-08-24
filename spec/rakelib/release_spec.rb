@@ -264,11 +264,10 @@ RSpec.describe "release rake helpers" do
       allow(self).to receive(:ensure_clean_worktree!)
       allow(self).to receive(:with_release_checkout).and_yield("/release")
       allow(self).to receive(:verify_npm_auth)
-      auth_checks = 0
-      allow(self).to receive(:verify_gh_auth) do
-        auth_checks += 1
-        abort "GitHub authentication expired" if auth_checks == 2
-      end
+      auth_error = SystemExit.new(1, "GitHub authentication expired")
+      expect(self).to receive(:verify_gh_auth).with(gem_root: anything).ordered
+      expect(self).to receive(:verify_gh_auth).with(gem_root: anything).ordered
+        .and_raise(auth_error)
       allow(self).to receive(:validate_release_ci_status!)
       allow(self).to receive(:target_gem_version).and_return("10.4.0.rc.1")
       allow(self).to receive(:warn_changelog_missing)
@@ -283,10 +282,62 @@ RSpec.describe "release rake helpers" do
       expect do
         expect do
           perform_release(gem_version: "10.4.0.rc.1", dry_run: false)
-        end.to raise_error(SystemExit) { |error| expect(error.status).not_to eq(0) }
+        end.to raise_error(SystemExit) { |error| expect(error).to equal(auth_error) }
       end.to output(
         /RELEASE COMPLETE!.*shakapacker@10\.4\.0-rc\.1.*shakapacker 10\.4\.0\.rc\.1.*bundle exec rake "sync_github_release\[10\.4\.0\.rc\.1\]"/m
       ).to_stdout
+    end
+
+    it "prints the release summary and recovery command before re-raising a post-publish StandardError" do
+      allow(self).to receive(:ensure_clean_worktree!)
+      allow(self).to receive(:with_release_checkout).and_yield("/release")
+      allow(self).to receive(:verify_npm_auth)
+      allow(self).to receive(:verify_gh_auth)
+      allow(self).to receive(:validate_release_ci_status!)
+      allow(self).to receive(:target_gem_version).and_return("10.4.0")
+      allow(self).to receive(:warn_changelog_missing)
+      allow(self).to receive(:validate_release_version_policy!)
+      allow(self).to receive(:refresh_release_root_lockfile)
+      allow(self).to receive(:refresh_spec_dummy_lockfiles)
+      allow(self).to receive(:current_gem_version).with("/release").and_return("10.4.0")
+      allow(self).to receive(:bump_supplemental_core_dep)
+      allow(self).to receive(:extract_changelog_section).and_return("release notes")
+      github_error = RuntimeError.new("GitHub API failed")
+      allow(self).to receive(:sync_github_release_after_publish).and_raise(github_error)
+      allow(Shakapacker::Utils::Misc).to receive(:sh_in_dir)
+
+      expect do
+        expect do
+          perform_release(gem_version: "10.4.0", dry_run: false)
+        end.to raise_error(RuntimeError) { |error| expect(error).to equal(github_error) }
+      end.to output(
+        /RELEASE COMPLETE!.*bundle exec rake "sync_github_release\[10\.4\.0\]"/m
+      ).to_stdout
+    end
+
+    it "does not label a successful post-publish SystemExit as a partial release" do
+      allow(self).to receive(:ensure_clean_worktree!)
+      allow(self).to receive(:with_release_checkout).and_yield("/release")
+      allow(self).to receive(:verify_npm_auth)
+      allow(self).to receive(:verify_gh_auth)
+      allow(self).to receive(:validate_release_ci_status!)
+      allow(self).to receive(:target_gem_version).and_return("10.4.0")
+      allow(self).to receive(:warn_changelog_missing)
+      allow(self).to receive(:validate_release_version_policy!)
+      allow(self).to receive(:refresh_release_root_lockfile)
+      allow(self).to receive(:refresh_spec_dummy_lockfiles)
+      allow(self).to receive(:current_gem_version).with("/release").and_return("10.4.0")
+      allow(self).to receive(:bump_supplemental_core_dep)
+      allow(self).to receive(:extract_changelog_section).and_return("release notes")
+      successful_exit = SystemExit.new(0)
+      allow(self).to receive(:sync_github_release_after_publish).and_raise(successful_exit)
+      allow(Shakapacker::Utils::Misc).to receive(:sh_in_dir)
+
+      expect do
+        expect do
+          perform_release(gem_version: "10.4.0", dry_run: false)
+        end.to raise_error(SystemExit) { |error| expect(error).to equal(successful_exit) }
+      end.not_to output(/RELEASE COMPLETE!|PARTIAL RELEASE|sync_github_release/).to_stdout
     end
 
     it "resolves an implicit dry-run version from the refreshed release checkout" do

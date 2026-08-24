@@ -957,7 +957,9 @@ def perform_release(
     begin
       sync_github_release_after_publish(gem_root: gem_root, gem_version: sync_gem_version, dry_run: dry_run,
                                         changelog_section: changelog_section)
-    rescue SystemExit
+    rescue StandardError, SystemExit => error
+      raise if error.is_a?(SystemExit) && error.success?
+
       release_result = {
         dry_run: dry_run,
         released_gem_version: released_gem_version,
