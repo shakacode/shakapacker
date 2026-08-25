@@ -522,7 +522,7 @@ describe "VersionChecker::NodePackageVersion" do
       end
 
       it "#skip_processing? returns true" do
-        expect(node_package_version_from_without.skip_processing?).to be  true
+        expect(node_package_version_from_without.skip_processing?).to be true
       end
 
       it "#semver_wildcard? returns false" do
