@@ -293,6 +293,39 @@ describe Shakapacker::SwcMigrator do
 
           expect(swc_config_content).to include(described_class::SWC_CONFIG_BODY)
         end
+
+        # A copy-pasted example that breaks the user's build is worse than no example.
+        # options: 'replace' would swap the whole options object, dropping the built-in
+        # parser (jsx/tsx) and transform.react.runtime defaults.
+        it "shows options: 'merge' rather than 'replace' in the override example" do
+          migrator.migrate_to_swc(run_installer: false)
+
+          expect(swc_config_content).to include("use: { loader: 'match', options: 'merge' }")
+          expect(swc_config_content).not_to include("options: 'replace' } }")
+          expect(swc_config_content).to match(/Use options: 'merge', not 'replace'/)
+        end
+
+        it "overrides both the JS and TypeScript builtin:swc-loader rules" do
+          migrator.migrate_to_swc(run_installer: false)
+
+          expect(swc_config_content).to include("test: /\\.(js|jsx|mjs)$/")
+          expect(swc_config_content).to include("test: /\\.(ts|tsx)$/")
+        end
+
+        # Matching on use.loader alone would make webpack-merge append builtin:swc-loader to
+        # every rule's use chain (CSS and Sass included), so the merge spec must keep
+        # `test: 'match'` and pair each rule explicitly.
+        it "keeps test-based matching so the override cannot leak into other rules" do
+          migrator.migrate_to_swc(run_installer: false)
+
+          expect(swc_config_content).to include("rules: { test: 'match', use: { loader: 'match', options: 'merge' } }")
+        end
+
+        it "applies mergeWithRules to the output of generateRspackConfig" do
+          migrator.migrate_to_swc(run_installer: false)
+
+          expect(swc_config_content).to include("})(generateRspackConfig(), {")
+        end
       end
 
       # Shakapacker::Configuration#assets_bundler is

@@ -54,27 +54,45 @@ module Shakapacker
 
     # Rspack never reads config/swc.config.js: package/rules/rspack.ts sets its
     # builtin:swc-loader options inline, so the file is generated with a header that says so.
+    #
+    # The example keeps `test: 'match'` and overrides the JS and TS rules separately on
+    # purpose. Matching on `use.loader` alone (a single override with no `test`) looks tidier
+    # but is wrong: webpack-merge cannot pair such an override with a specific rule, so it
+    # appends builtin:swc-loader onto EVERY rule's `use` chain, including the CSS and Sass
+    # rules. Verified at webpack-merge 5.10.0 and 6.0.1.
     SWC_CONFIG_RSPACK_HEADER = <<~JS.freeze
       // config/swc.config.js
       // NOTE: This file is NOT read when assets_bundler is 'rspack'.
       // Shakapacker's Rspack config sets its 'builtin:swc-loader' options inline, so nothing
       // here reaches your build. To customize SWC for Rspack, apply webpack-merge's
-      // mergeWithRules to the OUTPUT of generateRspackConfig(), matching on use.loader and
-      // replacing use.options. Passing an override into generateRspackConfig() cannot replace
-      // the built-in rule: it merges with plain merge, which concatenates module.rules and
-      // leaves the built-in rule in place alongside yours.
+      // mergeWithRules to the OUTPUT of generateRspackConfig(). Passing an override into
+      // generateRspackConfig() cannot replace the built-in rule: it merges with plain merge,
+      // which concatenates module.rules and leaves the built-in rule in place alongside yours.
+      //
+      // Use options: 'merge', not 'replace'. 'merge' deep-merges into the built-in options so
+      // parser.jsx (JS), parser.syntax/tsx (TS), and transform.react.runtime survive.
+      // 'replace' swaps the whole options object and silently drops them, breaking JSX and
+      // TypeScript compilation.
       //
       //   const { mergeWithRules } = require('shakapacker');
       //   const { generateRspackConfig } = require('shakapacker/rspack');
       //
+      //   const swcOptions = { jsc: { keepClassNames: true } }; // your SWC options
+      //
       //   module.exports = mergeWithRules({
-      //     module: { rules: { test: 'match', use: { loader: 'match', options: 'replace' } } },
+      //     module: { rules: { test: 'match', use: { loader: 'match', options: 'merge' } } },
       //   })(generateRspackConfig(), {
       //     module: {
       //       rules: [
+      //         // Shakapacker registers separate builtin:swc-loader rules for JS and TS.
+      //         // Override both: a JS-only override never reaches .ts/.tsx files.
       //         {
       //           test: /\\.(js|jsx|mjs)$/,
-      //           use: [{ loader: 'builtin:swc-loader', options: { /* your SWC options */ } }],
+      //           use: [{ loader: 'builtin:swc-loader', options: swcOptions }],
+      //         },
+      //         {
+      //           test: /\\.(ts|tsx)$/,
+      //           use: [{ loader: 'builtin:swc-loader', options: swcOptions }],
       //         },
       //       ],
       //     },
@@ -316,10 +334,12 @@ module Shakapacker
           logger.info "   - config/swc.config.js is NOT read when assets_bundler is 'rspack'"
           logger.info "     Shakapacker's Rspack config sets its 'builtin:swc-loader' options inline"
           logger.info "   - To customize SWC for Rspack, apply webpack-merge's 'mergeWithRules' to the"
-          logger.info "     OUTPUT of generateRspackConfig(), matching on 'use.loader' and replacing"
+          logger.info "     OUTPUT of generateRspackConfig(), matching on 'use.loader' and merging"
           logger.info "     'use.options'. Passing an override into generateRspackConfig() cannot replace"
           logger.info "     the built-in rule, because it merges with plain 'merge', which concatenates"
           logger.info "     'module.rules' and leaves the built-in rule in place alongside yours"
+          logger.info "   - Use options: 'merge', not 'replace', so the built-in parser and"
+          logger.info "     transform.react defaults survive, and override the JS and TS rules separately"
           logger.info "   - The generated config/swc.config.js header contains a copy-pasteable example"
           logger.info "   - See: https://github.com/shakacode/shakapacker/blob/main/docs/rspack.md"
         else

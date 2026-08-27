@@ -80,7 +80,10 @@ module Shakapacker
     # built-in rule rather than replacing it. mergeWithRules must be applied to its output.
     RSPACK_SWC_OVERRIDE_HINT =
       "Apply webpack-merge's 'mergeWithRules' to the output of generateRspackConfig() in your Rspack config, " \
-      "matching on 'use.loader' and replacing 'use.options'. " \
+      "matching on 'use.loader' and using options: 'merge' (not 'replace', which swaps the whole options object " \
+      "and drops the built-in parser and transform.react defaults). " \
+      "Override the JS (/\\.(js|jsx|mjs)$/) and TypeScript (/\\.(ts|tsx)$/) rules separately, since Shakapacker " \
+      "registers a 'builtin:swc-loader' rule for each. " \
       "Passing an override into generateRspackConfig() cannot replace the built-in rule, because it merges with " \
       "plain 'merge', which concatenates 'module.rules' and leaves the built-in 'builtin:swc-loader' rule in place " \
       "alongside yours. Shakapacker re-exports 'mergeWithRules'. " \

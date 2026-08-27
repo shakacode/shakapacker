@@ -3002,7 +3002,17 @@ describe Shakapacker::Doctor do
             expect(warning_messages).to include(
               match(/Apply webpack-merge's 'mergeWithRules' to the output of generateRspackConfig\(\)/)
             )
-            expect(warning_messages).to include(match(/matching on 'use\.loader' and replacing 'use\.options'/))
+            expect(warning_messages).to include(match(/matching on 'use\.loader' and using options: 'merge'/))
+          end
+
+          # options: 'replace' swaps the whole options object, dropping the built-in
+          # parser/transform.react defaults and breaking JSX and TypeScript compilation.
+          it "steers away from options: 'replace' and names both built-in rules" do
+            doctor.send(:check_javascript_transpiler_dependencies)
+            expect(warning_messages).to include(
+              match(/not 'replace', which swaps the whole options object and drops the built-in parser/)
+            )
+            expect(warning_messages).to include(match(/Override the JS .* and TypeScript .* rules separately/))
           end
 
           it "warns that passing an override into generateRspackConfig cannot replace the rule" do
