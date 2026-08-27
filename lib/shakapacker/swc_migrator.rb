@@ -32,8 +32,6 @@ module Shakapacker
       "@babel/eslint-parser"
     ].freeze
 
-    DEFAULT_ASSETS_BUNDLER = "webpack".freeze
-
     SWC_PACKAGES = {
       "@swc/core" => "^1.7.39",
       "swc-loader" => "^0.2.6"
@@ -60,11 +58,28 @@ module Shakapacker
       // config/swc.config.js
       // NOTE: This file is NOT read when assets_bundler is 'rspack'.
       // Shakapacker's Rspack config sets its 'builtin:swc-loader' options inline, so nothing
-      // here reaches your build. To customize SWC for Rspack, override the built-in rule in
-      // your Rspack config. generateRspackConfig merges with webpack-merge's 'merge', which
-      // concatenates 'module.rules', so a plain merge appends a second rule instead of
-      // replacing the built-in one. Use webpack-merge's 'mergeWithRules' to replace the
-      // built-in 'builtin:swc-loader' rule.
+      // here reaches your build. To customize SWC for Rspack, apply webpack-merge's
+      // mergeWithRules to the OUTPUT of generateRspackConfig(), matching on use.loader and
+      // replacing use.options. Passing an override into generateRspackConfig() cannot replace
+      // the built-in rule: it merges with plain merge, which concatenates module.rules and
+      // leaves the built-in rule in place alongside yours.
+      //
+      //   const { mergeWithRules } = require('shakapacker');
+      //   const { generateRspackConfig } = require('shakapacker/rspack');
+      //
+      //   module.exports = mergeWithRules({
+      //     module: { rules: { test: 'match', use: { loader: 'match', options: 'replace' } } },
+      //   })(generateRspackConfig(), {
+      //     module: {
+      //       rules: [
+      //         {
+      //           test: /\\.(js|jsx|mjs)$/,
+      //           use: [{ loader: 'builtin:swc-loader', options: { /* your SWC options */ } }],
+      //         },
+      //       ],
+      //     },
+      //   });
+      //
       // See: https://github.com/shakacode/shakapacker/blob/main/docs/rspack.md
     JS
 
@@ -300,10 +315,12 @@ module Shakapacker
         if rspack?
           logger.info "   - config/swc.config.js is NOT read when assets_bundler is 'rspack'"
           logger.info "     Shakapacker's Rspack config sets its 'builtin:swc-loader' options inline"
-          logger.info "   - To customize SWC for Rspack, override the built-in rule in your Rspack config"
-          logger.info "     generateRspackConfig merges with webpack-merge's 'merge', which concatenates"
-          logger.info "     'module.rules', so use 'mergeWithRules' to replace the built-in rule instead"
-          logger.info "     of appending a second one"
+          logger.info "   - To customize SWC for Rspack, apply webpack-merge's 'mergeWithRules' to the"
+          logger.info "     OUTPUT of generateRspackConfig(), matching on 'use.loader' and replacing"
+          logger.info "     'use.options'. Passing an override into generateRspackConfig() cannot replace"
+          logger.info "     the built-in rule, because it merges with plain 'merge', which concatenates"
+          logger.info "     'module.rules' and leaves the built-in rule in place alongside yours"
+          logger.info "   - The generated config/swc.config.js header contains a copy-pasteable example"
           logger.info "   - See: https://github.com/shakacode/shakapacker/blob/main/docs/rspack.md"
         else
           logger.info "   - config/swc.config.js is merged with Shakapacker's default SWC configuration"
@@ -316,42 +333,20 @@ module Shakapacker
         assets_bundler == "rspack"
       end
 
-      # Mirrors Shakapacker::Configuration#assets_bundler resolution order without loading the
-      # app's configuration, since the migrator only knows its root path.
+      # Resolves through Shakapacker's own configuration rather than re-reading
+      # config/shakapacker.yml here, so this guidance can never disagree with the bundler the
+      # build actually uses. Instance handles SHAKAPACKER_CONFIG, Env.inquire (Rails.env plus
+      # the production fallback), and Configuration's own precedence. Falls back to webpack
+      # when the config is missing or unparseable, since migration must not crash on it.
       def assets_bundler
         return @assets_bundler if defined?(@assets_bundler)
 
-        @assets_bundler = detect_assets_bundler
-      end
-
-      def detect_assets_bundler
-        env_override = ENV["SHAKAPACKER_ASSETS_BUNDLER"]
-        return env_override unless env_override.nil? || env_override.empty?
-
-        config_path = root_path.join("config/shakapacker.yml")
-        return DEFAULT_ASSETS_BUNDLER unless config_path.exist?
-
-        config = begin
-          YAML.load_file(config_path, aliases: true)
-        rescue ArgumentError
-          YAML.load_file(config_path)
+        @assets_bundler = begin
+          require "shakapacker"
+          Shakapacker::Instance.new(root_path: root_path).config.assets_bundler
+        rescue StandardError, LoadError
+          "webpack"
         end
-        return DEFAULT_ASSETS_BUNDLER unless config.is_a?(Hash)
-
-        [config[shakapacker_env], config["default"]].each do |section|
-          next unless section.is_a?(Hash)
-
-          value = section["assets_bundler"] || section["bundler"]
-          return value if value.is_a?(String) && !value.empty?
-        end
-
-        DEFAULT_ASSETS_BUNDLER
-      rescue StandardError
-        DEFAULT_ASSETS_BUNDLER
-      end
-
-      def shakapacker_env
-        ENV["RAILS_ENV"] || ENV["RACK_ENV"] || "development"
       end
 
       def create_swc_config
