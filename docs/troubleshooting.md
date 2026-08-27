@@ -362,11 +362,11 @@ If a Rspack build (`assets_bundler: 'rspack'`) fails with:
 The version of the SWC Wasm plugin you're using might not be compatible with 'builtin:swc-loader'
 ```
 
-your Wasm SWC plugin (configured via `jsc.experimental.plugins` in `config/swc.config.js`, e.g. `@swc/plugin-styled-components` or `swc-plugin-coverage-instrument`) was built for a different `swc_core` version than the one your installed Rspack release depends on. Wasm plugin/`swc_core` compatibility is an exact pairing, not a minimum-version floor — a plugin built for a _higher_ `swc_core` than your bundler embeds fails too. **Rspack 2.2 upgraded `swc_core` from 76 to 77**, so any plugin build that isn't specifically for `swc_core` 77 hits this error on Rspack 2.2+.
+your Wasm SWC plugin (configured via `jsc.experimental.plugins` in `config/swc.config.js`, e.g. `@swc/plugin-styled-components` or `swc-plugin-coverage-instrument`) was built for a different `swc_core` version than the one your installed Rspack release depends on. Wasm plugin/`swc_core` compatibility is an exact pairing, not a minimum-version floor — a plugin built for a _higher_ `swc_core` than your bundler embeds fails too. **Rspack 2.2 upgraded `swc_core` from 76 to 77**, so any plugin build that isn't specifically for `swc_core` 77 hits this error on Rspack 2.2. This 76→77 mapping is specific to the 2.2 release — a later Rspack release may bump `swc_core` again to a different version, so check what your installed release actually embeds rather than assuming 77 stays correct.
 
 **Solution:**
 
-- Get or rebuild a plugin build that specifically targets `swc_core` 77. Check [plugins.swc.rs](https://plugins.swc.rs/) and select your Rspack version to find the matching build, or
+- Get or rebuild a plugin build that specifically targets the `swc_core` version your installed Rspack release embeds. Check [plugins.swc.rs](https://plugins.swc.rs/) and select your Rspack version to find the matching build, or
 - Pin your Rspack packages (`@rspack/core`, `@rspack/cli`, etc.) to `< 2.2.0` until a compatible plugin build ships.
 
 See [Using SWC Loader](./using_swc_loader.md#wasm-plugin-compatibility-with-rspack) and Rspack's [SWC plugin version mismatch](https://rspack.rs/errors/swc-plugin-version) reference for more detail.
