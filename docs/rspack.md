@@ -180,7 +180,7 @@ module.exports = generateRspackConfig({
 
 ### Browserslist baseline targets (optional)
 
-Rspack also supports targeting a [Baseline](https://web.dev/baseline) browser set via `target`, e.g. `target: 'browserslist:baseline widely available'`, or a date-pinned variant like `target: 'browserslist:baseline widely available on 2025-05-01'`. This is an opt-in override in your own Rspack config — Shakapacker doesn't set `target` for either bundler, and the `browserslist` key the installer writes to `package.json` is unaffected either way.
+**Requires Rspack >= 2.1.9** (Shakapacker's peer range, `^2.0.0`, also admits 2.0.x and 2.1.0–2.1.8, where this isn't available). From 2.1.9 on, Rspack supports targeting a [Baseline](https://web.dev/baseline) browser set via `target`, e.g. `target: 'browserslist:baseline widely available'`, or a date-pinned variant like `target: 'browserslist:baseline widely available on 2025-05-01'`. This is an opt-in override in your own Rspack config — Shakapacker doesn't set `target` for either bundler, and the `browserslist` key the installer writes to `package.json` is unaffected either way.
 
 ## Limitations
 

@@ -254,18 +254,18 @@ If your Stimulus controllers aren't working after migrating to SWC:
 
 ## Wasm plugin compatibility with Rspack
 
-If you use `jsc.experimental.plugins` to load a Wasm SWC plugin (for example `@swc/plugin-styled-components` or `swc-plugin-coverage-instrument`), the plugin build must match the `swc_core` version that your installed bundler depends on. SWC Wasm plugins are not backward compatible across `swc_core` versions, and this applies to Rspack's `builtin:swc-loader` (Rspack's own SWC integration) just as much as to `swc-loader` on webpack.
+If you use `jsc.experimental.plugins` to load a Wasm SWC plugin (for example `@swc/plugin-styled-components` or `swc-plugin-coverage-instrument`), the plugin build must match the exact `swc_core` version that your installed bundler depends on. Per [SWC's own docs](https://swc.rs/docs/plugin/selecting-swc-core), "the Wasm plugins are not backwards compatible" — this is **not** a minimum-version floor, it's an exact/closely-tied version pairing: a plugin built against a _higher_ `swc_core` than your bundler embeds fails too, not just a lower one. This applies to Rspack's `builtin:swc-loader` (Rspack's own SWC integration) just as much as to `swc-loader` on webpack.
 
-**Rspack 2.2 upgraded `swc_core` from 76 to 77.** If you're on `assets_bundler: 'rspack'` and upgrade to Rspack 2.2 or later while keeping a Wasm plugin that was built against `swc_core` 76 or earlier, your build fails with:
+**Rspack 2.2 upgraded `swc_core` from 76 to 77.** If you're on `assets_bundler: 'rspack'` and upgrade to Rspack 2.2 or later while keeping a Wasm plugin that was built for `swc_core` 76 (or any version other than 77), your build fails with:
 
-```
+```text
 The version of the SWC Wasm plugin you're using might not be compatible with 'builtin:swc-loader'
 ```
 
 **Fix:**
 
-- Rebuild or upgrade the Wasm plugin to a build compiled against `swc_core` 77+. Check [plugins.swc.rs](https://plugins.swc.rs/) for a plugin version matching your Rspack release, or
-- Pin your Rspack packages (`@rspack/core`, `@rspack/cli`, `shakapacker-rspack`, etc.) to `< 2.2.0` until a compatible plugin build is available.
+- Get or rebuild a plugin build that specifically targets `swc_core` 77 (the version Rspack 2.2 embeds) — do not assume "77 or newer" works. Check [plugins.swc.rs](https://plugins.swc.rs/) and select your Rspack version to find the matching plugin build, or
+- Pin your Rspack packages (`@rspack/core`, `@rspack/cli`, etc.) to `< 2.2.0` until a compatible plugin build is available.
 
 See Rspack's [SWC plugin version mismatch](https://rspack.rs/errors/swc-plugin-version) error reference for more detail, and the [Troubleshooting guide](./troubleshooting.md#swc-wasm-plugin-incompatible-with-rspacks-builtinswc-loader) for the same guidance in context.
 

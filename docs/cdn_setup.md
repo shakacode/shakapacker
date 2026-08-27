@@ -100,17 +100,24 @@ This ensures that:
 - Dynamic imports and code-split chunks load from the CDN
 - Rendered asset URLs use the CDN host at request time
 
-> **Runtime public path overrides (webpack vs. Rspack):** The steps above cover the normal case, where `SHAKAPACKER_ASSET_HOST` (or `asset_host`) sets `output.publicPath` for you at compile time. If instead you need to override the public path at runtime — for example, an [on-the-fly override](https://webpack.js.org/guides/public-path/#on-the-fly) in your own entry code — the runtime variable differs by bundler:
+> **Runtime public path overrides (webpack vs. Rspack):** The steps above cover the normal case, where `SHAKAPACKER_ASSET_HOST` (or `asset_host`) sets `output.publicPath` for you at compile time. Most Shakapacker apps never need to touch this at runtime; skip this note unless you're bypassing `SHAKAPACKER_ASSET_HOST`/`asset_host` to set the public path dynamically yourself (e.g. per-request CDN selection). If you are, two things matter for either bundler:
 >
-> ```js
-> // Webpack
-> __webpack_public_path__ = "https://cdn.example.com/packs/"
+> - **Scope**: this only affects _dynamically loaded_ assets — code-split chunks loaded via dynamic `import()`. It does **not** affect assets loaded via static `<script src="...">`/`<link href="...">` tags (e.g. `javascript_pack_tag`/`stylesheet_pack_tag` output) — those already have their URL baked in at render time. If you don't use dynamic `import()`, you don't need this at all; `output.publicPath: 'auto'` may already do what you want without any runtime assignment.
+> - **Ordering**: the assignment must run before any other module in your entry graph requests a chunk, and ES module imports are hoisted above plain statements — so a plain assignment at the top of your entry file runs _after_ your imports, not before. Put the assignment in its own side-effect-only module and make it the first import of your entry:
 >
-> // Rspack (preferred over the deprecated __webpack_public_path__)
-> import.meta.rspackPublicPath = "https://cdn.example.com/packs/"
-> ```
+>   ```js
+>   // app/javascript/entrypoints/public_path.js
+>   __webpack_public_path__ = "https://cdn.example.com/packs/" // webpack
+>   // or, on Rspack (see version note below): import.meta.rspackPublicPath = "https://cdn.example.com/packs/"
+>   ```
 >
-> `__webpack_public_path__` remains correct and is the way to do this on webpack. Rspack still supports `__webpack_public_path__` for compatibility, but its docs mark it **Deprecated** in favor of [`import.meta.rspackPublicPath`](https://rspack.rs/api/runtime-api/module-variables#importmetarspackpublicpath) (available since Rspack v2.1.2, within Shakapacker's supported `^2.0.0` Rspack range). Both read from `output.publicPath` under the hood, so most Shakapacker apps never need either — this only matters if you bypass `SHAKAPACKER_ASSET_HOST`/`asset_host` and set the public path dynamically yourself.
+>   ```js
+>   // app/javascript/entrypoints/application.js
+>   import "./public_path" // must be the first import
+>   import "./app"
+>   ```
+>
+> The runtime variable name differs by bundler. `__webpack_public_path__` remains correct and is the way to do this on webpack — see webpack's [On The Fly](https://webpack.js.org/guides/public-path/#on-the-fly) guide for the same ordering requirement. **Rspack requires >= v2.1.2** for the replacement: Rspack still supports `__webpack_public_path__` for compatibility, but its docs mark it **Deprecated** in favor of [`import.meta.rspackPublicPath`](https://rspack.rs/api/runtime-api/module-variables#importmetarspackpublicpath), added in Rspack v2.1.2. Shakapacker's peer range (`^2.0.0`) also admits Rspack 2.0.x and 2.1.0–2.1.1, where `import.meta.rspackPublicPath` doesn't exist yet — check your installed `@rspack/core` version before switching, and use `__webpack_public_path__` (still supported, just deprecated) if you're below 2.1.2. See Rspack's [Dynamically set publicPath](https://rspack.rs/guide/features/asset-base-path#dynamically-set-publicpath) guide for the equivalent ordering/scope guidance on Rspack.
 
 ### 4. Deploy and Sync Assets
 
