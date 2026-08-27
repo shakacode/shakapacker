@@ -267,7 +267,7 @@ The version of the SWC Wasm plugin you're using might not be compatible with 'bu
 **Fix:**
 
 - Get or rebuild a plugin build that specifically targets the `swc_core` version your installed Rspack release embeds (77, for Rspack 2.2 — this mapping is specific to the 2.2 release; a later Rspack release may bump `swc_core` again to yet another version, so don't assume 77 stays correct going forward). Check [plugins.swc.rs](https://plugins.swc.rs/) and select your Rspack version to find the matching plugin build, or
-- Pin your Rspack packages (`@rspack/core`, `@rspack/cli`, etc.) to `< 2.2.0` until a compatible plugin build is available.
+- Pin your Rspack packages (`@rspack/core`, `@rspack/cli`, etc.) to `< 2.2.0` — but only if your plugin build specifically targets `swc_core` 76 (what pre-2.2 Rspack embeds); for any other `swc_core` version, downgrading won't necessarily fix it either, so get a matching build instead.
 
 See Rspack's [SWC plugin version mismatch](https://rspack.rs/errors/swc-plugin-version) error reference for more detail, and the [Troubleshooting guide](./troubleshooting.md#swc-wasm-plugin-incompatible-with-rspacks-builtinswc-loader) for the same guidance in context.
 

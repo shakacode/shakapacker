@@ -371,7 +371,7 @@ Wasm plugin/`swc_core` compatibility is an exact pairing, not a minimum-version 
 **Solution:**
 
 - Get or rebuild a plugin build that specifically targets the `swc_core` version your installed Rspack release embeds. Check [plugins.swc.rs](https://plugins.swc.rs/) and select your Rspack version to find the matching build, or
-- Pin your Rspack packages (`@rspack/core`, `@rspack/cli`, etc.) to `< 2.2.0` until a compatible plugin build ships.
+- Pin your Rspack packages (`@rspack/core`, `@rspack/cli`, etc.) to `< 2.2.0` — but only if your plugin build specifically targets `swc_core` 76 (what pre-2.2 Rspack embeds); for any other `swc_core` version, downgrading won't necessarily fix it either, so get a matching build instead.
 
 See [Using SWC Loader](./using_swc_loader.md#wasm-plugin-compatibility-with-rspack) and Rspack's [SWC plugin version mismatch](https://rspack.rs/errors/swc-plugin-version) reference for more detail.
 
