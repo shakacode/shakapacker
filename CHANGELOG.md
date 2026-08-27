@@ -10,6 +10,10 @@
 
 ## [Unreleased]
 
+### Changed
+
+- **Bumped the development and CI pin for Rspack from `2.0.1` to `2.2.0`.** [PR #1258](https://github.com/shakacode/shakapacker/pull/1258) by [justin808](https://github.com/justin808). The `@rspack/core`, `@rspack/cli`, `@rspack/dev-server`, and `@rspack/plugin-react-refresh` peer ranges are unchanged at `^2.0.0`, so applications may stay on any Rspack `2.x` release; only this repository's own development pins and dummy-app lockfiles move, so CI now exercises Rspack 2.2 against the range it already advertises. Annotated config exports (`bin/shakapacker-config --annotate`) also now list the complete `optimization.moduleIds` and `optimization.chunkIds` value sets for both bundlers, including `'compat-hashed'`, which requires Rspack 2.2 or newer and is documented as opt-in rather than made a default.
+
 ### Fixed
 
 - **Fixed `shakapacker:doctor` and `rake shakapacker:migrate_to_swc` telling Rspack apps that `config/swc.config.js` is merged into their build.** [PR #1260](https://github.com/shakacode/shakapacker/pull/1260) by [justin808](https://github.com/justin808). Rspack builds never read `config/swc.config.js`, because Shakapacker's Rspack rules set their `builtin:swc-loader` options inline. Doctor now warns that the file is unread on Rspack instead of reporting it as merged (and skips its content checks there), and no longer tells Rspack users with a `.swcrc` to migrate those settings into `config/swc.config.js`. The migrator's post-migration guidance and the generated file header instead show how to override the built-in `builtin:swc-loader` rule: apply `webpack-merge`'s `mergeWithRules` to the _output_ of `generateRspackConfig()`, since that function merges with plain `merge`, which concatenates `module.rules`, so an override passed into it is appended alongside the built-in rule rather than replacing it. Webpack apps keep the existing messaging. Fixes [#1259](https://github.com/shakacode/shakapacker/issues/1259).
