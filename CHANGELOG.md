@@ -10,6 +10,10 @@
 
 ## [Unreleased]
 
+### Changed
+
+- **Bumped the development and CI pin for Rspack from `2.0.1` to `2.2.0`.** [PR #PR_NUMBER_PLACEHOLDER](https://github.com/shakacode/shakapacker/pull/PR_NUMBER_PLACEHOLDER) by [justin808](https://github.com/justin808). The `@rspack/core`, `@rspack/cli`, `@rspack/dev-server`, and `@rspack/plugin-react-refresh` peer ranges are unchanged at `^2.0.0`, so applications may stay on any Rspack `2.x` release; only this repository's own development pins and dummy-app lockfiles move, so CI now exercises Rspack 2.2 against the range it already advertises. Annotated config exports (`bin/shakapacker-config --annotate`) also now list the complete `optimization.moduleIds` and `optimization.chunkIds` value sets for both bundlers, including `'compat-hashed'`, which requires Rspack 2.2 or newer and is documented as opt-in rather than made a default.
+
 ### Fixed
 
 - **Fixed post-publish GitHub release failures hiding successful package publication details.** The release task now prints its normal publication summary and the exact `sync_github_release` recovery command before exiting nonzero. [PR #1250](https://github.com/shakacode/shakapacker/pull/1250) by [justin808](https://github.com/justin808).

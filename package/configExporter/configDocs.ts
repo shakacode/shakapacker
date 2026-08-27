@@ -31,9 +31,9 @@ export const CONFIG_DOCS: Record<string, string> = {
   "optimization.runtimeChunk":
     "Extract webpack runtime into separate chunk: 'single' (one runtime for all), true (one per entry), false (inline)",
   "optimization.moduleIds":
-    "Module ID generation strategy: 'deterministic' (stable), 'named' (readable), 'natural' (numeric order)",
+    "Module ID generation strategy: 'deterministic' (stable short IDs), 'named' (readable), 'natural' (numeric order), 'size' (webpack only), 'hashed' (deprecated in webpack), 'compat-hashed' (rspack >= 2.2 only), false (disable)",
   "optimization.chunkIds":
-    "Chunk ID generation strategy: 'deterministic', 'named', 'natural'",
+    "Chunk ID generation strategy: 'deterministic' (stable short IDs), 'named' (readable), 'natural' (numeric order), 'size' and 'total-size' (size-optimized), 'compat-hashed' (rspack >= 2.2 only), false (disable)",
   module: "Configures how different file types are processed",
   "module.rules":
     "Array of rules defining loaders and processing for different file types",
