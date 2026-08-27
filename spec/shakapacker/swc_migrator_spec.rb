@@ -211,6 +211,120 @@ describe Shakapacker::SwcMigrator do
         expect(logger).to have_received(:error).with(/Failed to install packages/)
       end
     end
+
+    context "SWC config guidance per assets_bundler" do
+      let(:swc_config_content) { File.read(root_path.join("config/swc.config.js")) }
+
+      before do
+        allow(ENV).to receive(:[]).and_call_original
+        allow(ENV).to receive(:[]).with("SHAKAPACKER_ASSETS_BUNDLER").and_return(nil)
+        FileUtils.mkdir_p(root_path.join("config"))
+        File.write(root_path.join("package.json"), "{}")
+      end
+
+      def write_shakapacker_yml(bundler)
+        bundler_line = bundler ? "  assets_bundler: #{bundler}\n" : ""
+        File.write(root_path.join("config/shakapacker.yml"), <<~YAML)
+          default: &default
+            source_path: app/javascript
+          #{bundler_line}
+          development:
+            <<: *default
+        YAML
+      end
+
+      context "with assets_bundler webpack" do
+        before { write_shakapacker_yml("webpack") }
+
+        it "logs that the config is merged with Shakapacker defaults" do
+          migrator.migrate_to_swc(run_installer: false)
+
+          expect(logger).to have_received(:info)
+            .with("   - config/swc.config.js is merged with Shakapacker's default SWC configuration")
+          expect(logger).to have_received(:info).with("   - You can customize config/swc.config.js to add additional options")
+          expect(logger).not_to have_received(:info).with(/NOT read when assets_bundler is 'rspack'/)
+        end
+
+        it "writes the webpack header into config/swc.config.js" do
+          migrator.migrate_to_swc(run_installer: false)
+
+          expect(swc_config_content).to eq(described_class::DEFAULT_SWC_CONFIG)
+          expect(swc_config_content).to include("// This file is merged with Shakapacker's default SWC configuration")
+          expect(swc_config_content).not_to include("NOT read when assets_bundler is 'rspack'")
+        end
+      end
+
+      context "with assets_bundler rspack" do
+        before { write_shakapacker_yml("rspack") }
+
+        it "logs that the config is not read on Rspack" do
+          migrator.migrate_to_swc(run_installer: false)
+
+          expect(logger).to have_received(:info).with("   - config/swc.config.js is NOT read when assets_bundler is 'rspack'")
+          expect(logger).to have_received(:info).with(/'builtin:swc-loader' options inline/)
+          expect(logger).to have_received(:info).with(/'mergeWithRules' to replace the built-in rule/)
+          expect(logger).not_to have_received(:info)
+            .with("   - config/swc.config.js is merged with Shakapacker's default SWC configuration")
+        end
+
+        it "writes the Rspack header into config/swc.config.js" do
+          migrator.migrate_to_swc(run_installer: false)
+
+          expect(swc_config_content).to eq(described_class::RSPACK_SWC_CONFIG)
+          expect(swc_config_content).to include("// NOTE: This file is NOT read when assets_bundler is 'rspack'.")
+          expect(swc_config_content).to include("mergeWithRules")
+          expect(swc_config_content).not_to include("// This file is merged with Shakapacker's default SWC configuration")
+        end
+
+        it "keeps the SWC options body identical to the webpack variant" do
+          migrator.migrate_to_swc(run_installer: false)
+
+          expect(swc_config_content).to include(described_class::SWC_CONFIG_BODY)
+        end
+      end
+
+      context "with the deprecated bundler key set to rspack" do
+        before do
+          File.write(root_path.join("config/shakapacker.yml"), <<~YAML)
+            default: &default
+              source_path: app/javascript
+              bundler: rspack
+
+            development:
+              <<: *default
+          YAML
+        end
+
+        it "uses the Rspack guidance" do
+          migrator.migrate_to_swc(run_installer: false)
+
+          expect(swc_config_content).to eq(described_class::RSPACK_SWC_CONFIG)
+        end
+      end
+
+      context "with no assets_bundler configured" do
+        before { write_shakapacker_yml(nil) }
+
+        it "defaults to the webpack guidance" do
+          migrator.migrate_to_swc(run_installer: false)
+
+          expect(swc_config_content).to eq(described_class::DEFAULT_SWC_CONFIG)
+        end
+      end
+
+      context "with SHAKAPACKER_ASSETS_BUNDLER set to rspack" do
+        before do
+          allow(ENV).to receive(:[]).with("SHAKAPACKER_ASSETS_BUNDLER").and_return("rspack")
+          write_shakapacker_yml("webpack")
+        end
+
+        it "honors the environment override" do
+          migrator.migrate_to_swc(run_installer: false)
+
+          expect(swc_config_content).to eq(described_class::RSPACK_SWC_CONFIG)
+        end
+      end
+    end
   end
 
   describe "#clean_babel_packages" do
@@ -459,6 +573,21 @@ describe Shakapacker::SwcMigrator do
       expect(config).to include("module.exports")
       expect(config).to include("runtime: 'automatic'")
       expect(config).not_to include("jsc.target")
+    end
+
+    it "keeps DEFAULT_SWC_CONFIG as the frozen webpack variant" do
+      config = described_class::DEFAULT_SWC_CONFIG
+      expect(config).to be_frozen
+      expect(config).to eq("#{described_class::SWC_CONFIG_WEBPACK_HEADER}\n#{described_class::SWC_CONFIG_BODY}")
+      expect(config).to start_with("// config/swc.config.js\n// This file is merged with Shakapacker's default SWC configuration\n")
+    end
+
+    it "defines an Rspack SWC configuration that shares the webpack options body" do
+      config = described_class::RSPACK_SWC_CONFIG
+      expect(config).to be_frozen
+      expect(config).to include("// NOTE: This file is NOT read when assets_bundler is 'rspack'.")
+      expect(config).to include(described_class::SWC_CONFIG_BODY)
+      expect(config).not_to include("// This file is merged with Shakapacker's default SWC configuration")
     end
   end
 

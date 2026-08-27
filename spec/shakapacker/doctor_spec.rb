@@ -2945,6 +2945,55 @@ describe Shakapacker::Doctor do
         it "shows info about using recommended config" do
           doctor.send(:check_javascript_transpiler_dependencies)
           expect(doctor.info).to include(match(/Using config\/swc\.config\.js \(recommended\)/))
+          expect(doctor.info).to include(match(/merged with Shakapacker's defaults/))
+        end
+
+        it "does not warn that the config is unread when assets_bundler is webpack" do
+          doctor.send(:check_javascript_transpiler_dependencies)
+          expect(warning_messages).not_to include(match(/NOT read when assets_bundler is 'rspack'/))
+        end
+
+        context "when assets_bundler is rspack" do
+          before do
+            allow(config).to receive(:assets_bundler).and_return("rspack")
+          end
+
+          it "warns that config/swc.config.js is not read on Rspack" do
+            doctor.send(:check_javascript_transpiler_dependencies)
+            expect(warning_messages).to include(
+              match(/config\/swc\.config\.js is present but is NOT read when assets_bundler is 'rspack'/)
+            )
+            expect(warning_messages).to include(match(/builtin:swc-loader' options inline/))
+          end
+
+          it "points at replacing the built-in rule with mergeWithRules" do
+            doctor.send(:check_javascript_transpiler_dependencies)
+            expect(warning_messages).to include(
+              match(/generateRspackConfig merges with webpack-merge's 'merge', which concatenates 'module\.rules'/)
+            )
+            expect(warning_messages).to include(match(/'mergeWithRules' to replace the built-in 'builtin:swc-loader' rule/))
+          end
+
+          it "does not claim the config is merged with Shakapacker's defaults" do
+            doctor.send(:check_javascript_transpiler_dependencies)
+            expect(doctor.info).not_to include(match(/Using config\/swc\.config\.js \(recommended\)/))
+            expect(doctor.info).not_to include(match(/merged with Shakapacker's defaults/))
+          end
+
+          it "skips content validation for a file Rspack never reads" do
+            File.write(root_path.join("config/swc.config.js"), <<~JS)
+              module.exports = {
+                options: {
+                  jsc: {
+                    loose: true
+                  }
+                }
+              }
+            JS
+
+            doctor.send(:check_javascript_transpiler_dependencies)
+            expect(warning_messages).not_to include(match(/'loose: true' detected in config\/swc\.config\.js/))
+          end
         end
       end
 

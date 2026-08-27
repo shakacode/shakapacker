@@ -725,10 +725,21 @@ module Shakapacker
                       "See: https://github.com/shakacode/shakapacker/blob/main/docs/using_swc_loader.md")
         end
 
-        if swc_config_path.exist?
-          @info << "SWC configuration: Using config/swc.config.js (recommended). This config is merged with Shakapacker's defaults."
-          check_swc_config_settings(swc_config_path)
+        return unless swc_config_path.exist?
+
+        if assets_bundler == "rspack"
+          add_warning("SWC configuration: config/swc.config.js is present but is NOT read when assets_bundler is 'rspack'. " \
+                      "Shakapacker's Rspack config sets its 'builtin:swc-loader' options inline, so nothing in this file reaches your build.")
+          add_fix_hint("Customize SWC for Rspack by overriding the built-in rule in your Rspack config. " \
+                       "generateRspackConfig merges with webpack-merge's 'merge', which concatenates 'module.rules', " \
+                       "so a plain merge appends a second rule instead of replacing the built-in one. " \
+                       "Use webpack-merge's 'mergeWithRules' to replace the built-in 'builtin:swc-loader' rule. " \
+                       "See: https://github.com/shakacode/shakapacker/blob/main/docs/rspack.md")
+          return
         end
+
+        @info << "SWC configuration: Using config/swc.config.js (recommended). This config is merged with Shakapacker's defaults."
+        check_swc_config_settings(swc_config_path)
       end
 
       def check_swc_config_settings(config_path)
