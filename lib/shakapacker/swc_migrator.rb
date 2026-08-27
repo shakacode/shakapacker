@@ -74,6 +74,9 @@ module Shakapacker
       // 'replace' swaps the whole options object and silently drops them, breaking JSX and
       // TypeScript compilation.
       //
+      // Keep test: 'match' in the merge spec. Matching on use.loader alone appends
+      // builtin:swc-loader to every rule's use chain, CSS and Sass included.
+      //
       //   const { mergeWithRules } = require('shakapacker');
       //   const { generateRspackConfig } = require('shakapacker/rspack');
       //
@@ -334,8 +337,10 @@ module Shakapacker
           logger.info "   - config/swc.config.js is NOT read when assets_bundler is 'rspack'"
           logger.info "     Shakapacker's Rspack config sets its 'builtin:swc-loader' options inline"
           logger.info "   - To customize SWC for Rspack, apply webpack-merge's 'mergeWithRules' to the"
-          logger.info "     OUTPUT of generateRspackConfig(), matching on 'use.loader' and merging"
-          logger.info "     'use.options'. Passing an override into generateRspackConfig() cannot replace"
+          logger.info "     OUTPUT of generateRspackConfig(), matching on both 'test' and 'use.loader'"
+          logger.info "     and merging 'use.options'. Matching on 'use.loader' alone would append"
+          logger.info "     'builtin:swc-loader' to every rule's 'use' chain, CSS and Sass included."
+          logger.info "     Passing an override into generateRspackConfig() cannot replace"
           logger.info "     the built-in rule, because it merges with plain 'merge', which concatenates"
           logger.info "     'module.rules' and leaves the built-in rule in place alongside yours"
           logger.info "   - Use options: 'merge', not 'replace', so the built-in parser and"

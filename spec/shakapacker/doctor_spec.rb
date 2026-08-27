@@ -2957,6 +2957,26 @@ describe Shakapacker::Doctor do
             expect(warning_messages).not_to include(match(/properly merges with Shakapacker defaults/))
             expect(doctor.info).not_to include(match(/merged with Shakapacker's defaults/))
           end
+
+          # Both files hit both hint call sites; the ~700-character guidance should appear once.
+          it "prints the full override guidance once when both files exist" do
+            FileUtils.mkdir_p(root_path.join("config"))
+            File.write(root_path.join("config/swc.config.js"), "module.exports = {}")
+
+            doctor.send(:check_javascript_transpiler_dependencies)
+
+            full = warning_messages.count { |m| m.include?(Shakapacker::Doctor::RSPACK_SWC_OVERRIDE_HINT) }
+            backref = warning_messages.count { |m| m.include?(Shakapacker::Doctor::RSPACK_SWC_OVERRIDE_HINT_BACKREF) }
+            expect(full).to eq(1)
+            expect(backref).to eq(1)
+          end
+
+          it "still gives the full guidance when only .swcrc exists" do
+            doctor.send(:check_javascript_transpiler_dependencies)
+
+            expect(warning_messages.count { |m| m.include?(Shakapacker::Doctor::RSPACK_SWC_OVERRIDE_HINT) }).to eq(1)
+            expect(warning_messages).not_to include(match(/See the Rspack 'builtin:swc-loader' override guidance above/))
+          end
         end
       end
 
@@ -3002,7 +3022,9 @@ describe Shakapacker::Doctor do
             expect(warning_messages).to include(
               match(/Apply webpack-merge's 'mergeWithRules' to the output of generateRspackConfig\(\)/)
             )
-            expect(warning_messages).to include(match(/matching on 'use\.loader' and using options: 'merge'/))
+            expect(warning_messages).to include(
+              match(/matching on both 'test' and 'use\.loader', and using options: 'merge'/)
+            )
           end
 
           # options: 'replace' swaps the whole options object, dropping the built-in
@@ -3013,6 +3035,15 @@ describe Shakapacker::Doctor do
               match(/not 'replace', which swaps the whole options object and drops the built-in parser/)
             )
             expect(warning_messages).to include(match(/Override the JS .* and TypeScript .* rules separately/))
+          end
+
+          # Matching on use.loader alone appends builtin:swc-loader to every rule's use chain,
+          # so the hint must never describe that shape as the fix.
+          it "warns against dropping 'test' from the match" do
+            doctor.send(:check_javascript_transpiler_dependencies)
+            expect(warning_messages).to include(
+              match(/matching on 'use\.loader' alone makes webpack-merge append 'builtin:swc-loader' to every rule's 'use' chain/)
+            )
           end
 
           it "warns that passing an override into generateRspackConfig cannot replace the rule" do
