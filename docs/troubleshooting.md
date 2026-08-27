@@ -354,6 +354,27 @@ To diagnose and work around it:
 3. Re-test a real asset or manifest endpoint with `curl --max-time 5`.
 4. If disabling the notifier fixes the hang, keep it disabled under `WEBPACK_SERVE=true` or guard the notifier so spawn failures are caught and logged instead of escaping the plugin hook.
 
+## SWC Wasm plugin incompatible with Rspack's `builtin:swc-loader`
+
+If a Rspack build (`assets_bundler: 'rspack'`) fails with:
+
+```text
+The version of the SWC Wasm plugin you're using might not be compatible with 'builtin:swc-loader'
+```
+
+your Wasm SWC plugin — added via `jsc.experimental.plugins` (e.g. `@swc/plugin-styled-components` or `swc-plugin-coverage-instrument`) in a custom override of the `builtin:swc-loader` rule — was built for a different `swc_core` version than the one your installed Rspack release depends on.
+
+**This is not configured through `config/swc.config.js`.** Shakapacker's built-in Rspack rule hard-codes its `builtin:swc-loader` options and never reads that file (only the webpack SWC path does). A plugin placed only in `config/swc.config.js` has no effect on Rspack builds and won't produce this error at all — it's silently ignored. On Rspack, `jsc.experimental.plugins` has to be added in your own `config/rspack/rspack.config.js` — but a naive `module.rules` override passed to `generateRspackConfig()` won't replace Shakapacker's built-in rule (plain merge concatenates arrays, so you get a second matching rule instead of a replaced one, and the plugin may silently never run). Use [`mergeWithRules`](./node_package_api.md) to merge into the existing rule instead; see [Using SWC Loader](./using_swc_loader.md#wasm-plugin-compatibility-with-rspack) for a working example.
+
+Wasm plugin/`swc_core` compatibility isn't unlimited: SWC's plugin ABI has gotten more forgiving across versions over time, but a plugin built for one `swc_core` version isn't guaranteed to work with an arbitrary other one — check [plugins.swc.rs](https://plugins.swc.rs/) for what's actually compatible with your Rspack version. **Rspack 2.2 upgraded `swc_core` from 76 to 77**, which is enough of a jump that a plugin working fine on Rspack 2.1.x can fail on 2.2. This 76→77 mapping is specific to the 2.2 release — a later Rspack release may bump `swc_core` again to a different version, so check what your installed release actually embeds rather than assuming 77 stays correct.
+
+**Solution:**
+
+- Get a plugin build that [plugins.swc.rs](https://plugins.swc.rs/) lists as compatible with your installed Rspack version, or
+- Pin your Rspack packages (`@rspack/core`, `@rspack/cli`, etc.) to `< 2.2.0`. This isn't a guaranteed fix for every plugin — whether it works depends on whether your plugin build is one that plugins.swc.rs lists as compatible with the pre-2.2 `swc_core`.
+
+See [Using SWC Loader](./using_swc_loader.md#wasm-plugin-compatibility-with-rspack) and Rspack's [SWC plugin version mismatch](https://rspack.rs/errors/swc-plugin-version) reference for more detail.
+
 ## throw er; // Unhandled 'error' event
 
 - If you get this error while trying to use Elm, try rebuilding Elm. You can do

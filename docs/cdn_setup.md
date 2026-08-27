@@ -100,6 +100,25 @@ This ensures that:
 - Dynamic imports and code-split chunks load from the CDN
 - Rendered asset URLs use the CDN host at request time
 
+> **Runtime public path overrides (webpack vs. Rspack):** The steps above cover the normal case, where `SHAKAPACKER_ASSET_HOST` (or `asset_host`) sets `output.publicPath` for you at compile time. Most Shakapacker apps never need to touch this at runtime; skip this note unless you're bypassing `SHAKAPACKER_ASSET_HOST`/`asset_host` to set the public path dynamically yourself (e.g. per-request CDN selection). If you are, two things matter for either bundler:
+>
+> - **Scope**: a runtime override like this covers dynamic `import()` chunks and any image, font, or other file that's `import`ed/`require`d directly into your JavaScript and turned into an asset module. It does **not** cover two other common cases, both because their URLs are already fixed before the override ever runs: assets referenced from your CSS (`url(...)` in a stylesheet) — resolved and baked into the extracted CSS file at build time, under Shakapacker's normal production CSS-extraction path — and assets loaded via static `<script src="...">`/`<link href="...">` tags (e.g. `javascript_pack_tag`/`stylesheet_pack_tag` output), baked into the rendered HTML the same way. If your use case needs CSS-referenced or statically-tagged assets to vary per request, a JS runtime override alone won't get you there — control the public path at compile time instead (e.g. per-build `SHAKAPACKER_ASSET_HOST`, or `output.publicPath: 'auto'`).
+> - **Ordering**: the assignment must run before any other module in your entry graph requests a chunk, and ES module imports are hoisted above plain statements — so a plain assignment at the top of your entry file runs _after_ your imports, not before. Put the assignment in its own side-effect-only module **outside** your entry directory (Shakapacker's default `source_entry_path: packs` with `nested_entries: true` turns every file under `app/javascript/packs/` into its own pack — a module placed there directly would ship as a stray extra pack instead of getting imported), and make it the first import of your entry:
+>
+>   ```js
+>   // app/javascript/public_path.js  (a sibling of packs/, not inside it)
+>   __webpack_public_path__ = "https://cdn.example.com/packs/" // webpack
+>   // or, on Rspack (see version note below): import.meta.rspackPublicPath = "https://cdn.example.com/packs/"
+>   ```
+>
+>   ```js
+>   // app/javascript/packs/application.js
+>   import "../public_path" // must be the first import in this entry
+>   // ...the rest of your existing entry code
+>   ```
+>
+> The runtime variable name differs by bundler. `__webpack_public_path__` remains correct and is the way to do this on webpack — see webpack's [On The Fly](https://webpack.js.org/guides/public-path/#on-the-fly) guide for the same ordering requirement. **Rspack requires >= v2.1.2** for the replacement: Rspack still supports `__webpack_public_path__` for compatibility, but its docs mark it **Deprecated** in favor of [`import.meta.rspackPublicPath`](https://rspack.rs/api/runtime-api/module-variables#importmetarspackpublicpath), added in Rspack v2.1.2. Shakapacker's peer range (`^2.0.0`) also admits Rspack 2.0.x and 2.1.0–2.1.1, where `import.meta.rspackPublicPath` doesn't exist yet — check your installed `@rspack/core` version before switching, and use `__webpack_public_path__` (still supported, just deprecated) if you're below 2.1.2. See Rspack's [Dynamically set publicPath](https://rspack.rs/guide/features/asset-base-path#dynamically-set-publicpath) guide for the equivalent ordering/scope guidance on Rspack.
+
 ### 4. Deploy and Sync Assets
 
 After compilation, ensure your compiled assets in `public/packs` are accessible to your CDN:

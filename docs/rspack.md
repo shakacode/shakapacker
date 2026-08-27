@@ -154,6 +154,36 @@ optimization: {
 
 Shakapacker's generated Rspack config preserves the shared optimization defaults from the base config, including `optimization.splitChunks.chunks = "all"` and `optimization.runtimeChunk = "single"`. In production it also preserves compression plugins and Rspack's SWC/Lightning CSS minimizers.
 
+### Module IDs and chunk IDs
+
+Shakapacker does not set `optimization.moduleIds` or `optimization.chunkIds` itself ([`package/optimization/rspack.ts`](../package/optimization/rspack.ts) only configures `minimize`/`minimizer`), so Rspack's own defaults apply (`moduleIds` is `'deterministic'` in production).
+
+**Opt-in, requires Rspack >= 2.2.0:** Rspack 2.2 adds a `'compat-hashed'` value for **both** `optimization.moduleIds` and `optimization.chunkIds`, using the shortest available prefix of a stable hash. Rspack's own benchmark — measured with both options set to `'compat-hashed'` together — reports modest real-world savings versus `'deterministic'` (~0.33% smaller minified output, ~0.87% smaller minified+gzip output). Setting only one of the two won't reproduce those numbers.
+
+This is **not** a Shakapacker default, and we don't plan to make it one:
+
+- It requires Rspack >= 2.2.0, while Shakapacker's peer range still admits 2.0.x and 2.1.x.
+- Switching either option changes every module's or chunk's id, which invalidates all of your long-term-cached chunk hashes exactly once, on the deploy where you switch. That's a deploy-time tradeoff you should opt into deliberately, not one Shakapacker should make for you.
+- `compat-hashed` **module** ids (not chunk ids, which stay lowercase) are case-sensitive and may contain uppercase letters, per [Rspack's own docs](https://rspack.rs/config/optimization#optimizationmoduleids). If any output filename uses `[id]` as the only distinguishing placeholder for an asset or WebAssembly module filename, that's unsafe on case-insensitive filesystems (macOS and Windows, by default) — prefer `[contenthash]`, or include it alongside `[id]`.
+
+If you still want to opt in:
+
+```javascript
+// config/rspack/rspack.config.js
+const { generateRspackConfig } = require("shakapacker/rspack")
+
+module.exports = generateRspackConfig({
+  optimization: {
+    moduleIds: "compat-hashed",
+    chunkIds: "compat-hashed"
+  }
+})
+```
+
+### Browserslist baseline targets (optional)
+
+**Requires Rspack >= 2.1.9** (Shakapacker's peer range, `^2.0.0`, also admits 2.0.x and 2.1.0–2.1.8, where this isn't available). From 2.1.9 on, Rspack supports targeting a [Baseline](https://web.dev/baseline) browser set via `target`, e.g. `target: 'browserslist:baseline widely available'`, or a date-pinned variant like `target: 'browserslist:baseline widely available on 2025-05-01'`. This is an opt-in override in your own Rspack config — Shakapacker doesn't set `target` for either bundler, and the `browserslist` key the installer writes to `package.json` is unaffected either way.
+
 ## Limitations
 
 - **CoffeeScript**: Not supported with Rspack
