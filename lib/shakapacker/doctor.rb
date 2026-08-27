@@ -75,6 +75,25 @@ module Shakapacker
 
     PACKAGE_ROOT_MARKERS = (["package.json"] + PACKAGE_MANAGER_LOCKFILES.keys + ["node_modules"]).freeze
 
+    # generateRspackConfig merges with plain webpack-merge `merge` (package/rspack/index.ts),
+    # which concatenates `module.rules`, so an override handed to it is appended next to the
+    # built-in rule rather than replacing it. mergeWithRules must be applied to its output.
+    RSPACK_SWC_OVERRIDE_HINT =
+      "Apply webpack-merge's 'mergeWithRules' to the output of generateRspackConfig() in your Rspack config, " \
+      "matching on both 'test' and 'use.loader', and using options: 'merge' (not 'replace', which swaps the whole " \
+      "options object and drops the built-in parser and transform.react defaults). " \
+      "Keep 'test' in the match: matching on 'use.loader' alone makes webpack-merge append 'builtin:swc-loader' to " \
+      "every rule's 'use' chain, including the CSS and Sass rules. " \
+      "Override the JS (/\\.(js|jsx|mjs)$/) and TypeScript (/\\.(ts|tsx)$/) rules separately, since Shakapacker " \
+      "registers a 'builtin:swc-loader' rule for each. " \
+      "Passing an override into generateRspackConfig() cannot replace the built-in rule, because it merges with " \
+      "plain 'merge', which concatenates 'module.rules' and leaves the built-in 'builtin:swc-loader' rule in place " \
+      "alongside yours. Shakapacker re-exports 'mergeWithRules'. " \
+      "See: https://github.com/shakacode/shakapacker/blob/main/docs/rspack.md".freeze
+
+    RSPACK_SWC_OVERRIDE_HINT_BACKREF =
+      "See the Rspack 'builtin:swc-loader' override guidance above.".freeze
+
     def initialize(config = nil, root_path = nil, options = {})
       @config = config || Shakapacker.config
       @root_path = root_path || (defined?(Rails) ? Rails.root : Pathname.new(Dir.pwd))
@@ -718,16 +737,44 @@ module Shakapacker
         swcrc_path = root_path.join(".swcrc")
         swc_config_path = root_path.join("config/swc.config.js")
 
+        rspack = assets_bundler == "rspack"
+
         if swcrc_path.exist?
-          add_warning("SWC configuration: .swcrc file detected. This file completely overrides Shakapacker's default SWC settings and may cause build failures. " \
-                      "Please migrate to config/swc.config.js which properly merges with Shakapacker defaults. " \
-                      "To migrate: Move your custom settings from .swcrc to config/swc.config.js (see docs for format). " \
-                      "See: https://github.com/shakacode/shakapacker/blob/main/docs/using_swc_loader.md")
+          if rspack
+            # Deliberately says nothing about whether Rspack's builtin:swc-loader honors .swcrc
+            # (unverified); it only drops the webpack-only claim that config/swc.config.js merges.
+            add_warning("SWC configuration: .swcrc file detected while assets_bundler is 'rspack'. " \
+                        "Shakapacker's Rspack build does not read config/swc.config.js, so moving these settings there would not affect your build.")
+            add_rspack_swc_override_hint("To apply custom SWC options on Rspack, override the built-in 'builtin:swc-loader' rule.")
+          else
+            add_warning("SWC configuration: .swcrc file detected. This file completely overrides Shakapacker's default SWC settings and may cause build failures. " \
+                        "Please migrate to config/swc.config.js which properly merges with Shakapacker defaults. " \
+                        "To migrate: Move your custom settings from .swcrc to config/swc.config.js (see docs for format). " \
+                        "See: https://github.com/shakacode/shakapacker/blob/main/docs/using_swc_loader.md")
+          end
         end
 
-        if swc_config_path.exist?
-          @info << "SWC configuration: Using config/swc.config.js (recommended). This config is merged with Shakapacker's defaults."
-          check_swc_config_settings(swc_config_path)
+        return unless swc_config_path.exist?
+
+        if rspack
+          add_warning("SWC configuration: config/swc.config.js is present but is NOT read when assets_bundler is 'rspack'. " \
+                      "Shakapacker's Rspack config sets its 'builtin:swc-loader' options inline, so nothing in this file reaches your build.")
+          add_rspack_swc_override_hint("Customize SWC for Rspack by overriding the built-in 'builtin:swc-loader' rule instead.")
+          return
+        end
+
+        @info << "SWC configuration: Using config/swc.config.js (recommended). This config is merged with Shakapacker's defaults."
+        check_swc_config_settings(swc_config_path)
+      end
+
+      # The full hint is ~700 characters, and an Rspack app with both .swcrc and
+      # config/swc.config.js hits both call sites, so emit it once and refer back after that.
+      def add_rspack_swc_override_hint(lead)
+        if @rspack_swc_override_hint_emitted
+          add_fix_hint("#{lead} #{RSPACK_SWC_OVERRIDE_HINT_BACKREF}")
+        else
+          @rspack_swc_override_hint_emitted = true
+          add_fix_hint("#{lead} #{RSPACK_SWC_OVERRIDE_HINT}")
         end
       end
 

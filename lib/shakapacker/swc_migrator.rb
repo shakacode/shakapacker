@@ -46,11 +46,65 @@ module Shakapacker
       .eslintrc.json
     ].freeze
 
-    DEFAULT_SWC_CONFIG = <<~JS.freeze
+    SWC_CONFIG_WEBPACK_HEADER = <<~JS.freeze
       // config/swc.config.js
       // This file is merged with Shakapacker's default SWC configuration
       // See: https://swc.rs/docs/configuration/compilation
+    JS
 
+    # Rspack never reads config/swc.config.js: package/rules/rspack.ts sets its
+    # builtin:swc-loader options inline, so the file is generated with a header that says so.
+    #
+    # The example keeps `test: 'match'` and overrides the JS and TS rules separately on
+    # purpose. Matching on `use.loader` alone (a single override with no `test`) looks tidier
+    # but is wrong: webpack-merge cannot pair such an override with a specific rule, so it
+    # appends builtin:swc-loader onto EVERY rule's `use` chain, including the CSS and Sass
+    # rules. Verified at webpack-merge 5.10.0 and 6.0.1.
+    SWC_CONFIG_RSPACK_HEADER = <<~JS.freeze
+      // config/swc.config.js
+      // NOTE: This file is NOT read when assets_bundler is 'rspack'.
+      // Shakapacker's Rspack config sets its 'builtin:swc-loader' options inline, so nothing
+      // here reaches your build. To customize SWC for Rspack, apply webpack-merge's
+      // mergeWithRules to the OUTPUT of generateRspackConfig(). Passing an override into
+      // generateRspackConfig() cannot replace the built-in rule: it merges with plain merge,
+      // which concatenates module.rules and leaves the built-in rule in place alongside yours.
+      //
+      // Use options: 'merge', not 'replace'. 'merge' deep-merges into the built-in options so
+      // parser.jsx (JS), parser.syntax/tsx (TS), and transform.react.runtime survive.
+      // 'replace' swaps the whole options object and silently drops them, breaking JSX and
+      // TypeScript compilation.
+      //
+      // Keep test: 'match' in the merge spec. Matching on use.loader alone appends
+      // builtin:swc-loader to every rule's use chain, CSS and Sass included.
+      //
+      //   const { mergeWithRules } = require('shakapacker');
+      //   const { generateRspackConfig } = require('shakapacker/rspack');
+      //
+      //   const swcOptions = { jsc: { keepClassNames: true } }; // your SWC options
+      //
+      //   module.exports = mergeWithRules({
+      //     module: { rules: { test: 'match', use: { loader: 'match', options: 'merge' } } },
+      //   })(generateRspackConfig(), {
+      //     module: {
+      //       rules: [
+      //         // Shakapacker registers separate builtin:swc-loader rules for JS and TS.
+      //         // Override both: a JS-only override never reaches .ts/.tsx files.
+      //         {
+      //           test: /\\.(js|jsx|mjs)$/,
+      //           use: [{ loader: 'builtin:swc-loader', options: swcOptions }],
+      //         },
+      //         {
+      //           test: /\\.(ts|tsx)$/,
+      //           use: [{ loader: 'builtin:swc-loader', options: swcOptions }],
+      //         },
+      //       ],
+      //     },
+      //   });
+      //
+      // See: https://github.com/shakacode/shakapacker/blob/main/docs/rspack.md
+    JS
+
+    SWC_CONFIG_BODY = <<~JS.freeze
       const { env } = require('shakapacker');
 
       module.exports = {
@@ -69,6 +123,11 @@ module Shakapacker
         },
       };
     JS
+
+    # Kept for backward compatibility: same value as before, and still the webpack variant.
+    DEFAULT_SWC_CONFIG = "#{SWC_CONFIG_WEBPACK_HEADER}\n#{SWC_CONFIG_BODY}".freeze
+
+    RSPACK_SWC_CONFIG = "#{SWC_CONFIG_RSPACK_HEADER}\n#{SWC_CONFIG_BODY}".freeze
 
     def initialize(root_path, logger: nil)
       @root_path = Pathname.new(root_path)
@@ -89,9 +148,7 @@ module Shakapacker
       logger.info "   Note: SWC is approximately 20x faster than Babel for transpilation."
       logger.info "   Please test your application thoroughly after migration."
       logger.info "\n📝 Configuration Info:"
-      logger.info "   - config/swc.config.js is merged with Shakapacker's default SWC configuration"
-      logger.info "   - You can customize config/swc.config.js to add additional options"
-      logger.info "   - Avoid using .swcrc as it overrides Shakapacker defaults completely"
+      log_swc_config_guidance
 
       # Show cleanup recommendations if babel packages found
       if results[:babel_packages_found].any?
@@ -275,6 +332,48 @@ module Shakapacker
         {}
       end
 
+      def log_swc_config_guidance
+        if rspack?
+          logger.info "   - config/swc.config.js is NOT read when assets_bundler is 'rspack'"
+          logger.info "     Shakapacker's Rspack config sets its 'builtin:swc-loader' options inline"
+          logger.info "   - To customize SWC for Rspack, apply webpack-merge's 'mergeWithRules' to the"
+          logger.info "     OUTPUT of generateRspackConfig(), matching on both 'test' and 'use.loader'"
+          logger.info "     and merging 'use.options'. Matching on 'use.loader' alone would append"
+          logger.info "     'builtin:swc-loader' to every rule's 'use' chain, CSS and Sass included."
+          logger.info "     Passing an override into generateRspackConfig() cannot replace"
+          logger.info "     the built-in rule, because it merges with plain 'merge', which concatenates"
+          logger.info "     'module.rules' and leaves the built-in rule in place alongside yours"
+          logger.info "   - Use options: 'merge', not 'replace', so the built-in parser and"
+          logger.info "     transform.react defaults survive, and override the JS and TS rules separately"
+          logger.info "   - The generated config/swc.config.js header contains a copy-pasteable example"
+          logger.info "   - See: https://github.com/shakacode/shakapacker/blob/main/docs/rspack.md"
+        else
+          logger.info "   - config/swc.config.js is merged with Shakapacker's default SWC configuration"
+          logger.info "   - You can customize config/swc.config.js to add additional options"
+          logger.info "   - Avoid using .swcrc as it overrides Shakapacker defaults completely"
+        end
+      end
+
+      def rspack?
+        assets_bundler == "rspack"
+      end
+
+      # Resolves through Shakapacker's own configuration rather than re-reading
+      # config/shakapacker.yml here, so this guidance can never disagree with the bundler the
+      # build actually uses. Instance handles SHAKAPACKER_CONFIG, Env.inquire (Rails.env plus
+      # the production fallback), and Configuration's own precedence. Falls back to webpack
+      # when the config is missing or unparseable, since migration must not crash on it.
+      def assets_bundler
+        return @assets_bundler if defined?(@assets_bundler)
+
+        @assets_bundler = begin
+          require "shakapacker"
+          Shakapacker::Instance.new(root_path: root_path).config.assets_bundler
+        rescue StandardError, LoadError
+          "webpack"
+        end
+      end
+
       def create_swc_config
         config_dir = root_path.join("config")
         swc_config_path = config_dir.join("swc.config.js")
@@ -287,7 +386,7 @@ module Shakapacker
         FileUtils.mkdir_p(config_dir) unless config_dir.exist?
 
         logger.info "📄 Creating config/swc.config.js..."
-        File.write(swc_config_path, DEFAULT_SWC_CONFIG)
+        File.write(swc_config_path, rspack? ? RSPACK_SWC_CONFIG : DEFAULT_SWC_CONFIG)
         logger.info "✅ config/swc.config.js created"
         true
       rescue StandardError => e

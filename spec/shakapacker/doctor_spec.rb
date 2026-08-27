@@ -2927,6 +2927,57 @@ describe Shakapacker::Doctor do
           doctor.send(:check_javascript_transpiler_dependencies)
           expect(warning_messages).to include(match(/\.swcrc file detected.*overrides Shakapacker's default.*migrate to config\/swc\.config\.js/))
         end
+
+        context "when assets_bundler is rspack" do
+          before do
+            allow(config).to receive(:assets_bundler).and_return("rspack")
+          end
+
+          it "does not tell Rspack users to migrate to a file Rspack never reads" do
+            doctor.send(:check_javascript_transpiler_dependencies)
+            expect(warning_messages).to include(match(/\.swcrc file detected while assets_bundler is 'rspack'/))
+            expect(warning_messages).not_to include(match(/migrate to config\/swc\.config\.js/))
+            expect(warning_messages).not_to include(match(/properly merges with Shakapacker defaults/))
+          end
+
+          it "points at the Rspack rule override instead" do
+            doctor.send(:check_javascript_transpiler_dependencies)
+            expect(warning_messages).to include(
+              match(/Apply webpack-merge's 'mergeWithRules' to the output of generateRspackConfig\(\)/)
+            )
+          end
+
+          it "does not contradict itself when .swcrc and config/swc.config.js both exist" do
+            FileUtils.mkdir_p(root_path.join("config"))
+            File.write(root_path.join("config/swc.config.js"), "module.exports = {}")
+
+            doctor.send(:check_javascript_transpiler_dependencies)
+
+            expect(warning_messages).to include(match(/is NOT read when assets_bundler is 'rspack'/))
+            expect(warning_messages).not_to include(match(/properly merges with Shakapacker defaults/))
+            expect(doctor.info).not_to include(match(/merged with Shakapacker's defaults/))
+          end
+
+          # Both files hit both hint call sites; the ~700-character guidance should appear once.
+          it "prints the full override guidance once when both files exist" do
+            FileUtils.mkdir_p(root_path.join("config"))
+            File.write(root_path.join("config/swc.config.js"), "module.exports = {}")
+
+            doctor.send(:check_javascript_transpiler_dependencies)
+
+            full = warning_messages.count { |m| m.include?(Shakapacker::Doctor::RSPACK_SWC_OVERRIDE_HINT) }
+            backref = warning_messages.count { |m| m.include?(Shakapacker::Doctor::RSPACK_SWC_OVERRIDE_HINT_BACKREF) }
+            expect(full).to eq(1)
+            expect(backref).to eq(1)
+          end
+
+          it "still gives the full guidance when only .swcrc exists" do
+            doctor.send(:check_javascript_transpiler_dependencies)
+
+            expect(warning_messages.count { |m| m.include?(Shakapacker::Doctor::RSPACK_SWC_OVERRIDE_HINT) }).to eq(1)
+            expect(warning_messages).not_to include(match(/See the Rspack 'builtin:swc-loader' override guidance above/))
+          end
+        end
       end
 
       context "with config/swc.config.js file (recommended)" do
@@ -2945,6 +2996,83 @@ describe Shakapacker::Doctor do
         it "shows info about using recommended config" do
           doctor.send(:check_javascript_transpiler_dependencies)
           expect(doctor.info).to include(match(/Using config\/swc\.config\.js \(recommended\)/))
+          expect(doctor.info).to include(match(/merged with Shakapacker's defaults/))
+        end
+
+        it "does not warn that the config is unread when assets_bundler is webpack" do
+          doctor.send(:check_javascript_transpiler_dependencies)
+          expect(warning_messages).not_to include(match(/NOT read when assets_bundler is 'rspack'/))
+        end
+
+        context "when assets_bundler is rspack" do
+          before do
+            allow(config).to receive(:assets_bundler).and_return("rspack")
+          end
+
+          it "warns that config/swc.config.js is not read on Rspack" do
+            doctor.send(:check_javascript_transpiler_dependencies)
+            expect(warning_messages).to include(
+              match(/config\/swc\.config\.js is present but is NOT read when assets_bundler is 'rspack'/)
+            )
+            expect(warning_messages).to include(match(/builtin:swc-loader' options inline/))
+          end
+
+          it "points at applying mergeWithRules to the output of generateRspackConfig" do
+            doctor.send(:check_javascript_transpiler_dependencies)
+            expect(warning_messages).to include(
+              match(/Apply webpack-merge's 'mergeWithRules' to the output of generateRspackConfig\(\)/)
+            )
+            expect(warning_messages).to include(
+              match(/matching on both 'test' and 'use\.loader', and using options: 'merge'/)
+            )
+          end
+
+          # options: 'replace' swaps the whole options object, dropping the built-in
+          # parser/transform.react defaults and breaking JSX and TypeScript compilation.
+          it "steers away from options: 'replace' and names both built-in rules" do
+            doctor.send(:check_javascript_transpiler_dependencies)
+            expect(warning_messages).to include(
+              match(/not 'replace', which swaps the whole options object and drops the built-in parser/)
+            )
+            expect(warning_messages).to include(match(/Override the JS .* and TypeScript .* rules separately/))
+          end
+
+          # Matching on use.loader alone appends builtin:swc-loader to every rule's use chain,
+          # so the hint must never describe that shape as the fix.
+          it "warns against dropping 'test' from the match" do
+            doctor.send(:check_javascript_transpiler_dependencies)
+            expect(warning_messages).to include(
+              match(/matching on 'use\.loader' alone makes webpack-merge append 'builtin:swc-loader' to every rule's 'use' chain/)
+            )
+          end
+
+          it "warns that passing an override into generateRspackConfig cannot replace the rule" do
+            doctor.send(:check_javascript_transpiler_dependencies)
+            expect(warning_messages).to include(
+              match(/Passing an override into generateRspackConfig\(\) cannot replace the built-in rule/)
+            )
+          end
+
+          it "does not claim the config is merged with Shakapacker's defaults" do
+            doctor.send(:check_javascript_transpiler_dependencies)
+            expect(doctor.info).not_to include(match(/Using config\/swc\.config\.js \(recommended\)/))
+            expect(doctor.info).not_to include(match(/merged with Shakapacker's defaults/))
+          end
+
+          it "skips content validation for a file Rspack never reads" do
+            File.write(root_path.join("config/swc.config.js"), <<~JS)
+              module.exports = {
+                options: {
+                  jsc: {
+                    loose: true
+                  }
+                }
+              }
+            JS
+
+            doctor.send(:check_javascript_transpiler_dependencies)
+            expect(warning_messages).not_to include(match(/'loose: true' detected in config\/swc\.config\.js/))
+          end
         end
       end
 
