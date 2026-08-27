@@ -362,7 +362,11 @@ If a Rspack build (`assets_bundler: 'rspack'`) fails with:
 The version of the SWC Wasm plugin you're using might not be compatible with 'builtin:swc-loader'
 ```
 
-your Wasm SWC plugin (configured via `jsc.experimental.plugins` in `config/swc.config.js`, e.g. `@swc/plugin-styled-components` or `swc-plugin-coverage-instrument`) was built for a different `swc_core` version than the one your installed Rspack release depends on. Wasm plugin/`swc_core` compatibility is an exact pairing, not a minimum-version floor — a plugin built for a _higher_ `swc_core` than your bundler embeds fails too. **Rspack 2.2 upgraded `swc_core` from 76 to 77**, so any plugin build that isn't specifically for `swc_core` 77 hits this error on Rspack 2.2. This 76→77 mapping is specific to the 2.2 release — a later Rspack release may bump `swc_core` again to a different version, so check what your installed release actually embeds rather than assuming 77 stays correct.
+your Wasm SWC plugin — added via `jsc.experimental.plugins` (e.g. `@swc/plugin-styled-components` or `swc-plugin-coverage-instrument`) in a custom override of the `builtin:swc-loader` rule — was built for a different `swc_core` version than the one your installed Rspack release depends on.
+
+**This is not configured through `config/swc.config.js`.** Shakapacker's built-in Rspack rule hard-codes its `builtin:swc-loader` options and never reads that file (only the webpack SWC path does — see [Using SWC Loader](./using_swc_loader.md#wasm-plugin-compatibility-with-rspack)). A plugin placed only in `config/swc.config.js` has no effect on Rspack builds and won't produce this error at all — it's silently ignored. On Rspack, `jsc.experimental.plugins` has to be added by overriding the JS/TS loader rule yourself in your own `config/rspack/rspack.config.js`, and that's where the fix below applies.
+
+Wasm plugin/`swc_core` compatibility is an exact pairing, not a minimum-version floor — a plugin built for a _higher_ `swc_core` than your bundler embeds fails too. **Rspack 2.2 upgraded `swc_core` from 76 to 77**, so any plugin build that isn't specifically for `swc_core` 77 hits this error on Rspack 2.2. This 76→77 mapping is specific to the 2.2 release — a later Rspack release may bump `swc_core` again to a different version, so check what your installed release actually embeds rather than assuming 77 stays correct.
 
 **Solution:**
 

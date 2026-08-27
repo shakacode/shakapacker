@@ -256,6 +256,8 @@ If your Stimulus controllers aren't working after migrating to SWC:
 
 If you use `jsc.experimental.plugins` to load a Wasm SWC plugin (for example `@swc/plugin-styled-components` or `swc-plugin-coverage-instrument`), the plugin build must match the exact `swc_core` version that your installed bundler depends on. Per [SWC's own docs](https://swc.rs/docs/plugin/selecting-swc-core), "the Wasm plugins are not backwards compatible" — this is **not** a minimum-version floor, it's an exact/closely-tied version pairing: a plugin built against a _higher_ `swc_core` than your bundler embeds fails too, not just a lower one. This applies to Rspack's `builtin:swc-loader` (Rspack's own SWC integration) just as much as to `swc-loader` on webpack.
 
+**Where you configure this differs by bundler.** On webpack, `jsc.experimental.plugins` goes in `config/swc.config.js` like any other option in [Customizing loader options](#customizing-loader-options) above — Shakapacker's webpack SWC rule reads that file and merges it in. On Rspack, it does not: Shakapacker's built-in Rspack rule hard-codes its `builtin:swc-loader` options inline and never reads `config/swc.config.js`. A Wasm plugin placed only in `config/swc.config.js` is silently ignored on the Rspack path — no error, it just never loads. If you're on Rspack and need `jsc.experimental.plugins`, add it yourself by overriding the JS/TS loader rule in your own `config/rspack/rspack.config.js`; that's also where the fix below applies.
+
 **Rspack 2.2 upgraded `swc_core` from 76 to 77.** If you're on `assets_bundler: 'rspack'` and upgrade to Rspack 2.2 while keeping a Wasm plugin that isn't built specifically for `swc_core` 77, your build fails with:
 
 ```text
