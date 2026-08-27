@@ -100,6 +100,18 @@ This ensures that:
 - Dynamic imports and code-split chunks load from the CDN
 - Rendered asset URLs use the CDN host at request time
 
+> **Runtime public path overrides (webpack vs. Rspack):** The steps above cover the normal case, where `SHAKAPACKER_ASSET_HOST` (or `asset_host`) sets `output.publicPath` for you at compile time. If instead you need to override the public path at runtime — for example, an [on-the-fly override](https://webpack.js.org/guides/public-path/#on-the-fly) in your own entry code — the runtime variable differs by bundler:
+>
+> ```js
+> // Webpack
+> __webpack_public_path__ = "https://cdn.example.com/packs/"
+>
+> // Rspack (preferred over the deprecated __webpack_public_path__)
+> import.meta.rspackPublicPath = "https://cdn.example.com/packs/"
+> ```
+>
+> `__webpack_public_path__` remains correct and is the way to do this on webpack. Rspack still supports `__webpack_public_path__` for compatibility, but its docs mark it **Deprecated** in favor of [`import.meta.rspackPublicPath`](https://rspack.rs/api/runtime-api/module-variables#importmetarspackpublicpath) (available since Rspack v2.1.2, within Shakapacker's supported `^2.0.0` Rspack range). Both read from `output.publicPath` under the hood, so most Shakapacker apps never need either — this only matters if you bypass `SHAKAPACKER_ASSET_HOST`/`asset_host` and set the public path dynamically yourself.
+
 ### 4. Deploy and Sync Assets
 
 After compilation, ensure your compiled assets in `public/packs` are accessible to your CDN:

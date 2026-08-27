@@ -154,6 +154,34 @@ optimization: {
 
 Shakapacker's generated Rspack config preserves the shared optimization defaults from the base config, including `optimization.splitChunks.chunks = "all"` and `optimization.runtimeChunk = "single"`. In production it also preserves compression plugins and Rspack's SWC/Lightning CSS minimizers.
 
+### Module IDs
+
+Shakapacker does not set `optimization.moduleIds` itself ([`package/optimization/rspack.ts`](../package/optimization/rspack.ts) only configures `minimize`/`minimizer`), so Rspack's own default applies: `'deterministic'` in production.
+
+**Opt-in, requires Rspack >= 2.2.0:** Rspack 2.2 adds a `'compat-hashed'` value for `optimization.moduleIds`, which uses the shortest available prefix of a stable alphanumeric hash. Rspack reports modest real-world savings from this on one benchmarked app (~0.33% smaller minified output, ~0.87% smaller minified+gzip output) versus `'deterministic'`.
+
+This is **not** a Shakapacker default, and we don't plan to make it one:
+
+- It requires Rspack >= 2.2.0, while Shakapacker's peer range still admits 2.0.x and 2.1.x.
+- Switching `moduleIds` changes every module's id, which invalidates all of your long-term-cached chunk hashes exactly once, on the deploy where you switch. That's a deploy-time tradeoff you should opt into deliberately, not one Shakapacker should make for you.
+
+If you still want to opt in:
+
+```javascript
+// config/rspack/rspack.config.js
+const { generateRspackConfig } = require("shakapacker/rspack")
+
+module.exports = generateRspackConfig({
+  optimization: {
+    moduleIds: "compat-hashed"
+  }
+})
+```
+
+### Browserslist baseline targets (optional)
+
+Rspack also supports targeting a [Baseline](https://web.dev/baseline) browser set via `target`, e.g. `target: 'browserslist:baseline widely available'`, or a date-pinned variant like `target: 'browserslist:baseline widely available on 2025-05-01'`. This is an opt-in override in your own Rspack config — Shakapacker doesn't set `target` for either bundler, and the `browserslist` key the installer writes to `package.json` is unaffected either way.
+
 ## Limitations
 
 - **CoffeeScript**: Not supported with Rspack
