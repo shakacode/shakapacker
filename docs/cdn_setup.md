@@ -103,18 +103,18 @@ This ensures that:
 > **Runtime public path overrides (webpack vs. Rspack):** The steps above cover the normal case, where `SHAKAPACKER_ASSET_HOST` (or `asset_host`) sets `output.publicPath` for you at compile time. Most Shakapacker apps never need to touch this at runtime; skip this note unless you're bypassing `SHAKAPACKER_ASSET_HOST`/`asset_host` to set the public path dynamically yourself (e.g. per-request CDN selection). If you are, two things matter for either bundler:
 >
 > - **Scope**: this affects any asset whose URL is resolved from the public path at runtime — not just dynamic `import()` chunks, but also images, fonts, and any other file that's imported/required directly into your JS or CSS and turned into an asset module. Webpack's own docs describe `publicPath` as covering "any... assets... that are a part of your dependency graph," not just code-split chunks — the same holds for Rspack. It does **not** affect assets loaded via static `<script src="...">`/`<link href="...">` tags (e.g. `javascript_pack_tag`/`stylesheet_pack_tag` output) — those already have their URL baked into the rendered HTML before any runtime override executes. If you don't `import()` chunks or asset modules dynamically from your own JS/CSS, you likely don't need this at all; `output.publicPath: 'auto'` may already do what you want without any runtime assignment.
-> - **Ordering**: the assignment must run before any other module in your entry graph requests a chunk, and ES module imports are hoisted above plain statements — so a plain assignment at the top of your entry file runs _after_ your imports, not before. Put the assignment in its own side-effect-only module and make it the first import of your entry:
+> - **Ordering**: the assignment must run before any other module in your entry graph requests a chunk, and ES module imports are hoisted above plain statements — so a plain assignment at the top of your entry file runs _after_ your imports, not before. Put the assignment in its own side-effect-only module **outside** your entry directory (Shakapacker's default `source_entry_path: packs` with `nested_entries: true` turns every file under `app/javascript/packs/` into its own pack — a module placed there directly would ship as a stray extra pack instead of getting imported), and make it the first import of your entry:
 >
 >   ```js
->   // app/javascript/entrypoints/public_path.js
+>   // app/javascript/public_path.js  (a sibling of packs/, not inside it)
 >   __webpack_public_path__ = "https://cdn.example.com/packs/" // webpack
 >   // or, on Rspack (see version note below): import.meta.rspackPublicPath = "https://cdn.example.com/packs/"
 >   ```
 >
 >   ```js
->   // app/javascript/entrypoints/application.js
->   import "./public_path" // must be the first import
->   import "./app"
+>   // app/javascript/packs/application.js
+>   import "../public_path" // must be the first import in this entry
+>   // ...the rest of your existing entry code
 >   ```
 >
 > The runtime variable name differs by bundler. `__webpack_public_path__` remains correct and is the way to do this on webpack — see webpack's [On The Fly](https://webpack.js.org/guides/public-path/#on-the-fly) guide for the same ordering requirement. **Rspack requires >= v2.1.2** for the replacement: Rspack still supports `__webpack_public_path__` for compatibility, but its docs mark it **Deprecated** in favor of [`import.meta.rspackPublicPath`](https://rspack.rs/api/runtime-api/module-variables#importmetarspackpublicpath), added in Rspack v2.1.2. Shakapacker's peer range (`^2.0.0`) also admits Rspack 2.0.x and 2.1.0–2.1.1, where `import.meta.rspackPublicPath` doesn't exist yet — check your installed `@rspack/core` version before switching, and use `__webpack_public_path__` (still supported, just deprecated) if you're below 2.1.2. See Rspack's [Dynamically set publicPath](https://rspack.rs/guide/features/asset-base-path#dynamically-set-publicpath) guide for the equivalent ordering/scope guidance on Rspack.
