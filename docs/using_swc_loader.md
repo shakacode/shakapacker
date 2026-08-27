@@ -258,11 +258,22 @@ If you use `jsc.experimental.plugins` to load a Wasm SWC plugin (for example `@s
 
 **Where you configure this differs by bundler.** On webpack, `jsc.experimental.plugins` goes in `config/swc.config.js` like any other option in [Customizing loader options](#customizing-loader-options) above — Shakapacker's webpack SWC rule reads that file and merges it in. On Rspack, it does not: Shakapacker's built-in Rspack rule hard-codes its `builtin:swc-loader` options inline and never reads `config/swc.config.js`. A Wasm plugin placed only in `config/swc.config.js` is silently ignored on the Rspack path — no error, it just never loads.
 
-If you're on Rspack and need `jsc.experimental.plugins`, passing a `module.rules` override straight to `generateRspackConfig()` won't work either — it merges via plain concatenation, so your rule gets added _alongside_ Shakapacker's built-in one instead of replacing it, and the plugin may silently never run. Use [`mergeWithRules`](./node_package_api.md) (re-exported from `shakapacker/rspack`) to merge into the existing rule instead:
+If you're on Rspack and need `jsc.experimental.plugins`, passing a `module.rules` override straight to `generateRspackConfig()` won't work either — it merges via plain concatenation, so your rule gets added _alongside_ Shakapacker's built-in one instead of replacing it, and the plugin may silently never run. Use [`mergeWithRules`](./node_package_api.md) (re-exported from `shakapacker/rspack`) to merge into the existing rules instead. Shakapacker's built-in Rspack rule set has **two separate rules** — one for `.js`/`.jsx`/`.mjs`, one for `.ts`/`.tsx` — so the override needs an entry matching each `test` regexp you need, or your plugin only applies to whichever one you covered:
 
 ```javascript
 // config/rspack/rspack.config.js
 const { generateRspackConfig, mergeWithRules } = require("shakapacker/rspack")
+
+const pluginOptions = {
+  use: [
+    {
+      loader: "builtin:swc-loader",
+      options: {
+        jsc: { experimental: { plugins: [["your-plugin-package", {}]] } }
+      }
+    }
+  ]
+}
 
 module.exports = mergeWithRules({
   module: {
@@ -271,17 +282,8 @@ module.exports = mergeWithRules({
 })(generateRspackConfig(), {
   module: {
     rules: [
-      {
-        test: /\.(ts|tsx)$/,
-        use: [
-          {
-            loader: "builtin:swc-loader",
-            options: {
-              jsc: { experimental: { plugins: [["your-plugin-package", {}]] } }
-            }
-          }
-        ]
-      }
+      { test: /\.(js|jsx|mjs)$/, ...pluginOptions },
+      { test: /\.(ts|tsx)$/, ...pluginOptions }
     ]
   }
 })
