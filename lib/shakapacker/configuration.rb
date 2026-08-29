@@ -320,7 +320,10 @@ class Shakapacker::Configuration
     if data.has_key?(:bundler) && !data.has_key?(:assets_bundler)
       legacy_value = data[:bundler].to_s.strip
       described_value = legacy_value.empty? ? "empty" : legacy_value
-      $stderr.puts "⚠️  DEPRECATION WARNING: The 'bundler' configuration option is no longer supported and its value (#{described_value}) is IGNORED. Shakapacker is using '#{resolved}'. Set 'assets_bundler' in your shakapacker.yml instead — it was renamed to avoid confusion with Ruby's Bundler gem manager."
+      # An empty SHAKAPACKER_ASSETS_BUNDLER resolves to an empty string; name that
+      # state rather than printing "using ''". Doctor reports it as its own issue.
+      described_resolved = resolved.to_s.empty? ? "no bundler (SHAKAPACKER_ASSETS_BUNDLER is set but empty)" : "'#{resolved}'"
+      $stderr.puts "⚠️  DEPRECATION WARNING: The 'bundler' configuration option is no longer supported and its value (#{described_value}) is IGNORED. Shakapacker is using #{described_resolved}. Set 'assets_bundler' in your shakapacker.yml instead — it was renamed to avoid confusion with Ruby's Bundler gem manager."
     end
 
     resolved

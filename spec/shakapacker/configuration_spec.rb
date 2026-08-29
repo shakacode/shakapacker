@@ -914,6 +914,20 @@ describe "Shakapacker::Configuration" do
       FileUtils.rm_rf(app_root)
     end
 
+    # assets_bundler gives SHAKAPACKER_ASSETS_BUNDLER precedence over the YAML file,
+    # so an ambient value would silently replace what these examples assert.
+    around do |example|
+      previous = ENV["SHAKAPACKER_ASSETS_BUNDLER"]
+      ENV.delete("SHAKAPACKER_ASSETS_BUNDLER")
+      example.run
+    ensure
+      if previous.nil?
+        ENV.delete("SHAKAPACKER_ASSETS_BUNDLER")
+      else
+        ENV["SHAKAPACKER_ASSETS_BUNDLER"] = previous
+      end
+    end
+
     def write_config(contents)
       File.write(config_path, contents)
     end
@@ -948,7 +962,6 @@ describe "Shakapacker::Configuration" do
       end
 
       it "names the environment override in the warning when one is set" do
-        previous = ENV["SHAKAPACKER_ASSETS_BUNDLER"]
         ENV["SHAKAPACKER_ASSETS_BUNDLER"] = "rspack"
 
         resolved = nil
@@ -956,8 +969,15 @@ describe "Shakapacker::Configuration" do
 
         expect(resolved).to eq("rspack")
         expect(warning).to include("Shakapacker is using 'rspack'")
-      ensure
-        ENV["SHAKAPACKER_ASSETS_BUNDLER"] = previous
+      end
+
+      it "names the empty override rather than printing an empty bundler name" do
+        ENV["SHAKAPACKER_ASSETS_BUNDLER"] = ""
+
+        warning = capture_stderr { config.assets_bundler }
+
+        expect(warning).to include("Shakapacker is using no bundler (SHAKAPACKER_ASSETS_BUNDLER is set but empty)")
+        expect(warning).not_to include("Shakapacker is using ''")
       end
     end
 
