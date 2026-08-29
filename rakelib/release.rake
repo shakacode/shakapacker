@@ -1106,6 +1106,23 @@ def perform_release(
     puts "ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ"
     Shakapacker::Utils::Misc.sh_in_dir(release_root, release_it_command)
 
+    # release-it owns the ROOT package.json bump, but `--dry-run` makes it only *print* that
+    # step ("! npm version X --no-git-tag-version --workspaces=false") instead of running it.
+    # The supplementals above were bumped for real either way, so without this the dry run
+    # always reaches publish-packages.sh with the root one version behind, and its lockstep
+    # guard correctly rejects the run. Reproduce release-it's own command here so the dry run
+    # exercises the same three-package state a live release produces.
+    #
+    # Only the throwaway dry-run worktree is ever mutated: `with_release_checkout` yields the
+    # maintainer's checkout unchanged on the live path, where release-it does this itself.
+    if dry_run
+      Shakapacker::Utils::Misc.sh_in_dir(
+        release_root,
+        "npm version #{Shellwords.escape(npm_version)} --no-git-tag-version " \
+        "--allow-same-version --workspaces=false"
+      )
+    end
+
     # Publish all three npm packages in lockstep (core first, then supplementals).
     # publish-packages.sh re-validates version equality and skips packages that
     # are already on the registry, so it's safe to retry after a partial failure.
