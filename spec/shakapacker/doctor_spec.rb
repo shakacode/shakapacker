@@ -3150,12 +3150,19 @@ describe Shakapacker::Doctor do
 
           it "warns for esbuild too, since the gate is transpiler-agnostic on Rspack" do
             allow(config).to receive(:javascript_transpiler).and_return("esbuild")
+            File.write(package_json_path, JSON.generate(
+                         "devDependencies" => {
+                           "esbuild" => "^0.19.0",
+                           "esbuild-loader" => "^4.0.0"
+                         }
+                       ))
 
             doctor.send(:check_javascript_transpiler_dependencies)
 
             expect(warning_messages).to include(
               match(/config\/swc\.config\.js is present but is NOT read when assets_bundler is 'rspack'/)
             )
+            expect(doctor.issues).not_to include(match(/Missing required dependency 'esbuild'/))
           end
         end
 
