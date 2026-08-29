@@ -1,5 +1,8 @@
 require "spec_helper"
 require "rake"
+# Used directly by this file's fixtures and guards. `release.rake` also requires it, but relying
+# on that would make this file depend on an unrelated file's require list and on load order.
+require "json"
 
 release_rake_path = File.expand_path("../../rakelib/release.rake", __dir__)
 load release_rake_path unless defined?(ensure_clean_worktree!)
@@ -256,12 +259,66 @@ RSpec.describe "release rake helpers" do
       end.to output(/✓ Node dependencies installed/).to_stdout
     end
 
+    # The example below runs the real check against the real repository, so it needs an install
+    # that is *usable*, not merely present — and a developer's node_modules drifting from
+    # package.json is an ordinary state a checkout cannot rule out. That is an environment
+    # problem, not a defect in the code under test, so detect it up front and skip rather than
+    # letting `verify_node_modules!` reach `abort`.
+    #
+    # Deliberately narrow. It skips only for the two states in which no install exists to test —
+    # node_modules absent, and no `yarn install` ever finished — plus confirmed dependency drift,
+    # which is the one abort path a working checkout legitimately reaches. Every other way the
+    # helper can abort (a missing prepublishOnly binary, a declared package absent from the tree,
+    # a malformed manifest) deliberately falls through to fail the example loudly.
+    #
+    # NOTE: keep the pattern comparison below in sync with `verify_node_modules_match_manifest!`
+    # in rakelib/release.rake. It cannot call that helper — the helper aborts, which is the whole
+    # problem — so this is a deliberate duplicate. If the production check ever grows a section
+    # (peerDependencies, say) or changes how staleness is decided, update this too. Out of sync,
+    # the probe stops recognising drift the helper would abort on, and a drifted checkout goes
+    # back to failing this example instead of skipping it.
+    def repo_node_modules_unusable_reason(repo_root)
+      return "node_modules is not installed in this environment" unless
+        File.directory?(File.join(repo_root, "node_modules", ".bin"))
+
+      integrity_path = File.join(repo_root, "node_modules", ".yarn-integrity")
+      return "no `yarn install` has finished in this environment (#{integrity_path} is missing)" unless
+        File.exist?(integrity_path)
+
+      # From here the probe can only rule drift *in*. Anything it cannot read or compare returns
+      # nil so the example runs and `verify_node_modules!` decides for itself: the helper
+      # deliberately tolerates an uncomparable integrity marker, and aborts with its own
+      # actionable message on a broken package.json. Neither outcome is this probe's to pre-empt.
+      integrity = read_json_or_nil(integrity_path)
+      recorded_patterns = integrity.is_a?(Hash) ? integrity["topLevelPatterns"] : nil
+      return nil unless recorded_patterns.is_a?(Array)
+
+      package_json = read_json_or_nil(File.join(repo_root, "package.json"))
+      return nil unless package_json.is_a?(Hash)
+
+      declared_patterns = %w[dependencies devDependencies optionalDependencies].flat_map do |key|
+        section = package_json[key]
+        section.is_a?(Hash) ? section.map { |name, spec| "#{name}@#{spec}" } : []
+      end
+
+      stale = declared_patterns - recorded_patterns
+      return nil if stale.empty?
+
+      "node_modules has drifted from package.json in this environment " \
+        "(#{stale.join(', ')} not installed); run `yarn install`"
+    end
+
+    def read_json_or_nil(path)
+      JSON.parse(File.read(path))
+    rescue JSON::ParserError, SystemCallError
+      nil
+    end
+
     # Guards the dangerous direction: a false abort here would block a legitimate release.
     it "accepts the repository's own installed node_modules" do
       repo_root = File.expand_path("../..", __dir__)
-      unless File.directory?(File.join(repo_root, "node_modules", ".bin"))
-        skip "node_modules is not installed in this environment"
-      end
+      unusable_reason = repo_node_modules_unusable_reason(repo_root)
+      skip unusable_reason if unusable_reason
 
       expect do
         expect { verify_node_modules!(gem_root: repo_root) }.not_to raise_error
