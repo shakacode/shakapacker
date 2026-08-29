@@ -352,7 +352,7 @@ module.exports = {
 }
 ```
 
-**Note:** The `options` wrapper is required for proper merging with Shakapacker's defaults. Using `.swcrc` instead will completely override Shakapacker's settings and may cause build failures.
+**Note:** On webpack, the `options` wrapper is required for proper merging with Shakapacker's defaults; using `.swcrc` instead will completely override Shakapacker's settings and may cause build failures. On Rspack, neither `.swcrc` nor `config/swc.config.js` is read — Shakapacker's built-in `builtin:swc-loader` rule sets its options inline. To customize SWC on Rspack, override the built-in rule instead — see [Customizing SWC on Rspack](./rspack.md#customizing-swc-on-rspack).
 
 #### 5. Update React refresh plugin (if using React)
 
@@ -396,7 +396,7 @@ for how to confirm the gain on your codebase.
 
 #### Issue: Decorators not working
 
-Add decorator support to `config/swc.config.js`:
+Add decorator support to `config/swc.config.js` (webpack):
 
 ```javascript
 module.exports = {
@@ -411,9 +411,11 @@ module.exports = {
 }
 ```
 
+On Rspack, `config/swc.config.js` is not read — see [Customizing SWC on Rspack](./rspack.md#customizing-swc-on-rspack) to enable decorator support there instead.
+
 #### Issue: Stimulus controllers not working
 
-Ensure `keepClassNames: true` is set in `config/swc.config.js`.
+Ensure `keepClassNames: true` is set in `config/swc.config.js` (webpack) — on Rspack, `config/swc.config.js` is not read; see [Customizing SWC on Rspack](./rspack.md#customizing-swc-on-rspack) instead.
 
 ### Rollback
 

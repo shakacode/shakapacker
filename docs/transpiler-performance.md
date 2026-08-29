@@ -95,7 +95,7 @@ Watch for:
 - Smaller plugin ecosystem than Babel
 - Project-specific transform options may need `config/swc.config.js`
 - Stimulus apps should preserve class names; see [Using SWC with Stimulus](./using_swc_loader.md#using-swc-with-stimulus)
-- `.swcrc` can override Shakapacker defaults in surprising ways; prefer `config/swc.config.js`
+- On webpack, `.swcrc` can override Shakapacker defaults in surprising ways; prefer `config/swc.config.js`. On Rspack, neither file is read — see [Customizing SWC on Rspack](./rspack.md#customizing-swc-on-rspack)
 
 ### esbuild
 

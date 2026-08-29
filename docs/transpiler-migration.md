@@ -74,7 +74,7 @@ module.exports = {
 }
 ```
 
-**Important:** Use `config/swc.config.js` instead of `.swcrc`. The `.swcrc` file completely overrides Shakapacker's default SWC settings and can cause build failures. `config/swc.config.js` properly merges with Shakapacker's defaults.
+**Important:** On webpack, use `config/swc.config.js` instead of `.swcrc` — the `.swcrc` file completely overrides Shakapacker's default SWC settings and can cause build failures, while `config/swc.config.js` properly merges with Shakapacker's defaults. On Rspack, neither file is read: Shakapacker's built-in `builtin:swc-loader` rule sets its options inline, so settings in `.swcrc` or `config/swc.config.js` are silently ignored. To customize SWC on Rspack, override the built-in rule instead — see [Customizing SWC on Rspack](./rspack.md#customizing-swc-on-rspack).
 
 #### 4. Update React configuration (if using React)
 
@@ -114,7 +114,7 @@ after the migration.
 - [ ] Back up your current configuration
 - [ ] Install SWC dependencies
 - [ ] Update `shakapacker.yml`
-- [ ] If using Stimulus, ensure `keepClassNames: true` is set in `config/swc.config.js` (automatically included in v9.1.0+, including v10)
+- [ ] If using Stimulus, ensure `keepClassNames: true` is set in `config/swc.config.js` on webpack (automatically included in v9.1.0+, including v10) — on Rspack, see [Customizing SWC on Rspack](./rspack.md#customizing-swc-on-rspack) instead
 - [ ] Test your build locally
 - [ ] Run your test suite
 - [ ] Check browser compatibility
@@ -125,7 +125,7 @@ after the migration.
 
 If you're using [Stimulus](https://stimulus.hotwired.dev/), you must configure SWC to preserve class names. See the [Using SWC with Stimulus](using_swc_loader.md#using-swc-with-stimulus) section for detailed instructions.
 
-**Quick summary:** Add `keepClassNames: true` to your `config/swc.config.js`:
+**Quick summary (webpack):** Add `keepClassNames: true` to your `config/swc.config.js`:
 
 ```javascript
 module.exports = {
@@ -136,6 +136,8 @@ module.exports = {
   }
 }
 ```
+
+On Rspack, `config/swc.config.js` is not read — see [Customizing SWC on Rspack](./rspack.md#customizing-swc-on-rspack) to apply `keepClassNames: true` there instead.
 
 Starting with Shakapacker v9.1.0 (and continuing in v10), running `rake shakapacker:migrate_to_swc` automatically creates a configuration with this setting.
 
@@ -192,7 +194,7 @@ yarn add --dev @rspack/plugin-react-refresh
 
 ### Issue: Decorators not working
 
-**Solution**: Enable decorator support in `config/swc.config.js`:
+**Solution (webpack)**: Enable decorator support in `config/swc.config.js`:
 
 ```javascript
 // config/swc.config.js
@@ -207,6 +209,8 @@ module.exports = {
   }
 }
 ```
+
+On Rspack, `config/swc.config.js` is not read — see [Customizing SWC on Rspack](./rspack.md#customizing-swc-on-rspack) to enable decorator support there instead.
 
 ## Further Reading
 
