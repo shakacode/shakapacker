@@ -115,6 +115,26 @@ RSpec.describe "release rake helpers" do
       end.to output(/✓ Node dependencies installed/).to_stdout
     end
 
+    it "skips drift detection when the integrity marker cannot be read" do
+      create_complete_install
+      integrity_path = File.join(@node_modules_gem_root, "node_modules", ".yarn-integrity")
+      allow(File).to receive(:read).and_call_original
+      allow(File).to receive(:read).with(integrity_path).and_raise(Errno::EACCES)
+
+      expect do
+        verify_node_modules!(gem_root: @node_modules_gem_root)
+      end.to output(/✓ Node dependencies installed/).to_stdout
+    end
+
+    it "aborts with an actionable message when package.json cannot be parsed" do
+      create_complete_install
+      File.write(File.join(@node_modules_gem_root, "package.json"), "{ not json")
+
+      expect do
+        expect { verify_node_modules!(gem_root: @node_modules_gem_root) }.to raise_error(SystemExit)
+      end.to output(/Unable to read .*package\.json for the node dependency check/m).to_stderr
+    end
+
     it "passes when the install is complete and matches package.json" do
       create_complete_install
 
@@ -622,6 +642,48 @@ RSpec.describe "release rake helpers" do
       expect(self).not_to have_received(:with_release_checkout)
       expect(Shakapacker::Utils::Misc).not_to have_received(:sh_in_dir)
       expect(self).not_to have_received(:verify_npm_auth)
+    end
+
+    it "re-verifies node dependencies after the rebase, before the version bump" do
+      gem_root = File.expand_path("../..", __dir__)
+      allow(self).to receive(:ensure_clean_worktree!)
+      allow(self).to receive(:verify_npm_auth)
+      allow(self).to receive(:verify_gh_auth)
+      allow(self).to receive(:with_release_checkout).and_yield("/release")
+      allow(self).to receive(:validate_release_ci_status!)
+      allow(Shakapacker::Utils::Misc).to receive(:sh_in_dir)
+      # Clean at preflight, stale once the rebase has landed dependency changes.
+      allow(self).to receive(:verify_node_modules!).with(gem_root: gem_root)
+      allow(self).to receive(:verify_node_modules!).with(gem_root: "/release").and_raise(SystemExit.new(1))
+
+      expect do
+        perform_release(gem_version: "10.4.0", dry_run: false)
+      end.to raise_error(SystemExit) { |error| expect(error.status).not_to eq(0) }
+
+      expect(Shakapacker::Utils::Misc).to have_received(:sh_in_dir).with("/release", "git pull --rebase")
+      expect(Shakapacker::Utils::Misc).not_to have_received(:sh_in_dir).with("/release", /gem bump/)
+      expect(self).not_to have_received(:validate_release_ci_status!)
+    end
+
+    it "does not re-verify node dependencies inside the dry-run scratch worktree" do
+      allow(self).to receive(:with_release_checkout).and_yield("/refreshed")
+      allow(self).to receive(:validate_release_ci_status!)
+      allow(self).to receive(:verify_node_modules!)
+      allow(self).to receive(:target_gem_version).and_return("10.4.0")
+      allow(self).to receive(:warn_changelog_missing)
+      allow(self).to receive(:validate_release_version_policy!)
+      allow(self).to receive(:refresh_release_root_lockfile)
+      allow(self).to receive(:refresh_spec_dummy_lockfiles)
+      allow(self).to receive(:current_gem_version).with("/refreshed").and_return("10.4.0")
+      allow(self).to receive(:bump_supplemental_core_dep)
+      allow(self).to receive(:extract_changelog_section).and_return("release notes")
+      allow(Shakapacker::Utils::Misc).to receive(:sh_in_dir)
+
+      perform_release(gem_version: "10.4.0", dry_run: true, check_uncommitted: false)
+
+      # The scratch worktree never gets its own `yarn install`, so verifying it would abort
+      # every dry run. That gap is tracked separately.
+      expect(self).not_to have_received(:verify_node_modules!)
     end
 
     it "does not print a publication summary when GitHub auth fails during preflight" do

@@ -149,14 +149,22 @@ def verify_node_modules_match_manifest!(gem_root:)
 
   recorded_patterns = begin
     JSON.parse(File.read(integrity_path))["topLevelPatterns"]
-  rescue JSON::ParserError
+  rescue JSON::ParserError, SystemCallError
     nil
   end
   # An unreadable or differently-shaped marker means a yarn version whose format this cannot
   # compare. Skip drift detection rather than block a release on an unverifiable signal.
   return unless recorded_patterns.is_a?(Array)
 
-  package_json = JSON.parse(File.read(File.join(gem_root, "package.json")))
+  manifest_path = File.join(gem_root, "package.json")
+  package_json = begin
+    JSON.parse(File.read(manifest_path))
+  rescue JSON::ParserError, SystemCallError => e
+    # Unlike the marker, package.json is the manifest being released. A broken one cannot be
+    # skipped past, so it aborts with an actionable message rather than a raw backtrace.
+    abort "❌ Unable to read #{manifest_path} for the node dependency check: #{e.message}"
+  end
+
   declared_patterns = %w[dependencies devDependencies optionalDependencies].flat_map do |key|
     (package_json[key] || {}).map { |name, spec| "#{name}@#{spec}" }
   end
@@ -927,7 +935,14 @@ def perform_release(
   validate_requested_gem_version!(requested_gem_version)
 
   with_release_checkout(gem_root: gem_root, dry_run: dry_run) do |release_root|
-    Shakapacker::Utils::Misc.sh_in_dir(release_root, "git pull --rebase") unless dry_run
+    unless dry_run
+      Shakapacker::Utils::Misc.sh_in_dir(release_root, "git pull --rebase")
+
+      # The rebase can bring in dependency changes, staling the install the preflight just
+      # verified. prepublishOnly would only discover that after release-it has tagged and
+      # pushed, so re-verify the rebased tree here — still before the bump mutates anything.
+      verify_node_modules!(gem_root: release_root)
+    end
 
     # Gate on CI *after* the rebase so the validated commit is the one being released.
     validate_release_ci_status!(
