@@ -654,14 +654,16 @@ def with_release_checkout(gem_root:, dry_run:)
     worktree_dir = File.join(tmpdir, "worktree")
     escaped_worktree_dir = Shellwords.escape(worktree_dir)
     # release-it runs `git symbolic-ref HEAD`, which fails on a detached HEAD and aborts the
-    # dry run, so the worktree gets a throwaway branch that the ensure block deletes.
+    # dry run, so the worktree gets a throwaway branch that the ensure block deletes. `-B`
+    # rather than `-b` keeps this idempotent: a branch leaked by a hard-killed dry run that
+    # skipped the ensure block would otherwise block every later run reusing that PID.
     dry_run_branch = "release-dry-run-#{Process.pid}"
     escaped_dry_run_branch = Shellwords.escape(dry_run_branch)
 
     # Dry runs should exercise the release flow without dirtying the maintainer's checkout.
     Shakapacker::Utils::Misc.sh_in_dir(
       gem_root,
-      "git worktree add -b #{escaped_dry_run_branch} #{escaped_worktree_dir} HEAD"
+      "git worktree add -B #{escaped_dry_run_branch} #{escaped_worktree_dir} HEAD"
     )
     begin
       # Match the live `git pull --rebase` result without changing the maintainer's checkout.

@@ -162,7 +162,7 @@ RSpec.describe "release rake helpers" do
 
       expect(yielded_root).to eq("/tmp/shakapacker-release/worktree")
       expect(Shakapacker::Utils::Misc).to have_received(:sh_in_dir)
-        .with("/repo", "git worktree add -b release-dry-run-#{Process.pid} " \
+        .with("/repo", "git worktree add -B release-dry-run-#{Process.pid} " \
                       "/tmp/shakapacker-release/worktree HEAD").ordered
       expect(Open3).to have_received(:capture2e)
         .with("git", "-C", "/tmp/shakapacker-release/worktree", "fetch", "origin", "main").ordered
@@ -346,6 +346,25 @@ RSpec.describe "release rake helpers" do
         expect(symbolic_ref_succeeded).to be(true)
         expect(symbolic_ref_output).not_to include("not a symbolic ref")
         expect(symbolic_ref_output.strip).to eq("refs/heads/release-dry-run-#{Process.pid}")
+      end
+    end
+
+    # A dry run killed hard enough to skip the ensure block leaks its branch. Recreating the
+    # worktree must not be blocked by that leftover once the OS reuses the PID.
+    it "still runs when a dry-run branch leaked from an earlier hard-killed run" do
+      Dir.mktmpdir("shakapacker-release-symbolic-head") do |sandbox|
+        repo = build_repository(sandbox)
+        run_git!("-C", repo, "branch", "release-dry-run-#{Process.pid}")
+        symbolic_ref_output = nil
+
+        expect do
+          with_release_checkout(gem_root: repo, dry_run: true) do |release_root|
+            symbolic_ref_output = run_git!("-C", release_root, "symbolic-ref", "HEAD")
+          end
+        end.not_to raise_error
+
+        expect(symbolic_ref_output.strip).to eq("refs/heads/release-dry-run-#{Process.pid}")
+        expect(run_git!("-C", repo, "branch", "--list")).not_to include("release-dry-run-#{Process.pid}")
       end
     end
 
