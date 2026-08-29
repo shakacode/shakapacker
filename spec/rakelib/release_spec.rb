@@ -453,6 +453,15 @@ RSpec.describe "release rake helpers" do
         .with("git", "-C", "/tmp/shakapacker-release/worktree", "branch",
               "--set-upstream-to=origin/main", anything)
         .and_return(["", successful_status])
+      allow(Open3).to receive(:capture2e)
+        .with("yarn", "install", chdir: "/tmp/shakapacker-release/worktree")
+        .and_return(["", successful_status])
+      # The worktree is a stubbed path, so the post-install binary probe has nothing real to
+      # look at. Examples that care about a missing binary re-stub this for themselves.
+      allow(File).to receive(:executable?).and_call_original
+      allow(File).to receive(:executable?)
+        .with(%r{\A/tmp/shakapacker-release/worktree/node_modules/\.bin/})
+        .and_return(true)
     end
 
     it "refreshes the dry-run worktree from origin/main before evaluating the release" do
@@ -658,6 +667,96 @@ RSpec.describe "release rake helpers" do
         end.to raise_error(RuntimeError, "cleanup failed")
       end.to output(/Failed to clean up dry-run release worktree/).to_stderr
     end
+
+    # `git worktree add` checks out tracked files only, so the scratch worktree has no
+    # node_modules of its own. `npm publish --dry-run` still runs prepublishOnly
+    # (`yarn build && yarn type-check`), so without this install the dry run dies with
+    # `tsc: command not found` after every interesting check has already passed.
+    it "installs node dependencies in the dry-run worktree before yielding it" do
+      allow(Shakapacker::Utils::Misc).to receive(:sh_in_dir)
+      installed = false
+      allow(Open3).to receive(:capture2e)
+        .with("yarn", "install", chdir: "/tmp/shakapacker-release/worktree") do
+          installed = true
+          ["", double("status", success?: true)]
+        end
+
+      # The block body is what stands in for the rest of the release, so recording the flag
+      # from inside it is the only way to assert the install already happened by then.
+      installed_before_yield = nil
+      with_release_checkout(gem_root: "/repo", dry_run: true) { installed_before_yield = installed }
+
+      expect(installed_before_yield).to be(true)
+      expect(Open3).to have_received(:capture2e)
+        .with("yarn", "install", chdir: "/tmp/shakapacker-release/worktree")
+    end
+
+    # A dependency change landing on origin/main must be installed too, so the install has to
+    # follow the rebase rather than the bare `git worktree add`.
+    it "installs node dependencies after rebasing the worktree onto origin/main" do
+      allow(Shakapacker::Utils::Misc).to receive(:sh_in_dir)
+
+      with_release_checkout(gem_root: "/repo", dry_run: true) { "ok" }
+
+      expect(Open3).to have_received(:capture2e)
+        .with("git", "-C", "/tmp/shakapacker-release/worktree", "rebase", "origin/main").ordered
+      expect(Open3).to have_received(:capture2e)
+        .with("yarn", "install", chdir: "/tmp/shakapacker-release/worktree").ordered
+    end
+
+    it "aborts with an actionable message when the worktree install fails" do
+      allow(Shakapacker::Utils::Misc).to receive(:sh_in_dir)
+      allow(Open3).to receive(:capture2e)
+        .with("yarn", "install", chdir: "/tmp/shakapacker-release/worktree")
+        .and_return(["error registry unreachable", double("status", success?: false)])
+
+      expect do
+        expect do
+          with_release_checkout(gem_root: "/repo", dry_run: true) { "unreachable" }
+        end.to raise_error(SystemExit)
+      end.to output(
+        %r{Unable to install node dependencies in the dry-run worktree.*registry unreachable}m
+      ).to_stderr
+    end
+
+    # A `yarn install` can exit zero and still leave prepublishOnly without a binary it needs.
+    # Naming the binary here beats npm reporting a bare `command not found` much later.
+    it "aborts naming the missing binary when the worktree install leaves prepublishOnly unusable" do
+      allow(Shakapacker::Utils::Misc).to receive(:sh_in_dir)
+      allow(File).to receive(:executable?)
+        .with("/tmp/shakapacker-release/worktree/node_modules/.bin/tsc")
+        .and_return(false)
+
+      expect do
+        expect do
+          with_release_checkout(gem_root: "/repo", dry_run: true) { "unreachable" }
+        end.to raise_error(SystemExit)
+      end.to output(/dry-run worktree are incomplete after `yarn install`: tsc/).to_stderr
+    end
+
+    it "aborts with an actionable message when yarn is not on PATH" do
+      allow(Shakapacker::Utils::Misc).to receive(:sh_in_dir)
+      allow(Open3).to receive(:capture2e)
+        .with("yarn", "install", chdir: "/tmp/shakapacker-release/worktree")
+        .and_raise(Errno::ENOENT)
+
+      expect do
+        expect do
+          with_release_checkout(gem_root: "/repo", dry_run: true) { "unreachable" }
+        end.to raise_error(SystemExit)
+      end.to output(/yarn is not installed or not available on PATH/).to_stderr
+    end
+
+    # The live release publishes from the maintainer's own checkout, whose install
+    # `verify_node_modules!` already gates on. Re-installing there would mutate it.
+    it "never installs node dependencies on the live release path" do
+      allow(Shakapacker::Utils::Misc).to receive(:sh_in_dir)
+
+      expect { |block| with_release_checkout(gem_root: "/repo", dry_run: false, &block) }
+        .to yield_with_args("/repo")
+
+      expect(Open3).not_to have_received(:capture2e).with("yarn", "install", any_args)
+    end
   end
 
   # release-it runs `git symbolic-ref HEAD` and aborts the dry run when it fails, so this
@@ -698,6 +797,9 @@ RSpec.describe "release rake helpers" do
           raise "sh_in_dir failed: #{shell_command}\n#{output}" unless status.success?
         end
       end
+      # These sandbox repositories hold a README and nothing else, so there is no manifest to
+      # install from. The example that exercises the real install below opts back in.
+      allow(self).to receive(:install_dry_run_node_modules!)
     end
 
     it "gives the dry-run worktree a symbolic HEAD instead of a detached one" do
@@ -788,6 +890,38 @@ RSpec.describe "release rake helpers" do
         expect(run_git!("-C", repo, "worktree", "list").lines.size).to eq(1)
       end
     end
+
+    # The regression this guards is structural: `git worktree add` checks out tracked files
+    # only, and node_modules is gitignored, so the worktree really does start empty no matter
+    # how complete the maintainer's own install is. Asserting on the command string alone
+    # would not prove the install lands in the worktree, so this runs the real yarn.
+    #
+    # The manifest declares no dependencies, so the install is offline and effectively
+    # instant; REQUIRED_RELEASE_NODE_BINARIES is stubbed empty because a dependency-free
+    # install cannot produce tsc or prettier. The point being proven is that a `yarn install`
+    # runs *in the worktree*, which the created node_modules shows.
+    it "really installs node dependencies inside the dry-run worktree" do
+      stub_const("REQUIRED_RELEASE_NODE_BINARIES", [])
+      allow(self).to receive(:install_dry_run_node_modules!).and_call_original
+
+      Dir.mktmpdir("shakapacker-release-worktree-install") do |sandbox|
+        repo = build_repository(sandbox)
+        File.write(File.join(repo, "package.json"), %({\n  "name": "sandbox",\n  "version": "1.0.0"\n}\n))
+        File.write(File.join(repo, ".gitignore"), "node_modules\n")
+        run_git!("-C", repo, "add", "package.json", ".gitignore")
+        run_git!("-C", repo, "commit", "--quiet", "-m", "Add manifest")
+        run_git!("-C", repo, "push", "--quiet", "origin", "main")
+
+        worktree_node_modules = nil
+        with_release_checkout(gem_root: repo, dry_run: true) do |release_root|
+          worktree_node_modules = File.directory?(File.join(release_root, "node_modules"))
+        end
+
+        expect(worktree_node_modules).to be(true)
+        # The maintainer's checkout is never installed into by the dry run.
+        expect(File.directory?(File.join(repo, "node_modules"))).to be(false)
+      end
+    end
   end
 
   describe "#perform_release" do
@@ -851,8 +985,10 @@ RSpec.describe "release rake helpers" do
 
       perform_release(gem_version: "10.4.0", dry_run: true, check_uncommitted: false)
 
-      # The scratch worktree never gets its own `yarn install`, so verifying it would abort
-      # every dry run. That gap is tracked separately.
+      # `verify_node_modules!` exists to protect the maintainer's checkout, which a dry run
+      # never publishes from. The scratch worktree gets its dependencies from
+      # `with_release_checkout`, which installs and probes them itself, so running the live
+      # preflight against the worktree here would only duplicate that.
       expect(self).not_to have_received(:verify_node_modules!)
     end
 

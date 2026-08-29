@@ -776,6 +776,49 @@ def publish_or_update_github_release(gem_root:, release_context:, dry_run:)
   end
 end
 
+# `git worktree add` checks out tracked files only, and node_modules is gitignored, so the
+# dry-run scratch worktree starts with no node dependencies at all. `npm publish --dry-run`
+# still runs `prepublishOnly` (`yarn build && yarn type-check`), which resolves tsc and
+# prettier from node_modules/.bin — so without an install here every dry run dies with
+# `tsc: command not found` long after the interesting checks have passed.
+#
+# A plain `yarn install` is deliberate. It is what the maintainer's checkout holds, what
+# `verify_node_modules!` asserts about the live path, and therefore the only option that lets
+# the dry run build from the same inputs a real publish would. Symlinking or copying the
+# maintainer's node_modules would be faster still, but it would skip the install the release
+# actually depends on and hide exactly the drift `verify_node_modules!` exists to catch.
+# `--frozen-lockfile` is avoided for the opposite reason: it would abort the dry run on
+# lockfile drift a live release tolerates, making the rehearsal stricter than the thing it
+# rehearses.
+#
+# The cost is small in practice: the maintainer's own checkout keeps yarn's global cache
+# warm, so this relinks from cache rather than downloading.
+def install_dry_run_node_modules!(worktree_dir)
+  puts "Installing node dependencies in the dry-run worktree (prepublishOnly needs them)..."
+  begin
+    output, status = Open3.capture2e("yarn", "install", chdir: worktree_dir)
+  rescue Errno::ENOENT
+    abort "❌ yarn is not installed or not available on PATH, so the dry-run worktree cannot be " \
+          "prepared. Install yarn and retry."
+  end
+  unless status.success?
+    abort "❌ Unable to install node dependencies in the dry-run worktree #{worktree_dir}. " \
+          "`npm publish --dry-run` runs prepublishOnly (`yarn build && yarn type-check`), which " \
+          "needs them.\n\n#{output.strip}"
+  end
+
+  # A `yarn install` can exit zero having produced a tree `prepublishOnly` still cannot build
+  # from. Name the missing binary here rather than letting npm report a bare
+  # `command not found` from inside prepublishOnly much later in the run.
+  bin_dir = File.join(worktree_dir, "node_modules", ".bin")
+  missing = REQUIRED_RELEASE_NODE_BINARIES.reject { |binary| File.executable?(File.join(bin_dir, binary)) }
+  return if missing.empty?
+
+  abort "❌ Node dependencies in the dry-run worktree are incomplete after `yarn install`: " \
+        "#{missing.join(', ')} missing from #{bin_dir}. `npm publish --dry-run` runs " \
+        "prepublishOnly (`yarn build && yarn type-check`), which needs them."
+end
+
 def with_release_checkout(gem_root:, dry_run:)
   return yield(gem_root) unless dry_run
 
@@ -822,6 +865,8 @@ def with_release_checkout(gem_root:, dry_run:)
       unless upstream_status.success?
         abort "❌ Unable to track origin/main from the dry-run branch. Check that origin/main exists locally.\n\n#{upstream_output.strip}"
       end
+      # After the rebase, so a dependency change landing on origin/main is installed too.
+      install_dry_run_node_modules!(worktree_dir)
       yield(worktree_dir)
     ensure
       original_error = $ERROR_INFO
