@@ -48,7 +48,7 @@ RSpec.describe "release rake helpers" do
       FileUtils.chmod(0o755, bin_path)
     end
 
-    def create_complete_install(declared: { "webpack-merge" => "^5.8.0" }, recorded: nil)
+    def create_complete_install(declared: { "webpack-merge" => "^5.8.0" }, recorded: nil, present: nil)
       REQUIRED_RELEASE_NODE_BINARIES.each { |binary| create_node_bin(binary) }
       File.write(
         File.join(@node_modules_gem_root, "package.json"),
@@ -56,6 +56,9 @@ RSpec.describe "release rake helpers" do
       )
       patterns = recorded || declared.map { |name, spec| "#{name}@#{spec}" }
       write_yarn_integrity(JSON.generate("topLevelPatterns" => patterns))
+      (present || declared.keys).each do |name|
+        FileUtils.mkdir_p(File.join(@node_modules_gem_root, "node_modules", name))
+      end
     end
 
     def write_yarn_integrity(contents)
@@ -102,16 +105,107 @@ RSpec.describe "release rake helpers" do
       )
 
       expect do
-        verify_node_modules!(gem_root: @node_modules_gem_root)
+        # `abort` raises SystemExit, which would otherwise tear down the whole run instead of
+        # failing this example — a regression here must surface as a normal failure.
+        expect { verify_node_modules!(gem_root: @node_modules_gem_root) }.not_to raise_error
       end.to output(/✓ Node dependencies installed/).to_stdout
     end
 
     it "skips drift detection when the integrity marker is not in a comparable format" do
-      REQUIRED_RELEASE_NODE_BINARIES.each { |binary| create_node_bin(binary) }
+      create_complete_install
       write_yarn_integrity("not json at all")
 
       expect do
-        verify_node_modules!(gem_root: @node_modules_gem_root)
+        # `abort` raises SystemExit, which would otherwise tear down the whole run instead of
+        # failing this example — a regression here must surface as a normal failure.
+        expect { verify_node_modules!(gem_root: @node_modules_gem_root) }.not_to raise_error
+      end.to output(/✓ Node dependencies installed/).to_stdout
+    end
+
+    it "aborts when a declared package is missing from the installed tree" do
+      create_complete_install(
+        declared: { "webpack-merge" => "^5.8.0", "js-yaml" => "^4.1.0" },
+        present: ["webpack-merge"]
+      )
+
+      expect do
+        expect { verify_node_modules!(gem_root: @node_modules_gem_root) }.to raise_error(SystemExit)
+      end.to output(/damaged: js-yaml declared in package\.json but missing.*Run `yarn install`/m).to_stderr
+    end
+
+    it "still checks package presence when the integrity marker cannot be compared" do
+      create_complete_install(
+        declared: { "webpack-merge" => "^5.8.0", "js-yaml" => "^4.1.0" },
+        present: ["webpack-merge"]
+      )
+      write_yarn_integrity("not json at all")
+
+      expect do
+        expect { verify_node_modules!(gem_root: @node_modules_gem_root) }.to raise_error(SystemExit)
+      end.to output(/damaged: js-yaml/m).to_stderr
+    end
+
+    it "aborts cleanly when a dependency section is not an object" do
+      create_complete_install
+      File.write(
+        File.join(@node_modules_gem_root, "package.json"),
+        JSON.generate("dependencies" => "webpack-merge@^5.8.0")
+      )
+
+      expect do
+        expect { verify_node_modules!(gem_root: @node_modules_gem_root) }.to raise_error(SystemExit)
+      end.to output(/malformed dependencies section: expected an object.*got String/m).to_stderr
+    end
+
+    # An Array survives `.map`, so without the shape check this one yields garbage patterns
+    # instead of raising — the drift comparison would then trust them.
+    it "aborts cleanly when an optional dependency section is an array" do
+      create_complete_install
+      File.write(
+        File.join(@node_modules_gem_root, "package.json"),
+        JSON.generate(
+          "dependencies" => { "webpack-merge" => "^5.8.0" },
+          "optionalDependencies" => ["fsevents"]
+        )
+      )
+
+      expect do
+        expect { verify_node_modules!(gem_root: @node_modules_gem_root) }.to raise_error(SystemExit)
+      end.to output(/malformed optionalDependencies section.*got Array/m).to_stderr
+    end
+
+    # npm lets an optionalDependencies entry override a dependencies entry of the same name, so
+    # this package may be legitimately absent — aborting on it would block every release.
+    it "does not require a dependency that is also declared optional" do
+      REQUIRED_RELEASE_NODE_BINARIES.each { |binary| create_node_bin(binary) }
+      File.write(
+        File.join(@node_modules_gem_root, "package.json"),
+        JSON.generate(
+          "dependencies" => { "fsevents" => "^2.3.0" },
+          "optionalDependencies" => { "fsevents" => "^2.3.0" }
+        )
+      )
+      write_yarn_integrity(JSON.generate("topLevelPatterns" => ["fsevents@^2.3.0"]))
+
+      expect do
+        # `abort` raises SystemExit, which would otherwise tear down the whole run instead of
+        # failing this example — a regression here must surface as a normal failure.
+        expect { verify_node_modules!(gem_root: @node_modules_gem_root) }.not_to raise_error
+      end.to output(/✓ Node dependencies installed/).to_stdout
+    end
+
+    it "does not require optional dependencies to be present" do
+      REQUIRED_RELEASE_NODE_BINARIES.each { |binary| create_node_bin(binary) }
+      File.write(
+        File.join(@node_modules_gem_root, "package.json"),
+        JSON.generate("optionalDependencies" => { "fsevents" => "^2.3.0" })
+      )
+      write_yarn_integrity(JSON.generate("topLevelPatterns" => ["fsevents@^2.3.0"]))
+
+      expect do
+        # `abort` raises SystemExit, which would otherwise tear down the whole run instead of
+        # failing this example — a regression here must surface as a normal failure.
+        expect { verify_node_modules!(gem_root: @node_modules_gem_root) }.not_to raise_error
       end.to output(/✓ Node dependencies installed/).to_stdout
     end
 
@@ -122,8 +216,25 @@ RSpec.describe "release rake helpers" do
       allow(File).to receive(:read).with(integrity_path).and_raise(Errno::EACCES)
 
       expect do
-        verify_node_modules!(gem_root: @node_modules_gem_root)
+        # `abort` raises SystemExit, which would otherwise tear down the whole run instead of
+        # failing this example — a regression here must surface as a normal failure.
+        expect { verify_node_modules!(gem_root: @node_modules_gem_root) }.not_to raise_error
       end.to output(/✓ Node dependencies installed/).to_stdout
+    end
+
+    # Valid JSON that is not an object. Indexing an Array/Integer/true/nil root raises, and a
+    # String root is quieter still: every section reads as nil, so the check would pass vacuously.
+    it "aborts when package.json parses to something other than an object" do
+      create_complete_install
+      manifest_path = File.join(@node_modules_gem_root, "package.json")
+
+      ["[]", '"x"', "42", "true", "null"].each do |root|
+        File.write(manifest_path, root)
+
+        expect do
+          expect { verify_node_modules!(gem_root: @node_modules_gem_root) }.to raise_error(SystemExit)
+        end.to output(/package\.json is not a JSON object.*Fix package\.json and retry/m).to_stderr
+      end
     end
 
     it "aborts with an actionable message when package.json cannot be parsed" do
@@ -139,7 +250,9 @@ RSpec.describe "release rake helpers" do
       create_complete_install
 
       expect do
-        verify_node_modules!(gem_root: @node_modules_gem_root)
+        # `abort` raises SystemExit, which would otherwise tear down the whole run instead of
+        # failing this example — a regression here must surface as a normal failure.
+        expect { verify_node_modules!(gem_root: @node_modules_gem_root) }.not_to raise_error
       end.to output(/✓ Node dependencies installed/).to_stdout
     end
 
@@ -151,7 +264,7 @@ RSpec.describe "release rake helpers" do
       end
 
       expect do
-        verify_node_modules!(gem_root: repo_root)
+        expect { verify_node_modules!(gem_root: repo_root) }.not_to raise_error
       end.to output(/✓ Node dependencies installed/).to_stdout
     end
   end

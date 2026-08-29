@@ -147,6 +147,27 @@ def verify_node_modules_match_manifest!(gem_root:)
           "`yarn install` ever finished). Run `yarn install` and retry."
   end
 
+  manifest_path = File.join(gem_root, "package.json")
+  package_json = begin
+    JSON.parse(File.read(manifest_path))
+  rescue JSON::ParserError, SystemCallError => e
+    # Unlike the marker, package.json is the manifest being released. A broken one cannot be
+    # skipped past, so it aborts with an actionable message rather than a raw backtrace.
+    abort "❌ Unable to read #{manifest_path} for the node dependency check: #{e.message}"
+  end
+  # `[]`, `"x"`, `42`, `true` and `null` are all valid JSON, so parsing succeeding does not mean
+  # the manifest is an object. Indexing those raises TypeError or NoMethodError — and a String
+  # root is worse still, since `"x"["dependencies"]` returns nil, so every section would read as
+  # empty and the whole check would pass vacuously on a nonsense manifest.
+  unless package_json.is_a?(Hash)
+    abort "❌ #{manifest_path} is not a JSON object (got #{package_json.class}). " \
+          "Fix package.json and retry."
+  end
+
+  # Runs before the marker is even parsed: it needs only package.json, so an unreadable marker
+  # must not silently skip it too.
+  verify_declared_packages_present!(gem_root: gem_root, package_json: package_json, manifest_path: manifest_path)
+
   recorded_patterns = begin
     JSON.parse(File.read(integrity_path))["topLevelPatterns"]
   rescue JSON::ParserError, SystemCallError
@@ -156,17 +177,9 @@ def verify_node_modules_match_manifest!(gem_root:)
   # compare. Skip drift detection rather than block a release on an unverifiable signal.
   return unless recorded_patterns.is_a?(Array)
 
-  manifest_path = File.join(gem_root, "package.json")
-  package_json = begin
-    JSON.parse(File.read(manifest_path))
-  rescue JSON::ParserError, SystemCallError => e
-    # Unlike the marker, package.json is the manifest being released. A broken one cannot be
-    # skipped past, so it aborts with an actionable message rather than a raw backtrace.
-    abort "❌ Unable to read #{manifest_path} for the node dependency check: #{e.message}"
-  end
-
   declared_patterns = %w[dependencies devDependencies optionalDependencies].flat_map do |key|
-    (package_json[key] || {}).map { |name, spec| "#{name}@#{spec}" }
+    declared_dependency_section(package_json: package_json, manifest_path: manifest_path, key: key)
+      .map { |name, spec| "#{name}@#{spec}" }
   end
 
   # One-directional on purpose: leftover entries in the marker are harmless, while a pattern
@@ -176,6 +189,47 @@ def verify_node_modules_match_manifest!(gem_root:)
 
   abort "❌ Node dependencies are stale: package.json declares #{stale.join(', ')}, which the " \
         "installed node_modules does not have. Run `yarn install` and retry."
+end
+
+# The integrity marker records what a completed install *requested*, not what survived it. A
+# package removed afterwards — or lost to an install interrupted after an earlier successful one,
+# which leaves the previous marker in place — keeps the marker consistent while the build input
+# is gone. So check the tree itself, not just yarn's record of it.
+#
+# Optional dependencies are excluded: they are permitted to be absent by definition.
+def verify_declared_packages_present!(gem_root:, package_json:, manifest_path:)
+  node_modules_dir = File.join(gem_root, "node_modules")
+  required_names = %w[dependencies devDependencies].flat_map do |key|
+    declared_dependency_section(package_json: package_json, manifest_path: manifest_path, key: key).keys
+  end
+  # npm treats an optionalDependencies entry as overriding a dependencies entry of the same name,
+  # so a package listed in both may be legitimately absent after a successful install. Without
+  # this subtraction the exclusion above silently fails for exactly that case, and the release
+  # would abort every time — even immediately after the `yarn install` the message prescribes.
+  required_names -= declared_dependency_section(
+    package_json: package_json, manifest_path: manifest_path, key: "optionalDependencies"
+  ).keys
+
+  # A package declared in both dependencies and devDependencies appears twice, which would
+  # otherwise repeat the name in the abort message.
+  absent = required_names.uniq.reject { |name| File.directory?(File.join(node_modules_dir, name)) }
+  return if absent.empty?
+
+  abort "❌ Node dependencies are damaged: #{absent.join(', ')} declared in package.json but " \
+        "missing from #{node_modules_dir}. Run `yarn install` and retry."
+end
+
+# package.json is the manifest being released, so a malformed dependency section must abort with an
+# actionable message rather than escape as a NoMethodError backtrace from `.keys` / `.map`. An
+# Array is the quieter case: it survives `.map` and yields garbage patterns the drift comparison
+# would otherwise trust.
+def declared_dependency_section(package_json:, manifest_path:, key:)
+  section = package_json[key]
+  return {} if section.nil?
+  return section if section.is_a?(Hash)
+
+  abort "❌ #{manifest_path} has a malformed #{key} section: expected an object mapping package " \
+        "names to version specs, got #{section.class}. Fix package.json and retry."
 end
 
 def current_gem_version(gem_root)
