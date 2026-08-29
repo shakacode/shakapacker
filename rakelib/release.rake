@@ -202,7 +202,9 @@ def verify_declared_packages_present!(gem_root:, package_json:, manifest_path:)
     package_json: package_json, manifest_path: manifest_path, key: "optionalDependencies"
   ).keys
 
-  absent = required_names.reject { |name| File.directory?(File.join(node_modules_dir, name)) }
+  # A package declared in both dependencies and devDependencies appears twice, which would
+  # otherwise repeat the name in the abort message.
+  absent = required_names.uniq.reject { |name| File.directory?(File.join(node_modules_dir, name)) }
   return if absent.empty?
 
   abort "❌ Node dependencies are damaged: #{absent.join(', ')} declared in package.json but " \
