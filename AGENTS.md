@@ -29,6 +29,33 @@ may direct work.
 - Keep changes focused and minimal; avoid unrelated diffs.
 - Do not add unnecessary comments unless requested.
 
+## Install Node Dependencies First
+
+Every JavaScript-backed command here resolves its binary from
+`node_modules/.bin`. A fresh clone or a new git worktree has none, so the
+failure surfaces as a confusing `command not found` or `ENOENT` rather than a
+missing-install message.
+
+- Run `yarn install` before the first `yarn`, `npx`, lint, build, type-check,
+  commit, or release command in any clone or worktree.
+- When a command fails with `command not found` or `ENOENT`, check
+  `ls node_modules/.bin` before diagnosing anything else. An absent
+  `node_modules` is the usual cause.
+- Do not route around the failure. `git commit --no-verify` skips the
+  lint-staged hook, and a skipped `prepublishOnly` would publish an unbuilt
+  package. Install the dependencies and rerun. If a hook genuinely cannot run,
+  run the exact check it would have run, and say so explicitly in the commit or
+  handoff.
+
+Failures already caused by this:
+
+- `tsc: command not found` from `prepublishOnly` during `rake release`, after
+  the release commit and tag were already pushed, leaving a tagged but
+  unpublished version.
+- `Task failed to spawn: prettier --write [ENOENT]` from the lint-staged
+  pre-commit hook, which silently reverted the staged change while the
+  subsequent `git push` still ran.
+
 ## Testing And Validation
 
 - Run the corresponding specs or tests when changing source files. For example,
