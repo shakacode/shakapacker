@@ -934,6 +934,89 @@ RSpec.describe "release rake helpers" do
     end
   end
 
+  describe "#extract_changelog_section" do
+    around do |example|
+      Dir.mktmpdir("shakapacker-changelog-encoding-spec") do |tmpdir|
+        @changelog_path = File.join(tmpdir, "CHANGELOG.md")
+        # Mirrors the real CHANGELOG: non-ASCII lives below the version headers, so only a
+        # scan that runs off the end of the file reaches it.
+        File.write(@changelog_path, <<~MARKDOWN, encoding: "UTF-8")
+          # Versions
+
+          ## [Unreleased]
+
+          ## [v10.3.2] - August 28, 2026
+
+          ### Fixed
+
+          - **Fixed a thing.** [PR #1](https://example.com/1) by [x](https://example.com/x).
+
+          ## [v10.3.1] - August 3, 2026
+
+          ### ⚠️ Breaking Changes
+
+          - **Removed a thing** — see the migration guide.
+        MARKDOWN
+        example.run
+      end
+    end
+
+    it "returns the section for a version that is present" do
+      section = extract_changelog_section(changelog_path: @changelog_path, npm_version: "10.3.2")
+
+      expect(section).to include("Fixed a thing")
+      expect(section).not_to include("Breaking Changes")
+    end
+
+    it "returns nil rather than raising when the version has no section and the changelog is not ASCII" do
+      # A missing version scans the whole file, so the non-ASCII tail is always reached.
+      expect(extract_changelog_section(changelog_path: @changelog_path, npm_version: "99.99.99")).to be_nil
+    end
+
+    it "reads the changelog as UTF-8 so a non-UTF-8 default external encoding cannot break matching" do
+      # Encoding.default_external is process-global, so assert the read is pinned instead of
+      # mutating it. Without the explicit encoding, `LANG`-less environments (CI images, cron,
+      # Docker) raise ArgumentError: invalid byte sequence in US-ASCII while scanning.
+      allow(File).to receive(:readlines).and_call_original
+
+      extract_changelog_section(changelog_path: @changelog_path, npm_version: "99.99.99")
+
+      expect(File).to have_received(:readlines).with(@changelog_path, encoding: "UTF-8")
+    end
+  end
+
+  describe "#extract_latest_changelog_version" do
+    around do |example|
+      Dir.mktmpdir("shakapacker-changelog-version-encoding-spec") do |tmpdir|
+        @gem_root = tmpdir
+        # Mirrors the real CHANGELOG: non-ASCII below the version headers.
+        File.write(File.join(tmpdir, "CHANGELOG.md"), <<~MARKDOWN, encoding: "UTF-8")
+          # Versions
+
+          ## [Unreleased]
+
+          ## [v10.3.2] - August 28, 2026
+
+          ### ⚠️ Breaking Changes
+
+          - **Removed a thing** — see the migration guide.
+        MARKDOWN
+        example.run
+      end
+    end
+
+    it "reads the changelog as UTF-8 so a non-UTF-8 default external encoding cannot break matching" do
+      # Encoding.default_external is process-global, so assert the read is pinned instead of
+      # mutating it. Mirrors the sibling guard on #extract_changelog_section — without this,
+      # the encoding argument here could be dropped by a future edit with no spec failing.
+      allow(File).to receive(:readlines).and_call_original
+
+      expect(extract_latest_changelog_version(gem_root: @gem_root)).to eq("10.3.2")
+
+      expect(File).to have_received(:readlines).with(File.join(@gem_root, "CHANGELOG.md"), encoding: "UTF-8")
+    end
+  end
+
   describe "#fetch_gh_jsonl" do
     it "parses stdout without mixing in successful gh diagnostics from stderr" do
       status = double("status", success?: true)
