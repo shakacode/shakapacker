@@ -2864,6 +2864,18 @@ describe Shakapacker::Doctor do
         doctor.send(:check_javascript_transpiler_dependencies)
         expect(doctor.issues).to be_empty
       end
+
+      it "stays silent about SWC config files on Rspack" do
+        allow(config).to receive(:assets_bundler).and_return("rspack")
+        FileUtils.mkdir_p(root_path.join("config"))
+        File.write(root_path.join("config/swc.config.js"), "module.exports = {}")
+        File.write(root_path.join(".swcrc"), JSON.generate({}))
+
+        doctor.send(:check_javascript_transpiler_dependencies)
+
+        expect(warning_messages).not_to include(match(/NOT read when assets_bundler is 'rspack'/))
+        expect(warning_messages).not_to include(match(/\.swcrc file detected/))
+      end
     end
 
     context "transpiler config consistency" do
@@ -3072,6 +3084,96 @@ describe Shakapacker::Doctor do
 
             doctor.send(:check_javascript_transpiler_dependencies)
             expect(warning_messages).not_to include(match(/'loose: true' detected in config\/swc\.config\.js/))
+          end
+        end
+      end
+
+      # Rspack always transpiles with builtin:swc-loader, so the "this file is not read"
+      # warnings must reach any Rspack app, not only javascript_transpiler: swc ones.
+      context "with SWC config files while javascript_transpiler is not swc" do
+        let(:config_data) { super().merge(javascript_transpiler: "babel") }
+
+        before do
+          allow(config).to receive(:javascript_transpiler).and_return("babel")
+          package_json = {
+            "devDependencies" => {
+              "babel-loader" => "^9.0.0",
+              "@babel/core" => "^7.20.0",
+              "@babel/preset-env" => "^7.20.0"
+            }
+          }
+          File.write(package_json_path, JSON.generate(package_json))
+          FileUtils.mkdir_p(root_path.join("config"))
+          File.write(root_path.join("config/swc.config.js"), <<~JS)
+            module.exports = {
+              options: {
+                jsc: {
+                  loose: true
+                }
+              }
+            }
+          JS
+        end
+
+        context "when assets_bundler is rspack" do
+          before do
+            allow(config).to receive(:assets_bundler).and_return("rspack")
+          end
+
+          it "warns that config/swc.config.js is not read on Rspack" do
+            doctor.send(:check_javascript_transpiler_dependencies)
+
+            expect(warning_messages).to include(
+              match(/config\/swc\.config\.js is present but is NOT read when assets_bundler is 'rspack'/)
+            )
+            expect(warning_messages).to include(
+              match(/Apply webpack-merge's 'mergeWithRules' to the output of generateRspackConfig\(\)/)
+            )
+          end
+
+          it "does not emit the webpack-only content or merge messaging" do
+            doctor.send(:check_javascript_transpiler_dependencies)
+
+            expect(warning_messages).not_to include(match(/'loose: true' detected in config\/swc\.config\.js/))
+            expect(doctor.info).not_to include(match(/Using config\/swc\.config\.js \(recommended\)/))
+            expect(doctor.info).not_to include(match(/merged with Shakapacker's defaults/))
+          end
+
+          it "warns that .swcrc is not read on Rspack without suggesting a migration" do
+            File.write(root_path.join(".swcrc"), JSON.generate({}))
+
+            doctor.send(:check_javascript_transpiler_dependencies)
+
+            expect(warning_messages).to include(match(/\.swcrc file detected while assets_bundler is 'rspack'/))
+            expect(warning_messages).not_to include(match(/migrate to config\/swc\.config\.js/))
+          end
+
+          it "warns for esbuild too, since the gate is transpiler-agnostic on Rspack" do
+            allow(config).to receive(:javascript_transpiler).and_return("esbuild")
+
+            doctor.send(:check_javascript_transpiler_dependencies)
+
+            expect(warning_messages).to include(
+              match(/config\/swc\.config\.js is present but is NOT read when assets_bundler is 'rspack'/)
+            )
+          end
+        end
+
+        context "when assets_bundler is webpack" do
+          it "stays silent because webpack reads these files only with javascript_transpiler: swc" do
+            doctor.send(:check_javascript_transpiler_dependencies)
+
+            expect(warning_messages).not_to include(match(/NOT read when assets_bundler is 'rspack'/))
+            expect(warning_messages).not_to include(match(/'loose: true' detected in config\/swc\.config\.js/))
+            expect(doctor.info).not_to include(match(/Using config\/swc\.config\.js \(recommended\)/))
+          end
+
+          it "stays silent about a .swcrc file" do
+            File.write(root_path.join(".swcrc"), JSON.generate({}))
+
+            doctor.send(:check_javascript_transpiler_dependencies)
+
+            expect(warning_messages).not_to include(match(/\.swcrc file detected/))
           end
         end
       end

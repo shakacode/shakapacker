@@ -684,8 +684,11 @@ module Shakapacker
           add_warning("Both esbuild and Babel dependencies are installed. Consider removing Babel dependencies to reduce node_modules size")
         end
 
-        # Check for SWC configuration conflicts
-        if transpiler == "swc"
+        # Check for SWC configuration conflicts. Rspack always transpiles with
+        # builtin:swc-loader, so SWC config files go unread there regardless of
+        # javascript_transpiler; the webpack-only content checks stay SWC-gated
+        # inside check_swc_config_conflicts.
+        if transpiler == "swc" || assets_bundler == "rspack"
           check_swc_config_conflicts
         end
       end
