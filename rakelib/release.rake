@@ -147,15 +147,6 @@ def verify_node_modules_match_manifest!(gem_root:)
           "`yarn install` ever finished). Run `yarn install` and retry."
   end
 
-  recorded_patterns = begin
-    JSON.parse(File.read(integrity_path))["topLevelPatterns"]
-  rescue JSON::ParserError, SystemCallError
-    nil
-  end
-  # An unreadable or differently-shaped marker means a yarn version whose format this cannot
-  # compare. Skip drift detection rather than block a release on an unverifiable signal.
-  return unless recorded_patterns.is_a?(Array)
-
   manifest_path = File.join(gem_root, "package.json")
   package_json = begin
     JSON.parse(File.read(manifest_path))
@@ -164,6 +155,19 @@ def verify_node_modules_match_manifest!(gem_root:)
     # skipped past, so it aborts with an actionable message rather than a raw backtrace.
     abort "❌ Unable to read #{manifest_path} for the node dependency check: #{e.message}"
   end
+
+  # Runs before the marker is even parsed: it needs only package.json, so an unreadable marker
+  # must not silently skip it too.
+  verify_declared_packages_present!(gem_root: gem_root, package_json: package_json)
+
+  recorded_patterns = begin
+    JSON.parse(File.read(integrity_path))["topLevelPatterns"]
+  rescue JSON::ParserError, SystemCallError
+    nil
+  end
+  # An unreadable or differently-shaped marker means a yarn version whose format this cannot
+  # compare. Skip drift detection rather than block a release on an unverifiable signal.
+  return unless recorded_patterns.is_a?(Array)
 
   declared_patterns = %w[dependencies devDependencies optionalDependencies].flat_map do |key|
     (package_json[key] || {}).map { |name, spec| "#{name}@#{spec}" }
@@ -176,6 +180,23 @@ def verify_node_modules_match_manifest!(gem_root:)
 
   abort "❌ Node dependencies are stale: package.json declares #{stale.join(', ')}, which the " \
         "installed node_modules does not have. Run `yarn install` and retry."
+end
+
+# The integrity marker records what a completed install *requested*, not what survived it. A
+# package removed afterwards — or lost to an install interrupted after an earlier successful one,
+# which leaves the previous marker in place — keeps the marker consistent while the build input
+# is gone. So check the tree itself, not just yarn's record of it.
+#
+# Optional dependencies are excluded: they are permitted to be absent by definition.
+def verify_declared_packages_present!(gem_root:, package_json:)
+  node_modules_dir = File.join(gem_root, "node_modules")
+  required_names = %w[dependencies devDependencies].flat_map { |key| (package_json[key] || {}).keys }
+
+  absent = required_names.reject { |name| File.directory?(File.join(node_modules_dir, name)) }
+  return if absent.empty?
+
+  abort "❌ Node dependencies are damaged: #{absent.join(', ')} declared in package.json but " \
+        "missing from #{node_modules_dir}. Run `yarn install` and retry."
 end
 
 def current_gem_version(gem_root)
