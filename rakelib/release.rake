@@ -558,7 +558,10 @@ def extract_latest_changelog_version(gem_root:)
   return nil unless File.exist?(changelog_path)
 
   converter = Shakapacker::Utils::VersionSyntaxConverter.new
-  File.readlines(changelog_path).each do |line|
+  # CHANGELOG.md holds non-ASCII (em dashes, ⚠️). Without an explicit encoding these lines
+  # inherit a non-UTF-8 Encoding.default_external when LANG/LC_ALL are unset, and matching
+  # them raises ArgumentError instead of scanning cleanly.
+  File.readlines(changelog_path, encoding: "UTF-8").each do |line|
     # Match versioned headers like ## [v9.6.0] or ## [v9.6.0-rc.1], skip ## [Unreleased]
     match = line.match(/^## \[v([^\]]+)\]/)
     next unless match
@@ -612,7 +615,7 @@ def sync_github_release_after_publish(gem_root:, gem_version:, dry_run:, changel
 end
 
 def extract_changelog_section(changelog_path:, npm_version:)
-  lines = File.readlines(changelog_path)
+  lines = File.readlines(changelog_path, encoding: "UTF-8")
   section_header = /^## \[v#{Regexp.escape(npm_version)}\]/
   start_index = lines.index { |line| line.match?(section_header) }
   return nil unless start_index
