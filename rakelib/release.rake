@@ -155,6 +155,14 @@ def verify_node_modules_match_manifest!(gem_root:)
     # skipped past, so it aborts with an actionable message rather than a raw backtrace.
     abort "❌ Unable to read #{manifest_path} for the node dependency check: #{e.message}"
   end
+  # `[]`, `"x"`, `42`, `true` and `null` are all valid JSON, so parsing succeeding does not mean
+  # the manifest is an object. Indexing those raises TypeError or NoMethodError — and a String
+  # root is worse still, since `"x"["dependencies"]` returns nil, so every section would read as
+  # empty and the whole check would pass vacuously on a nonsense manifest.
+  unless package_json.is_a?(Hash)
+    abort "❌ #{manifest_path} is not a JSON object (got #{package_json.class}). " \
+          "Fix package.json and retry."
+  end
 
   # Runs before the marker is even parsed: it needs only package.json, so an unreadable marker
   # must not silently skip it too.

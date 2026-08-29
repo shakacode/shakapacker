@@ -222,6 +222,21 @@ RSpec.describe "release rake helpers" do
       end.to output(/✓ Node dependencies installed/).to_stdout
     end
 
+    # Valid JSON that is not an object. Indexing an Array/Integer/true/nil root raises, and a
+    # String root is quieter still: every section reads as nil, so the check would pass vacuously.
+    it "aborts when package.json parses to something other than an object" do
+      create_complete_install
+      manifest_path = File.join(@node_modules_gem_root, "package.json")
+
+      ["[]", '"x"', "42", "true", "null"].each do |root|
+        File.write(manifest_path, root)
+
+        expect do
+          expect { verify_node_modules!(gem_root: @node_modules_gem_root) }.to raise_error(SystemExit)
+        end.to output(/package\.json is not a JSON object.*Fix package\.json and retry/m).to_stderr
+      end
+    end
+
     it "aborts with an actionable message when package.json cannot be parsed" do
       create_complete_install
       File.write(File.join(@node_modules_gem_root, "package.json"), "{ not json")
