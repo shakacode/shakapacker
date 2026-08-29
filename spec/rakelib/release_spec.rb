@@ -270,6 +270,13 @@ RSpec.describe "release rake helpers" do
     # which is the one abort path a working checkout legitimately reaches. Every other way the
     # helper can abort (a missing prepublishOnly binary, a declared package absent from the tree,
     # a malformed manifest) deliberately falls through to fail the example loudly.
+    #
+    # NOTE: keep the pattern comparison below in sync with `verify_node_modules_match_manifest!`
+    # in rakelib/release.rake. It cannot call that helper — the helper aborts, which is the whole
+    # problem — so this is a deliberate duplicate. If the production check ever grows a section
+    # (peerDependencies, say) or changes how staleness is decided, update this too. Out of sync,
+    # the probe stops recognising drift the helper would abort on, and a drifted checkout goes
+    # back to failing this example instead of skipping it.
     def repo_node_modules_unusable_reason(repo_root)
       return "node_modules is not installed in this environment" unless
         File.directory?(File.join(repo_root, "node_modules", ".bin"))

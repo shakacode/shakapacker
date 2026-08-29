@@ -26,7 +26,10 @@ RSpec.describe "spec_helper truncation guards" do
     path = File.join(@probe_dir, "truncation_probe.rb")
     File.write(path, body)
     output, status = Open3.capture2e("bundle", "exec", "rspec", path, chdir: REPO_ROOT)
-    [output, status]
+    # The guard messages contain "❌". Open3 hands back bytes tagged with the child's external
+    # encoding, which is US-ASCII under a POSIX/C locale, and matching against that raises
+    # ArgumentError instead of failing usefully.
+    [output.dup.force_encoding(Encoding::UTF_8), status]
   end
 
   it "leaves an ordinary passing run alone" do
@@ -36,7 +39,7 @@ RSpec.describe "spec_helper truncation guards" do
 
     expect(status).to be_success
     expect(output).to include("1 example, 0 failures")
-    expect(output).not_to include("terminated before the suite finished")
+    expect(output).not_to include("Failing the run so it cannot be mistaken")
   end
 
   it "turns a SystemExit inside an example into a failure and keeps running the suite" do
@@ -60,7 +63,7 @@ RSpec.describe "spec_helper truncation guards" do
     RUBY
 
     expect(status).not_to be_success
-    expect(output).to include("terminated before the suite finished")
+    expect(output).to include("never reached the end of the suite")
   end
 
   # `after(:suite)` runs from an `ensure` inside `with_suite_hooks`, so the completion flag alone
@@ -72,6 +75,21 @@ RSpec.describe "spec_helper truncation guards" do
     RUBY
 
     expect(status).not_to be_success
-    expect(output).to include("terminated before the suite finished")
+    # The completion flag is set here by that `ensure`, so the count comparison is what catches it.
+    expect(output).to include("Only 0 of 1 loaded examples ran")
+  end
+
+  # Nastiest of the set: nothing is truncated. Every example runs and reports, then the hook
+  # discards RSpec's exit status on the way out, so real failures vanish into a clean exit.
+  it "does not let an after(:context) hook discard recorded failures" do
+    output, status = run_probe(<<~RUBY)
+      RSpec.describe("probe") do
+        it("fails") { expect(1).to eq(2) }
+        after(:context) { exit 0 }
+      end
+    RUBY
+
+    expect(status).not_to be_success
+    expect(output).to include("example(s) failed, but the process was about to exit successfully")
   end
 end

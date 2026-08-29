@@ -13,41 +13,50 @@ require_relative "./support/html_test_helpers"
 #   1. `around` converts a SystemExit raised *inside an example* into an ordinary failure, so the
 #      run continues and the offending example is named. This is the readable half.
 #   2. `at_exit` is the backstop for everything an example hook cannot see — a SystemExit while
-#      loading a spec file, or from a `before(:suite)` hook, both of which happen before any
-#      example exists. It refuses to let a run that did not actually complete exit zero.
+#      loading a spec file, or from a `before(:suite)`, `before(:context)` or `after(:context)`
+#      hook. It refuses to let any of those exit zero.
 #
-# "Completed" needs two signals, because neither alone is sufficient. `after(:suite)` runs from an
-# `ensure` inside `with_suite_hooks`, so it fires even when a `before(:suite)` hook exits — the
-# flag alone would call that truncated run complete. And the example counts alone cannot see a
-# SystemExit raised before any example was loaded, where nothing is both loaded and unexecuted.
-# Requiring the suite to have finished *and* every loaded example to have reported covers both.
+# The backstop asks three independent questions, because each catches a case the others miss:
+#
+#   * Did anything fail? RSpec's own exit status is computed after the suite runs, so an `exit 0`
+#     from an `after(:context)` hook in the last group discards it — every example has already
+#     run and reported, failures and all, and the process still exits clean. This is the worst of
+#     the three: it does not truncate anything, it silently discards real failures.
+#   * Did the suite reach the end? Catches a SystemExit before any example was loaded, where
+#     nothing is both loaded and unexecuted for the count check to notice.
+#   * Did every loaded example run? `after(:suite)` runs from an `ensure` inside
+#     `with_suite_hooks`, so the completion flag is set even when a `before(:suite)` hook exits.
+#     Only the counts see that one.
 #
 # The backstop only ever turns green into red: if the process is already exiting non-zero, the run
 # is failing on its own and needs no help, so it stays out of the way (a spec file with a syntax
 # error, for instance, already exits non-zero and reports its own error).
 #
-# Known gap: under `--dry-run` RSpec skips `with_suite_hooks`, so the flag never gets set and only
-# the count comparison is left. A SystemExit raised while *loading* a spec file is invisible to
-# that comparison, so `rspec --dry-run` can still exit zero on a truncated load. Dry runs are not
-# a pass/fail gate here (CI runs the suite for real via `rake test`), so this is left as a known
-# limitation rather than paid for with a heavier mechanism.
+# Known gap: under `--dry-run` RSpec skips `with_suite_hooks`, so the completion flag never gets
+# set and only the other two questions are left. A SystemExit raised while *loading* a spec file
+# is invisible to both, so `rspec --dry-run` can still exit zero on a truncated load. Dry runs are
+# not a pass/fail gate here (CI runs the suite for real via `rake test`), so this is left as a
+# known limitation rather than paid for with a heavier mechanism.
 suite_reached_completion = false
 
-run_completed_normally = lambda do
-  dry_run = RSpec.configuration.dry_run?
-  next false unless suite_reached_completion || dry_run
+# Returns why this run must not be allowed to exit zero, or nil when a clean exit is trustworthy.
+untrustworthy_success_reason = lambda do
+  reporter = RSpec.world.reporter
+  failed = reporter.failed_examples.size
 
-  # Every example RSpec loaded must also have started. A run cut short mid-suite leaves loaded
-  # examples that never reported.
-  RSpec.world.example_count == RSpec.world.reporter.examples.size
+  if failed.positive?
+    "#{failed} example(s) failed, but the process was about to exit successfully."
+  elsif !(suite_reached_completion || RSpec.configuration.dry_run?)
+    "The run never reached the end of the suite, so the reported example count is not the whole suite."
+  elsif RSpec.world.example_count != reporter.examples.size
+    "Only #{reporter.examples.size} of #{RSpec.world.example_count} loaded examples ran."
+  end
 rescue StandardError
-  # The backstop must never be the reason a run breaks; fall back to the weaker signal.
-  suite_reached_completion
+  # The backstop must never itself be the reason a run breaks; fall back to the weakest signal.
+  "The run never reached the end of the suite." unless suite_reached_completion
 end
 
 at_exit do
-  next if run_completed_normally.call
-
   terminating = $!
   exit_status = if terminating.is_a?(SystemExit)
     terminating.status
@@ -56,12 +65,14 @@ at_exit do
   end
   next unless exit_status.zero?
 
+  reason = untrustworthy_success_reason.call
+  next unless reason
+
   warn ""
-  warn "❌ The RSpec run terminated before the suite finished, so the reported example count is " \
-       "not the whole suite."
-  warn "   The usual cause is `Kernel#abort` or `Kernel#exit` reached while loading a spec file, " \
-       "or from a `before(:suite)` hook."
-  warn "   Failing the run so a truncated suite cannot be mistaken for a passing one."
+  warn "❌ #{reason}"
+  warn "   A `Kernel#abort` or `Kernel#exit` reached while loading a spec file, or from a suite " \
+       "or context hook, is the usual cause."
+  warn "   Failing the run so it cannot be mistaken for a clean pass."
   exit 1
 end
 
