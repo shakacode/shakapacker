@@ -172,7 +172,7 @@ The `options` strategy in the `mergeWithRules` spec decides whether Shakapacker'
 - **`options: "merge"`** (used above) deep-merges your options _onto_ Shakapacker's. The built-in `jsc.parser` (`syntax: "ecmascript"` / `syntax: "typescript"`, `jsx`/`tsx`) and `jsc.transform.react.runtime: "automatic"` are preserved, and your keys are layered on top. This is what you want for adding a plugin or tweaking one option.
 - **`options: "replace"`** swaps the options object out wholesale. Shakapacker's `jsc.parser` and `jsc.transform` are **gone**, not overridden — with the example above, Rspack would be left with no parser syntax and no automatic JSX runtime. Only use `replace` when you are deliberately supplying a complete SWC options object yourself.
 
-Either way, `test: "match"` and `loader: "match"` are what keep the rule count unchanged; without `mergeWithRules` the js rule is duplicated rather than updated.
+Keep **both** `test: "match"` and `loader: "match"` in the spec, for different reasons. `loader: "match"` is what merges your entry into the existing rule instead of appending a new one. `test: "match"` is what pins each entry to the rule it belongs to: matching on `use.loader` alone leaves the rule count unchanged but applies your override to _every_ rule that has a `use` chain, appending `builtin:swc-loader` onto the CSS and Sass chains too. And without `mergeWithRules` at all, the js rule is duplicated rather than updated.
 
 #### Wasm SWC plugins
 
