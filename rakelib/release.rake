@@ -194,6 +194,13 @@ def verify_declared_packages_present!(gem_root:, package_json:, manifest_path:)
   required_names = %w[dependencies devDependencies].flat_map do |key|
     declared_dependency_section(package_json: package_json, manifest_path: manifest_path, key: key).keys
   end
+  # npm treats an optionalDependencies entry as overriding a dependencies entry of the same name,
+  # so a package listed in both may be legitimately absent after a successful install. Without
+  # this subtraction the exclusion above silently fails for exactly that case, and the release
+  # would abort every time — even immediately after the `yarn install` the message prescribes.
+  required_names -= declared_dependency_section(
+    package_json: package_json, manifest_path: manifest_path, key: "optionalDependencies"
+  ).keys
 
   absent = required_names.reject { |name| File.directory?(File.join(node_modules_dir, name)) }
   return if absent.empty?

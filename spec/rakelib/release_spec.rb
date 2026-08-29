@@ -105,7 +105,9 @@ RSpec.describe "release rake helpers" do
       )
 
       expect do
-        verify_node_modules!(gem_root: @node_modules_gem_root)
+        # `abort` raises SystemExit, which would otherwise tear down the whole run instead of
+        # failing this example — a regression here must surface as a normal failure.
+        expect { verify_node_modules!(gem_root: @node_modules_gem_root) }.not_to raise_error
       end.to output(/✓ Node dependencies installed/).to_stdout
     end
 
@@ -114,7 +116,9 @@ RSpec.describe "release rake helpers" do
       write_yarn_integrity("not json at all")
 
       expect do
-        verify_node_modules!(gem_root: @node_modules_gem_root)
+        # `abort` raises SystemExit, which would otherwise tear down the whole run instead of
+        # failing this example — a regression here must surface as a normal failure.
+        expect { verify_node_modules!(gem_root: @node_modules_gem_root) }.not_to raise_error
       end.to output(/✓ Node dependencies installed/).to_stdout
     end
 
@@ -170,6 +174,26 @@ RSpec.describe "release rake helpers" do
       end.to output(/malformed optionalDependencies section.*got Array/m).to_stderr
     end
 
+    # npm lets an optionalDependencies entry override a dependencies entry of the same name, so
+    # this package may be legitimately absent — aborting on it would block every release.
+    it "does not require a dependency that is also declared optional" do
+      REQUIRED_RELEASE_NODE_BINARIES.each { |binary| create_node_bin(binary) }
+      File.write(
+        File.join(@node_modules_gem_root, "package.json"),
+        JSON.generate(
+          "dependencies" => { "fsevents" => "^2.3.0" },
+          "optionalDependencies" => { "fsevents" => "^2.3.0" }
+        )
+      )
+      write_yarn_integrity(JSON.generate("topLevelPatterns" => ["fsevents@^2.3.0"]))
+
+      expect do
+        # `abort` raises SystemExit, which would otherwise tear down the whole run instead of
+        # failing this example — a regression here must surface as a normal failure.
+        expect { verify_node_modules!(gem_root: @node_modules_gem_root) }.not_to raise_error
+      end.to output(/✓ Node dependencies installed/).to_stdout
+    end
+
     it "does not require optional dependencies to be present" do
       REQUIRED_RELEASE_NODE_BINARIES.each { |binary| create_node_bin(binary) }
       File.write(
@@ -179,7 +203,9 @@ RSpec.describe "release rake helpers" do
       write_yarn_integrity(JSON.generate("topLevelPatterns" => ["fsevents@^2.3.0"]))
 
       expect do
-        verify_node_modules!(gem_root: @node_modules_gem_root)
+        # `abort` raises SystemExit, which would otherwise tear down the whole run instead of
+        # failing this example — a regression here must surface as a normal failure.
+        expect { verify_node_modules!(gem_root: @node_modules_gem_root) }.not_to raise_error
       end.to output(/✓ Node dependencies installed/).to_stdout
     end
 
@@ -190,7 +216,9 @@ RSpec.describe "release rake helpers" do
       allow(File).to receive(:read).with(integrity_path).and_raise(Errno::EACCES)
 
       expect do
-        verify_node_modules!(gem_root: @node_modules_gem_root)
+        # `abort` raises SystemExit, which would otherwise tear down the whole run instead of
+        # failing this example — a regression here must surface as a normal failure.
+        expect { verify_node_modules!(gem_root: @node_modules_gem_root) }.not_to raise_error
       end.to output(/✓ Node dependencies installed/).to_stdout
     end
 
@@ -207,7 +235,9 @@ RSpec.describe "release rake helpers" do
       create_complete_install
 
       expect do
-        verify_node_modules!(gem_root: @node_modules_gem_root)
+        # `abort` raises SystemExit, which would otherwise tear down the whole run instead of
+        # failing this example — a regression here must surface as a normal failure.
+        expect { verify_node_modules!(gem_root: @node_modules_gem_root) }.not_to raise_error
       end.to output(/✓ Node dependencies installed/).to_stdout
     end
 
@@ -219,7 +249,7 @@ RSpec.describe "release rake helpers" do
       end
 
       expect do
-        verify_node_modules!(gem_root: repo_root)
+        expect { verify_node_modules!(gem_root: repo_root) }.not_to raise_error
       end.to output(/✓ Node dependencies installed/).to_stdout
     end
   end
