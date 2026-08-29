@@ -979,6 +979,61 @@ describe "Shakapacker::Configuration" do
       end
     end
 
+    context "with an empty legacy 'bundler' value" do
+      before do
+        write_config(<<~YAML)
+          test:
+            source_path: app/javascript
+            bundler:
+        YAML
+      end
+
+      it "describes the ignored value as empty rather than printing nothing" do
+        resolved = nil
+        warning = capture_stderr { resolved = config.assets_bundler }
+
+        expect(resolved).to eq("webpack")
+        expect(warning).to include("its value (empty) is IGNORED")
+      end
+    end
+
+    context "with an empty 'assets_bundler' value and a legacy 'bundler' value" do
+      before do
+        write_config(<<~YAML)
+          test:
+            source_path: app/javascript
+            bundler: rspack
+            assets_bundler:
+        YAML
+      end
+
+      it "does not fall back to the legacy key, matching what package/config.ts builds" do
+        resolved = nil
+        warning = capture_stderr { resolved = config.assets_bundler }
+
+        expect(resolved).to eq("webpack")
+        expect(warning).to eq("")
+      end
+    end
+
+    context "with an empty 'assets_bundler' value and no legacy key" do
+      before do
+        write_config(<<~YAML)
+          test:
+            source_path: app/javascript
+            assets_bundler:
+        YAML
+      end
+
+      it "falls back to the literal webpack default" do
+        resolved = nil
+        warning = capture_stderr { resolved = config.assets_bundler }
+
+        expect(resolved).to eq("webpack")
+        expect(warning).to eq("")
+      end
+    end
+
     context "with both 'bundler' and 'assets_bundler' set" do
       before do
         write_config(<<~YAML)

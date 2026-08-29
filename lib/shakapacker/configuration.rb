@@ -318,7 +318,9 @@ class Shakapacker::Configuration
 
     # The legacy 'bundler' key is never read, so warn that its value is ignored
     if data.has_key?(:bundler) && !data.has_key?(:assets_bundler)
-      $stderr.puts "⚠️  DEPRECATION WARNING: The 'bundler' configuration option is no longer supported and its value (#{data[:bundler]}) is IGNORED. Shakapacker is using '#{resolved}'. Set 'assets_bundler' in your shakapacker.yml instead — it was renamed to avoid confusion with Ruby's Bundler gem manager."
+      legacy_value = data[:bundler].to_s.strip
+      described_value = legacy_value.empty? ? "empty" : legacy_value
+      $stderr.puts "⚠️  DEPRECATION WARNING: The 'bundler' configuration option is no longer supported and its value (#{described_value}) is IGNORED. Shakapacker is using '#{resolved}'. Set 'assets_bundler' in your shakapacker.yml instead — it was renamed to avoid confusion with Ruby's Bundler gem manager."
     end
 
     resolved

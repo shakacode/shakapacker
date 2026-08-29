@@ -329,9 +329,9 @@ describe Shakapacker::SwcMigrator do
       end
 
       # Shakapacker::Configuration#assets_bundler is
-      # `ENV[...] || fetch(:assets_bundler) || fetch(:bundler) || "webpack"`, and
+      # `ENV[...] || fetch(:assets_bundler) || "webpack"`, and
       # fetch(:assets_bundler) already falls back to the bundled default "webpack", so the
-      # legacy `bundler:` key can never be reached. Such an app really does build with webpack,
+      # legacy `bundler:` key is never read. Such an app really does build with webpack,
       # and config/swc.config.js really is read for it, so it must get the webpack guidance.
       context "with only the deprecated bundler key set to rspack" do
         before do
