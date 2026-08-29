@@ -148,9 +148,13 @@ RSpec.describe "release rake helpers" do
       allow(Open3).to receive(:capture2e)
         .with("git", "-C", "/tmp/shakapacker-release/worktree", "rebase", "origin/main")
         .and_return(["", successful_status])
+      allow(Open3).to receive(:capture2e)
+        .with("git", "-C", "/tmp/shakapacker-release/worktree", "branch",
+              "--set-upstream-to=origin/main", "release-dry-run-#{Process.pid}")
+        .and_return(["", successful_status])
     end
 
-    it "refreshes the detached dry-run worktree from origin/main before evaluating the release" do
+    it "refreshes the dry-run worktree from origin/main before evaluating the release" do
       allow(Shakapacker::Utils::Misc).to receive(:sh_in_dir)
 
       yielded_root = nil
@@ -158,13 +162,59 @@ RSpec.describe "release rake helpers" do
 
       expect(yielded_root).to eq("/tmp/shakapacker-release/worktree")
       expect(Shakapacker::Utils::Misc).to have_received(:sh_in_dir)
-        .with("/repo", "git worktree add --detach /tmp/shakapacker-release/worktree HEAD").ordered
+        .with("/repo", "git worktree add -b release-dry-run-#{Process.pid} " \
+                      "/tmp/shakapacker-release/worktree HEAD").ordered
       expect(Open3).to have_received(:capture2e)
         .with("git", "-C", "/tmp/shakapacker-release/worktree", "fetch", "origin", "main").ordered
       expect(Open3).to have_received(:capture2e)
         .with("git", "-C", "/tmp/shakapacker-release/worktree", "rebase", "origin/main").ordered
       expect(Shakapacker::Utils::Misc).to have_received(:sh_in_dir)
         .with("/repo", "git worktree remove --force /tmp/shakapacker-release/worktree").ordered
+    end
+
+    it "tracks origin/main so release-it finds an upstream for the dry-run branch" do
+      allow(Shakapacker::Utils::Misc).to receive(:sh_in_dir)
+
+      with_release_checkout(gem_root: "/repo", dry_run: true) { "ok" }
+
+      expect(Open3).to have_received(:capture2e)
+        .with("git", "-C", "/tmp/shakapacker-release/worktree", "branch",
+              "--set-upstream-to=origin/main", "release-dry-run-#{Process.pid}")
+    end
+
+    it "aborts with an actionable message when the dry-run branch cannot track origin/main" do
+      failed_status = double("status", success?: false)
+      allow(Open3).to receive(:capture2e)
+        .with("git", "-C", "/tmp/shakapacker-release/worktree", "branch",
+              "--set-upstream-to=origin/main", "release-dry-run-#{Process.pid}")
+        .and_return(["the requested upstream branch 'origin/main' does not exist\n", failed_status])
+      allow(Shakapacker::Utils::Misc).to receive(:sh_in_dir)
+
+      expect do
+        expect do
+          with_release_checkout(gem_root: "/repo", dry_run: true) { "unreachable" }
+        end.to raise_error(SystemExit)
+      end.to output(/Unable to track origin\/main from the dry-run branch.*does not exist/m).to_stderr
+    end
+
+    it "deletes the throwaway dry-run branch so no stray branches are left behind" do
+      allow(Shakapacker::Utils::Misc).to receive(:sh_in_dir)
+
+      with_release_checkout(gem_root: "/repo", dry_run: true) { "ok" }
+
+      expect(Shakapacker::Utils::Misc).to have_received(:sh_in_dir)
+        .with("/repo", "git worktree remove --force /tmp/shakapacker-release/worktree").ordered
+      expect(Shakapacker::Utils::Misc).to have_received(:sh_in_dir)
+        .with("/repo", "git branch -D release-dry-run-#{Process.pid}").ordered
+    end
+
+    it "never creates the dry-run worktree with a detached HEAD" do
+      allow(Shakapacker::Utils::Misc).to receive(:sh_in_dir)
+
+      with_release_checkout(gem_root: "/repo", dry_run: true) { "ok" }
+
+      expect(Shakapacker::Utils::Misc).not_to have_received(:sh_in_dir)
+        .with("/repo", a_string_including("git worktree add --detach"))
     end
 
     it "aborts with an actionable message when the dry-run fetch fails" do
@@ -244,6 +294,86 @@ RSpec.describe "release rake helpers" do
           with_release_checkout(gem_root: "/repo", dry_run: true) { "ok" }
         end.to raise_error(RuntimeError, "cleanup failed")
       end.to output(/Failed to remove dry-run release worktree/).to_stderr
+    end
+  end
+
+  # release-it runs `git symbolic-ref HEAD` and aborts the dry run when it fails, so this
+  # exercises real git rather than asserting on the command string alone.
+  describe "#with_release_checkout against a real repository" do
+    def run_git!(*args)
+      output, status = Open3.capture2e("git", *args)
+      raise "git #{args.join(' ')} failed:\n#{output}" unless status.success?
+
+      output
+    end
+
+    def build_repository(sandbox)
+      origin = File.join(sandbox, "origin.git")
+      repo = File.join(sandbox, "repo")
+
+      run_git!("init", "--quiet", "--bare", "--initial-branch=main", origin)
+      run_git!("clone", "--quiet", origin, repo)
+      run_git!("-C", repo, "config", "user.email", "release@example.com")
+      run_git!("-C", repo, "config", "user.name", "Release Bot")
+      File.write(File.join(repo, "README.md"), "dry run\n")
+      run_git!("-C", repo, "add", "README.md")
+      run_git!("-C", repo, "commit", "--quiet", "-m", "Initial commit")
+      run_git!("-C", repo, "push", "--quiet", "origin", "main")
+
+      repo
+    end
+
+    before do
+      allow(Shakapacker::Utils::Misc).to receive(:sh_in_dir) do |dir, *shell_commands|
+        shell_commands.flatten.each do |shell_command|
+          output, status = Open3.capture2e("bash", "-c", "cd #{Shellwords.escape(dir)} && #{shell_command}")
+          raise "sh_in_dir failed: #{shell_command}\n#{output}" unless status.success?
+        end
+      end
+    end
+
+    it "gives the dry-run worktree a symbolic HEAD instead of a detached one" do
+      Dir.mktmpdir("shakapacker-release-symbolic-head") do |sandbox|
+        repo = build_repository(sandbox)
+        symbolic_ref_output = nil
+        symbolic_ref_succeeded = nil
+
+        with_release_checkout(gem_root: repo, dry_run: true) do |release_root|
+          symbolic_ref_output, status = Open3.capture2e("git", "-C", release_root, "symbolic-ref", "HEAD")
+          symbolic_ref_succeeded = status.success?
+        end
+
+        expect(symbolic_ref_succeeded).to be(true)
+        expect(symbolic_ref_output).not_to include("not a symbolic ref")
+        expect(symbolic_ref_output.strip).to eq("refs/heads/release-dry-run-#{Process.pid}")
+      end
+    end
+
+    it "configures an upstream on the dry-run branch, which release-it also requires" do
+      Dir.mktmpdir("shakapacker-release-symbolic-head") do |sandbox|
+        repo = build_repository(sandbox)
+        upstream = nil
+
+        with_release_checkout(gem_root: repo, dry_run: true) do |release_root|
+          upstream = run_git!(
+            "-C", release_root, "for-each-ref", "--format=%(upstream:short)",
+            "refs/heads/release-dry-run-#{Process.pid}"
+          )
+        end
+
+        expect(upstream.strip).to eq("origin/main")
+      end
+    end
+
+    it "leaves no throwaway branch or worktree behind after the dry run" do
+      Dir.mktmpdir("shakapacker-release-symbolic-head") do |sandbox|
+        repo = build_repository(sandbox)
+
+        with_release_checkout(gem_root: repo, dry_run: true) { "ok" }
+
+        expect(run_git!("-C", repo, "branch", "--list")).not_to include("release-dry-run-#{Process.pid}")
+        expect(run_git!("-C", repo, "worktree", "list").lines.size).to eq(1)
+      end
     end
   end
 

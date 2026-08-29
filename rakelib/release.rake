@@ -653,9 +653,16 @@ def with_release_checkout(gem_root:, dry_run:)
   Dir.mktmpdir("shakapacker-release-dry-run") do |tmpdir|
     worktree_dir = File.join(tmpdir, "worktree")
     escaped_worktree_dir = Shellwords.escape(worktree_dir)
+    # release-it runs `git symbolic-ref HEAD`, which fails on a detached HEAD and aborts the
+    # dry run, so the worktree gets a throwaway branch that the ensure block deletes.
+    dry_run_branch = "release-dry-run-#{Process.pid}"
+    escaped_dry_run_branch = Shellwords.escape(dry_run_branch)
 
     # Dry runs should exercise the release flow without dirtying the maintainer's checkout.
-    Shakapacker::Utils::Misc.sh_in_dir(gem_root, "git worktree add --detach #{escaped_worktree_dir} HEAD")
+    Shakapacker::Utils::Misc.sh_in_dir(
+      gem_root,
+      "git worktree add -b #{escaped_dry_run_branch} #{escaped_worktree_dir} HEAD"
+    )
     begin
       # Match the live `git pull --rebase` result without changing the maintainer's checkout.
       fetch_output, fetch_status = Open3.capture2e("git", "-C", worktree_dir, "fetch", "origin", "main")
@@ -667,11 +674,21 @@ def with_release_checkout(gem_root:, dry_run:)
       unless rebase_status.success?
         abort "❌ Unable to rebase the dry run onto origin/main. Update or reconcile the branch, then retry.\n\n#{rebase_output.strip}"
       end
+
+      # release-it also refuses to run without an upstream for the current branch, and the
+      # throwaway branch has none until it tracks the branch the dry run just rebased onto.
+      upstream_output, upstream_status = Open3.capture2e(
+        "git", "-C", worktree_dir, "branch", "--set-upstream-to=origin/main", dry_run_branch
+      )
+      unless upstream_status.success?
+        abort "❌ Unable to track origin/main from the dry-run branch. Check that origin/main exists locally.\n\n#{upstream_output.strip}"
+      end
       yield(worktree_dir)
     ensure
       original_error = $ERROR_INFO
       begin
         Shakapacker::Utils::Misc.sh_in_dir(gem_root, "git worktree remove --force #{escaped_worktree_dir}")
+        Shakapacker::Utils::Misc.sh_in_dir(gem_root, "git branch -D #{escaped_dry_run_branch}")
       rescue Exception => cleanup_error # rubocop:disable Lint/RescueException
         # Preserve any release failure already propagating, even if cleanup exits outside StandardError.
         warn "⚠️ Failed to remove dry-run release worktree #{worktree_dir}: #{cleanup_error.message}"
@@ -833,7 +850,7 @@ def perform_release(
       dry_run: dry_run
     )
 
-    # An argument-less dry run refreshes only its detached worktree. Resolve the
+    # An argument-less dry run refreshes only its throwaway worktree. Resolve the
     # implicit version here so it reads the refreshed changelog and gem version.
     if dry_run && requested_gem_version.empty?
       requested_gem_version = resolve_implicit_release_version(gem_root: release_root, dry_run: true)
