@@ -1015,7 +1015,7 @@ Note: [Rubygem is 6.3.0.pre.rc.1](https://rubygems.org/gems/shakapacker/versions
 
 See [CHANGELOG.md in rails/webpacker (up to v5.4.3)](https://github.com/rails/webpacker/blob/master/CHANGELOG.md)
 
-[Unreleased]: https://github.com/shakacode/shakapacker/compare/v10.3.1...main
+[Unreleased]: https://github.com/shakacode/shakapacker/compare/v10.3.2...main
 [v10.3.2]: https://github.com/shakacode/shakapacker/compare/v10.3.1...v10.3.2
 [v10.3.1]: https://github.com/shakacode/shakapacker/compare/v10.3.0...v10.3.1
 [v10.3.0]: https://github.com/shakacode/shakapacker/compare/v10.2.0...v10.3.0
