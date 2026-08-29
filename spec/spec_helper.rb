@@ -40,7 +40,7 @@ run_completed_normally = lambda do
   # Every example RSpec loaded must also have started. A run cut short mid-suite leaves loaded
   # examples that never reported.
   RSpec.world.example_count == RSpec.world.reporter.examples.size
-rescue StandardError, NoMethodError
+rescue StandardError
   # The backstop must never be the reason a run breaks; fall back to the weaker signal.
   suite_reached_completion
 end

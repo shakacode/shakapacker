@@ -1,5 +1,8 @@
 require "spec_helper"
 require "rake"
+# Used directly by this file's fixtures and guards. `release.rake` also requires it, but relying
+# on that would make this file depend on an unrelated file's require list and on load order.
+require "json"
 
 release_rake_path = File.expand_path("../../rakelib/release.rake", __dir__)
 load release_rake_path unless defined?(ensure_clean_worktree!)
