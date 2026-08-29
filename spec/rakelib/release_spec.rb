@@ -454,7 +454,7 @@ RSpec.describe "release rake helpers" do
               "--set-upstream-to=origin/main", anything)
         .and_return(["", successful_status])
       allow(Open3).to receive(:capture2e)
-        .with("yarn", "install", chdir: "/tmp/shakapacker-release/worktree")
+        .with("yarn", "install", "--production=false", chdir: "/tmp/shakapacker-release/worktree")
         .and_return(["", successful_status])
       # The worktree is a stubbed path, so the post-install binary probe has nothing real to
       # look at. Examples that care about a missing binary re-stub this for themselves.
@@ -676,7 +676,7 @@ RSpec.describe "release rake helpers" do
       allow(Shakapacker::Utils::Misc).to receive(:sh_in_dir)
       installed = false
       allow(Open3).to receive(:capture2e)
-        .with("yarn", "install", chdir: "/tmp/shakapacker-release/worktree") do
+        .with("yarn", "install", "--production=false", chdir: "/tmp/shakapacker-release/worktree") do
           installed = true
           ["", double("status", success?: true)]
         end
@@ -688,7 +688,7 @@ RSpec.describe "release rake helpers" do
 
       expect(installed_before_yield).to be(true)
       expect(Open3).to have_received(:capture2e)
-        .with("yarn", "install", chdir: "/tmp/shakapacker-release/worktree")
+        .with("yarn", "install", "--production=false", chdir: "/tmp/shakapacker-release/worktree")
     end
 
     # A dependency change landing on origin/main must be installed too, so the install has to
@@ -701,13 +701,28 @@ RSpec.describe "release rake helpers" do
       expect(Open3).to have_received(:capture2e)
         .with("git", "-C", "/tmp/shakapacker-release/worktree", "rebase", "origin/main").ordered
       expect(Open3).to have_received(:capture2e)
-        .with("yarn", "install", chdir: "/tmp/shakapacker-release/worktree").ordered
+        .with("yarn", "install", "--production=false", chdir: "/tmp/shakapacker-release/worktree").ordered
+    end
+
+    # Yarn Classic treats NODE_ENV=production as if `--production` were passed and omits
+    # devDependencies — which is where typescript and prettier live. A maintainer shell that
+    # exports it would otherwise leave prepublishOnly without its binaries even though the
+    # install itself succeeded. `--production=false` overrides NODE_ENV and is inert otherwise.
+    it "installs devDependencies even when the shell exports NODE_ENV=production" do
+      allow(Shakapacker::Utils::Misc).to receive(:sh_in_dir)
+
+      with_release_checkout(gem_root: "/repo", dry_run: true) { "ok" }
+
+      expect(Open3).to have_received(:capture2e)
+        .with("yarn", "install", "--production=false", chdir: "/tmp/shakapacker-release/worktree")
+      expect(Open3).not_to have_received(:capture2e)
+        .with("yarn", "install", chdir: "/tmp/shakapacker-release/worktree")
     end
 
     it "aborts with an actionable message when the worktree install fails" do
       allow(Shakapacker::Utils::Misc).to receive(:sh_in_dir)
       allow(Open3).to receive(:capture2e)
-        .with("yarn", "install", chdir: "/tmp/shakapacker-release/worktree")
+        .with("yarn", "install", "--production=false", chdir: "/tmp/shakapacker-release/worktree")
         .and_return(["error registry unreachable", double("status", success?: false)])
 
       expect do
@@ -737,7 +752,7 @@ RSpec.describe "release rake helpers" do
     it "aborts with an actionable message when yarn is not on PATH" do
       allow(Shakapacker::Utils::Misc).to receive(:sh_in_dir)
       allow(Open3).to receive(:capture2e)
-        .with("yarn", "install", chdir: "/tmp/shakapacker-release/worktree")
+        .with("yarn", "install", "--production=false", chdir: "/tmp/shakapacker-release/worktree")
         .and_raise(Errno::ENOENT)
 
       expect do

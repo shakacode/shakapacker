@@ -796,7 +796,11 @@ end
 def install_dry_run_node_modules!(worktree_dir)
   puts "Installing node dependencies in the dry-run worktree (prepublishOnly needs them)..."
   begin
-    output, status = Open3.capture2e("yarn", "install", chdir: worktree_dir)
+    # `--production=false` guards against a maintainer shell that exports NODE_ENV=production:
+    # Yarn Classic then behaves as if `--production` were passed and omits devDependencies —
+    # which is where typescript and prettier live, the very binaries prepublishOnly needs.
+    # The flag overrides NODE_ENV and is a no-op otherwise.
+    output, status = Open3.capture2e("yarn", "install", "--production=false", chdir: worktree_dir)
   rescue Errno::ENOENT
     abort "❌ yarn is not installed or not available on PATH, so the dry-run worktree cannot be " \
           "prepared. Install yarn and retry."
