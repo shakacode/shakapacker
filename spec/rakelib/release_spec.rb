@@ -989,6 +989,57 @@ RSpec.describe "release rake helpers" do
 
       expect(result[:changelog_section_found]).to be(true)
     end
+
+    # release-it skips its own root `npm version` under `--dry-run`, while the supplementals are
+    # bumped for real regardless. Without a stand-in bump the dry run always hands
+    # publish-packages.sh a root package.json one version behind, and its lockstep guard aborts.
+    it "bumps the root package.json itself on the dry-run path, before publish-packages.sh runs" do
+      root_bump_command = "npm version 10.4.0 --no-git-tag-version --allow-same-version --workspaces=false"
+      commands = []
+      allow(self).to receive(:with_release_checkout).and_yield("/refreshed")
+      allow(self).to receive(:validate_release_ci_status!)
+      allow(self).to receive(:target_gem_version).and_return("10.4.0")
+      allow(self).to receive(:warn_changelog_missing)
+      allow(self).to receive(:validate_release_version_policy!)
+      allow(self).to receive(:refresh_release_root_lockfile)
+      allow(self).to receive(:refresh_spec_dummy_lockfiles)
+      allow(self).to receive(:current_gem_version).with("/refreshed").and_return("10.4.0")
+      allow(self).to receive(:bump_supplemental_core_dep)
+      allow(self).to receive(:extract_changelog_section).and_return("release notes")
+      allow(Shakapacker::Utils::Misc).to receive(:sh_in_dir) { |_dir, command| commands << command }
+
+      perform_release(gem_version: "10.4.0", dry_run: true, check_uncommitted: false)
+
+      expect(Shakapacker::Utils::Misc).to have_received(:sh_in_dir).with("/refreshed", root_bump_command)
+      # The bump is worthless unless it lands before the lockstep guard reads package.json.
+      expect(commands.index(root_bump_command))
+        .to be < commands.index { |command| command.start_with?("./scripts/publish-packages.sh") }
+    end
+
+    it "leaves the root package.json bump to release-it on the live path" do
+      allow(self).to receive(:ensure_clean_worktree!)
+      allow(self).to receive(:with_release_checkout).and_yield("/release")
+      allow(self).to receive(:verify_node_modules!)
+      allow(self).to receive(:verify_npm_auth)
+      allow(self).to receive(:verify_gh_auth)
+      allow(self).to receive(:validate_release_ci_status!)
+      allow(self).to receive(:target_gem_version).and_return("10.4.0")
+      allow(self).to receive(:warn_changelog_missing)
+      allow(self).to receive(:validate_release_version_policy!)
+      allow(self).to receive(:refresh_release_root_lockfile)
+      allow(self).to receive(:refresh_spec_dummy_lockfiles)
+      allow(self).to receive(:current_gem_version).with("/release").and_return("10.4.0")
+      allow(self).to receive(:bump_supplemental_core_dep)
+      allow(self).to receive(:extract_changelog_section).and_return("release notes")
+      allow(self).to receive(:sync_github_release_after_publish)
+      allow(Shakapacker::Utils::Misc).to receive(:sh_in_dir)
+
+      perform_release(gem_version: "10.4.0", dry_run: false)
+
+      # A second bump on the live path would re-run `npm version` after release-it already
+      # committed the bump, dirtying the tagged tree.
+      expect(Shakapacker::Utils::Misc).not_to have_received(:sh_in_dir).with("/release", /--workspaces=false/)
+    end
   end
 
   describe "#extract_changelog_section" do
