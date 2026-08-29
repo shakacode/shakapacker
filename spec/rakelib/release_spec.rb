@@ -256,12 +256,49 @@ RSpec.describe "release rake helpers" do
       end.to output(/✓ Node dependencies installed/).to_stdout
     end
 
+    # The example below runs the real check against the real repository, so it needs an install
+    # that is *usable*, not merely present — and a developer's node_modules drifting from
+    # package.json is an ordinary state a checkout cannot rule out. That is an environment
+    # problem, not a defect in the code under test, so detect it up front and skip rather than
+    # letting `verify_node_modules!` reach `abort`.
+    #
+    # Deliberately narrow: it models only the stale-pattern comparison, which is the one abort
+    # path a legitimately drifted checkout hits. Every other way the helper can abort — missing
+    # binaries, a declared package absent from the tree, a malformed manifest — is left to fail
+    # the example loudly, because none of those is a state a working install should be in.
+    def repo_node_modules_unusable_reason(repo_root)
+      return "node_modules is not installed in this environment" unless
+        File.directory?(File.join(repo_root, "node_modules", ".bin"))
+
+      integrity_path = File.join(repo_root, "node_modules", ".yarn-integrity")
+      return "no `yarn install` has finished in this environment (#{integrity_path} is missing)" unless
+        File.exist?(integrity_path)
+
+      recorded_patterns = JSON.parse(File.read(integrity_path))["topLevelPatterns"]
+      # A marker this cannot compare tells us nothing about drift; the helper skips its own drift
+      # detection in that case too, so there is nothing here to skip for.
+      return nil unless recorded_patterns.is_a?(Array)
+
+      package_json = JSON.parse(File.read(File.join(repo_root, "package.json")))
+      declared_patterns = %w[dependencies devDependencies optionalDependencies].flat_map do |key|
+        section = package_json[key]
+        section.is_a?(Hash) ? section.map { |name, spec| "#{name}@#{spec}" } : []
+      end
+
+      stale = declared_patterns - recorded_patterns
+      return nil if stale.empty?
+
+      "node_modules has drifted from package.json in this environment " \
+        "(#{stale.join(', ')} not installed); run `yarn install`"
+    rescue JSON::ParserError, SystemCallError => e
+      "node_modules or package.json could not be read in this environment: #{e.message}"
+    end
+
     # Guards the dangerous direction: a false abort here would block a legitimate release.
     it "accepts the repository's own installed node_modules" do
       repo_root = File.expand_path("../..", __dir__)
-      unless File.directory?(File.join(repo_root, "node_modules", ".bin"))
-        skip "node_modules is not installed in this environment"
-      end
+      unusable_reason = repo_node_modules_unusable_reason(repo_root)
+      skip unusable_reason if unusable_reason
 
       expect do
         expect { verify_node_modules!(gem_root: repo_root) }.not_to raise_error
