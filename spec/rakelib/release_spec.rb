@@ -141,6 +141,35 @@ RSpec.describe "release rake helpers" do
       end.to output(/damaged: js-yaml/m).to_stderr
     end
 
+    it "aborts cleanly when a dependency section is not an object" do
+      create_complete_install
+      File.write(
+        File.join(@node_modules_gem_root, "package.json"),
+        JSON.generate("dependencies" => "webpack-merge@^5.8.0")
+      )
+
+      expect do
+        expect { verify_node_modules!(gem_root: @node_modules_gem_root) }.to raise_error(SystemExit)
+      end.to output(/malformed dependencies section: expected an object.*got String/m).to_stderr
+    end
+
+    # An Array survives `.map`, so without the shape check this one yields garbage patterns
+    # instead of raising — the drift comparison would then trust them.
+    it "aborts cleanly when an optional dependency section is an array" do
+      create_complete_install
+      File.write(
+        File.join(@node_modules_gem_root, "package.json"),
+        JSON.generate(
+          "dependencies" => { "webpack-merge" => "^5.8.0" },
+          "optionalDependencies" => ["fsevents"]
+        )
+      )
+
+      expect do
+        expect { verify_node_modules!(gem_root: @node_modules_gem_root) }.to raise_error(SystemExit)
+      end.to output(/malformed optionalDependencies section.*got Array/m).to_stderr
+    end
+
     it "does not require optional dependencies to be present" do
       REQUIRED_RELEASE_NODE_BINARIES.each { |binary| create_node_bin(binary) }
       File.write(

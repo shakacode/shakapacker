@@ -158,7 +158,7 @@ def verify_node_modules_match_manifest!(gem_root:)
 
   # Runs before the marker is even parsed: it needs only package.json, so an unreadable marker
   # must not silently skip it too.
-  verify_declared_packages_present!(gem_root: gem_root, package_json: package_json)
+  verify_declared_packages_present!(gem_root: gem_root, package_json: package_json, manifest_path: manifest_path)
 
   recorded_patterns = begin
     JSON.parse(File.read(integrity_path))["topLevelPatterns"]
@@ -170,7 +170,8 @@ def verify_node_modules_match_manifest!(gem_root:)
   return unless recorded_patterns.is_a?(Array)
 
   declared_patterns = %w[dependencies devDependencies optionalDependencies].flat_map do |key|
-    (package_json[key] || {}).map { |name, spec| "#{name}@#{spec}" }
+    declared_dependency_section(package_json: package_json, manifest_path: manifest_path, key: key)
+      .map { |name, spec| "#{name}@#{spec}" }
   end
 
   # One-directional on purpose: leftover entries in the marker are harmless, while a pattern
@@ -188,15 +189,30 @@ end
 # is gone. So check the tree itself, not just yarn's record of it.
 #
 # Optional dependencies are excluded: they are permitted to be absent by definition.
-def verify_declared_packages_present!(gem_root:, package_json:)
+def verify_declared_packages_present!(gem_root:, package_json:, manifest_path:)
   node_modules_dir = File.join(gem_root, "node_modules")
-  required_names = %w[dependencies devDependencies].flat_map { |key| (package_json[key] || {}).keys }
+  required_names = %w[dependencies devDependencies].flat_map do |key|
+    declared_dependency_section(package_json: package_json, manifest_path: manifest_path, key: key).keys
+  end
 
   absent = required_names.reject { |name| File.directory?(File.join(node_modules_dir, name)) }
   return if absent.empty?
 
   abort "❌ Node dependencies are damaged: #{absent.join(', ')} declared in package.json but " \
         "missing from #{node_modules_dir}. Run `yarn install` and retry."
+end
+
+# package.json is the manifest being released, so a malformed dependency section must abort with an
+# actionable message rather than escape as a NoMethodError backtrace from `.keys` / `.map`. An
+# Array is the quieter case: it survives `.map` and yields garbage patterns the drift comparison
+# would otherwise trust.
+def declared_dependency_section(package_json:, manifest_path:, key:)
+  section = package_json[key]
+  return {} if section.nil?
+  return section if section.is_a?(Hash)
+
+  abort "❌ #{manifest_path} has a malformed #{key} section: expected an object mapping package " \
+        "names to version specs, got #{section.class}. Fix package.json and retry."
 end
 
 def current_gem_version(gem_root)
