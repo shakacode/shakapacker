@@ -1,6 +1,7 @@
 require_relative "spec_helper_initializer"
 require "tempfile"
 require "tmpdir"
+require "stringio"
 require "fileutils"
 
 describe "Shakapacker::Configuration" do
@@ -618,7 +619,6 @@ describe "Shakapacker::Configuration" do
         allow(config).to receive(:fetch).with(:javascript_transpiler).and_return(nil)
         allow(config).to receive(:fetch).with(:webpack_loader).and_return(nil)
         allow(config).to receive(:fetch).with(:assets_bundler).and_return(nil)
-        allow(config).to receive(:fetch).with(:bundler).and_return(nil)
         expect(config.javascript_transpiler).to eq "babel"
       end
     end
@@ -895,6 +895,185 @@ describe "Shakapacker::Configuration" do
     end
   end
 
+  describe "#assets_bundler" do
+    let(:app_root) { Pathname.new(Dir.mktmpdir) }
+    let(:config_path) { app_root.join("config/shakapacker.yml") }
+    let(:config) do
+      Shakapacker::Configuration.new(
+        root_path: app_root,
+        config_path: config_path,
+        env: "test"
+      )
+    end
+
+    before do
+      FileUtils.mkdir_p(config_path.dirname)
+    end
+
+    after do
+      FileUtils.rm_rf(app_root)
+    end
+
+    # assets_bundler gives SHAKAPACKER_ASSETS_BUNDLER precedence over the YAML file,
+    # so an ambient value would silently replace what these examples assert.
+    around do |example|
+      previous = ENV["SHAKAPACKER_ASSETS_BUNDLER"]
+      ENV.delete("SHAKAPACKER_ASSETS_BUNDLER")
+      example.run
+    ensure
+      if previous.nil?
+        ENV.delete("SHAKAPACKER_ASSETS_BUNDLER")
+      else
+        ENV["SHAKAPACKER_ASSETS_BUNDLER"] = previous
+      end
+    end
+
+    def write_config(contents)
+      File.write(config_path, contents)
+    end
+
+    def capture_stderr
+      original = $stderr
+      $stderr = StringIO.new
+      yield
+      $stderr.string
+    ensure
+      $stderr = original
+    end
+
+    context "with only the legacy 'bundler' key" do
+      before do
+        write_config(<<~YAML)
+          test:
+            source_path: app/javascript
+            bundler: rspack
+        YAML
+      end
+
+      it "ignores the legacy value, warns that it is ignored and names the bundler actually used" do
+        resolved = nil
+        warning = capture_stderr { resolved = config.assets_bundler }
+
+        expect(resolved).to eq("webpack")
+        expect(warning).to include("The 'bundler' configuration option is no longer supported")
+        expect(warning).to include("its value (rspack) is IGNORED")
+        expect(warning).to include("Shakapacker is using 'webpack'")
+        expect(warning).to include("Set 'assets_bundler' in your shakapacker.yml instead")
+      end
+
+      it "names the environment override in the warning when one is set" do
+        ENV["SHAKAPACKER_ASSETS_BUNDLER"] = "rspack"
+
+        resolved = nil
+        warning = capture_stderr { resolved = config.assets_bundler }
+
+        expect(resolved).to eq("rspack")
+        expect(warning).to include("Shakapacker is using 'rspack'")
+      end
+
+      it "names the empty override rather than printing an empty bundler name" do
+        ENV["SHAKAPACKER_ASSETS_BUNDLER"] = ""
+
+        warning = capture_stderr { config.assets_bundler }
+
+        expect(warning).to include("Shakapacker is using no bundler (SHAKAPACKER_ASSETS_BUNDLER is set but empty)")
+        expect(warning).not_to include("Shakapacker is using ''")
+      end
+    end
+
+    context "with only the 'assets_bundler' key" do
+      before do
+        write_config(<<~YAML)
+          test:
+            source_path: app/javascript
+            assets_bundler: rspack
+        YAML
+      end
+
+      it "resolves the configured bundler without any deprecation warning" do
+        resolved = nil
+        warning = capture_stderr { resolved = config.assets_bundler }
+
+        expect(resolved).to eq("rspack")
+        expect(warning).to eq("")
+      end
+    end
+
+    context "with an empty legacy 'bundler' value" do
+      before do
+        write_config(<<~YAML)
+          test:
+            source_path: app/javascript
+            bundler:
+        YAML
+      end
+
+      it "describes the ignored value as empty rather than printing nothing" do
+        resolved = nil
+        warning = capture_stderr { resolved = config.assets_bundler }
+
+        expect(resolved).to eq("webpack")
+        expect(warning).to include("its value (empty) is IGNORED")
+      end
+    end
+
+    context "with an empty 'assets_bundler' value and a legacy 'bundler' value" do
+      before do
+        write_config(<<~YAML)
+          test:
+            source_path: app/javascript
+            bundler: rspack
+            assets_bundler:
+        YAML
+      end
+
+      it "does not fall back to the legacy key, matching what package/config.ts builds" do
+        resolved = nil
+        warning = capture_stderr { resolved = config.assets_bundler }
+
+        expect(resolved).to eq("webpack")
+        expect(warning).to eq("")
+      end
+    end
+
+    context "with an empty 'assets_bundler' value and no legacy key" do
+      before do
+        write_config(<<~YAML)
+          test:
+            source_path: app/javascript
+            assets_bundler:
+        YAML
+      end
+
+      it "falls back to the literal webpack default" do
+        resolved = nil
+        warning = capture_stderr { resolved = config.assets_bundler }
+
+        expect(resolved).to eq("webpack")
+        expect(warning).to eq("")
+      end
+    end
+
+    context "with both 'bundler' and 'assets_bundler' set" do
+      before do
+        write_config(<<~YAML)
+          test:
+            source_path: app/javascript
+            bundler: webpack
+            assets_bundler: rspack
+        YAML
+      end
+
+      it "resolves 'assets_bundler' and stays silent about the legacy key" do
+        resolved = nil
+        warning = capture_stderr { resolved = config.assets_bundler }
+
+        expect(resolved).to eq("rspack")
+        expect(warning).to eq("")
+      end
+    end
+  end
+
   describe "#webpack_loader (deprecated)" do
     context "with both webpack_loader and javascript_transpiler set" do
       let(:config) do
@@ -931,7 +1110,6 @@ describe "Shakapacker::Configuration" do
         allow(config).to receive(:fetch).with(:javascript_transpiler).and_return(nil)
         allow(config).to receive(:fetch).with(:webpack_loader).and_return("swc")
         allow(config).to receive(:fetch).with(:assets_bundler).and_return(nil)
-        allow(config).to receive(:fetch).with(:bundler).and_return(nil)
 
         expect($stderr).to receive(:puts).with(/DEPRECATION WARNING.*webpack_loader.*deprecated.*javascript_transpiler/)
         expect(config.javascript_transpiler).to eq "swc"
