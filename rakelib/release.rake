@@ -127,7 +127,47 @@ def verify_node_modules!(gem_root:)
           "Run `yarn install` and retry."
   end
 
-  puts "✓ Node dependencies installed with prepublishOnly binaries: #{REQUIRED_RELEASE_NODE_BINARIES.join(', ')}"
+  verify_node_modules_match_manifest!(gem_root: gem_root)
+
+  puts "✓ Node dependencies installed and matching package.json"
+end
+
+# Binary presence alone does not prove a usable install. `prepublishOnly` compiles the whole
+# package, resolving far more than tsc and prettier, and two realistic states leave those two
+# on disk while that deeper resolution still fails: an install interrupted partway, and a
+# release run right after merging dependency changes, where node_modules predates package.json.
+#
+# Yarn writes node_modules/.yarn-integrity only once an install finishes, recording the exact
+# `name@spec` patterns package.json declared at that moment. Comparing the manifest against
+# yarn's own marker catches both states without running a build or touching the working tree.
+def verify_node_modules_match_manifest!(gem_root:)
+  integrity_path = File.join(gem_root, "node_modules", ".yarn-integrity")
+  unless File.exist?(integrity_path)
+    abort "❌ Node dependencies are incompletely installed (#{integrity_path} is missing, so no " \
+          "`yarn install` ever finished). Run `yarn install` and retry."
+  end
+
+  recorded_patterns = begin
+    JSON.parse(File.read(integrity_path))["topLevelPatterns"]
+  rescue JSON::ParserError
+    nil
+  end
+  # An unreadable or differently-shaped marker means a yarn version whose format this cannot
+  # compare. Skip drift detection rather than block a release on an unverifiable signal.
+  return unless recorded_patterns.is_a?(Array)
+
+  package_json = JSON.parse(File.read(File.join(gem_root, "package.json")))
+  declared_patterns = %w[dependencies devDependencies optionalDependencies].flat_map do |key|
+    (package_json[key] || {}).map { |name, spec| "#{name}@#{spec}" }
+  end
+
+  # One-directional on purpose: leftover entries in the marker are harmless, while a pattern
+  # package.json declares and the install never saw is exactly the stale-install case.
+  stale = declared_patterns - recorded_patterns
+  return if stale.empty?
+
+  abort "❌ Node dependencies are stale: package.json declares #{stale.join(', ')}, which the " \
+        "installed node_modules does not have. Run `yarn install` and retry."
 end
 
 def current_gem_version(gem_root)

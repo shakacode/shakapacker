@@ -48,6 +48,20 @@ RSpec.describe "release rake helpers" do
       FileUtils.chmod(0o755, bin_path)
     end
 
+    def create_complete_install(declared: { "webpack-merge" => "^5.8.0" }, recorded: nil)
+      REQUIRED_RELEASE_NODE_BINARIES.each { |binary| create_node_bin(binary) }
+      File.write(
+        File.join(@node_modules_gem_root, "package.json"),
+        JSON.generate("dependencies" => declared)
+      )
+      patterns = recorded || declared.map { |name, spec| "#{name}@#{spec}" }
+      write_yarn_integrity(JSON.generate("topLevelPatterns" => patterns))
+    end
+
+    def write_yarn_integrity(contents)
+      File.write(File.join(@node_modules_gem_root, "node_modules", ".yarn-integrity"), contents)
+    end
+
     it "aborts naming yarn install when node_modules is not installed" do
       expect do
         expect { verify_node_modules!(gem_root: @node_modules_gem_root) }.to raise_error(SystemExit)
@@ -62,11 +76,62 @@ RSpec.describe "release rake helpers" do
       end.to output(/Node dependencies are incomplete: tsc.*Run `yarn install` and retry/m).to_stderr
     end
 
-    it "passes when every prepublishOnly binary is present" do
+    it "aborts naming yarn install when no install ever finished" do
       REQUIRED_RELEASE_NODE_BINARIES.each { |binary| create_node_bin(binary) }
 
       expect do
+        expect { verify_node_modules!(gem_root: @node_modules_gem_root) }.to raise_error(SystemExit)
+      end.to output(/incompletely installed.*Run `yarn install` and retry/m).to_stderr
+    end
+
+    it "aborts naming yarn install when package.json declares a dependency the install never saw" do
+      create_complete_install(
+        declared: { "webpack-merge" => "^5.8.0", "js-yaml" => "^4.1.0" },
+        recorded: ["webpack-merge@^5.8.0"]
+      )
+
+      expect do
+        expect { verify_node_modules!(gem_root: @node_modules_gem_root) }.to raise_error(SystemExit)
+      end.to output(/stale: package\.json declares js-yaml@\^4\.1\.0.*Run `yarn install` and retry/m).to_stderr
+    end
+
+    it "tolerates leftover entries in the integrity marker" do
+      create_complete_install(
+        declared: { "webpack-merge" => "^5.8.0" },
+        recorded: ["webpack-merge@^5.8.0", "removed-package@^1.0.0"]
+      )
+
+      expect do
         verify_node_modules!(gem_root: @node_modules_gem_root)
+      end.to output(/✓ Node dependencies installed/).to_stdout
+    end
+
+    it "skips drift detection when the integrity marker is not in a comparable format" do
+      REQUIRED_RELEASE_NODE_BINARIES.each { |binary| create_node_bin(binary) }
+      write_yarn_integrity("not json at all")
+
+      expect do
+        verify_node_modules!(gem_root: @node_modules_gem_root)
+      end.to output(/✓ Node dependencies installed/).to_stdout
+    end
+
+    it "passes when the install is complete and matches package.json" do
+      create_complete_install
+
+      expect do
+        verify_node_modules!(gem_root: @node_modules_gem_root)
+      end.to output(/✓ Node dependencies installed/).to_stdout
+    end
+
+    # Guards the dangerous direction: a false abort here would block a legitimate release.
+    it "accepts the repository's own installed node_modules" do
+      repo_root = File.expand_path("../..", __dir__)
+      unless File.directory?(File.join(repo_root, "node_modules", ".bin"))
+        skip "node_modules is not installed in this environment"
+      end
+
+      expect do
+        verify_node_modules!(gem_root: repo_root)
       end.to output(/✓ Node dependencies installed/).to_stdout
     end
   end
