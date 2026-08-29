@@ -154,7 +154,7 @@ module.exports = customConfig
 
 ### Required Configuration
 
-SWC mangles (minifies) class names by default for optimization. Since Stimulus relies on class names to discover and instantiate controllers, you must preserve class names in your `config/swc.config.js`:
+SWC mangles (minifies) class names by default for optimization. Since Stimulus relies on class names to discover and instantiate controllers, you must preserve class names. On webpack, do this in your `config/swc.config.js`:
 
 ```js
 // config/swc.config.js
@@ -175,6 +175,8 @@ module.exports = {
   }
 }
 ```
+
+On Rspack, `config/swc.config.js` is not read — see [Customizing SWC on Rspack](./rspack.md#customizing-swc-on-rspack) to apply `keepClassNames: true` there instead.
 
 **Note:** Starting with Shakapacker v9.1.0, the default `swc.config.js` created by `rake shakapacker:migrate_to_swc` includes `keepClassNames: true` automatically.
 
@@ -246,7 +248,7 @@ jsc: {
 
 If your Stimulus controllers aren't working after migrating to SWC:
 
-1. ✅ Verify `keepClassNames: true` is set in `config/swc.config.js`
+1. ✅ Verify `keepClassNames: true` is set in `config/swc.config.js` (webpack) or in your `builtin:swc-loader` override (Rspack — see [Customizing SWC on Rspack](./rspack.md#customizing-swc-on-rspack))
 2. ✅ Ensure your controllers have explicit class names (not anonymous classes)
 3. ✅ Test with `console.log()` in your controller's `connect()` method to verify it's being instantiated
 4. ✅ Check that you haven't added `jsc.target` (which conflicts with Shakapacker's `env` setting)
@@ -308,4 +310,4 @@ See Rspack's [SWC plugin version mismatch](https://rspack.rs/errors/swc-plugin-v
 ## Known limitations
 
 - `browserslist` config at the moment is not being picked up automatically. [Related SWC issue](https://github.com/swc-project/swc/issues/3365). You can add your browserlist config through customizing loader options as outlined above.
-- On webpack, using a `.swcrc` config file is not supported: you might face issues when `.swcrc` config diverges from the SWC options we're passing in the webpack rule. On Rspack, `.swcrc` is not read at all — Rspack's `builtin:swc-loader` ignores it entirely, so any settings there are silently inert. See [Customizing SWC on Rspack](./rspack.md#customizing-swc-on-rspack) to override SWC options on Rspack instead.
+- On webpack, `.swcrc` is read, but it completely overrides Shakapacker's default SWC settings instead of merging with them, which can cause build failures — use `config/swc.config.js` instead (see [Customizing loader options](#customizing-loader-options) above). On Rspack, `.swcrc` is not read at all — Rspack's `builtin:swc-loader` ignores it entirely, so any settings there are silently inert. See [Customizing SWC on Rspack](./rspack.md#customizing-swc-on-rspack) to override SWC options on Rspack instead.

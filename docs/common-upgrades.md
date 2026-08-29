@@ -396,7 +396,7 @@ for how to confirm the gain on your codebase.
 
 #### Issue: Decorators not working
 
-Add decorator support to `config/swc.config.js`:
+Add decorator support to `config/swc.config.js` (webpack):
 
 ```javascript
 module.exports = {
@@ -411,9 +411,11 @@ module.exports = {
 }
 ```
 
+On Rspack, `config/swc.config.js` is not read — see [Customizing SWC on Rspack](./rspack.md#customizing-swc-on-rspack) to enable decorator support there instead.
+
 #### Issue: Stimulus controllers not working
 
-Ensure `keepClassNames: true` is set in `config/swc.config.js`.
+Ensure `keepClassNames: true` is set in `config/swc.config.js` (webpack) — on Rspack, `config/swc.config.js` is not read; see [Customizing SWC on Rspack](./rspack.md#customizing-swc-on-rspack) instead.
 
 ### Rollback
 
