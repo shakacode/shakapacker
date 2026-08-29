@@ -14,18 +14,39 @@ require_relative "./support/html_test_helpers"
 #      run continues and the offending example is named. This is the readable half.
 #   2. `at_exit` is the backstop for everything an example hook cannot see — a SystemExit while
 #      loading a spec file, or from a `before(:suite)` hook, both of which happen before any
-#      example exists. It refuses to let a run that never reached `after(:suite)` exit zero.
+#      example exists. It refuses to let a run that did not actually complete exit zero.
+#
+# "Completed" needs two signals, because neither alone is sufficient. `after(:suite)` runs from an
+# `ensure` inside `with_suite_hooks`, so it fires even when a `before(:suite)` hook exits — the
+# flag alone would call that truncated run complete. And the example counts alone cannot see a
+# SystemExit raised before any example was loaded, where nothing is both loaded and unexecuted.
+# Requiring the suite to have finished *and* every loaded example to have reported covers both.
 #
 # The backstop only ever turns green into red: if the process is already exiting non-zero, the run
 # is failing on its own and needs no help, so it stays out of the way (a spec file with a syntax
 # error, for instance, already exits non-zero and reports its own error).
+#
+# Known gap: under `--dry-run` RSpec skips `with_suite_hooks`, so the flag never gets set and only
+# the count comparison is left. A SystemExit raised while *loading* a spec file is invisible to
+# that comparison, so `rspec --dry-run` can still exit zero on a truncated load. Dry runs are not
+# a pass/fail gate here (CI runs the suite for real via `rake test`), so this is left as a known
+# limitation rather than paid for with a heavier mechanism.
 suite_reached_completion = false
 
+run_completed_normally = lambda do
+  dry_run = RSpec.configuration.dry_run?
+  next false unless suite_reached_completion || dry_run
+
+  # Every example RSpec loaded must also have started. A run cut short mid-suite leaves loaded
+  # examples that never reported.
+  RSpec.world.example_count == RSpec.world.reporter.examples.size
+rescue StandardError, NoMethodError
+  # The backstop must never be the reason a run breaks; fall back to the weaker signal.
+  suite_reached_completion
+end
+
 at_exit do
-  next if suite_reached_completion
-  # `--dry-run` skips `with_suite_hooks` entirely, so `after(:suite)` never fires even though the
-  # run completed normally. Without this the backstop would fail every dry run.
-  next if RSpec.configuration.dry_run?
+  next if run_completed_normally.call
 
   terminating = $!
   exit_status = if terminating.is_a?(SystemExit)
@@ -38,7 +59,7 @@ at_exit do
   warn ""
   warn "❌ The RSpec run terminated before the suite finished, so the reported example count is " \
        "not the whole suite."
-  warn "   The usual cause is `Kernel#abort` or `Kernel#exit` reached while loading a spec file " \
+  warn "   The usual cause is `Kernel#abort` or `Kernel#exit` reached while loading a spec file, " \
        "or from a `before(:suite)` hook."
   warn "   Failing the run so a truncated suite cannot be mistaken for a passing one."
   exit 1

@@ -262,10 +262,11 @@ RSpec.describe "release rake helpers" do
     # problem, not a defect in the code under test, so detect it up front and skip rather than
     # letting `verify_node_modules!` reach `abort`.
     #
-    # Deliberately narrow: it models only the stale-pattern comparison, which is the one abort
-    # path a legitimately drifted checkout hits. Every other way the helper can abort — missing
-    # binaries, a declared package absent from the tree, a malformed manifest — is left to fail
-    # the example loudly, because none of those is a state a working install should be in.
+    # Deliberately narrow. It skips only for the two states in which no install exists to test —
+    # node_modules absent, and no `yarn install` ever finished — plus confirmed dependency drift,
+    # which is the one abort path a working checkout legitimately reaches. Every other way the
+    # helper can abort (a missing prepublishOnly binary, a declared package absent from the tree,
+    # a malformed manifest) deliberately falls through to fail the example loudly.
     def repo_node_modules_unusable_reason(repo_root)
       return "node_modules is not installed in this environment" unless
         File.directory?(File.join(repo_root, "node_modules", ".bin"))
@@ -274,12 +275,17 @@ RSpec.describe "release rake helpers" do
       return "no `yarn install` has finished in this environment (#{integrity_path} is missing)" unless
         File.exist?(integrity_path)
 
-      recorded_patterns = JSON.parse(File.read(integrity_path))["topLevelPatterns"]
-      # A marker this cannot compare tells us nothing about drift; the helper skips its own drift
-      # detection in that case too, so there is nothing here to skip for.
+      # From here the probe can only rule drift *in*. Anything it cannot read or compare returns
+      # nil so the example runs and `verify_node_modules!` decides for itself: the helper
+      # deliberately tolerates an uncomparable integrity marker, and aborts with its own
+      # actionable message on a broken package.json. Neither outcome is this probe's to pre-empt.
+      integrity = read_json_or_nil(integrity_path)
+      recorded_patterns = integrity.is_a?(Hash) ? integrity["topLevelPatterns"] : nil
       return nil unless recorded_patterns.is_a?(Array)
 
-      package_json = JSON.parse(File.read(File.join(repo_root, "package.json")))
+      package_json = read_json_or_nil(File.join(repo_root, "package.json"))
+      return nil unless package_json.is_a?(Hash)
+
       declared_patterns = %w[dependencies devDependencies optionalDependencies].flat_map do |key|
         section = package_json[key]
         section.is_a?(Hash) ? section.map { |name, spec| "#{name}@#{spec}" } : []
@@ -290,8 +296,12 @@ RSpec.describe "release rake helpers" do
 
       "node_modules has drifted from package.json in this environment " \
         "(#{stale.join(', ')} not installed); run `yarn install`"
-    rescue JSON::ParserError, SystemCallError => e
-      "node_modules or package.json could not be read in this environment: #{e.message}"
+    end
+
+    def read_json_or_nil(path)
+      JSON.parse(File.read(path))
+    rescue JSON::ParserError, SystemCallError
+      nil
     end
 
     # Guards the dangerous direction: a false abort here would block a legitimate release.
