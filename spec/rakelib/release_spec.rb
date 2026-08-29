@@ -1018,6 +1018,22 @@ RSpec.describe "release rake helpers" do
   end
 
   describe "#fetch_gh_jsonl" do
+    it "decodes gh output as UTF-8 so a non-UTF-8 default external encoding cannot break parsing" do
+      # gh returns whatever GitHub echoes back, including commit messages. Open3 tags that
+      # output with Encoding.default_external, so under a LANG-less environment an em dash in
+      # a commit message used to raise Encoding::CompatibilityError on the first String call.
+      status = double("status", success?: true)
+      payload = %({"display_title":"Read CHANGELOG.md as UTF-8 \u2014 release task"}\n)
+      ascii_tagged = payload.dup.force_encoding(Encoding::US_ASCII)
+      command = ["gh", "api", "--paginate", "--jq", ".workflow_runs[]", "repos/example/actions/runs"]
+      allow(Open3).to receive(:capture3).with(*command).and_return([ascii_tagged, "".dup.force_encoding(Encoding::US_ASCII), status])
+
+      rows, error = fetch_gh_jsonl("repos/example/actions/runs", ".workflow_runs[]")
+
+      expect(error).to be_nil
+      expect(rows).to eq([{ "display_title" => "Read CHANGELOG.md as UTF-8 \u2014 release task" }])
+    end
+
     it "parses stdout without mixing in successful gh diagnostics from stderr" do
       status = double("status", success?: true)
       command = ["gh", "api", "--paginate", "--jq", ".workflow_runs[]", "repos/example/actions/runs"]
