@@ -128,6 +128,56 @@ Rspack has built-in loaders that are faster than their webpack counterparts:
 - **CSS Extraction**: Uses `rspack.CssExtractRspackPlugin` instead of `mini-css-extract-plugin`
 - **Asset Handling**: Uses built-in asset modules instead of `file-loader`/`url-loader`
 
+### Customizing SWC on Rspack
+
+**`config/swc.config.js` is not read on the Rspack path.** Shakapacker's built-in Rspack rule ([`package/rules/rspack.ts`](../package/rules/rspack.ts)) hard-codes its `builtin:swc-loader` options inline. Options you put in `config/swc.config.js` are picked up on webpack only — on Rspack they are silently ignored, with no error and no warning.
+
+**Passing `module.rules` into `generateRspackConfig()` does not replace the built-in rule.** `generateRspackConfig()` merges your extra config with plain [`webpack-merge`](https://github.com/survivejs/webpack-merge), which _concatenates_ arrays. Your SWC rule lands **alongside** Shakapacker's, so both run and the built-in one still applies its own options.
+
+To actually override the SWC options, wrap the **output** of `generateRspackConfig()` in `mergeWithRules` (re-exported from `shakapacker/rspack`) so your entry is matched into the existing rule instead of appended after it. Shakapacker's Rspack rule set has **two** SWC rules — one for `.js`/`.jsx`/`.mjs` and one for `.ts`/`.tsx` — so you need an entry per `test` regexp, or you only cover one of them:
+
+```javascript
+// config/rspack/rspack.config.js
+const { generateRspackConfig, mergeWithRules } = require("shakapacker/rspack")
+
+const swcOverride = {
+  use: [
+    {
+      loader: "builtin:swc-loader",
+      options: {
+        jsc: { experimental: { plugins: [["your-plugin-package", {}]] } }
+      }
+    }
+  ]
+}
+
+module.exports = mergeWithRules({
+  module: {
+    rules: { test: "match", use: { loader: "match", options: "merge" } }
+  }
+})(generateRspackConfig(), {
+  module: {
+    rules: [
+      { test: /\.(js|jsx|mjs)$/, ...swcOverride },
+      { test: /\.(ts|tsx)$/, ...swcOverride }
+    ]
+  }
+})
+```
+
+#### `merge` vs `replace` for the `options` strategy
+
+The `options` strategy in the `mergeWithRules` spec decides whether Shakapacker's base SWC options survive, so pick it deliberately:
+
+- **`options: "merge"`** (used above) deep-merges your options _onto_ Shakapacker's. The built-in `jsc.parser` (`syntax: "ecmascript"` / `syntax: "typescript"`, `jsx`/`tsx`) and `jsc.transform.react.runtime: "automatic"` are preserved, and your keys are layered on top. This is what you want for adding a plugin or tweaking one option.
+- **`options: "replace"`** swaps the options object out wholesale. Shakapacker's `jsc.parser` and `jsc.transform` are **gone**, not overridden — with the example above, Rspack would be left with no parser syntax and no automatic JSX runtime. Only use `replace` when you are deliberately supplying a complete SWC options object yourself.
+
+Either way, `test: "match"` and `loader: "match"` are what keep the rule count unchanged; without `mergeWithRules` the js rule is duplicated rather than updated.
+
+#### Wasm SWC plugins
+
+The common reason to reach for this is `jsc.experimental.plugins`, used to load a Wasm SWC plugin such as `@swc/plugin-styled-components`. A Wasm plugin placed only in `config/swc.config.js` never loads on Rspack, which is what the recipe above fixes. Wasm plugin builds must also match the `swc_core` version your bundler embeds — Rspack 2.2 changed it, so a plugin that worked on 2.1.x can start failing after the upgrade. See [Wasm plugin compatibility with Rspack](./using_swc_loader.md#wasm-plugin-compatibility-with-rspack) for the version-matching details and the error message to look for.
+
 ### Plugin Compatibility
 
 Most webpack plugins work with Rspack, but some have Rspack-specific alternatives:
