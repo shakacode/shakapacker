@@ -10,6 +10,8 @@
 
 ## [Unreleased]
 
+## [v10.3.2] - August 28, 2026
+
 ### Changed
 
 - **Bumped the development and CI pin for Rspack from `2.0.1` to `2.2.0`.** [PR #1258](https://github.com/shakacode/shakapacker/pull/1258) by [justin808](https://github.com/justin808). The `@rspack/core`, `@rspack/cli`, `@rspack/dev-server`, and `@rspack/plugin-react-refresh` peer ranges are unchanged at `^2.0.0`, so applications may stay on any Rspack `2.x` release; only this repository's own development pins and dummy-app lockfiles move, so CI now exercises Rspack 2.2 against the range it already advertises. Annotated config exports (`bin/shakapacker-config --annotate`) also now list the complete `optimization.moduleIds` and `optimization.chunkIds` value sets for both bundlers, including `'compat-hashed'`, which requires Rspack 2.2 or newer and is documented as opt-in rather than made a default.
@@ -1013,7 +1015,8 @@ Note: [Rubygem is 6.3.0.pre.rc.1](https://rubygems.org/gems/shakapacker/versions
 
 See [CHANGELOG.md in rails/webpacker (up to v5.4.3)](https://github.com/rails/webpacker/blob/master/CHANGELOG.md)
 
-[Unreleased]: https://github.com/shakacode/shakapacker/compare/v10.3.1...main
+[Unreleased]: https://github.com/shakacode/shakapacker/compare/v10.3.2...main
+[v10.3.2]: https://github.com/shakacode/shakapacker/compare/v10.3.1...v10.3.2
 [v10.3.1]: https://github.com/shakacode/shakapacker/compare/v10.3.0...v10.3.1
 [v10.3.0]: https://github.com/shakacode/shakapacker/compare/v10.2.0...v10.3.0
 [v10.2.0]: https://github.com/shakacode/shakapacker/compare/v10.1.0...v10.2.0
