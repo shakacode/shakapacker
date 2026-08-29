@@ -744,10 +744,14 @@ module Shakapacker
 
         if swcrc_path.exist?
           if rspack
-            # Deliberately says nothing about whether Rspack's builtin:swc-loader honors .swcrc
-            # (unverified); it only drops the webpack-only claim that config/swc.config.js merges.
-            add_warning("SWC configuration: .swcrc file detected while assets_bundler is 'rspack'. " \
-                        "Shakapacker's Rspack build does not read config/swc.config.js, so moving these settings there would not affect your build.")
+            # Verified against @rspack/core 2.0.1 and 2.2.0: 'builtin:swc-loader' never reads .swcrc.
+            # A .swcrc setting jsc.target and an optimizer global produced byte-identical output to
+            # no .swcrc, and the same options passed inline did change the output. A .swcrc enabling
+            # decorator syntax also failed to unblock a decorator source, including with empty loader
+            # options and with swcrc/configFile set, so this is not just inline options winning.
+            add_warning("SWC configuration: .swcrc is present but is NOT read when assets_bundler is 'rspack'. " \
+                        "Rspack transpiles with 'builtin:swc-loader', which ignores .swcrc entirely, so every setting in it is silently inert. " \
+                        "Moving these settings to config/swc.config.js would not help either - Shakapacker's Rspack build does not read that file.")
             add_rspack_swc_override_hint("To apply custom SWC options on Rspack, override the built-in 'builtin:swc-loader' rule.")
           else
             add_warning("SWC configuration: .swcrc file detected. This file completely overrides Shakapacker's default SWC settings and may cause build failures. " \

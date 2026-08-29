@@ -2874,7 +2874,7 @@ describe Shakapacker::Doctor do
         doctor.send(:check_javascript_transpiler_dependencies)
 
         expect(warning_messages).not_to include(match(/NOT read when assets_bundler is 'rspack'/))
-        expect(warning_messages).not_to include(match(/\.swcrc file detected/))
+        expect(warning_messages).not_to include(match(/\.swcrc/))
       end
     end
 
@@ -2947,7 +2947,7 @@ describe Shakapacker::Doctor do
 
           it "does not tell Rspack users to migrate to a file Rspack never reads" do
             doctor.send(:check_javascript_transpiler_dependencies)
-            expect(warning_messages).to include(match(/\.swcrc file detected while assets_bundler is 'rspack'/))
+            expect(warning_messages).to include(match(/\.swcrc is present but is NOT read when assets_bundler is 'rspack'/))
             expect(warning_messages).not_to include(match(/migrate to config\/swc\.config\.js/))
             expect(warning_messages).not_to include(match(/properly merges with Shakapacker defaults/))
           end
@@ -2957,6 +2957,22 @@ describe Shakapacker::Doctor do
             expect(warning_messages).to include(
               match(/Apply webpack-merge's 'mergeWithRules' to the output of generateRspackConfig\(\)/)
             )
+          end
+
+          # Verified against @rspack/core 2.0.1 and 2.2.0: builtin:swc-loader never reads .swcrc, so
+          # the settings are inert rather than merely unmigratable.
+          it "says .swcrc is ignored outright, not just that it cannot be migrated" do
+            doctor.send(:check_javascript_transpiler_dependencies)
+
+            expect(warning_messages).to include(
+              match(/'builtin:swc-loader', which ignores \.swcrc entirely, so every setting in it is silently inert/)
+            )
+          end
+
+          it "does not claim .swcrc overrides Shakapacker's SWC defaults on Rspack" do
+            doctor.send(:check_javascript_transpiler_dependencies)
+
+            expect(warning_messages).not_to include(match(/completely overrides Shakapacker's default SWC settings/))
           end
 
           it "does not contradict itself when .swcrc and config/swc.config.js both exist" do
@@ -3144,7 +3160,7 @@ describe Shakapacker::Doctor do
 
             doctor.send(:check_javascript_transpiler_dependencies)
 
-            expect(warning_messages).to include(match(/\.swcrc file detected while assets_bundler is 'rspack'/))
+            expect(warning_messages).to include(match(/\.swcrc is present but is NOT read when assets_bundler is 'rspack'/))
             expect(warning_messages).not_to include(match(/migrate to config\/swc\.config\.js/))
           end
 
@@ -3180,7 +3196,7 @@ describe Shakapacker::Doctor do
 
             doctor.send(:check_javascript_transpiler_dependencies)
 
-            expect(warning_messages).not_to include(match(/\.swcrc file detected/))
+            expect(warning_messages).not_to include(match(/\.swcrc/))
           end
         end
       end
