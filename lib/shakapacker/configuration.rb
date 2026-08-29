@@ -303,20 +303,25 @@ class Shakapacker::Configuration
   # Resolution order:
   # 1. CLI --bundler flag (via bundler_override)
   # 2. SHAKAPACKER_ASSETS_BUNDLER environment variable
-  # 3. assets_bundler setting in config file
-  # 4. bundler setting in config file (deprecated)
-  # 5. Defaults to "webpack"
+  # 3. assets_bundler setting in config file (or the bundled default)
+  # 4. Defaults to "webpack"
+  #
+  # The legacy 'bundler' setting is not consulted; it is only used to warn that
+  # its value is ignored.
   #
   # @return [String] "webpack" or "rspack"
   def assets_bundler
     # CLI --bundler flag takes highest precedence
     return @bundler_override if @bundler_override
 
-    # Show deprecation warning if using old 'bundler' key
+    resolved = ENV["SHAKAPACKER_ASSETS_BUNDLER"] || fetch(:assets_bundler) || "webpack"
+
+    # The legacy 'bundler' key is never read, so warn that its value is ignored
     if data.has_key?(:bundler) && !data.has_key?(:assets_bundler)
-      $stderr.puts "⚠️  DEPRECATION WARNING: The 'bundler' configuration option is deprecated. Please use 'assets_bundler' instead to avoid confusion with Ruby's Bundler gem manager."
+      $stderr.puts "⚠️  DEPRECATION WARNING: The 'bundler' configuration option is no longer supported and its value (#{data[:bundler]}) is IGNORED. Shakapacker is using '#{resolved}'. Set 'assets_bundler' in your shakapacker.yml instead — it was renamed to avoid confusion with Ruby's Bundler gem manager."
     end
-    ENV["SHAKAPACKER_ASSETS_BUNDLER"] || fetch(:assets_bundler) || fetch(:bundler) || "webpack"
+
+    resolved
   end
 
   # Deprecated alias for {#assets_bundler}
