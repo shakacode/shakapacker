@@ -872,6 +872,38 @@ RSpec.describe "release rake helpers" do
     end
   end
 
+  describe "#extract_latest_changelog_version" do
+    around do |example|
+      Dir.mktmpdir("shakapacker-changelog-version-encoding-spec") do |tmpdir|
+        @gem_root = tmpdir
+        # Mirrors the real CHANGELOG: non-ASCII below the version headers.
+        File.write(File.join(tmpdir, "CHANGELOG.md"), <<~MARKDOWN, encoding: "UTF-8")
+          # Versions
+
+          ## [Unreleased]
+
+          ## [v10.3.2] - August 28, 2026
+
+          ### ⚠️ Breaking Changes
+
+          - **Removed a thing** — see the migration guide.
+        MARKDOWN
+        example.run
+      end
+    end
+
+    it "reads the changelog as UTF-8 so a non-UTF-8 default external encoding cannot break matching" do
+      # Encoding.default_external is process-global, so assert the read is pinned instead of
+      # mutating it. Mirrors the sibling guard on #extract_changelog_section — without this,
+      # the encoding argument here could be dropped by a future edit with no spec failing.
+      allow(File).to receive(:readlines).and_call_original
+
+      expect(extract_latest_changelog_version(gem_root: @gem_root)).to eq("10.3.2")
+
+      expect(File).to have_received(:readlines).with(File.join(@gem_root, "CHANGELOG.md"), encoding: "UTF-8")
+    end
+  end
+
   describe "#fetch_gh_jsonl" do
     it "parses stdout without mixing in successful gh diagnostics from stderr" do
       status = double("status", success?: true)
