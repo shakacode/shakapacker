@@ -13,7 +13,7 @@ RSpec.describe "release rake helpers" do
       expect do
         load File.expand_path("../../rakelib/release.rake", __dir__)
       end.not_to output(
-        /GITHUB_REPO_SLUG_PATTERN|CI_PASSING_CONCLUSIONS|CONDITIONAL_MAIN_PUSH_WORKFLOWS|AbortingMessageHandler/
+        /GITHUB_REPO_SLUG_PATTERN|CI_PASSING_CONCLUSIONS|CONDITIONAL_MAIN_PUSH_WORKFLOWS|REQUIRED_RELEASE_NODE_BINARIES|AbortingMessageHandler/
       ).to_stderr
     ensure
       $VERBOSE = previous_verbose
@@ -29,6 +29,45 @@ RSpec.describe "release rake helpers" do
       expect do
         expect { ensure_clean_worktree! }.to raise_error(SystemExit)
       end.to output("❌ You have uncommitted code\n").to_stderr
+    end
+  end
+
+  describe "#verify_node_modules!" do
+    around do |example|
+      Dir.mktmpdir("shakapacker-node-modules-spec") do |tmpdir|
+        @node_modules_gem_root = tmpdir
+        example.run
+      end
+    end
+
+    def create_node_bin(name)
+      bin_dir = File.join(@node_modules_gem_root, "node_modules", ".bin")
+      FileUtils.mkdir_p(bin_dir)
+      bin_path = File.join(bin_dir, name)
+      File.write(bin_path, "#!/bin/sh\n")
+      FileUtils.chmod(0o755, bin_path)
+    end
+
+    it "aborts naming yarn install when node_modules is not installed" do
+      expect do
+        expect { verify_node_modules!(gem_root: @node_modules_gem_root) }.to raise_error(SystemExit)
+      end.to output(/Node dependencies are not installed.*Run `yarn install` and retry/m).to_stderr
+    end
+
+    it "aborts naming yarn install when a prepublishOnly binary is missing" do
+      create_node_bin("prettier")
+
+      expect do
+        expect { verify_node_modules!(gem_root: @node_modules_gem_root) }.to raise_error(SystemExit)
+      end.to output(/Node dependencies are incomplete: tsc.*Run `yarn install` and retry/m).to_stderr
+    end
+
+    it "passes when every prepublishOnly binary is present" do
+      REQUIRED_RELEASE_NODE_BINARIES.each { |binary| create_node_bin(binary) }
+
+      expect do
+        verify_node_modules!(gem_root: @node_modules_gem_root)
+      end.to output(/✓ Node dependencies installed/).to_stdout
     end
   end
 
@@ -497,8 +536,32 @@ RSpec.describe "release rake helpers" do
   end
 
   describe "#perform_release" do
+    it "aborts before the version bump, commit, tag, or push when node_modules is missing" do
+      gem_root = File.expand_path("../..", __dir__)
+      allow(self).to receive(:ensure_clean_worktree!)
+      allow(self).to receive(:verify_npm_auth)
+      allow(self).to receive(:verify_gh_auth)
+      allow(self).to receive(:with_release_checkout)
+      allow(Shakapacker::Utils::Misc).to receive(:sh_in_dir)
+      allow(File).to receive(:directory?).and_call_original
+      allow(File).to receive(:directory?).with(File.join(gem_root, "node_modules", ".bin")).and_return(false)
+
+      expect do
+        expect do
+          perform_release(gem_version: "10.4.0", dry_run: false)
+        end.to raise_error(SystemExit) { |error| expect(error.status).not_to eq(0) }
+      end.to output(/Node dependencies are not installed.*Run `yarn install` and retry/m).to_stderr
+
+      # Nothing may run before the abort: the bump, commit, tag, and push all go through
+      # the release checkout and sh_in_dir.
+      expect(self).not_to have_received(:with_release_checkout)
+      expect(Shakapacker::Utils::Misc).not_to have_received(:sh_in_dir)
+      expect(self).not_to have_received(:verify_npm_auth)
+    end
+
     it "does not print a publication summary when GitHub auth fails during preflight" do
       allow(self).to receive(:ensure_clean_worktree!)
+      allow(self).to receive(:verify_node_modules!)
       allow(self).to receive(:verify_npm_auth)
       allow(self).to receive(:verify_gh_auth).and_raise(SystemExit.new(1))
 
@@ -512,6 +575,7 @@ RSpec.describe "release rake helpers" do
     it "prints the release summary and recovery command before re-raising a post-publish GitHub auth failure" do
       allow(self).to receive(:ensure_clean_worktree!)
       allow(self).to receive(:with_release_checkout).and_yield("/release")
+      allow(self).to receive(:verify_node_modules!)
       allow(self).to receive(:verify_npm_auth)
       auth_error = SystemExit.new(1, "GitHub authentication expired")
       expect(self).to receive(:verify_gh_auth).with(gem_root: anything).ordered
@@ -540,6 +604,7 @@ RSpec.describe "release rake helpers" do
     it "prints the release summary and recovery command before re-raising a post-publish StandardError" do
       allow(self).to receive(:ensure_clean_worktree!)
       allow(self).to receive(:with_release_checkout).and_yield("/release")
+      allow(self).to receive(:verify_node_modules!)
       allow(self).to receive(:verify_npm_auth)
       allow(self).to receive(:verify_gh_auth)
       allow(self).to receive(:validate_release_ci_status!)
@@ -567,6 +632,7 @@ RSpec.describe "release rake helpers" do
     it "does not label a successful post-publish SystemExit as a partial release" do
       allow(self).to receive(:ensure_clean_worktree!)
       allow(self).to receive(:with_release_checkout).and_yield("/release")
+      allow(self).to receive(:verify_node_modules!)
       allow(self).to receive(:verify_npm_auth)
       allow(self).to receive(:verify_gh_auth)
       allow(self).to receive(:validate_release_ci_status!)

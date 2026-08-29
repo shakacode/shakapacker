@@ -23,6 +23,9 @@ REQUIRED_MAIN_PUSH_WORKFLOWS = [
 ].freeze unless defined?(REQUIRED_MAIN_PUSH_WORKFLOWS)
 CONDITIONAL_MAIN_PUSH_WORKFLOWS = ["Babel 8 smoke"].freeze unless defined?(CONDITIONAL_MAIN_PUSH_WORKFLOWS)
 
+# `prepublishOnly` (`yarn build && yarn type-check`) resolves these from node_modules/.bin.
+REQUIRED_RELEASE_NODE_BINARIES = %w[prettier tsc].freeze unless defined?(REQUIRED_RELEASE_NODE_BINARIES)
+
 unless defined?(AbortingMessageHandler)
   class AbortingMessageHandler
     def add_error(error)
@@ -105,6 +108,26 @@ def verify_gh_auth(gem_root:)
   end
 
   puts "✓ GitHub CLI authenticated with write access to #{repo_slug}"
+end
+
+# `npm publish` runs `prepublishOnly`, whose binaries resolve from node_modules/.bin. That
+# happens long after the version bump, commit, tag, and push, so a missing local install
+# burns a public tag on a release that never reaches a registry — exactly what happened on
+# v10.3.2 (`tsc: command not found`). Fail closed here, before anything is mutated.
+def verify_node_modules!(gem_root:)
+  bin_dir = File.join(gem_root, "node_modules", ".bin")
+  unless File.directory?(bin_dir)
+    abort "❌ Node dependencies are not installed (#{bin_dir} is missing). Run `yarn install` and retry."
+  end
+
+  missing = REQUIRED_RELEASE_NODE_BINARIES.reject { |binary| File.executable?(File.join(bin_dir, binary)) }
+  unless missing.empty?
+    abort "❌ Node dependencies are incomplete: #{missing.join(', ')} missing from #{bin_dir}. " \
+          "`npm publish` runs prepublishOnly (`yarn build && yarn type-check`), which needs them. " \
+          "Run `yarn install` and retry."
+  end
+
+  puts "✓ Node dependencies installed with prepublishOnly binaries: #{REQUIRED_RELEASE_NODE_BINARIES.join(', ')}"
 end
 
 def current_gem_version(gem_root)
@@ -854,6 +877,8 @@ def perform_release(
     puts "ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ"
     puts "PRE-FLIGHT CHECKS"
     puts "ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ"
+    # Cheapest and most local of the gates, so it runs before the interactive npm login prompt.
+    verify_node_modules!(gem_root: gem_root)
     verify_npm_auth
     verify_gh_auth(gem_root: gem_root)
   end
