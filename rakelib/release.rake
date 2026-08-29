@@ -23,6 +23,9 @@ REQUIRED_MAIN_PUSH_WORKFLOWS = [
 ].freeze unless defined?(REQUIRED_MAIN_PUSH_WORKFLOWS)
 CONDITIONAL_MAIN_PUSH_WORKFLOWS = ["Babel 8 smoke"].freeze unless defined?(CONDITIONAL_MAIN_PUSH_WORKFLOWS)
 
+# `prepublishOnly` (`yarn build && yarn type-check`) resolves these from node_modules/.bin.
+REQUIRED_RELEASE_NODE_BINARIES = %w[prettier tsc].freeze unless defined?(REQUIRED_RELEASE_NODE_BINARIES)
+
 unless defined?(AbortingMessageHandler)
   class AbortingMessageHandler
     def add_error(error)
@@ -105,6 +108,74 @@ def verify_gh_auth(gem_root:)
   end
 
   puts "✓ GitHub CLI authenticated with write access to #{repo_slug}"
+end
+
+# `npm publish` runs `prepublishOnly`, whose binaries resolve from node_modules/.bin. That
+# happens long after the version bump, commit, tag, and push, so a missing local install
+# burns a public tag on a release that never reaches a registry — exactly what happened on
+# v10.3.2 (`tsc: command not found`). Fail closed here, before anything is mutated.
+def verify_node_modules!(gem_root:)
+  bin_dir = File.join(gem_root, "node_modules", ".bin")
+  unless File.directory?(bin_dir)
+    abort "❌ Node dependencies are not installed (#{bin_dir} is missing). Run `yarn install` and retry."
+  end
+
+  missing = REQUIRED_RELEASE_NODE_BINARIES.reject { |binary| File.executable?(File.join(bin_dir, binary)) }
+  unless missing.empty?
+    abort "❌ Node dependencies are incomplete: #{missing.join(', ')} missing from #{bin_dir}. " \
+          "`npm publish` runs prepublishOnly (`yarn build && yarn type-check`), which needs them. " \
+          "Run `yarn install` and retry."
+  end
+
+  verify_node_modules_match_manifest!(gem_root: gem_root)
+
+  puts "✓ Node dependencies installed and matching package.json"
+end
+
+# Binary presence alone does not prove a usable install. `prepublishOnly` compiles the whole
+# package, resolving far more than tsc and prettier, and two realistic states leave those two
+# on disk while that deeper resolution still fails: an install interrupted partway, and a
+# release run right after merging dependency changes, where node_modules predates package.json.
+#
+# Yarn writes node_modules/.yarn-integrity only once an install finishes, recording the exact
+# `name@spec` patterns package.json declared at that moment. Comparing the manifest against
+# yarn's own marker catches both states without running a build or touching the working tree.
+def verify_node_modules_match_manifest!(gem_root:)
+  integrity_path = File.join(gem_root, "node_modules", ".yarn-integrity")
+  unless File.exist?(integrity_path)
+    abort "❌ Node dependencies are incompletely installed (#{integrity_path} is missing, so no " \
+          "`yarn install` ever finished). Run `yarn install` and retry."
+  end
+
+  recorded_patterns = begin
+    JSON.parse(File.read(integrity_path))["topLevelPatterns"]
+  rescue JSON::ParserError, SystemCallError
+    nil
+  end
+  # An unreadable or differently-shaped marker means a yarn version whose format this cannot
+  # compare. Skip drift detection rather than block a release on an unverifiable signal.
+  return unless recorded_patterns.is_a?(Array)
+
+  manifest_path = File.join(gem_root, "package.json")
+  package_json = begin
+    JSON.parse(File.read(manifest_path))
+  rescue JSON::ParserError, SystemCallError => e
+    # Unlike the marker, package.json is the manifest being released. A broken one cannot be
+    # skipped past, so it aborts with an actionable message rather than a raw backtrace.
+    abort "❌ Unable to read #{manifest_path} for the node dependency check: #{e.message}"
+  end
+
+  declared_patterns = %w[dependencies devDependencies optionalDependencies].flat_map do |key|
+    (package_json[key] || {}).map { |name, spec| "#{name}@#{spec}" }
+  end
+
+  # One-directional on purpose: leftover entries in the marker are harmless, while a pattern
+  # package.json declares and the install never saw is exactly the stale-install case.
+  stale = declared_patterns - recorded_patterns
+  return if stale.empty?
+
+  abort "❌ Node dependencies are stale: package.json declares #{stale.join(', ')}, which the " \
+        "installed node_modules does not have. Run `yarn install` and retry."
 end
 
 def current_gem_version(gem_root)
@@ -854,6 +925,8 @@ def perform_release(
     puts "ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ"
     puts "PRE-FLIGHT CHECKS"
     puts "ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ"
+    # Cheapest and most local of the gates, so it runs before the interactive npm login prompt.
+    verify_node_modules!(gem_root: gem_root)
     verify_npm_auth
     verify_gh_auth(gem_root: gem_root)
   end
@@ -862,7 +935,14 @@ def perform_release(
   validate_requested_gem_version!(requested_gem_version)
 
   with_release_checkout(gem_root: gem_root, dry_run: dry_run) do |release_root|
-    Shakapacker::Utils::Misc.sh_in_dir(release_root, "git pull --rebase") unless dry_run
+    unless dry_run
+      Shakapacker::Utils::Misc.sh_in_dir(release_root, "git pull --rebase")
+
+      # The rebase can bring in dependency changes, staling the install the preflight just
+      # verified. prepublishOnly would only discover that after release-it has tagged and
+      # pushed, so re-verify the rebased tree here — still before the bump mutates anything.
+      verify_node_modules!(gem_root: release_root)
+    end
 
     # Gate on CI *after* the rebase so the validated commit is the one being released.
     validate_release_ci_status!(
