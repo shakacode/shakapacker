@@ -8,6 +8,7 @@ require "open3"
 require "tempfile"
 require "tmpdir"
 require "json"
+require "securerandom"
 
 GITHUB_REPO_SLUG_PATTERN = /\A[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+\z/ unless defined?(GITHUB_REPO_SLUG_PATTERN)
 
@@ -654,16 +655,24 @@ def with_release_checkout(gem_root:, dry_run:)
     worktree_dir = File.join(tmpdir, "worktree")
     escaped_worktree_dir = Shellwords.escape(worktree_dir)
     # release-it runs `git symbolic-ref HEAD`, which fails on a detached HEAD and aborts the
-    # dry run, so the worktree gets a throwaway branch that the ensure block deletes. `-B`
-    # rather than `-b` keeps this idempotent: a branch leaked by a hard-killed dry run that
-    # skipped the ensure block would otherwise block every later run reusing that PID.
-    dry_run_branch = "release-dry-run-#{Process.pid}"
+    # dry run, so the worktree gets a throwaway branch that the ensure block deletes.
+    #
+    # The random suffix is what makes this safe, not the PID: a dry run killed hard enough to
+    # skip the ensure block leaves the branch checked out in a registered worktree, and git
+    # then refuses to reuse that name ("is already used by worktree at ...") — including under
+    # `-B`, which only creates-or-resets a branch and cannot claim one held by another
+    # worktree. A fresh name per run can never collide with that leftover.
+    dry_run_branch = "release-dry-run-#{Process.pid}-#{SecureRandom.hex(4)}"
     escaped_dry_run_branch = Shellwords.escape(dry_run_branch)
+
+    # Drop registrations whose directories are already gone, so leaked worktrees from
+    # hard-killed runs do not accumulate in the maintainer's checkout.
+    Shakapacker::Utils::Misc.sh_in_dir(gem_root, "git worktree prune")
 
     # Dry runs should exercise the release flow without dirtying the maintainer's checkout.
     Shakapacker::Utils::Misc.sh_in_dir(
       gem_root,
-      "git worktree add -B #{escaped_dry_run_branch} #{escaped_worktree_dir} HEAD"
+      "git worktree add -b #{escaped_dry_run_branch} #{escaped_worktree_dir} HEAD"
     )
     begin
       # Match the live `git pull --rebase` result without changing the maintainer's checkout.
@@ -688,14 +697,24 @@ def with_release_checkout(gem_root:, dry_run:)
       yield(worktree_dir)
     ensure
       original_error = $ERROR_INFO
-      begin
-        Shakapacker::Utils::Misc.sh_in_dir(gem_root, "git worktree remove --force #{escaped_worktree_dir}")
-        Shakapacker::Utils::Misc.sh_in_dir(gem_root, "git branch -D #{escaped_dry_run_branch}")
+      cleanup_errors = []
+
+      # `sh_in_dir` raises on a non-zero exit, so these must be attempted independently:
+      # chaining them would let a failed `worktree remove` skip the branch deletion and leak
+      # exactly the branch this cleanup exists to remove.
+      [
+        "git worktree remove --force #{escaped_worktree_dir}",
+        "git branch -D #{escaped_dry_run_branch}"
+      ].each do |cleanup_command|
+        Shakapacker::Utils::Misc.sh_in_dir(gem_root, cleanup_command)
       rescue Exception => cleanup_error # rubocop:disable Lint/RescueException
         # Preserve any release failure already propagating, even if cleanup exits outside StandardError.
-        warn "⚠️ Failed to remove dry-run release worktree #{worktree_dir}: #{cleanup_error.message}"
-        raise cleanup_error unless original_error
+        warn "⚠️ Failed to clean up dry-run release worktree #{worktree_dir} " \
+             "(#{cleanup_command}): #{cleanup_error.message}"
+        cleanup_errors << cleanup_error
       end
+
+      raise cleanup_errors.first if cleanup_errors.any? && !original_error
     end
   end
 end

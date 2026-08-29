@@ -137,7 +137,12 @@ RSpec.describe "release rake helpers" do
   end
 
   describe "#with_release_checkout" do
+    # Pinned so the throwaway branch name is predictable; the random suffix itself is covered
+    # by "names the dry-run branch with a random suffix ..." below.
+    let(:dry_run_branch) { "release-dry-run-#{Process.pid}-abcd1234" }
+
     before do
+      allow(SecureRandom).to receive(:hex).with(4).and_return("abcd1234")
       allow(Dir).to receive(:mktmpdir)
         .with("shakapacker-release-dry-run")
         .and_yield("/tmp/shakapacker-release")
@@ -148,9 +153,11 @@ RSpec.describe "release rake helpers" do
       allow(Open3).to receive(:capture2e)
         .with("git", "-C", "/tmp/shakapacker-release/worktree", "rebase", "origin/main")
         .and_return(["", successful_status])
+      # `anything` for the branch so the random-suffix example can call the real SecureRandom;
+      # the exact name is still asserted via `have_received`.
       allow(Open3).to receive(:capture2e)
         .with("git", "-C", "/tmp/shakapacker-release/worktree", "branch",
-              "--set-upstream-to=origin/main", "release-dry-run-#{Process.pid}")
+              "--set-upstream-to=origin/main", anything)
         .and_return(["", successful_status])
     end
 
@@ -162,7 +169,9 @@ RSpec.describe "release rake helpers" do
 
       expect(yielded_root).to eq("/tmp/shakapacker-release/worktree")
       expect(Shakapacker::Utils::Misc).to have_received(:sh_in_dir)
-        .with("/repo", "git worktree add -B release-dry-run-#{Process.pid} " \
+        .with("/repo", "git worktree prune").ordered
+      expect(Shakapacker::Utils::Misc).to have_received(:sh_in_dir)
+        .with("/repo", "git worktree add -b #{dry_run_branch} " \
                       "/tmp/shakapacker-release/worktree HEAD").ordered
       expect(Open3).to have_received(:capture2e)
         .with("git", "-C", "/tmp/shakapacker-release/worktree", "fetch", "origin", "main").ordered
@@ -179,14 +188,14 @@ RSpec.describe "release rake helpers" do
 
       expect(Open3).to have_received(:capture2e)
         .with("git", "-C", "/tmp/shakapacker-release/worktree", "branch",
-              "--set-upstream-to=origin/main", "release-dry-run-#{Process.pid}")
+              "--set-upstream-to=origin/main", dry_run_branch)
     end
 
     it "aborts with an actionable message when the dry-run branch cannot track origin/main" do
       failed_status = double("status", success?: false)
       allow(Open3).to receive(:capture2e)
         .with("git", "-C", "/tmp/shakapacker-release/worktree", "branch",
-              "--set-upstream-to=origin/main", "release-dry-run-#{Process.pid}")
+              "--set-upstream-to=origin/main", dry_run_branch)
         .and_return(["the requested upstream branch 'origin/main' does not exist\n", failed_status])
       allow(Shakapacker::Utils::Misc).to receive(:sh_in_dir)
 
@@ -205,7 +214,67 @@ RSpec.describe "release rake helpers" do
       expect(Shakapacker::Utils::Misc).to have_received(:sh_in_dir)
         .with("/repo", "git worktree remove --force /tmp/shakapacker-release/worktree").ordered
       expect(Shakapacker::Utils::Misc).to have_received(:sh_in_dir)
-        .with("/repo", "git branch -D release-dry-run-#{Process.pid}").ordered
+        .with("/repo", "git branch -D #{dry_run_branch}").ordered
+    end
+
+    # `sh_in_dir` raises on a non-zero exit, so chaining the two cleanup calls would let a
+    # failed `worktree remove` skip the branch deletion entirely.
+    it "still deletes the throwaway branch when removing the worktree fails" do
+      allow(Shakapacker::Utils::Misc).to receive(:sh_in_dir) do |_dir, command|
+        raise "cleanup failed" if command.include?("git worktree remove")
+
+        true
+      end
+
+      expect do
+        expect do
+          with_release_checkout(gem_root: "/repo", dry_run: true) { "ok" }
+        end.to raise_error(RuntimeError, "cleanup failed")
+      end.to output(/Failed to clean up dry-run release worktree/).to_stderr
+
+      expect(Shakapacker::Utils::Misc).to have_received(:sh_in_dir)
+        .with("/repo", "git branch -D #{dry_run_branch}")
+    end
+
+    it "warns about every cleanup step that fails rather than stopping at the first" do
+      allow(Shakapacker::Utils::Misc).to receive(:sh_in_dir) do |_dir, command|
+        raise "cleanup failed" if command.include?("git worktree remove") || command.include?("git branch -D")
+
+        true
+      end
+
+      expect do
+        expect do
+          with_release_checkout(gem_root: "/repo", dry_run: true) do
+            raise "release failed"
+          end
+        end.to raise_error(RuntimeError, "release failed")
+      end.to output(
+        /git worktree remove --force .*\n.*\n?.*git branch -D #{Regexp.escape(dry_run_branch)}/m
+      ).to_stderr
+    end
+
+    it "prunes stale worktree registrations before adding the dry-run worktree" do
+      allow(Shakapacker::Utils::Misc).to receive(:sh_in_dir)
+
+      with_release_checkout(gem_root: "/repo", dry_run: true) { "ok" }
+
+      expect(Shakapacker::Utils::Misc).to have_received(:sh_in_dir)
+        .with("/repo", "git worktree prune").ordered
+      expect(Shakapacker::Utils::Misc).to have_received(:sh_in_dir)
+        .with("/repo", a_string_including("git worktree add")).ordered
+    end
+
+    # A leaked branch stays checked out in the killed run's registered worktree, and git
+    # refuses to reuse that name even under `-B`. A fresh name per run cannot collide.
+    it "names the dry-run branch with a random suffix so a leaked branch cannot collide" do
+      allow(SecureRandom).to receive(:hex).with(4).and_call_original
+      allow(Shakapacker::Utils::Misc).to receive(:sh_in_dir)
+
+      with_release_checkout(gem_root: "/repo", dry_run: true) { "ok" }
+
+      expect(Shakapacker::Utils::Misc).to have_received(:sh_in_dir)
+        .with("/repo", match(/\Agit worktree add -b release-dry-run-#{Process.pid}-[0-9a-f]{8} /))
     end
 
     it "never creates the dry-run worktree with a detached HEAD" do
@@ -262,7 +331,7 @@ RSpec.describe "release rake helpers" do
             raise "release failed"
           end
         end.to raise_error(RuntimeError, "release failed")
-      end.to output(/Failed to remove dry-run release worktree/).to_stderr
+      end.to output(/Failed to clean up dry-run release worktree/).to_stderr
     end
 
     it "preserves the release failure when cleanup raises outside StandardError" do
@@ -279,7 +348,7 @@ RSpec.describe "release rake helpers" do
             raise "release failed"
           end
         end.to raise_error(RuntimeError, "release failed")
-      end.to output(/Failed to remove dry-run release worktree/).to_stderr
+      end.to output(/Failed to clean up dry-run release worktree/).to_stderr
     end
 
     it "raises cleanup failures when the dry run itself succeeded" do
@@ -293,7 +362,7 @@ RSpec.describe "release rake helpers" do
         expect do
           with_release_checkout(gem_root: "/repo", dry_run: true) { "ok" }
         end.to raise_error(RuntimeError, "cleanup failed")
-      end.to output(/Failed to remove dry-run release worktree/).to_stderr
+      end.to output(/Failed to clean up dry-run release worktree/).to_stderr
     end
   end
 
@@ -323,7 +392,12 @@ RSpec.describe "release rake helpers" do
       repo
     end
 
+    # Pinned so the throwaway branch name is predictable, and so the leaked-worktree tests can
+    # stage a leftover under the exact name this run will try to use.
+    let(:dry_run_branch) { "release-dry-run-#{Process.pid}-abcd1234" }
+
     before do
+      allow(SecureRandom).to receive(:hex).with(4).and_return("abcd1234")
       allow(Shakapacker::Utils::Misc).to receive(:sh_in_dir) do |dir, *shell_commands|
         shell_commands.flatten.each do |shell_command|
           output, status = Open3.capture2e("bash", "-c", "cd #{Shellwords.escape(dir)} && #{shell_command}")
@@ -345,16 +419,21 @@ RSpec.describe "release rake helpers" do
 
         expect(symbolic_ref_succeeded).to be(true)
         expect(symbolic_ref_output).not_to include("not a symbolic ref")
-        expect(symbolic_ref_output.strip).to eq("refs/heads/release-dry-run-#{Process.pid}")
+        expect(symbolic_ref_output.strip).to eq("refs/heads/#{dry_run_branch}")
       end
     end
 
-    # A dry run killed hard enough to skip the ensure block leaks its branch. Recreating the
-    # worktree must not be blocked by that leftover once the OS reuses the PID.
-    it "still runs when a dry-run branch leaked from an earlier hard-killed run" do
+    # A hard-killed dry run skips the ensure block and leaves its worktree registered with the
+    # branch still checked out. git refuses to reuse a branch held by another worktree — `-B`
+    # included, since it cannot claim one — so the new run must not depend on that name being
+    # free. It also prunes the registration once the directory is gone.
+    it "still runs and prunes when a hard-killed run leaked a worktree registration" do
       Dir.mktmpdir("shakapacker-release-symbolic-head") do |sandbox|
         repo = build_repository(sandbox)
-        run_git!("-C", repo, "branch", "release-dry-run-#{Process.pid}")
+        leaked_worktree = File.join(sandbox, "leaked")
+        run_git!("-C", repo, "worktree", "add", "-b", "release-dry-run-#{Process.pid}-deadbeef",
+                 leaked_worktree, "HEAD")
+        FileUtils.rm_rf(leaked_worktree)
         symbolic_ref_output = nil
 
         expect do
@@ -363,8 +442,29 @@ RSpec.describe "release rake helpers" do
           end
         end.not_to raise_error
 
-        expect(symbolic_ref_output.strip).to eq("refs/heads/release-dry-run-#{Process.pid}")
-        expect(run_git!("-C", repo, "branch", "--list")).not_to include("release-dry-run-#{Process.pid}")
+        expect(symbolic_ref_output.strip).to eq("refs/heads/#{dry_run_branch}")
+        expect(run_git!("-C", repo, "branch", "--list")).not_to include(dry_run_branch)
+        expect(run_git!("-C", repo, "worktree", "list")).not_to include(leaked_worktree)
+      end
+    end
+
+    # The leftover directory is still present here, so pruning cannot reclaim it. Only the
+    # per-run random suffix keeps the new branch name from colliding.
+    it "still runs when an earlier dry-run worktree is still registered and present" do
+      Dir.mktmpdir("shakapacker-release-symbolic-head") do |sandbox|
+        repo = build_repository(sandbox)
+        leaked_worktree = File.join(sandbox, "leaked")
+        run_git!("-C", repo, "worktree", "add", "-b", "release-dry-run-#{Process.pid}-deadbeef",
+                 leaked_worktree, "HEAD")
+        symbolic_ref_output = nil
+
+        expect do
+          with_release_checkout(gem_root: repo, dry_run: true) do |release_root|
+            symbolic_ref_output = run_git!("-C", release_root, "symbolic-ref", "HEAD")
+          end
+        end.not_to raise_error
+
+        expect(symbolic_ref_output.strip).to eq("refs/heads/#{dry_run_branch}")
       end
     end
 
@@ -376,7 +476,7 @@ RSpec.describe "release rake helpers" do
         with_release_checkout(gem_root: repo, dry_run: true) do |release_root|
           upstream = run_git!(
             "-C", release_root, "for-each-ref", "--format=%(upstream:short)",
-            "refs/heads/release-dry-run-#{Process.pid}"
+            "refs/heads/#{dry_run_branch}"
           )
         end
 
@@ -390,7 +490,7 @@ RSpec.describe "release rake helpers" do
 
         with_release_checkout(gem_root: repo, dry_run: true) { "ok" }
 
-        expect(run_git!("-C", repo, "branch", "--list")).not_to include("release-dry-run-#{Process.pid}")
+        expect(run_git!("-C", repo, "branch", "--list")).not_to include(dry_run_branch)
         expect(run_git!("-C", repo, "worktree", "list").lines.size).to eq(1)
       end
     end
