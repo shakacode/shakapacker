@@ -74,7 +74,7 @@ module.exports = {
 }
 ```
 
-**Important:** Use `config/swc.config.js` instead of `.swcrc`. The `.swcrc` file completely overrides Shakapacker's default SWC settings and can cause build failures. `config/swc.config.js` properly merges with Shakapacker's defaults.
+**Important:** On webpack, use `config/swc.config.js` instead of `.swcrc` — the `.swcrc` file completely overrides Shakapacker's default SWC settings and can cause build failures, while `config/swc.config.js` properly merges with Shakapacker's defaults. On Rspack, neither file is read: Shakapacker's built-in `builtin:swc-loader` rule sets its options inline, so settings in `.swcrc` or `config/swc.config.js` are silently ignored. To customize SWC on Rspack, override the built-in rule instead — see [Customizing SWC on Rspack](./rspack.md#customizing-swc-on-rspack).
 
 #### 4. Update React configuration (if using React)
 

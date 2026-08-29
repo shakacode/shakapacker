@@ -308,4 +308,4 @@ See Rspack's [SWC plugin version mismatch](https://rspack.rs/errors/swc-plugin-v
 ## Known limitations
 
 - `browserslist` config at the moment is not being picked up automatically. [Related SWC issue](https://github.com/swc-project/swc/issues/3365). You can add your browserlist config through customizing loader options as outlined above.
-- Using `.swcrc` config file is currently not supported. You might face some issues when `.swcrc` config is diverging from the SWC options we're passing in the Webpack rule.
+- On webpack, using a `.swcrc` config file is not supported: you might face issues when `.swcrc` config diverges from the SWC options we're passing in the webpack rule. On Rspack, `.swcrc` is not read at all — Rspack's `builtin:swc-loader` ignores it entirely, so any settings there are silently inert. See [Customizing SWC on Rspack](./rspack.md#customizing-swc-on-rspack) to override SWC options on Rspack instead.

@@ -352,7 +352,7 @@ module.exports = {
 }
 ```
 
-**Note:** The `options` wrapper is required for proper merging with Shakapacker's defaults. Using `.swcrc` instead will completely override Shakapacker's settings and may cause build failures.
+**Note:** On webpack, the `options` wrapper is required for proper merging with Shakapacker's defaults; using `.swcrc` instead will completely override Shakapacker's settings and may cause build failures. On Rspack, neither `.swcrc` nor `config/swc.config.js` is read — Shakapacker's built-in `builtin:swc-loader` rule sets its options inline. To customize SWC on Rspack, override the built-in rule instead — see [Customizing SWC on Rspack](./rspack.md#customizing-swc-on-rspack).
 
 #### 5. Update React refresh plugin (if using React)
 
