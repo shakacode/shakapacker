@@ -1319,7 +1319,75 @@ RSpec.describe "release rake helpers" do
     end
   end
 
+  describe "#verify_gh_auth" do
+    # gh output reaches these two sites the same way it reaches fetch_gh_jsonl: tagged with
+    # Encoding.default_external, which is US-ASCII when LANG and LC_ALL are unset. Both sites
+    # interpolate that output into UTF-8 abort strings, so without decode_gh_output a non-ASCII
+    # byte from GitHub raises Encoding::CompatibilityError instead of the intended message.
+    def us_ascii(text)
+      (+text).force_encoding(Encoding::US_ASCII)
+    end
+
+    it "reports an auth failure whose gh output contains non-ASCII" do
+      failed = double("status", success?: false)
+      allow(Open3).to receive(:capture2e)
+        .with("gh", "auth", "status")
+        .and_return([us_ascii("You are not logged in — run `gh auth login`\n"), failed])
+
+      expect do
+        expect { verify_gh_auth(gem_root: "/repo") }.to raise_error(SystemExit)
+      end.to output(/not logged in — run/).to_stderr
+    end
+
+    it "reports a permissions-probe failure whose gh output contains non-ASCII" do
+      ok = double("status", success?: true)
+      failed = double("status", success?: false)
+      allow(self).to receive(:github_repo_slug).with("/repo").and_return("shakacode/shakapacker")
+      allow(Open3).to receive(:capture2e)
+        .with("gh", "auth", "status")
+        .and_return([us_ascii("Logged in\n"), ok])
+      allow(Open3).to receive(:capture2e)
+        .with("gh", "api", "repos/shakacode/shakapacker", "--jq", ".permissions.push")
+        .and_return([us_ascii("Resource not accessible — check the token scope\n"), failed])
+
+      expect do
+        expect { verify_gh_auth(gem_root: "/repo") }.to raise_error(SystemExit)
+      end.to output(/not accessible — check/).to_stderr
+    end
+
+    it "passes when gh reports write access" do
+      ok = double("status", success?: true)
+      allow(self).to receive(:github_repo_slug).with("/repo").and_return("shakacode/shakapacker")
+      allow(Open3).to receive(:capture2e)
+        .with("gh", "auth", "status")
+        .and_return([us_ascii("Logged in\n"), ok])
+      allow(Open3).to receive(:capture2e)
+        .with("gh", "api", "repos/shakacode/shakapacker", "--jq", ".permissions.push")
+        .and_return([us_ascii("true\n"), ok])
+
+      expect do
+        verify_gh_auth(gem_root: "/repo")
+      end.to output(/✓ GitHub CLI authenticated with write access/).to_stdout
+    end
+  end
+
   describe "#fetch_gh_jsonl" do
+    it "decodes gh output as UTF-8 so a non-UTF-8 default external encoding cannot break parsing" do
+      # gh returns whatever GitHub echoes back, including commit messages. Open3 tags that
+      # output with Encoding.default_external, so under a LANG-less environment an em dash in
+      # a commit message used to raise Encoding::CompatibilityError on the first String call.
+      status = double("status", success?: true)
+      payload = %({"display_title":"Read CHANGELOG.md as UTF-8 \u2014 release task"}\n)
+      ascii_tagged = payload.dup.force_encoding(Encoding::US_ASCII)
+      command = ["gh", "api", "--paginate", "--jq", ".workflow_runs[]", "repos/example/actions/runs"]
+      allow(Open3).to receive(:capture3).with(*command).and_return([ascii_tagged, (+"").force_encoding(Encoding::US_ASCII), status])
+
+      rows, error = fetch_gh_jsonl("repos/example/actions/runs", ".workflow_runs[]")
+
+      expect(error).to be_nil
+      expect(rows).to eq([{ "display_title" => "Read CHANGELOG.md as UTF-8 \u2014 release task" }])
+    end
+
     it "parses stdout without mixing in successful gh diagnostics from stderr" do
       status = double("status", success?: true)
       command = ["gh", "api", "--paginate", "--jq", ".workflow_runs[]", "repos/example/actions/runs"]

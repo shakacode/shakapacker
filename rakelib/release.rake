@@ -87,9 +87,18 @@ def verify_npm_auth(registry_url = "https://registry.npmjs.org/")
   puts "✓ Logged in to NPM as: #{result.strip}"
 end
 
+# `gh` emits UTF-8, but Open3 tags captured output with Encoding.default_external, which is
+# US-ASCII when LANG and LC_ALL are unset. Any non-ASCII that GitHub echoes back — an em dash
+# in a commit message, an accented display name — then makes String operations raise
+# Encoding::CompatibilityError. Reinterpret the bytes as the UTF-8 they already are.
+def decode_gh_output(output)
+  output.to_s.dup.force_encoding(Encoding::UTF_8)
+end
+
 def verify_gh_auth(gem_root:)
   begin
     result, status = Open3.capture2e("gh", "auth", "status")
+    result = decode_gh_output(result)
   rescue Errno::ENOENT
     abort "❌ GitHub CLI is not installed or not available on PATH. Install `gh` and retry."
   end
@@ -99,7 +108,7 @@ def verify_gh_auth(gem_root:)
 
   repo_slug = github_repo_slug(gem_root)
   permissions_result, status = Open3.capture2e("gh", "api", "repos/#{repo_slug}", "--jq", ".permissions.push")
-  permissions_result = permissions_result.strip
+  permissions_result = decode_gh_output(permissions_result).strip
   unless status.success?
     abort "❌ GitHub CLI authenticated, but failed to verify write access to #{repo_slug}.\n\n#{permissions_result}"
   end
@@ -458,6 +467,8 @@ end
 def fetch_gh_jsonl(api_path, jq_filter)
   begin
     output, error_output, status = Open3.capture3("gh", "api", "--paginate", "--jq", jq_filter, api_path)
+    output = decode_gh_output(output)
+    error_output = decode_gh_output(error_output)
   rescue Errno::ENOENT
     return [nil, "GitHub CLI is not installed or not available on PATH. Install `gh` and retry."]
   end
