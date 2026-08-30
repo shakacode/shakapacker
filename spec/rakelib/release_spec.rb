@@ -1026,7 +1026,7 @@ RSpec.describe "release rake helpers" do
       payload = %({"display_title":"Read CHANGELOG.md as UTF-8 \u2014 release task"}\n)
       ascii_tagged = payload.dup.force_encoding(Encoding::US_ASCII)
       command = ["gh", "api", "--paginate", "--jq", ".workflow_runs[]", "repos/example/actions/runs"]
-      allow(Open3).to receive(:capture3).with(*command).and_return([ascii_tagged, "".dup.force_encoding(Encoding::US_ASCII), status])
+      allow(Open3).to receive(:capture3).with(*command).and_return([ascii_tagged, (+"").force_encoding(Encoding::US_ASCII), status])
 
       rows, error = fetch_gh_jsonl("repos/example/actions/runs", ".workflow_runs[]")
 
