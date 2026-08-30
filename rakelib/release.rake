@@ -1172,7 +1172,11 @@ def perform_release(
     # core-first order.
     release_it_command = +"npx --yes release-it #{Shellwords.escape(npm_version)}"
     release_it_command << " --no-npm.publish --no-git.requireCleanWorkingDir"
-    release_it_command << " --dry-run --verbose" if dry_run
+    # `--ci` only on the dry run. release-it prompts to confirm the commit, tag, and push
+    # even under `--dry-run`, so without it a dry run stops at `? Commit (Release X)? (Y/n)`
+    # and cannot run unattended or as a CI check. The live path deliberately keeps those
+    # prompts: they are the last confirmation before an irreversible tag and publish.
+    release_it_command << " --dry-run --verbose --ci" if dry_run
     npm_dist_tag = npm_dist_tag_for_version(npm_version)
     puts "ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ"
     puts "NPM target (lockstep): shakapacker, shakapacker-webpack, shakapacker-rspack @ #{npm_version} (dist-tag: #{npm_dist_tag})"
