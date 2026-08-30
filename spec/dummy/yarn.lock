@@ -1144,42 +1144,42 @@
     schema-utils "^4.2.0"
     source-map "^0.7.3"
 
-"@rspack/binding-darwin-arm64@2.2.0":
-  version "2.2.0"
-  resolved "https://registry.npmjs.org/@rspack/binding-darwin-arm64/-/binding-darwin-arm64-2.2.0.tgz"
-  integrity sha512-KAVVT7hp3NBjtc/RY2UtOjzzc8i+s4pIhW1p52UV+Aev6ywQCu3dXwkHTonpPvJO3hqLXc4zIMH5l4HbMqBm4g==
+"@rspack/binding-darwin-arm64@2.2.1":
+  version "2.2.1"
+  resolved "https://registry.npmjs.org/@rspack/binding-darwin-arm64/-/binding-darwin-arm64-2.2.1.tgz"
+  integrity sha512-Y/Naw/7V76QiUYdYRuBzBZtzRjt/3fjDUuF8GK0+/BO7BP1RrpY4tk1ln+iiqegRUD8u9uGn08fi8No1rwfyUg==
 
-"@rspack/binding@2.2.0":
-  version "2.2.0"
-  resolved "https://registry.npmjs.org/@rspack/binding/-/binding-2.2.0.tgz"
-  integrity sha512-nxZzJqqB0EmEKp6qjzFNkBb/SgGt0k0DSENrLvAJgvVvrm3waVsubD0cfxtPlZY/rd5SzadzxWGEHRyFcds5nA==
+"@rspack/binding@2.2.1":
+  version "2.2.1"
+  resolved "https://registry.npmjs.org/@rspack/binding/-/binding-2.2.1.tgz"
+  integrity sha512-56TqztuEMd+aHGv1jDXnkJQGSLTb4NoO146flFxJqPG8931UdXPO2pNR9M0Q2Pz+GvmO0fLHGPLYBHoRVrRlHw==
   optionalDependencies:
-    "@rspack/binding-darwin-arm64" "2.2.0"
-    "@rspack/binding-darwin-x64" "2.2.0"
-    "@rspack/binding-linux-arm64-gnu" "2.2.0"
-    "@rspack/binding-linux-arm64-musl" "2.2.0"
-    "@rspack/binding-linux-ppc64-gnu" "2.2.0"
-    "@rspack/binding-linux-riscv64-gnu" "2.2.0"
-    "@rspack/binding-linux-riscv64-musl" "2.2.0"
-    "@rspack/binding-linux-s390x-gnu" "2.2.0"
-    "@rspack/binding-linux-x64-gnu" "2.2.0"
-    "@rspack/binding-linux-x64-musl" "2.2.0"
-    "@rspack/binding-wasm32-wasi" "2.2.0"
-    "@rspack/binding-win32-arm64-msvc" "2.2.0"
-    "@rspack/binding-win32-ia32-msvc" "2.2.0"
-    "@rspack/binding-win32-x64-msvc" "2.2.0"
+    "@rspack/binding-darwin-arm64" "2.2.1"
+    "@rspack/binding-darwin-x64" "2.2.1"
+    "@rspack/binding-linux-arm64-gnu" "2.2.1"
+    "@rspack/binding-linux-arm64-musl" "2.2.1"
+    "@rspack/binding-linux-ppc64-gnu" "2.2.1"
+    "@rspack/binding-linux-riscv64-gnu" "2.2.1"
+    "@rspack/binding-linux-riscv64-musl" "2.2.1"
+    "@rspack/binding-linux-s390x-gnu" "2.2.1"
+    "@rspack/binding-linux-x64-gnu" "2.2.1"
+    "@rspack/binding-linux-x64-musl" "2.2.1"
+    "@rspack/binding-wasm32-wasi" "2.2.1"
+    "@rspack/binding-win32-arm64-msvc" "2.2.1"
+    "@rspack/binding-win32-ia32-msvc" "2.2.1"
+    "@rspack/binding-win32-x64-msvc" "2.2.1"
 
 "@rspack/cli@^2.0.0":
-  version "2.2.0"
-  resolved "https://registry.npmjs.org/@rspack/cli/-/cli-2.2.0.tgz"
-  integrity sha512-GSiQPG5v5tN8vYJdUMYX44sPiwVVG8H25fq3LWRydVB4WswDAD/N3qNgWZtFVliQdLH3ZWzFdFUoCyZmea0TMA==
+  version "2.2.1"
+  resolved "https://registry.npmjs.org/@rspack/cli/-/cli-2.2.1.tgz"
+  integrity sha512-Id6Jy9aHkKuLyYqxoDZt5P0y55/hQuUwoceSEBXloWdbRoKByxMJt+FHZdQHKKyfD0/8uA8p99DDMPe6vhypLg==
 
 "@rspack/core@^1.0.0 || ^2.0.0", "@rspack/core@^2.0.0", "@rspack/core@^2.0.0-0", "@rspack/core@0.x || ^1.0.0 || ^2.0.0-0":
-  version "2.2.0"
-  resolved "https://registry.npmjs.org/@rspack/core/-/core-2.2.0.tgz"
-  integrity sha512-3W7oX0BAHbK4VlknH3lfyfRvupzxdZtyEa+DfKmdjzmIAcqYtHnFd0nLqp5dzitDPyDI1TIKkDhpB0AZJn0pVg==
+  version "2.2.1"
+  resolved "https://registry.npmjs.org/@rspack/core/-/core-2.2.1.tgz"
+  integrity sha512-EHFX2oWCY1HkHJkG/Ev8HXCcl4gQzgETyairdIlBkKaypuW8i7kowBxUFzpHHg/ObF70vB3focToel9Wwg4MRA==
   dependencies:
-    "@rspack/binding" "2.2.0"
+    "@rspack/binding" "2.2.1"
 
 "@rspack/dev-middleware@^2.0.3":
   version "2.0.3"
