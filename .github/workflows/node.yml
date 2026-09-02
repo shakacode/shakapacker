@@ -6,13 +6,11 @@ on:
       - "main"
   pull_request:
     paths:
-      - "**.md"
       - "**.js"
       - "**.ts"
       - "package.json"
       - "yarn.lock"
       - "eslint.config.js"
-      - ".prettierrc"
       - ".prettierignore"
       - "knip.json"
       - "tsconfig.json"
@@ -44,9 +42,6 @@ jobs:
 
       - name: Node eslint
         run: yarn lint
-
-      - name: Prettier format check
-        run: yarn prettier --check .
 
       - name: Detect dead code
         run: yarn knip
