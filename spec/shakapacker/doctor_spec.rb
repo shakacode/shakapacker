@@ -53,6 +53,21 @@ describe Shakapacker::Doctor do
     FileUtils.rm_rf(root_path)
   end
 
+  # Doctor reads SHAKAPACKER_ASSETS_BUNDLER directly (assets_bundler_configured?) and
+  # through Configuration#assets_bundler, so an ambient value would silently override
+  # what these examples assert.
+  around do |example|
+    previous = ENV["SHAKAPACKER_ASSETS_BUNDLER"]
+    ENV.delete("SHAKAPACKER_ASSETS_BUNDLER")
+    example.run
+  ensure
+    if previous.nil?
+      ENV.delete("SHAKAPACKER_ASSETS_BUNDLER")
+    else
+      ENV["SHAKAPACKER_ASSETS_BUNDLER"] = previous
+    end
+  end
+
   # Helper to extract warning messages from the new hash format
   def warning_messages
     doctor.warnings.map { |w| w[:message] }
