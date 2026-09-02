@@ -11,11 +11,10 @@ on:
       - "package.json"
       - "yarn.lock"
       - "eslint.config.js"
-      - ".prettierignore"
       - "knip.json"
       - "tsconfig.json"
       - "jest.config.js"
-      - ".github/workflows/node.yml"
+      - ".github/workflows/**"
   workflow_dispatch:
 
 concurrency:
