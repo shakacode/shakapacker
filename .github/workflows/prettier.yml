@@ -1,0 +1,52 @@
+name: Prettier
+
+on:
+  push:
+    branches:
+      - "main"
+  pull_request:
+    paths:
+      - "**.md"
+      - "**.yml"
+      - "**.yaml"
+      - "**.json"
+      - "**.css"
+      - "**.html"
+      - "**.js"
+      - "**.cjs"
+      - "**.jsx"
+      - "**.ts"
+      - "**.tsx"
+      # Extensionless `#!/usr/bin/env node` scripts; prettier formats these too
+      - "bin/**"
+      - "package.json"
+      - "yarn.lock"
+      - "prettier.config.js"
+      - ".prettierignore"
+      - ".github/workflows/prettier.yml"
+  workflow_dispatch:
+
+concurrency:
+  # Pushing new changes to a branch will cancel any in-progress CI runs
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  prettier:
+    name: Prettier format check
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20.19.x"
+          cache: yarn
+
+      - name: Install dependencies
+        run: yarn --frozen-lockfile --non-interactive --prefer-offline
+
+      - name: Prettier format check
+        run: yarn prettier --check .

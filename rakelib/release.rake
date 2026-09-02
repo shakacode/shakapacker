@@ -1150,21 +1150,6 @@ def perform_release(
     supplemental_package_jsons = supplemental_package_dirs.map { |d| "#{d}/package.json" }
     Shakapacker::Utils::Misc.sh_in_dir(release_root, "git add #{Shellwords.join(supplemental_package_jsons)}")
 
-    # release-it owns the root package.json bump, but skips it under --dry-run, while the
-    # supplemental bumps above are real in both modes. Left alone that asymmetry leaves the
-    # root one version behind the supplementals, and publish-packages.sh's lockstep guard
-    # correctly rejects the result, so a dry run could never reach the publish step.
-    #
-    # Mirror release-it's own invocation (`npm version <v> --no-git-tag-version
-    # --workspaces=false`) so the scratch worktree ends up in the state a live run would
-    # produce. The worktree is throwaway, so mutating it is safe.
-    if dry_run
-      Shakapacker::Utils::Misc.sh_in_dir(
-        release_root,
-        "npm version #{Shellwords.escape(npm_version)} --no-git-tag-version --allow-same-version --workspaces=false"
-      )
-    end
-
     # Use npx so maintainers don't need a globally installed `release-it` binary.
     # This avoids failures from shim managers (e.g. mise) when `release-it` isn't configured.
     # `--no-npm.publish` defers npm publishing to publish-packages.sh below, which
@@ -1172,7 +1157,11 @@ def perform_release(
     # core-first order.
     release_it_command = +"npx --yes release-it #{Shellwords.escape(npm_version)}"
     release_it_command << " --no-npm.publish --no-git.requireCleanWorkingDir"
-    release_it_command << " --dry-run --verbose" if dry_run
+    # `--ci` only on the dry run. release-it prompts to confirm the commit, tag, and push
+    # even under `--dry-run`, so without it a dry run stops at `? Commit (Release X)? (Y/n)`
+    # and cannot run unattended or as a CI check. The live path deliberately keeps those
+    # prompts: they are the last confirmation before an irreversible tag and publish.
+    release_it_command << " --dry-run --verbose --ci" if dry_run
     npm_dist_tag = npm_dist_tag_for_version(npm_version)
     puts "ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ"
     puts "NPM target (lockstep): shakapacker, shakapacker-webpack, shakapacker-rspack @ #{npm_version} (dist-tag: #{npm_dist_tag})"
