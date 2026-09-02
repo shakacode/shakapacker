@@ -10,6 +10,10 @@
 
 ## [Unreleased]
 
+### Fixed
+
+- Emit the legacy `bundler:` deprecation warning once per configuration instance instead of on every call. [PR #1304](https://github.com/shakacode/shakapacker/pull/1304) by [justin808](https://github.com/justin808).
+
 ## [v10.3.2] - August 28, 2026
 
 ### Changed
