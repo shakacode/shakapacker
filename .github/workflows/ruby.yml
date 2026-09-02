@@ -8,9 +8,11 @@ on:
     paths:
       - "**.rb"
       - "**.rbs"
+      - "**.rake"
       - "**.gemspec"
       - "Gemfile"
       - "Rakefile"
+      - "rakelib/**"
       - "gemfiles/**"
       - ".rubocop.yml"
       - ".agents/bin/merge-readiness-check"
