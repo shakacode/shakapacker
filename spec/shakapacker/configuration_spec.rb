@@ -979,6 +979,29 @@ describe "Shakapacker::Configuration" do
         expect(warning).to include("Shakapacker is using no bundler (SHAKAPACKER_ASSETS_BUNDLER is set but empty)")
         expect(warning).not_to include("Shakapacker is using ''")
       end
+
+      it "warns only once per instance across repeated calls to assets_bundler, rspack?, and webpack?" do
+        warning = capture_stderr do
+          config.assets_bundler
+          config.rspack?
+          config.webpack?
+        end
+
+        expect(warning.scan("DEPRECATION WARNING: The 'bundler'").length).to eq(1)
+      end
+
+      it "warns again for a fresh instance" do
+        capture_stderr { config.assets_bundler }
+
+        other_config = Shakapacker::Configuration.new(
+          root_path: app_root,
+          config_path: config_path,
+          env: "test"
+        )
+        warning = capture_stderr { other_config.assets_bundler }
+
+        expect(warning).to include("DEPRECATION WARNING: The 'bundler'")
+      end
     end
 
     context "with only the 'assets_bundler' key" do
@@ -995,6 +1018,16 @@ describe "Shakapacker::Configuration" do
         warning = capture_stderr { resolved = config.assets_bundler }
 
         expect(resolved).to eq("rspack")
+        expect(warning).to eq("")
+      end
+
+      it "does not warn even across repeated calls to assets_bundler, rspack?, and webpack?" do
+        warning = capture_stderr do
+          config.assets_bundler
+          config.rspack?
+          config.webpack?
+        end
+
         expect(warning).to eq("")
       end
     end

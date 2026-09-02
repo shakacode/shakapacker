@@ -316,8 +316,12 @@ class Shakapacker::Configuration
 
     resolved = ENV["SHAKAPACKER_ASSETS_BUNDLER"] || fetch(:assets_bundler) || "webpack"
 
-    # The legacy 'bundler' key is never read, so warn that its value is ignored
-    if data.has_key?(:bundler) && !data.has_key?(:assets_bundler)
+    # The legacy 'bundler' key is never read, so warn that its value is ignored.
+    # Only warn once per instance to avoid repeating it on every call, since
+    # rspack?, webpack?, bundler, assets_bundler_config_path, and transpiler
+    # defaulting all call this method.
+    if !@legacy_bundler_key_warned && data.has_key?(:bundler) && !data.has_key?(:assets_bundler)
+      @legacy_bundler_key_warned = true
       legacy_value = data[:bundler].to_s.strip
       described_value = legacy_value.empty? ? "empty" : legacy_value
       # An empty SHAKAPACKER_ASSETS_BUNDLER resolves to an empty string; name that
