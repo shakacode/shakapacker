@@ -571,6 +571,21 @@ describe "Shakapacker::Configuration" do
   end
 
   describe "#javascript_transpiler" do
+    # javascript_transpiler defaults through rspack?, which gives SHAKAPACKER_ASSETS_BUNDLER
+    # precedence over the YAML file, so an ambient value would silently replace what these
+    # examples assert.
+    around do |example|
+      previous = ENV["SHAKAPACKER_ASSETS_BUNDLER"]
+      ENV.delete("SHAKAPACKER_ASSETS_BUNDLER")
+      example.run
+    ensure
+      if previous.nil?
+        ENV.delete("SHAKAPACKER_ASSETS_BUNDLER")
+      else
+        ENV["SHAKAPACKER_ASSETS_BUNDLER"] = previous
+      end
+    end
+
     context "with javascript_transpiler set in config" do
       let(:config) do
         Shakapacker::Configuration.new(
