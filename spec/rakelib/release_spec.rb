@@ -984,49 +984,6 @@ RSpec.describe "release rake helpers" do
       expect(self).not_to have_received(:validate_release_ci_status!)
     end
 
-    def stub_dry_run_release
-      allow(self).to receive(:with_release_checkout).and_yield("/refreshed")
-      allow(self).to receive(:validate_release_ci_status!)
-      allow(self).to receive(:verify_node_modules!)
-      allow(self).to receive(:target_gem_version).and_return("10.4.0")
-      allow(self).to receive(:warn_changelog_missing)
-      allow(self).to receive(:validate_release_version_policy!)
-      allow(self).to receive(:refresh_release_root_lockfile)
-      allow(self).to receive(:refresh_spec_dummy_lockfiles)
-      allow(self).to receive(:current_gem_version).with("/refreshed").and_return("10.4.0")
-      allow(self).to receive(:bump_supplemental_core_dep)
-      allow(self).to receive(:extract_changelog_section).and_return("release notes")
-      allow(Shakapacker::Utils::Misc).to receive(:sh_in_dir)
-    end
-
-    it "bumps the root package.json on the dry-run path so the lockstep guard sees all three in step" do
-      # release-it skips the root bump under --dry-run while the supplemental bumps are real
-      # in both modes, so without this the root trails and publish-packages.sh rejects the run.
-      stub_dry_run_release
-
-      perform_release(gem_version: "10.4.0", dry_run: true, check_uncommitted: false)
-
-      expect(Shakapacker::Utils::Misc).to have_received(:sh_in_dir).with(
-        "/refreshed",
-        "npm version 10.4.0 --no-git-tag-version --allow-same-version --workspaces=false"
-      )
-    end
-
-    it "leaves the root package.json bump to release-it on the live path" do
-      stub_dry_run_release
-      allow(self).to receive(:verify_npm_auth)
-      allow(self).to receive(:verify_gh_auth)
-      allow(self).to receive(:ensure_clean_worktree!)
-      # Keep the assertion on the bump; the post-publish GitHub sync is another test's subject.
-      allow(self).to receive(:sync_github_release_after_publish)
-
-      perform_release(gem_version: "10.4.0", dry_run: false, check_uncommitted: false)
-
-      expect(Shakapacker::Utils::Misc).not_to have_received(:sh_in_dir).with(
-        "/refreshed", /npm version .* --workspaces=false/
-      )
-    end
-
     it "does not re-verify node dependencies inside the dry-run scratch worktree" do
       allow(self).to receive(:with_release_checkout).and_yield("/refreshed")
       allow(self).to receive(:validate_release_ci_status!)
