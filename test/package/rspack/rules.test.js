@@ -143,6 +143,31 @@ describe("rspack/rules", () => {
       // CSS rule should be present since moduleExists is mocked to return true
       expect(cssRule).toBeDefined()
     })
+
+    test("falls back to Rspack's built-in CSS support when css-loader is missing", () => {
+      let rulesWithoutCssLoader
+
+      jest.isolateModules(() => {
+        const helpers = require("../../../package/utils/helpers")
+        helpers.moduleExists.mockImplementation(
+          (packageName) => packageName !== "css-loader"
+        )
+
+        rulesWithoutCssLoader = require("../../../package/rules/rspack")
+      })
+
+      const cssRule = rulesWithoutCssLoader.find(
+        (rule) => String(rule.test) === "/\\.(css)$/i"
+      )
+
+      expect(cssRule).toMatchObject({
+        type: "css/auto",
+        parser: { namedExports: true },
+        generator: { exportsConvention: "camel-case-only" }
+      })
+      // Rspack v2 needs no `experiments.css` for this - the rule type is enough.
+      expect(cssRule.use).toBeUndefined()
+    })
   })
 
   describe("sass rules", () => {

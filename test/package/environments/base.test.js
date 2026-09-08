@@ -112,10 +112,34 @@ describe("Base config", () => {
       const defaultRules = rules
       const configRules = baseConfig.module.rules
 
-      // moduleExists is mocked to return false, so rules loaded inside the test have only 3
-      // But baseConfig was loaded before the mock was applied, so it has all 5 rules
-      expect(defaultRules).toHaveLength(3)
+      // moduleExists is mocked to return false, so css-loader looks absent. CSS and Sass
+      // still get rules - getStyleRule falls back to the bundler's built-in CSS support
+      // rather than dropping them - so both counts match.
+      expect(defaultRules).toHaveLength(5)
       expect(configRules).toHaveLength(5)
+    })
+
+    test("falls back to built-in CSS support when css-loader is absent", () => {
+      const rules = require("../../../package/rules/webpack")
+      const cssRule = rules.find((rule) => String(rule.test) === "/\\.(css)$/i")
+
+      expect(cssRule).toMatchObject({
+        type: "css/auto",
+        parser: { namedExports: true },
+        generator: { exportsConvention: "camel-case-only" }
+      })
+      expect(cssRule.use).toBeUndefined()
+    })
+
+    test("keeps preprocessor loaders on the built-in CSS path", () => {
+      const rules = require("../../../package/rules/webpack")
+      const sassRule = rules.find((rule) =>
+        String(rule.test).includes("scss|sass")
+      )
+
+      expect(sassRule.type).toBe("css/auto")
+      expect(sassRule.use).toHaveLength(1)
+      expect(sassRule.use[0].loader).toContain("sass-loader")
     })
 
     test("should return default plugins", () => {

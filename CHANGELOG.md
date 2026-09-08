@@ -10,6 +10,15 @@
 
 ## [Unreleased]
 
+### Added
+
+- **Added support for the bundler's built-in CSS handling when `css-loader` is not installed.** [PR #1308](https://github.com/shakacode/shakapacker/pull/1308) by [justin808](https://github.com/justin808). `css-loader`, `style-loader`, and `mini-css-extract-plugin` were archived upstream in August 2026, and Rspack v2 deprecated `experiments.css` in favor of `type: "css/auto"` rules. Shakapacker previously dropped the CSS rule entirely when `css-loader` was absent, so `.css` imports failed to build - and on webpack 5.109+, where `experiments.css` defaults to `'auto'`, that missing rule instead silently activated webpack's built-in CSS with `exportsConvention: 'as-is'` while `.scss`, `.less`, and `.styl` still had no rule at all. Shakapacker now emits `type: "css/auto"` rules for CSS and every preprocessor extension, maps `css_modules_export_mode` and `dev_server.inline_css` onto the built-in parser so class names and imports keep their documented shape, and sets `output.cssFilename`/`cssChunkFilename` to the paths the extraction plugins used so `manifest.json` and `stylesheet_pack_tag` are unchanged. webpack additionally gets an explicit `experiments: { css: true }`, which is required across the whole supported range: the option is `false` before 5.109, and from 5.109 its `'auto'` default turns built-in CSS _off_ as soon as a rule declares an explicit `css/auto` type, failing with `No parser registered for css/auto`. Apps with `css-loader` installed are unaffected and keep the loader chain. See [docs/css_loader_deprecation.md](./docs/css_loader_deprecation.md). Refs [#1307](https://github.com/shakacode/shakapacker/issues/1307).
+
+### Changed
+
+- **Changed `shakapacker:doctor` to stop reporting a missing `css-loader` as an error.** [PR #1308](https://github.com/shakacode/shakapacker/pull/1308) by [justin808](https://github.com/justin808). Building without `css-loader` is now a supported configuration, so doctor reports which CSS path the build is on instead of demanding `css-loader` and `style-loader`, and warns when `css_extract_ignore_order_warnings: true` is set on the built-in path, where it has no effect because built-in CSS emits no order-conflict warnings.
+- **Changed `css-minimizer-webpack-plugin` to be used whenever it is installed.** [PR #1308](https://github.com/shakacode/shakapacker/pull/1308) by [justin808](https://github.com/justin808). It was previously skipped unless `css-loader` was also installed, which left CSS unminified on the built-in path. The plugin minifies emitted `.css` assets regardless of how they were produced. Rspack is unaffected; it minifies CSS with `LightningCssMinimizerRspackPlugin` on both paths.
+
 ### Fixed
 
 - **Fixed the legacy `bundler:` deprecation warning repeating on every call.** It now prints once per configuration instance. [PR #1304](https://github.com/shakacode/shakapacker/pull/1304) by [justin808](https://github.com/justin808).
