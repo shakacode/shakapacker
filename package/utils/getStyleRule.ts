@@ -25,6 +25,12 @@ const usesNativeCss = (): boolean => !moduleExists("css-loader")
 const namedExportsEnabled = (): boolean =>
   config.css_modules_export_mode !== "default"
 
+const tryPostcss = () =>
+  canProcess("postcss-loader", (loaderPath: string) => ({
+    loader: loaderPath,
+    options: { sourceMap: true }
+  }))
+
 // The built-in parser's equivalents of the css-loader options below: `parser`
 // replaces `modules`, and `generator.exportsConvention` takes kebab-case
 // spellings of css-loader's `exportLocalsConvention` values.
@@ -48,9 +54,13 @@ const getNativeStyleRule = (
     }
   }
 
-  // Preprocessors still run as loaders; the built-in parser consumes their CSS output.
-  if (preprocessors.length) {
-    rule.use = preprocessors
+  // PostCSS and the preprocessors still run as loaders; the built-in parser
+  // consumes their CSS output. Loaders apply right-to-left, so this keeps the
+  // css-loader chain's order: preprocessor first, then PostCSS.
+  const use = [tryPostcss(), ...preprocessors].filter(Boolean)
+
+  if (use.length) {
+    rule.use = use
   }
 
   return rule
@@ -63,12 +73,6 @@ const getStyleRule = (
   if (usesNativeCss()) {
     return getNativeStyleRule(test, preprocessors)
   }
-
-  const tryPostcss = () =>
-    canProcess("postcss-loader", (loaderPath: string) => ({
-      loader: loaderPath,
-      options: { sourceMap: true }
-    }))
 
   // style-loader is required when using css modules with HMR on the webpack-dev-server
 

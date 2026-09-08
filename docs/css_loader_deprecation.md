@@ -42,14 +42,15 @@ Shakapacker chooses per build, based on whether `css-loader` resolves:
 | `css-loader` installed | What Shakapacker emits                                                                                                                    |
 | ---------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
 | Yes (default)          | The loader chain: `mini-css-extract-plugin`/`CssExtractRspackPlugin` (or `style-loader`) → `css-loader` → `postcss-loader` → preprocessor |
-| No                     | `{ type: "css/auto" }` rules, so the bundler parses CSS itself                                                                            |
+| No                     | `{ type: "css/auto" }` rules with `postcss-loader` → preprocessor still in `use`, so the bundler parses the CSS they produce              |
 
 The installer adds `css-loader` to every new app, so the loader chain is what
 you get unless you remove it deliberately.
 
 ### Opting into built-in CSS
 
-Uninstall `css-loader`:
+Uninstall `css-loader`. Keep `postcss-loader` and any preprocessor loader — the
+built-in parser replaces `css-loader`, not them:
 
 ```bash
 yarn remove css-loader style-loader mini-css-extract-plugin
@@ -59,6 +60,11 @@ Shakapacker then emits `css/auto` rules for `.css` and for every preprocessor
 extension, sets `experiments.css` on webpack, and points `output.cssFilename` at
 the same `css/[name]-[contenthash:8].css` paths the extraction plugins used, so
 `manifest.json` and `stylesheet_pack_tag` are unchanged.
+
+PostCSS keeps running on both paths and in the same order: the preprocessor
+compiles first, then `postcss-loader`, then the CSS is parsed. Autoprefixer,
+`postcss-preset-env`, and Tailwind's PostCSS plugin are unaffected by the
+switch.
 
 `bundle exec rake shakapacker:doctor` reports which path a build is on.
 

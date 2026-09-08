@@ -165,8 +165,10 @@ describe("rspack/rules", () => {
         parser: { namedExports: true },
         generator: { exportsConvention: "camel-case-only" }
       })
-      // Rspack v2 needs no `experiments.css` for this - the rule type is enough.
-      expect(cssRule.use).toBeUndefined()
+      // Built-in CSS replaces css-loader, not postcss-loader, which canProcess
+      // resolves to the mocked path here.
+      expect(cssRule.use).toHaveLength(1)
+      expect(cssRule.use[0].loader).toBe("/mocked-loader")
     })
   })
 

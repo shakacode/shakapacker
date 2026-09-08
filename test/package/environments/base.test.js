@@ -128,6 +128,7 @@ describe("Base config", () => {
         parser: { namedExports: true },
         generator: { exportsConvention: "camel-case-only" }
       })
+      // postcss-loader is not installed in this repo, so there is nothing to add.
       expect(cssRule.use).toBeUndefined()
     })
 

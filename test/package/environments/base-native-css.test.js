@@ -6,7 +6,11 @@ const { chdirTestApp, resetEnv } = require("../../helpers")
 const rootPath = process.cwd()
 chdirTestApp()
 
-const loadBaseConfig = ({ assetsBundler = "webpack", cssLoader = false }) => {
+const loadBaseConfig = ({
+  assetsBundler = "webpack",
+  cssLoader = false,
+  postcssLoader = false
+}) => {
   jest.resetModules()
   resetEnv()
   process.env.NODE_ENV = "production"
@@ -19,7 +23,15 @@ const loadBaseConfig = ({ assetsBundler = "webpack", cssLoader = false }) => {
     return {
       ...original,
       moduleExists: (moduleName) =>
-        moduleName === "css-loader" ? cssLoader : true
+        moduleName === "css-loader" ? cssLoader : true,
+      // postcss-loader is not a repo dependency, so resolving it has to be
+      // simulated to exercise the PostCSS branch at all.
+      canProcess: (rule, callback) => {
+        if (rule === "postcss-loader") {
+          return postcssLoader ? callback("/mocked/postcss-loader") : null
+        }
+        return original.canProcess(rule, callback)
+      }
     }
   })
   jest.doMock("@rspack/core", () => ({
@@ -61,6 +73,44 @@ describe("base config without css-loader", () => {
       loadBaseConfig({ assetsBundler: "rspack" }).experiments
     ).toBeUndefined()
   })
+
+  describe.each(["webpack", "rspack"])(
+    "with postcss-loader on %s",
+    (bundler) => {
+      // Built-in CSS replaces css-loader, not postcss-loader. Dropping PostCSS here
+      // would silently ship unprefixed/untransformed CSS to anyone using
+      // autoprefixer, postcss-preset-env, or Tailwind.
+      const cssRuleFor = (config) =>
+        config.module.rules.find((rule) => String(rule.test) === "/\\.(css)$/i")
+      const sassRuleFor = (config) =>
+        config.module.rules.find((rule) =>
+          String(rule.test).includes("scss|sass")
+        )
+
+      test("keeps PostCSS on plain CSS", () => {
+        const cssRule = cssRuleFor(
+          loadBaseConfig({ assetsBundler: bundler, postcssLoader: true })
+        )
+
+        expect(cssRule.type).toBe("css/auto")
+        expect(cssRule.use).toHaveLength(1)
+        expect(cssRule.use[0].loader).toBe("/mocked/postcss-loader")
+      })
+
+      test("runs PostCSS after the preprocessor", () => {
+        const sassRule = sassRuleFor(
+          loadBaseConfig({ assetsBundler: bundler, postcssLoader: true })
+        )
+
+        // Loaders apply right-to-left: sass-loader compiles first, then PostCSS,
+        // matching the css-loader chain's ordering.
+        expect(sassRule.type).toBe("css/auto")
+        expect(sassRule.use).toHaveLength(2)
+        expect(sassRule.use[0].loader).toBe("/mocked/postcss-loader")
+        expect(sassRule.use[1].loader).toContain("sass-loader")
+      })
+    }
+  )
 })
 
 describe("base config with css-loader", () => {
