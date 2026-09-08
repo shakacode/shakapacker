@@ -827,13 +827,25 @@ module Shakapacker
       end
 
       def check_css_dependencies
-        unless package_installed?("css-loader")
+        unless css_loader_available?
           report_native_css_handling
           return
         end
 
         check_dependency("style-loader", @issues, "CSS (style-loader)")
         check_optional_dependency("mini-css-extract-plugin", @warnings, "CSS extraction")
+      end
+
+      # getStyleRule picks its CSS path with `require.resolve`, so mirror that here
+      # rather than reading declared dependencies alone: a hoisted or transitive
+      # css-loader resolves for the build while never appearing in package.json,
+      # and reporting the wrong path is worse than reporting none. Fall back to the
+      # declared dependency so an app whose node_modules is not installed yet still
+      # gets the path it will build with.
+      def css_loader_available?
+        return true if installed_package_json_path("css-loader").exist?
+
+        package_installed?("css-loader")
       end
 
       # css-loader, style-loader, and mini-css-extract-plugin are archived upstream.
@@ -1937,7 +1949,7 @@ module Shakapacker
           end
 
           def print_css_status
-            unless doctor.send(:package_installed?, "css-loader")
+            unless doctor.send(:css_loader_available?)
               puts "✓ CSS: handled by #{doctor.send(:assets_bundler)}'s built-in CSS support (css-loader not installed)"
               return
             end

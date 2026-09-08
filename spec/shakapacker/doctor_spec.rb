@@ -3368,6 +3368,24 @@ describe Shakapacker::Doctor do
       end
     end
 
+    context "when css-loader is hoisted but not declared" do
+      before do
+        File.write(package_json_path, JSON.generate({}))
+        css_loader_pkg = root_path.join("node_modules/css-loader/package.json")
+        FileUtils.mkdir_p(css_loader_pkg.dirname)
+        File.write(css_loader_pkg, JSON.generate({ "name" => "css-loader", "version" => "7.1.5" }))
+      end
+
+      # getStyleRule resolves css-loader with require.resolve, so a transitive or
+      # hoisted copy still selects the loader chain. Doctor must not claim the
+      # build is on the built-in CSS path.
+      it "reports the loader chain rather than built-in CSS" do
+        doctor.send(:check_css_dependencies)
+
+        expect(warning_messages).not_to include(match(/built-in CSS support/))
+      end
+    end
+
     context "when css-loader is missing" do
       before do
         File.write(package_json_path, JSON.generate({}))

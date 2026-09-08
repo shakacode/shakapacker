@@ -6,11 +6,17 @@ and what is still missing before built-in CSS can become the default.
 
 ## What actually happened
 
-In August 2026 the webpack team archived the repositories for `css-loader`,
-`style-loader`, `mini-css-extract-plugin`, and `css-minimizer-webpack-plugin`,
-and added a deprecation banner to the `css-loader` README pointing at webpack's
+The webpack team archived the repositories for `css-loader`, `style-loader`, and
+`mini-css-extract-plugin` in late August 2026, and added a deprecation banner to
+the `css-loader` README pointing at webpack's
 [Native CSS guide](https://webpack.js.org/guides/native-css/). webpack now parses
 CSS itself and no longer needs the loader.
+
+`css-minimizer-webpack-plugin` was archived earlier, on a separate track: its
+README directs you to
+[`minimizer-webpack-plugin`](https://github.com/webpack/minimizer-webpack-plugin#css),
+which is actively released and is the same package webpack's own default
+minimizer uses internally.
 
 Two clarifications, because the wording upstream invites a stronger reading than
 the facts support:
@@ -106,11 +112,16 @@ These are the reasons built-in CSS is not the default yet.
   build, so server-rendered class names will not match the client's. Shakapacker
   does not yet pin a deterministic template. If you do SSR (React on Rails), set
   one yourself on both configs before switching.
-- **CSS minification still needs `css-minimizer-webpack-plugin` on webpack.**
-  webpack's bundled CSS minifier only runs when `optimization.minimizer` is left
-  at its default, and Shakapacker sets that array to configure Terser. Install
-  `css-minimizer-webpack-plugin` to minify CSS — the same as on the loader
-  chain, where it is also what does the work. Rspack is unaffected: it minifies
+- **CSS minification still needs a separate plugin on webpack.** Recent webpack
+  versions minify CSS through their default `optimization.minimizer`, but that
+  entry only applies when the array is left untouched, and Shakapacker replaces
+  it to configure Terser. So the built-in minifier never runs here, on either
+  CSS path. Shakapacker picks up `css-minimizer-webpack-plugin` when it is
+  installed — the same as on the loader chain, where it is also what does the
+  work. Note that this plugin is itself deprecated in favor of
+  [`minimizer-webpack-plugin`](https://github.com/webpack/minimizer-webpack-plugin#css);
+  Shakapacker does not wire that one up yet, so using it means configuring
+  `optimization.minimizer` in your own config. Rspack is unaffected: it minifies
   CSS with `LightningCssMinimizerRspackPlugin` either way.
 - **Rspack has not reached parity with webpack.** See Rspack's
   [built-in CSS tracking issue](https://github.com/web-infra-dev/rspack/issues/14002).
