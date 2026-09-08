@@ -67,14 +67,12 @@ debug("Loading CSS rule configuration...")
 if (!moduleExists("css-loader")) {
   info("css-loader not installed - using Rspack's built-in CSS support")
 }
+// getStyleRule always returns a rule: with css-loader it builds the loader
+// chain, without it the built-in `css/auto` rule.
 const css = require("./css")
 
-if (css) {
-  debug("Successfully added CSS rule")
-  rules.push(css)
-} else {
-  warn("CSS rule configuration returned null")
-}
+rules.push(css)
+debug("Successfully added CSS rule")
 
 // Sass rules
 debug("Checking for Sass loader...")

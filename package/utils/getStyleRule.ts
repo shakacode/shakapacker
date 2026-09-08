@@ -66,10 +66,12 @@ const getNativeStyleRule = (
   return rule
 }
 
+// Always returns a rule: the built-in `css/auto` fallback covers the case where
+// css-loader is absent, so callers no longer need a null check.
 const getStyleRule = (
   test: RegExp,
   preprocessors: unknown[] = []
-): StyleRule | null => {
+): StyleRule => {
   if (usesNativeCss()) {
     return getNativeStyleRule(test, preprocessors)
   }

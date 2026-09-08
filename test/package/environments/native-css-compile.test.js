@@ -33,8 +33,10 @@ const compile = (config) =>
   new Promise((resolve, reject) => {
     webpack(config, (err, stats) => {
       if (err) return reject(err)
-      if (stats.hasErrors()) {
-        return reject(new Error(stats.toString({ preset: "errors-only" })))
+      // A missing CSS Modules export is only a warning, so warnings have to
+      // fail this too or the export assertions below prove nothing.
+      if (stats.hasErrors() || stats.hasWarnings()) {
+        return reject(new Error(stats.toString({ preset: "errors-warnings" })))
       }
       return resolve(stats)
     })
@@ -53,9 +55,12 @@ describe("built-in CSS compilation", () => {
       path.join(fixtureDir, "styles.module.css"),
       ".my-button { color: red; }\n"
     )
+    // A named import is the assertion: webpack warns when the CSS module does
+    // not export `myButton`, and `compile` rejects on warnings. A namespace
+    // import would silently yield `undefined` instead.
     fs.writeFileSync(
       path.join(fixtureDir, "index.js"),
-      'import "./plain.css"\nimport * as styles from "./styles.module.css"\nconsole.log(styles.myButton)\n'
+      'import "./plain.css"\nimport { myButton } from "./styles.module.css"\nconsole.log(myButton)\n'
     )
   })
 
