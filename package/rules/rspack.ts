@@ -61,20 +61,18 @@ rules.push({
   ]
 })
 
-// CSS rules using Rspack's built-in CSS handling
-debug("Checking for CSS loader...")
-if (moduleExists("css-loader")) {
-  debug("css-loader found, loading CSS rule configuration...")
-  const css = require("./css")
-  if (css) {
-    debug("Successfully added CSS rule")
-    rules.push(css)
-  } else {
-    warn("css-loader found but rule configuration returned null")
-  }
-} else {
-  info("Skipping CSS support - css-loader not installed")
+// CSS rules. With css-loader installed this is the loader chain; without it,
+// getStyleRule falls back to Rspack's built-in `css/auto` parsing.
+debug("Loading CSS rule configuration...")
+if (!moduleExists("css-loader")) {
+  info("css-loader not installed - using Rspack's built-in CSS support")
 }
+// getStyleRule always returns a rule: with css-loader it builds the loader
+// chain, without it the built-in `css/auto` rule.
+const css = require("./css")
+
+rules.push(css)
+debug("Successfully added CSS rule")
 
 // Sass rules
 debug("Checking for Sass loader...")
