@@ -7,6 +7,9 @@ gemspec path: "../"
 gem "rails", '~>7.2.0'
 gem "rake", ">= 11.1"
 gem "rack-proxy", require: false
+# json 3 removes the `quirks_mode` keyword passed by supported ActiveSupport versions.
+# Remove this constraint once all supported ActiveSupport versions support json 3.
+gem "json", "< 3"
 gem "rspec-rails", "~> 7.0"
 gem "byebug"
 # i18n 1.15.0/1.15.1 call Fiber[] (Ruby 3.2+) unconditionally, crashing on Ruby 3.1.
