@@ -77,6 +77,18 @@ Failures already caused by this:
 - Keep pull requests small, focused, and easy to review.
 - Open a pull request immediately after pushing branch changes.
 
+## Review and Merge Gate
+
+AI reviewers are advisory unless they report a blocker. Before merging, require
+all current-head `gh pr checks` entries to pass, all review threads to be
+resolved, and GitHub to report clean mergeability. Run
+`.agents/bin/merge-readiness-check <PR_NUMBER>` before merge. It also checks
+historical post-merge timing for replay readiness. Live GitHub branch rules,
+including required approvals, remain authoritative; this seam grants no
+standing merge authority. Follow the direct user or maintainer instruction.
+
+Prefix follow-up issue titles with `Follow-up:`.
+
 ## Changelog
 
 - Update `CHANGELOG.md` only for user-visible changes: features, bug fixes,
