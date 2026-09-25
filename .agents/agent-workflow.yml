@@ -3,6 +3,7 @@
 version: 1
 base_branch: main
 review:
+  # No Shaka CI review job is named; live GitHub approvals and AGENTS.md still gate merges.
   required: none
 merge:
   preference: ask
