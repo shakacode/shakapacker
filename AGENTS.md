@@ -79,13 +79,17 @@ Failures already caused by this:
 
 ## Review and Merge Gate
 
-AI reviewers are advisory unless they report a blocker. Before merging, require
-all current-head `gh pr checks` entries to pass, all review threads to be
-resolved, and GitHub to report clean mergeability. Run
+AI reviewers are advisory. A reported blocker requires maintainer review and
+does not replace approvals required by GitHub branch rules. Before merging,
+require all current-head `gh pr checks` entries to pass, all review threads to
+be resolved, and GitHub to report clean mergeability. Run
 `.agents/bin/merge-readiness-check <PR_NUMBER>` before merge. It also checks
 historical post-merge timing for replay readiness. Live GitHub branch rules,
 including required approvals, remain authoritative; this seam grants no
-standing merge authority. Follow the direct user or maintainer instruction.
+standing merge authority. Changes to CI, workflows, build configuration,
+dependencies, runtime, broad refactors, and releases require explicit
+maintainer direction. Follow the direct user or maintainer instruction for
+other changes.
 
 Prefix follow-up issue titles with `Follow-up:`.
 
