@@ -13,6 +13,7 @@
 ### Fixed
 
 - **Fixed the legacy `bundler:` deprecation warning repeating on every call.** It now prints once per configuration instance. [PR #1304](https://github.com/shakacode/shakapacker/pull/1304) by [justin808](https://github.com/justin808).
+- **Fixed missing subresource integrity hashes in Rspack manifest entrypoints.** With `assets_bundler: rspack` and `integrity.enabled: true`, `manifest.json` entrypoints now use the same `{ src, integrity }` shape as webpack, so `javascript_pack_tag` and `stylesheet_pack_tag` render `integrity` and `crossorigin` attributes. [PR #1313](https://github.com/shakacode/shakapacker/pull/1313) by [nherzing](https://github.com/nherzing).
 
 ## [v10.3.2] - August 28, 2026
 

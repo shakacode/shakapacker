@@ -12,11 +12,14 @@ const { moduleExists } = require("../utils/helpers")
 interface ManifestFile {
   name: string
   path: string
+  integrity?: string
 }
 
+type EntrypointAsset = string | { src: string; integrity: string }
+
 interface EntrypointAssets {
-  js: string[]
-  css: string[]
+  js: EntrypointAsset[]
+  css: EntrypointAsset[]
 }
 
 interface Manifest {
@@ -46,9 +49,17 @@ const getPlugins = (): unknown[] => {
         const manifest: Manifest = seed || {}
 
         // Add files mapping first
+        const integrityByPath: Record<string, string> = {}
         files.forEach((file) => {
           manifest[file.name] = file.path
+          if (file.integrity) {
+            integrityByPath[file.path] = file.integrity
+          }
         })
+
+        // Match webpack-assets-manifest's `{ src, integrity }` entrypoint shape
+        const withIntegrity = (src: string): EntrypointAsset =>
+          integrityByPath[src] ? { src, integrity: integrityByPath[src] } : src
 
         // Add entrypoints information compatible with Shakapacker expectations
         const entrypointsManifest: Record<
@@ -61,13 +72,13 @@ const getPlugins = (): unknown[] => {
               .filter(
                 (file) => file.endsWith(".js") && !file.includes(".hot-update.")
               )
-              .map((file) => config.publicPathWithoutCDN + file)
+              .map((file) => withIntegrity(config.publicPathWithoutCDN + file))
             const cssFiles = entrypointFiles
               .filter(
                 (file) =>
                   file.endsWith(".css") && !file.includes(".hot-update.")
               )
-              .map((file) => config.publicPathWithoutCDN + file)
+              .map((file) => withIntegrity(config.publicPathWithoutCDN + file))
 
             entrypointsManifest[entrypointName] = {
               assets: {
