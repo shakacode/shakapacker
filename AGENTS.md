@@ -77,6 +77,29 @@ Failures already caused by this:
 - Keep pull requests small, focused, and easy to review.
 - Open a pull request immediately after pushing branch changes.
 
+## Review and Merge Gate
+
+AI reviewers are advisory. A reported blocker requires maintainer review and
+does not replace approvals required by GitHub branch rules. Before merging,
+require all current-head `gh pr checks` entries to pass or be explicitly
+skipped by the workflow, all review threads to be resolved, and GitHub to report
+clean mergeability. Run
+`.agents/bin/merge-readiness-check <PR_NUMBER>` before merge. It also checks
+historical post-merge timing for replay readiness. Live GitHub branch rules,
+including required approvals, remain authoritative; this seam grants no
+standing merge authority. Changes to GitHub Actions or other CI automation, build
+configuration, dependencies, runtime, broad refactors, and releases require explicit
+maintainer direction. Portable documentation, agent-facing workflow text, helper
+scripts, and validation fixtures are low-risk only when this task explicitly selects
+`auto` and the full gate passes. This does not waive any approval required by live
+GitHub branch rules. To reproduce a CI-only failure, use the matching job in
+`.github/workflows`; hosted CI runs on every pull request. Follow the direct user or
+maintainer instruction for other changes.
+A batch may auto-merge a ready, low-risk PR at closeout only when its task
+explicitly selects `auto` and the full merge gate passes.
+
+Prefix follow-up issue titles with `Follow-up:`.
+
 ## Changelog
 
 - Update `CHANGELOG.md` only for user-visible changes: features, bug fixes,
