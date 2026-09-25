@@ -87,10 +87,14 @@ clean mergeability. Run
 `.agents/bin/merge-readiness-check <PR_NUMBER>` before merge. It also checks
 historical post-merge timing for replay readiness. Live GitHub branch rules,
 including required approvals, remain authoritative; this seam grants no
-standing merge authority. Changes to CI, workflows, build configuration,
-dependencies, runtime, broad refactors, and releases require explicit
-maintainer direction. Follow the direct user or maintainer instruction for
-other changes.
+standing merge authority. Changes to GitHub Actions or other CI automation, build
+configuration, dependencies, runtime, broad refactors, and releases require explicit
+maintainer direction. Portable documentation, agent-facing workflow text, helper
+scripts, and validation fixtures are low-risk only when this task explicitly selects
+`auto` and the full gate passes. This does not waive any approval required by live
+GitHub branch rules. To reproduce a CI-only failure, use the matching job in
+`.github/workflows`; hosted CI runs on every pull request. Follow the direct user or
+maintainer instruction for other changes.
 A batch may auto-merge a ready, low-risk PR at closeout only when its task
 explicitly selects `auto` and the full merge gate passes.
 
