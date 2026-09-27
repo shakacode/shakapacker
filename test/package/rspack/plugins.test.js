@@ -143,6 +143,46 @@ describe("rspack/plugins", () => {
       ])
     })
 
+    test("rspackManifestPlugin generate adds integrity to entrypoint assets", () => {
+      const plugins = getPlugins()
+      const manifestPlugin = plugins.find(
+        (p) => p.name === "RspackManifestPlugin"
+      )
+      const { publicPath } = manifestPlugin.options
+
+      const files = [
+        {
+          name: "app.js",
+          path: `${publicPath}js/app-123.js`,
+          integrity: "sha384-js"
+        },
+        {
+          name: "app.css",
+          path: `${publicPath}css/app-456.css`,
+          integrity: "sha256-css sha384-css"
+        },
+        { name: "vendor.js", path: `${publicPath}js/vendor-789.js` }
+      ]
+
+      const entrypoints = {
+        app: ["js/vendor-789.js", "js/app-123.js", "css/app-456.css"]
+      }
+
+      const manifest = manifestPlugin.options.generate(null, files, entrypoints)
+
+      expect(manifest.entrypoints.app.assets.js).toEqual([
+        `${publicPath}js/vendor-789.js`,
+        { src: `${publicPath}js/app-123.js`, integrity: "sha384-js" }
+      ])
+      expect(manifest.entrypoints.app.assets.css).toEqual([
+        {
+          src: `${publicPath}css/app-456.css`,
+          integrity: "sha256-css sha384-css"
+        }
+      ])
+      expect(manifest["app.js"]).toBe(`${publicPath}js/app-123.js`)
+    })
+
     test("includes CssExtractRspackPlugin when css-loader exists", () => {
       moduleExists.mockReturnValue(true)
 
