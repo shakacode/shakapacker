@@ -827,9 +827,53 @@ module Shakapacker
       end
 
       def check_css_dependencies
-        check_dependency("css-loader", @issues, "CSS")
+        unless css_loader_available?
+          report_native_css_handling
+          return
+        end
+
         check_dependency("style-loader", @issues, "CSS (style-loader)")
         check_optional_dependency("mini-css-extract-plugin", @warnings, "CSS extraction")
+      end
+
+      # getStyleRule picks its CSS path with `require.resolve`, so mirror that here
+      # rather than reading declared dependencies alone: a hoisted or transitive
+      # css-loader resolves for the build while never appearing in package.json,
+      # and reporting the wrong path is worse than reporting none. Fall back to the
+      # declared dependency so an app whose node_modules is not installed yet still
+      # gets the path it will build with.
+      def css_loader_available?
+        return true if installed_package_json_path("css-loader").exist?
+
+        package_installed?("css-loader")
+      end
+
+      # css-loader, style-loader, and mini-css-extract-plugin are archived upstream.
+      # Without css-loader, Shakapacker emits `type: "css/auto"` rules and the bundler
+      # parses CSS itself, so this is a supported configuration rather than a missing
+      # dependency - but the generated class names differ from the css-loader chain.
+      def report_native_css_handling
+        add_info_warning(
+          "CSS is handled by #{assets_bundler}'s built-in CSS support because 'css-loader' is not installed. " \
+          "This is supported: Shakapacker configures CSS Modules to match its documented " \
+          "css_modules_export_mode. Note that generated CSS Modules class names differ from the " \
+          "css-loader chain, so a build that switches between the two changes every hashed class name."
+        )
+        add_fix_hint("Install 'css-loader' to keep the loader chain, or see docs/css_loader_deprecation.md.")
+
+        report_inert_css_extract_ignore_order_warnings
+      end
+
+      # `ignoreOrder` is a mini-css-extract-plugin/CssExtractRspackPlugin option. Built-in
+      # CSS support emits no order-conflict warnings, so there is nothing for it to silence.
+      def report_inert_css_extract_ignore_order_warnings
+        return unless config_key_configured?(:css_extract_ignore_order_warnings)
+        return unless config_value(:css_extract_ignore_order_warnings)
+
+        add_warning(
+          "config/shakapacker.yml sets 'css_extract_ignore_order_warnings: true', but it has no effect " \
+          "without 'css-loader': built-in CSS support does not emit CSS order-conflict warnings."
+        )
       end
 
       def check_css_modules_configuration
@@ -1905,6 +1949,11 @@ module Shakapacker
           end
 
           def print_css_status
+            unless doctor.send(:css_loader_available?)
+              puts "✓ CSS: handled by #{doctor.send(:assets_bundler)}'s built-in CSS support (css-loader not installed)"
+              return
+            end
+
             print_package_status("css-loader", "CSS")
             print_package_status("style-loader", "CSS (style-loader)")
             print_package_status("mini-css-extract-plugin", "CSS extraction (optional)")

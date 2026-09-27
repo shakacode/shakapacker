@@ -3368,16 +3368,67 @@ describe Shakapacker::Doctor do
       end
     end
 
-    context "when CSS loaders are missing" do
+    context "when css-loader is hoisted but not declared" do
+      before do
+        File.write(package_json_path, JSON.generate({}))
+        css_loader_pkg = root_path.join("node_modules/css-loader/package.json")
+        FileUtils.mkdir_p(css_loader_pkg.dirname)
+        File.write(css_loader_pkg, JSON.generate({ "name" => "css-loader", "version" => "7.1.5" }))
+      end
+
+      # getStyleRule resolves css-loader with require.resolve, so a transitive or
+      # hoisted copy still selects the loader chain. Doctor must not claim the
+      # build is on the built-in CSS path.
+      it "reports the loader chain rather than built-in CSS" do
+        doctor.send(:check_css_dependencies)
+
+        expect(warning_messages).not_to include(match(/built-in CSS support/))
+      end
+    end
+
+    context "when css-loader is missing" do
       before do
         File.write(package_json_path, JSON.generate({}))
       end
 
-      it "adds missing dependency issues" do
+      it "reports built-in CSS handling instead of a missing dependency" do
         doctor.send(:check_css_dependencies)
-        expect(doctor.issues).to include(match(/Missing required dependency 'css-loader'/))
-        expect(doctor.issues).to include(match(/Missing required dependency 'style-loader'/))
-        expect(warning_messages).to include(match(/Optional dependency 'mini-css-extract-plugin'/))
+
+        expect(doctor.issues).to be_empty
+        expect(warning_messages).to include(match(/built-in CSS support/))
+        expect(warning_messages).to include(match(/class names differ/))
+      end
+
+      it "points at the loader chain and the migration doc" do
+        doctor.send(:check_css_dependencies)
+
+        expect(warning_messages).to include(match(/Install 'css-loader' to keep the loader chain/))
+        expect(warning_messages).to include(match(/docs\/css_loader_deprecation\.md/))
+      end
+
+      it "does not ask for style-loader or mini-css-extract-plugin" do
+        doctor.send(:check_css_dependencies)
+
+        expect(warning_messages).not_to include(match(/style-loader/))
+        expect(warning_messages).not_to include(match(/mini-css-extract-plugin/))
+      end
+
+      context "with css_extract_ignore_order_warnings enabled" do
+        let(:config_data) { super().merge(css_extract_ignore_order_warnings: true) }
+
+        it "warns that the setting is inert without css-loader" do
+          doctor.send(:check_css_dependencies)
+
+          expect(warning_messages).to include(match(/css_extract_ignore_order_warnings.*has no effect/m))
+        end
+      end
+
+      context "with css_extract_ignore_order_warnings left at its default" do
+        it "stays quiet about order warnings" do
+          doctor.send(:check_css_dependencies)
+
+          expect(warning_messages).not_to include(match(/css_extract_ignore_order_warnings/))
+        end
       end
     end
   end

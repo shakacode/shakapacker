@@ -3,11 +3,12 @@ const { requireOrError } = require("../utils/requireOrError")
 const TerserPlugin = requireOrError("terser-webpack-plugin")
 const { moduleExists } = require("../utils/helpers")
 
+// css-minimizer-webpack-plugin minifies emitted .css assets, so it applies
+// whether the stylesheet came from css-loader or from webpack's built-in CSS
+// parsing. Setting optimization.minimizer at all opts out of webpack's own
+// bundled CSS minifier, so this stays the minifier for both paths.
 const tryCssMinimizer = (): unknown | null => {
-  if (
-    moduleExists("css-loader") &&
-    moduleExists("css-minimizer-webpack-plugin")
-  ) {
+  if (moduleExists("css-minimizer-webpack-plugin")) {
     const CssMinimizerPlugin = requireOrError("css-minimizer-webpack-plugin")
     return new CssMinimizerPlugin()
   }
