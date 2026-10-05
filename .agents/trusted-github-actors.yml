@@ -22,7 +22,7 @@ trusted_bots:
 # review evidence only.
 trusted_metadata_bots:
   # Observed historical review comments use the actual GitHub login
-  # `cursor[bot]`; keep them non-actionable unless separately triaged.
+  # `cursor[bot]`; store the base name and keep them metadata-only.
   - cursor
   # Repo-local exception: github-actions comments here are Claude completion or
   # status metadata only. They do not override AGENTS.md or widen a batch scope.
