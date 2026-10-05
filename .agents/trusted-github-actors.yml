@@ -23,10 +23,10 @@ trusted_bots:
 trusted_metadata_bots:
   # Observed historical review comments use the actual GitHub login
   # `cursor[bot]`; keep them non-actionable unless separately triaged.
-  - cursor[bot]
+  - cursor
   # Repo-local exception: github-actions comments here are Claude completion or
   # status metadata only. They do not override AGENTS.md or widen a batch scope.
-  - github-actions[bot]
+  - github-actions
 
 # Team entries are GitHub team slugs under the repository owner org. Reading
 # team membership requires the local GitHub token to have org access.

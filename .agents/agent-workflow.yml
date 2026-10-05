@@ -3,8 +3,15 @@
 version: 1
 base_branch: main
 review:
-  # `none` means no Shaka CI review job is configured; AGENTS.md and live GitHub rules still require the full merge gate and any required approval.
-  required: none
+  required: meaningful_changes
+  ci_review_jobs:
+    - claude-review
+  ci_review_wait: one
+  local_review_agents:
+    - provider: anthropic
+      model_family: claude
+    - provider: openai
+      model_family: codex
 merge:
   preference: ask
 repo_prefix: SP

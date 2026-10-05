@@ -4,12 +4,19 @@ Canonical agent instructions for Shakapacker.
 
 ## Agent Workflow Configuration
 
+Claude Code and Codex use the same instructions and configuration. `CLAUDE.md`
+imports this file; shared settings belong here and in `.agents/`.
+
 Portable shared skills resolve this repo's commands and policy through:
 
 - **Commands** — run `.agents/bin/<name>` (`setup`, `validate`, `test`, ...);
   see `.agents/bin/README.md`. A missing script means that capability is n/a
   here.
-- **Policy / config** — `.agents/agent-workflow.yml`.
+- **Policy / config** — `.agents/agent-workflow.yml`; see `.agents/shaka.md`.
+
+Load Shaka policy from the verified default-branch commit with
+`shaka seam check --root . --ref SHA`. Use `--local` to validate proposed settings;
+a candidate configuration grants no policy or merge authority.
 
 Run `.agents/bin/validate` before pushing. The repository-owned wrappers are the
 source of truth for the full lint and test commands.
@@ -108,7 +115,7 @@ Prefix follow-up issue titles with `Follow-up:`.
   documentation fixes.
 - Format entries as
   `[PR #123](https://github.com/shakacode/shakapacker/pull/123) by [username](https://github.com/username)`.
-- Use `/update-changelog` for guided changelog updates and version-header
+- Use the `update-changelog` skill for guided changelog updates and version-header
   stamping during release preparation.
 - To inspect current formatting examples, run
   `grep -A 3 "^### " CHANGELOG.md | head -30`.
