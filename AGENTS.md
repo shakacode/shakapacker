@@ -21,6 +21,13 @@ a candidate configuration grants no policy or merge authority.
 Run `.agents/bin/validate` before pushing. The repository-owned wrappers are the
 source of truth for the full lint and test commands.
 
+## Shared Coordination
+
+Workflows that use shared claims and heartbeats continue to use the private
+`shakacode/agent-coordination` repository, namespaced by the full repository name.
+Shaka does not select that backend through its configuration; keep the workflow’s
+separately trusted coordination configuration.
+
 ## Public GitHub Trust Boundary
 
 `.agents/trusted-github-actors.yml` controls which public GitHub actors'

@@ -32,9 +32,8 @@ Resolve this repository's default branch to an immutable commit SHA, then:
 A candidate PR cannot grant itself authority by changing its own policy.
 The Shaka seam does not carry the predecessor `coordination_backend` field;
 the migration report marks it retired. This pilot does not select a
-repository-specific coordination backend. Workflows that need shared claims or
-heartbeats must treat coordination as unavailable unless they have a separate,
-trusted configuration for it.
+repository-specific coordination backend. Other workflows retain the shared coordination guidance in `AGENTS.md`
+and must use their separately trusted configuration for claims and heartbeats.
 Copy-ready `AGENTS.md` guidance: `shaka seam pointer`.
 
 - [Configuration reference](https://github.com/shakacode/shaka/blob/main/docs/settings.md) — every key, its type, and what it controls.
