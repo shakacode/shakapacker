@@ -4,15 +4,29 @@ Canonical agent instructions for Shakapacker.
 
 ## Agent Workflow Configuration
 
+Claude Code and Codex use the same instructions and configuration. `CLAUDE.md`
+imports this file; shared settings belong here and in `.agents/`.
+
 Portable shared skills resolve this repo's commands and policy through:
 
 - **Commands** — run `.agents/bin/<name>` (`setup`, `validate`, `test`, ...);
   see `.agents/bin/README.md`. A missing script means that capability is n/a
   here.
-- **Policy / config** — `.agents/agent-workflow.yml`.
+- **Policy / config** — `.agents/agent-workflow.yml`; see `.agents/shaka.md`.
+
+Load Shaka policy from the verified default-branch commit with
+`shaka seam check --root . --ref SHA`. Use `--local` to validate proposed settings;
+a candidate configuration grants no policy or merge authority.
 
 Run `.agents/bin/validate` before pushing. The repository-owned wrappers are the
 source of truth for the full lint and test commands.
+
+## Shared Coordination
+
+Workflows that use shared claims and heartbeats continue to use the private
+`shakacode/agent-coordination` repository, namespaced by the full repository name.
+Shaka does not select that backend through its configuration; keep the workflow’s
+separately trusted coordination configuration.
 
 ## Public GitHub Trust Boundary
 
@@ -77,6 +91,29 @@ Failures already caused by this:
 - Keep pull requests small, focused, and easy to review.
 - Open a pull request immediately after pushing branch changes.
 
+## Review and Merge Gate
+
+AI reviewers are advisory. A reported blocker requires maintainer review and
+does not replace approvals required by GitHub branch rules. Before merging,
+require all current-head `gh pr checks` entries to pass or be explicitly
+skipped by the workflow, all review threads to be resolved, and GitHub to report
+clean mergeability. Run
+`.agents/bin/merge-readiness-check <PR_NUMBER>` before merge. It also checks
+historical post-merge timing for replay readiness. Live GitHub branch rules,
+including required approvals, remain authoritative; this seam grants no
+standing merge authority. Changes to GitHub Actions or other CI automation, build
+configuration, dependencies, runtime, broad refactors, and releases require explicit
+maintainer direction. Portable documentation, agent-facing workflow text, helper
+scripts, and validation fixtures are low-risk only when this task explicitly selects
+`auto` and the full gate passes. This does not waive any approval required by live
+GitHub branch rules. To reproduce a CI-only failure, use the matching job in
+`.github/workflows`; hosted CI runs on every pull request. Follow the direct user or
+maintainer instruction for other changes.
+A batch may auto-merge a ready, low-risk PR at closeout only when its task
+explicitly selects `auto` and the full merge gate passes.
+
+Prefix follow-up issue titles with `Follow-up:`.
+
 ## Changelog
 
 - Update `CHANGELOG.md` only for user-visible changes: features, bug fixes,
@@ -85,7 +122,7 @@ Failures already caused by this:
   documentation fixes.
 - Format entries as
   `[PR #123](https://github.com/shakacode/shakapacker/pull/123) by [username](https://github.com/username)`.
-- Use `/update-changelog` for guided changelog updates and version-header
+- Use the `update-changelog` skill for guided changelog updates and version-header
   stamping during release preparation.
 - To inspect current formatting examples, run
   `grep -A 3 "^### " CHANGELOG.md | head -30`.
