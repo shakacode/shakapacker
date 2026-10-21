@@ -198,6 +198,19 @@ describe "CSS Modules Configuration" do
       expect(style_rule_content).to include("v8 behavior")
     end
 
+    it "ensures the built-in CSS fallback mirrors the css-loader export mode" do
+      # Without css-loader the bundler parses CSS itself, so the same
+      # css_modules_export_mode must map onto the built-in parser/generator
+      # options rather than silently reverting to their defaults ('as-is').
+      style_rule_content = File.read("package/utils/getStyleRule.ts")
+
+      expect(style_rule_content).to include('type: "css/auto"')
+      expect(style_rule_content).to include("namedExports: useNamedExports")
+      expect(style_rule_content).to include(
+        'exportsConvention: useNamedExports ? "camel-case-only" : "camel-case"'
+      )
+    end
+
     describe "css_modules_export_mode configuration" do
       it "defaults to 'named' when not specified" do
         # The test config doesn't have css_modules_export_mode set
