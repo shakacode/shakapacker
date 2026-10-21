@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+# Pre-push gate: lint + test (run before pushing).
+set -euo pipefail
+root=$(env -u GIT_DIR -u GIT_WORK_TREE -u GIT_COMMON_DIR -u GIT_PREFIX -u GIT_CEILING_DIRECTORIES git -C "$(dirname -- "$0")" rev-parse --show-toplevel) || exit $?
+cd "$root"
+.agents/bin/lint
+bundle exec ruby .agents/bin/merge-readiness-check-test.rb
+.agents/shaka/bin/test
