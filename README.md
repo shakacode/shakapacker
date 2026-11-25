@@ -12,9 +12,11 @@ manifest-backed bridge to webpack 5 or Rspack, with view helpers, installer
 tasks, binstubs, and configuration conventions that still allow direct bundler
 customization.
 
-_Shakapacker 10 supports [Rspack](https://rspack.rs/) — up to 17x faster than
-webpack per
-[upstream benchmarks](https://shakapacker.com/docs/transpiler-performance/#published-benchmarks)._
+_Shakapacker 10 supports [Rspack](https://rspack.rs/). Rspack's own
+[benchmark](https://shakapacker.com/docs/transpiler-performance/#published-benchmarks)
+reports roughly 8x faster production builds and ~17x faster HMR than webpack. At
+[Academia.edu](#shakacode-support), Rspack made warm-cache and incremental
+builds 2-4x faster._
 
 The canonical markdown source stays in this repository's [`docs/`](./docs/)
 directory and is published to the docs site.
