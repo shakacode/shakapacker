@@ -24,10 +24,32 @@ const rulesPath = resolve(
   `${config.assets_bundler}.js`
 )
 const rules = require(rulesPath)
+const { usesNativeCss } = require("../utils/getStyleRule")
 
 // Don't use contentHash except for production for performance
 // https://webpack.js.org/guides/build-performance/#avoid-production-specific-tooling
 const hash = isProduction || config.useContentHash ? "-[contenthash]" : ""
+
+// Matches the filenames mini-css-extract-plugin/CssExtractRspackPlugin use on
+// the css-loader path, so manifest.json entries are identical either way.
+const cssHash = isProduction || config.useContentHash ? "-[contenthash:8]" : ""
+
+// Without css-loader the bundler parses CSS itself. webpack needs the
+// experiment turned on explicitly: `experiments.css` defaults to `false` before
+// 5.109, and from 5.109 its `'auto'` default *disables* built-in CSS as soon as
+// a rule declares an explicit `css/auto` type, which is exactly what
+// getStyleRule emits. Rspack v2 deprecated the flag and needs only the rule.
+const nativeCss = usesNativeCss()
+const nativeCssConfig =
+  nativeCss && config.assets_bundler !== "rspack"
+    ? { experiments: { css: true } }
+    : {}
+const nativeCssOutput = nativeCss
+  ? {
+      cssFilename: `css/[name]${cssHash}.css`,
+      cssChunkFilename: `css/[id]${cssHash}.css`
+    }
+  : {}
 
 const getFilesInDirectory = (dir: string, includeNested: boolean): string[] => {
   if (!existsSync(dir)) {
@@ -104,9 +126,11 @@ const getModulePaths = (): string[] => {
 
 const baseConfig: Configuration = {
   mode: "production",
+  ...nativeCssConfig,
   output: {
     filename: `js/[name]${hash}.js`,
     chunkFilename: `js/[name]${hash}.chunk.js`,
+    ...nativeCssOutput,
 
     // https://webpack.js.org/configuration/output/#outputhotupdatechunkfilename
     hotUpdateChunkFilename: "js/[id].[fullhash].hot-update.js",
